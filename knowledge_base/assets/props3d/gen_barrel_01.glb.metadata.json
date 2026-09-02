@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "_statut": "DECLARATION — ne fait JAMAIS foi (confrontee par declaration_mismatch)",
+  "asset_id": "gen_barrel_01",
+  "category": "prop",
+  "style": "lowpoly",
+  "license": "CC0-1.0",
+  "source": "ORIGINAL — aucune inspiration externe citee — scripts/forge/asset_producer/build_asset.py",
+  "provenance_url": null,
+  "produced_by": "blender 5.1.1 / archetype=barrel",
+  "origin_rule": "base_center",
+  "ground_rule": "base_contact",
+  "variants": [],
+  "consumer_examples": [
+    "obstacle destructible",
+    "cachette de butin"
+  ],
+  "lowest_point_y": 0.0,
+  "height_y": 0.9,
+  "width_x": 0.6,
+  "depth_z": 0.6
+}

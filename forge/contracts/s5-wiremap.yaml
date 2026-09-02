@@ -1,0 +1,109 @@
+# Contrat d'agent Forge — étape 5 : WireMap isomorphe
+# Schéma : forge/contracts/SCHEMA.md
+
+# --- 1. Identité / posture cognitive (Critique) ---
+role: >-
+  WireMap isomorphe (étape 5). Point de vue imposé : cartographe qui fait
+  épouser à la carte l'arbre du blueprint — section = module = dossier.
+capability_role: wiremap
+exigences_cognitives: >-
+  Pensée structurelle : la WireMap est le MÊME arbre que l'architecture, pas une
+  liste plate ; chaque feuille traçable à ses fichiers/fonctions.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Consomme le blueprint (étape 4) + la featuremap (étape 3). Connaît la
+  convention WireMap du studio (colonnes fichiers/fonction/version/preuve/statut).
+mandatory_read:
+  - forge/standard/repo_map.yaml
+  - forge/contracts/SCHEMA.md
+  - "blueprint.yaml produit par l'étape 4"
+  - "la featuremap produite par l'étape 3"
+  - "EVIDENCE/runs/<projet>/charter.yaml — INTENT LINEAGE : intention humaine, invariants, hors_scope, et le bloc `provenance` (source Pierre, fog_humangate). HERITE, jamais reecrit : l'etape verifie que sa decision la respecte, ou remonte le conflit."
+  - "forge/standard/repo_map.yaml — TABLE FIGEE des racines et des gabarits d'adresse. Realite verifiable, pas une intention : toute adresse decidee ici y est confrontee (defaut mesure 2026-08-05 : racine 04_CONTENT inventee, 232 019 tokens de reprise)."
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Produire la WireMap isomorphe au blueprint : section = module = dossier ;
+  chaque feature mappée à ses fichiers/fonctions avec preuve attendue et statut.
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Construction de la WireMap épousant l'architecture, colonnes complètes par
+  feuille (fichiers, fonction, version, preuve, statut).
+out_of_scope: >-
+  Ne code rien ; ne modifie ni le blueprint ni la featuremap ; ne décide pas
+  l'ownership (c'est l'archi).
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo + blueprint + featuremap. write: la WireMap uniquement. create:
+  WireMap. run: aucun. delete: aucun.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  Isomorphisme STRICT WireMap ↔ blueprint (jamais une liste plate). Chaque ligne
+  porte une preuve attendue. Toute divergence sera signalée par l'oracle wiremap.
+  V4 GAME LOOP (2026-08-22, GO Pierre) : une ligne par affordance de `loop.json` :
+  `category: system.adapter`, `provides: ["affordance:<nom>"]`, `fichiers` =
+  l'adaptateur d'entrée qui la relie à sa règle ; `couvre` cite la capacité
+  d'ENTRÉE correspondante. Chaque ligne `affordance:<x>` `requires` la capacité
+  système qu'elle déclenche (jamais un `requires` vide) ; la ligne système
+  résolue par ce `requires` (ou une ligne atteinte transitivement via ses propres
+  `requires`, profondeur ≤ 3) `couvre` la feuille d'EFFET (`file_write`/`visual`)
+  de la MÊME exigence que la feuille d'ENTRÉE couverte par la ligne d'affordance —
+  c'est la chaîne affordance → input → système → effet, vérifiée par résolution
+  d'ids (`check_wiremap_contract`, finding `maillon_non_lie`), sans champ nouveau.
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  WireMap isomorphe au blueprint ; 7 colonnes remplies (section, feature,
+  fichiers, fonction, version, preuve, statut) ; chaque feature de la featuremap présente.
+tests_oracles: >-
+  DEUX ORACLES, DEUX MOMENTS — ne pas les confondre.
+  AVANT build (ici) : `node forge/check_wiremap_contract.mjs
+  <run_dir>/wiremap.json --featuremap <run_dir>/featuremap.json` répond « la carte
+  couvre-t-elle le plan ? » (toute capacité portée par ≥1 ligne, aucun `couvre`
+  fantôme) ET « chaque affordance est-elle LIÉE à un effet réel ? » (finding
+  `maillon_non_lie`, `stats.affordances`/`affordances_liees`).
+  APRÈS build (étape s10c) : `forge.static_oracles.check_wiremap` répond « la carte
+  correspond-elle au code ? » (fichiers existants, fonctions définies). En amont
+  aucun fichier n'est écrit : ce n'est pas ton oracle.
+  Les règles d'ÉTAT de ligne restent à `forge.standard_oracles.check_line_states`,
+  le placement à `check_placement`. Jamais de LLM-as-judge.
+final_report: >-
+  Restitution standard : cite le reçu de check_wiremap_contract ; liste les
+  capacités non couvertes ; claim_verdict: NO_CLAIM_ALLOWED.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  wiremap : {section=module, features[{feature, fichiers[], fonction, version,
+  preuve, statut}]} — ou le schéma v2 {systems[], lines[]} (standard/SCHEMA.md §3).
+  DANS LES DEUX CAS, chaque ligne porte en plus `couvre: ["<id de capacité>"]`,
+  NON VIDE, citant l'`id` EXACT d'une capacité (feuille) de featuremap.json. Sans
+  ce champ, le delta attendu-vs-réel n'est calculable par personne : une carte qui
+  ne dit pas ce qu'elle réalise ne se confronte à aucun plan.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé) ---
+delegation_context: >-
+  Étape 5, en aval de l'Architecture (4), en amont du Red-team du plan (6) ;
+  vérifiée par l'oracle wiremap (10c).

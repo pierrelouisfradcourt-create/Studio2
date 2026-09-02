@@ -1,0 +1,1224 @@
+{
+ "genre": "Idle / Incremental Clicker (kitten clicker)",
+ "games_observed": [
+  "Cookie Clicker",
+  "Neko Atsume",
+  "Kittens Game"
+ ],
+ "dimensions": [
+  {
+   "id": "combat",
+   "status": "NOT_MEASURED",
+   "reason": "Genre non conflictuel : les trois jeux du panel ont has_defeat_state=false (worldscan:games[0].objectives) et aucune mecanique de combat, degats, portee ou cadence de tir n'apparait dans les sources. Aucune grandeur de combat n'existe a mesurer."
+  },
+  {
+   "id": "progression",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "temps jusqu'au 1er auto-producteur perceptible",
+     "value": "10",
+     "unit": "minutes",
+     "source": "Cookie Clicker (worldscan:games[0].loops.minute_10)",
+     "observed": true
+    },
+    {
+     "name": "temps jusqu'au 1er palier de mecanique nouvelle (minigames)",
+     "value": "5",
+     "unit": "heures",
+     "source": "Cookie Clicker (worldscan:games[0].loops.hour_5)",
+     "observed": true
+    },
+    {
+     "name": "nombre de paliers de boucle observes avant l'endgame",
+     "value": "3",
+     "unit": "paliers",
+     "source": "Cookie Clicker / Kittens Game (worldscan:games[2].loops.minute_10)",
+     "observed": true
+    }
+   ]
+  },
+  {
+   "id": "economy",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "nombre de ressources actives en endgame",
+     "value": "15",
+     "unit": "ressources",
+     "source": "Kittens Game (worldscan:games[2].loops.endgame)",
+     "observed": true
+    },
+    {
+     "name": "nombre de ressources actives a ~10 min",
+     "value": "2",
+     "unit": "ressources",
+     "source": "Kittens Game (worldscan:games[2].loops.minute_10)",
+     "observed": true
+    },
+    {
+     "name": "nombre de types de batiments producteurs (heure 5)",
+     "value": "10",
+     "unit": "batiments",
+     "source": "Cookie Clicker (worldscan:games[0].loops.hour_5)",
+     "observed": true
+    }
+   ]
+  },
+  {
+   "id": "rng",
+   "status": "NOT_MEASURED",
+   "reason": "Le seul mecanisme aleatoire cite est la 'variable reward schedule' de Neko Atsume (worldscan:games[1].retention_answer) : quels chats visitent est imprevisible. Il est decrit qualitativement, sans aucune probabilite ni taux d'apparition chiffre dans les sources. Aucune grandeur d'alea n'est observable ; pour ce jeu, les rares sont d'ailleurs deterministes (design), donc rien a calibrer sur l'alea."
+  },
+  {
+   "id": "rarity",
+   "status": "NOT_MEASURED",
+   "reason": "La rarete/collection est presente (completion du Catbook, worldscan:games[1].loops.hour_5) mais aucune taille de pool de chats ni echelle de paliers de rarete chiffree n'apparait dans le worldscan JSON. Impossible d'en extraire une grandeur sans l'inventer."
+  },
+  {
+   "id": "bonus",
+   "status": "NOT_MEASURED",
+   "reason": "Les bonus/multiplicateurs (upgrades, cycles de prestige) sont cites qualitativement (worldscan:games[0].loops.endgame : 'prestige cycles') mais aucune magnitude numerique (facteur d'upgrade, bonus de prestige) n'est fournie par les sources. Une valeur serait fabriquee."
+  },
+  {
+   "id": "metagame",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "nombre d'achievements (pseudo-endgame)",
+     "value": "600",
+     "unit": "achievements",
+     "source": "Cookie Clicker (worldscan:games[0].loops.endgame)",
+     "observed": true
+    },
+    {
+     "name": "jeux du panel offrant un mode prestige/reset",
+     "value": "2",
+     "unit": "jeux (sur 3)",
+     "source": "Cookie Clicker & Kittens Game (worldscan:games[0].objectives)",
+     "observed": true
+    },
+    {
+     "name": "completion du Catbook a ~5 h (Neko Atsume)",
+     "value": "50",
+     "unit": "%",
+     "source": "Neko Atsume (worldscan:games[1].loops.hour_5)",
+     "observed": true
+    }
+   ]
+  },
+  {
+   "id": "construction",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "nombre de batiments actifs a ~10 min",
+     "value": "3-5",
+     "unit": "batiments",
+     "source": "Cookie Clicker (worldscan:games[0].loops.minute_10)",
+     "observed": true
+    },
+    {
+     "name": "nombre de types de batiments a l'heure 5",
+     "value": "10",
+     "unit": "batiments",
+     "source": "Cookie Clicker (worldscan:games[0].loops.hour_5)",
+     "observed": true
+    }
+   ]
+  }
+ ],
+ "sources_consumed": {
+  "worldscan": [
+   "worldscan:games[0].loops.minute_10",
+   "worldscan:games[0].loops.hour_5",
+   "worldscan:games[0].loops.endgame",
+   "worldscan:games[0].objectives",
+   "worldscan:games[0].retention_answer",
+   "worldscan:games[1].loops.hour_5",
+   "worldscan:games[1].retention_answer",
+   "worldscan:games[2].loops.minute_10",
+   "worldscan:games[2].loops.endgame"
+  ],
+  "story_bible": [
+   "story_bible:context",
+   "story_bible:stakes",
+   "story_bible:coherence_rules",
+   "story_bible:characters"
+  ],
+  "art_bible": [
+   "art_bible:visual_language",
+   "art_bible:affordance_rules",
+   "art_bible:character_states"
+  ]
+ },
+ "game_master": {
+  "world_interpretation": [
+   {
+    "fact": "Le jeu est une colonie de chatons bienveillante qui s'etend refuge -> jardin -> grenier ; le joueur percoit une colonie qui se developpe, pas un compteur.",
+    "source": "story_bible:context"
+   },
+   {
+    "fact": "L'enjeu est aspirationnel et sans defaite : croissance de la colonie et completion de l'album, aucune condition de defaite.",
+    "source": "story_bible:stakes"
+   },
+   {
+    "fact": "Regle de visibilite absolue : un chaton n'apparait sur la scene QUE s'il est adopte ; sinon il n'existe qu'en silhouette « ? » dans l'album.",
+    "source": "story_bible:coherence_rules"
+   },
+   {
+    "fact": "Le risque de retention nomme par le genre est l'interface statique ('plateau monotone si interface statique') : d'ou la regle maitresse UNLOCK != +X %, chaque achat doit changer l'ecran.",
+    "source": "worldscan:games[0].retention_answer"
+   },
+   {
+    "fact": "L'identite visuelle decidee est storybook-flat : une seule affordance mise en evidence a la fois, cout ET effet lisibles, chaque achat transforme visiblement la scene.",
+    "source": "art_bible:visual_language"
+   },
+   {
+    "fact": "Les chatons sont distingues par rarete (6 communs + 3 rares dores) sans identite individuelle heritee ; les 6 robes de base et 3 rares sont decidees par l'art.",
+    "source": "story_bible:characters"
+   }
+  ],
+  "loops": {
+   "core_loop": [
+    {
+     "id": "c_action",
+     "kind": "action",
+     "actor": "PLAYER",
+     "why": "caresser la pelote : l'unite de sens, tout se lit en clics",
+     "metric_ref": "m_click_gain",
+     "proof_ref": "p_click_gain",
+     "affordance": "pelote"
+    },
+    {
+     "id": "c_feedback",
+     "kind": "feedback",
+     "actor": "SYSTEM",
+     "why": "la pelote roule, un ronron monte (son) : le monde reagit au clic",
+     "metric_ref": "m_click_gain",
+     "proof_ref": "p_click_gain",
+     "hud": "hud.ronrons"
+    },
+    {
+     "id": "c_reward",
+     "kind": "reward",
+     "actor": "SYSTEM",
+     "why": "+1 ronron credite ; le chaton le plus proche leve la tete",
+     "metric_ref": "m_click_gain",
+     "proof_ref": "p_click_gain",
+     "resource": "ronrons"
+    },
+    {
+     "id": "c_progression",
+     "kind": "progression",
+     "actor": "SYSTEM",
+     "why": "les ronrons accumules rendent le prochain achat atteignable",
+     "metric_ref": "m_cost_kitten_1",
+     "proof_ref": "p_cost_kitten_1"
+    },
+    {
+     "id": "c_decision",
+     "kind": "decision",
+     "actor": "PLAYER",
+     "why": "cliquer encore ou depenser : l'arbitrage de base actif vs achat",
+     "metric_ref": "m_cost_kitten_1",
+     "proof_ref": "p_cost_kitten_1"
+    }
+   ],
+   "progression_loop": [
+    {
+     "id": "s_p01",
+     "kind": "action",
+     "actor": "PLAYER",
+     "why": "caresser jusqu'a 20 ronrons pour accueillir le 1er chaton",
+     "metric_ref": "m_click_gain",
+     "proof_ref": "p_click_gain",
+     "affordance": "pelote",
+     "hud": "hud.ronrons"
+    },
+    {
+     "id": "s_p01b",
+     "kind": "feedback",
+     "actor": "SYSTEM",
+     "why": "pop + son a chaque clic ; le cout du chaton devient lisible/atteignable",
+     "metric_ref": "m_cost_kitten_1",
+     "proof_ref": "p_cost_kitten_1",
+     "hud": "hud.cout_acheter_chaton"
+    },
+    {
+     "id": "s_p02",
+     "kind": "reward",
+     "actor": "PLAYER",
+     "why": "premier chaton : le jeu cesse d'etre un compteur, `placer` apparait",
+     "metric_ref": "m_cost_kitten_1",
+     "proof_ref": "p_first_kitten_time",
+     "affordance": "acheter_chaton",
+     "resource": "ronrons"
+    },
+    {
+     "id": "s_p03",
+     "kind": "progression",
+     "actor": "PLAYER",
+     "why": "placer le chaton : l'espace devient une regle, le jardin se deverrouille visuellement",
+     "metric_ref": "m_prod_kitten",
+     "proof_ref": "p_place_time",
+     "affordance": "placer",
+     "hud": "hud.places"
+    },
+    {
+     "id": "s_p05",
+     "kind": "decision",
+     "actor": "PLAYER",
+     "why": "DECISION 1 au cout commun 60 : amenager (banc, passif) OU caresse longue (actif), exclusives au seuil",
+     "metric_ref": "m_cost_upgrade_1",
+     "proof_ref": "p_decision1",
+     "affordance": "acheter_chaton|acheter_amelioration"
+    }
+   ],
+   "player_loop": [
+    {
+     "id": "pl_action",
+     "kind": "action",
+     "actor": "PLAYER",
+     "why": "lire l'objectif (en haut) et agir sur la seule affordance mise en evidence",
+     "metric_ref": "m_click_gain",
+     "proof_ref": "p_click_gain",
+     "hud": "hud.objectif"
+    },
+    {
+     "id": "pl_feedback",
+     "kind": "feedback",
+     "actor": "SYSTEM",
+     "why": "la scene change visiblement a chaque action (regle maitresse UNLOCK != +X %)",
+     "metric_ref": "m_prod_kitten",
+     "proof_ref": "p_prod_kitten"
+    },
+    {
+     "id": "pl_reward",
+     "kind": "reward",
+     "actor": "SYSTEM",
+     "why": "une possibilite perceptible apparait (un chaton, un lieu, un objet)",
+     "metric_ref": "m_cost_garden",
+     "proof_ref": "p_cost_garden"
+    },
+    {
+     "id": "pl_progression",
+     "kind": "progression",
+     "actor": "SYSTEM",
+     "why": "hud.ensuite nomme l'objectif suivant, le joueur comprend la suite",
+     "metric_ref": "m_prestige_threshold",
+     "proof_ref": "p_prestige_threshold",
+     "hud": "hud.ensuite"
+    },
+    {
+     "id": "pl_decision",
+     "kind": "decision",
+     "actor": "PLAYER",
+     "why": "choisir l'ordre des achats (chaton vs objet au cout commun)",
+     "metric_ref": "m_cost_upgrade_1",
+     "proof_ref": "p_decision1"
+    }
+   ],
+   "content_loop": [
+    {
+     "id": "ct_action",
+     "kind": "action",
+     "actor": "PLAYER",
+     "why": "depenser pour une progression",
+     "metric_ref": "m_cost_kitten_1",
+     "proof_ref": "p_cost_kitten_1",
+     "affordance": "acheter_chaton"
+    },
+    {
+     "id": "ct_feedback",
+     "kind": "feedback",
+     "actor": "SYSTEM",
+     "why": "une case du tableau de contenu se remplit : carte/objet/animation/chaton/skin/interaction",
+     "metric_ref": "m_garden_mult",
+     "proof_ref": "p_garden_mult"
+    },
+    {
+     "id": "ct_reward",
+     "kind": "reward",
+     "actor": "SYSTEM",
+     "why": "un comportement nouveau et visible (le chaton dort, joue, chasse, grimpe)",
+     "metric_ref": "m_prod_kitten",
+     "proof_ref": "p_prod_kitten"
+    },
+    {
+     "id": "ct_progression",
+     "kind": "progression",
+     "actor": "SYSTEM",
+     "why": "le nouveau contenu ouvre l'objet/chaton suivant",
+     "metric_ref": "m_cost_garden",
+     "proof_ref": "p_cost_garden"
+    },
+    {
+     "id": "ct_decision",
+     "kind": "decision",
+     "actor": "PLAYER",
+     "why": "quel contenu debloquer d'abord (banc vs fleurs vs jouet vs niche)",
+     "metric_ref": "m_cost_upgrade_1",
+     "proof_ref": "p_decision1"
+    }
+   ],
+   "meta_loop": [
+    {
+     "id": "mt_action",
+     "kind": "action",
+     "actor": "PLAYER",
+     "why": "declencher le prestige (nouvelle portee) quand 5 chatons places + jardin",
+     "metric_ref": "m_prestige_threshold",
+     "proof_ref": "p_prestige_threshold",
+     "affordance": "prestige"
+    },
+    {
+     "id": "mt_feedback",
+     "kind": "feedback",
+     "actor": "SYSTEM",
+     "why": "reset observable : les chatons partent adoptes, l'album se colore, la saison change, le jardin se re-verrouille",
+     "metric_ref": "m_prestige_threshold",
+     "proof_ref": "p_reset"
+    },
+    {
+     "id": "mt_reward",
+     "kind": "reward",
+     "actor": "SYSTEM",
+     "why": "+1 coeur = +25 % additif au clic ET a la production ; ruban visible sur le panier",
+     "metric_ref": "m_heart_bonus",
+     "proof_ref": "p_heart_bonus",
+     "resource": "coeurs"
+    },
+    {
+     "id": "mt_progression",
+     "kind": "progression",
+     "actor": "SYSTEM",
+     "why": "grenier + croquettes + chatons rares deviennent disponibles (portee >= 2)",
+     "metric_ref": "m_kibble_rate",
+     "proof_ref": "p_kibble_rate"
+    },
+    {
+     "id": "mt_decision",
+     "kind": "decision",
+     "actor": "PLAYER",
+     "why": "DECISION 2 : developper le jardin (album/rares) OU ouvrir le grenier (production)",
+     "metric_ref": "m_decision2_cost",
+     "proof_ref": "p_decision2_cost",
+     "affordance": "developper_jardin|ouvrir_grenier"
+    }
+   ],
+   "economy_loop": [
+    {
+     "id": "ec_action",
+     "kind": "action",
+     "actor": "PLAYER",
+     "why": "produire des ronrons (caresses + chatons qui ronronnent)",
+     "metric_ref": "m_prod_kitten",
+     "proof_ref": "p_prod_kitten",
+     "resource": "ronrons"
+    },
+    {
+     "id": "ec_feedback",
+     "kind": "feedback",
+     "actor": "SYSTEM",
+     "why": "hud.taux monte, hud.ronrons s'accumule",
+     "metric_ref": "m_prod_kitten",
+     "proof_ref": "p_prod_kitten",
+     "hud": "hud.taux"
+    },
+    {
+     "id": "ec_reward",
+     "kind": "reward",
+     "actor": "PLAYER",
+     "why": "depenser transforme le monde (chaton / lieu / objet / interaction) : rien ne coute sans transformer la scene",
+     "metric_ref": "m_cost_garden",
+     "proof_ref": "p_cost_garden",
+     "resource": "ronrons"
+    },
+    {
+     "id": "ec_progression",
+     "kind": "progression",
+     "actor": "SYSTEM",
+     "why": "la nouvelle capacite augmente la production (le lieu x1,5, le chaton +0,5/s)",
+     "metric_ref": "m_garden_mult",
+     "proof_ref": "p_garden_mult"
+    },
+    {
+     "id": "ec_decision",
+     "kind": "decision",
+     "actor": "PLAYER",
+     "why": "reinvestir en production passive (chaton/jardin) ou en clic (amelioration)",
+     "metric_ref": "m_cost_upgrade_1",
+     "proof_ref": "p_decision1"
+    }
+   ]
+  },
+  "economy_model": {
+   "resources": [
+    {
+     "id": "ronrons",
+     "unit": "ronron",
+     "sources": [
+      "click",
+      "kitten_production"
+     ],
+     "sinks": [
+      "acheter_chaton",
+      "acheter_place",
+      "acheter_amelioration",
+      "ouvrir_jardin",
+      "ouvrir_grenier",
+      "adopter_rare"
+     ],
+     "initial_stock": 0
+    },
+    {
+     "id": "croquettes",
+     "unit": "croquette",
+     "sources": [
+      "garden_kittens"
+     ],
+     "sinks": [
+      "adopter_rare"
+     ],
+     "initial_stock": 0
+    },
+    {
+     "id": "coeurs",
+     "unit": "coeur",
+     "sources": [
+      "prestige"
+     ],
+     "sinks": [],
+     "initial_stock": 0
+    }
+   ],
+   "formulas": [
+    {
+     "id": "f_click",
+     "text": "gain_par_clic = base_click * (1 + 0.25 * coeurs) * 2^upgrade_level",
+     "params": {
+      "base_click": 1,
+      "heart_bonus": 0.25,
+      "upgrade_factor": 2,
+      "upgrade_max_level": 3
+     }
+    },
+    {
+     "id": "f_production",
+     "text": "ronrons_par_s = somme_chatons * prod_base * (jardin ? 1.5 : 1) * (1 + 0.25 * coeurs)",
+     "params": {
+      "prod_base": 0.5,
+      "garden_mult": 1.5,
+      "heart_bonus": 0.25
+     }
+    },
+    {
+     "id": "f_kibble",
+     "text": "croquettes_par_s = chatons_au_jardin * kibble_rate (portee >= 2)",
+     "params": {
+      "kibble_rate": 0.2
+     }
+    },
+    {
+     "id": "f_prestige",
+     "text": "multiplicateur_permanent = 1 + 0.25 * coeurs (applique au clic ET a la production)",
+     "params": {
+      "heart_bonus": 0.25
+     }
+    },
+    {
+     "id": "f_cost_scale",
+     "text": "echelle de couts partagee chatons/objets, identique a chaque portee",
+     "params": {
+      "scale": [
+       20,
+       60,
+       140,
+       300,
+       600
+      ]
+     }
+    }
+   ]
+  },
+  "progression_metrics": [
+   {
+    "id": "m_click_gain",
+    "kind": "invariant",
+    "value": 1,
+    "unit": "ronron/clic",
+    "why": "l'unite de sens : tout se lit en clics",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_cost_kitten_1",
+    "kind": "invariant",
+    "value": 20,
+    "unit": "ronrons",
+    "why": "cout du 1er chaton : premiere possession, debloque `placer`",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_cost_place_2",
+    "kind": "invariant",
+    "value": 80,
+    "unit": "ronrons",
+    "why": "cout de la 2e place : l'espace COUTE, 1re depense hors chaton",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_cost_upgrade_1",
+    "kind": "invariant",
+    "value": 60,
+    "unit": "ronrons",
+    "why": "cout amelioration niveau 1 = cout chaton 2 : la decision A/B a cout commun",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_cost_garden",
+    "kind": "invariant",
+    "value": 300,
+    "unit": "ronrons",
+    "why": "cout du jardin : nouvelle boucle de production + 3 places",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_prod_kitten",
+    "kind": "invariant",
+    "value": 0.5,
+    "unit": "ronron/s",
+    "why": "production passive d'un chaton place",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_garden_mult",
+    "kind": "invariant",
+    "value": 1.5,
+    "unit": "facteur",
+    "why": "multiplicateur de production pour les chatons au jardin",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_heart_bonus",
+    "kind": "invariant",
+    "value": 0.25,
+    "unit": "fraction additive/coeur",
+    "why": "chaque coeur = +25 % additif au clic ET a la production",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "m_prestige_threshold",
+    "kind": "invariant",
+    "value": 5,
+    "unit": "chatons places",
+    "why": "seuil de maitrise : 5 chatons places ET jardin ouvert => `prestige` apparait",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_kibble_rate",
+    "kind": "invariant",
+    "value": 0.2,
+    "unit": "croquette/s par chaton au jardin",
+    "why": "production de croquettes au niveau 2",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "m_cost_rare",
+    "kind": "invariant",
+    "value": 400,
+    "unit": "ronrons",
+    "why": "cout R d'un chaton rare (sans hasard, deterministe)",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_cost_rare_c",
+    "kind": "invariant",
+    "value": 30,
+    "unit": "croquettes",
+    "why": "cout C d'un chaton rare",
+    "source": "design:gameplay_loop_content_contract_v1"
+   },
+   {
+    "id": "m_decision2_cost",
+    "kind": "invariant",
+    "value": 500,
+    "unit": "ronrons",
+    "why": "cout commun de la decision 2 (developper le jardin vs ouvrir le grenier)",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "t_first_kitten_time",
+    "kind": "target",
+    "range": {
+     "min": 2,
+     "max": 8
+    },
+    "unit": "secondes",
+    "why": "duree cible jusqu'au 1er chaton apres le 1er clic",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "t_place_time",
+    "kind": "target",
+    "range": {
+     "min": 2,
+     "max": 10
+    },
+    "unit": "secondes",
+    "why": "duree cible pour placer un chaton",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "t_level1_active",
+    "kind": "target",
+    "range": {
+     "min": 150,
+     "max": 300
+    },
+    "unit": "secondes",
+    "why": "duree active cible du niveau 1 (2,5-5 min) avant le prestige",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "t_prestige_replay_speedup",
+    "kind": "target",
+    "range": {
+     "min": 0.15,
+     "max": 0.25
+    },
+    "unit": "fraction de reduction de duree",
+    "why": "le niveau 1 rejoue est ~20 % plus rapide grace aux coeurs (H4)",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "t_first_rare_time",
+    "kind": "target",
+    "range": {
+     "min": 120,
+     "max": 300
+    },
+    "unit": "secondes",
+    "why": "duree cible jusqu'au 1er rare apres le prestige (2-5 min)",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "o_idle_level1",
+    "kind": "observation",
+    "unit": "secondes",
+    "why": "duree idle reelle du niveau 1 (~20 min), mesuree non contraignante",
+    "source": "design:progression_contract_v1"
+   },
+   {
+    "id": "o_clicks_to_first_kitten",
+    "kind": "observation",
+    "unit": "clics",
+    "why": "nombre de clics reellement effectues jusqu'au 1er chaton (observe, non bloquant)",
+    "source": "design:progression_contract_v1"
+   }
+  ],
+  "proof_model": [
+   {
+    "id": "p_click_gain",
+    "measures": "m_click_gain",
+    "how": "hud",
+    "expected": "hud.ronrons augmente de 1 a chaque clic (sonde B)"
+   },
+   {
+    "id": "p_cost_kitten_1",
+    "measures": "m_cost_kitten_1",
+    "how": "hud",
+    "expected": "aff.acheter_chaton devient achetable a 20 R ; hud.cout_acheter_chaton = 20"
+   },
+   {
+    "id": "p_cost_place_2",
+    "measures": "m_cost_place_2",
+    "how": "hud",
+    "expected": "aff.acheter_place coute 80 R ; hud.places 1/2 apres achat"
+   },
+   {
+    "id": "p_cost_upgrade_1",
+    "measures": "m_cost_upgrade_1",
+    "how": "hud",
+    "expected": "amelioration niveau 1 coute 60 R = cout du chaton 2"
+   },
+   {
+    "id": "p_cost_garden",
+    "measures": "m_cost_garden",
+    "how": "hud",
+    "expected": "aff.ouvrir_jardin coute 300 R ; appears:lieu jardin apres achat"
+   },
+   {
+    "id": "p_prod_kitten",
+    "measures": "m_prod_kitten",
+    "how": "player_loop",
+    "expected": "hud.taux monte de +0,5/s par chaton place, sans clic (sonde)"
+   },
+   {
+    "id": "p_garden_mult",
+    "measures": "m_garden_mult",
+    "how": "player_loop",
+    "expected": "hud.taux x1,5 apres placement d'un chaton au jardin"
+   },
+   {
+    "id": "p_heart_bonus",
+    "measures": "m_heart_bonus",
+    "how": "player_loop",
+    "expected": "ADVANTAGE : gain/clic apres prestige = avant x1,25 pour 1 coeur"
+   },
+   {
+    "id": "p_prestige_threshold",
+    "measures": "m_prestige_threshold",
+    "how": "player_loop",
+    "expected": "aff.prestige apparait quand 5 chatons places ET jardin ouvert (appears:affordance)"
+   },
+   {
+    "id": "p_kibble_rate",
+    "measures": "m_kibble_rate",
+    "how": "hud",
+    "expected": "hud.croquettes monte de 0,2/s par chaton au jardin (portee >= 2), sans clic"
+   },
+   {
+    "id": "p_cost_rare",
+    "measures": "m_cost_rare",
+    "how": "hud",
+    "expected": "aff.adopter_rare exige 400 R"
+   },
+   {
+    "id": "p_cost_rare_c",
+    "measures": "m_cost_rare_c",
+    "how": "hud",
+    "expected": "aff.adopter_rare exige 30 C"
+   },
+   {
+    "id": "p_decision2_cost",
+    "measures": "m_decision2_cost",
+    "how": "decision",
+    "expected": "cout commun 500 R pour developper_jardin OU ouvrir_grenier (exclusifs au seuil)"
+   },
+   {
+    "id": "p_first_kitten_time",
+    "measures": "t_first_kitten_time",
+    "how": "player_loop",
+    "expected": "1er chaton adopte 2-8 s apres le 1er clic (sonde chronometree) ; hud.collection 0->1"
+   },
+   {
+    "id": "p_place_time",
+    "measures": "t_place_time",
+    "how": "player_loop",
+    "expected": "placement effectue en [2,10] s ; hud.places 1/1"
+   },
+   {
+    "id": "p_level1_active",
+    "measures": "t_level1_active",
+    "how": "player_loop",
+    "expected": "duree active du niveau 1 dans [150,300] s (sonde chronometree)"
+   },
+   {
+    "id": "p_prestige_replay_speedup",
+    "measures": "t_prestige_replay_speedup",
+    "how": "player_loop",
+    "expected": "niveau 1 rejoue 15-25 % plus vite (comparaison sonde avant/apres prestige)"
+   },
+   {
+    "id": "p_first_rare_time",
+    "measures": "t_first_rare_time",
+    "how": "player_loop",
+    "expected": "1er rare adopte 2-5 min apres le prestige ; silhouette doree coloree"
+   },
+   {
+    "id": "p_decision1",
+    "measures": "s_p05",
+    "how": "decision",
+    "expected": "DECISION 6/6 : states_differ, futures_differ, non-dominance (A > B idle, B > A actif), objectifs differents (2 trajectoires x 2 politiques)"
+   },
+   {
+    "id": "p_reset",
+    "measures": "mt_feedback",
+    "how": "player_loop",
+    "expected": "resets sur hud.ronrons ; chatons retires de la scene ; places = 1 ; jardin re-verrouille (volets clos, « ? ») ; album conserve"
+   }
+  ],
+  "grey_blocks": [
+   {
+    "id": "gb_kitten1",
+    "type": "ACTOR",
+    "role": "REWARD",
+    "state": "LOCKED",
+    "requires": [
+     "m_cost_kitten_1"
+    ],
+    "player_meaning": "Mon premier chaton : le refuge cesse d'etre vide, j'ai quelque chose a m'occuper.",
+    "builder_contract": "Au seuil de 20 ronrons, le panier s'ouvre et un chaton (robe tabby) en sort par une animation, s'assoit au centre ; l'affordance `placer` apparait (elle n'existait pas).",
+    "proof_ref": "p_first_kitten_time",
+    "unlock": [
+     "gb_placer"
+    ],
+    "next_goal": "Trouve-lui une place"
+   },
+   {
+    "id": "gb_placer",
+    "type": "UI",
+    "role": "AFFORDANCE",
+    "state": "LOCKED",
+    "requires": [
+     "gb_kitten1"
+    ],
+    "player_meaning": "Je peux poser mon chaton quelque part : l'espace du refuge existe et se remplit.",
+    "builder_contract": "L'affordance `placer` apparait apres le 1er chaton ; l'activer deplace le chaton sur le coussin (animation : il se couche) et entrouvre visiblement les volets du jardin (« Ouvre le jardin » devient lisible).",
+    "proof_ref": "p_place_time",
+    "unlock": [
+     "gb_garden"
+    ],
+    "next_goal": "Ouvre le jardin"
+   },
+   {
+    "id": "gb_place2",
+    "type": "RESOURCE",
+    "role": "PROGRESSION_GATE",
+    "state": "LOCKED",
+    "requires": [
+     "m_cost_place_2"
+    ],
+    "player_meaning": "L'espace coute : pour accueillir un 2e chaton il me faut une 2e place.",
+    "builder_contract": "Quand les places sont pleines, `aff.acheter_place` (80 R) apparait ; l'achat ajoute un emplacement visible dans le refuge et reactive `acheter_chaton`.",
+    "proof_ref": "p_cost_place_2",
+    "unlock": [
+     "gb_kitten1"
+    ],
+    "next_goal": "Adopte un 2e chaton ou ameliore la pelote"
+   },
+   {
+    "id": "gb_garden",
+    "type": "LOCATION",
+    "role": "PROGRESSION_GATE",
+    "state": "LOCKED",
+    "requires": [
+     "m_cost_garden",
+     "gb_placer"
+    ],
+    "player_meaning": "Une nouvelle partie du monde s'ouvre, avec ses places, son arbre et ses interactions.",
+    "builder_contract": "A 300 R, `ouvrir_jardin` ouvre le jardin : la carte s'agrandit (herbe, arbre, 3 emplacements de chatons, 4 emplacements d'objets, un oiseau passe) et la lucarne du grenier apparait au-dessus (« ? »).",
+    "proof_ref": "p_cost_garden",
+    "unlock": [
+     "gb_banc",
+     "gb_fleurs",
+     "gb_jouet",
+     "gb_niche"
+    ],
+    "next_goal": "Place 2 chatons au jardin"
+   },
+   {
+    "id": "gb_caresse_longue",
+    "type": "RULE",
+    "role": "AFFORDANCE",
+    "state": "LOCKED",
+    "requires": [
+     "m_cost_upgrade_1"
+    ],
+    "player_meaning": "Une nouvelle facon de caresser : maintenir pour un ronron continu.",
+    "builder_contract": "L'amelioration `caresse_longue` (60 R, decision B) ajoute l'interaction « maintenir la pelote » : ronronnement continu et un chaton vient se frotter (nouvelle animation).",
+    "proof_ref": "p_cost_upgrade_1",
+    "unlock": [
+     "gb_banc"
+    ],
+    "next_goal": "Apprends a appeler les chatons"
+   },
+   {
+    "id": "gb_banc",
+    "type": "ITEM",
+    "role": "REWARD",
+    "state": "LOCKED",
+    "requires": [
+     "m_cost_upgrade_1",
+     "gb_garden"
+    ],
+    "player_meaning": "Un endroit ou un chaton dort et produit tout seul, meme quand je ne clique pas.",
+    "builder_contract": "Le banc (60 R, decision A) apparait dans le jardin ; un chaton s'y installe et dort en ronronnant : production passive rendue visible.",
+    "proof_ref": "p_prod_kitten",
+    "unlock": [
+     "gb_fleurs"
+    ],
+    "next_goal": "Amenage le jardin : des fleurs"
+   },
+   {
+    "id": "gb_fleurs",
+    "type": "ITEM",
+    "role": "CONTENT",
+    "state": "LOCKED",
+    "requires": [
+     "gb_banc"
+    ],
+    "player_meaning": "Un massif vivant : des papillons, un chaton qui les chasse.",
+    "builder_contract": "Les fleurs (140 R) ajoutent un massif ; au clic les papillons s'envolent et un chaton (tuxedo) les chasse (animation).",
+    "proof_ref": "p_prod_kitten",
+    "unlock": [
+     "gb_jouet"
+    ],
+    "next_goal": "Ajoute un jouet"
+   },
+   {
+    "id": "gb_jouet",
+    "type": "ITEM",
+    "role": "CONTENT",
+    "state": "LOCKED",
+    "requires": [
+     "gb_fleurs"
+    ],
+    "player_meaning": "Un jouet que je lance et qu'un chaton poursuit.",
+    "builder_contract": "Le jouet pelote-souris (300 R) ; au clic on le lance et un chaton court apres (animation de course).",
+    "proof_ref": "p_prod_kitten",
+    "unlock": [
+     "gb_niche"
+    ],
+    "next_goal": "Ajoute une niche"
+   },
+   {
+    "id": "gb_niche",
+    "type": "ITEM",
+    "role": "CONTENT",
+    "state": "LOCKED",
+    "requires": [
+     "gb_jouet"
+    ],
+    "player_meaning": "Un abri ou un chaton dort la nuit.",
+    "builder_contract": "La niche (600 R) ; un chaton (siamois) y dort la nuit ; un cycle jour/nuit global leger (~2 min) devient perceptible parce qu'un chaton y dort.",
+    "proof_ref": "p_prod_kitten",
+    "unlock": [
+     "gb_prestige"
+    ],
+    "next_goal": "Remplis le refuge (5 chatons)"
+   },
+   {
+    "id": "gb_prestige",
+    "type": "UI",
+    "role": "META",
+    "state": "LOCKED",
+    "requires": [
+     "m_prestige_threshold",
+     "gb_garden"
+    ],
+    "player_meaning": "Recommencer dans un monde different, en gardant mes souvenirs (album, coeurs).",
+    "builder_contract": "Quand 5 chatons sont places ET le jardin ouvert, `aff.prestige` apparait ; l'activer fait partir les chatons (adoptes, animation joyeuse), colore l'album, change la saison de la carte, re-verrouille le jardin (volets clos, « ? »), fait apparaitre un grenier ferme et pose un ruban sur le panier.",
+    "proof_ref": "p_reset",
+    "unlock": [
+     "gb_grenier",
+     "gb_kibble",
+     "gb_rare"
+    ],
+    "next_goal": "Portee 2 : le jardin produit des croquettes"
+   },
+   {
+    "id": "gb_grenier",
+    "type": "LOCATION",
+    "role": "PROGRESSION_GATE",
+    "state": "LOCKED",
+    "requires": [
+     "gb_prestige",
+     "m_decision2_cost"
+    ],
+    "player_meaning": "Un 3e lieu : plus de places et une production renforcee (la promesse de la lucarne).",
+    "builder_contract": "Des la portee 2, `ouvrir_grenier` (500 R, decision 2) ouvre le grenier (lumiere de lucarne, poussiere, 3 places, x1,5 R) — exclusif au seuil avec `developper_jardin`.",
+    "proof_ref": "p_decision2_cost",
+    "unlock": [
+     "gb_kitten1"
+    ],
+    "next_goal": "Remplis le grenier"
+   },
+   {
+    "id": "gb_kibble",
+    "type": "RESOURCE",
+    "role": "CONTENT",
+    "state": "LOCKED",
+    "requires": [
+     "gb_prestige",
+     "gb_garden"
+    ],
+    "player_meaning": "Une nouvelle ressource : les croquettes, produites par le jardin, qui ouvrent les rares.",
+    "builder_contract": "En portee >= 2, une gamelle apparait au jardin ; les chatons du jardin mangent et produisent 0,2 C/s ; cliquer la gamelle la remplit (animation).",
+    "proof_ref": "p_kibble_rate",
+    "unlock": [
+     "gb_rare"
+    ],
+    "next_goal": "Adopte un chaton rare"
+   },
+   {
+    "id": "gb_rare",
+    "type": "ACTOR",
+    "role": "REWARD",
+    "state": "LOCKED",
+    "requires": [
+     "m_cost_rare",
+     "m_cost_rare_c",
+     "gb_kibble"
+    ],
+    "player_meaning": "Un chaton rare et unique : il colore une page doree de l'album.",
+    "builder_contract": "`adopter_rare` (400 R + 30 C, sans hasard) fait apparaitre un chaton rare dore avec une animation unique ; sa silhouette doree de l'album se colore.",
+    "proof_ref": "p_first_rare_time",
+    "unlock": [
+     "gb_album"
+    ],
+    "next_goal": "Complete l'album"
+   },
+   {
+    "id": "gb_album",
+    "type": "UI",
+    "role": "META",
+    "state": "AVAILABLE",
+    "requires": [],
+    "player_meaning": "La promesse visible des le depart : 9 silhouettes « ? » a reveler ; jamais un chaton sur la scene avant d'etre adopte.",
+    "builder_contract": "Le panneau album montre 6 silhouettes « ? » communes + 3 dorees, 0 coloree au boot ; chaque adoption colore une silhouette ; album complet => ecran « Refuge complet ».",
+    "proof_ref": "p_first_kitten_time"
+   }
+  ],
+  "artist_requirements": [
+   {
+    "id": "ar_kitten1",
+    "grey_block": "gb_kitten1",
+    "states_to_show": [
+     "LOCKED",
+     "OWNED",
+     "PLACED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "20 ronrons",
+    "preview": true,
+    "affordance_visual": "panier ferme qui s'ouvre ; chaton tabby qui en sort et s'assoit au centre",
+    "readability": "silhouette lisible a petite taille, robe reconnaissable a la seule couleur"
+   },
+   {
+    "id": "ar_placer",
+    "grey_block": "gb_placer",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "un chaton a placer",
+    "preview": false,
+    "affordance_visual": "bouton `placer` mis en evidence (halo) ; cout 0 et effet lisibles dessous",
+    "readability": "une seule affordance mise en evidence a la fois"
+   },
+   {
+    "id": "ar_garden",
+    "grey_block": "gb_garden",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE",
+     "PLACED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "un chaton place + 300 ronrons",
+    "preview": true,
+    "affordance_visual": "volets clos « ? » (LOCKED) -> entrouverts avec cout (AVAILABLE) -> jardin ouvert (3 places, arbre, 4 emplacements d'objets, lucarne du grenier « ? »)",
+    "readability": "l'agrandissement de la carte est percu immediatement"
+   },
+   {
+    "id": "ar_banc",
+    "grey_block": "gb_banc",
+    "states_to_show": [
+     "LOCKED",
+     "PLACED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "60 ronrons (decision A)",
+    "preview": true,
+    "affordance_visual": "banc vide puis un chaton qui y dort en ronronnant",
+    "readability": "on voit qu'il produit meme sans clic (signal de production passive)"
+   },
+   {
+    "id": "ar_fleurs",
+    "grey_block": "gb_fleurs",
+    "states_to_show": [
+     "LOCKED",
+     "PLACED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "140 ronrons",
+    "preview": true,
+    "affordance_visual": "massif de fleurs + papillons ; un chaton tuxedo les chasse ; cliquables (papillons s'envolent)",
+    "readability": "l'interaction est evidente (les papillons reagissent au clic)"
+   },
+   {
+    "id": "ar_jouet",
+    "grey_block": "gb_jouet",
+    "states_to_show": [
+     "LOCKED",
+     "PLACED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "300 ronrons",
+    "preview": true,
+    "affordance_visual": "jouet pelote-souris ; clic = lancer ; un chaton court apres",
+    "readability": "la course rend l'effet du clic lisible"
+   },
+   {
+    "id": "ar_niche",
+    "grey_block": "gb_niche",
+    "states_to_show": [
+     "LOCKED",
+     "PLACED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "600 ronrons",
+    "preview": true,
+    "affordance_visual": "niche ; un chaton siamois y dort la nuit ; lumiere globale qui varie (cycle jour/nuit leger)",
+    "readability": "le cycle jour/nuit rend l'usage nocturne perceptible"
+   },
+   {
+    "id": "ar_prestige",
+    "grey_block": "gb_prestige",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE",
+     "CONSUMED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "5 chatons places + jardin ouvert",
+    "preview": true,
+    "affordance_visual": "`prestige` absent puis apparait (fx_unlock) ; a l'activation : depart joyeux des chatons, album qui se colore, changement de saison, ruban sur le panier",
+    "readability": "le reset (perte) ET l'heritage (coeur, ruban, saison) se lisent simultanement, comme une transformation, pas une punition"
+   },
+   {
+    "id": "ar_grenier",
+    "grey_block": "gb_grenier",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE",
+     "PLACED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "portee >= 2 + 500 ronrons (decision 2)",
+    "preview": true,
+    "affordance_visual": "lucarne « ? » visible depuis la portee 1 (promesse) -> grenier ouvert (lumiere de lucarne, poussiere, 3 places)",
+    "readability": "la promesse tenue de la portee precedente est reconnaissable"
+   },
+   {
+    "id": "ar_rare",
+    "grey_block": "gb_rare",
+    "states_to_show": [
+     "LOCKED",
+     "OWNED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "400 ronrons + 30 croquettes",
+    "preview": true,
+    "affordance_visual": "silhouette doree « ? » dans l'album -> chaton rare dore avec une animation unique",
+    "readability": "le dore distingue nettement le rare du commun"
+   },
+   {
+    "id": "ar_album",
+    "grey_block": "gb_album",
+    "states_to_show": [
+     "LOCKED",
+     "OWNED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "adopter les chatons",
+    "preview": true,
+    "affordance_visual": "9 silhouettes « ? » (6 communes + 3 dorees), 0 coloree au depart ; une se colore a chaque adoption",
+    "readability": "un chaton n'est JAMAIS montre sur la scene avant d'etre adopte (regle de coherence)"
+   }
+  ]
+ }
+}

@@ -1,0 +1,250 @@
+{
+ "schema_version": 1,
+ "root_problems": [
+  {
+   "id": "ORACLE_FALSE_NEGATIVE",
+   "layer": "quality",
+   "description": "Un oracle mecanique declare OK un artefact vide de sens. Mesure le 2026-08-04 : 3 worldscans declares OK portaient des champs identiques entre deux jeux differents, donc une information nulle.",
+   "lesson_ids": [],
+   "metrics": [
+    {
+     "name": "detection_rate",
+     "description": "Part des defauts reels detectes sur un echantillon ou ils sont connus.",
+     "unit": "ratio"
+    },
+    {
+     "name": "false_positive_count",
+     "description": "Signaux emis sur des artefacts connus-bons.",
+     "unit": "count"
+    }
+   ],
+   "reward_contract": {
+    "objective": {
+     "metric": "detection_rate",
+     "direction": "maximize"
+    },
+    "constraints": [
+     {
+      "metric": "false_positive_count",
+      "operator": "max",
+      "value": 0
+     }
+    ],
+    "penalties": [
+     "maintenance"
+    ],
+    "forbidden": [
+     "aggregate_quality_score",
+     "moyenne ponderee detection_rate x precision"
+    ],
+    "measurement_method": "Defauts INJECTES dans un artefact de reference (donc connus d avance) : detection_rate = defauts detectes / defauts injectes, sur un jeu positif ; false_positive_count compte sur un jeu negatif d artefacts connus-bons. Mesure du 2026-08-04 : detection_rate=1,0 (5/5), false_positive_rate=0 (0/7), n=12.",
+    "evidence_required": [
+     "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/measured_metrics.json",
+     "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/positifs.json",
+     "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/negatifs.json"
+    ],
+    "forbidden_inference": []
+   },
+   "forbidden_aggregation": [
+    "mutation_score",
+    "quality_score",
+    "global_score"
+   ],
+   "winning_strategy": null
+  },
+  {
+   "id": "DEFECT_DISPLACEMENT",
+   "layer": "quality",
+   "description": "Reparer un axe pousse le defaut sur un axe non mesure. Observe TROIS fois le 2026-08-04 : au niveau du prompt, de la boucle de reparation, puis de la couche de qualite elle-meme.",
+   "lesson_ids": [],
+   "metrics": [
+    {
+     "name": "residual_defect_rate",
+     "description": "Defauts encore presents APRES reparation, y compris deplaces vers un autre champ.",
+     "unit": "ratio"
+    },
+    {
+     "name": "false_positive_count",
+     "description": "Signaux emis sur des artefacts connus-bons.",
+     "unit": "count"
+    }
+   ],
+   "reward_contract": {
+    "objective": {
+     "metric": "residual_defect_rate",
+     "direction": "minimize"
+    },
+    "constraints": [
+     {
+      "metric": "false_positive_count",
+      "operator": "max",
+      "value": 0
+     }
+    ],
+    "penalties": [
+     "regression"
+    ],
+    "forbidden": [
+     "aggregate_quality_score"
+    ],
+    "measurement_method": "NON DEFINI pour residual_defect_rate : cette metrique n a jamais ete mesuree. Ce qui A ete mesure le 2026-08-04 est une AUTRE grandeur — detection_rate=1,0 (3/3), false_positive_rate=0 (0/7), n=10 — et ne peut pas s y substituer.",
+    "evidence_required": [
+     "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/measured_metrics.json"
+    ],
+    "forbidden_inference": []
+   },
+   "forbidden_aggregation": [
+    "mutation_score",
+    "quality_score",
+    "global_score"
+   ],
+   "winning_strategy": null
+  },
+  {
+   "id": "PROMPT_FIELD_OMISSION",
+   "layer": "s2-worldscan",
+   "description": "Le worker omet un champ obligatoire du contrat. Plafond mesure : 2 jeux valides sur 3, jamais franchi en 4 formulations, et le jeu qui echoue CHANGE d une formulation a l autre.",
+   "lesson_ids": [],
+   "metrics": [
+    {
+     "name": "artifact_completeness",
+     "description": "Part des artefacts passant l oracle du premier coup.",
+     "unit": "ratio"
+    },
+    {
+     "name": "completion_tokens",
+     "description": "Tokens de completion depenses.",
+     "unit": "tokens"
+    },
+    {
+     "name": "field_completion_without_regression",
+     "description": "Champs obligatoires remplis / champs obligatoires attendus (9 par jeu x 2 jeux).",
+     "unit": "ratio"
+    },
+    {
+     "name": "discriminance_count",
+     "description": "Signaux DISCRIMINANCE sur l artefact genere (deux jeux decrits par la meme phrase).",
+     "unit": "count"
+    }
+   ],
+   "reward_contract": {
+    "objective": {
+     "metric": "field_completion_without_regression",
+     "direction": "maximize"
+    },
+    "constraints": [
+     {
+      "metric": "discriminance_count",
+      "operator": "max",
+      "value": 0
+     },
+     {
+      "metric": "completion_tokens",
+      "operator": "max",
+      "value": "declared"
+     }
+    ],
+    "penalties": [
+     "cost_tokens"
+    ],
+    "forbidden": [
+     "mutation_score"
+    ],
+    "measurement_method": "champs obligatoires non vides / champs obligatoires attendus, comptes sur l artefact genere depuis une specification de tache VERSIONNEE.",
+    "evidence_required": [
+     "input.json",
+     "before.json",
+     "after.json",
+     "oracle_before.json",
+     "oracle_after.json",
+     "measured_metrics.json",
+     "reproduce.command"
+    ],
+    "forbidden_inference": [
+     "« oracle passe » != « probleme resolu »",
+     "Falsifie le 2026-08-04 : un saboteur remplissant les 18 champs avec « Le jeu est interessant. » obtient completion 1,0 ET fait passer l oracle. Seule la contrainte discriminance_count<=0 le rejette (6 signaux)."
+    ]
+   },
+   "forbidden_aggregation": [
+    "mutation_score",
+    "quality_score",
+    "global_score"
+   ],
+   "winning_strategy": {
+    "generation": "H1_instance_separation (M-ws5)",
+    "repair": "REPAIR_LOOP_V1",
+    "evidence": "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/measured_metrics.json"
+   }
+  },
+  {
+   "id": "REPAIR_NON_CONVERGENCE",
+   "layer": "repair",
+   "description": "La boucle depense des appels sans reduire le nombre de problemes. Cas mesure : 3 cycles, 81 tokens, compte de problemes rigoureusement identique (2 -> 2 -> 2).",
+   "lesson_ids": [],
+   "metrics": [
+    {
+     "name": "problems_resolved_ratio",
+     "description": "Part des problemes d oracle resolus par la boucle.",
+     "unit": "ratio"
+    },
+    {
+     "name": "completion_tokens",
+     "description": "Tokens de completion depenses par la reparation.",
+     "unit": "tokens"
+    },
+    {
+     "name": "regression_count",
+     "description": "Chemins deja valides modifies par erreur.",
+     "unit": "count"
+    },
+    {
+     "name": "discriminance_count",
+     "description": "Signaux DISCRIMINANCE sur l artefact repare (deux entrees decrites par la meme phrase).",
+     "unit": "count"
+    }
+   ],
+   "reward_contract": {
+    "objective": {
+     "metric": "problems_resolved_ratio",
+     "direction": "maximize"
+    },
+    "constraints": [
+     {
+      "metric": "regression_count",
+      "operator": "max",
+      "value": 0
+     },
+     {
+      "metric": "discriminance_count",
+      "operator": "max",
+      "value": 0
+     }
+    ],
+    "penalties": [
+     "cost_tokens",
+     "regression"
+    ],
+    "forbidden": [
+     "aggregate_quality_score"
+    ],
+    "measurement_method": "(problems_avant - problems_apres) / problems_avant, comptes par l oracle de l etape sur un artefact d entree VERSIONNE.",
+    "evidence_required": [
+     "worldscan_input.json",
+     "worldscan_after.json",
+     "oracle_result.json",
+     "measured_metrics.json"
+    ],
+    "forbidden_inference": [
+     "« artefact accepte par oracle » != « probleme resolu »",
+     "Falsifie le 2026-08-04 : un reparateur saboteur ecrivant « Le jeu est interessant. » dans les deux jeux obtient 1,0, exactement comme la mutation retenue. La metrique mesure l ORACLE, pas le root_problem."
+    ]
+   },
+   "forbidden_aggregation": [
+    "mutation_score",
+    "quality_score",
+    "global_score"
+   ],
+   "winning_strategy": null
+  }
+ ]
+}

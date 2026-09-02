@@ -1,0 +1,11 @@
+; project.godot — projet de test P5 (campagne micro, mesure de consommation KB).
+; Cree par l'orchestrateur AVANT la campagne comme echafaudage minimal : le
+; builder produit la logique et son harnais, pas la configuration du projet.
+
+config_version=5
+
+[application]
+
+config/name="p5_gridnav"
+run/main_scene=""
+config/features=PackedStringArray("4.3")

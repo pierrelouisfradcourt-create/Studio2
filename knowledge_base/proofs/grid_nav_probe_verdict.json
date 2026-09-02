@@ -1,0 +1,134 @@
+{
+  "project": "grid_nav_probe",
+  "run_id": "grid_nav_probe-ETAPE0-20260721b",
+  "software_verdict": "OK",
+  "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+  "claim_verdict": "NO_CLAIM_ALLOWED",
+  "decision": "HUMANGATE_READY_WITH_OBJECTION",
+  "oracles": {
+    "code": {
+      "oracle_id": "code",
+      "run_id": "grid_nav_probe-ETAPE0-20260721b",
+      "status": "OK",
+      "evidence_sha256": "375ed29cb9cd6b7e810ed895f81708eb3686066ba1981152d9db8992e739fd69",
+      "detail": {
+        "returncode": 0,
+        "oracle": "scripts/forge/godot_oracle.mjs games/grid_nav_probe",
+        "mecanique": {
+          "harness": "res://tests/run_tests.gd",
+          "passed": 39,
+          "failed": 0,
+          "expected_asserts": 39,
+          "exit": 0
+        },
+        "solvability": {
+          "script": "res://solvability.gd",
+          "trials": 50,
+          "won": 50,
+          "lost": 0,
+          "failed_seeds": [],
+          "verdict": "OK"
+        },
+        "role_sim": {
+          "role": "role-grid-navigator",
+          "seeds": "3000..3299",
+          "trials": 300,
+          "success_rate": 1.0,
+          "min": 26,
+          "median": 26,
+          "max": 26,
+          "declared_band": [
+            26,
+            26
+          ],
+          "in_declared_band": true,
+          "note": "fenetre de validation DISJOINTE des fenetres de calibration ; bande ponctuelle = test d'optimalite"
+        },
+        "mutation": {
+          "receipt": {
+            "oracle_id": "mutation",
+            "run_id": "grid_nav_probe-ETAPE0-20260721b",
+            "status": "OK",
+            "evidence_sha256": "",
+            "detail": {
+              "game_dir": "C:\\TACTICAL_CHESS_STUDIO\\.claude\\worktrees\\forge-godot-etape0\\games\\grid_nav_probe",
+              "logic_files": [
+                "core/grid_nav.gd"
+              ],
+              "test_argv": [
+                "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe",
+                "--headless",
+                "--script",
+                "tests/run_tests.gd"
+              ],
+              "test_files_scelles": [
+                "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe",
+                "tests/run_tests.gd"
+              ],
+              "baseline_ok": true,
+              "total": 17,
+              "killed": 15,
+              "survived": 2,
+              "survivants_non_tries": [],
+              "gate_checked": true,
+              "mutation_exception": true,
+              "triaged_survivors": [
+                "true->false@L61",
+                "true->false@L87"
+              ],
+              "code_sha256": {
+                "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe": "63b3b2208819714c9677fbfdd8217c5b7dee8ecf5f383502e826bc9e2227ff5a",
+                "core/grid_nav.gd": "f064870f736c147e10454387ac4636316432843914afce81e00366c2750d8b55",
+                "tests/run_tests.gd": "096cd7546f7d701832cb7c13872add001a9e4e96e3581fef2548f28f36a7288a"
+              },
+              "triage_sha256": "5ad1d5fd31dead05ff76c67d3618ef03af14f2a62d3cc5a291348a939ab6aa52"
+            },
+            "ts": 1784662826.7244365,
+            "evidence_path": ""
+          },
+          "signature": "1651171b9b4251df74355c7b862d9c6e15f4f8ed6abcd0f7f6e3457d47563333"
+        }
+      },
+      "ts": 1774000000.0,
+      "evidence_path": "knowledge_base/proofs/grid_nav_probe_oracle.log"
+    },
+    "archi": {
+      "oracle_id": "archi",
+      "run_id": "grid_nav_probe-ETAPE0-20260721b",
+      "status": "SKIPPED",
+      "evidence_sha256": "",
+      "detail": {
+        "raison": "artefact de preuve de chaine (etape 0) : aucun blueprint d'ownership produit, donc aucune dependance interdite a verifier. SKIPPED declare, pas OK fabrique."
+      },
+      "ts": 1774000000.0,
+      "evidence_path": ""
+    },
+    "wiremap": {
+      "oracle_id": "wiremap",
+      "run_id": "grid_nav_probe-ETAPE0-20260721b",
+      "status": "SKIPPED",
+      "evidence_sha256": "",
+      "detail": {
+        "raison": "artefact de preuve de chaine (etape 0) : aucune WireMap feature<->code produite. SKIPPED declare, pas OK fabrique."
+      },
+      "ts": 1774000000.0,
+      "evidence_path": ""
+    }
+  },
+  "redteam_reviewer": "aucun (etape 0 : pas de passe red-team sur cet artefact)",
+  "redteam_ran": false,
+  "provenance_ok": true,
+  "git_head": "bc9dd62dba8af731ac7fa8fbd958c2776222ccc8",
+  "nonce": "6bf32b4c9a34430b42991ab745a6a374",
+  "ts": 1774000000.0,
+  "redteam_advisory": [],
+  "humangate_flags": [
+    "archi non vérifiée (oracle sauté dans ce profil)",
+    "wiremap non vérifiée (oracle sauté dans ce profil)",
+    "mutation: 2 survivant(s) trié(s) par le producteur (true->false@L61, true->false@L87) — équivalence NON vérifiée mécaniquement, ratification HumanGate obligatoire avant tout claim positif",
+    "red-team dégradé: reviewer indépendant n'a pas tourné (fallback)",
+    "bande ponctuelle [26,26] : elle teste l'OPTIMALITE du navigateur (26 = plancher de Manhattan, seul un plus court chemin l'atteint), pas un etalement de difficulte",
+    "logique de generation de labyrinthe dupliquee entre trial.gd et solvability.gd"
+  ],
+  "hmac": "287b0ad4fc5f1160b014f32d03ab48947426896ae3e253f380b87ef0dcd920ef"
+}

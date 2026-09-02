@@ -1,0 +1,119 @@
+$ node run-oracle.mjs
+(cwd=C:\TACTICAL_CHESS_STUDIO\games\kb_tactics)
+
+--- stdout ---
+=== ORACLE kb_tactics ===
+
+--- (a) logic tests ---
+✔ init : joueur au départ, pv pleins, sortie au coin opposé, statut ACTIVE (0.953ms)
+✔ la sortie est TOUJOURS atteignable (garantie sys-reachability) sur 50 seeds (4.4538ms)
+✔ génération : la grille contient de vrais obstacles (pas un repli vide) sur seeds 1..10 (0.649ms)
+✔ génération : exactement ENEMY_COUNT (2) ennemis placés (0.7998ms)
+✔ génération : empreinte exacte du niveau (obstacles + positions ennemies) par seed (0.717ms)
+✔ déplacement dans une case libre bouge le joueur d'exactement 1 case (0.2083ms)
+✔ déplacement hors grille : le joueur reste sur place (0.0995ms)
+✔ déplacement dans un obstacle : le joueur reste sur place (0.0838ms)
+✔ atteindre la sortie => WON (0.1111ms)
+✔ combat : un ennemi adjacent inflige exactement effectiveDamage(ENEMY_ATK, PLAYER_DEF) (0.4168ms)
+✔ dégâts plancher : même DEF >= ATK, un ennemi adjacent inflige au moins 1 (0.148ms)
+✔ défaite : pv à 0 => LOST et pv bornés à 0 (0.1813ms)
+✔ ennemis LENTS : ne bougent qu'un tour sur ENEMY_MOVE_PERIOD (0.2714ms)
+✔ forceLose (hook debug) : LOST immédiat (0.2685ms)
+✔ aucune action n'a d'effet une fois la partie terminée (0.1771ms)
+✔ déterminisme : même seed + même séquence => même état final (0.2531ms)
+✔ reset restaure l'état initial pour le même seed (0.2854ms)
+✔ readDebug expose les hooks de jouabilité attendus (0.1253ms)
+✔ borne : le joueur peut entrer en colonne 0 (x>=0, tue le mutant de borne) (0.0916ms)
+✔ borne : le joueur peut entrer en ligne 0 (y>=0, tue le mutant de borne) (0.0681ms)
+✔ IA : poursuite même rangée => l'ennemi avance d'une case en X (0.1108ms)
+✔ IA : poursuite même colonne => l'ennemi avance d'une case en Y (0.1055ms)
+✔ IA : à distance égale |dx|==|dy|, priorité à l'axe X (tue >= -> >) (0.0627ms)
+✔ IA : même rangée mais X bloqué et aucun repli Y => l'ennemi attend (tue stepY inversé) (0.0602ms)
+✔ IA : X bloqué mais repli Y disponible (branche X) => l'ennemi prend le Y (tue le push Y) (0.0631ms)
+✔ IA : Y bloqué mais repli X disponible (branche Y) => l'ennemi prend le X (tue le push X) (0.0599ms)
+✔ _occupiedByEnemy : un ennemi hors de la case cible ne bloque pas le joueur (tue && -> ||) (0.0525ms)
+✔ reset avec un AUTRE seed régénère selon ce seed (tue !== -> ===) (0.2755ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15.8819
+
+[logic] exit = 0
+
+--- (b) property tests ---
+✔ invariant : hp ∈ [0, PLAYER_MAX_HP] à tout instant sur 40 parties aléatoires (4.9555ms)
+✔ invariant : le joueur reste toujours dans la grille et hors obstacle (2.1288ms)
+✔ invariant : le joueur se déplace d'au plus 1 case de Manhattan par tour (1.5561ms)
+✔ invariant : les ennemis restent dans la grille, hors obstacle, sans se superposer (2.025ms)
+✔ invariant : WON => joueur sur la sortie ; LOST => hp==0 (cohérence des fins) (2.8581ms)
+✔ invariant : déterminisme total sur séquences aléatoires seedées (rejeu identique) (2.2905ms)
+✔ invariant de PLACEMENT ennemi sur 200 seeds : libre, hors sortie, distance>2 du départ, distincts (4.9929ms)
+✔ invariant : deux seeds différents produisent des niveaux différents (RNG seedé effectif) (0.1407ms)
+✔ invariant : hp non croissant (le joueur ne se soigne jamais) (1.2046ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25.6223
+
+[properties] exit = 0
+
+--- (c) e2e Playwright ---
+--- (1) Page chargée, vérification des hooks ---
+Hooks : {"hasGame":true,"hasDebug":true,"hasOverlay":true,"hasRestart":true}
+
+--- (2) Assets ingérés chargés dans le navigateur ---
+Assets : {"player":true,"enemy":true}
+
+--- (3) Déplacement joueur (ArrowRight) ---
+✓ joueur déplacé : x 0 -> 1
+
+--- (4) Overlay caché en jeu ---
+✓ overlay caché en jeu
+
+--- (5) Forcer défaite (hook debug) ---
+✓ défaite + overlay visible
+
+--- (6) Restart ---
+✓ restart a réinitialisé la partie
+
+=== RÉSUMÉ E2E ===
+  assets Kenney chargés: joueur=true, ennemi=true
+  déplacement droite: x 0 -> 1
+  après forceLose: status=LOST
+  après restart: {"status":"ACTIVE","hp":50,"turn":0}
+
+RESULT: PASS
+
+[e2e] exit = 0
+
+--- (d) solvabilité ---
+=== ORACLE DE SOLVABILITÉ — kb_tactics ===
+
+seed    1 | enveloppe OK | sortie atteignable oui | bot GAGNE en 23 tours, hp=49
+seed    7 | enveloppe OK | sortie atteignable oui | bot GAGNE en 31 tours, hp=48
+seed   42 | enveloppe OK | sortie atteignable oui | bot GAGNE en 19 tours, hp=50
+seed  123 | enveloppe OK | sortie atteignable oui | bot GAGNE en 19 tours, hp=50
+seed  888 | enveloppe OK | sortie atteignable oui | bot GAGNE en 25 tours, hp=50
+seed 2024 | enveloppe OK | sortie atteignable oui | bot GAGNE en 19 tours, hp=50
+
+RESULT: PASS
+
+[solvabilité] exit = 0
+
+=== RÉSUMÉ ORACLE ===
+logic tests    : PASS (code 0)
+property tests : PASS (code 0)
+e2e Playwright : PASS (code 0)
+solvabilité    : PASS (un bot gagne) (code 0)
+
+VERDICT ORACLE: PASS
+
+--- stderr ---

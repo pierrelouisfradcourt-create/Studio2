@@ -1,0 +1,329 @@
+# forge/contracts/roles.yaml
+# Résolution rôle-de-capacité -> runtime pour les agents Forge.
+# Portée : Forge UNIQUEMENT. Ne touche pas openclaw/capabilities.yaml — qui n'est PLUS le « SSOT
+# studio » : openclaw est LEGACY depuis le 2026-07-23 (Pierre : « on travaille que claude et forge »).
+# Ce fichier-ci est la seule source de résolution de rôle de la Forge : `contract.resolve_runtime`
+# passe toujours `caps_path=FORGE_ROLES`. Le chemin openclaw n'est que le DÉFAUT du module partagé
+# `control_plane/registry.py:15`, consommé par la lane STUDIO, elle-même gelée. (Étiquette
+# « SSOT studio, IMP-124 » corrigée le 2026-07-23 : elle était devenue fausse.)
+# Décisions : ADR-002 gate 1 (full Claude pour cette phase) + gate 4 (Qwen = red team indépendant).
+# Lu par : forge/contract.py via control_plane.registry.get_model_for_role(role, caps_path=ce fichier).
+# claim_posture: NO_CLAIM_ALLOWED
+
+version: "1.0"
+generated: "2026-07-09"
+source_adr: ADR-002
+
+# DEUX RÔLES DISTINCTS, longtemps confondus sous un seul nom (défaut trouvé et corrigé
+# le 2026-07-23) :
+#
+#  * `orchestrator`     — la SESSION qui pilote /forge, celle avec qui Pierre parle.
+#    Ce rôle n'est résolu par AUCUN code : la porte ne le dispatche jamais, la session
+#    elle-même l'incarne, et c'est PIERRE qui choisit son modèle en ouvrant la session.
+#    L'entrée ci-dessous est donc purement DESCRIPTIVE. Fable en mode superpowers
+#    (décision Pierre 2026-07-10).
+#
+#  * `run_orchestrator` — l'AGENT SPAWNÉ sous contrat (forge/contracts/
+#    orchestrator.yaml) qui conduit UN run : il lance run_real.py, laisse la chaîne
+#    boucler, vérifie le verdict, restitue. Celui-là EST résolu par le registry, donc
+#    son modèle a un effet mécanique et un coût réel. Sous **Opus** — décision Pierre
+#    2026-07-22 : « Fable consomme trop, je ne peux pas l'utiliser sur des trucs comme
+#    Pong ». Aucun des deux n'est un tier de build.
+#
+# Pourquoi les séparer : le registry résout un rôle par ORDRE DE DÉCLARATION (premier
+# modèle qui déclare le rôle gagne, control_plane/registry.py:39). Tant que les deux
+# usages partageaient le nom `orchestrator`, écrire « Fable OU Opus » en commentaire ne
+# changeait rien — le code rendait Fable, toujours. Une décision de Pierre vivait à côté
+# d'une donnée qui la contredisait : exactement le défaut que le contrat de système
+# interdit.
+#
+# Escalade de modèle (forge/escalate.py) : échelle des BUILDERS Claude
+# haiku -> sonnet -> opus. Un tier faible peut demander (ESCALATE_REQUEST) ou déclencher
+# par oracle rouge une ré-exécution du même contrat au tier supérieur (borné, tracé,
+# signé dans le verdict). Qwen (reviewer) et non-llm (oracles) ne s'escaladent pas.
+
+models:
+  - id: anthropic/claude-fable-5
+    name: Fable 5 — orchestrateur /forge (mode superpowers)
+    provider: claude-local
+    reasoning: high
+    roles:
+      - orchestrator        # démarre et pilote la chaîne (hors étapes contractualisées)
+
+  - id: anthropic/claude-opus-4-8
+    name: Claude Opus 4.8
+    provider: claude-local
+    reasoning: high
+    roles:
+      - run_orchestrator    # agent SPAWNÉ qui conduit un run (contrats/orchestrator.yaml).
+                            # Distinct de `orchestrator` (la session, descriptive, Fable) :
+                            # celui-ci est résolu par le registry et dispatché par la porte,
+                            # donc son modèle a un coût réel. Opus — RATIFIÉ Pierre
+                            # 2026-07-23 (« intention ≠ exécution »).
+                            # Réserve exprimée dans la même ratification, PAS ENCORE
+                            # IMPLÉMENTÉE : l'orchestrateur ne doit pas consommer le tier
+                            # maximal en permanence si la tâche peut être traitée plus bas.
+                            # Aucun mécanisme ne porte encore cette règle — `escalate.py` ne
+                            # couvre que les BUILDERS. Tant qu'aucun champ structuré ne
+                            # l'exprime, cette ligne reste une INTENTION, pas une politique
+                            # active : ne pas la lire comme un comportement en vigueur.
+      - contract_author     # étape 0 — rédacteur du contrat
+      - prisme              # étape 1 — Prisme Produit (photo du produit fini)
+      - game_master         # étape 2.7 — Game Master : traduit World Scan + Story
+                            # Bible + Art Bible (+ héritage inter-run) en jeu MESURABLE
+                            # (bloc `game_master`, Lot B 2026-08-23, GO Pierre : role
+                            # scindé de `worldscan` qui reste haiku pour s2-worldscan —
+                            # un bloc à 9 sorties contraintes dépasse probablement
+                            # haiku, cf. plan Lot B § Risques nommés).
+      - art_director        # étape 2.5 — Art Bible + asset_requests (Tier 3 #7)
+      - decompose           # étape 3 — décomposition fonctionnelle
+      - architect           # étape 4 — architecte
+      - wiremap             # étape 5 — WireMap isomorphe
+      - redteam_code        # étape 11 — red-team code (contexte vierge)
+      - game_forger         # étape 9 variante STANDARD — forge un JEU ENTIER depuis un
+                            # squelette gelé. Distinct de `builder` : ce rôle tient
+                            # simultanément toutes les lignes du squelette, plusieurs
+                            # runtimes, une parité entre implémentations et six oracles,
+                            # sans droit d'ajouter quoi que ce soit hors plan. Raisonnement
+                            # soutenu sous contrainte, pas exécution mécanique — `builder`
+                            # (haiku) reste juste pour ce à quoi il était calibré : une
+                            # brique isolée. Ajouté 2026-07-22, gate Pierre.
+
+  - id: anthropic/claude-haiku-4-5-20251001
+    name: Claude Haiku 4.5
+    provider: claude-local
+    reasoning: low
+    roles:
+      - builder             # étape 9 — build (délégation économique)
+      - worldscan           # étape 2 — world scan
+
+  # Missions d'outillage Forge (hors chaîne s0-s12) : Sonnet = bras d'exécution
+  # (répartition ratifiée Pierre 2026-07-19). Ce tier existait déjà dans l'échelle
+  # d'escalade des builders (escalate.py LADDER) mais aucun rôle ne le résolvait.
+  # Ajouté 2026-07-26 pour la mission M1 (télémétrie d'échec) — gate Pierre au commit.
+  - id: anthropic/claude-sonnet-5
+    name: Claude Sonnet 5 — outillage Forge (missions sous contrat hors profil)
+    provider: claude-local
+    reasoning: high
+    roles:
+      - forge_toolsmith     # missions d'outillage sur forge/** (ex. M1) —
+                            # contrat dédié obligatoire, dispatch allow_unprofiled
+                            # assumé et inscrit dans l'audit signé
+
+  # Gate 4 : validation indépendante. Qwen critique les DÉCISIONS, ne remplace pas les oracles.
+  - id: lmstudio/qwen2.5-14b-instruct
+    name: Qwen2.5 14B — red team / reviewer indépendant
+    provider: lmstudio
+    reasoning: false
+    roles:
+      - redteam_reviewer    # étape 6 — red-team du plan (archi + wiremap)
+      - repair_runtime      # réparation ciblée d'un défaut DÉJÀ identifié par un oracle
+                            # amont. Accepté SOUS CONDITION par Pierre le 2026-08-04 :
+                            # ni production_ready, ni garantie de qualité. Ce rôle
+                            # DÉCLARE du code qui tournait déjà (run_real.py:1164) hors
+                            # de tout registre — voir `runtime_contracts` en fin de
+                            # fichier pour son contrat d'entrée/sortie.
+      - asset_spec_author   # traduit une demande gameplay en spec d'asset paramétrée
+                            # (Asset Library V1, 2026-08-06). TRANSFORMATION, pas rappel —
+                            # le registre où ce modèle est mesuré fiable. Il n'écrit
+                            # aucune géométrie et ne juge rien : sa sortie passe par des
+                            # énumérations fermées avant d'atteindre Blender.
+
+  # Étapes déterministes (oracles + verdict) : PAS de LLM. Runtime sentinelle non-llm.
+  - id: deterministic/non-llm
+    name: Oracle déterministe (non-LLM)
+    provider: forge
+    reasoning: false
+    roles:
+      - deterministic       # étapes 10a/10b/10c (oracles) + 12 (verdict signé)
+
+# ===================================================================================
+# CONTRATS DE RUNTIME
+# ===================================================================================
+# `models` ci-dessus répond à « QUI exécute ce rôle ». Cette section répond à « QUOI,
+# avec quelles entrées, quelles sorties et quelles limites ». Les deux sont séparées
+# parce qu'un rôle peut changer de modèle sans changer de contrat, et l'inverse.
+#
+# Lecture : informative pour `control_plane/registry.py` (il ne lit que `models`), mais
+# NORMATIVE pour la Forge — `repair_runtime_adapter.mjs` refuse toute requête qui ne
+# porte pas exactement les entrées listées ici.
+#
+# Un seul rôle y figure aujourd'hui, à dessein : on déclare ce qu'on a mesuré, pas ce
+# qu'on aimerait avoir.
+
+runtime_contracts:
+
+  repair_runtime:
+    mission: >-
+      Réparer un défaut DÉJÀ IDENTIFIÉ par un oracle amont, et rien d'autre. Ne découvre
+      pas les défauts, ne modifie pas les métriques, ne modifie pas les règles
+      d'acceptation, ne supprime pas un finding, n'écrit pas hors des champs autorisés.
+    # Chaîne d'exécution RÉELLE — aucune abstraction. Chacun de ces fichiers existe et
+    # tournait déjà avant cette déclaration.
+    implementation:
+      called_by:  forge/run_real.py:1164 (run_repair_step, 5 étapes amont)
+      adapter:    forge/repair_runtime_adapter.mjs
+      entrypoint: forge/repair_step.mjs
+      logic:      forge/repair_loop.mjs
+      model:      lmstudio/qwen2.5-14b-instruct
+      temperature: 0
+      max_tokens: 400        # valeur RÉELLE du code (repair_step.mjs:93)
+      kill_switch: FORGE_REPAIR=0
+    # `request_file` : le callable lit un JSON portant les entrées NOMMÉES ci-dessous.
+    invocation: request_file
+    inputs:  [finding_id, root_problem_id, artifact_ref, evidence_ref, allowed_fields, forbidden_fields]
+    outputs: [before, after, patch, oracle_before, oracle_after, evidence_created, mutation_used]
+    constraints:
+      oracle_unchanged:  l'oracle est rejoué par l'appelant, jamais fourni par le runtime
+      metrics_unchanged: aucune écriture dans capabilities.json, mutation_registry.json,
+                         root_problems.json, le ledger ou memory/
+      scope_limited:     toute écriture hors `allowed_fields` annule la réparation entière
+                         et restaure l'artefact
+      no_verdict:        capteur, pas juge — le runtime ne fixe jamais ok/fail
+    # LIMITES DÉCLARÉES — elles font partie du contrat, pas d'une note de bas de page.
+    limits:
+      quality_not_proven: true
+      production_ready: false
+      why: >-
+        L'oracle valide la FERMETURE DU DÉFAUT MESURÉ. Il ne valide ni la qualité
+        rédactionnelle, ni la valeur gameplay, ni l'expérience joueur. Mesuré : une
+        réparation acceptée par l'oracle a écrit « J'ai apprécié de jouer à Cookie
+        Clicker » dans un champ censé expliquer la rétention. « oracle OK » ne se lit
+        jamais « qualité OK ».
+      cost: 70 à 151 tokens de complétion mesurés sur 3 exécutions versionnées
+      evidence: EVIDENCE/bundles/REPAIR_RUNTIME_V1/ · EVIDENCE/bundles/REPAIR-LOOP-V1/
+      accepted_by: Pierre (HumanGate) le 2026-08-04 — SOUS CONDITION
+
+  # DÉCLARATION DE L'EXISTANT, 2026-08-04. Ce runtime tourne depuis toujours (oracles
+  # 10a/10b/10c, verdict signé, et depuis peu les deux détecteurs de qualité). Il
+  # n'avait simplement pas de contrat — comme 15 des 16 rôles. Rien de nouveau ici :
+  # aucune ligne de code n'a changé, on écrit ce que le code fait déjà.
+  deterministic:
+    mission: >-
+      Mesurer un artefact et rendre des compteurs. Aucun modèle n'intervient : même
+      entrée, même sortie, toujours. Ne génère rien, ne répare rien, ne décide d'aucun
+      verdict d'étape — il produit la mesure sur laquelle un verdict s'appuie.
+    implementation:
+      entrypoints:
+        - forge/oracle_quality.mjs        # signaux DISCRIMINANCE · LANGUE · RECOPIE
+        - forge/cross_field_quality.mjs   # déplacements inter-champs
+        - forge/check_worldscan.mjs       # + les 5 autres check_*.mjs
+      invoked_from:
+        - forge/repair_step.mjs (phaseQualite)   # embarqué
+        - CLI directe (node <entrypoint> <artefact.json>)  # autonome
+      model: aucun
+      provider: forge
+    # `positional_artifact` : le callable reçoit le CHEMIN de l'artefact en argument
+    # positionnel — pas d'enveloppe JSON. Convention réelle des CLI d'oracle
+    # (`node oracle_quality.mjs <artefact.json> [--json]`), déclarée le 2026-08-04.
+    invocation: positional_artifact
+    inputs:  [artifact_ref]
+    # Noms RÉELS des clés rendues par `mesurerSignalSemantique` (oracle_quality.mjs:247).
+    # Corrigé le 2026-08-04 : le contrat déclarait « compteurs », le code rend « compte ».
+    # Un contrat qui invente le nom de sa propre sortie ne peut vérifier personne.
+    outputs: [verdict, signaux, compte]
+    constraints:
+      no_model:      aucun appel de complétion, aucun réseau
+      no_write:      ne modifie jamais l'artefact mesuré
+      no_verdict:    advisory — la mesure ne fait basculer aucun verdict d'étape
+      deterministic: deux exécutions sur la même entrée rendent la même sortie
+    limits:
+      quality_not_proven: false   # ces capacités MESURENT la qualité, elles ne l'écrivent pas
+      production_ready: false
+      why: >-
+        La détection est mesurée sur des défauts INJECTÉS, donc connus d'avance
+        (detection_rate 1,0 · false_positive_rate 0 · n=12 et n=10). Un défaut d'un type
+        non injecté reste invisible : la mesure borne ce qu'on a testé, pas ce qui existe.
+      evidence: EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/
+      declared_by: déclaration de l'existant — aucun runtime ajouté
+
+  # DÉCLARATION DE L'EXISTANT, 2026-08-06 (Asset Library V1). Ce runtime a réellement
+  # produit 6 assets avant d'être déclaré ici — on écrit ce que le code fait déjà,
+  # aucune ligne de code n'a changé pour cette entrée.
+  asset_producer:
+    mission: >-
+      Fabriquer un asset 3D à partir d'une spec paramétrée, et RIEN d'autre. Ne juge
+      jamais sa propre production, ne mesure pas pour preuve, n'écrit jamais le
+      manifeste de recensement ni le catalogue. Le verdict appartient à un mesureur
+      indépendant qui n'a pas produit le fichier.
+    implementation:
+      entrypoint: forge/asset_producer/build_asset.py
+      executor:   blender 5.1.1 --background (WSL2 Ubuntu-24.04)
+      binary:     $BLENDER_BIN
+      proposer:   forge/asset_producer/propose_asset.py   # dépose une kb.proposal.v1
+      skill:      .claude/skills/asset-generator/SKILL.md
+      # Sentinelle lisible par machine — l'explication vit dans ce commentaire, pas
+      # dans la valeur : la géométrie est procédurale et paramétrée, aucun modèle de
+      # complétion n'intervient. Un test vérifie qu'un runtime déclarant un vrai
+      # modèle se résout bien dans le registry (test_roles_registry_integrity.py).
+      model:      aucun
+      provider:   blender
+    # `spec_file` : le callable reçoit le CHEMIN d'une spec JSON en argument positionnel,
+    # puis le répertoire de destination. Convention réelle du CLI
+    # (`blender -b --python build_asset.py -- <spec.json> <dest_dir>`).
+    invocation: spec_file
+    inputs:  [asset_id, archetype, category, size, color, variants, consumer]
+    outputs: [glb, metadata_json, generation_report_json]
+    constraints:
+      no_self_judgement:  ne produit aucun verdict ; l'oracle est rejoué par l'appelant
+      no_manifest:        n'écrit JAMAIS <asset>.glb.geometry.json (parole du HumanGate)
+      no_catalog_write:   n'écrit JAMAIS catalog.json (propose-only, via propose_asset.py)
+      consumer_required:  refuse une spec sans `consumer` — pas d'asset sans consommateur
+      closed_archetypes:  archétype hors liste = erreur explicite, jamais un cube par défaut
+      grounded_by_design: géométrie bâtie en Z>=0 côté Blender (=> Y>=0 en glTF)
+    limits:
+      quality_not_proven: true
+      production_ready: false
+      why: >-
+        Les 7 archétypes sont des PRIMITIVES paramétrées (boîtes, cylindres). Ils prouvent
+        la chaîne de production et d'ancrage, pas la qualité artistique : aucun asset
+        produit ne ressemble à un asset de production. « oracle OK » ne se lit jamais
+        « asset beau ». Aucun modèle génératif (Hunyuan3D) n'est branché sur ce runtime.
+      variants_depend_on_honesty: >-
+        La garde sur les variantes exclusives repose sur la franchise du producteur :
+        un producteur qui n'annonce pas ses `variants` dans metadata.json retombe sur
+        le seuil de part de sommets, qui peut les classer MAIN automatiquement.
+      evidence: knowledge_base/assets/props3d/ (6 assets, 6 generation_report.json)
+      declared_by: déclaration de l'existant — aucun runtime ajouté
+
+  # DÉCLARATION DE L'EXISTANT, 2026-08-06. Ce runtime a réellement produit une spec
+  # valide au premier essai (`gen_pedestal`, temp 0) avant d'être déclaré ici.
+  asset_spec_author:
+    mission: >-
+      Traduire une demande de gameplay en langage naturel en spécification d'asset
+      paramétrée, et RIEN d'autre. Ne fabrique aucune géométrie, ne mesure rien, ne juge
+      rien, n'écrit aucun fichier du dépôt. Sa sortie est une PROPOSITION de paramètres
+      qui doit franchir des énumérations fermées avant d'atteindre le producteur.
+    implementation:
+      entrypoint: forge/asset_producer/qwen_spec.py
+      transport:  HTTP OpenAI-compatible, http://localhost:1234/v1/chat/completions
+      model:      lmstudio/qwen2.5-14b-instruct
+      temperature: 0
+      max_tokens: 600
+      provider:   lmstudio
+    # `natural_language` : le callable reçoit une phrase, pas un artefact.
+    invocation: natural_language
+    inputs:  [demande_gameplay]
+    outputs: [spec, trace]
+    constraints:
+      closed_enums:      archetype et category hors liste = REJET, jamais un repli silencieux
+      consumer_required: "champ `consumer` vide = rejet — pas d'asset sans consommateur"
+      bounded_dims:      "dimensions hors [0.05, 20.0] m rejetées (échelle aberrante)"
+      no_file_write:     n'écrit aucun fichier du dépôt
+      no_judgement:      ne produit aucun verdict ; l'oracle est rejoué en aval
+      one_repair_only:   une réparation ciblée sur les champs fautifs, puis échec explicite
+    limits:
+      quality_not_proven: true
+      production_ready: false
+      why: >-
+        Le modèle est mesuré fiable en TRANSFORMATION, pas en RAPPEL (mémoire studio,
+        2026-08-04 : ses citations dérivent même à température 0). Ici il ne cite rien, il
+        convertit une intention en paramètres — mais rien ne garantit que les paramètres
+        choisis produisent un asset *utile*. Les énumérations fermées bornent le dégât,
+        elles ne rendent pas la proposition pertinente.
+      no_semantic_check: >-
+        Aucun mécanisme ne vérifie que l'archétype choisi correspond vraiment à la demande.
+        Mesuré : « piédestal » a produit `archetype: platform` — plausible, mais c'est un
+        jugement humain, pas une correspondance vérifiée.
+      evidence: reçus signés `asset_spec_author` dans EVIDENCE/bundles/dispatch_audit.jsonl
+      declared_by: déclaration de l'existant — aucun runtime ajouté

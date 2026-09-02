@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/asset_producer/asset_lesson.schema.json",
+  "title": "ASSET_LESSON v1 — SPECIFICATION",
+  "description": "Lecon tiree d'un LOT d'assets produits. STATUT : SPECIFICATION SEULE au 2026-08-06 — aucun producteur, aucun consommateur. Ne pas lire comme un mecanisme actif. Le schema existe pour que la boucle d'amelioration soit specifiee avant d'etre codee ; tant que rien ne l'ecrit ni ne le lit, `asset_lesson` n'a aucun effet sur un lot. Voir docs/forge/ASSET_LEARNING_LOOP_V1_SPEC.md.",
+  "type": "object",
+  "required": [
+    "schema_version", "lesson_id", "batch_id", "asset_type", "generation",
+    "defauts_detectes", "cause_racine", "correction_recommandee", "impact_prochain_lot",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "lesson_id": {
+      "type": "string",
+      "pattern": "^asset\\.[a-z0-9_]+$",
+      "description": "Identifiant stable. Prefixe `asset.` pour ne pas se melanger aux lecons de run Forge (EVIDENCE/reports/lessons.jsonl)."
+    },
+    "batch_id": {
+      "type": "string",
+      "description": "Lot d'ou vient la lecon. Sans lui, la question « pourquoi le prochain lot differe » n'a pas de reference."
+    },
+    "asset_type": {
+      "type": "string",
+      "description": "Categorie ou archetype concerne (ex. `chest`, `prop`). Une lecon qui vaut pour TOUT est generalement une lecon fausse."
+    },
+    "generation": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Numero de generation de cet asset_type. Deux lots de meme generation ne se distinguent par rien : c'est le compteur qui rend la difference observable."
+    },
+    "defauts_detectes": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Defauts MESURES, jamais ressentis. Chaque entree cite l'oracle et le verdict qui l'a produit.",
+      "items": {
+        "type": "object",
+        "required": ["oracle", "check", "verdict", "assets"],
+        "additionalProperties": false,
+        "properties": {
+          "oracle": { "type": "string" },
+          "check": { "type": "string" },
+          "verdict": { "enum": ["OK", "FAIL", "BLOCKED"] },
+          "assets": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "cause_racine": {
+      "type": "object",
+      "required": ["couche", "enonce"],
+      "additionalProperties": false,
+      "properties": {
+        "couche": {
+          "enum": ["spec", "producteur", "oracle", "manifeste", "kb", "runtime"],
+          "description": "OU le defaut est ne. Distinguer `producteur` et `oracle` est le coeur : un lot qui bloque peut signaler un producteur fautif OU un oracle trop/pas assez strict."
+        },
+        "enonce": { "type": "string" }
+      }
+    },
+    "correction_recommandee": {
+      "type": "object",
+      "required": ["cible", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "cible": { "type": "string", "description": "Fichier ou champ precis a modifier." },
+        "action": { "type": "string" },
+        "interdit": {
+          "type": "string",
+          "description": "Ce qu'il ne faut SURTOUT pas faire pour fermer ce defaut (ex. desserrer un seuil de rules.yaml)."
+        }
+      }
+    },
+    "impact_prochain_lot": {
+      "type": "object",
+      "required": ["change", "verification"],
+      "additionalProperties": false,
+      "properties": {
+        "change": {
+          "type": "string",
+          "description": "Ce qui sera DIFFERENT dans le prochain lot. C'est la reponse a « pourquoi le prochain lot n'est pas le precedent »."
+        },
+        "verification": {
+          "type": "string",
+          "description": "Comment on saura que le changement a eu l'effet annonce — un oracle, pas une impression."
+        },
+        "attendu": {
+          "type": "string",
+          "description": "Resultat attendu, ecrit AVANT le lot suivant (sinon la lecon se confirme toujours apres coup)."
+        }
+      }
+    },
+    "status": {
+      "enum": ["CANDIDATE", "VALIDATED", "APPLIED", "REFUTED"],
+      "description": "CANDIDATE -> VALIDATED (HumanGate) -> APPLIED (lot suivant produit) -> ou REFUTED si le lot suivant n'a pas montre l'effet annonce. REFUTED est un etat NORMAL, pas un echec : une lecon qui ne peut pas etre refutee n'apprend rien."
+    },
+    "refutation": {
+      "type": "object",
+      "description": "Rempli seulement si status=REFUTED : ce qui a ete observe au lieu de l'attendu.",
+      "additionalProperties": true
+    }
+  }
+}

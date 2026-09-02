@@ -1,0 +1,33 @@
+# forge.genome_generation — génération COURANTE du génome Forge (invariant déclaré).
+#
+# Fichier de DONNÉES, jamais une constante enfouie dans du code ni une décision
+# posée dans un commentaire (règle ratifiée Pierre 2026-07-23 : « aucune décision
+# dans un commentaire » — cf. memory/structured_field_not_comment.md). Même patron
+# que `forge/reference_protected.yaml` : versionné, commenté, avec sa
+# source de ratification citée, lu par du code (jamais un chemin/valeur en dur).
+#
+# Source de ratification (aucune numérotation nouvelle inventée ici — transcription
+# directe de ce que la doctrine nomme déjà) :
+#   - docs/forge/FORGE_EVOLUTION_DOCTRINE_V0.md §1.0 (typologie des génomes) :
+#       « témoin gelé — Pong » (non comparable, hors numérotation de génération) ;
+#       « génome historique — Snake V1 (chaîne Opus) » ;
+#       « génome industriel — Snake V2 ».
+#   - docs/forge/FORGE_EVOLUTION_DOCTRINE_V0.md §5 : « un changement de sémantique
+#     d'exécution ouvre une génération ».
+#   - docs/fvl/FVL_PHASE_0_5_CHARTER.md §4.1 : « V2 vise le premier génome
+#     industriel ». Ce charter (Phase 0.5, dont la présente étape 3 fait partie)
+#     EST la construction de V2 — c'est la génération courante au moment où ce
+#     fichier est écrit (2026-07-30).
+#
+# Mapping retenu : generation 1 = Snake V1 (chaîne Opus, génome HISTORIQUE, gelé,
+# jamais comparé) ; generation 2 = V2 (génome INDUSTRIEL, EN CONSTRUCTION — c'est
+# la valeur courante ci-dessous). Un changement de génération (V2 -> V3, etc.) est
+# un geste RATIFIÉ (doctrine §5) : modifier `current_generation` ici est cet acte,
+# jamais une déduction automatique par du code.
+#
+# La LIGNÉE (parent_run_id, delta calculé entre deux runs, `comparable_to`) reste
+# une question OUVERTE de la doctrine (§10, point 6 : « qui possède la lignée ?
+# Aujourd'hui personne ») — HORS PÉRIMÈTRE de ce fichier, qui déclare UNE seule
+# valeur scalaire (la génération courante), rien de plus.
+schema: forge.genome_generation.v1
+current_generation: 2

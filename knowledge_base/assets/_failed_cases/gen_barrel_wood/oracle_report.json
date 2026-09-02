@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "asset_file": "gen_barrel_wood.glb",
+  "sha256": "07b5ca8f58396444a30122bf587fd7fdc52553058ef96bd38c95ec5afff1d478",
+  "verdict": "FAIL",
+  "reason": "VARIANTS_MATCH_GEOMETRY",
+  "checks": [
+    {
+      "name": "manifest_present",
+      "verdict": "OK",
+      "detail": "aucun sidecar gen_barrel_wood.glb.geometry.json -- non requis tant qu'aucune geometrie n'est UNKNOWN",
+      "measured": null,
+      "threshold": null,
+      "threshold_source": null,
+      "expression": "load_manifest(asset)"
+    },
+    {
+      "name": "ground_contact",
+      "verdict": "OK",
+      "detail": "min_y=0.0000 -- ne flotte pas au-dessus du plan 0.0",
+      "measured": 0.0,
+      "threshold": 0.01,
+      "threshold_source": "rules.yaml",
+      "expression": "min_y <= ground.plane + ground.float_tolerance"
+    },
+    {
+      "name": "no_buried_geometry",
+      "verdict": "OK",
+      "detail": "min_y=0.0000 au-dessus du plan 0.0",
+      "measured": 0.0,
+      "threshold": -0.01,
+      "threshold_source": "rules.yaml",
+      "expression": "min_y >= ground.plane - ground.buried_tolerance"
+    },
+    {
+      "name": "pivot_at_base",
+      "verdict": "OK",
+      "detail": "origine au pied (ecart 0.0000)",
+      "measured": 0.0,
+      "threshold": 0.05,
+      "threshold_source": "rules.yaml",
+      "expression": "abs(min_y - root_origin_y) <= pivot.max_offset"
+    },
+    {
+      "name": "scale_within_band",
+      "verdict": "OK",
+      "detail": "hauteur=1.0000 bande=[0.05, 50.0]",
+      "measured": 1.0,
+      "threshold": [
+        0.05,
+        50.0
+      ],
+      "threshold_source": "rules.yaml",
+      "expression": "scale.min_height <= (max_y - min_y) <= scale.max_height"
+    },
+    {
+      "name": "all_meshes_declared",
+      "verdict": "OK",
+      "detail": "tout noeud mesh est MAIN ou porte un role declare",
+      "measured": 0,
+      "threshold": 0,
+      "threshold_source": "rules.yaml",
+      "expression": "every mesh_node.classification != UNKNOWN"
+    },
+    {
+      "name": "variants_match_geometry",
+      "verdict": "FAIL",
+      "detail": "variante(s) declaree(s) sans mesh correspondant: ['intact', 'broken'] (meshes presents: ['gen_barrel_wood'])",
+      "measured": 2,
+      "threshold": 0,
+      "threshold_source": "declaration",
+      "expression": "every declaration.variants[i] matches a mesh_node name"
+    },
+    {
+      "name": "declaration_mismatch",
+      "verdict": "OK",
+      "detail": "le producteur declare min_y=0.0000, la mesure independante donne 0.0000 (ecart 0.0000)",
+      "measured": 0.0,
+      "threshold": 0.01,
+      "threshold_source": "rules.yaml",
+      "expression": "abs(declaration.lowest_point_y - measured min_y) <= tolerance"
+    }
+  ],
+  "census": [
+    {
+      "name": "gen_barrel_wood",
+      "vertices": 144,
+      "share": 1.0,
+      "has_material": true,
+      "is_skinned": false,
+      "parent": null,
+      "min_y": 0.0,
+      "max_y": 1.0,
+      "classification": "MAIN",
+      "declared_role": null,
+      "unknown_reason": null
+    }
+  ],
+  "anchor_basis": "MAIN+SECONDARY hors ['collider'] (1 noeuds)",
+  "main_geometry_undetermined": false,
+  "measurement_space": "gltf_bind_pose",
+  "skin_evaluated": false,
+  "up_axis": "Y",
+  "fog": "conformite esthetique et adequation visuelle non evaluees -- jugement Pierre requis. Mesure en pose de liaison (skin non evalue)."
+}

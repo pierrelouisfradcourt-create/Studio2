@@ -1,0 +1,19 @@
+# Fixture de contrôle — maillon 2 (POSITIF) : ce fragment IMITE un lecteur réel
+# du champ `reasoning`, pour prouver que scan_reasoning_readers le détecte
+# effectivement (et pas seulement qu'il rend toujours 0 par construction).
+# Ce fichier n'est jamais importé comme module Python — lu comme texte brut.
+
+def resolve_effort(model: dict) -> str:
+    level = model.get("reasoning")
+    if level is False:
+        return ""
+    return level
+
+
+def other_access(model):
+    return model["reasoning"]
+
+
+def assignment_form(model):
+    reasoning = model.get("reasoning", "high")
+    return reasoning

@@ -1,0 +1,69 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.instrument_assumes_instead_of_reads
+statement: 'Le mode de panne dominant d''une premiere campagne sur un nouveau runtime
+  (ici : premiere cible Godot apres un regime uniquement web/JS) n''est pas un bug
+  isole mais une famille : un instrument de la chaine de preuve SUPPOSE une topologie
+  (web) au lieu de LIRE celle declaree par le projet. Chaque instrument corrige un
+  a un finit par re-tomber sur la meme cause. Avant d''ajouter un correctif ponctuel
+  a un oracle qui echoue sur un nouveau type de jeu, verifier s''il lit la topologie
+  declaree ou s''il presuppose celle du jeu precedent.'
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-instrument_assumes_instead_of_reads
+  kind: pattern
+  function: 'Le mode de panne dominant d''une premiere campagne sur un nouveau runtime
+    (ici : premiere cible Godot apres un regime uniquement web/JS) n''est pas un bug
+    isole mais une famille : un instrument de la chaine de preuve SUPPOSE une topologie
+    (web) au lieu de LIRE celle declaree par le projet. Chaque instrument corrige
+    un a un finit par re-tomber sur la meme cause. Avant d''ajouter un correctif ponctuel
+    a un oracle qui echoue sur un nouveau type de jeu, verifier s''il lit la topologie
+    declaree ou s''il presuppose celle du jeu precedent.'
+  source: Forge lesson 'forge.instrument_assumes_instead_of_reads' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.instrument_assumes_instead_of_reads
+    supporting_runs:
+    - snake-_run_reel_20260729
+    - snake-_run_runtime_20260729
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-03T14:10:36.006543+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - snake-_run_reel_20260729
+  - snake-_run_runtime_20260729
+  invariants:
+  - 'Le mode de panne dominant d''une premiere campagne sur un nouveau runtime (ici
+    : premiere cible Godot apres un regime uniquement web/JS) n''est pas un bug isole
+    mais une famille : un instrument de la chaine de preuve SUPPOSE une topologie
+    (web) au lieu de LIRE celle declaree par le projet. Chaque instrument corrige
+    un a un finit par re-tomber sur la meme cause. Avant d''ajouter un correctif ponctuel
+    a un oracle qui echoue sur un nouveau type de jeu, verifier s''il lit la topologie
+    declaree ou s''il presuppose celle du jeu precedent.'
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - snake-_run_reel_20260729
+  - snake-_run_runtime_20260729
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-03T14:10:46+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T14:11:05+00:00'

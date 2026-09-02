@@ -1,0 +1,180 @@
+{
+  "_note": "Manifeste des DÉCLARATIONS surveillées par forge/declaration_readers.mjs. Une « déclaration » = un fichier qui énonce une règle, un rôle ou une permission. Le capteur répond à UNE question : ce fichier est-il réellement LU par du code ? Il MESURE (exit 0 toujours), il ne juge pas. Aucun champ custom n'est ajouté aux fichiers surveillés — le manifeste vit ICI, à côté du capteur.",
+  "_scope": "Volontairement court : on ne surveille que ce dont on peut prouver la lecture ou l'absence de lecture. Ajouter une entrée = décision explicite, pas un scan automatique de tout le repo.",
+  "_kinds": {
+    "agent_md": "dossier de fiches .md à frontmatter (D1 + D3..D6).",
+    "policy_json": "fichier JSON de POLITIQUE dont les champs sont un SCHÉMA stable (D1 + D2/D7). À n'utiliser que là : sur un registre de DONNÉES (clés = noms de projets/d'assets), D2/D7 ne mesurent rien et produisent du bruit.",
+    "declaration_doc": "fichier déclaratif dont on ne pose QUE la question du lecteur (D1). Aucune analyse de champ. Vaut pour .md, .yaml, et les .json dont les clés sont des données."
+  },
+  "_rejets": "Candidats ÉVALUÉS puis REJETÉS le 2026-07-19, à ne pas ré-ajouter sans lever la cause : (1) forge/contracts/*.yaml — contract.py:112 résout le chemin dynamiquement (`f\"{etape}.yaml\"`), donc aucun basename de contrat n'apparaît dans le code : une entrée par contrat émettrait D1 sur des fichiers RÉELLEMENT chargés (faux positif structurel) ; et une entrée-dossier serait verte à jamais (le littéral 'forge/contracts' est dans agent_context_map.mjs) donc ne discrimine rien. Seul roles.yaml, référencé littéralement, est surveillé. (2) knowledge_base/catalog.json — registre de DONNÉES à 9 lecteurs ; en policy_json il produit 7 constats D7 structurels (un consommateur qui n'a besoin que de `style` ne nomme évidemment pas les 33 champs) : bruit, pas dérive. (3) forge/oracles.json en policy_json — les clés de premier niveau sont des NOMS DE PROJETS résolus dynamiquement : 12 D2 de bruit ; conservé en declaration_doc. (4) .claude/settings.json — consommé par le runtime Claude Code (hors repo) et par rien d'autre ; D1 y serait faux, et aucune analyse de champ n'y a de sens : le capteur n'a rien d'honnête à en dire. (5) schemas/*.schema.json en bloc (39) — hors périmètre déclaratif (schémas de packets d'échange) ; seuls les 5 schémas des politiques déjà surveillées + 1 témoin positif sont retenus.",
+  "scan": {
+    "code_extensions": [".py", ".mjs", ".js", ".cjs", ".ts", ".tsx", ".rs", ".sh", ".ps1", ".bat"],
+    "data_extensions": [".json", ".yaml", ".yml", ".toml"],
+    "exclude_dirs": [
+      "node_modules",
+      ".git",
+      "worktrees",
+      ".claude/worktrees",
+      "graphify-out",
+      "target",
+      "dist",
+      "build",
+      "__pycache__",
+      ".mypy_cache",
+      ".pytest_cache",
+      "e2e-shots"
+    ],
+    "exclude_dir_patterns": ["^\\.venv", "_MIGRATED_HOLD$"],
+    "self_files": [
+      "forge/declaration_readers.mjs",
+      "forge/declaration_readers.test.mjs",
+      "forge/declaration_watchlist.json"
+    ]
+  },
+  "declarations": [
+    {
+      "id": "claude-agents",
+      "kind": "agent_md",
+      "dir": ".claude/agents",
+      "extension": ".md",
+      "declares": "rôles, modèles et permissions des sous-agents Claude Code",
+      "schema_keys": ["name", "description", "model", "tools", "allowed-tools", "disallowedTools", "color"],
+      "schema_source": "clés reconnues par le runtime Claude Code pour un fichier .claude/agents/*.md (liste FERMÉE — toute autre clé est hors-schéma donc lue par personne)",
+      "required_keys": ["description"],
+      "path_valued_keys": ["domain", "forbidden_paths"],
+      "external_consumer": "runtime Claude Code (binaire hors repo) — charge les fiches valides comme sous-agents ; D1 serait donc factuellement faux",
+      "non_reader_mentions": [
+        {
+          "path": "deploy_studio.sh",
+          "reason": "n'est plus un écrivain ni un lecteur depuis le 2026-07-19 : le bloc de génération par heredoc a été RETIRÉ, il ne reste qu'un commentaire d'archive citant le chemin (deploy_studio.sh ligne 65). Le compter comme lecteur masquerait le fait que ces fiches ne sont lues par aucun code du repo."
+        }
+      ]
+    },
+    {
+      "id": "tool-permission-matrix",
+      "kind": "policy_json",
+      "path": "lab/agent_policy/tool_permission_matrix.json",
+      "declares": "matrice de permissions agent_id × tool × effect",
+      "field_scopes": ["$", "$.global_constraints", "$.tool_rules[*]"],
+      "ignore_fields": ["$schema"]
+    },
+    {
+      "id": "autonomy-levels",
+      "kind": "policy_json",
+      "path": "lab/agent_policy/autonomy_levels.json",
+      "declares": "niveaux d'autonomie des agents",
+      "field_scopes": ["$"],
+      "ignore_fields": ["$schema"]
+    },
+    {
+      "id": "forbidden-surfaces",
+      "kind": "policy_json",
+      "path": "lab/agent_policy/forbidden_surfaces.json",
+      "declares": "surfaces interdites aux agents",
+      "field_scopes": ["$"],
+      "ignore_fields": ["$schema"]
+    },
+    {
+      "id": "freeze-rules",
+      "kind": "policy_json",
+      "path": "lab/agent_policy/freeze_rules.json",
+      "declares": "règles de gel",
+      "field_scopes": ["$"],
+      "ignore_fields": ["$schema"]
+    },
+    {
+      "id": "strike-rules",
+      "kind": "policy_json",
+      "path": "lab/agent_policy/strike_rules.json",
+      "declares": "règles de strike",
+      "field_scopes": ["$"],
+      "ignore_fields": ["$schema"]
+    },
+    {
+      "id": "studio-expectations",
+      "kind": "policy_json",
+      "path": "forge/studio_expectations.json",
+      "declares": "affirmations des cartes du studio (témoin POSITIF — ce fichier EST lu par studio_selfaudit.mjs)",
+      "field_scopes": ["$"],
+      "ignore_fields": ["$schema", "_note", "_maj"]
+    },
+    {
+      "id": "forge-roles",
+      "kind": "declaration_doc",
+      "path": "forge/contracts/roles.yaml",
+      "declares": "registry rôle-de-capacité -> modèle/provider (ADR-002 gate 1 : jamais de modèle en dur). Lecteur littéral vérifié à la main : forge/contract.py:31 `FORGE_ROLES = CONTRACTS_DIR / \"roles.yaml\"`. Sert de fil-piège : si plus aucun code ne le nomme, la résolution du modèle est passée ailleurs."
+    },
+    {
+      "id": "forge-oracles",
+      "kind": "declaration_doc",
+      "path": "forge/oracles.json",
+      "declares": "commande d'oracle par projet. Lecteur littéral vérifié : forge/oracle.py:20 `DEFAULT_CONFIG`. Pas d'analyse de champ (voir _rejets §3)."
+    },
+    {
+      "id": "claim-matrix",
+      "kind": "declaration_doc",
+      "path": "00_STUDIO_CONTROL/01_SYSTEM/boundaries/CLAIM_MATRIX.md",
+      "declares": "claim_verdict autorisé. TÉMOIN POSITIF des matrices .md : lecture réelle vérifiée à la main (autopilot.py:67 read_text + regex `claim_verdict:`) — prouve que le capteur ne signale pas une matrice .md par principe."
+    },
+    {
+      "id": "authority-matrix",
+      "kind": "declaration_doc",
+      "path": "docs/control-plane/AUTHORITY_MATRIX.md",
+      "declares": "qui décide quoi dans le control-plane. Comparer à claim-matrix : même forme, même prétention d'autorité, mais aucun code ne la nomme."
+    },
+    {
+      "id": "escalation-matrix",
+      "kind": "declaration_doc",
+      "path": "docs/control-plane/ESCALATION_MATRIX_V0.md",
+      "declares": "règles d'escalade du control-plane. Même question que authority-matrix."
+    },
+    {
+      "id": "schema-tool-permission-matrix",
+      "kind": "declaration_doc",
+      "path": "schemas/tool_permission_matrix.schema.json",
+      "declares": "schéma de la politique lab/agent_policy/tool_permission_matrix.json (elle-même surveillée et LUE). Question : la politique est lue, mais son schéma est-il seulement appliqué par un validateur ?"
+    },
+    {
+      "id": "schema-autonomy-levels",
+      "kind": "declaration_doc",
+      "path": "schemas/autonomy_levels.schema.json",
+      "declares": "schéma de lab/agent_policy/autonomy_levels.json"
+    },
+    {
+      "id": "schema-forbidden-surfaces",
+      "kind": "declaration_doc",
+      "path": "schemas/forbidden_surfaces.schema.json",
+      "declares": "schéma de lab/agent_policy/forbidden_surfaces.json"
+    },
+    {
+      "id": "schema-freeze-rules",
+      "kind": "declaration_doc",
+      "path": "schemas/freeze_rules.schema.json",
+      "declares": "schéma de lab/agent_policy/freeze_rules.json"
+    },
+    {
+      "id": "schema-strike-rules",
+      "kind": "declaration_doc",
+      "path": "schemas/strike_rules.schema.json",
+      "declares": "schéma de lab/agent_policy/strike_rules.json"
+    },
+    {
+      "id": "schema-task-packet",
+      "kind": "declaration_doc",
+      "path": "schemas/task_packet.schema.json",
+      "declares": "schéma des task packets. TÉMOIN POSITIF de schemas/ : nommé par 7 fichiers de code (agent_pr_operator.py:27 et le control-plane) — prouve que le capteur ne signale pas un schéma par principe."
+    },
+    {
+      "id": "forge-ledger-proposals",
+      "kind": "declaration_doc",
+      "path": "EVIDENCE/reports/forge_ledger_proposals.jsonl",
+      "declares": "dépôt propose-only des propositions d'entrée ledger émises par `studio_link.propose_ledger_entry`. Fil-piège T1 (DECISION_LAYER_AUDIT_2026-07-19) : writer connu (`studio_link.py:439`), AUCUN lecteur/promoteur trouvé au moment de l'audit (2026-07-20) — la promotion vers `IMPROVEMENT_LEDGER.yaml` reste 100% manuelle. Réévaluer si un lecteur apparaît."
+    },
+    {
+      "id": "forge-project-proposals",
+      "kind": "declaration_doc",
+      "path": "EVIDENCE/reports/forge_project_proposals.jsonl",
+      "declares": "dépôt propose-only des propositions de fiche projet émises par `studio_link.propose_project_record`. Même fil-piège que forge-ledger-proposals : writer connu, aucun lecteur trouvé au 2026-07-20."
+    }
+  ]
+}

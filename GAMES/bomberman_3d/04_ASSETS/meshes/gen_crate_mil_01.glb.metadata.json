@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "_statut": "DECLARATION — ne fait JAMAIS foi (confrontee par declaration_mismatch)",
+  "asset_id": "gen_crate_mil_01",
+  "category": "prop",
+  "style": "lowpoly",
+  "license": "CC0-1.0",
+  "source": "ORIGINAL — aucune inspiration externe citee — scripts/forge/asset_producer/build_asset.py",
+  "provenance_url": null,
+  "produced_by": "blender 5.1.1 / archetype=military_crate",
+  "origin_rule": "base_center",
+  "ground_rule": "base_contact",
+  "variants": [],
+  "consumer_examples": [
+    "decor d'anneau bomberman_3d (hors grille jouable) — PROTOTYPE P9, non cable",
+    "famille DURE/modulaire de la grammaire de props (direction A, jouet de guerre)"
+  ],
+  "lowest_point_y": 0.0,
+  "height_y": 0.62,
+  "width_x": 0.84,
+  "depth_z": 0.62
+}

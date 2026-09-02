@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_sandbag_01",
+  "archetype": "sandbag",
+  "params": {
+    "size": {
+      "w": 0.86,
+      "d": 0.46,
+      "h": 0.46
+    },
+    "color": [
+      0.62,
+      0.55,
+      0.38,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_sandbag_01"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 13020,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

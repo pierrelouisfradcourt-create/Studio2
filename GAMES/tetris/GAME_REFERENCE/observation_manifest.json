@@ -1,0 +1,40 @@
+{
+  "advisory": true,
+  "_note": "World Scan Tetris — observation ADVISORY, jamais une decision. Regle ratifiee : URLs citees, aucune collecte locale de media. Produit le 2026-08-03 par recherche web reelle ; chaque URL a ete retournee par une recherche, aucune n'est reconstruite de memoire.",
+  "_limite_declaree": "Aucune source de type 'video' ni 'screenshot' : l'observation porte sur les FAITS MECANIQUES documentes (regles, tables de gravite, bareme), pas sur le ressenti visuel. Le champ 'loops' est donc derive de la documentation, pas d'une session de jeu observee — a requalifier si un playtest reel est mene.",
+  "games": [
+    {
+      "game": "Tetris (standard Guideline, 2001+)",
+      "sources": [
+        { "url": "https://tetris.wiki/Tetris_Guideline", "type": "wiki" },
+        { "url": "https://tetris.wiki/Super_Rotation_System", "type": "wiki" },
+        { "url": "https://harddrop.com/wiki/SRS", "type": "wiki" },
+        { "url": "https://harddrop.com/wiki/Tetris_Guideline", "type": "wiki" },
+        { "url": "https://strategywiki.org/wiki/Tetris/Rotation_systems", "type": "wiki" }
+      ],
+      "loops": {
+        "minute_1": "Poser des pieces a plat, survivre. Le joueur decouvre les 7 tetrominos et la rotation ; il empile sans plan et nettoie des lignes simples.",
+        "minute_10": "Le joueur vise la ligne quadruple (Tetris) : il creuse un puits d'une colonne et reserve la piece I. La reserve (hold) et l'apercu (next) deviennent des outils de planification, pas des decorations.",
+        "hour_5": "Gestion du risque : la gravite a augmente, le joueur arbitre entre nettoyer vite (survie) et empiler pour le score. Les kicks du SRS deviennent une ressource — poser une piece dans un creux ferme n'est plus un accident mais une intention.",
+        "endgame": "La gravite depasse la vitesse de decision humaine ; la partie se termine par blocage (une piece ne peut plus apparaitre). Il n'y a PAS de victoire en marathon : la seule fin est la perte. Cette asymetrie est structurante."
+      },
+      "retention_answer": "La tension vient d'une dette qui s'accumule visiblement : chaque piece mal posee reste a l'ecran et contraint toutes les suivantes. Le joueur ne perd pas d'un coup, il se voit perdre progressivement — et garde jusqu'au bout l'illusion reelle de pouvoir redresser."
+    },
+    {
+      "game": "Tetris (NES, Nintendo, 1989)",
+      "sources": [
+        { "url": "https://tetris.wiki/Tetris_(NES,_Nintendo)", "type": "wiki" },
+        { "url": "https://harddrop.com/wiki/Tetris_(NES,_Nintendo)", "type": "wiki" },
+        { "url": "https://strategywiki.org/wiki/Tetris_(NES)", "type": "wiki" },
+        { "url": "https://en.wikipedia.org/wiki/Tetris_(NES_video_game)", "type": "wiki" }
+      ],
+      "loops": {
+        "minute_1": "Identique au standard en surface, mais SANS reserve ni apercu long : le joueur ne voit qu'une piece a l'avance. La planification est bornee par construction.",
+        "minute_10": "Le niveau monte tous les 10 lignes une fois le premier palier franchi ; la gravite devient le vrai adversaire. Le bareme recompense fortement le quadruple (300 pts/ligne au niveau 0 contre 40 pour un simple), ce qui pousse au risque.",
+        "hour_5": "La rotation de cette version n'a pas de wall kick : une piece contre un mur ne peut simplement pas tourner. Le joueur apprend a ne jamais dependre d'un rattrapage — contrainte absente du standard moderne.",
+        "endgame": "Le score sature a 999 999 ('maxout') : la fin n'est pas la mort mais un plafond numerique. La partie continue sans plus rien recompenser."
+      },
+      "retention_answer": "Contrainte plus dure et lisible : sans reserve, sans kick, sans apercu profond, la competence mesuree est la lecture du terrain plutot que la manipulation. Le jeu est plus punitif mais plus honnete — chaque perte est attribuable a une decision du joueur."
+    }
+  ]
+}

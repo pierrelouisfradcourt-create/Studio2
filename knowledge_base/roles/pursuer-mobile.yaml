@@ -1,0 +1,73 @@
+# Contrat ROLE gameplay — poursuivant mobile
+# Schéma : knowledge_base/roles/SCHEMA.md (12 champs, règle des 3 états)
+# Exemple canonique cité dans docs/forge/STUDIO_ARCHITECTURE.md §3 :
+# « poursuivant mobile, cible de difficulté X » — repris ici tel quel comme 1er ROLE réel.
+
+role_id: role-pursuer-mobile
+
+archetype: >-
+  Une entité qui doit rattraper une cible mobile fuyante en terrain ouvert (pas de murs,
+  pas d'obstacles — la variante "terrain contraint" est un rôle distinct, hors scope ici).
+  Le défi produit n'est PAS "le poursuivant gagne-t-il" (ça, c'est une solvabilité
+  binaire) mais "en combien de temps, sur une distribution de départs variés" — la bande
+  de difficulté est la donnée de conception qui intéresse le Game Designer.
+
+requires:
+  movement: >-
+    fn(pos, targetPos, speed) -> pos — se déplace d'au plus `speed` pas (Chebyshev) vers
+    `targetPos`, un axe à la fois, jamais en dépassant la cible. Pur, déterministe.
+  distance_metric: >-
+    fn(a, b) -> number — distance de Chebyshev entre deux positions {x,y}, utilisée pour
+    détecter la capture (distance <= catch_radius).
+
+fulfilled_by:
+  - sys-pursuer-mobile
+
+# Ajouté lors de la généralisation de role_sim.mjs (2e rôle, 2026-07-13) — la mécanique de
+# ce rôle a été EXTRAITE (inchangée) depuis l'ancien role_sim.mjs monolithique vers ce
+# module dédié. Vérifié : mêmes médianes mesurées sur les mêmes seeds après extraction.
+simulation_module: knowledge_base/systems/ai/pursuer_scenario.mjs
+
+simulation_config:
+  trials: 300
+  seed_start: 1000
+  max_ticks: 60
+  arena_half_size: 20
+  catch_radius: 1
+  pursuer_speed: 2
+  evader_speed: 1
+
+# Bande de difficulté DÉCLARÉE — fixée APRÈS calibration réelle (voir calibration_note),
+# AVANT toute exécution de validation officielle ultérieure (aucune mesure officielle
+# n'a encore eu lieu au moment où cette bande est figée — la calibration ne compte pas
+# comme validation, c'est explicitement son rôle de rester exploratoire).
+difficulty_target:
+  metric: ticks_to_catch_median
+  min: 15
+  max: 35
+
+calibration_note: >-
+  Mesure exploratoire du 2026-07-13, 300 essais réels (seeds 1..300), simulation_config
+  ci-dessus (pursuer_speed=2, evader_speed=1, arena_half_size=20, catch_radius=1,
+  max_ticks=60) : min=1, médiane=24, max=60 ticks ; 297/300 captures (catch_rate=0.99 —
+  3 essais n'ont PAS capturé dans les 60 ticks, rapporté tel quel, pas caché). Bande
+  [15,35] choisie pour encadrer la médiane observée (24) avec une marge de conception —
+  pas pour reproduire exactement la mesure. Preuve (sortie réelle de role_sim.mjs, pas
+  résumée) : knowledge_base/proofs/role_sim_pursuer_mobile_calibration.log.
+  NOTE MÉTHODE : `seed_start` ci-dessus vaut 1000 (pas 1) — la calibration a tourné sur
+  les seeds 1..300 ; toute exécution officielle de ce fichier tourne sur un échantillon
+  DISJOINT (1000..1299), pour éviter de valider sur les mêmes données que celles ayant
+  servi à choisir la bande déclarée.
+
+proof_of_use: knowledge_base/proofs/role_sim_pursuer_mobile_validation.log
+
+tier: validated
+
+license: MIT
+
+path: knowledge_base/roles/pursuer-mobile.yaml
+
+out_of_scope: >-
+  Ne couvre pas la coordination multi-poursuivants, ni le terrain avec obstacles/murs,
+  ni la perception limitée (le poursuivant connaît toujours la position exacte de la
+  cible — un rôle "poursuivant à perception limitée" serait un contrat distinct).

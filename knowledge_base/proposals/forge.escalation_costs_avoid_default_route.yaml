@@ -1,0 +1,69 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.escalation_costs_avoid_default_route
+statement: 'Une escalade humaine a un cout reel : interruption du flux, consommation
+  de contexte, perte de temps, dilution de la mission. L''humain n''est pas la route
+  par defaut quand une correction est determinee. Avant de solliciter l''humain, verifier
+  : est-ce une decision de conception ? un changement d''invariant ? un choix produit
+  ? existe-t-il plusieurs solutions valides ? Si non aux quatre et que cause, correction
+  et maitrise du risque sont acquises, la Forge applique. Chaque escalade doit etre
+  justifiee par une NECESSITE DE DECISION, jamais par une incapacite a appliquer une
+  solution deja trouvee.'
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-escalation_costs_avoid_default_route
+  kind: pattern
+  function: 'Une escalade humaine a un cout reel : interruption du flux, consommation
+    de contexte, perte de temps, dilution de la mission. L''humain n''est pas la route
+    par defaut quand une correction est determinee. Avant de solliciter l''humain,
+    verifier : est-ce une decision de conception ? un changement d''invariant ? un
+    choix produit ? existe-t-il plusieurs solutions valides ? Si non aux quatre et
+    que cause, correction et maitrise du risque sont acquises, la Forge applique.
+    Chaque escalade doit etre justifiee par une NECESSITE DE DECISION, jamais par
+    une incapacite a appliquer une solution deja trouvee.'
+  source: Forge lesson 'forge.escalation_costs_avoid_default_route' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.escalation_costs_avoid_default_route
+    supporting_runs:
+    - tetris-fullgodot-20260803-084719
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-03T11:32:30.815423+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - tetris-fullgodot-20260803-084719
+  invariants:
+  - 'Une escalade humaine a un cout reel : interruption du flux, consommation de contexte,
+    perte de temps, dilution de la mission. L''humain n''est pas la route par defaut
+    quand une correction est determinee. Avant de solliciter l''humain, verifier :
+    est-ce une decision de conception ? un changement d''invariant ? un choix produit
+    ? existe-t-il plusieurs solutions valides ? Si non aux quatre et que cause, correction
+    et maitrise du risque sont acquises, la Forge applique. Chaque escalade doit etre
+    justifiee par une NECESSITE DE DECISION, jamais par une incapacite a appliquer
+    une solution deja trouvee.'
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - tetris-fullgodot-20260803-084719
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-03T11:32:30+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T11:32:31+00:00'

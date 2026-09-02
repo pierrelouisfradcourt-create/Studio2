@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_crate_mil_01",
+  "archetype": "military_crate",
+  "params": {
+    "size": {
+      "w": 0.84,
+      "d": 0.62,
+      "h": 0.62
+    },
+    "color": [
+      0.32,
+      0.34,
+      0.22,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_crate_mil_01"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 5432,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

@@ -1,0 +1,7 @@
+{"type":"system","subtype":"init","session_id":"synthetic-2"}
+{"type":"assistant","message":{"model":"claude-sonnet-5","content":[{"type":"thinking","thinking":"","signature":"synthetic-sig"}],"usage":{"output_tokens":2}},"session_id":"synthetic-2"}
+{"type":"assistant","message":{"model":"claude-sonnet-5","content":[{"type":"text","text":"reponse"}],"usage":{"output_tokens":2}},"session_id":"synthetic-2"}
+
+not-json-garbage-line-should-be-ignored
+
+{"type":"result","is_error":false,"total_cost_usd":0.05,"duration_api_ms":12000,"usage":{"output_tokens":500},"result":"reponse","type":"result"}

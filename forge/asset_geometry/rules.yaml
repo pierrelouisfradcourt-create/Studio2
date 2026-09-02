@@ -1,0 +1,58 @@
+# rules.yaml — seuils par defaut du studio pour l'Asset Geometry Oracle V1.
+#
+# AUTORITE (cf. docs/forge/ASSET_GEOMETRY_ORACLE_V1_DESIGN.md §6) :
+#   rules.yaml (defaut)  <-  asset_request.geometry (override explicite du run)
+# Il n'existe AUCUN seuil implicite : tout seuil consomme par un check est ecrit ici.
+# Le rapport cite pour chaque check la valeur effective ET sa provenance
+# (threshold_source: "rules.yaml" | "asset_request").
+#
+# Le manifeste d'un asset (<asset>.glb.geometry.json) ne porte JAMAIS de tolerance :
+# il declare ce qui existe, pas ce qui est acceptable.
+
+schema_version: "1.0"
+
+# Axe vertical du fichier glTF. La spec glTF impose Y-up (Godot aussi).
+# Blender affiche du Z-up parce que son importeur convertit -- ne pas confondre.
+up_axis: "Y"
+
+ground:
+  plane: 0.0
+  # Au-dessus de plane + float_tolerance => l'asset flotte.
+  float_tolerance: 0.01
+  # En dessous de plane - buried_tolerance => l'asset est enterre.
+  buried_tolerance: 0.01
+
+pivot:
+  # Convention par defaut. Un asset volant/suspendu (lanterne, plateforme) la viole
+  # legitimement : son manifeste doit alors declarer un autre origin_rule, sinon
+  # l'oracle produit un faux positif sur cette famille (limite connue, design §13).
+  origin_rule: "base_center"
+  # Ecart tolere entre l'origine du noeud racine et le bas de la geometrie jugee.
+  max_offset: 0.05
+  # Enumeration FERMEE. Une valeur hors liste dans un manifeste ne desactive pas le
+  # check en silence : elle BLOQUE. Sans cette fermeture, ecrire n'importe quoi dans
+  # `origin_rule` suffirait a faire taire pivot_at_base -- un trou d'echappement.
+  allowed_origin_rules: ["base_center", "centroid", "suspended", "declared"]
+
+scale:
+  # Bande de hauteur plausible, en unites glTF (1 unite = 1 metre par convention).
+  min_height: 0.05
+  max_height: 50.0
+
+classification:
+  # Un noeud portant un materiau est MAIN s'il est skinne, OU parente a un rig, OU
+  # s'il pese au moins cette part des sommets. La 3e branche existe pour les assets
+  # STATIQUES (props) : sans elle tout prop genere serait UNKNOWN a vie.
+  main_share_threshold: 0.10
+  # Noms de parents consideres comme un rig (comparaison insensible a la casse).
+  rig_parent_names: ["rig", "armature", "skeleton", "root"]
+
+# declaration_required : toute geometrie UNKNOWN bloque (verdict BLOCKED).
+# allow_undeclared    : la geometrie UNKNOWN est rapportee sans bloquer.
+secondary_mesh_policy: "declaration_required"
+
+# Roles declarables dans le manifeste d'un asset (enumeration fermee).
+# Les colliders sont exclus de la MESURE d'ancrage (ils debordent legitimement
+# le visuel) mais restent recenses et rapportes.
+allowed_roles: ["main", "collider", "socket", "variant", "lod", "fx", "decor"]
+roles_excluded_from_anchor: ["collider"]

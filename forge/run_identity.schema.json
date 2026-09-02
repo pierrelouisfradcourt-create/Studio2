@@ -1,0 +1,48 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "$id": "run_identity.schema.json",
+ "title": "RUN_IDENTITY_V1",
+ "description": "Les quatre dimensions d'identite d'un run, chacune avec UNE semantique. Le defaut ferme : un seul champ `project` portait quatre sens (nom de jeu `tetris`, identifiant d'execution `shmup_slice_patch2`, portee `driver_smoke`, nature `story_probe`), et les consommateurs devaient deviner d'apres la FORME DU NOM. REGLE CARDINALE (ratifiee Pierre 2026-08-19) : une dimension inconnue reste EXPLICITEMENT inconnue, elle n'est JAMAIS remplacee par une valeur inventee pour satisfaire ce schema. C'est pourquoi `nature` n'a PAS d'enumeration : l'hypothese `real|fixture|selftest|probe` couvrait 57 pourcent des enregistrements et laissait 71 identifiants sur 149 hors classement — falsifiee avant d'etre ecrite. Autorite conjointe : `forge/run_identity.py`, attache a ce fichier par test.",
+ "type": "object",
+ "required": [
+  "project_id",
+  "run_id",
+  "scope",
+  "mode"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "project_id": {
+   "type": "string",
+   "minLength": 1,
+   "description": "Le PROJET auquel le run appartient. N'est valide contre AUCUNE liste, et ne doit jamais l'etre : mesure du 2026-08-19, les deux sources canoniques candidates (`GAMES/`, `oracles.json`) rejettent 21 des 28 projets reellement observes, dont `_selftest` — l'auto-test de l'Observer lui-meme."
+  },
+  "run_id": {
+   "type": "string",
+   "minLength": 1,
+   "description": "L'IDENTITE de cette execution. REQUIS : 27 pourcent des enregistrements signes de `EVIDENCE/bundles/*.jsonl` n'en portent aucun, et `_belongs_to_project` rend False sur vide — ils sont invisibles a TOUS les rapports Observer. Rupture de tracabilite, pas defaut de proprete. PEUT egaler `project_id` : le defaut n'etait pas qu'ils se ressemblent, mais qu'UN champ portait DEUX sens (`driver_smoke_v6_20260808` porte reellement la meme valeur des deux cotes)."
+  },
+  "scope": {
+   "type": "string",
+   "enum": [
+    "PRODUCT",
+    "FACTORY"
+   ],
+   "description": "Ce sur quoi porte le run. PRODUCT = un jeu. FACTORY = l'usine elle-meme (`driver_smoke`, `p1-injection`, `charte2`, `amont-narratif`). Socle DEJA ratifie par la separation `capabilities.yaml` / `factory_capabilities.yaml` — applique ici aux runs. Fige Pierre 2026-08-19."
+  },
+  "mode": {
+   "type": "string",
+   "enum": [
+    "live",
+    "dryrun"
+   ],
+   "description": "ORTHOGONAL a la nature : un run reel sans effet reste un run reel. `dryrun` est attestee (445 enregistrements, predicat `audit._is_dryrun`, qui l'annote sans jamais en faire une categorie) ; `live` en est le complement exact. Aucune troisieme valeur n'a ete observee, donc aucune n'est proposee. Une NATURE presumee (`fixture`, `audit`) ne passe PAS par ce champ."
+  },
+  "nature": {
+   "type": "string",
+   "minLength": 1,
+   "default": "UNKNOWN",
+   "description": "Ce que FAIT le run. VOLONTAIREMENT SANS ENUMERATION — les donnees imposent plusieurs classes (usine, audit, asset, fixture) sans encore justifier leurs valeurs finales. ABSENTE vaut `UNKNOWN` explicite ; PRESENTE MAIS VIDE est REFUSEE par `run_identity.py`, car une ignorance deguisee en valeur devient indetectable — exactement le trou creuse par `run_id` sur 27 pourcent du flux."
+  }
+ }
+}

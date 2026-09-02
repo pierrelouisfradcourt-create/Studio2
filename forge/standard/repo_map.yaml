@@ -1,0 +1,135 @@
+# TABLE category -> dossier. Donnee FIGEE du standard.
+#
+# C'est ICI, et nulle part ailleurs, que la question « ou va ce fichier » est
+# tranchee. Le builder ne la pose jamais : la reconciliation applique cette table.
+# Sinon le point de freestyle se deplace simplement de « quel systeme » a « ou je
+# pose le fichier » (FORGE_STANDARD_v1.md §2).
+#
+# REGLE DE MATERIALISATION : un dossier n'est cree que lorsqu'un contrat l'exige.
+# L'oracle verifie dans LES DEUX SENS — tout dossier reference existe, tout dossier
+# qui existe est reference. Un dossier vide est un FAIL, pas une commodite : huit
+# dossiers vides sur Pong ressemblent a une structure sans en etre une.
+#
+# REGLE D'IDENTITE DES GABARITS (REPO_MAP_TEMPLATE_IDENTITY_V1, ratifiee Pierre
+# 2026-07-23) : « Un gabarit qui revendique un artefact concret doit porter un
+# identifiant stable permettant une correspondance univoque. Les motifs generiques
+# sont reserves aux categories, pas aux preuves d'existence. »
+#
+# Deux formes de gabarit, distinguees par la TERMINAISON — c'est la table qui
+# declare la forme, le code ne code en dur aucune liste de categories :
+#   * gabarit de DOSSIER   -> se termine par « / » ; `{id}` = identifiant du
+#     contenant (system_parent, sinon identifiant de la ligne). Un chemin est
+#     valide s'il commence par ce prefixe. Ex. `system: 05_SYSTEMS/{id}/`.
+#   * gabarit d'ARTEFACT NOMME -> ne se termine PAS par « / » et porte `{id}` ;
+#     `{id}` = le NOM DU FICHIER lui-meme. Le chemin declare doit valoir EXACTEMENT
+#     le gabarit substitue : l'artefact vit directement dans le dossier de sa
+#     categorie (pas de sous-dossier), et son nom EST son identite.
+#     Ex. `test.solvability: 07_TESTS/oracle/{id}` -> 07_TESTS/oracle/solvability.mjs.
+#
+# Portee de l'obligation `{id}` (decision, `scope: [test.*, asset.*]`) : toute
+# categorie `test.*` ou `asset.*` DOIT porter `{id}` — c'est verifie mecaniquement
+# (forge/tests/test_standard_oracles.py, invariant de table). Sans `{id}`,
+# plusieurs lignes revendiquent le meme artefact via un motif generique et l'oracle
+# ne voit que des motifs, jamais des identites : il ne peut pas voir la collision.
+#
+# Deux categories peuvent partager un DOSSIER (`test.oracle` et `test.solvability`
+# ci-dessous) : ce n'est plus une ambiguite depuis que l'identite est le nom du
+# fichier et non le dossier. Le cas pathologique — les deux revendiquant le MEME
+# fichier — est attrape par `revendications_multiples` dans `check_placement`.
+
+schema_version: 1
+
+# Racines universelles (structure de GAME_PROJECT, §2 passe 1).
+roots:
+  charter:    "00_CHARTER/"
+  design:     "01_DESIGN/"
+  entities:   "02_ENTITIES/"
+  world:      "03_WORLD/"
+  assets:     "04_ASSETS/"
+  systems:    "05_SYSTEMS/"
+  runtime:    "06_RUNTIME/"
+  tests:      "07_TESTS/"
+  telemetry:  "08_TELEMETRY/"
+  wiremap:    "09_WIREMAP/"
+  forge:      "10_FORGE/"
+
+# Mapping categorie -> emplacement (passe 2 : meublage).
+# La categorie est declaree A LA CREATION du contrat et n'est jamais reevaluee
+# apres coup selon la complexite de l'objet (§1, regle de categorie).
+mapping:
+
+  # --- systemes : services partages entre plusieurs entites ---
+  system:             "05_SYSTEMS/{id}/"
+  system.adapter:     "06_RUNTIME/adapters/{id}/"
+
+  # --- entites : objets du jeu, meme complexes, tant qu'ils ne sont pas partages ---
+  entity:             "02_ENTITIES/{id}/"
+  entity.player:      "02_ENTITIES/players/{id}/"
+  entity.enemy:       "02_ENTITIES/enemies/{id}/"
+  entity.boss:        "02_ENTITIES/bosses/{id}/"
+  entity.prop:        "02_ENTITIES/props/{id}/"
+
+  # --- monde ---
+  level:              "03_WORLD/levels/{id}/"
+  world.rules:        "03_WORLD/rules/{id}/"
+
+  # --- contenu : artefacts NOMMES ({id} = nom du fichier, extension comprise) ---
+  # L'extension n'est PAS figee dans le gabarit : un asset audio est un .wav, un
+  # .ogg, son manifeste ou sa licence — c'est le NOM qui identifie, pas le format.
+  asset.sprite:       "04_ASSETS/sprites/{id}"
+  asset.audio:        "04_ASSETS/audio/{id}"
+  asset.font:         "04_ASSETS/fonts/{id}"
+  # asset.mesh — ajoute sur decision humaine D3 (Pierre, 2026-08-11). Motif mesure, pas
+  # suppose : la taxonomie d'assets etait 2D (sprite/audio/font) alors que le parc produit
+  # desormais de la 3D. Deux jeux portent deja des `.glb` — `bomberman_3d` (3, consommes par
+  # `arena_view_3d.gd`) et `chess_tcg` (8) — sans qu'aucune categorie ne permette de les
+  # declarer ; `check_index` les classait `dossiers_orphelins`.
+  # IMPACT MESURE AVANT ECRITURE : les 6 wiremaps du parc n'utilisent AUCUNE categorie
+  # `asset.*`. Cette branche du standard etait donc DOCUMENTED_ONLY, et l'ajout d'une cle de
+  # mapping ne peut qu'AUTORISER une declaration de plus — il n'en invalide aucune.
+  asset.mesh:         "04_ASSETS/meshes/{id}"
+
+  # --- preuve : artefacts NOMMES (idem) ---
+  test.unit:          "07_TESTS/unit/{id}"
+  test.oracle:        "07_TESTS/oracle/{id}"
+  test.solvability:   "07_TESTS/oracle/{id}"
+
+  # --- racine de projet moteur : artefacts NOMMES que le moteur ou ses oracles
+  # exigent a la racine du projet (ratification Pierre 2026-07-28, fogs F1/F2).
+  # Motif : `godot_oracle.mjs` charge `res://tests/run_tests.gd` et
+  # `res://solvability.gd` — chemins imposes par le moteur, qu'aucune categorie
+  # n'hebergeait. On corrige la table de verite plutot que de fragiliser l'oracle.
+  # {id} = le NOM du fichier (project.godot, main.tscn, solvability.gd...).
+  godot.project_root: "{id}"
+  # Meme ratification, cas mesure a la cloture : `godot_oracle.mjs:17` charge
+  # `res://tests/run_tests.gd` (sous-dossier), pas la racine — la table epouse
+  # l'oracle, jamais l'inverse.
+  godot.project_tests: "tests/{id}"
+
+  # --- observation amont : le dossier de reference produit AVANT le jeu (World Scan /
+  # GAME_REFERENCE). Categorie ajoutee sur gate Pierre 2026-08-10.
+  #
+  # Motif mesure : `GAMES/tetris/GAME_REFERENCE/` remontait en `dossiers_hors_structure`
+  # (check_index) faute d'identite architecturale. La reparation par deplacement a ete
+  # ECARTEE apres verification : son contenu DIFFERE de `EVIDENCE/runs/tetris/
+  # GAME_REFERENCE/` (6 fichiers sur 6), ce n'est donc pas un doublon — deplacer « pour
+  # faire passer l'oracle » aurait detruit de l'information. On donne a l'emplacement une
+  # identite explicite plutot que de le faire disparaitre.
+  #
+  # Gabarit de DOSSIER FIXE, sans `{id}` : meme forme que `charter`/`design.doc`/
+  # `telemetry` ci-dessous (l'obligation `{id}` a pour portee `test.*` et `asset.*`
+  # uniquement). Suffit a rendre le dossier legal : check_index derive `allowed_top` du
+  # premier segment de chaque gabarit du mapping, sans liste codee en dur.
+  reference.observation: "GAME_REFERENCE/"
+
+  # --- gouvernance du jeu ---
+  charter:            "00_CHARTER/"
+  design.doc:         "01_DESIGN/"
+  telemetry:          "08_TELEMETRY/"
+  wiremap:            "09_WIREMAP/"
+  validator:          "10_FORGE/validators/"
+
+# Categories connues mais volontairement SANS emplacement : une categorie absente
+# de `mapping` est un FAIL a la reconciliation, jamais un placement par defaut.
+# Ajouter une categorie = modifier ce fichier = gate Pierre (une table figee qui
+# se complete au fil de l'eau par le builder n'est plus figee).

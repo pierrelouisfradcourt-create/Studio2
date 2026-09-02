@@ -1,0 +1,209 @@
+# Contrat d'agent Forge — étape 1 : Prisme Produit (décomposition du produit fini en facettes observables)
+# Schéma : forge/contracts/SCHEMA.md
+
+# --- 1. Identité / posture cognitive (Critique) ---
+role: >-
+  Prisme Produit (étape 1). Point de vue imposé : réalisateur qui décrit le
+  produit FINI tel que le joueur le vit, pas le chemin pour y arriver.
+capability_role: prisme
+exigences_cognitives: >-
+  Vision produit concrète. Sépare strictement ce que le joueur voit / fait /
+  ressent, et n'énonce que des Règles observables (testables).
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Consomme le charter (étape 0) + le prompt utilisateur. Connaît les conventions
+  produit du studio.
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - "charter.yaml produit par l'étape 0"
+  - "story_bible.json (s2.6) et gm_worldscan.json (s2.7) S'ILS SONT PRÉSENTS dans le run_dir : ce sont des SOURCES d'exigences au même titre que le World Scan (profil full_godot_narratif) ; absents => tu le dis, tu ne compenses pas"
+  - "design/progression_contract.md et design/calibration.md (Lot D 2026-08-23, GO
+    Pierre — fuite de mesure fermee : le design n'etait lu par personne) S'ILS SONT
+    PRÉSENTS dans le run_dir : l'ordre des exigences de boucle DANS LE PRISME EST LA
+    PRÉCÉDENCE JOUÉE (loop_spec.mjs les projette dans l'ordre d'apparition, plus
+    jamais par tri alphabétique) — écris-les DANS L'ORDRE OÙ LE JOUEUR LES VIT
+    (P01 -> P12) ; absents => comportement inchangé, tu ne compenses pas"
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Produire product_snapshot.md : le produit fini décomposé en facettes — ce que
+  le joueur voit, ce qu'il fait, ce qu'il ressent, + les Règles observables.
+  4 sections obligatoires, aucun flou, aucun « à définir ».
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Capture de la vision produit finie : expérience joueur (voit/fait/ressent) +
+  liste des Règles observables. Écrit product_snapshot.md uniquement.
+out_of_scope: >-
+  Ne décompose pas en features (c'est l'étape 3) ; ne décide ni l'architecture
+  ni le code ; ne fait pas le world scan.
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo + charter. write: product_snapshot.md uniquement. create:
+  product_snapshot.md. run: aucun. delete: aucun.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  Décrit le produit FINI, jamais le chemin. Toute règle DOIT être observable
+  (donc testable plus tard). Aucun champ « à définir ».
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  product_snapshot.md valide, 4 sections remplies, chaque règle observable et
+  cohérente avec le charter. ET bloc ```json``` terminal valide : chaque exigence
+  porte la chaîne complète observation -> claim -> enonce -> expected_proof ->
+  destination (les trois premiers maillons DIFFÉRENTS),
+  avec sa provenance (source/source_role/reference).
+tests_oracles: >-
+  Oracle déterministe non-LLM : `node forge/check_prisme_manifest.mjs
+  <run_dir>/prisme.json --worldscan <run_dir>/worldscan.json`. Vérifie la chaîne
+  Observation -> Claim -> Exigence -> Preuve attendue -> Destination, la provenance, et
+  l'ancrage des références dans le World Scan. Ne juge JAMAIS la qualité du texte.
+  Une exigence sans preuve attendue exploitable est CLASSÉE non actionnable (fait
+  mesuré), elle ne fait échouer l'étape que si AUCUNE exigence ne l'est.
+  (La conformité markdown du panel reste `forge/prisme/check_prisme.mjs`.)
+final_report: >-
+  Restitution standard : cite le charter comme ancre ET le reçu de
+  check_prisme_manifest ; liste les exigences classées non actionnables et les
+  références non ancrées ; claim_verdict: NO_CLAIM_ALLOWED.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  DEUX sorties, les deux obligatoires. (1) product_snapshot.md :
+  {ce_que_le_joueur_voit, ce_qu_il_fait, ce_qu_il_ressent, regles_observables[]}.
+  M3'b (GO Pierre 2026-08-14) — COMMENT tu le livres : tu n'écris AUCUN fichier.
+  TOUT LE TEXTE de ta réponse SITUÉ HORS du bloc ```json``` terminal EST
+  product_snapshot.md — l'exécuteur le matérialise tel quel (il retire le bloc JSON
+  et la ligne RETURN_REASON, rien d'autre). Ta réponse doit donc ÊTRE ce document,
+  pas un rapport qui le décrit. FORMAT EXIGÉ par l'oracle check_prisme.mjs, à
+  respecter au caractère près : quatre en-têtes `## <n>. <TITRE>` dont les titres
+  contiennent `CE QUE LE JOUEUR VOIT`, `CE QUE LE JOUEUR FAIT`, `CE QUE LE JOUEUR
+  RESSENT` et `RÈGLES OBSERVABLES` ; chaque section ≥ 40 caractères de contenu réel ;
+  au moins une règle numérotée en début de ligne sous la forme `- **R1` (puis R2,
+  R3…) ; aucun placeholder (`à définir`, `TBD`, `???`, `TODO`, `XXX`).
+  Mesuré le 2026-08-13 (run p2a-return-snapshot) : le fichier a bien été matérialisé
+  (8516 octets, propre) mais check_prisme l'a REFUSÉ — « aucune règle numérotée
+  "- **Rn" » — parce que la réponse était rédigée comme un rapport, l'agent ignorant
+  que sa prose DEVIENDRAIT cet artefact. Le défaut était dans le contrat, pas dans
+  la rédaction.
+  (2) Un bloc ```json``` TERMINAL, matérialisé en prisme.json par l'exécuteur (tu
+  n'écris JAMAIS ce fichier toi-même) :
+  {"game_id": "<id>", "exigences": [{"id", "source": "EXPECTED"|"ADDITIONS",
+  "source_role", "reference", "observation", "claim", "enonce",
+  "expected_proof": {"kind": "bot_action"|"oracle"|"mutation"|"visual"|"file_write",
+  "statement"}, "destination": "s3-decompo"|"s4-archi"|"s5-wiremap"|"s9-build"}]}.
+  CHAÎNE DE FALSIFIABILITÉ, trois maillons qui doivent DIFFÉRER : `observation` (ce
+  que la source montre) -> `claim` (ce que tu en déduis, et qui peut être faux
+  indépendamment de l'observation) -> `enonce` (ce que le jeu doit alors garantir).
+  Recopier l'un dans l'autre satisfait le schéma sans rien déduire, et rend
+  indécidable le lieu d'une panne : donnée fausse, ou déduction fausse ?
+  RÈGLES DURES : `source` vaut EXPECTED (vu dans un artefact amont -> `reference`
+  est une ADRESSE, jamais une prose : `worldscan:<chemin>` (ex.
+  `worldscan:games[0].objectives[0].victory_condition`,
+  `worldscan:games[0].loops.minute_10`), `story_bible:<id de section>` (ex.
+  `story_bible:stakes`), `gm_worldscan:<id de dimension>` (ex.
+  `gm_worldscan:progression`) — la sonde check_amont_traversal.mjs RÉSOUT chaque
+  adresse dans l'artefact ; une adresse qui ne résout rien compte comme
+  référence non résolue, mesurée et reportée) ou ADDITIONS (ta proposition ->
+  `reference` vaut
+  EXPLICITEMENT null, jamais un champ omis). `CORE` t'est INTERDIT : l'origine
+  d'une exigence CORE est `core_list` par construction, elle ne transite jamais par
+  un modèle. Le champ vocabulaire est celui de la ligne de wiremap v2
+  (standard/SCHEMA.md §3) : tes exigences sont des lignes candidates.
+  V4 GAME LOOP (GO Pierre 2026-08-22, champs ADDITIFS — ajoutés à la ligne
+  d'exigence ci-dessus, rien retiré) : LE SUJET PLAYER ENTRE DANS LE CONTRAT.
+  Chaque exigence porte désormais `acteur: "PLAYER"|"SYSTEM"` (qui agit) et
+  `loop_role` ∈ {PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION,
+  UNLOCK, NEXT_GOAL, REPEAT, META_LOOP, ADVANTAGE, NONE} (sa position dans la
+  séquence de boucle imposée : PLAYER_GOAL -> PLAYER_ACTION -> GAME_RESPONSE ->
+  REWARD -> DECISION -> UNLOCK -> NEXT_GOAL -> REPEAT -> META_LOOP -> ADVANTAGE ;
+  NONE = exigence
+  produit ordinaire, hors boucle). Une exigence PLAYER porte `affordance` (le
+  nom de la cible cliquable, ex. `acheter_chaton`) OU est un objectif affiché
+  (`observe.hud`). GAMEPLAY CONTRACT (GO Pierre 2026-08-22, 10 maillons A..J,
+  C = AFFORDANCE porté par B) — `observe: {hud, predicate}` est OBLIGATOIRE
+  pour TOUTE exigence de boucle (rôle ≠ NONE), `predicate` ∈ "nonempty" |
+  "increases" | "changes" | "decreases" | "resets" | "new_distinct" |
+  "contains:<txt>" | "appears:<groupe>" | "increases_more_than:<ref>".
+  RÈGLES PAR MAILLON (au-delà d'« au moins une exigence par rôle ») :
+  G (NEXT_GOAL) : AU MOINS DEUX exigences, toutes `observe.predicate:
+  "new_distinct"` sur LE MÊME `observe.hud` (ex. `objectif`) — GOAL_2 doit
+  différer TEXTUELLEMENT de GOAL_1 à l'écran, pas seulement changer de valeur.
+  F (UNLOCK) : au moins une exigence porte, EN PLUS de `affordance`, un champ
+  `observe.appears: "<groupe>"` — la preuve de Progression (nouvelle
+  affordance/HUD/contenu visible après F).
+  H (REPEAT) : au moins une exigence avec `replay: ["<id>", ...]`, la liste
+  des ids d'exigences de rôle B..F (PLAYER_ACTION|GAME_RESPONSE|REWARD|UNLOCK)
+  à rejouer dans le nouvel état — la preuve que la boucle recommence pour de
+  vrai, pas par convention.
+  I (META_LOOP) : au moins une exigence PLAYER avec `affordance` (le geste de
+  prestige) ET `observe` dont le prédicat visible est `decreases` ou `resets`
+  (un reset qui se VOIT, ex. `ronrons` retombe à zéro).
+  J (ADVANTAGE) : au moins une exigence avec `replay_ref: "<id de B>"` (l'id
+  d'une exigence PLAYER_ACTION rejouée après I) et `observe.predicate:
+  "increases_more_than:<le même id>"` — le delta de cette action après le
+  prestige doit être strictement supérieur au delta initial, prouvé par la
+  mesure, jamais par un texte.
+  DECISION (extension 2026-08-23, GO Pierre « contrat exécutable : point de
+  décision + sonde à deux trajectoires », définition ratifiée
+  `studio_brain/gamedesign/kitten_clicker_decision_significative.md`) — entre
+  REWARD et UNLOCK dans la séquence de boucle : AU MOINS une exigence dont
+  `options` porte exactement 2 refs d'exigences de rôle PLAYER_ACTION ou UNLOCK
+  portant chacune `affordance` (les deux affordances DOIVENT être distinctes) ;
+  `policies` porte AU MOINS 2 politiques `{name, click, every_frames}` (noms
+  distincts, `click` = null ou une affordance PLAYER_ACTION existante,
+  `every_frames >= 1` dès que `click` n'est pas null) ; `metric` nomme un
+  `observe.hud` DÉJÀ observé par une autre exigence de boucle ; `horizon_frames`
+  >= 60 ; `observe: {hud: "objectif", predicate}` (le step DECISION s'affiche
+  comme un objectif). Forme figée du plan (exemple concret Kitten Clicker) :
+  `{"loop_role": "DECISION", "options": ["p_buy_kitten", "p_upgrade_click"],
+  "metric": "ronrons", "horizon_frames": 300, "policies": [{"name": "idle",
+  "click": null, "every_frames": 0}, {"name": "actif", "click": "pelote",
+  "every_frames": 3}], "observe": {"hud": "objectif", "predicate": "changes"}}`.
+  RÈGLE : AU MOINS UNE EXIGENCE PAR RÔLE (les 10 rôles de boucle, NONE exclu),
+  PLUS les règles par maillon ci-dessus pour G/F/H/I/J/DECISION — sans quoi la
+  boucle joueur est incomplète et injouable (mesuré, run 7 : boucle atteint G
+  mais s'arrête là — G ne compte qu'un objectif, H et J n'existent pas encore
+  comme maillons). Les rôles PLAYER_ACTION / UNLOCK / META_LOOP sont rédigés à LA
+  VOIX ACTIVE, LE JOUEUR POUR SUJET — jamais la voix passive (« Acheter un
+  chaton fait apparaître… » est REFUSÉ ; « Le joueur peut acheter un chaton en
+  cliquant la cible `acheter_chaton` ; la collection affichée augmente » est
+  attendu).
+  `loop.json` (la boucle dérivée) N'EST JAMAIS ÉCRIT PAR TOI : c'est une
+  PROJECTION DÉTERMINISTE de `prisme.json`, dérivée et matérialisée par
+  l'EXÉCUTEUR après ta réponse. Si tu émets un bloc ```json``` nommé `loop` ou
+  tentes de produire un fichier `loop.json`, il est IGNORÉ.
+  SOURÇAGE GM (Lot B, T3, 2026-08-23, plan `2026-08-23-forge-lot-b-game-master.md`) :
+  toute exigence de boucle (`acteur: "PLAYER"` ou `loop_role` ≠ NONE) doit citer,
+  dans son champ `reference`, une adresse `gm_worldscan:game_master.loops.<loop>.<step_id>`
+  ou `gm_worldscan:game_master.grey_blocks.<id>` — les métriques `progression_metrics`
+  du Game Master sont reprises TELLES QUELLES (jamais réinventées), et les `target`
+  avec leur tolérance. ADDITIF, MESURÉ (jamais gaté avant le run 10, verrou GO Pierre) :
+  `check_prisme_manifest` rapporte `stats.exigences_sourcees_gm` /
+  `stats.exigences_boucle` — baseline mesurée run 9 (avant `game_master`) : 0/13.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé) ---
+delegation_context: >-
+  Étape 1, en aval du Contrat (0), en amont du World Scan (2) et de la
+  Décomposition fonctionnelle (3).

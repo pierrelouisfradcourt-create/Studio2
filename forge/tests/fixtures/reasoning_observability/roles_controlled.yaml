@@ -1,0 +1,19 @@
+# Fixture de contrôle — maillon 1 : couvre les 4 kinds (cli_compatible,
+# not_applicable, unknown, absent) en un seul fichier, jamais lu par le
+# registry réel (uniquement par les tests de reasoning_observability).
+version: "test"
+models:
+  - id: test/model-high
+    roles: [role_high]
+    reasoning: high
+  - id: test/model-low
+    roles: [role_low]
+    reasoning: low
+  - id: test/model-not-applicable
+    roles: [role_na]
+    reasoning: false
+  - id: test/model-unknown
+    roles: [role_unknown]
+    reasoning: "extreme"
+  - id: test/model-absent
+    roles: [role_absent]

@@ -1,0 +1,33 @@
+{
+ "schema_version": 1,
+ "id": "arena_classic",
+ "nom": "Arene classique",
+ "plan": [
+  "###############",
+  "#S..+.++.++..S#",
+  "#.#+#+#.#+#+#.#",
+  "#.+.++.++.++..#",
+  "#+#+#.#+#+#.#+#",
+  "#.++.++.++.++.#",
+  "#+#.#+#+#.#+#+#",
+  "#+.++.++.++.++#",
+  "#.#+#+#.#+#+#.#",
+  "#.+.++.++.++..#",
+  "#.#+#.#+#+#.#.#",
+  "#S...++.++...S#",
+  "###############"
+ ],
+ "powerup_rules": {
+  "BOMB_UP": 3,
+  "FIRE_UP": 3,
+  "SPEED_UP": 2
+ },
+ "powerup_densite": 30,
+ "victory_rule": "LAST_STANDING",
+ "metadata": {
+  "origine": "builtin",
+  "auteur": "forge",
+  "date": "2026-08-10"
+ },
+ "theme": "pierre"
+}

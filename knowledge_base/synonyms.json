@@ -1,0 +1,17 @@
+{
+  "poursuite": ["poursuite", "poursuit", "poursuivre", "chasse", "chasser", "traque", "traquer", "pourchasse", "pourchasser"],
+  "garde": ["garde", "gardien", "gardienne", "sentinelle", "guardian", "surveille", "surveillant"],
+  "fuite": ["fuite", "fuir", "evasion", "esquive", "esquiver", "evader", "echapper"],
+  "ennemi": ["ennemi", "adversaire", "hostile", "monstre"],
+  "degats": ["degat", "degats", "dommage", "dommages", "blessure", "blessures", "damage"],
+  "deplacement": ["deplacement", "mouvement", "bouger", "bouge", "avance", "avancer", "move"],
+  "zone": ["zone", "territoire", "controle", "zoc"],
+  "atteignabilite": ["atteignabilite", "accessibilite", "reachability", "atteignable", "accessible"],
+  "niveau": ["niveau", "level", "stage", "carte", "map"],
+  "vitesse": ["vitesse", "rapidite", "speed"],
+  "cible": ["cible", "target", "objectif"],
+  "grille": ["grille", "case", "cases", "plateau", "tour"],
+  "temps_reel": ["continu", "vectoriel", "vectorielle", "arcade", "defilement"],
+  "plancher": ["plancher", "floor", "minimum"],
+  "points_de_vie": ["hp", "vie", "sante", "health"]
+}

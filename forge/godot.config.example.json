@@ -1,0 +1,4 @@
+{
+  "_comment": "Copier en godot.config.json et adapter. Utiliser l executable CONSOLE pour capturer stdout.",
+  "godot_bin": "C:/chemin/vers/Godot_v4.6.3-stable_win64_console.exe"
+}

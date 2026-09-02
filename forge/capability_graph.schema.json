@@ -1,0 +1,171 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "$id": "capability_graph.schema.json",
+ "title": "CAPABILITY_GRAPH_V1",
+ "description": "Catalogue des CAPACITES PROUVEES de la Forge. Une mutation devient une capacite uniquement si elle possede : une preuve versionnee, un root_problem, une metrique mesuree, et des contraintes connues. NE PAS CONFONDRE avec `capability_role` de forge/contracts/roles.yaml : celui-la resout un role vers un RUNTIME (quel modele execute l etape), celui-ci catalogue une COMPETENCE MESUREE (quoi sait-on faire, et prouve comment). Deux notions distinctes qui partagent un mot ; les fusionner ferait perdre les deux.",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "capabilities",
+  "proven_chains"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "capabilities": {
+   "type": "array",
+   "items": {
+    "$ref": "#/definitions/capability"
+   }
+  },
+  "proven_chains": {
+   "description": "Chaines REELLEMENT executees et mesurees. Une chaine n est PAS un agent : c est une suite de capacites. Aucune chaine hypothetique.",
+   "type": "array",
+   "items": {
+    "$ref": "#/definitions/chain"
+   }
+  }
+ },
+ "definitions": {
+  "capability": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "name",
+    "solves",
+    "source_mutation",
+    "input_contract",
+    "output_contract",
+    "evidence_refs",
+    "metrics",
+    "limitations",
+    "state",
+    "action",
+    "expected_metric",
+    "constraints"
+   ],
+   "properties": {
+    "id": {
+     "type": "string",
+     "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "name": {
+     "type": "string",
+     "minLength": 1
+    },
+    "solves": {
+     "description": "root_problem_id adresses. NON VIDE : une capacite qui ne resout aucun probleme declare n est pas selectionnable.",
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string"
+     }
+    },
+    "source_mutation": {
+     "description": "Mutation du registre qui la PROUVE. Le registre reste la source unique.",
+     "type": "string",
+     "minLength": 1
+    },
+    "input_contract": {
+     "type": "string",
+     "minLength": 1
+    },
+    "output_contract": {
+     "type": "string",
+     "minLength": 1
+    },
+    "evidence_refs": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string"
+     }
+    },
+    "metrics": {
+     "description": "Valeurs MESUREES, reprises de la mutation source.",
+     "type": "object",
+     "additionalProperties": {
+      "type": [
+       "number",
+       "string"
+      ]
+     }
+    },
+    "limitations": {
+     "description": "Ce que la capacite NE fait PAS. Une limitation non ecrite est une limitation qu on decouvrira en production.",
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "state": {
+     "description": "Etat sur lequel la capacite s applique.",
+     "type": "string",
+     "minLength": 1
+    },
+    "action": {
+     "description": "Ce qu elle fait a cet etat.",
+     "type": "string",
+     "minLength": 1
+    },
+    "expected_metric": {
+     "description": "Metrique locale attendue, appartenant au root_problem.",
+     "type": "string",
+     "minLength": 1
+    },
+    "constraints": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "chain": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "solves",
+    "capabilities",
+    "evidence",
+    "result"
+   ],
+   "properties": {
+    "id": {
+     "type": "string",
+     "minLength": 1
+    },
+    "solves": {
+     "type": "string",
+     "minLength": 1
+    },
+    "capabilities": {
+     "type": "array",
+     "minItems": 2,
+     "items": {
+      "type": "string"
+     }
+    },
+    "evidence": {
+     "type": "string",
+     "minLength": 1
+    },
+    "result": {
+     "description": "Ce que la chaine a REELLEMENT produit, mesure.",
+     "type": "object",
+     "additionalProperties": {
+      "type": [
+       "number",
+       "string",
+       "boolean"
+      ]
+     }
+    }
+   }
+  }
+ }
+}

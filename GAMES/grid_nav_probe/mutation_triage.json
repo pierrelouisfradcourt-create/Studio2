@@ -1,0 +1,16 @@
+[
+  {
+    "name": "true->false",
+    "line": 61,
+    "justification": "EQUIVALENT PROUVE PAR LECTURE DU GARDE. Le marquage `visited[from] = true` (l.61) n'est jamais LU par sa valeur : le seul garde qui consulte `visited` dans cette fonction est `if visited.has(neighbor)` (l.79), qui teste la PRESENCE DE LA CLE, pas son contenu. Muter la valeur en `false` cree exactement la meme cle dans le Dictionary, donc `has()` rend le meme booleen, donc le BFS suit le meme parcours, produit le meme `parent`, la meme reconstruction de chemin et le meme compteur d'expansions. Aucun comportement observable ne differe : aucun test ne peut distinguer le mutant de l'original, y compris via next_step_expansions (ajoute precisement pour rendre le TRAVAIL observable, et qui ne les separe pas non plus). NOTE : remplace une premiere justification qui affirmait « les tests passent quand meme » — argument circulaire (c'est la definition d'un survivant, pas une preuve) et de surcroit faux, puisqu'il supposait un comportement different mais benin.",
+    "verifie_le": "2026-07-21 (relance apres bornage du BFS : lignes 48 -> 61)",
+    "methode": "lecture du garde l.79 (visited.has) + re-execution du gate mutation apres ajout de 5 tests sur next_step_expansions : les 2 mutants survivent toujours, conformement a l'equivalence."
+  },
+  {
+    "name": "true->false",
+    "line": 87,
+    "justification": "EQUIVALENT PROUVE PAR LECTURE DU GARDE, meme argument qu'en l.61. `visited[neighbor] = true` n'est lu que par `visited.has(neighbor)` (l.79) : la valeur stockee est inerte, seule la presence de la cle compte. Le mutant `= false` enregistre la meme cle et produit donc un parcours, un resultat et un nombre d'expansions identiques. ATTENTION AU CONTRE-SENS : supprimer entierement le marquage serait un VRAI bug (re-enfilement des memes noeuds, travail qui explose) et serait tue par le test de borne d'expansions sur grande grille. Ce n'est PAS ce que fait ce mutant : il ecrit toujours la cle, il n'en change que la valeur, qui n'est jamais consultee.",
+    "verifie_le": "2026-07-21 (relance apres bornage du BFS : lignes 70 -> 87)",
+    "methode": "lecture du garde l.79 (visited.has) + re-execution du gate mutation : survivant confirme, conformement a l'equivalence."
+  }
+]

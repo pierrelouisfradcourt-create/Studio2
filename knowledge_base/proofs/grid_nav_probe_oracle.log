@@ -1,0 +1,17 @@
+[godot_oracle] === run_tests.gd (mecanique) ===
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+
+=== RESULT: 39 passed, 0 failed ===
+[godot_oracle] OK : run_tests.gd (mecanique)
+[godot_oracle] === solvability_godot.mjs (R9) ===
+{
+  "project": "games/grid_nav_probe",
+  "trials": 50,
+  "won": 50,
+  "lost": 0,
+  "failed_seeds": [],
+  "verdict": "OK"
+}
+[godot_oracle] OK : solvabilite (R9)
+[godot_oracle] ALL CHECKS PASSED

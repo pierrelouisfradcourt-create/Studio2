@@ -1,0 +1,60 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.wiremap_concept_reuse_requalification
+statement: Une ligne de wiremap reused_from.type=CONCEPT transposee d'un jeu a un
+  autre peut porter une promesse (expected_proof) fausse dans le nouveau contexte
+  si le genre change de nature (ex. grille discrete -> physique continue temps reel)
+  ; la provenance seule ne prouve pas la transposabilite, une justification explicite
+  de compatibilite de genre devrait etre exigee.
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-wiremap_concept_reuse_requalification
+  kind: pattern
+  function: Une ligne de wiremap reused_from.type=CONCEPT transposee d'un jeu a un
+    autre peut porter une promesse (expected_proof) fausse dans le nouveau contexte
+    si le genre change de nature (ex. grille discrete -> physique continue temps reel)
+    ; la provenance seule ne prouve pas la transposabilite, une justification explicite
+    de compatibilite de genre devrait etre exigee.
+  source: Forge lesson 'forge.wiremap_concept_reuse_requalification' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.wiremap_concept_reuse_requalification
+    supporting_runs:
+    - breakout_v2-run3-20260731-111149
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-01T14:55:15.828330+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - breakout_v2
+  invariants:
+  - Une ligne de wiremap reused_from.type=CONCEPT transposee d'un jeu a un autre peut
+    porter une promesse (expected_proof) fausse dans le nouveau contexte si le genre
+    change de nature (ex. grille discrete -> physique continue temps reel) ; la provenance
+    seule ne prouve pas la transposabilite, une justification explicite de compatibilite
+    de genre devrait etre exigee.
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - breakout_v2-run3-20260731-111149
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-02T11:48:55+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T05:58:59+00:00'

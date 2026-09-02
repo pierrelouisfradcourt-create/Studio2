@@ -1,0 +1,197 @@
+{
+ "schema_version": 1,
+ "capabilities": [
+  {
+   "id": "instance_separation",
+   "name": "Separation stricte des instances a la generation",
+   "solves": [
+    "PROMPT_FIELD_OMISSION"
+   ],
+   "source_mutation": "M-ws5",
+   "input_contract": "specification de tache (genre + contrat + oracle), versionnee et hachee",
+   "output_contract": "artefact worldscan.json, 2 jeux decrits independamment",
+   "evidence_refs": [
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/before.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/after.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/oracle_before.json"
+   ],
+   "metrics": {
+    "field_completion_without_regression": 0.889,
+    "discriminance_count": 0,
+    "cross_field_count": 0,
+    "completion_tokens": 569
+   },
+   "limitations": [
+    "laisse 2 champs sur 18 vides (retention_answer) : l oracle ne passe pas seule",
+    "mesuree sur un seul run"
+   ],
+   "state": "aucun artefact",
+   "action": "generer en traitant chaque entree comme une tache isolee",
+   "expected_metric": "field_completion_without_regression",
+   "constraints": [
+    "discriminance_count == 0"
+   ],
+   "executor_status": "EXECUTABLE",
+   "measurement_status": "CONSTRAINT_ONLY",
+   "capability_status": "PROVEN_EXECUTABLE",
+   "production_ready": false,
+   "runtime_role": "worldscan",
+   "quality_not_proven": true,
+   "quality_basis": "sortie jugee par un oracle de STRUCTURE seul : aucune mesure de la justesse du contenu genere"
+  },
+  {
+   "id": "targeted_field_repair",
+   "name": "Reparation locale d un champ sous liste blanche",
+   "solves": [
+    "REPAIR_NON_CONVERGENCE"
+   ],
+   "source_mutation": "REPAIR-LOOP-V1",
+   "input_contract": "artefact + problems[] d oracle au format « <chemin>: <raison> »",
+   "output_contract": "meme artefact, seuls les chemins fautifs modifies, non-regression calculee",
+   "evidence_refs": [
+    "EVIDENCE/bundles/REPAIR_NON_CONVERGENCE/worldscan_input.json",
+    "EVIDENCE/bundles/REPAIR-LOOP-V1/worldscan_after.json",
+    "EVIDENCE/bundles/REPAIR-LOOP-V1/oracle_result.json",
+    "EVIDENCE/bundles/REPAIR-LOOP-V1/measured_metrics.json"
+   ],
+   "metrics": {
+    "problems_resolved_ratio": 1,
+    "completion_tokens": 68,
+    "regression_count": 0,
+    "discriminance_count": 0
+   },
+   "limitations": [
+    "converge vers l ORACLE, pas vers la qualite : un oracle de non-vacuite fait ecrire des valeurs non vides, pas justes",
+    "ne repare pas un finding non adressable (nom de fichier, manque d objet entier)"
+   ],
+   "state": "artefact rejete par un oracle",
+   "action": "reparer UNIQUEMENT les chemins cites par l oracle",
+   "expected_metric": "problems_resolved_ratio",
+   "constraints": [
+    "regression_count == 0",
+    "arret sur decroissance stricte des problemes"
+   ],
+   "executor_status": "EXECUTABLE",
+   "measurement_status": "CONSTRAINT_ONLY",
+   "capability_status": "PROVEN_EXECUTABLE",
+   "production_ready": false,
+   "runtime_role": "repair_runtime",
+   "quality_not_proven": true,
+   "quality_basis": "l oracle valide la FERMETURE DU DEFAUT MESURE, pas la qualite redactionnelle, ni la valeur gameplay, ni l experience joueur"
+  },
+  {
+   "id": "duplicate_content_detection",
+   "name": "Detection de deux entrees decrites par la meme phrase",
+   "solves": [
+    "ORACLE_FALSE_NEGATIVE"
+   ],
+   "source_mutation": "Q1-DISCRIMINANCE",
+   "input_contract": "artefact structure quelconque",
+   "output_contract": "liste de signaux DISCRIMINANCE avec leurs chemins",
+   "evidence_refs": [
+    "EVIDENCE/bundles/Q1-DISCRIMINANCE/worldscan_before.json",
+    "EVIDENCE/bundles/Q1-DISCRIMINANCE/worldscan_after.json",
+    "EVIDENCE/bundles/Q1-DISCRIMINANCE/metrics.json",
+    "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/measured_metrics.json"
+   ],
+   "metrics": {
+    "false_positive_count": 0,
+    "detection_rate": 1,
+    "false_positive_rate": 0,
+    "sample_size": 12
+   },
+   "limitations": [
+    "ne compare que le MEME champ entre entrees : une contamination inter-champs lui est invisible",
+    "detection_rate mesure UNIQUEMENT sur la classe DISCRIMINANCE (n=12). Le module execute aussi LANGUE (Q2-LANGUE) et RECOPIE (Q3-RECOPIE) : ces deux classes tournent a chaque appel mais ne sont ni citees en source_mutation ni mesurees.",
+    "defauts INJECTES donc connus d avance : un type de defaut non injecte reste invisible"
+   ],
+   "state": "artefact accepte par l oracle mecanique",
+   "action": "signaler les champs de sens identiques entre entrees",
+   "expected_metric": "detection_rate",
+   "constraints": [
+    "false_positive_count == 0 sur les artefacts connus-bons"
+   ],
+   "executor_status": "EXECUTABLE",
+   "measurement_status": "OBJECTIVE_MEASURED",
+   "capability_status": "PROVEN_EXECUTABLE",
+   "production_ready": false,
+   "runtime_role": "deterministic",
+   "quality_not_proven": false,
+   "quality_basis": "detection_rate et false_positive_rate mesures sur defauts injectes connus (n=12)",
+   "executed_by": [
+    {
+     "runtime_role": "deterministic",
+     "implementation": "forge/oracle_quality.mjs (mesurerSignalSemantique)",
+     "invoked_from": [
+      "forge/repair_step.mjs:126",
+      "forge/repair_step.mjs:192"
+     ],
+     "embedded_in": "repair_runtime (phaseQualite)"
+    }
+   ]
+  },
+  {
+   "id": "cross_field_copy_detection",
+   "name": "Detection d une copie entre champs d entrees differentes",
+   "solves": [
+    "DEFECT_DISPLACEMENT"
+   ],
+   "source_mutation": "M-Q5-A",
+   "input_contract": "artefact structure quelconque",
+   "output_contract": "liste de signaux WARNING_CROSS_FIELD_COPY (source, cible)",
+   "evidence_refs": [
+    "EVIDENCE/bundles/M-Q5-A/worldscan_before.json",
+    "EVIDENCE/bundles/M-Q5-A/worldscan_after.json",
+    "EVIDENCE/bundles/M-Q5-A/metrics.json",
+    "EVIDENCE/bundles/M-Q5-A/diff.json",
+    "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/measured_metrics.json"
+   ],
+   "metrics": {
+    "false_positive_count": 0,
+    "detection_rate": 1,
+    "false_positive_rate": 0,
+    "sample_size": 10
+   },
+   "limitations": [
+    "une seule strategie active (A : egalite normalisee) ; B/C/D existent mais ne sont pas activees",
+    "detection_rate mesure sur defauts INJECTES (n=10) ; residual_defect_rate, la metrique objectif de son root_problem, n a jamais ete mesuree"
+   ],
+   "state": "artefact apres reparation",
+   "action": "signaler qu un champ reprend un AUTRE champ d une AUTRE entree",
+   "expected_metric": "residual_defect_rate",
+   "constraints": [
+    "false_positive_count == 0 sur 12 artefacts connus-bons"
+   ],
+   "executor_status": "EXECUTABLE",
+   "measurement_status": "OBJECTIVE_MEASURED",
+   "capability_status": "PROVEN_EXECUTABLE",
+   "production_ready": false,
+   "runtime_role": "deterministic",
+   "quality_not_proven": false,
+   "quality_basis": "detection_rate et false_positive_rate mesures sur defauts injectes connus (n=10)",
+   "executed_by": [
+    {
+     "runtime_role": "deterministic",
+     "implementation": "forge/cross_field_quality.mjs (mesurerCroise)",
+     "invoked_from": [
+      "forge/repair_step.mjs:175",
+      "forge/repair_step.mjs:193"
+     ],
+     "embedded_in": "repair_runtime (phaseQualite)"
+    }
+   ]
+  }
+ ],
+ "proven_chains": [
+  {
+   "id": "worldscan_complete_v1",
+   "source_of_truth": {
+    "file": "forge/agent_recipes.json",
+    "recipe_id": "world_scan_repair_v1"
+   },
+   "note": "DOUBLON RESOLU 2026-08-04 : cette entree declarait les memes capacites pour le meme root_problem que la recette. Deux ecritures du meme fait divergent ; la recette est la source de verite parce qu elle est LUE par candidate_selector.mjs et execution_binding.mjs. Aucune preuve supprimee : le chemin ci-dessous est conserve, et les chiffres mesures (0,889 -> 1,0, oracle FAIL -> OK, 0 regression, 70 tokens) vivent dans ce fichier.",
+   "evidence": "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/measured_metrics.json"
+  }
+ ]
+}

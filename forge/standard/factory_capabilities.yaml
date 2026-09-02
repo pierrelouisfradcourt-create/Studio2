@@ -1,0 +1,99 @@
+# REGISTRE USINE — vocabulaire FERME des preoccupations d'USINE.
+#
+# Jumeau de `capabilities.yaml`, gouvernance SEPAREE. Ratifie Pierre 2026-08-10.
+#
+# POURQUOI DEUX REGISTRES. Le bloc SNAKE de `capabilities.yaml` (ratifie 2026-07-28)
+# pose que « SEULES les capacites du JEU entrent ici », et exclut nommement les
+# preoccupations d'usine — execution d'oracles, manifeste de preuve, gate de mutation,
+# rapports de wiremap, sondes de debug, garde de purete, rejeu de determinisme.
+# Cette regle etait tenue par de la prose : rien n'empechait mecaniquement une sonde
+# d'entrer dans le registre produit, et c'est exactement ce que la wiremap Tetris a
+# fait en declarant `game.debug_state` (ligne `debug.observation_point`).
+#
+# Le defaut n'etait PAS un identifiant isole : au 2026-08-10, deux jeux declarent
+# 13 identifiants de cette famille — Tetris 1 (`game.debug_state`) et Pacman 12
+# (`probe.stream`, `proof.*` x7, `solvability.*` x3, `render.capture`), plus
+# `game.observable` qui pose la meme question. Le choix retenu (option b) est de
+# donner a l'usine son propre espace de noms plutot que d'amender retroactivement
+# la doctrine pour faire entrer un artefact de preuve dans le registre produit :
+#
+#     game.* / play.* / input.* / render.* / audio.*   ->  capabilities.yaml
+#     probe.* / proof.* / solvability.* / factory.*    ->  CE FICHIER
+#
+# CE QUE CE FICHIER NE CHANGE PAS. `check_collisions` applique aux identifiants
+# d'usine EXACTEMENT les memes regles structurelles qu'aux capacites de jeu
+# (single_owner, doubles proprietaires, trous, ordre d'ecriture implicite) : separer
+# les gouvernances ne cree aucune zone franche. Un identifiant absent des DEUX
+# registres reste un FAIL — le vocabulaire demeure ferme.
+#
+# COMMENT IL GRANDIT. Comme son jumeau : par proposition mesuree, jamais par
+# invention. `driver.py::_propose_capability_gaps` depose une proposition pour tout
+# identifiant inconnu ; c'est Pierre qui tranche, A LA PROMOTION, dans lequel des deux
+# registres l'identifiant entre. Le `statement` reste humain (meme limite honnete que
+# `propose_capability_gap` pose deja).
+#
+# ETAT AU 2026-08-10 : amorce a UNE entree, celle qui debloque Tetris. Les 12
+# identifiants d'usine de Pacman ne sont PAS pre-remplis ici — ils n'ont pas encore
+# ete mesures par un oracle (pacman n'est jamais passe par le driver). Ils
+# remonteront par le profil `oracle_only`, et seront ratifies alors. Ecrire ici un
+# vocabulaire non mesure serait exactement l'invention que la Forge s'interdit.
+
+schema_version: 1
+
+# ESPACES DE NOMS DE L'USINE — champ STRUCTURE, lu par le code, jamais un commentaire
+# (regle ratifiee 2026-07-23 : aucune decision dans un commentaire).
+#
+# Sert au ROUTAGE des propositions : un identifiant inconnu dont le nom commence par
+# l'un de ces prefixes part dans `EVIDENCE/reports/forge_factory_capability_gap_proposals.jsonl`
+# (file USINE) au lieu de la file PRODUIT que Pierre arbitre. Sans ce tri, la mesure de
+# pacman deverserait 8 identifiants d'usine au milieu de 67 identifiants de jeu.
+#
+# La liste est DERIVEE DU REEL, pas anticipee : chaque prefixe est present dans une
+# wiremap mesuree au 2026-08-10.
+#   probe.        sondes d'observation      (pacman v2 : probe.observable)
+#   proof.        harnais de preuve         (pacman v2 : proof.* x6)
+#   bot.          bot de solvabilite        (pacman v2 : bot.solvability)
+#   solvability.  idem, nommage pacman v1   (conserve : la carte v1 reste lisible)
+#   factory.      generique, reserve
+#
+# LIMITE : le routage se fait sur le NOM. Une preoccupation d'usine mal nommee part en
+# produit — c'etait le cas de `game.debug_state` (Tetris) avant son renommage. Ce
+# mecanisme reduit le bruit ; il ne remplace pas l'arbitrage humain a la promotion.
+namespaces:
+  - "probe."
+  - "proof."
+  - "bot."
+  - "solvability."
+  - "factory."
+
+factory_capabilities:
+
+  # ---------- sondes d'observation ----------
+  # Apportee par TETRIS (ligne wiremap `debug.observation_point`, run
+  # tetris-fullgodot-20260803-084719). Declaree `game.debug_state` a l'origine :
+  # l'identifiant change d'espace de noms, la ligne et le code (05_SYSTEMS/
+  # debug_state/debug_state.gd) sont inchanges.
+  - id: probe.state_snapshot
+    statement: "Exposer un instantane de l'etat lisible par un oracle, en copie profonde et sans effet de bord — jamais destine au joueur."
+    single_owner: true
+
+  # ---------- bot de preuve ----------
+  # Ratification Pierre 2026-08-10. Identifiant PROPOSE PAR LA MESURE, jamais forge ici :
+  # run pacman-capitalisation-20260810 l'a depose en file usine depuis la wiremap v2 de
+  # Pacman (ligne solvability.*). Tetris le REPREND plutot que de creer un synonyme —
+  # une seule ratification couvre les deux jeux.
+  #
+  # Deux implementations reelles au moment de la ratification :
+  #   - GAMES/tetris/solvability.gd (146 l.) — bot deterministe, N_SURVIVE=100
+  #   - GAMES/pacman/06_RUNTIME/adapters/solvability_bot/ — bot de parcours
+  # Le `statement` decrit ce que les DEUX font, sans epouser le critere de l'un : Tetris
+  # prouve une SURVIE (pas d'etat gagne), Pacman un PARCOURS complet. Le critere de
+  # reussite appartient au jeu, la capacite decrit le MOYEN.
+  #
+  # USINE et non produit : c'est un instrument de preuve, exclu du registre produit par
+  # la regle du bloc SNAKE de capabilities.yaml. Le statement de `game.solo_opponent`
+  # (registre produit) pose deja la frontiere : « adversaire automatique [...], DISTINCT
+  # du bot de solvabilite ».
+  - id: bot.solvability
+    statement: "Piloter une partie de bout en bout par un bot deterministe, via le meme canal public que le joueur (intentions, jamais de forcage d'etat), et rendre un verdict de jouabilite reproductible a graine egale."
+    single_owner: true

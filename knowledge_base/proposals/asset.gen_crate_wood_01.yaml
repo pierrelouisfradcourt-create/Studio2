@@ -1,0 +1,57 @@
+schema: kb.proposal.v1
+status: PROPOSED
+proposal_id: asset.gen_crate_wood_01
+origine: asset_library_v1 — scripts/forge/asset_producer/propose_asset.py
+statement: 'Ingerer l''asset 3D ''gen_crate_wood_01'' (prop) dans la bibliotheque
+  : geometrie mesuree independamment et jugee OK par l''Asset Geometry Oracle.'
+entree_catalogue_proposee:
+  entry_type: asset
+  asset_id: asset-gen-crate-wood-01
+  source: ORIGINAL — aucune inspiration externe citee — scripts/forge/asset_producer/build_asset.py
+  license: CC0-1.0
+  provenance_url: null
+  style: lowpoly
+  genre:
+  - generic
+  biome: null
+  format: 3D
+  size_kb: 2
+  sha256: b57c561b8956350d25ce73e2f882ceb73d9ccd57b0ef4591f84a9c9f5e81e9da
+  runtime: godot
+  ingested: true
+  path: knowledge_base/assets/props3d/gen_crate_wood_01.glb
+  usage_examples: []
+  tier: candidate
+  category: prop
+  geometry_status: OK
+  geometry_manifest: null
+  consumer:
+  - obstacle destructible
+  - decor de niveau
+  variants: []
+preuve:
+  oracle: scripts/forge/asset_geometry/oracle.py
+  verdict: OK
+  measurement_space: gltf_bind_pose
+  skin_evaluated: false
+  anchor_basis: MAIN+SECONDARY hors ['collider'] (1 noeuds)
+  checks:
+    manifest_present: OK
+    ground_contact: OK
+    no_buried_geometry: OK
+    pivot_at_base: OK
+    scale_within_band: OK
+    all_meshes_declared: OK
+    declaration_mismatch: OK
+  census:
+  - name: gen_crate_wood_01
+    classification: MAIN
+    declared_role: null
+  declaration_producteur: <asset>.glb.metadata.json — DECLARATION, confrontee par
+    declaration_mismatch, jamais une preuve
+  generation_report: gen_crate_wood_01.generation_report.json
+ratification:
+  statut: EN_ATTENTE
+  decideur: null
+  commande: python -m scripts.forge.kb_proposal --apply asset.gen_crate_wood_01 --ratifie-par
+    "<humain>"

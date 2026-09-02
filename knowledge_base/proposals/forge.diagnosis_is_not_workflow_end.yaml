@@ -1,0 +1,68 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.diagnosis_is_not_workflow_end
+statement: 'Un diagnostic n''est PAS une fin de workflow. Quand la Forge identifie
+  la cause racine, le composant responsable et la correction evidente, elle applique
+  la correction AVANT de demander une validation humaine. La sortie attendue est PROBLEM
+  / CAUSE / ACTION / VALIDATION / ESCALADE-si-choix-humain-restant, jamais PROBLEM
+  / CAUSE / QUESTION. Ne jamais transformer un bug d''implementation en decision humaine.
+  Grille avant escalade : prevu au Master Schema ? deja contracte ? cause identifiee
+  ? solution determinee ? risque acceptable ? Si oui aux cinq : reparer, tester, documenter.'
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-diagnosis_is_not_workflow_end
+  kind: pattern
+  function: 'Un diagnostic n''est PAS une fin de workflow. Quand la Forge identifie
+    la cause racine, le composant responsable et la correction evidente, elle applique
+    la correction AVANT de demander une validation humaine. La sortie attendue est
+    PROBLEM / CAUSE / ACTION / VALIDATION / ESCALADE-si-choix-humain-restant, jamais
+    PROBLEM / CAUSE / QUESTION. Ne jamais transformer un bug d''implementation en
+    decision humaine. Grille avant escalade : prevu au Master Schema ? deja contracte
+    ? cause identifiee ? solution determinee ? risque acceptable ? Si oui aux cinq
+    : reparer, tester, documenter.'
+  source: Forge lesson 'forge.diagnosis_is_not_workflow_end' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.diagnosis_is_not_workflow_end
+    supporting_runs:
+    - tetris-fullgodot-20260803-084719
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-03T11:32:30.815423+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - tetris-fullgodot-20260803-084719
+  invariants:
+  - 'Un diagnostic n''est PAS une fin de workflow. Quand la Forge identifie la cause
+    racine, le composant responsable et la correction evidente, elle applique la correction
+    AVANT de demander une validation humaine. La sortie attendue est PROBLEM / CAUSE
+    / ACTION / VALIDATION / ESCALADE-si-choix-humain-restant, jamais PROBLEM / CAUSE
+    / QUESTION. Ne jamais transformer un bug d''implementation en decision humaine.
+    Grille avant escalade : prevu au Master Schema ? deja contracte ? cause identifiee
+    ? solution determinee ? risque acceptable ? Si oui aux cinq : reparer, tester,
+    documenter.'
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - tetris-fullgodot-20260803-084719
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-03T11:32:30+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T11:32:31+00:00'

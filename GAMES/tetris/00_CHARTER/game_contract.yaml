@@ -1,0 +1,110 @@
+# TETRIS — contrat de jeu (budget + preuve). Nœud 4 du curriculum.
+# Format : scripts/forge/standard/SCHEMA.md §1 — schéma FERMÉ, exactement 7 clés de
+# premier niveau. Gabarit : games/breakout_v2/00_CHARTER/game_contract.yaml.
+#
+# STATUT : PROPOSITION DE BOOTSTRAP (2026-08-03). Ce fichier est mécaniquement valide
+# (check_contract_completeness) mais N'EST PAS RATIFIÉ. Le charter narratif (critères de
+# succès, paramètres de design, actions interdites) reste à produire par l'étape s0 sous
+# son contrat — il n'est PAS pré-écrit ici : un bootstrap prépare le terrain, il ne joue
+# pas les étapes à la place des agents.
+#
+# NŒUD : 4. Suit le précédent MÉCANIQUE Pong=1 / Snake=2 / Breakout_v2=3.
+
+schema_version: 1
+game_id: tetris
+node: 4
+runtimes: [rules, godot]
+
+budget:
+  # reuses: VIDE — et c'est une décision, pas un oubli. Le catalogue ne contient
+  # aujourd'hui qu'une brique Godot en tier validated/candidate (sys-grid-nav-m01,
+  # navigation sur grille discrète). Tetris EST sur grille discrète, donc cette brique
+  # est le premier candidat sérieux depuis le début du curriculum — mais la déclarer
+  # ici sans avoir vérifié son API réelle contre le besoin ferait échouer le volet
+  # budget, et surtout répéterait l'erreur P5 (une brique importée « littéralement »
+  # alors que sa signature ne correspondait pas). À trancher à l'étape s3/s4, sur
+  # lecture du code de la brique, pas sur son nom.
+  reuses: []
+  # adds: VIDE. Ce build ne PROMET aucun dépôt en bibliothèque. Si le forgeron juge
+  # qu'un système mérite d'être légué (le générateur en sac de 7 est le candidat le
+  # plus probable), le budget le BLOQUE et le remonte — comportement voulu.
+  adds: []
+
+assets:
+  # Rendu par primitives du moteur, aucun asset externe prévu. Même position que
+  # Snake et Breakout_v2.
+  plan: cc0
+
+# =====================================================================================
+# DESCRIPTEUR DE PREUVE — contrat docs/forge/CONTRAT_PREUVE_MUTATION_V1.md (FIGÉ).
+# =====================================================================================
+proof:
+  schema_version: 1
+  runtime: godot
+
+  mutation:
+    # À CONFIRMER contre la wiremap RÉELLE une fois gelée (règle de forme 4 du contrat :
+    # une catégorie ni jugée ni exclue est un BLOCKED). Valeurs calquées sur Breakout_v2,
+    # à vérifier catégorie par catégorie — pas à recopier aveuglément.
+    categories_mutables: [system]
+    categories_exclues:
+      - system.adapter        # rendu/runtime -> oracle produit, pas mutation
+      - test.unit
+      - test.oracle
+      - godot.project_root
+      - godot.project_tests
+      # Ajoutees le 2026-08-17 (GO Pierre). Regression mesuree : la taxonomie s'est enrichie
+      # cote Forge (d623334, 2788ab4), les wiremaps ont adopte les nouvelles categories, mais
+      # AUCUN contrat de jeu ne les classait -> `evaluate_proof_descriptor` rejetait le
+      # descripteur (contrat §2 regle 4 : une categorie non classee est une decision non prise).
+      # EXCLUES, meme critere que `level`/`world.rules` chez bomberman_3d : ce n'est pas du code.
+      - reference.observation # GAME_REFERENCE/*.md + observation_manifest.json : documentation
+      - asset.mesh            # 04_ASSETS/meshes/*.glb + *.import : binaires, rien a muter
+
+    command: ["<bin:godot>", "--headless", "--path", ".", "--script", "res://tests/run_tests.gd"]
+    cwd: "games/tetris"
+    binary_ref: godot
+    expects_exit_zero: true
+
+    budget:
+      # NON CALIBRÉ. Aucune mesure Tetris n'existe. Ces valeurs sont un point de départ
+      # [H] repris de Breakout_v2, PAS une valeur ratifiée. À recalibrer sur mesure
+      # réelle avant s9, jamais après un dépassement silencieux.
+      max_mutants: 200          # A_CALIBRER
+      timeout_per_mutant_s: 30  # A_CALIBRER
+      total_timeout_s: 900      # A_CALIBRER
+      cost_class: engine
+
+    seals:
+      wrapper: []
+      test_scripts: ["tests/run_tests.gd"]
+
+  solvability:
+    entry: "solvability.gd"
+    # HONNÊTETÉ DE GENRE — décision PRISE, plus ouverte. `genre.tetris.no_victory_in_marathon`
+    # interdit un état gagné : `solvability.gd` définit donc `succeeded` comme « survit
+    # >= N_SURVIVE pièces ET nettoie >= 1 ligne » (l.66-67), une preuve que le système est
+    # JOUABLE et que l'objectif est ATTEIGNABLE — jamais un « le bot gagne ». Le `won: 50/50`
+    # que rend l'oracle doit se lire ainsi, sans quoi il promettrait plus qu'il ne mesure.
+    # CALIBRÉ le 2026-08-18 (GO Pierre) — l'ancienne valeur `20000` était marquée
+    # A_CALIBRER, marge large volontaire, et n'avait JAMAIS été consommée : `oracles.json`
+    # ne portait aucune entrée `solvability` pour tetris, le jeu tournait donc sur les
+    # DÉFAUTS (`max_ticks: 200`), et rendait `won: 0/50` — un faux négatif, pas un défaut
+    # du jeu. Il manquait 300 ticks.
+    #
+    # 500 N'EST PAS UN NOUVEAU CALIBRAGE : c'est la valeur DÉJÀ MESURÉE ET RATIFIÉE le
+    # 2026-08-10 et inscrite dans `solvability.gd` (l.20-33, 18 graines, preuve sous
+    # `lab/forge_evidence/TETRIS_SOLVABILITY_N_20260810/`) — cadence 4,448 ticks/pièce ×
+    # plancher `N_SURVIVE = 100` ⇒ ~445 ticks nécessaires. Le balayage du 2026-08-18 l'a
+    # retrouvée indépendamment : bascule entre 400 (0/10) et 500 (10/10).
+    #
+    # LES DEUX CONSTANTES SONT COUPLÉES (avertissement de `solvability.gd`) : à 4,448
+    # ticks/pièce, `max_ticks` borne mécaniquement le nombre de pièces atteignables.
+    # Relever `N_SURVIVE` sans relever `max_ticks` fabrique un faux négatif certain.
+    max_ticks: 500
+    trials: 50
+    # Coût mesuré ~0,5 s/essai à 500 ticks ⇒ marge ×20. Les trois autres jeux déclarent
+    # 60000 : ce serait une CONVENTION DE PARC, pas un calibrage. Inscrit même s'il égale
+    # `DEFAULT_TRIAL_TIMEOUT_MS`, pour ne pas dépendre silencieusement d'un défaut — le
+    # défaut même que ce lot ferme.
+    trial_timeout_ms: 10000

@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_button_floor_01",
+  "archetype": "button",
+  "params": {
+    "size": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 0.2
+    },
+    "color": [
+      0.35,
+      0.35,
+      0.38,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_button_floor_01_base",
+    "gen_button_floor_01_cap"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 8684,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

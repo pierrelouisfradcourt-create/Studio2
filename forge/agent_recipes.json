@@ -1,0 +1,123 @@
+{
+ "schema_version": 1,
+ "recipes": [
+  {
+   "id": "world_scan_repair_v1",
+   "mission": "Produire un manifeste World Scan complet pour un genre donne, sans champ obligatoire manquant et sans deux jeux decrits par la meme phrase.",
+   "root_problem": "PROMPT_FIELD_OMISSION",
+   "capability_chain": [
+    {
+     "capability": "instance_separation",
+     "evidence": "M-ws5"
+    },
+    {
+     "capability": "targeted_field_repair",
+     "evidence": "REPAIR-LOOP-V1"
+    }
+   ],
+   "runtime_roles": [
+    {
+     "capability": "instance_separation",
+     "capability_role": "worldscan"
+    },
+    {
+     "capability": "targeted_field_repair",
+     "capability_role": "repair_runtime"
+    }
+   ],
+   "evidence_requirements": [
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/measured_metrics.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/measured_metrics.json",
+    "EVIDENCE/bundles/REPAIR-LOOP-V1/measured_metrics.json",
+    "EVIDENCE/bundles/REPAIR_RUNTIME_V1/replay_metrics.json"
+   ],
+   "validation_contract": {
+    "objective_metric": "field_completion_without_regression",
+    "constraints": [
+     "discriminance_count max 0",
+     "completion_tokens max declared"
+    ],
+    "oracle": "check_worldscan.mjs v0.3"
+   },
+   "proven": true,
+   "recipe_status": "EXECUTABLE",
+   "blocked_reasons": [],
+   "quality_not_proven": true,
+   "production_ready": false,
+   "quality_note": "L oracle valide la fermeture du defaut mesure. Il ne valide ni la qualite redactionnelle, ni la valeur gameplay, ni l experience joueur.",
+   "proven_basis": "chaine rejouee de bout en bout le 2026-08-04 a travers le runtime declare : entree sha256 0f7865ebd9a8a751, completion 0.889 -> 1.0, oracle FAIL -> OK, 0 regression, contract_status CONFORME"
+  },
+  {
+   "id": "duplicate_content_gate_v1",
+   "mission": "Detecter, sur un artefact deja produit, deux entrees distinctes decrites par la meme phrase — sans passer par une reparation.",
+   "root_problem": "ORACLE_FALSE_NEGATIVE",
+   "capability_chain": [
+    {
+     "capability": "duplicate_content_detection",
+     "evidence": "Q1-DISCRIMINANCE"
+    }
+   ],
+   "runtime_roles": [
+    {
+     "capability": "duplicate_content_detection",
+     "capability_role": "deterministic"
+    }
+   ],
+   "evidence_requirements": [
+    "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/measured_metrics.json",
+    "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/positifs.json",
+    "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/negatifs.json"
+   ],
+   "validation_contract": {
+    "objective_metric": "detection_rate",
+    "constraints": [
+     "false_positive_count max 0"
+    ],
+    "oracle": "oracle_quality.mjs (mesurerSignalSemantique)"
+   },
+   "proven": true,
+   "proven_basis": "capacite EXECUTEE (repair_step.mjs phaseQualite) ET mesuree en autonome (CAPABILITY_MEASUREMENT_V1, defauts injectes connus). Entrypoint CLI existant, aucun code ajoute.",
+   "recipe_status": "EXECUTABLE",
+   "blocked_reasons": [],
+   "quality_not_proven": false,
+   "production_ready": false,
+   "quality_note": "La detection est mesuree sur defauts injectes : elle borne ce qui a ete teste, pas ce qui existe."
+  },
+  {
+   "id": "cross_field_copy_gate_v1",
+   "mission": "Detecter, sur un artefact deja produit, un champ recopie depuis une AUTRE entree — le deplacement de defaut que la reparation peut creer.",
+   "root_problem": "DEFECT_DISPLACEMENT",
+   "capability_chain": [
+    {
+     "capability": "cross_field_copy_detection",
+     "evidence": "M-Q5-A"
+    }
+   ],
+   "runtime_roles": [
+    {
+     "capability": "cross_field_copy_detection",
+     "capability_role": "deterministic"
+    }
+   ],
+   "evidence_requirements": [
+    "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/measured_metrics.json",
+    "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/positifs.json",
+    "EVIDENCE/bundles/CAPABILITY_MEASUREMENT_V1/negatifs.json"
+   ],
+   "validation_contract": {
+    "objective_metric": "residual_defect_rate",
+    "constraints": [
+     "false_positive_count max 0"
+    ],
+    "oracle": "cross_field_quality.mjs (mesurerCroise, strategie A)"
+   },
+   "proven": true,
+   "proven_basis": "capacite EXECUTEE (repair_step.mjs phaseQualite) ET mesuree en autonome (CAPABILITY_MEASUREMENT_V1, defauts injectes connus). Entrypoint CLI existant, aucun code ajoute.",
+   "recipe_status": "EXECUTABLE",
+   "blocked_reasons": [],
+   "quality_not_proven": false,
+   "production_ready": false,
+   "quality_note": "La detection est mesuree sur defauts injectes : elle borne ce qui a ete teste, pas ce qui existe."
+  }
+ ]
+}

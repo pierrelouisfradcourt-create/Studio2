@@ -1,0 +1,63 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.run_status_not_liveness_proof
+statement: 'Un champ run_status: RUNNING dans un state.json n''est pas une preuve
+  de vie du run : quand un run long est lance depuis le shell d''un sous-agent orchestrateur
+  plutot que depuis la session de supervision, la mort de ce sous-agent tue son process
+  d''arriere-plan sans mettre a jour l''etat. Le step-timeout ne peut pas se declencher
+  car il vit dans le process mort. Avant de croire un RUNNING, verifier qu''un process
+  existe reellement et l''age du dernier updated_ts.'
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-run_status_not_liveness_proof
+  kind: pattern
+  function: 'Un champ run_status: RUNNING dans un state.json n''est pas une preuve
+    de vie du run : quand un run long est lance depuis le shell d''un sous-agent orchestrateur
+    plutot que depuis la session de supervision, la mort de ce sous-agent tue son
+    process d''arriere-plan sans mettre a jour l''etat. Le step-timeout ne peut pas
+    se declencher car il vit dans le process mort. Avant de croire un RUNNING, verifier
+    qu''un process existe reellement et l''age du dernier updated_ts.'
+  source: Forge lesson 'forge.run_status_not_liveness_proof' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.run_status_not_liveness_proof
+    supporting_runs:
+    - pong_r3
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-03T14:10:36.006543+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - pong_r3
+  invariants:
+  - 'Un champ run_status: RUNNING dans un state.json n''est pas une preuve de vie
+    du run : quand un run long est lance depuis le shell d''un sous-agent orchestrateur
+    plutot que depuis la session de supervision, la mort de ce sous-agent tue son
+    process d''arriere-plan sans mettre a jour l''etat. Le step-timeout ne peut pas
+    se declencher car il vit dans le process mort. Avant de croire un RUNNING, verifier
+    qu''un process existe reellement et l''age du dernier updated_ts.'
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - pong_r3
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-03T14:10:46+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T14:11:03+00:00'

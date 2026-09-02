@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "_statut": "DECLARATION — ne fait JAMAIS foi (confrontee par declaration_mismatch)",
+  "asset_id": "gen_chest_01",
+  "category": "chest",
+  "style": "lowpoly",
+  "license": "CC0-1.0",
+  "source": "ORIGINAL — aucune inspiration externe citee — scripts/forge/asset_producer/build_asset.py",
+  "provenance_url": null,
+  "produced_by": "blender 5.1.1 / archetype=chest",
+  "origin_rule": "base_center",
+  "ground_rule": "base_contact",
+  "variants": [
+    "lid_closed",
+    "lid_open"
+  ],
+  "consumer_examples": [
+    "coffre a butin",
+    "recompense de fin de salle"
+  ],
+  "lowest_point_y": 0.0,
+  "height_y": 0.7,
+  "width_x": 0.9,
+  "depth_z": 0.9
+}

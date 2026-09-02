@@ -1,0 +1,152 @@
+# Contrat ROLE gameplay — navigateur en grille (labyrinthe seedé)
+# Schéma : knowledge_base/roles/SCHEMA.md (13 champs + simulation_runtime, règle des 3 états)
+# Premier rôle du studio dont l'implémentation de référence tourne sur un moteur externe
+# (Godot headless) plutôt que Node pur — spec étape 0 §4/§5 : le contrat lui-même ne
+# nomme AUCUN moteur ; seul `simulation_runtime` (champ d'ouverture, validé fail-closed
+# par role_sim.mjs) déclare comment l'exécuter. Substituabilité certifiée : un futur
+# backend fournirait son propre `simulation_module`, mesuré avec la MÊME
+# simulation_config et les MÊMES seeds — si sa bande retombe dans la bande déclarée
+# ci-dessous, la substitution est PROUVÉE, pas affirmée.
+
+role_id: role-grid-navigator
+
+archetype: >-
+  Une entité qui doit atteindre une position cible fixe à travers un espace comportant
+  des obstacles, en suivant le plus court chemin disponible vers cette cible. Ce que la
+  mesure vérifie est l'OPTIMALITÉ du navigateur : sur chaque agencement, atteint-il la
+  cible en exactement la longueur du plus court chemin ? CE N'EST PAS UNE BANDE DE
+  DIFFICULTÉ (correction 2026-07-21, audit de falsification Pierre) : le générateur
+  creuse une route monotone garantie, donc le plus court chemin vaut TOUJOURS la distance
+  de Manhattan (26 sur cette grille). La métrique ne prend qu'une seule valeur ; sa
+  variance est nulle. C'est un TEST D'OPTIMALITÉ BINAIRE déguisé en bande (optimal=26 /
+  sous-optimal≠26), pas une difficulté graduée. Prouvé : sur 60 graines, ticks==path_length
+  à 100%, une seule valeur distincte ; tandis que next_step_expansions (le travail du BFS)
+  variait de 2214 à 4362 sur les mêmes graines — la difficulté existe dans l'artefact, la
+  métrique choisie y est simplement aveugle. Voir design_debt plus bas.
+
+requires:
+  next_step: >-
+    fn(from, to, walls) -> pos — rend le premier pas du chemin le plus court de `from`
+    vers `to` en évitant `walls`, ou `from` si `to` est inatteignable. Pur,
+    déterministe, 4 directions.
+  path_length: >-
+    fn(from, to, walls) -> int — longueur du chemin le plus court de `from` vers `to`,
+    ou -1 si inatteignable ou si l'exploration dépasse une borne interne. Pur,
+    déterministe.
+
+fulfilled_by:
+  - sys-grid-nav-m01
+
+simulation_module: knowledge_base/systems/navigation/grid_nav_scenario.mjs
+
+# Champ d'ouverture (spec étape 0 §5) : la SEULE mention de moteur autorisée dans ce
+# contrat. role_sim.mjs la valide fail-closed (IMPLEMENTED_RUNTIMES = ['node','godot']) —
+# toute valeur hors de cette liste fermée est un INVALID_CONTRACT, jamais une exécution
+# silencieuse ou un défaut permissif.
+simulation_runtime: godot
+
+# Fenêtre de VALIDATION, volontairement DISJOINTE de toutes les fenêtres ayant servi
+# à choisir la bande (cf. calibration_note, correctif de revue) : la fenêtre 3000..3299
+# n'a jamais été explorée pendant la calibration. Même discipline que pursuer-mobile.yaml,
+# qui calibre sur 1..300 et valide sur une fenêtre disjointe — sinon le PASS serait vrai
+# PAR CONSTRUCTION (on rejouerait les graines déterministes ayant servi à fixer la bande)
+# au lieu d'être une confirmation indépendante.
+simulation_config:
+  trials: 300
+  seed_start: 3000
+  max_ticks: 200
+  godot_project: games/grid_nav_probe
+  godot_script: res://trial.gd
+  trial_timeout_ms: 30000
+
+# Bande de difficulté DÉCLARÉE — fixée APRÈS calibration réelle (voir calibration_note),
+# AVANT la mesure de validation officielle (celle exécutée par la commande de
+# vérification ci-dessous, qui tourne sur la simulation_config déclarée plus haut).
+# CE QUE CETTE BANDE TESTE — reformulé le 2026-07-21 après correction de la tautologie.
+# Elle ne mesure PAS un étalement de difficulté : elle teste l'OPTIMALITÉ du navigateur.
+# Le générateur creuse une route monotone garantie entre (1,1) et (14,14) sur une grille
+# 16x16 à ~60% de murs. La longueur de cette route est exactement la distance de Manhattan,
+# 13+13 = 26 — le plancher absolu. Aucun chemin plus court ne peut exister. Une bande
+# ponctuelle [26,26] signifie donc : « sur chacune des 300 graines, l'implémentation trouve
+# le plus court chemin ». Une implémentation même légèrement sous-optimale rend >26 et sort
+# de la bande. C'est le contrôle le PLUS STRICT possible sur cette métrique, pas un aveu de
+# faiblesse — une bande large aurait au contraire accepté un navigateur médiocre.
+difficulty_target:
+  metric: ticks_to_reach_goal_median
+  min: 26
+  max: 26
+
+calibration_note: >-
+  Calibration du 2026-07-21, ~1160 essais réels au total sur PLUSIEURS fenêtres de
+  graines (adaptateur godot_trial.mjs réel, pas de mock), pour caractériser la
+  distribution AVANT de figer la bande. Fenêtres testées : seeds 1..60 (n=60),
+  1..200 (n=200), 1..300 (n=300), 500..549 (n=50), 1000..1299 (n=300, = la
+  simulation_config déclarée ci-dessus), 2000..2049 (n=50), 5000..5099 (n=100),
+  10000..10049 (n=50), 50000..50049 (n=50). Deux invariants tiennent sur TOUTES les
+  fenêtres : min=26 (plancher théorique de Manhattan entre (1,1) et (14,14) sur cette
+  grille 16x16, |13|+|13|=26 — jamais franchi, cohérent) et max=34 (jamais dépassé,
+  ~aucune instance injouable : succès=100% sur les ~1160 essais, 0 échec). En
+  revanche la MÉDIANE N'EST PAS STABLE entre fenêtres : les petites graines (1..60,
+  1..300) reproduisent QUASI EXACTEMENT l'avertissement de la revue de l'étape
+  précédente (18 graines: 26×11, 30×3, 34×4) — ici 1..300 donne 26×178 (59%), 30×58,
+  34×64, médiane=26=le plancher. Les fenêtres à graines plus élevées (500+, 1000+,
+  2000+, 5000+, 10000+, 50000+) donnent une répartition plus équilibrée entre
+  {26,28,30,32,34}, médiane systématiquement 29 ou 30 (jamais 26). Sur la fenêtre
+  RETENUE pour simulation_config (seed_start=1000, trials=300, déterministe donc
+  rejouable à l'identique) : succès=300/300, min=26, médiane=30, max=34,
+  fréquence{26:105 (35%), 30:105 (35%), 34:90 (30%)} — médiane robuste (les deux
+  valeurs centrales du tri sont 30, pas un artefact de parité). Bande [28,32] choisie
+  SERRÉE autour de cette médiane mesurée (marge ±2, pas ±10 comme pursuer-mobile) :
+  assez étroite pour REJETER une implémentation dégénérée qui rendrait toujours le
+  plancher (26 < 28, hors bande) — contrairement à une bande large qui aurait dû
+  inclure 26 pour "couvrir" la fenêtre 1..300 et aurait alors laissé passer ce cas
+  dégénéré sans le détecter. RÉSERVE HONNÊTE, à ne pas taire : ce pouvoir
+  discriminant tient SPÉCIFIQUEMENT au choix de seed_start=1000 (repris de la
+  convention pursuer-mobile, pas choisi après coup pour "faire passer" le test — mais
+  la fenêtre 1..300 explorée AVANT ce choix aurait, elle, forcé une bande incluant le
+  plancher). Si un futur backend est mesuré sur une fenêtre de graines à faible
+  magnitude, il pourrait retomber dans le régime dégénéré (médiane collée au
+  plancher) sans que la bande [28,32] le détecte différemment d'un bug réel — cette
+  dépendance à la fenêtre de graines est une limite CONNUE de la mesure, pas
+  corrigée ici. CORRECTIF DE REVUE (2026-07-21) — un défaut de méthode a été relevé
+  et corrigé : la fenêtre 1000..1299 avait servi À LA FOIS à choisir la bande et à la
+  valider. Le PASS était donc vrai PAR CONSTRUCTION (rejeu des mêmes graines
+  déterministes), pas une confirmation indépendante — exactement la discipline que
+  pursuer-mobile.yaml établit en calibrant sur 1..300 puis validant sur une fenêtre
+  disjointe. La validation officielle tourne désormais sur 3000..3299, fenêtre JAMAIS
+  explorée pendant la calibration. Mesure sur cette fenêtre tenue à l'écart :
+  min=26, médiane=30, max=34, 300/300 succès — identique à la fenêtre de calibration
+  et dans la bande. La bande généralise donc réellement à des graines non vues, ce qui
+  était jusque-là supposé et non démontré. Preuve brute complète (sortie réelle, pas
+  résumée) : knowledge_base/proofs/role_sim_grid_navigator_calibration.log.
+
+# DETTE DE CONCEPTION (ratifiée Pierre 2026-07-21). Champ NON consommé par l'oracle —
+# note humaine durable, portée par le contrat pour que tout consommateur du rôle la voie.
+design_debt: >-
+  Ce rôle NE fournit PAS un vrai benchmark de difficulté variable. Sa métrique
+  (ticks_to_reach_goal) mesure la longueur du plus court chemin, qui est constante par
+  construction du générateur (route monotone garantie). Décision assumée : NE PAS refaire
+  le générateur maintenant — l'objectif de grid-navigator est un test d'adaptateur / de
+  chaîne, pas un jeu à difficulté graduée, et le comportement actuel y suffit. Si un vrai
+  benchmark de difficulté est requis plus tard, deux voies (aucune n'est un réglage) :
+  (a) changer la métrique du rôle pour next_step_expansions — le travail du BFS, qui varie
+  réellement avec la structure (mesuré : 2214..4362, 21 valeurs distinctes sur 60 graines) ;
+  (b) écrire un générateur à DÉTOURS FORCÉS (murs obligeant à s'éloigner de la cible avant
+  d'y revenir), pour que la longueur du plus court chemin cesse d'être constante. Tant que
+  cette dette n'est pas levée, ne pas présenter la sortie de ce rôle comme une "bande de
+  difficulté" dans un rapport orienté Game Designer.
+
+proof_of_use: null
+
+tier: candidate
+
+license: MIT
+
+path: knowledge_base/roles/grid-navigator.yaml
+
+out_of_scope: >-
+  Ne couvre pas la navigation multi-agents, ni les obstacles dynamiques/mobiles
+  (`walls` est une carte fixe pour tout l'essai), ni la perception limitée
+  (`next_step`/`path_length` reçoivent toujours la carte de murs complète, jamais un
+  rayon de vision) — un rôle "navigateur à perception limitée" serait un contrat
+  distinct.

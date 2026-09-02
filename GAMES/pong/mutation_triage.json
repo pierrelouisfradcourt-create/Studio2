@@ -1,0 +1,23 @@
+[
+  {
+    "name": "ge->gt",
+    "line": 133,
+    "fichier": "05_SYSTEMS/game_loop/loop.mjs",
+    "expression": "vx: towardLoser >= 0 ? Math.abs(serveVx(...)) : -Math.abs(serveVx(...))",
+    "justification": "A la ligne 130, `const towardLoser = scored === 'p1' ? 1 : -1;` : towardLoser vaut TOUJOURS 1 ou -1, jamais 0. Les predicats `>= 0` et `> 0` ne different qu'a la valeur 0, inatteignable ici. Aucun test ne peut distinguer les deux versions. Mutant equivalent. (Ligne 114->133 : decalage du a l'ajout de TICK_HZ/SERVE_CROSS_DIST/ballCrossingTimeSeconds pour play.playable_speed ; re-verifie run pong_r3:2 2026-07-27.)"
+  },
+  {
+    "name": "or->and",
+    "line": 19,
+    "fichier": "05_SYSTEMS/input/input.mjs",
+    "expression": "const up = raw.up === true || raw[UP] === true;",
+    "justification": "UP === 'up' (ligne 9). raw[UP] est raw['up'], soit exactement raw.up : les deux operandes sont le MEME acces de propriete, donc la meme valeur X. `X || X` et `X && X` valent tous deux X pour toute entree. Mutant equivalent."
+  },
+  {
+    "name": "or->and",
+    "line": 20,
+    "fichier": "05_SYSTEMS/input/input.mjs",
+    "expression": "const down = raw.down === true || raw[DOWN] === true;",
+    "justification": "DOWN === 'down' (ligne 10). raw[DOWN] est raw['down'] = raw.down : meme acces de propriete, meme valeur X. `X || X` === `X && X` === X pour toute entree. Mutant equivalent."
+  }
+]

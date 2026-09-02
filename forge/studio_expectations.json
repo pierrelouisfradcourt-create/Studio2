@@ -1,0 +1,23 @@
+{
+  "_note": "Projection machine-lisible des AFFIRMATIONS des cartes de référence du studio (STUDIO_ARCHITECTURE.md, STUDIO_AGENT_ATLAS.md, STUDIO_MASTER_SCHEMA.html). studio_selfaudit.mjs compare `claimed` a la realite du filesystem et flague toute derive. Quand Pierre met une carte a jour, il met a jour la ligne ici -> la carte ne peut plus mentir en silence. claimed: 'target' (les cartes disent 'a construire/manquant/cible') | 'exists' (les cartes disent 'cable/prouve').",
+  "_maj": "2026-07-15 : les 6 lignes ci-dessous passent claimed target->exists apres correction des cartes (STUDIO_ARCHITECTURE.md / STUDIO_AGENT_ATLAS.md / STUDIO_MASTER_SCHEMA.html portent desormais un bandeau MaJ 2026-07-15). Le manifeste reste le miroir des cartes : quand une carte change, cette ligne change.",
+  "doc_claims": [
+    {"path": "knowledge_base/search.mjs", "claimed": "exists", "source": "STUDIO_ARCHITECTURE.md §2 + bandeau MaJ 2026-07-15 · STUDIO_MASTER_SCHEMA.html zone C"},
+    {"path": "knowledge_base/role_sim.mjs", "claimed": "exists", "source": "STUDIO_AGENT_ATLAS.md §2.3 (marque CONSTRUIT 2026-07-13)"},
+    {"path": "forge/reuse_ratio.mjs", "claimed": "exists", "source": "STUDIO_AGENT_ATLAS.md §2.4 + bandeau MaJ 2026-07-15"},
+    {"path": "forge/pool.py", "claimed": "exists", "source": "STUDIO_MASTER_SCHEMA.html coupe B (pool construit) + bandeau MaJ 2026-07-15"},
+    {"path": "forge/contracts/s2.5-artbible.yaml", "claimed": "exists", "source": "STUDIO_ARCHITECTURE.md §7 + bandeau MaJ 2026-07-15"},
+    {"path": "knowledge_base/roles/pursuer-mobile.yaml", "claimed": "exists", "source": "STUDIO_ARCHITECTURE.md §5 + bandeau MaJ 2026-07-15"},
+    {"path": "forge/agents_ccgs", "claimed": "target", "source": "STUDIO_AGENT_ATLAS.md §4 (import 49 roles CCGS = cible non commencee)"}
+  ],
+  "connectors": {
+    "reference": "EVIDENCE/bundles/forge_telemetry.jsonl",
+    "watched": [
+      "EVIDENCE/reports/forge_ledger_proposals.jsonl",
+      "EVIDENCE/reports/forge_project_proposals.jsonl",
+      "EVIDENCE/reports/forge_bible_proposals.jsonl",
+      "knowledge_base/learning_curve.jsonl"
+    ],
+    "threshold_days": 3
+  }
+}

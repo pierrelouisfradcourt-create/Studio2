@@ -1,0 +1,130 @@
+# Contrat d'agent Forge — étape 3 : Décomposition Fonctionnelle
+# Schéma : forge/contracts/SCHEMA.md
+# Source : planète s3-decompo de llm-lego/library/chain-forge.json, complétée au schéma canonique 16 champs.
+# Règle : un champ Critique vide/absent => non activable. skill/plugin peuvent valoir `aucun`, jamais absents.
+
+# --- 1. Identité / posture cognitive (Critique) ---
+# `role` = posture/persona injectée dans le prompt. `capability_role` = clé résolue
+# par le registry local (roles.yaml) vers un runtime — JAMAIS de modèle en dur (ADR-002 gate 1).
+role: >-
+  Décomposition Fonctionnelle (étape 3). Point de vue : analyste qui énumère les
+  fonctions attendues avant toute archi.
+capability_role: decompose
+exigences_cognitives: >-
+  Décomposition exhaustive Système→Feature→capacité, chaque feuille traçable à une
+  preuve.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Consomme le Prisme Produit (étape 1) et le World Scan (étape 2) ; connaît les
+  Règles observables du Prisme d'où héritent les preuves attendues. Conventions :
+  CLAUDE.md + rules/.
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - "l'artefact product_snapshot.md produit par le Prisme (étape 1)"
+  - "EVIDENCE/runs/<projet>/knowledge_packet.json — patterns externes cités, ADVISORY jamais prescriptif"
+  - "EVIDENCE/runs/<projet>/charter.yaml — INTENT LINEAGE : intention humaine, invariants, hors_scope, et le bloc `provenance` (source Pierre, fog_humangate). HERITE, jamais reecrit : l'etape verifie que sa decision la respecte, ou remonte le conflit."
+  - "story_bible.json (s2.6) et gm_worldscan.json (s2.7) S'ILS SONT PRÉSENTS dans le run_dir (profil full_godot_narratif) : les contraintes narratives et les dimensions de calibration (progression, economy, bonus…) y vivent — une feuille qui les réalise cite l'exigence du Prisme qui les porte (source_ref), jamais l'artefact directement"
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Produire l'arbre Système→Feature→capacité ; chaque FEUILLE porte sa preuve
+  attendue (héritée des Règles observables du Prisme).
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Énumération fonctionnelle depuis le Prisme Produit ; définition des preuves
+  attendues par feuille. Écrit uniquement la featuremap.
+out_of_scope: >-
+  Ne découpe PAS en modules (c'est l'archi, étape 4). Ne code rien. Ne touche pas
+  aux lanes protégées (tests/, src/).
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo entier. write: featuremap uniquement. create: featuremap. run: aucun.
+  delete: aucun.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  Chaque feuille DOIT avoir une preuve_attendue ; pas de feuille orpheline. La
+  preuve attendue est héritée des Règles observables du Prisme, jamais inventée.
+  V4 GAME LOOP (2026-08-22, GO Pierre) : une action joueur (exigence `acteur:
+  PLAYER` avec `affordance`) se décompose en une capacité d'ENTRÉE (le joueur agit
+  sur l'affordance nommée, preuve `bot_action` depuis `main.tscn`) ET une capacité
+  d'EFFET — jamais l'effet seul. `loop.json` (projection déterministe du Prisme)
+  est une ENTRÉE à lire, jamais à réécrire.
+  Maillons F..J (additif, règle B étendue) : F (UNLOCK) et I (META_LOOP) suivent
+  EXACTEMENT la règle de B — capacité d'ENTRÉE `bot_action` depuis `main.tscn`
+  obligatoire. G (NEXT_GOAL) se décompose en une capacité d'EFFET VISIBLE (le
+  label `objectif` change pour un texte nouveau, preuve `file_write` ou `visual`)
+  — jamais une entrée seule. H (REPEAT) et J (ADVANTAGE) sont des REJEUX : ils
+  n'exigent AUCUNE feuille propre, mais leurs `replay`/`replay_ref` doivent
+  chacun cibler une exigence du Prisme déjà couverte par ailleurs — un rejeu qui
+  vise une exigence non couverte ou inexistante rejoue du vide.
+  GREY BLOCKS DU GAME MASTER (Lot B, T3, 2026-08-23, plan
+  `2026-08-23-forge-lot-b-game-master.md`) : chaque `game_master.grey_blocks[].id`
+  du GM (s2.7) DOIT apparaître comme `id` OU `source_ref` d'une feuille de la
+  featuremap — un grey block sans feuille est `grey_block_non_decompose`
+  (`check_decompo --gm <gm_worldscan.json>`). Le `builder_contract` de chaque
+  grey block est recopié TEL QUEL dans `expected_proof.statement` de la feuille
+  qui le porte, jamais réinventé. Sans `game_master`/`grey_blocks` (runs
+  antérieurs au Lot B) : comportement inchangé, 0 grey block mesuré.
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  featuremap valide ; chaque feuille porte {capacite, expected_proof, source_ref} ;
+  TOUTE exigence du Prisme est portée par ≥1 feuille ; AUCUNE feuille ne cite une
+  exigence inexistante.
+tests_oracles: >-
+  Oracle déterministe non-LLM : `node forge/check_decompo.mjs
+  <run_dir>/featuremap.json --prisme <run_dir>/prisme.json [--gm <run_dir>/gm_worldscan.json]`.
+  Mesure la COUVERTURE (toute exigence portée), la NON-INVENTION (tout `source_ref`
+  résout) et la COMPLÉTUDE (feuilles complètes). La granularité est REPORTÉE, jamais
+  gatée (règle de variance ratifiée 2026-07-21). Maillons F..J (additif) : `boucle_sans_effet`
+  (G sans feuille d'effet sourcée), `boucle_replay_non_couvert` (H/J dont un
+  `replay`/`replay_ref` cible une exigence non couverte ou inexistante) ;
+  `stats.maillons_couverts.{F,G,H,I,J}` reporte le compte par rôle.
+  Lot B, T3 (2026-08-23) : avec `--gm`, `grey_block_non_decompose` (un
+  `game_master.grey_blocks[].id` sans feuille) fait échouer l'étape ;
+  `stats.grey_blocks`/`stats.grey_blocks_couverts` reportent le compte. Sans `--gm`
+  ou sans bloc `game_master` : comportement inchangé (0 grey block). Jamais de
+  LLM-as-judge.
+final_report: >-
+  software/evidence/claim séparés ; cite le reçu de check_decompo ; liste les
+  exigences non couvertes et les feuilles non sourcées ;
+  claim_verdict: NO_CLAIM_ALLOWED.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  Un bloc ```json``` TERMINAL, matérialisé en featuremap.json par l'exécuteur (tu
+  n'écris JAMAIS ce fichier toi-même) : {"game_id": "<id>", "systemes": [{"id",
+  "features": [{"id", "capacites": [{"id", "capacite", "source_ref",
+  "expected_proof": {"kind": "bot_action"|"oracle"|"mutation"|"visual"|"file_write",
+  "statement"}}]}]}]}. L'arbre reste Système→Feature→capacité, la capacité EST la
+  feuille. RÈGLES DURES : `source_ref` cite l'`id` EXACT d'une exigence de
+  prisme.json — une feuille qui n'en cite aucune est une invention non déclarée, et
+  une exigence que nulle feuille ne porte est une omission silencieuse. Tu
+  n'inventes AUCUNE preuve attendue : elle est héritée de l'exigence d'origine.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape 3, en aval du World Scan (2), en amont de l'Architecture (4).

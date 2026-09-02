@@ -1,0 +1,66 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.test_green_via_wrong_causal_path
+statement: Un test peut rester vert non pas parce que la propriete testee est vraie,
+  mais parce que ses assertions sont satisfaites par un chemin de code different de
+  celui qu'il pretend verifier. Un test de non-tunneling qui verifie vx<0, x<=limite
+  et score=0 peut passer parce qu'un point marque par erreur a recentre la balle (nouveau
+  service), pas parce que la balle a ete correctement renvoyee -- le test devient
+  une preuve de vert, pas une preuve de correction. Toujours tracer le CHEMIN qui
+  satisfait chaque assertion, pas seulement leur valeur finale.
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-test_green_via_wrong_causal_path
+  kind: pattern
+  function: Un test peut rester vert non pas parce que la propriete testee est vraie,
+    mais parce que ses assertions sont satisfaites par un chemin de code different
+    de celui qu'il pretend verifier. Un test de non-tunneling qui verifie vx<0, x<=limite
+    et score=0 peut passer parce qu'un point marque par erreur a recentre la balle
+    (nouveau service), pas parce que la balle a ete correctement renvoyee -- le test
+    devient une preuve de vert, pas une preuve de correction. Toujours tracer le CHEMIN
+    qui satisfait chaque assertion, pas seulement leur valeur finale.
+  source: Forge lesson 'forge.test_green_via_wrong_causal_path' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.test_green_via_wrong_causal_path
+    supporting_runs:
+    - pong_r2
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-03T14:10:36.006543+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - pong_r2
+  invariants:
+  - Un test peut rester vert non pas parce que la propriete testee est vraie, mais
+    parce que ses assertions sont satisfaites par un chemin de code different de celui
+    qu'il pretend verifier. Un test de non-tunneling qui verifie vx<0, x<=limite et
+    score=0 peut passer parce qu'un point marque par erreur a recentre la balle (nouveau
+    service), pas parce que la balle a ete correctement renvoyee -- le test devient
+    une preuve de vert, pas une preuve de correction. Toujours tracer le CHEMIN qui
+    satisfait chaque assertion, pas seulement leur valeur finale.
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - pong_r2
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-03T14:10:46+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T14:11:04+00:00'

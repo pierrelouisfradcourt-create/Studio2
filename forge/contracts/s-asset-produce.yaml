@@ -1,0 +1,209 @@
+# Contrat d'agent Forge — étape s-asset-produce : Producteur de géométrie (Blender)
+# Schéma : forge/contracts/SCHEMA.md
+#
+# ÉCRIT SOUS MISSION A1 (paquet A décision 1, ratifiée Pierre 2026-08-28), RÉTROACTIVEMENT
+# à un runtime déjà en production : `forge/asset_producer/asset_dispatch.py::
+# dispatch` invoque ce rôle depuis le 2026-08-06 (Asset Library V1) SANS jamais passer par
+# la porte `forge.contract` — 96 spawns réels signés dans
+# EVIDENCE/bundles/dispatch_audit.jsonl, aucun contrat YAML. Ce fichier NE CHANGE AUCUN
+# COMPORTEMENT : il documente au schéma canonique ce que le code fait déjà. Le câblage réel
+# N'EST PAS fait ici (cf. `out_of_scope` de la mission qui l'a écrit, et le rapport A1).
+#
+# GAP DE RÉSOLUTION DOCUMENTÉ, NON CORRIGÉ ICI : `capability_role: asset_producer`
+# (ci-dessous) EST déjà déclaré dans `roles.yaml::runtime_contracts.asset_producer`
+# (mission/E-S réelle : entrypoint build_asset.py, executor Blender 5.1.1 --background
+# WSL2, implementation.model: aucun — géométrie procédurale, aucun LLM). Mais ce rôle
+# N'EST DÉCLARÉ DANS AUCUN `roles.yaml::models[].roles` — la liste que consomme
+# `control_plane.registry.get_model_for_role`, seule source lue par
+# `forge.contract.resolve_runtime`. Conséquence MESURÉE (forge/tests/
+# test_a1_asset_contracts.py::test_produce_contract_resolve_runtime_currently_unresolved) :
+# `forge.contract.resolve_runtime(this_contract)` lève `RoleUnresolved` aujourd'hui.
+# Ce contrat NE FORCE PAS d'ajout à roles.yaml pour faire disparaître ce rouge — la
+# mission qui l'a écrit a reçu instruction explicite de ne modifier roles.yaml que si
+# `validate_contract` (qui NE consulte PAS le registry) en avait besoin, ce qui n'est pas
+# le cas ici. `validate_contract(this_contract)` PASSE ; seule la résolution runtime via
+# `forge.contract` échoue — cohérent avec le fait que `asset_dispatch.py` ne passe de
+# toute façon jamais par cette porte : sa PROPRE résolution locale
+# (`asset_dispatch.resolve_runtime`, distincte de `forge.contract.resolve_runtime`) lit le
+# même `roles.yaml` par le même mécanisme et échoue exactement de la même façon
+# aujourd'hui (elle rend `("", "")`, absorbée en best-effort — cf. code cité dans
+# `memoire`). Le rapport A1 propose le câblage minimal comme étape suivante distincte.
+#
+# MÉCANISME RÉEL (asset_dispatch.py::dispatch, lignes 335-397) : Task (spec.json produite
+# par l'étape amont s-asset-spec) -> announce() [reçu signé spawn_prepared] -> Blender WSL
+# (build_asset.py) -> oracle indépendant (forge/asset_geometry/oracle.py, REJOUÉ
+# par le dispatcher, jamais fourni par le producteur) -> proposal (propose_asset.py, si
+# oracle OK, propose-only — n'écrit jamais catalog.json) -> record() [reçu signé
+# spawn_executed + ligne asset.result dans EVIDENCE/bundles/asset_results.jsonl].
+
+# --- 1. Identité / posture cognitive (Critique) ---
+role: >-
+  Producteur de géométrie (étape s-asset-produce). Point de vue imposé :
+  fabricant procédural qui exécute une spec paramétrée sans jamais juger sa
+  propre production ni inventer un paramètre hors spec — un exécutant, pas un
+  décideur.
+capability_role: asset_producer
+exigences_cognitives: >-
+  Aucune — ce rôle est un PROCESS déterministe (Blender --background exécutant
+  forge/asset_producer/build_asset.py), pas un modèle de complétion.
+  `roles.yaml::runtime_contracts.asset_producer.implementation.model` déclare
+  explicitement "aucun" : la géométrie est procédurale (primitives paramétrées
+  — boîtes, cylindres — selon 7+ archétypes fermés), zéro appel LLM sur ce
+  chemin. Ce champ reste Critique et rempli (jamais "aucun" lui-même) pour
+  documenter EXPLICITEMENT cette absence plutôt que de la laisser absente.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Runtime `asset_producer` déclaré dans forge/contracts/roles.yaml
+  (section runtime_contracts, PAS dans models[].roles — cf. GAP documenté en
+  tête de fichier). Entrypoint réel : forge/asset_producer/build_asset.py,
+  exécuté via `wsl.exe -d <distro> -- <blender_bin> -b --python build_asset.py --
+  <spec.wsl> <dest.wsl>` (forge/asset_producer/asset_dispatch.py::
+  run_producer). Binaire Blender résolu par forge/blender_bin.py (jamais
+  codé en dur — env BLENDER_BIN -> forge/blender.config.json -> erreur
+  explicite). L'appelant réel (asset_dispatch.py::dispatch) applique D'ABORD les
+  contraintes du lot précédent (check_batch_constraints, archetypes_blocked /
+  require_variants_declared, lues depuis analyze_batch.load_constraints) AVANT
+  toute production — un archétype bloqué par une leçon validée est refusé sans
+  jamais atteindre Blender. Ce runtime ne juge JAMAIS sa propre sortie : l'oracle
+  forge/asset_geometry/oracle.py est REJOUÉ par l'appelant sur le .glb
+  produit, jamais fourni par le producteur (constraints.no_self_judgement,
+  roles.yaml).
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - forge/contracts/roles.yaml
+  - forge/asset_producer/asset_dispatch.py
+  - forge/asset_producer/build_asset.py
+  - forge/asset_geometry/oracle.py
+  - "la spec JSON produite par l'étape amont s-asset-spec (asset_id, archetype,
+    category, size, color, variants, consumer)"
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Fabriquer UN fichier .glb (géométrie procédurale, primitives paramétrées selon
+  l'archétype fermé de la spec) à partir de la spec JSON reçue, et RIEN d'autre.
+  N'invente aucun paramètre hors de ceux de la spec. Écrit exactement 2 artefacts
+  par asset : <asset_id>.glb et <asset_id>.generation_report.json — jamais de
+  troisième fichier, en particulier jamais <asset_id>.glb.geometry.json (réservé
+  au HumanGate) ni knowledge_base/catalog.json (réservé à --apply humain via
+  kb_proposal.py). Un archétype hors de la liste fermée (ARCHETYPES) lève une
+  erreur explicite ("archetype inconnu"), jamais un cube de repli silencieux.
+  Une spec sans `consumer` non vide est refusée avant toute production.
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Génération de géométrie procédurale .glb + son rapport de génération, à partir
+  d'une spec paramétrée déjà validée en amont (étape s-asset-spec). Écrit
+  UNIQUEMENT dans le répertoire de destination du run (knowledge_base/assets/…
+  seulement via le flux propose-only décrit en out_of_scope, jamais en écriture
+  directe par ce rôle).
+out_of_scope: >-
+  Ne produit AUCUN verdict de qualité géométrique — l'oracle indépendant
+  (forge/asset_geometry/oracle.py) est seul habilité, et il est REJOUÉ
+  par l'appelant, jamais fourni par ce rôle. N'écrit JAMAIS
+  knowledge_base/catalog.json (ADR-002, propose-only — c'est
+  propose_asset.py qui dépose une proposition, et kb_proposal.py --apply, geste
+  humain explicite, qui promeut). N'écrit JAMAIS <asset>.glb.geometry.json
+  (parole du HumanGate). Ne décide pas de la spec (étape s-asset-spec, contrat
+  frère, amont). Ne juge jamais la qualité artistique de sa propre production
+  (limite déclarée : "aucun asset produit ne ressemble à un asset de
+  production", roles.yaml::runtime_contracts.asset_producer.limits.why).
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo entier (dont la spec JSON du run). write: UNIQUEMENT le répertoire
+  de destination du run (knowledge_base/assets/props3d/ ou équivalent injecté
+  par l'appelant), limité aux 2 fichiers .glb/.generation_report.json par asset.
+  run: le binaire Blender résolu via WSL (wsl.exe -d <distro> -- <blender_bin>).
+  create: les 2 fichiers de sortie par asset uniquement. delete: aucun.
+  INTERDIT: knowledge_base/catalog.json en écriture, tests/**, <asset>.glb.
+  geometry.json.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  Ne se prononce JAMAIS sur son propre verdict — `no_self_judgement` (roles.yaml)
+  est un invariant dur : l'oracle est rejoué par l'appelant, ce rôle ne rend
+  aucun "OK"/"FAIL"/"BLOCKED" sur sa propre sortie. N'écrit jamais le manifeste
+  (<asset>.glb.geometry.json, parole du HumanGate) ni le catalogue
+  (knowledge_base/catalog.json, propose-only). Refuse toute spec sans `consumer`
+  non vide, AVANT toute production — pas d'asset sans consommateur nommé. Un
+  archétype hors liste fermée est une ERREUR EXPLICITE, jamais un cube de
+  repli. N'affirme jamais qu'un asset produit est "de qualité production" — les
+  archétypes sont des primitives paramétrées (boîtes, cylindres), elles prouvent
+  la chaîne de production, jamais la qualité artistique (limite honnête et
+  permanente du runtime, à ne jamais requalifier en prose optimiste).
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  Le .glb produit existe et sa géométrie satisfait
+  forge/asset_geometry/oracle.py (verdict OK ou BLOCKED — les deux sont
+  des résultats légitimes de l'oracle, pas des échecs de ce rôle ; FAIL = défaut
+  géométrique mesuré, à éviter). generation_report.json déclare explicitement
+  "manifest_written": False. Aucune spec sans `consumer` non vide n'atteint
+  Blender. Un archétype hors ARCHETYPES lève avant toute tentative de
+  production.
+tests_oracles: >-
+  Oracle déterministe non-LLM : forge/asset_geometry/oracle.py
+  (vocabulaire de verdict fermé OK/FAIL/BLOCKED — OK: tous les checks déclarés
+  passent ; FAIL: défaut géométrique MESURÉ, enterré/flottant/pivot faux/échelle
+  aberrante ; BLOCKED: bien formé mais décision automatique impossible ->
+  HumanGate). L'oracle est REJOUÉ par forge/asset_producer/
+  asset_dispatch.py::dispatch sur le .glb produit, jamais auto-attesté par ce
+  rôle. Contrôle de forme complémentaire : forge/tests/
+  test_asset_worker_contract.py (les chemins déclarés existent, le producteur ne
+  s'auto-juge pas, n'écrit ni manifeste ni catalogue, refuse une spec sans
+  consumer, l'archétype inconnu lève). Jamais de LLM-as-judge sur la géométrie
+  ni sur l'esthétique.
+final_report: >-
+  software/evidence/claim séparés ; cite forge/asset_geometry/oracle.py
+  comme oracle de la géométrie produite (verdict REJOUÉ, jamais auto-attesté) ;
+  toute qualité artistique reste un fog HumanGate, jamais un claim ; le gap de
+  résolution `capability_role: asset_producer` (non déclaré dans
+  roles.yaml::models[].roles, cf. tête de fichier) est un fait à SIGNALER, pas à
+  masquer ; claim_verdict: NO_CLAIM_ALLOWED.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  <asset_id>.glb (géométrie procédurale glTF binaire, Z>=0 côté Blender donc
+  Y>=0 en glTF) + <asset_id>.generation_report.json (déclare au minimum
+  "manifest_written": False) dans le répertoire de destination du run. Aucun
+  troisième fichier. Le verdict de qualité N'appartient PAS à ce rôle : il est
+  produit par l'oracle indépendant en aval et recopié tel quel par l'appelant
+  (asset_dispatch.py::build_result) dans EVIDENCE/bundles/asset_results.jsonl
+  — `quality_not_proven: true` y est toujours porté explicitement.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+# Identifiant nu, convention des contrats existants (world-scan, architecture-review) :
+# la chaîne asset est pilotée par le skill `/asset-generator` (.claude/skills/asset-generator/).
+skill: asset-generator
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape AVAL du traducteur de spec (s-asset-spec, contrat frère) dans la lane
+  Asset Library V1. Invoquée par
+  forge/asset_producer/asset_dispatch.py::dispatch, HORS de la chaîne
+  contractualisée s0-s12 (aucun appelant dans dispatch.py/driver.py/run_real.py
+  ne cite cette étape) — la Forge produit des assets par un chemin PARALLÈLE à
+  la porte de contrat depuis le 2026-08-06, 96 spawns signés sans contrat avant
+  ce fichier. Ce contrat documente le cadre au schéma canonique et FIGE
+  mécaniquement (par test) le gap de résolution `capability_role` restant ; il
+  ne branche pas `asset_dispatch.py` sur `forge.contract` (câblage hors
+  périmètre de la mission A1 qui l'a écrit — voir son rapport pour la
+  proposition de câblage minimal, non implémentée).

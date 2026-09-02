@@ -1,0 +1,13 @@
+{
+  "schema": "pong-audio-manifest/1",
+  "assets": [
+    {
+      "id": "bounce",
+      "file": "bounce.wav",
+      "license": "CC0-1.0",
+      "source": "generated",
+      "trigger": "audio.cue on event {type:'bounce'}",
+      "format": "PCM 16-bit mono 22050Hz, ~70ms"
+    }
+  ]
+}

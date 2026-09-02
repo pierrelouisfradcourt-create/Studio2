@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_pillar_stone_01",
+  "archetype": "pillar",
+  "params": {
+    "size": {
+      "w": 0.5,
+      "d": 0.5,
+      "h": 3.0
+    },
+    "color": [
+      0.5,
+      0.48,
+      0.44,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_pillar_stone_01"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 4584,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

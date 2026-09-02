@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "lesson_id": "asset.barrel_variants_match_geometry",
+  "batch_id": "props3d-2026-08-06",
+  "asset_type": "barrel",
+  "generation": 1,
+  "defauts_detectes": [
+    {
+      "oracle": "scripts/forge/asset_geometry/oracle.py",
+      "check": "variants_match_geometry",
+      "verdict": "FAIL",
+      "assets": [
+        "gen_barrel_wood"
+      ],
+      "detail": "1 asset(s) en echec sur variants_match_geometry"
+    }
+  ],
+  "cause_racine": {
+    "couche": "producteur",
+    "enonce": "La construction de l'archetype 'barrel' viole variants_match_geometry."
+  },
+  "correction_recommandee": {
+    "cible": "scripts/forge/asset_producer/build_asset.py",
+    "action": "Corriger la construction de 'barrel' pour satisfaire variants_match_geometry.",
+    "interdit": "Desserrer le seuil correspondant dans rules.yaml : il protege tous les assets, pas seulement celui-ci."
+  },
+  "impact_prochain_lot": {
+    "change": "L'archetype 'barrel' est interdit de dispatch jusqu'a correction.",
+    "verification": "Rejouer le lot : plus aucun FAIL sur variants_match_geometry.",
+    "attendu": "0 FAIL sur variants_match_geometry"
+  },
+  "verification_mecanique": {
+    "kind": "no_check_failure",
+    "archetype": "barrel",
+    "check": "variants_match_geometry"
+  },
+  "status": "CANDIDATE"
+}

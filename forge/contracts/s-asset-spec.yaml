@@ -1,0 +1,177 @@
+# Contrat d'agent Forge — étape s-asset-spec : Auteur de spec d'asset (Qwen)
+# Schéma : forge/contracts/SCHEMA.md
+#
+# ÉCRIT SOUS MISSION A1 (paquet A décision 1, ratifiée Pierre 2026-08-28), RÉTROACTIVEMENT
+# à un runtime déjà en production : `forge/asset_producer/asset_dispatch.py::
+# author_spec` invoque ce rôle depuis le 2026-08-06 (Asset Library V1) SANS jamais passer
+# par la porte `forge.contract` — 96 spawns réels signés dans
+# EVIDENCE/bundles/dispatch_audit.jsonl, aucun contrat YAML. Ce fichier NE CHANGE AUCUN
+# COMPORTEMENT : il documente au schéma canonique ce que le code fait déjà. Le câblage réel
+# (faire passer `asset_dispatch.py` par cette porte) N'EST PAS fait ici — cf. rapport A1.
+#
+# RÔLE RÉEL (déjà déclaré, déjà résolu) : `capability_role: asset_spec_author` figure
+# dans `roles.yaml::models[qwen2.5-14b-instruct].roles` (résout vers
+# lmstudio/qwen2.5-14b-instruct, provider lmstudio) ET dans
+# `roles.yaml::runtime_contracts.asset_spec_author` (mission/E-S détaillée : entrypoint
+# forge/asset_producer/qwen_spec.py, invocation natural_language, temperature 0,
+# max_tokens 600). Ce contrat ne redéfinit rien de ce registre — il déclare le CADRE
+# (frontières, garde-fou, oracle) dans lequel ce rôle déjà résolu doit opérer.
+#
+# MÉCANISME RÉEL (asset_dispatch.py::author_spec, lignes 98-143) : reçoit une demande
+# gameplay en langage naturel, appelle `qwen_spec.generate_spec(demande, model=...)`,
+# écrit `<asset_id>.spec.json` dans le répertoire de destination du run (JAMAIS dans le
+# dépôt), émet 2 reçus signés (`spawn_prepared`/`spawn_executed`, cf. forge.audit) sous
+# ETAPE_SPEC="s-asset-spec". Ce module n'écrit AUCUNE géométrie et ne juge rien — sa
+# sortie (la spec JSON) doit ensuite franchir les énumérations fermées de
+# `build_asset.py` avant d'atteindre Blender (étape s-asset-produce, contrat frère).
+
+# --- 1. Identité / posture cognitive (Critique) ---
+role: >-
+  Auteur de spec d'asset (étape s-asset-spec). Point de vue imposé : traducteur
+  technique qui convertit une demande de gameplay en langage naturel en une
+  spécification d'asset PARAMÉTRÉE et bornée — jamais un décorateur qui invente
+  une géométrie, jamais un juge de la pertinence de sa propre proposition.
+capability_role: asset_spec_author
+exigences_cognitives: >-
+  Extraction et clôture d'énumérations : identifier archetype/category/size/
+  color/variants/consumer depuis une phrase, en restant STRICTEMENT dans les
+  listes fermées de forge/asset_producer/qwen_spec.py (ARCHETYPES,
+  CATEGORIES) — aucune invention hors liste, aucun repli silencieux. Rôle mesuré
+  fiable en TRANSFORMATION (pas en rappel/citation, cf. mémoire studio
+  2026-08-04 : ce modèle dérive en rappel même à température 0 — ici il ne cite
+  rien, il convertit).
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Runtime `asset_spec_author` déclaré dans forge/contracts/roles.yaml
+  (section models + runtime_contracts) : temperature 0, max_tokens 600, appel
+  HTTP direct http://localhost:1234/v1/chat/completions (LM Studio, aucun outil
+  de session). Entrypoint réel : forge/asset_producer/qwen_spec.py
+  (fonction generate_spec, système SYSTEM déjà câblé avec les énumérations
+  fermées). Appelant réel : forge/asset_producer/asset_dispatch.py::
+  author_spec, qui écrit la spec produite dans le répertoire de destination du
+  run (jamais dans le dépôt) et émet les reçus signés `spawn_prepared`/
+  `spawn_executed` sous cette étape. Aval réel : forge/asset_producer/
+  build_asset.py (étape s-asset-produce, contrat frère) qui refuse toute spec
+  hors énumération ou sans `consumer`.
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - forge/contracts/roles.yaml
+  - forge/asset_producer/qwen_spec.py
+  - "la demande gameplay en langage naturel (fournie par l'appelant, --from-request
+    de asset_dispatch.py ou équivalent)"
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Produire UNE spec d'asset JSON strict à partir d'une demande gameplay en
+  langage naturel : {asset_id (snake_case, préfixe "gen_"), archetype (dans
+  ARCHETYPES fermé), category (dans CATEGORIES fermée), style, size:{w,d,h} en
+  mètres bornés [0.05, 20.0], color:[r,g,b,a] dans [0,1], variants[] (états
+  mutuellement exclusifs, [] sinon), consumer[] (NON VIDE — à quoi sert cet
+  asset dans le jeu, refus sinon)}. Si la demande ne correspond à aucun
+  archetype de la liste fermée, choisir le plus proche et l'EXPLIQUER dans
+  `consumer` — jamais inventer une valeur hors liste. Une seule réparation
+  ciblée sur les champs fautifs est tolérée (doctrine REPAIR_LOOP), puis échec
+  explicite — jamais une spec de repli silencieuse.
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Traduction demande gameplay -> spec JSON paramétrée. Ne produit AUCUN fichier
+  du dépôt (l'écriture du .spec.json dans le répertoire de run appartient à
+  l'appelant asset_dispatch.py::author_spec, pas à ce rôle). Ne juge aucun
+  verdict — l'oracle est rejoué en aval, jamais par ce rôle.
+out_of_scope: >-
+  Ne fabrique aucune géométrie (Blender, étape s-asset-produce, contrat frère).
+  Ne mesure rien, ne juge rien, n'écrit jamais knowledge_base/catalog.json ni
+  aucun fichier du dépôt. Ne vérifie pas sémantiquement que l'archetype choisi
+  correspond réellement à la demande (limite déclarée du runtime, cf.
+  runtime_contracts.asset_spec_author.limits.no_semantic_check — c'est un
+  jugement humain, pas une correspondance vérifiée mécaniquement).
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo entier (dont forge/asset_producer/qwen_spec.py pour les
+  énumérations fermées). write: aucun fichier du dépôt (le module lui-même
+  n'écrit rien — cf. constraints.no_file_write du runtime_contract). run: aucun
+  process externe autre que l'appel HTTP LM Studio déjà encapsulé par
+  qwen_spec.py. create: aucun. delete: aucun.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  Énumérations FERMÉES (archetype, category) : une valeur hors liste est un
+  REJET explicite, jamais un repli silencieux ni une invention. `consumer` vide
+  = rejet — pas d'asset sans consommateur nommé. Dimensions hors [0.05, 20.0] m
+  = rejet (échelle aberrante). Ne produit jamais de verdict de qualité ni
+  d'esthétique — ce rôle ne juge rien, l'oracle géométrique (étape aval) est
+  seul habilité à juger la géométrie produite à partir de cette spec. N'affirme
+  jamais que l'archetype choisi "correspond" sémantiquement à la demande — ce
+  n'est jamais vérifié mécaniquement (cf. out_of_scope), le dire serait un claim
+  non prouvé.
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  La spec produite est un JSON valide portant EXACTEMENT les 7 champs requis ;
+  archetype ET category appartiennent aux énumérations fermées de
+  qwen_spec.py ; size.{w,d,h} dans [0.05, 20.0] ; color a 4 composantes dans
+  [0,1] ; consumer est une liste non vide. Une spec qui viole une seule de ces
+  contraintes est un échec explicite (QwenError), jamais une valeur corrigée en
+  silence hors de la réparation ciblée déjà prévue par le code.
+tests_oracles: >-
+  Pas d'oracle de qualité dédié à cette étape seule (elle ne produit aucun
+  artefact binaire à mesurer géométriquement) : la validation est structurelle,
+  portée par le CODE de forge/asset_producer/qwen_spec.py lui-même
+  (énumérations fermées, bornes dimensionnelles, `consumer` non vide, JSON
+  strict) — testé par forge/tests/test_asset_worker_contract.py et
+  l'oracle géométrique en aval (forge/asset_geometry/oracle.py,
+  étape s-asset-produce) qui juge le résultat FINAL de la chaîne, pas cette
+  spec isolément. Jamais de LLM-as-judge sur la pertinence de la spec.
+final_report: >-
+  software/evidence/claim séparés ; cite les contraintes structurelles de
+  qwen_spec.py comme validation (énumérations fermées, bornes, consumer requis)
+  et l'oracle géométrique aval comme preuve finale de chaîne ; toute
+  correspondance sémantique demande<->archetype non vérifiée mécaniquement est
+  remontée en fog, jamais un claim ; claim_verdict: NO_CLAIM_ALLOWED.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  Un objet JSON strict, UNIQUEMENT ce JSON (aucun texte avant/après, aucune
+  balise de code) : {asset_id: string ("gen_" + snake_case), archetype: string
+  (∈ ARCHETYPES), category: string (∈ CATEGORIES), style: string, size:
+  {w: number, d: number, h: number} (mètres, ∈ [0.05, 20.0]), color:
+  [number,number,number,number] (∈ [0,1] chacun), variants: string[],
+  consumer: string[] (non vide)}. Consommé tel quel par
+  forge/asset_producer/asset_dispatch.py::author_spec, qui l'écrit dans
+  <asset_id>.spec.json (répertoire de run, jamais le dépôt).
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape AMONT du producteur de géométrie (s-asset-produce, contrat frère) dans
+  la lane Asset Library V1. Invoquée par
+  forge/asset_producer/asset_dispatch.py::author_spec, HORS de la
+  chaîne contractualisée s0-s12 (aucun appelant dans dispatch.py/driver.py/
+  run_real.py ne cite ces 2 étapes) — la Forge produit des assets par un
+  chemin PARALLÈLE à la porte de contrat depuis le 2026-08-06. Ce contrat
+  documente le cadre au schéma canonique ; il ne branche pas encore
+  `asset_dispatch.py` sur `forge.contract` (câblage hors périmètre de la
+  mission A1 qui l'a écrit — voir le rapport de cette mission pour la
+  proposition de câblage minimal, non implémentée).

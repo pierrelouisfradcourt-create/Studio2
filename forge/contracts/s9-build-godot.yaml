@@ -1,0 +1,148 @@
+# Contrat d'agent Forge — étape 9 (variante GODOT) : Builder de brique GDScript
+# Schéma : forge/contracts/SCHEMA.md (17 champs, règle des 3 états)
+# Source : s9-build.yaml, adapté au runtime Godot (spec docs/superpowers/specs/2026-07-21-forge-godot-etape0-design.md)
+# Statut : PROPOSED — créé 2026-07-21 pour l'étape 0 du curriculum Godot.
+#
+# POURQUOI UNE VARIANTE : le contrat s9-build.yaml d'origine suppose une lane web/JS —
+# son oracle passe par npm/node, et il exige un volet e2e « click-through navigateur réel ».
+# Ces clauses n'ont pas de sens pour une brique GDScript prouvée en headless. Plutôt que
+# de les laisser s'appliquer à vide (elles seraient ininterprétables, donc contournées en
+# silence), cette variante les remplace par leurs équivalents Godot ET DÉCLARE
+# EXPLICITEMENT ce qui ne s'applique pas (§7). Une clause inapplicable non déclarée est
+# un oubli ; le schéma refuse les oublis.
+
+# --- 1. Identité / posture cognitive (Critique) ---
+role: >-
+  Builder GDScript (délégation bornée par l'ownership). Point de vue : développeur
+  discipliné qui écrit de la logique pure, sans dépendance de scène, testable en
+  headless. Ne cherche pas à faire un jeu : produit une CAPACITÉ prouvable.
+capability_role: builder
+exigences_cognitives: >-
+  Exécution bornée et déterminisme obsessionnel. Toute source d'aléa non seedée ou de
+  temps (randi, randf, randomize, Time.*, OS.*, FileAccess) est une faute, pas une
+  commodité : la garde de pureté R10 les rejette et toute la chaîne de mesure suppose
+  la reproductibilité. Discipline de périmètre supérieure à la vitesse.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Le dépôt possède DÉJÀ un harnais Godot headless prouvé vert : GAMES/chess_tcg/
+  (cœur de règles GDScript pur dans core/, oracle tests/run_tests.gd en
+  `--headless --script`, exit 0/1, garde anti-faux-vert par EXPECTED_ASSERTS). C'est
+  le patron de référence à calquer, pas à réinventer. Le binaire Godot ne se code
+  jamais en dur : il se résout par forge/godot_bin.mjs. Conventions :
+  CLAUDE.md + .claude/rules/ par lane. L'infrastructure de preuve (adaptateur
+  knowledge_base/systems/adapters/godot_trial.mjs, gate mutation conscient du
+  GDScript, garde de pureté R10 GDScript) est déjà livrée et vérifiée.
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - GAMES/chess_tcg/tests/run_tests.gd
+  - GAMES/chess_tcg/core/moves.gd
+  - fixtures/godot_trial_probe/trial.gd
+  - knowledge_base/systems/adapters/godot_trial.mjs
+
+# --- 2bis. SEARCH d'abord (STUDIO_AGENT_ATLAS.md §2.4) ---
+# AVANT d'écrire une pièce de logique, interroger knowledge_base/search.mjs en langage
+# libre ("node knowledge_base/search.mjs \"<intention>\""). Un résultat pertinent
+# (tier=validated de préférence) est IMPORTÉ RÉELLEMENT, jamais recopié ; le builder
+# n'écrit alors que le DELTA. Réserve honnête pour cette variante : la KB ne contient
+# aujourd'hui AUCUNE brique GDScript (le catalogue est HTML/JS et manifest-only 3D).
+# Un résultat de recherche pertinent est donc improbable — la requête reste OBLIGATOIRE
+# et son absence de résultat doit être RAPPORTÉE, pas passée sous silence. Le builder
+# ne modifie jamais catalog.json lui-même (propose-only).
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Produire la brique M01 (navigation en grille) en GDScript pur et son artefact
+  consommateur headless, de sorte que la chaîne brick -> implémentation -> simulation
+  headless -> oracle soit prouvée de bout en bout. Le livrable est une PREUVE DE
+  CHAÎNE, pas un jeu : un Pac-Maze jouable et beau n'est pas un critère de réussite.
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Écriture de knowledge_base/systems/navigation/grid_nav.gd et de l'arborescence
+  GAMES/grid_nav_probe/ (project.godot, core/, tests/run_tests.gd, trial.gd,
+  mutation_triage.json si un survivant équivalent doit être justifié).
+out_of_scope: >-
+  Ne touche PAS à l'infrastructure de preuve déjà livrée : knowledge_base/role_sim.mjs,
+  knowledge_base/kb-validate.mjs, forge/mutation.py, forge/godot_bin.mjs,
+  knowledge_base/systems/adapters/. Ne modifie PAS knowledge_base/catalog.json au-delà
+  de l'ajout de sa propre entrée. Ne touche PAS tests/** (zone protégée), ni autopilot.py,
+  ni scripts/studioV2/ (lane STUDIO gelée). Ne crée aucun autre jeu.
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: dépôt entier. write: UNIQUEMENT knowledge_base/systems/navigation/**,
+  GAMES/grid_nav_probe/**, et l'ajout de sa propre entrée dans
+  knowledge_base/catalog.json. run: le binaire Godot en headless (résolu via
+  forge/godot_bin.mjs), node, et le gate mutation Python. create: fichiers de
+  son ownership uniquement. delete: aucun. INTERDIT : tests/**, autopilot.py,
+  scripts/studioV2/, git push.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  (a) DÉTERMINISME : aucune source d'aléa non seedée ni de temps. L'ordre d'exploration
+  d'un algorithme doit être FIXE et explicite, jamais dépendant de l'ordre d'itération
+  d'un Dictionary. (b) Logique PURE : aucune dépendance de scène, aucun état global,
+  aucune mutation des arguments reçus. (c) Le harnais de test doit porter la garde
+  anti-faux-vert EXPECTED_ASSERTS du patron chess_tcg : sans elle, un cœur qui ne
+  compile pas produit un vert silencieux. (d) Aucun chemin absolu utilisateur dans un
+  fichier versionné. (e) Ne commit jamais avec `git add -A` ni `git add .` ; ne push jamais.
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  (1) `<godot> --headless --path GAMES/grid_nav_probe --script res://tests/run_tests.gd`
+  sort en exit 0 ET le nombre d'assertions annoncé égale EXPECTED_ASSERTS.
+  (2) Gate mutation sur GAMES/grid_nav_probe/core/grid_nav.gd : 100% des mutants tués,
+  OU chaque survivant trié équivalent avec justification prouvée dans
+  GAMES/grid_nav_probe/mutation_triage.json. Un survivant non justifié = échec.
+  (3) Le point d'entrée trial.gd émet un reçu FORGE_TRIAL unique et valide, lisible par
+  l'adaptateur, avec sortie STRICTEMENT identique sur graine identique (déterminisme
+  vérifié par répétition, pas supposé).
+  (4) kb-validate PASS après ajout de l'entrée au catalogue.
+  CE QUI NE S'APPLIQUE PAS, ET POURQUOI — décision assumée, pas omission : le volet
+  « e2e click-through navigateur réel » du contrat s9-build d'origine est SANS OBJET
+  ici (artefact headless sans interface, aucun navigateur impliqué). Le volet
+  SOLVABILITÉ (« un bot joue et GAGNE ») est DIFFÉRÉ à l'étape suivante du plan, qui
+  livre l'oracle solvability_godot.mjs. CONSÉQUENCE À ASSUMER : à l'issue de cette
+  étape la brique reste tier=candidate avec proof_of_use=null. Elle n'est PAS
+  certifiable, et aucun rapport ne doit laisser entendre le contraire.
+tests_oracles: >-
+  Oracle CODE déterministe non-LLM : run_tests.gd exécuté par le binaire Godot en
+  headless (jamais un LLM-as-judge, jamais une inspection visuelle). Méta-oracle :
+  forge.mutation.run_mutation_test sur le fichier de logique, qui reconnaît désormais
+  les opérateurs GDScript (and/or, ==/!=) et traite `#` comme commentaire pur via
+  forge.mutation.comment_prefixes_for — une mutation dans un commentaire serait
+  inkillable et fausserait le score. Garde de pureté : la règle R10 de
+  knowledge_base/kb-validate.mjs rejette randi/randf/randomize/OS.*/Time.*/FileAccess/
+  DirAccess/HTTPRequest/Engine.*/Input.* dans une brique .gd — écrire l'un d'eux fera
+  échouer la validation du catalogue, ce n'est pas une recommandation.
+final_report: >-
+  software/evidence/claim séparés. Cite pour CHAQUE affirmation la commande exécutée et
+  sa sortie réelle (preuve d'exécution, jamais preuve d'existence). Liste les fichiers
+  touchés confrontés à l'ownership. Cite la ou les requêtes SEARCH effectuées avant
+  écriture et leur résultat, même vide. Rapporte le score de mutation brut, survivants
+  compris. Déclare explicitement que la solvabilité n'a pas été mesurée à cette étape.
+  claim_verdict: NO_CLAIM_ALLOWED. Vocabulaire : OK / FAIL / BLOCKED uniquement.
+  Sans oracle disponible => remonte un besoin HumanGate (fog), jamais un claim.
+
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  (a) La brique knowledge_base/systems/navigation/grid_nav.gd et sa copie de travail
+  dans GAMES/grid_nav_probe/core/. (b) Le harnais GAMES/grid_nav_probe/tests/run_tests.gd
+  avec EXPECTED_ASSERTS. (c) Le point d'entrée GAMES/grid_nav_probe/trial.gd conforme
+  au contrat de sortie `FORGE_TRIAL <json>` ({"succeeded": bool, "ticks": number|null},
+  exit 0 ; entrée invalide => erreur sur stderr et exit 2, JAMAIS un reçu). (d) L'entrée
+  catalogue correspondante, tier=candidate, proof_of_use=null. (e) Le reçu brut du gate
+  mutation. (f) Micro-commits cadrés aux seuls fichiers de l'ownership.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape 8 du plan docs/superpowers/plans/2026-07-21-forge-godot-etape0.md, en aval de
+  l'infrastructure de preuve (résolveur Godot, adaptateur de simulation, gate mutation
+  GDScript, gardes de catalogue) et en amont du contrat de rôle (étape 9), de l'oracle
+  de solvabilité (étape 10) et de la certification (étape 11). Mandaté par Pierre —
+  gate HumanGate explicite du 2026-07-21 sur le périmètre Forge (ADR-002).

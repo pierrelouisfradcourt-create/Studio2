@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "asset_file": "gen_chest_01.glb",
+  "sha256": "65cefb14430a2838ad65b1c3eea2bf3ae2a51e07f58a8af8c8332ec4f003423f",
+  "up_axis": "Y",
+  "ground_plane": 0.0,
+  "origin_rule": "base_center",
+  "authored_by": "HumanGate — recensement, jamais ecrit par le producteur",
+  "authored_at": "2026-08-06",
+  "note": "Le coffre livre DEUX etats de couvercle mutuellement exclusifs dans un seul fichier. Le consommateur doit en masquer un : `lid_closed` par defaut, `lid_open` apres ouverture. Le producteur avait annonce ces variantes dans son metadata.json ; l'oracle a refuse de les classer MAIN automatiquement tant qu'un humain n'avait pas tranche leur role.",
+  "meshes": [
+    { "name": "gen_chest_01_body",       "role": "main",    "consumer": "corps du coffre, toujours visible" },
+    { "name": "gen_chest_01_lid_closed", "role": "variant", "consumer": "etat ferme (exclusif avec lid_open)" },
+    { "name": "gen_chest_01_lid_open",   "role": "variant", "consumer": "etat ouvert (exclusif avec lid_closed)" }
+  ]
+}

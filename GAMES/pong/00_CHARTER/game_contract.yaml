@@ -1,0 +1,14 @@
+# PONG — contrat de jeu (budget). Noeud 1 du curriculum.
+# Format : scripts/forge/standard/SCHEMA.md §1
+
+schema_version: 1
+game_id: pong
+node: 1
+runtimes: [rules, browser, godot]
+
+budget:
+  reuses: []              # premier vrai jeu : rien a reutiliser, c'est la reference de depart
+  adds:   [game_loop]     # UN seul systeme neuf depose en bibliotheque
+
+assets:
+  plan: cc0

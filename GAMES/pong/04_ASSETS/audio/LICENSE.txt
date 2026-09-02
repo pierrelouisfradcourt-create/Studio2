@@ -1,0 +1,9 @@
+bounce.wav — dedie au DOMAINE PUBLIC (CC0 1.0 Universal).
+
+Ce fichier audio (un court blip de rebond, sinusoide 480 Hz avec fondu, 70 ms,
+PCM 16-bit mono 22050 Hz) a ete genere par programme (aucune source tierce, aucun
+sample). En tant qu'oeuvre triviale auto-generee, il est place sans reserve dans le
+domaine public au titre de la dediction CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/).
+
+Aucune attribution requise. Reutilisation libre.
+Plan d'assets du contrat de jeu : cc0 (game_contract.yaml -> assets.plan).

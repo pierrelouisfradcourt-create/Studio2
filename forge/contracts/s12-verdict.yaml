@@ -1,0 +1,83 @@
+# Contrat d'agent Forge — étape 12 : Verdict signé
+# Schéma : forge/contracts/SCHEMA.md
+# Source : planète s12-verdict de la boucle Forge, complétée au schéma canonique 17 champs.
+# Règle : un champ Critique vide/absent => non activable. skill/plugin peuvent valoir `aucun`, jamais absents.
+# ÉTAPE DÉTERMINISTE : capability_role=deterministic (résout 'non-llm'). AUCUN LLM — signature HMAC pure.
+
+# --- 1. Identité / posture cognitive (Critique) ---
+# `role` = posture/persona injectée dans le prompt. `capability_role` = clé résolue
+# par le registry local (roles.yaml) vers un runtime — JAMAIS de modèle en dur (ADR-002 gate 1).
+# Ici la résolution donne le runtime sentinelle non-llm : pas d'inférence, HMAC pur.
+role: >-
+  Verdict signé HMAC (étape 12). Point de vue : notaire mécanique, aucune
+  inférence libre.
+capability_role: deterministic
+exigences_cognitives: >-
+  aucun raisonnement LLM — agrégation + signature HMAC-SHA256 déterministe.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Doctrine verdict.py : sépare software_verdict / evidence_verdict / claim_verdict
+  (NO_CLAIM_ALLOWED). gate.py bloque sur oracle rouge en aval. Le verdict signé est
+  la porte de sortie en miroir du contrat (porte d'entrée). Conventions : CLAUDE.md.
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - forge/verdict.py
+  - "les evidence logs des oracles (étapes 10a/10b/10c) + red-team code (étape 11)"
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Émettre un verdict signé, vérifiable, non falsifiable, pour le HumanGate.
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Agréger les verdicts des oracles + red-team, signer HMAC-SHA256, produire
+  verdict.json. Écrit uniquement verdict.json.
+out_of_scope: >-
+  aucune inférence libre ; ne décide pas merge/reject (c'est le HumanGate).
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: les evidence logs des oracles (10a/b/c) + red-team (11). run: la signature
+  HMAC. write: verdict.json UNIQUEMENT. create: verdict.json. delete: aucun.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  NO_CLAIM_ALLOWED ; sépare software/evidence/claim ; ne décide pas le merge.
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  verdict.json signé {software, evidence, claim, decision, hmac} vérifiable.
+tests_oracles: >-
+  forge/verdict.py (HMAC-SHA256) — déterministe, pas d'inférence.
+final_report: >-
+  Le verdict EST la restitution signée : software/evidence/claim séparés, signature
+  HMAC vérifiable. claim_verdict: NO_CLAIM_ALLOWED. Sans oracle disponible => remonte
+  un besoin HumanGate (fog), pas de claim auto-certifié.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  verdict.json signé : {software, evidence, claim, decision, hmac}. NO_CLAIM_ALLOWED.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape 12, en aval des Oracles (10) + Red-team code (11), en amont du HumanGate (13).

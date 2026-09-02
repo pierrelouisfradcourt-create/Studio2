@@ -1,0 +1,50 @@
+# forge.reference_protected — invariant ratifié (docs/forge/FORGE_EVOLUTION_DOCTRINE_V0.md
+# §1.1), périmètre minimal ratifié Pierre 2026-07-29 (docs/fvl/FVL_PHASE_0_5_CHARTER.md
+# §7 point 1 : « protection du témoin · détection de modification · dérogation
+# humaine explicite. Rien d'autre avant la calibration »).
+#
+# DONNÉES consommées par forge/reference_guard.py — AUCUN chemin en dur dans
+# le code (mission FVL Phase 0.5, volet DÉTECTION). Modifier ce fichier change ce qui
+# est protégé ; ce n'est PAS une dérogation à une violation détectée — le calcul se
+# fait sur CE fichier, aussi versionné que le reste du dépôt.
+schema: forge.reference_protected.v1
+
+# Motifs protégés. Suffixe "/**" = tout le sous-arbre, résolu par
+# `git ls-files --cached --others --exclude-standard` (reference_guard.py) :
+# respecte .gitignore, donc le cache d'import Godot (.godot/) et les __pycache__
+# ne polluent jamais l'empreinte — incident témoin Pong déjà ratifié Pierre
+# 2026-07-28 (voir le commentaire correspondant dans le .gitignore racine).
+# EXTENSION RATIFIÉE PIERRE 2026-07-30 (avant gel du tronc V2) — la garde ne protège plus
+# seulement le TÉMOIN, mais tout le PÉRIMÈTRE dont dépend la validité d'une calibration.
+# Motif par ligne, chacun établi par mesure :
+#   GAMES/pong/**          témoin de régression gelé (décision 2026-07-27)
+#   tests/**               zone protégée déclarée (.claude/rules/tests.md)
+#   forge/**       LE CODE DU TRONC — n'avait aucun contrôle d'intégrité ; git_head
+#                          identifie l'état, la garde prouve dans les preuves de CHAQUE run
+#                          qu'il n'a pas bougé pendant la campagne (complémentaires)
+#   control_plane/registry.py  résout rôle -> modèle ET raisonnement (boucle 6) ; hors de
+#                          scripts/, donc hors de toute couverture jusqu'ici
+#   .claude/hooks/**       ENTRÉE D'EXÉCUTION : session-start.sh se déclenche sur chaque
+#                          `claude -p` lancé depuis la racine et injecte ~32,8k tokens dans
+#                          CHAQUE appel (mesuré boucle 5). Un hook qui change entre deux runs
+#                          change ce qui entre dans le modèle — même statut que le corpus de
+#                          leçons, déjà rangé dans les entrées gelées.
+#   CLAUDE.md              injecté par le même chemin, pour la même raison.
+# EXCLUSION DÉLIBÉRÉE : .claude/settings.json — c'est la configuration de protection FUTURE,
+# pas une entrée du tronc actuel ; l'inclure ferait signaler le geste de Pierre comme dérive.
+protected:
+  - GAMES/pong/**
+  - tests/**
+  - forge/**
+  - control_plane/registry.py
+  - .claude/hooks/**
+  - CLAUDE.md
+
+# Fichier de dérogation humaine — réutilise le sentinel déjà en place pour
+# forge.git_guard (déjà dans la liste `deny` de .claude/settings.json : une session
+# ne peut pas se l'auto-écrire). Schéma lu par reference_guard._read_derogation :
+#   {"reason": "...", "paths": ["GAMES/pong/...", ...], "timestamp_epoch": ...}
+# `timestamp_epoch` est ignoré ici (pas de fenêtre de fraîcheur pour ce garde — voir
+# la doctrine "tu lis un fichier, c'est tout"), mais reste utile pour git_guard qui
+# lit le même fichier pour un autre usage.
+derogation_path: .claude/HUMAN_GIT_OVERRIDE.json

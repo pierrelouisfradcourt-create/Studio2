@@ -1,0 +1,95 @@
+# Contrat d'agent Forge — étape 10d : Oracle VISUEL couche 1 (déterministe, ADVISORY)
+# Schéma : forge/contracts/SCHEMA.md
+# Source : docs/forge/S10D_CONTRACT_PROPOSAL.md (v2 red-teamée, ratifiée Pierre 2026-07-12)
+#          + annexe docs/forge/S10D_REDTEAM_ADJUDICATION.md.
+# ANNEXE ADVISORY : cette étape est HORS chaîne de promotion (absente de CHAIN/ORDER,
+# non câblée au driver). Aucun test de chaîne ne la couvre (zone protégée) — validation
+# manuelle : python -c "import sys; sys.path.insert(0, 'scripts'); from forge.contract import load_contract, build_dispatch_payload; p = build_dispatch_payload(load_contract('s10d-oracle-visual'), etape='s10d-oracle-visual'); print(p.model)"
+# (attendu : non-llm). Règle : un champ Critique vide/absent => non activable.
+
+# --- 1. Identité / posture cognitive (Critique) ---
+role: >-
+  Capteur visuel déterministe (non-LLM). Point de vue : mesure mécanique advisory,
+  aucun jugement, aucun verdict de qualité.
+capability_role: deterministic
+exigences_cognitives: >-
+  aucun raisonnement LLM — exécution déterministe seedée reproductible.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Consomme un jeu déjà vert P0 (aval des oracles 10a-10c). Runtime :
+  scripts/quality_sensor/collect.mjs (seed fixe, séquence rejouable). Doctrine :
+  P1_MECHANICAL_CONTRACT.md (invariants advisory). Base expérimentale : familles
+  A1/A2/A3/A5 prouvées sur défauts SYNTHÉTIQUES, sur Breakout uniquement, sans
+  généralisation (P1_1_RESULTS.md, formulation ratifiée) ; seuils v0 figés
+  (A1 < 4.5:1 · A2 < 24 px · A3 > 0.92 · A5 > 0).
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - docs/forge/P1_MECHANICAL_CONTRACT.md
+  - docs/forge/S10D_CONTRACT_PROPOSAL.md
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Produire le rapport advisory visual_mechanical.json (familles évaluées A1/A2/A3/A5,
+  seuils v0) sur le jeu du run — un signal à lire par un humain, JAMAIS une décision
+  machine. A4 = signal brut ; A6 et B1-B4 émises par le capteur mais HORS évaluation.
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Lancer node scripts/quality_sensor/collect.mjs <jeu> (seed enregistrée, séquence
+  rejouable) ; déposer visual_mechanical.json + visual_mechanical_report.md sous
+  lab/forge_sensors/<jeu>/ ; chaque observation traçable (measured, threshold,
+  justification, raw, artifact).
+out_of_scope: >-
+  Tout verdict/score/agrégat de QUALITÉ ; toute écriture dans verdict.json, reçus,
+  is_clean_pass, ledger, mémoire ; toute métrique hors capteur existant ; tout
+  retuning de seuil ; toute modification du capteur, du harnais e2e, de
+  run-oracle.mjs ou du driver ; tout LLM.
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo entier. run: node scripts/quality_sensor/collect.mjs <jeu> (le serveur du
+  jeu est lancé par le capteur lui-même). write: UNIQUEMENT lab/forge_sensors/<jeu>/.
+  delete: aucun. Déclaré : un dispatch via prepare_dispatch APPEND une entrée d'audit
+  dans EVIDENCE/bundles/dispatch_audit.jsonl (dispatch.py) — hors run direct.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  ADVISORY STRICT : un signal ou un échec s10d ne bloque RIEN et ne dégrade AUCUN
+  verdict de run forge. JAMAIS de LLM-as-judge. Gel auto-contenu : sha256 de
+  sensor.mjs/analysis.mjs/collect.mjs relevés en début de run et re-vérifiés en fin ;
+  divergence => BLOCKED documenté, jamais silencieux. Vocabulaire d'observation
+  UNIQUE : signal_detected / signal_absent / metric_unavailable.
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  rapport présent avec advisory:true ; run.seed + run.input_sequence rejouables ;
+  chaque observation porte measured, threshold, justification, raw, artifact ;
+  AUCUNE clé de score/verdict/agrégat (invariant testé par le cœur pur) ;
+  couverture : chaque famille A1/A2/A3/A5 émet >=1 observation measured non-null.
+tests_oracles: >-
+  fixtures/p1 : re-collect des 5 sondes (node scripts/quality_sensor/collect.mjs
+  p1_probe_*) puis node fixtures/p1/check.mjs exit 0 — non-régression du capteur ;
+  tests cœur pur quality_sensor (node --test, 19 tests) verts.
+final_report: >-
+  software/evidence/claim séparés. software_verdict porte sur l'EXÉCUTION du capteur
+  et JAMAIS sur la qualité du jeu : OK = rapport produit + invariants de format
+  tenus ; FAIL = capteur en échec ; BLOCKED = préconditions absentes ou sha divergent.
+  evidence_verdict: MECHANICAL_VALIDATION_ONLY ; claim_verdict: NO_CLAIM_ALLOWED ;
+  advisory_only: true.
+
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  lab/forge_sensors/<jeu>/visual_mechanical.json + visual_mechanical_report.md,
+  format v0 de P1_MECHANICAL_CONTRACT.md (invariants de format inchangés :
+  advisory:true, seed+séquence, observations atomiques, zéro agrégat).
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape 10d, annexe ADVISORY en aval des oracles 10a-10c ; n'entre pas dans la chaîne
+  de promotion (is_clean_pass ne la lit pas ; absente de dispatch.ORDER et du driver).
+  Se greffe sur le rôle deterministic documenté pour 10a/10b/10c/12 dans roles.yaml.

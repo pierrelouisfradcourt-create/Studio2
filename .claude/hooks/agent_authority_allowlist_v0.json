@@ -1,0 +1,81 @@
+{
+  "schema": "AGENT_AUTHORITY_ALLOWLIST_V0",
+  "version": "0.1.0",
+  "generated_at": "2026-08-09",
+  "generated_by": "Claude Opus 5 via Claude Code (session df575b56-a1ad-43a3-9635-0eefbdab5303)",
+  "scope_note": "Liste AUTO-LIMITANTE des types d'agent INTEGRES (builtin) dont la capacite est etablie par une source citable. Elle ne pretend PAS documenter tout le harnais Claude Code. Un type absent de cette liste ET absent de .claude/agents/<type>.md est UNKNOWN, donc REFUSE (DENY) par pretool_forge_guard.py. C'est ce refus par defaut qui rend la liste acceptable : l'incompletude ne peut jamais elargir une autorite.",
+  "consumer": ".claude/hooks/pretool_forge_guard.py (couche authority_inheritance)",
+  "custom_agents_note": "Les agents CUSTOM ne figurent pas ici : leur capacite est lue a la source depuis .claude/agents/<type>.md (frontmatter `disallowedTools`). Un agent .md sans `description` n'est pas enregistre par le harnais (mesure 2026-08-09 : economy-designer.md et ui-programmer.md sont sur disque mais absents de la liste de types du runtime) et reste donc UNKNOWN -> DENY.",
+  "capability_semantics": {
+    "known_capabilities": "\"ALL\" = univers complet des outils ; une LISTE = ensemble fini explicite d'outils autorises ; \"UNKNOWN\" = non etabli -> DENY.",
+    "known_restrictions": "outils retires de known_capabilities.",
+    "verification_status": "OBSERVED_RUNTIME_LISTING = releve dans la liste de types d'agent exposee par le harnais lui-meme ; DERIVED_FROM_TRANSCRIPT_METADATA = vu dans les .meta.json mais sans declaration de capacite ; UNVERIFIED = a ne jamais utiliser pour autoriser.",
+    "accepted_for_authority": ["OBSERVED_RUNTIME_LISTING"]
+  },
+  "types": {
+    "__main_session__": {
+      "type": "__main_session__",
+      "source": "pseudo-type interne : le transcript principal <session_id>.jsonl n'appartient a aucun sous-agent, il appartient a la session utilisateur (racine de toute lignee).",
+      "source_version_or_note": "Mesure 2026-08-09 : les .meta.json de profondeur 1 n'ont pas de parentAgentId ; leur toolUseId n'apparait que dans le transcript principal de la session.",
+      "known_capabilities": "ALL",
+      "known_restrictions": [],
+      "verification_status": "OBSERVED_RUNTIME_LISTING"
+    },
+    "general-purpose": {
+      "type": "general-purpose",
+      "source": "Liste des types d'agent exposee par le harnais Claude Code (description de l'outil Agent).",
+      "source_version_or_note": "Releve 2026-08-09, session df575b56 : \"general-purpose ... (Tools: *)\".",
+      "known_capabilities": "ALL",
+      "known_restrictions": [],
+      "verification_status": "OBSERVED_RUNTIME_LISTING"
+    },
+    "claude": {
+      "type": "claude",
+      "source": "Liste des types d'agent exposee par le harnais Claude Code (description de l'outil Agent).",
+      "source_version_or_note": "Releve 2026-08-09, session df575b56 : \"claude ... (Tools: *)\".",
+      "known_capabilities": "ALL",
+      "known_restrictions": [],
+      "verification_status": "OBSERVED_RUNTIME_LISTING"
+    },
+    "Explore": {
+      "type": "Explore",
+      "source": "Liste des types d'agent exposee par le harnais Claude Code (description de l'outil Agent).",
+      "source_version_or_note": "Releve 2026-08-09, session df575b56 : \"Explore ... (Tools: All tools except Agent, Artifact, ExitPlanMode, Edit, Write, NotebookEdit)\".",
+      "known_capabilities": "ALL",
+      "known_restrictions": ["Agent", "Artifact", "ExitPlanMode", "Edit", "Write", "NotebookEdit"],
+      "verification_status": "OBSERVED_RUNTIME_LISTING"
+    },
+    "Plan": {
+      "type": "Plan",
+      "source": "Liste des types d'agent exposee par le harnais Claude Code (description de l'outil Agent).",
+      "source_version_or_note": "Releve 2026-08-09, session df575b56 : \"Plan ... (Tools: All tools except Agent, Artifact, ExitPlanMode, Edit, Write, NotebookEdit)\".",
+      "known_capabilities": "ALL",
+      "known_restrictions": ["Agent", "Artifact", "ExitPlanMode", "Edit", "Write", "NotebookEdit"],
+      "verification_status": "OBSERVED_RUNTIME_LISTING"
+    },
+    "statusline-setup": {
+      "type": "statusline-setup",
+      "source": "Liste des types d'agent exposee par le harnais Claude Code (description de l'outil Agent).",
+      "source_version_or_note": "Releve 2026-08-09, session df575b56 : \"statusline-setup ... (Tools: Read, Edit)\".",
+      "known_capabilities": ["Read", "Edit"],
+      "known_restrictions": [],
+      "verification_status": "OBSERVED_RUNTIME_LISTING"
+    },
+    "claude-code-guide": {
+      "type": "claude-code-guide",
+      "source": "Liste des types d'agent exposee par le harnais Claude Code (description de l'outil Agent).",
+      "source_version_or_note": "Releve 2026-08-09, session df575b56 : \"claude-code-guide ... (Tools: Glob, Grep, Read, WebFetch, WebSearch)\".",
+      "known_capabilities": ["Glob", "Grep", "Read", "WebFetch", "WebSearch"],
+      "known_restrictions": [],
+      "verification_status": "OBSERVED_RUNTIME_LISTING"
+    },
+    "workflow-subagent": {
+      "type": "workflow-subagent",
+      "source": "Observe uniquement dans les sidecars <session>/subagents/workflows/wf_*/agent-*.meta.json.",
+      "source_version_or_note": "Releve 2026-08-09 : {\"agentType\":\"workflow-subagent\",\"spawnDepth\":1}, sans toolUseId. Aucune declaration de capacite nulle part -> autorite NON ETABLIE.",
+      "known_capabilities": "UNKNOWN",
+      "known_restrictions": [],
+      "verification_status": "DERIVED_FROM_TRANSCRIPT_METADATA"
+    }
+  }
+}

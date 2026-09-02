@@ -1,0 +1,466 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "$id": "mutation_registry.schema.json",
+ "title": "MUTATION_REGISTRY_V2",
+ "description": "Mémoire scientifique de la Forge. Une mutation n'existe pas parce qu'elle a été essayée, mais parce qu'elle a été MESURÉE. Aucun champ libre : tout est enum, nombre, ou référence vérifiable sur disque.",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "mutations"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "mutations": {
+   "type": "array",
+   "items": {
+    "$ref": "#/definitions/mutation"
+   }
+  }
+ },
+ "definitions": {
+  "mutation": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "title",
+    "mutation_class",
+    "layer",
+    "worker",
+    "target",
+    "hypothesis",
+    "implementation",
+    "expected_gain",
+    "expected_risk",
+    "measured_gain",
+    "measured_cost",
+    "false_positive",
+    "true_positive",
+    "sample_size",
+    "confidence",
+    "known_side_effects",
+    "known_blind_spots",
+    "accepted",
+    "production_ready",
+    "rejected_reason",
+    "evidence_refs",
+    "evidence_status",
+    "reproducibility",
+    "requires",
+    "conflicts",
+    "timestamp",
+    "root_problem_id",
+    "reward_contract_ref",
+    "evaluation_context",
+    "status",
+    "measured_metrics"
+   ],
+   "properties": {
+    "id": {
+     "type": "string",
+     "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "title": {
+     "type": "string",
+     "minLength": 1
+    },
+    "mutation_class": {
+     "description": "Exactement une classe par mutation.",
+     "enum": [
+      "PROMPT",
+      "ORACLE",
+      "REPAIR",
+      "WORKFLOW",
+      "SCHEMA",
+      "CONTRACT",
+      "MODEL",
+      "TOOLING"
+     ]
+    },
+    "layer": {
+     "description": "Zone ou une boucle peut casser. VOCABULAIRE : forge/layers.json (source unique, lue par check_mutation_registry et candidate_selector). Cette copie est verifiee par test contre la source.",
+     "enum": [
+      "s1-prisme",
+      "s2-worldscan",
+      "s3-decompo",
+      "s4-archi-contract",
+      "s5-wiremap-contract",
+      "repair",
+      "quality",
+      "driver",
+      "preflight",
+      "build",
+      "oracle-produit",
+      "knowledge",
+      "feedback-loop"
+     ]
+    },
+    "worker": {
+     "type": "string",
+     "minLength": 1
+    },
+    "target": {
+     "description": "Fichier ou artefact que la mutation modifie.",
+     "type": "string",
+     "minLength": 1
+    },
+    "hypothesis": {
+     "type": "string",
+     "minLength": 1
+    },
+    "implementation": {
+     "type": "string",
+     "minLength": 1
+    },
+    "expected_gain": {
+     "type": "string",
+     "minLength": 1
+    },
+    "expected_risk": {
+     "type": "string",
+     "minLength": 1
+    },
+    "measured_gain": {
+     "description": "Ce qui a été OBSERVÉ. `UNKNOWN` quand la mesure n'existe pas — jamais une estimation.",
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "measured_cost": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "token_cost",
+      "runtime_cost",
+      "complexity_cost",
+      "maintenance_cost"
+     ],
+     "description": "Toute valeur provient d'une mesure existante. Sinon `UNKNOWN` — jamais un chiffre inventé.",
+     "properties": {
+      "token_cost": {
+       "oneOf": [
+        {
+         "type": "integer",
+         "minimum": 0
+        },
+        {
+         "const": "UNKNOWN"
+        }
+       ]
+      },
+      "runtime_cost": {
+       "oneOf": [
+        {
+         "type": "integer",
+         "minimum": 0
+        },
+        {
+         "const": "UNKNOWN"
+        }
+       ]
+      },
+      "complexity_cost": {
+       "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "UNKNOWN"
+       ]
+      },
+      "maintenance_cost": {
+       "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "UNKNOWN"
+       ]
+      }
+     }
+    },
+    "false_positive": {
+     "oneOf": [
+      {
+       "type": "integer",
+       "minimum": 0
+      },
+      {
+       "const": "UNKNOWN"
+      }
+     ]
+    },
+    "true_positive": {
+     "oneOf": [
+      {
+       "type": "integer",
+       "minimum": 0
+      },
+      {
+       "const": "UNKNOWN"
+      }
+     ]
+    },
+    "sample_size": {
+     "oneOf": [
+      {
+       "type": "integer",
+       "minimum": 0
+      },
+      {
+       "const": "UNKNOWN"
+      }
+     ]
+    },
+    "confidence": {
+     "description": "TOUJOURS la chaîne 'AUTO'. La valeur est DÉRIVÉE par check_mutation_registry.mjs depuis sample_size / false_positive / true_positive. Saisir un nombre à la main produirait un chiffre dont personne ne saurait retrouver l'origine — c'est précisément ce que ce registre existe pour empêcher.",
+     "const": "AUTO"
+    },
+    "known_side_effects": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1
+     }
+    },
+    "known_blind_spots": {
+     "description": "Ce que la mutation NE regarde pas. Le défaut migre vers l'angle mort : ne pas le nommer, c'est le perdre.",
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1
+     }
+    },
+    "accepted": {
+     "description": "La mutation est-elle scientifiquement retenue (mesure à l'appui) ?",
+     "type": "boolean"
+    },
+    "production_ready": {
+     "description": "Utilisable en production. DISTINCT de `accepted` : une mutation peut être valide et pas encore assez éprouvée pour sortir du laboratoire.",
+     "type": "boolean"
+    },
+    "rejected_reason": {
+     "description": "null si accepted. Sinon {code lisible par machine, note lisible par un humain}.",
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "code",
+        "note"
+       ],
+       "properties": {
+        "code": {
+         "enum": [
+          "REFUTED_FALSE_POSITIVE",
+          "NO_MEASURED_GAIN",
+          "BLIND_TO_TESTED_DEFECT",
+          "NOT_REPRODUCIBLE",
+          "SUPERSEDED",
+          "VIOLATES_CONTRACT_CONSTRAINT"
+         ]
+        },
+        "note": {
+         "type": "string",
+         "minLength": 1
+        }
+       }
+      }
+     ]
+    },
+    "evidence_refs": {
+     "description": "Preuves TYPÉES par nature. Le scratchpad et la conversation n'y figurent jamais : une mutation dont la seule preuve est une conversation ne peut pas être acceptée.",
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "artifacts",
+      "tests",
+      "reports",
+      "telemetry",
+      "commits"
+     ],
+     "properties": {
+      "artifacts": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1
+       }
+      },
+      "tests": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1
+       }
+      },
+      "reports": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1
+       }
+      },
+      "telemetry": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1
+       }
+      },
+      "commits": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1
+       }
+      }
+     }
+    },
+    "evidence_status": {
+     "enum": [
+      "VERSIONED",
+      "UNKNOWN"
+     ]
+    },
+    "reproducibility": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "command",
+      "inputs",
+      "expected_outputs",
+      "deterministic"
+     ],
+     "properties": {
+      "command": {
+       "description": "Commande RÉELLE et existante qui rejoue la mesure. Le checker vérifie que le script cité est sur disque.",
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "inputs": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1
+       }
+      },
+      "expected_outputs": {
+       "type": "array",
+       "items": {
+        "type": "string",
+        "minLength": 1
+       }
+      },
+      "deterministic": {
+       "description": "false quand la mesure a impliqué un appel modèle : rejouer ne redonnera pas la même sortie. Ce qui reste rejouable est le VERDICT DE L'ORACLE sur l'artefact gelé, pas la génération.",
+       "type": "boolean"
+      }
+     }
+    },
+    "requires": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "conflicts": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "timestamp": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "root_problem_id": {
+     "description": "Probleme racine que cette mutation adresse. null = on ignore encore a QUELLE question elle repond : elle reste memoire, hors MCTS.",
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "reward_contract_ref": {
+     "description": "Reference au contrat applicable, forme '<ROOT_PROBLEM_ID>#reward_contract'. null => la mutation ne peut PAS entrer dans une recherche MCTS (status OBSERVED).",
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "evaluation_context": {
+     "description": "Conditions de la mesure. Sans elles, deux mesures ne sont pas comparables meme sous un meme reward_contract : un taux obtenu a temperature 0 sur 3 jeux ne se compare pas a un taux obtenu ailleurs.",
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "dataset",
+      "worker_model",
+      "temperature",
+      "oracle_version",
+      "dataset_sha256"
+     ],
+     "properties": {
+      "dataset": {
+       "type": "string",
+       "minLength": 1
+      },
+      "worker_model": {
+       "type": "string",
+       "minLength": 1
+      },
+      "temperature": {
+       "oneOf": [
+        {
+         "type": "number",
+         "minimum": 0
+        },
+        {
+         "const": "UNKNOWN"
+        }
+       ]
+      },
+      "oracle_version": {
+       "type": "string",
+       "minLength": 1
+      },
+      "dataset_sha256": {
+       "description": "Empreinte du fichier d entree. C est ELLE qui fait foi pour la comparabilite, jamais le chemin : deux copies identiques a deux chemins differents sont le meme dataset, et deux fichiers homonymes ne le sont pas.",
+       "type": "string",
+       "minLength": 8
+      }
+     }
+    },
+    "status": {
+     "description": "Cycle de vie. Une mutation ne meurt JAMAIS : une branche ecartee aujourd hui peut redevenir pertinente quand l echantillon grandit ou quand le probleme change. OBSERVED = memoire uniquement, exclue du MCTS faute de reward_contract applicable.",
+     "enum": [
+      "DISCOVERED",
+      "OBSERVED",
+      "MEASURED",
+      "REPRODUCIBLE",
+      "ACCEPTED",
+      "PRODUCTION",
+      "SUPERSEDED",
+      "ARCHIVED"
+     ]
+    },
+    "measured_metrics": {
+     "description": "Valeurs MESUREES des metriques declarees par le reward_contract du root_problem. Cle = nom de metrique tel que declare dans root_problems.json. Objet VIDE = aucune mesure disponible : la mutation existe, mais rien ne permet de l ordonner face a ses freres. C est cette absence, et non le nombre de mutations, qui bloque le MCTS.",
+     "type": "object",
+     "additionalProperties": {
+      "type": [
+       "number",
+       "string"
+      ]
+     }
+    }
+   }
+  }
+ }
+}

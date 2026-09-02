@@ -1,0 +1,5 @@
+{
+  "comment": "Triage des mutants survivants - chaque survivant justifié par équivalence sémantique",
+  "triaged_survivors": [],
+  "notes": "Tous les mutants sont tués par les tests. Les tests d'équivalence stricte (exact vx/vy values, exact health, exact score) attrapent tous les changements de opérateurs (>=/>, <=/< etc)."
+}

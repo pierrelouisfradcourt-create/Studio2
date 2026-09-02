@@ -1,0 +1,99 @@
+# SNAKE — contrat de jeu (budget). Noeud 2 du curriculum, premier jeu a cible GODOT.
+# Format : scripts/forge/standard/SCHEMA.md §1
+# Pose par l'orchestrateur le 2026-07-28 en mise en place du run s9 (go Pierre).
+
+schema_version: 1
+game_id: snake
+node: 2
+runtimes: [rules, godot]
+
+budget:
+  # BUDGET CONSERVATEUR, A RATIFIER PAR PIERRE.
+  # reuses: VIDE — la loi exige qu'un `reuses` existe en bibliotheque au tier `validated`.
+  #   La seule brique Godot du catalogue, `sys-grid-nav-m01` (grid_nav.gd), est mesuree
+  #   tier=candidate / proof_of_use=null : la declarer ici ferait echouer le volet budget.
+  #   La carte la traite en `CODE_COPIE` (copie attestee par empreinte), pas en reuse de
+  #   bibliotheque validee — les deux notions ne se confondent pas.
+  reuses: []
+  # adds: VIDE — ce build ne PROMET aucun depot en bibliotheque. Une promesse non tenue est
+  #   une violation (`promis_non_depose`) ; ne rien promettre est le choix honnete pour un
+  #   premier build sur un runtime neuf. Si le forgeron juge qu'un systeme merite d'etre
+  #   legue, le budget le BLOQUE et il le remonte : c'est le comportement voulu (fail-closed),
+  #   pas un echec. Decision Pierre 2026-07-28 : « pas d'extension d'infrastructure ».
+  adds: []
+
+assets:
+  # Valeurs legales du standard : cc0 (plan A) | generated (plan B). `none` n'existe pas —
+  # refus mecanique verifie a la mise en place (`champ mal type 'plan' (recu 'none')`).
+  # Le charter v2 ne prevoit AUCUN asset externe (rendu par primitives du moteur) ; `cc0`
+  # est donc declare comme plan par defaut sans qu'aucun asset ne soit attendu.
+  plan: cc0
+
+# =====================================================================================
+# DESCRIPTEUR DE PREUVE — contrat docs/forge/CONTRAT_PREUVE_MUTATION_V1.md (FIGE).
+# Migration ratifiee Pierre 2026-07-28 : « migrer uniquement le descripteur proof: de
+# Snake, conformement au contrat V1 deja ratifie. Aucun autre changement sous
+# games/snake/** ». Snake est le PREMIER jeu du parc a porter ce descripteur ; Pong
+# reste sous regime historique (temoin gele, hors migration, contrat V1 §6).
+# =====================================================================================
+proof:
+  schema_version: 1
+  # Le runtime QUI PROUVE. Doit appartenir a `runtimes:` ci-dessus (regle de forme 1).
+  runtime: godot
+
+  mutation:
+    # PERIMETRE PAR CATEGORIE, jamais par extension (contrat §2 ; garde-fou 1 du contrat
+    # n2 deja ratifie : « la restriction se fait par CATEGORIE STRUCTUREE, jamais par
+    # heuristique de chemin »). Les 6 categories ci-dessous sont EXACTEMENT celles
+    # presentes dans games/snake/09_WIREMAP/wiremap.json (mesure : system 15,
+    # system.adapter 18, test.unit 26, test.oracle 10, godot.project_root 1,
+    # godot.project_tests 1) — leur union couvre tout, regle de forme 4 : une categorie
+    # ni jugee ni exclue est un BLOCKED, jamais un oubli silencieux.
+    categories_mutables: [system]
+    categories_exclues:
+      - system.adapter      # decision U-2 : rendu/runtime -> oracle produit, pas mutation
+      - test.unit           # ne jamais muter la preuve elle-meme
+      - test.oracle         # idem
+      - godot.project_root  # project.godot / solvability.gd : preuve et configuration
+      - godot.project_tests # tests/run_tests.gd : LE harnais, muter serait muter la preuve
+      # Ajoutees le 2026-08-17 (GO Pierre). PREVENTIF ici : la wiremap de Snake n'emploie
+      # encore NI l'une NI l'autre, donc son run passe aujourd'hui. Mais la meme omission a
+      # bloque tetris et bomberman_3d des que leur wiremap a adopte ces categories — la
+      # regression etait ARMEE chez Snake aussi, en attente d'une carte enrichie.
+      # EXCLUES : ce n'est pas du code (meme critere que les lignes ci-dessus).
+      - reference.observation # GAME_REFERENCE/*.md + observation_manifest.json : documentation
+      - asset.mesh            # 04_ASSETS/meshes/*.glb + *.import : binaires, rien a muter
+
+    # COMMANDE DEDIEE A LA MUTATION — jamais la commande d'oracle (contrat §0).
+    # Mesure du 2026-07-28 : run_tests.gd seul = 0,27 s ; l'oracle complet (mecanique +
+    # 50 essais de solvabilite) = 13,3 s. Sur 64 mutants : 17 s contre 14 min, facteur 50.
+    # Et rejouer 50 parties par mutant ne prouve rien sur la logique mutee.
+    command: ["<bin:godot>", "--headless", "--path", ".", "--script", "res://tests/run_tests.gd"]
+    cwd: "games/snake"        # relatif a la racine du depot
+    binary_ref: godot         # resolu a l'execution par scripts/forge/godot_bin.mjs
+    expects_exit_zero: true
+
+    budget:
+      # Valeurs ratifiees Pierre 2026-07-28, derivees de mesures (64 mutants reels,
+      # 0,27 s par execution) : marges x3, x100, x50. Depassement => BLOCKED explicite,
+      # JAMAIS un resultat partiel presente comme preuve (contrat §4).
+      max_mutants: 200
+      timeout_per_mutant_s: 30
+      total_timeout_s: 900
+      cost_class: engine      # un lancement moteur par mutant
+
+    seals:
+      # Chaine de preuve (contrat §3) : ce qui est scelle pour repondre apres coup a
+      # « quelle preuve exacte a produit ce verdict ? ». `test_scripts` est RELATIF AU JEU
+      # — c'est ce qui rend le recu scellable malgre une commande qui lance le moteur.
+      wrapper: []
+      test_scripts: ["tests/run_tests.gd"]
+
+  solvability:
+    # Remplace le chemin `07_TESTS/oracle/solvability.mjs` code en dur dans
+    # static_oracles.py (hypothese web-only). max_ticks mesure : une partie gagnee prend
+    # 266 a 417 ticks ; le defaut historique de 200 produisait un FAUX NEGATIF (0/50).
+    entry: "solvability.gd"
+    max_ticks: 5000
+    trials: 50
+    trial_timeout_ms: 60000

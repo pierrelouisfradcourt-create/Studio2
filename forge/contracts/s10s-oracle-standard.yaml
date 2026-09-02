@@ -1,0 +1,110 @@
+# Contrat d'agent Forge — étape 10s : Oracle STANDARD (déterministe non-LLM)
+# Schéma : forge/contracts/SCHEMA.md (règle des 3 états — un champ absent = refus)
+# Statut : PROPOSED — créé 2026-07-22, jumeau du Builder STANDARD (s9-build-standard).
+#
+# CE QUI DISTINGUE CETTE VARIANTE : ce n'est pas UN oracle mais les SIX oracles du
+# standard (forge/standard_oracles.py), exécutés ensemble, en mode APRÈS BUILD
+# (par opposition au mode « au gel » utilisé en amont du build). C'est la porte de
+# sortie du builder STANDARD : elle vérifie que le squelette gelé a été honoré ligne
+# par ligne, pas seulement que le code produit "marche" au jugé.
+
+# --- 1. Identité / posture cognitive (Critique) ---
+role: >-
+  Oracle STANDARD (déterministe non-LLM, six volets). Point de vue : vérificateur
+  d'isomorphisme squelette↔code après build — complétude du contrat, budget d'empilement,
+  états des lignes, placement, index bidirectionnel, collisions de capacités.
+capability_role: deterministic
+exigences_cognitives: >-
+  Aucun raisonnement LLM — six vérifications déterministes (schéma fermé, arithmétique
+  de budget, machine à états, table de placement, index de fichiers, registre de capacités).
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Consomme le contrat de jeu (00_CHARTER/game_contract.yaml) et le squelette
+  (09_WIREMAP/wiremap.json) du jeu courant, ainsi que les trois fichiers de référence du
+  standard (core_requirements.yaml, repo_map.yaml, capabilities.yaml) qui ne varient jamais
+  d'un jeu à l'autre. Les six oracles vivent dans forge/standard_oracles.py — module
+  autonome, non branché ailleurs que par ce contrat. Distinction de moment (SCHEMA.md §3) :
+  cette étape tourne en mode « après build » (`frozen="built"`, `built=True`), à l'inverse du
+  mode « au gel » qui a validé le squelette AVANT le build (hors périmètre de ce contrat).
+mandatory_read:
+  - forge/standard/SCHEMA.md
+  - forge/standard/core_requirements.yaml
+  - forge/standard/repo_map.yaml
+  - forge/standard/capabilities.yaml
+  - le contrat de jeu courant (00_CHARTER/game_contract.yaml)
+  - le squelette du jeu courant, après build (09_WIREMAP/wiremap.json)
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Exécuter les six oracles du standard sur le jeu courant en mode APRÈS BUILD et rendre
+  OK/FAIL : (1) complétude du contrat de jeu, (2) budget d'empilement respecté, (3) aucune
+  ligne restée REQUIRED, (4) placement cohérent avec repo_map, (5) index bidirectionnel
+  carte↔disque sans manquant ni orphelin, (6) registre de capacités sans collision ni trou.
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Lire le contrat de jeu, le squelette et les trois fichiers de référence du standard ;
+  exécuter les six fonctions de forge/standard_oracles.py ; agréger leurs verdicts.
+out_of_scope: >-
+  Aucun jugement LLM. Ne modifie ni le contrat de jeu, ni le squelette, ni le code du jeu,
+  ni forge/standard/** ni forge/standard_oracles.py (modifier son propre
+  juge est la faute la plus grave possible ici).
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: dépôt entier (jeu courant + forge/standard/**). run: les six oracles du
+  standard (forge/standard_oracles.py). write: UNIQUEMENT le reçu de l'oracle
+  standard dans EVIDENCE/bundles. create: le reçu. delete: aucun.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  JAMAIS de LLM-as-judge. Jamais d'exception sur une entrée manquante ou malformée (fichier
+  absent, JSON illisible, YAML cassé) : un échec de lecture est un reçu BLOCKED motivé, pas
+  un crash — même discipline que check_architecture (commentaire sur le crash-loop réel évité).
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  Les SIX oracles passent : {contract_completeness, budget, line_states, placement, index,
+  collisions} tous `passed: true`. Un seul FAIL parmi les six => l'oracle STANDARD rend FAIL,
+  avec le détail des violations de chaque volet concerné.
+tests_oracles: >-
+  forge/standard_oracles.py (les six fonctions), déterministes, non-LLM. Mode
+  après build : `check_line_states(..., frozen="built")` (REQUIRED interdit),
+  `check_index(..., built=True)` (fichiers/dossiers déclarés doivent exister).
+final_report: >-
+  software/evidence/claim séparés. Cite les six oracles et leur `passed` individuel + le
+  détail des violations pour ceux en FAIL. claim_verdict: NO_CLAIM_ALLOWED. Vocabulaire :
+  OK / FAIL / BLOCKED uniquement. Entrée manquante/malformée => BLOCKED motivé, jamais
+  un claim.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  {passed: bool, contract_completeness: {...}, budget: {...}, line_states: {...},
+  placement: {...}, index: {...}, collisions: {...}}. OK si passed, FAIL sinon, BLOCKED si
+  une entrée est absente/illisible.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape 10s, porte de sortie déterministe du Builder STANDARD (s9-build-standard). En amont :
+  le squelette gelé honoré par le builder. En aval : s11-redteam-code (advisory) puis
+  s12-verdict (agrégation signée), puis HumanGate Pierre.

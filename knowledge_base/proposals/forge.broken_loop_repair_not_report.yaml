@@ -1,0 +1,60 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.broken_loop_repair_not_report
+statement: 'Une boucle cassee dont la cause racine est identifiee et la solution connue
+  doit etre REPAREE immediatement, pas remontee comme observation. Le role de la Forge
+  n''est pas de signaler les ecarts mais de reconnecter les boucles : diagnostic ->
+  cause -> correction -> test -> preuve, exactement comme pour un bug. On repare le
+  mecanisme generique, jamais le cas particulier en exception.'
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-broken_loop_repair_not_report
+  kind: pattern
+  function: 'Une boucle cassee dont la cause racine est identifiee et la solution
+    connue doit etre REPAREE immediatement, pas remontee comme observation. Le role
+    de la Forge n''est pas de signaler les ecarts mais de reconnecter les boucles
+    : diagnostic -> cause -> correction -> test -> preuve, exactement comme pour un
+    bug. On repare le mecanisme generique, jamais le cas particulier en exception.'
+  source: Forge lesson 'forge.broken_loop_repair_not_report' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.broken_loop_repair_not_report
+    supporting_runs:
+    - tetris-fullgodot-20260803-084719
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-03T11:31:51.387425+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - tetris-fullgodot-20260803-084719
+  invariants:
+  - 'Une boucle cassee dont la cause racine est identifiee et la solution connue doit
+    etre REPAREE immediatement, pas remontee comme observation. Le role de la Forge
+    n''est pas de signaler les ecarts mais de reconnecter les boucles : diagnostic
+    -> cause -> correction -> test -> preuve, exactement comme pour un bug. On repare
+    le mecanisme generique, jamais le cas particulier en exception.'
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - tetris-fullgodot-20260803-084719
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-03T11:31:51+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T11:31:51+00:00'

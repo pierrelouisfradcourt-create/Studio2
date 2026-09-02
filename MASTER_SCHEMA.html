@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MASTER SCHEMA V2 — Studio</title>
+<style>
+:root{--bg:#fbfaf8;--fg:#1c1b19;--mut:#6b6862;--line:#ddd8d0;--card:#fff;
+  --acc:#8a5a2b;--ok:#2f6d4f;--warn:#8a6d1f;--bad:#8f3a34;--code:#f3f0ea;--dim:#efece5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16150f;--fg:#eae6dd;--mut:#a09a8e;--line:#33302a;--card:#1e1c16;
+  --acc:#d29a5e;--ok:#6fbf90;--warn:#d6b25c;--bad:#e0837a;--code:#22201a;--dim:#211f19}}
+:root[data-theme="dark"]{--bg:#16150f;--fg:#eae6dd;--mut:#a09a8e;--line:#33302a;--card:#1e1c16;
+  --acc:#d29a5e;--ok:#6fbf90;--warn:#d6b25c;--bad:#e0837a;--code:#22201a;--dim:#211f19}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+ font:15px/1.62 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;padding:32px 20px 80px}
+.wrap{max-width:1120px;margin:0 auto}
+h1{font-size:27px;margin:0 0 4px;letter-spacing:-.015em}
+h2{font-size:17px;margin:40px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h2 .n{color:var(--acc);font-weight:700;margin-right:9px}
+h3{font-size:13.5px;margin:22px 0 6px;color:var(--acc);text-transform:uppercase;letter-spacing:.07em}
+p{margin:8px 0}
+.sub{color:var(--mut);font-size:13px;margin:0 0 18px}
+code,pre{font-family:ui-monospace,"Cascadia Code",Consolas,monospace}
+code{background:var(--code);padding:1px 5px;border-radius:3px;font-size:12.5px}
+pre{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;
+ overflow-x:auto;font-size:12.5px;line-height:1.5}
+table{border-collapse:collapse;width:100%;font-size:12.8px;margin:10px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--code);font-weight:600;white-space:nowrap}
+tbody tr:nth-child(even){background:var(--dim)}
+.card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--acc);
+ border-radius:0 6px 6px 0;padding:12px 16px;margin:14px 0}
+.card.b{border-left-color:var(--bad)}
+.k{color:var(--ok);font-weight:600}.m{color:var(--warn);font-weight:600}
+.r{color:var(--bad);font-weight:600}.a{color:var(--acc);font-weight:600}
+.ev{color:var(--mut);font-size:12px;font-family:ui-monospace,monospace}
+ol,ul{margin:8px 0;padding-left:22px}li{margin:4px 0}
+.foot{margin-top:46px;padding-top:14px;border-top:1px solid var(--line);color:var(--mut);font-size:12.5px}
+</style></head><body><div class="wrap">
+
+<h1>MASTER SCHEMA V2</h1>
+<p class="sub">Représentation du système, mesurée · <b>source canonique</b> · 2026-09-01<br>
+Tous les chiffres et toutes les preuves de ce document proviennent d'une <b>passe de mesure
+unique</b> sur l'état courant du V2. Rien n'est repris sur parole.</p>
+
+<pre>derived_from:
+  - ancien MASTER_SCHEMA (matière première — aucune autorité)
+  - surfaces V2 réellement retenues, re-mesurées à l'instant
+  - graphe d'import du paquet Forge · résolution de rôle exécutée · constantes testées
+statut : SOURCE CANONIQUE
+</pre>
+
+<h2><span class="n">1</span>La loi de ce document</h2>
+<div class="card"><b>Une surface n'existe dans ce schéma que si elle a les quatre.</b>
+<code>CONSOMMATEUR</code> · <code>INTERFACE</code> · <code>ENTRÉE/SORTIE</code> ·
+<code>PREUVE</code>. S'il en manque une, la surface est déclarée <b>UNKNOWN</b> ou reste
+<b>dehors</b> — jamais présentée comme acquise.</div>
+<p>Corollaire appliqué partout : <b>le repo ment par accumulation, le document ment par
+obsolescence.</b> Un état déclaré ne devient jamais automatiquement un état réel ; une divergence
+se rend visible, elle ne se corrige pas en silence.</p>
+<p class="ev">Piège rencontré et évité pendant la mesure : un consommateur ne se trouve pas par la
+forme du nom. <code>execution_proof</code> semblait appelé par la chaîne — ce sont les champs
+<code>execution_proof_attestation</code> du verdict. Faux positif écarté.</p>
+
+<h2><span class="n">2</span>Carte des surfaces</h2>
+<pre>                       <b>CLAUDE CODE</b>   l'operateur — aucun composant d'orchestration en V2
+                             │        lit le contexte · charge les skills · prépare le Brief
+                             │        invoque la Forge · récupère · observe · présente au gate
+                             ▼
+                       MASTER_SCHEMA    la carte, jamais un composant exécutif
+                             │
+      ┌──────────────────────┼──────────────────────┐
+      ▼                      ▼                      ▼
+    forge/            knowledge_base              TOOLS/
+  la fabrique         conserve le ratifié     capacités + observer
+      │                      │                      │
+      └──────────────────────┼──────────────────────┘
+                             ▼
+                          GAMES/            rail · briefs · jeux retenus
+                             │
+                             ▼
+                       ⟨ EVIDENCE/ ⟩        <b>DÉCLARÉE, INEXISTANTE</b>
+                             │              destination explicite des sorties de run
+                             ▼
+                        HUMAN GATE          seul producteur de vérité
+
+hors V2 — restent dans l'ancien Studio : control_plane · openclaw · anciennes lanes
+                                          architectures expérimentales · council</pre>
+<p><b>Précondition d'exécution</b> (pas une surface) : Python + <b>PyYAML</b> · Node.js ·
+<code>claude</code> CLI · <code>git</code>. <b>Aucun paquet npm</b> — les 47 <code>.mjs</code>
+n'importent que des modules natifs <code>node:</code>, donc ni <code>package.json</code> ni
+<code>node_modules</code>. La chaîne asset (<code>numpy</code>, <code>pygltflib</code>,
+<code>bpy</code>) est <b>hors du fermé transitif</b> de <code>run_real</code> : un run n'en a pas
+besoin. Le contrôle revient à <code>forge/preflight.py</code>, garde qui existe déjà.</p>
+<p><b>Invocation canonique, unique</b> — depuis <code>Studio/</code> :
+<code>python -m forge.run_real</code> · validation <code>python -m pytest forge/tests</code>.
+Même racine, même <code>sys.path</code>, aucun <code>PYTHONPATH</code>, aucun <code>.pth</code>,
+aucune installation implicite, aucun chemin vers l'ancien Studio.
+<span class="ev">Mesuré : c'est la seule disposition où l'exécution réelle ET les tests passent
+avec les imports internes. La disposition actuelle <code>FORGE/forge/</code> donne pytest vert et
+exécution cassée.</span></p>
+<p><b>670 fichiers</b> — <code>FORGE/</code> 466 · <code>knowledge_base/</code> 129 ·
+<code>TOOLS/</code> 41 · <code>.claude/</code> 28 · <code>GAMES/</code> 2 · 3 documents racine +
+ce schéma.</p>
+
+<h2><span class="n">3</span>Contrat de surface — la table centrale</h2>
+<table><thead><tr>
+<th>surface</th><th>consommateur</th><th>interface</th><th>entrée → sortie</th><th>preuve</th><th>statut</th>
+</tr></thead><tbody>
+<tr><td><b>MASTER_SCHEMA</b><br><span class="ev">1 fichier</span></td>
+<td>humain ; cité par <code>RAIL_REGISTER</code>, <code>IO_CONTRACT</code>, <code>ADJUDICATION</code></td>
+<td>page HTML autonome</td>
+<td>mesures des surfaces → carte</td>
+<td>chaque affirmation porte sa mesure ; 0 référence externe</td>
+<td class="k">IMPLEMENTED</td></tr>
+
+<tr><td><b>FORGE</b> — chaîne<br><span class="ev">27 modules</span></td>
+<td>opérateur via <code>run_real</code> ; porte <code>pretool_forge_guard</code></td>
+<td>CLI Python + import du paquet <code>forge</code></td>
+<td>Brief + contrats + KB → run_dir, verdict signé, leçons</td>
+<td><b>27 modules atteignables</b> par graphe d'import depuis 5 points d'entrée (sur 55 <code>.py</code>)</td>
+<td class="k">IMPLEMENTED</td></tr>
+
+<tr><td><b>FORGE</b> — ressources<br><span class="ev">28 contrats, standard/, oracles.json</span></td>
+<td><code>load_contract</code> · <code>_STANDARD_DIR</code> · <code>resolve_oracle</code></td>
+<td>fichiers lus au démarrage</td>
+<td>— (données internes)</td>
+<td class="r">aucune : <b>4 chemins sur 6 ne résolvent pas</b> dans le V2</td>
+<td class="r">BLOCKED</td></tr>
+
+<tr><td><b>knowledge_base</b><br><span class="ev">129 fichiers</span></td>
+<td><code>contract.py</code> (injection) · <code>kb_proposal.py</code> (écriture) · driver · preflight · observer</td>
+<td>fichiers + <code>kb_proposal --apply --ratifie-par</code></td>
+<td>propositions → briques servies aux agents</td>
+<td><b>catalogue lu et parsé : 50 entrées, 7 <code>validated</code>, 26 propositions</b></td>
+<td class="k">IMPLEMENTED</td></tr>
+
+<tr><td><b>GAMES</b> — rail<br><span class="ev">2 fichiers, 0 jeu</span></td>
+<td>humain — point de décision avant toute migration</td>
+<td>registre Markdown</td>
+<td>rail déclaré + mesure du repo → décision</td>
+<td>25 nœuds relevés verbatim ; drift mesuré sur 5 d'entre eux</td>
+<td class="k">IMPLEMENTED</td></tr>
+
+<tr><td><b>GAMES</b> — jeux</td>
+<td>—</td><td>—</td><td>—</td>
+<td class="r">aucun jeu importé</td>
+<td class="r">BLOCKED</td></tr>
+
+<tr><td><b>TOOLS</b> — observer<br><span class="ev">40 fichiers</span></td>
+<td>humain</td>
+<td>CLI Python</td>
+<td>run_dirs, rapports, KB → vues et drifts</td>
+<td>lien Forge prouvé : <code>from forge.anonymize_session_paths import …</code></td>
+<td class="m">IMPLEMENTED<br>sorties visant <code>lab/</code></td></tr>
+
+<tr><td><b>control_plane</b><br><span class="ev">2 fichiers</span></td>
+<td>3 fonctions sur 9 utilisées par la Forge ; les 6 autres, 0 consommateur Forge</td>
+<td>import Python</td>
+<td>yaml fourni par l'appelant → modèle/provider</td>
+<td><code>game_forger → claude-opus-4-8 [claude-local]</code> <b>exécuté</b> via <code>forge/contracts/roles.yaml</code></td>
+<td class="r"><b>HORS V2</b><br>reste dans l'ancien Studio ; la résolution de rôle devient une capacité interne de la Forge</td></tr>
+
+<tr><td><b>EVIDENCE</b></td>
+<td class="r">aucun — la surface n'existe pas</td>
+<td>—</td>
+<td>runs, bundles, rapports, RUN_INDEX</td>
+<td class="r">aucune</td>
+<td class="r">BLOCKED</td></tr>
+
+<tr><td><b>.claude</b> — la porte<br><span class="ev">28 fichiers</span></td>
+<td>runtime Claude Code</td>
+<td>hooks <code>PreToolUse</code></td>
+<td>tentative de spawn → autorisation ou refus</td>
+<td class="r">aucune : câblage <code>hooks → FORGE/forge</code> jamais testé</td>
+<td class="m">UNKNOWN</td></tr>
+
+<tr><td><b>tests</b><br><span class="ev">220 <code>.py</code> + 51 <code>.test.mjs</code></span></td>
+<td><code>pytest</code>, via <code>oracles.json</code></td>
+<td>CLI</td>
+<td>fixtures → vert / rouge</td>
+<td class="r">aucune : <b>0 exécution</b>, et isolation cassée (43 tests sur <code>REPO_ROOT</code>, 68 sur un <code>scripts/forge</code> factice)</td>
+<td class="r">BLOCKED</td></tr>
+</tbody></table>
+<p><b>Trois surfaces sur dix satisfont le contrat complet.</b> C'est l'état réel, pas un échec du
+document : les sept autres sont nommées avec ce qui leur manque.</p>
+
+<h2><span class="n">4</span>Comment la Forge fabrique</h2>
+<pre>run_real ──▶ ForgeDriver ──▶ dispatch ──▶ contract ──▶ runtime ──▶ oracles ──▶ verdict ──▶ verify_run
+   seul        boucle,        LA PORTE     17 champs                non-LLM     HMAC       re-vérifie
+ point d'entrée escalade      valide       rendus/consommés       déterministes signé      AUTHENTIQUE</pre>
+<p><b>28 contrats d'étape</b> : <code>s0-contrat</code> → <code>s1-prisme</code> →
+<code>s2-worldscan</code> → <code>s2.5-artbible</code> → <code>s2.6-story-bible</code> →
+<code>s2.7-gm-worldscan</code> → <code>s3-decompo</code> → <code>s4-archi</code> →
+<code>s5-wiremap</code> → <code>s6-redteam-plan</code> → <code>s9-build*</code> (4 variantes) →
+<code>s10a/b/c/d/s</code> → <code>s11-redteam-code</code> → <code>s12-verdict</code>.</p>
+<p><b>Contrat d'agent : 17 champs</b>, présents dans les 23 contrats d'étape — 13 rendus au prompt,
+3 consommés au dispatch, 1 de documentation pure. <span class="ev">Honnêteté conservée de la
+source : <code>parent_agent</code> est déclaré mais rempli dans 0 contrat sur 23.</span></p>
+<h3>Ce qui empêche la Forge de fonctionner ici</h3>
+<pre>constante              résout vers                                        existe
+CONTRACTS_DIR          Studio\scripts\forge\contracts                     <b>NON</b>   les 28 contrats
+oracle.DEFAULT_CONFIG  Studio\scripts\forge\oracles.json                  <b>NON</b>   registre d'oracles
+driver._STANDARD_DIR   Studio\scripts\forge\standard                      <b>NON</b>   squelette gelé
+verdict.DEFAULT_KEY    Studio\scripts\forge\.forge_key                    <b>NON</b>   clé de signature
+contract.KB_CATALOG    Studio\knowledge_base\catalog.json                 oui
+contract.KB_PROPOSALS  Studio\knowledge_base\proposals                    oui</pre>
+<p><b>Cause unique</b> : <code>REPO_ROOT</code> sert à la fois à localiser les <i>surfaces
+voisines</i> et les <i>fichiers frères du paquet</i>. Les deux qui marchent sont exactement les
+deux qui visent une surface. Ce n'est pas un problème de chemins, c'est une
+<b>frontière de paquet</b> — détail et options dans <code>FORGE/IO_CONTRACT.md</code>.</p>
+
+<h2><span class="n">5</span>La boucle de vérité, et ses deux coupures</h2>
+<pre>DECLARATION ──▶ EXECUTION ──▶ EVIDENCE ──▶ COMPARISON ──▶ HUMAN GATE ──▶ TRUTH
+MASTER_SCHEMA    FORGE         verdicts     RAIL_REGISTER    Pierre        MASTER_SCHEMA
+ + Brief                        + leçons    (déclaré/mesuré)              (état actualisé)
+
+état réel :
+   DECLARATION ──✗── EXECUTION      aucun project_brief.yaml dans le V2
+   EXECUTION   ──✗── EVIDENCE       destination non canonisée, et pas de clé de signature</pre>
+<p>La boucle <b>Observation → Leçon → HumanGate → Connaissance ratifiée → Injection contrôlée</b>
+est, elle, <b>fermée et exercée</b> : <code>learning_hook</code> → <code>learning_memory</code>
+(<code>cause</code> est un champ) → <code>kb_proposal</code> propose-only →
+<code>catalog.json</code> → <code>contract.py</code>. Quatre <b>statuts dans un seul magasin</b>,
+jamais quatre dossiers.</p>
+<p class="ev">Règle du code, verbatim : une proposition sous <code>proposals/</code> n'est PAS
+servie — seules son identité et son état « non ratifiée » sont signalés. Servir son contenu
+court-circuiterait le HumanGate. Goulot mesuré : 7 <code>validated</code> sur 50 entrées.</p>
+
+<h2><span class="n">6</span>Ce qui est dehors, et pourquoi</h2>
+<p>Règle : <b>pas de consommateur démontré dans V2 ⇒ n'entre pas dans V2.</b> Quatre canaux
+cherchés à chaque fois — import, CLI/sous-processus, référence <code>.mjs</code>, référence
+<code>.claude/</code> ou <code>TOOLS/</code>.</p>
+<table><thead><tr><th>écarté</th><th>volume</th><th>preuve</th></tr></thead><tbody>
+<tr><td><code>lab/</code></td><td>3 779</td><td>sorties de runtime — 95 run_dirs, 47 dossiers d'évidence</td></tr>
+<tr><td><code>games/</code></td><td>1 253</td><td>rétention non décidée ; un jeu vit dans 3 emplacements</td></tr>
+<tr><td><code>docs/</code> hors schéma</td><td>534</td><td>3 propositions de master schema concurrentes, ~40 <code>PROPOSED</code></td></tr>
+<tr><td><code>00_STUDIO_CONTROL/</code></td><td>289</td><td>génération précédente ; ses 2 points d'entrée visent 5 fichiers absents</td></tr>
+<tr><td><code>scripts/</code> hors forge+observer</td><td>641</td><td>lane STUDIO gelée, couche council/cockpit gelée</td></tr>
+<tr><td><code>src/ ml/ tests/ bench/ tools/</code></td><td>~340</td><td>ROCKY — abandonné par décision</td></tr>
+<tr><td><code>studio/ studio_core/ governance/ schemas/</code></td><td>~150</td><td>anciennes factories, 0 ou 1 consommateur</td></tr>
+<tr><td><code>openclaw/</code></td><td>2</td><td><b>retiré du V2</b> : les 8 sites d'appel passent tous un chemin explicite ; <code>get_model_for_role('game_forger')</code> par openclaw → <code>None</code></td></tr>
+<tr><td>archives, contrats one-shot</td><td>36</td><td>archive explicite — aucune archive dans le V2</td></tr>
+</tbody></table>
+<h3>Proposé au retrait — mesuré, non appliqué</h3>
+<table><thead><tr><th>bloc</th><th>fichiers</th><th>preuve</th></tr></thead><tbody>
+<tr><td>Île de décision V2 (7 modules + 4 registres/schémas + tests)</td><td>17</td><td><b>0 appelant</b> sur les 8 modules de la chaîne, après élimination de 2 faux positifs</td></tr>
+<tr><td>Panel Prisme multi-lentilles</td><td>8</td><td><code>--charter</code> jamais passé ; lenses jamais consommées par <code>panel.LENSES</code></td></tr>
+<tr><td>Orphelins <code>wiremap_nav</code></td><td>2</td><td>0 consommateur, tous canaux</td></tr>
+</tbody></table>
+<p>Le gain en volume est faible (670 → 643). <b>Le gain réel est ailleurs</b> : ces 27 fichiers
+sont ceux qui feraient croire à un lecteur que le studio dispose d'un moteur de décision MCTS et
+d'un panel multi-lentilles. Les retirer ne réduit pas le poids — <b>ça supprime une promesse
+fausse</b>.</p>
+<p class="ev">Résultat honnête de l'adjudication : la copie de la Forge était déjà dense.
+40 % du V2 sont des tests, aucun orphelin ; 47 <code>.mjs</code> de code, 2 orphelins ;
+55 modules <code>.py</code>, 0 franchement mort. Le gros bruit du repo source n'était pas dans la
+Forge — il a été écarté dès la première passe.</p>
+
+<h2><span class="n">7</span>UNKNOWN assumés</h2>
+<table><thead><tr><th>sujet</th><th>ce qui manque</th></tr></thead><tbody>
+<tr><td>7 CLI (<code>check_prerun</code>, <code>pair_preflight</code>, <code>m7_masking</code>…)</td><td>0 consommateur dans V2, mais 6/7 sont des points d'entrée <code>argparse</code> appelés par un <b>humain via un protocole absent du V2</b>. Règle mécanique et réalité divergent — non tranché.</td></tr>
+<tr><td>Câblage de la porte</td><td><code>.claude/hooks</code> → <code>FORGE/forge</code> jamais testé ; échec probable <i>fail-closed</i> (refus systématique)</td></tr>
+<tr><td>Suite de tests</td><td>0 exécution, et l'isolation est cassée : un vert ne prouverait rien</td></tr>
+<tr><td>Placement de <code>control_plane</code></td><td>preuve faite (capacité Studio), destination non décidée</td></tr>
+<tr><td>HEAD source</td><td>bouge en continu — 3 HEAD différents pendant la seule session de reconstruction</td></tr>
+</tbody></table>
+
+<h2><span class="n">8</span>Le contrat, et l'ordre de travail</h2>
+<pre>CALLER        Claude Code
+ENTRYPOINT    python -m forge.run_real
+PRECONDITION  l'environnement fournit Python + PyYAML + Node.js + Claude CLI + Git
+              Godot uniquement lorsqu'un profil en a besoin
+OWNERSHIP     Claude Code possède l'environnement
+              Forge possède ses ressources internes
+              Forge ne possède ni Control Plane ni environnement global du Studio
+FAIL-CLOSED   forge.preflight vérifie les préconditions avant toute dépense LLM</pre>
+<p><b>Il n'existe aucun objet « launcher » dans l'architecture cible.</b> Claude Code est
+l'appelant, <code>forge.run_real</code> est le point d'entrée. Rien entre les deux.
+Décisions O1–O6 <b>fermées</b> — détail dans <code>TOPOLOGY.md</code>.</p>
+<p class="ev">Ancrage du chantier : snapshot source <b>feeb29cb</b> (2026-09-01 16:33), 2 commits
+et 408 lignes devant la copie du V2. Le patch s'appliquera à cet état identifié, jamais à une
+cible mouvante.</p>
+<p><b>D1 — FORGE BOUNDARY</b> : ressources internes relatives au paquet, surfaces du Studio
+relatives à la racine. Aucune jonction NTFS, aucun miroir <code>scripts/forge</code>, aucune
+dépendance implicite à la disposition du repo source. Toute modification validée par une suite de
+tests <b>isolée des ressources réelles</b>.</p>
+<p><b>D2</b> clé de signature propre au V2, jamais versionnée · <b>D3</b> entrée
+<code>GAMES/&lt;game&gt;/brief/</code> · <b>D4</b> sortie <code>EVIDENCE/{runs,bundles,reports}</code>
++ rétention Option C · <b>D5</b> aucune migration de <code>lab/</code> · <b>D6</b> un run ne crée
+jamais une surface · <b>D7</b> la Forge canonique est corrigée une fois, puis réimportée ·
+<b>D8</b> la source est toujours le HEAD observé au moment de l'import.</p>
+<pre>0. FORGE SELF-LOCATION   comprendre · décider · tester      ← mesuré, stratégie ouverte
+1. V2 IDENTITY           nouvelle clé de signature
+2. GAME INPUT            GAMES/&lt;game&gt;/brief/
+3. EVIDENCE CONTRACT     EVIDENCE/{runs,bundles,reports}
+4. FORGE PATH PATCH      dans le repo source
+5. nouvelle copie Forge → V2
+6. validation V2
+7. seulement ensuite : premier jeu</pre>
+<p><b>Critère de sortie du chantier test isolation</b> — le vert seul ne suffit pas :</p>
+<pre>pytest vert
++ les tests utilisent réellement leurs fixtures
++ aucun test ne dépend accidentellement du contenu de la Forge réelle</pre>
+
+<div class="foot">
+<b>Ce document décrit l'état MESURÉ. La cible décidée vit dans <code>TOPOLOGY.md</code></b>
+(5 surfaces · 8 interfaces gardées · 10 règles de vérité · spécification du patch de frontière) —
+ne pas confondre les deux, c'est la distinction déclaré / observé appliquée à nous-mêmes.<br><br>
+Compagnons — ce document explique la <b>structure</b>, ils portent la <b>mesure</b> :
+<code>GAMES/RAIL_REGISTER.md</code> (état des 25 nœuds) ·
+<code>FORGE/IO_CONTRACT.md</code> (jonctions entrée/sortie) ·
+<code>ADJUDICATION.md</code> (fichier par fichier) ·
+<code>PROVENANCE.md</code> · <code>RECONSTRUCTION_AUDIT.md</code>.<br><br>
+<b>software_verdict: OK</b> — chaque relation est adossée à une mesure exécutée sur l'état courant ·
+<b>evidence_verdict: MECHANICAL_VALIDATION_ONLY</b> · <b>claim_verdict: NO_CLAIM_ALLOWED</b>.<br>
+Aucun verdict global ready / not-ready. Le V2 est <b>assemblé et mesuré</b>, il n'est
+<b>pas prouvé exécutable</b> : 3 surfaces sur 10 satisfont le contrat complet.
+</div>
+
+</div></body></html>

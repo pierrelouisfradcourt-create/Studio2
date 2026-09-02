@@ -1,0 +1,9 @@
+[
+  {
+    "name": "true->false",
+    "line": 17,
+    "fichier": "05_SYSTEMS/food_spawn/food_spawn.gd",
+    "expression": "occupees[seg] = true",
+    "justification": "`occupees` est un Dictionary utilise UNIQUEMENT comme ensemble d'appartenance : la seule lecture est `if not occupees.has(c)` (ligne 22), qui teste la PRESENCE DE LA CLE et jamais la valeur associee. Remplacer `true` par `false` laisse donc la cle `seg` presente a l'identique et `has()` renvoie le meme resultat sur toute entree : la liste des cases libres produite est strictement la meme. Aucun test ne peut distinguer les deux versions, car aucun chemin d'execution ne lit cette valeur. Mutant equivalent. (Verifie sur le run snake-descripteur-20260729-082703 : 64 mutants generes, 63 tues, ce seul survivant.)"
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "id": "level_catalog",
+  "niveaux": [
+    {
+      "dossier": "maze_classic",
+      "cadence_fantome": 20
+    },
+    {
+      "dossier": "maze_alt",
+      "cadence_fantome": 24
+    },
+    {
+      "dossier": "maze_grid",
+      "cadence_fantome": 28
+    }
+  ]
+}

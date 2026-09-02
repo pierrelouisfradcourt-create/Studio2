@@ -1,0 +1,57 @@
+{
+ "schema_version": 1,
+ "round": 1,
+ "questions": [
+  {
+   "id": "q_art_001",
+   "from": "ART",
+   "to": "GM",
+   "round": 1,
+   "about": "art_bible:character_states",
+   "missing": [
+    "ce que le joueur doit percevoir a travers la lucarne du grenier en etat LOCKED : un simple « ? » sombre, ou un teaser (silhouette entrevue des 3 rares dores) qui promet le contenu de la portee 2"
+   ],
+   "why": "L'etat LOCKED du grenier est une PROMESSE (« qu'est-ce qu'il y a derriere le grenier ? »). Je ne peux pas figer le sprite du grenier LOCKED sans savoir s'il doit teaser un contenu precis ou rester un mystere opaque — les deux produisent une image et une intention de curiosite differentes.",
+   "blocking": true,
+   "answer": null
+  },
+  {
+   "id": "q_art_002",
+   "from": "ART",
+   "to": "GM",
+   "round": 1,
+   "about": "art_bible:affordance_rules",
+   "missing": [
+    "le repere VISUEL qui doit faire lire la decision 1 (banc A passif vs caresse_longue B actif, exclusives au seuil) comme DEUX chemins distincts et non deux boutons ordinaires : couleur/pictogramme passif-vs-actif, apercu de la consequence, formulation cote a cote ?"
+   ],
+   "why": "La lecon LOOP_EXISTS impose que la decision se lise comme un changement de possibilite, pas un texte. L'art doit rendre l'exclusivite-au-seuil et la non-dominance perceptibles a l'ecran ; sans l'intention du GM sur CE que le joueur doit comparer d'un coup d'oeil, je risque de dessiner deux boutons jumeaux qui tuent la decision.",
+   "blocking": true,
+   "answer": null
+  },
+  {
+   "id": "q_art_003",
+   "from": "ART",
+   "to": "GM",
+   "round": 1,
+   "about": "art_bible:character_states",
+   "missing": [
+    "le comportement joueur attendu devant le jardin ferme (etat LOCKED du jardin) : curiosite/desir d'ouvrir, ou simple attente d'avoir assez de ronrons — pour calibrer si LOCKED doit etre teasing (entrouvert, vivant) ou clairement grise/en attente"
+   ],
+   "why": "La lisibilite en 5 s de chaque ecran est mesuree au HumanGate. Le degre de « teasing » du jardin ferme change son sprite (volets entrouverts + oiseau vs grisage plat + « ? »). Je peux representer un LOCKED par defaut, mais l'intention de comportement du GM affinerait l'etat AVAILABLE/LOCKED.",
+   "blocking": false,
+   "answer": null
+  }
+ ],
+ "declarations": {
+  "ART": {
+   "round": 1,
+   "ready_for_freeze": false,
+   "open_to_gm": 3
+  },
+  "GM": {
+   "round": 1,
+   "ready_for_freeze": false,
+   "open_to_art": 0
+  }
+ }
+}

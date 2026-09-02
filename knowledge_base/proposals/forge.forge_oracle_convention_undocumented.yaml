@@ -1,0 +1,60 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.forge_oracle_convention_undocumented
+statement: La convention de sonde observable FORGE_ORACLE (marqueur litteral, format
+  de sortie stdout 'FORGE_ORACLE <volet> {json}', decouverte par grep du code) n'existe
+  que dans le code executant (product_oracle_godot.py) et par precedent (games/snake/07_TESTS/oracle/),
+  jamais declaree dans scripts/forge/standard/SCHEMA.md -- un builder ne peut la decouvrir
+  que par un exemple donne explicitement dans sa tache.
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-forge_oracle_convention_undocumented
+  kind: pattern
+  function: La convention de sonde observable FORGE_ORACLE (marqueur litteral, format
+    de sortie stdout 'FORGE_ORACLE <volet> {json}', decouverte par grep du code) n'existe
+    que dans le code executant (product_oracle_godot.py) et par precedent (games/snake/07_TESTS/oracle/),
+    jamais declaree dans scripts/forge/standard/SCHEMA.md -- un builder ne peut la
+    decouvrir que par un exemple donne explicitement dans sa tache.
+  source: Forge lesson 'forge.forge_oracle_convention_undocumented' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.forge_oracle_convention_undocumented
+    supporting_runs:
+    - breakout_v2-run3-20260731-111149
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-01T14:55:15.847914+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - breakout_v2
+  invariants:
+  - La convention de sonde observable FORGE_ORACLE (marqueur litteral, format de sortie
+    stdout 'FORGE_ORACLE <volet> {json}', decouverte par grep du code) n'existe que
+    dans le code executant (product_oracle_godot.py) et par precedent (games/snake/07_TESTS/oracle/),
+    jamais declaree dans scripts/forge/standard/SCHEMA.md -- un builder ne peut la
+    decouvrir que par un exemple donne explicitement dans sa tache.
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - breakout_v2-run3-20260731-111149
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-02T11:48:55+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T05:59:00+00:00'

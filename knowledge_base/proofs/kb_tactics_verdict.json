@@ -1,0 +1,109 @@
+{
+  "project": "kb_tactics",
+  "run_id": "kb_tactics-INGEST-20260712",
+  "software_verdict": "OK",
+  "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+  "claim_verdict": "NO_CLAIM_ALLOWED",
+  "decision": "HUMANGATE_READY_WITH_OBJECTION",
+  "oracles": {
+    "code": {
+      "oracle_id": "code",
+      "run_id": "kb_tactics-INGEST-20260712",
+      "status": "OK",
+      "evidence_sha256": "efafcbd2d833e0baf9af66d7a98bc38a0be0b5b9167d31208f1160591ed3e4cd",
+      "detail": {
+        "returncode": 0,
+        "e2e": {
+          "passed": true
+        },
+        "mutation": {
+          "receipt": {
+            "oracle_id": "mutation",
+            "run_id": "kb_tactics-INGEST-20260712",
+            "status": "OK",
+            "evidence_sha256": "5bbdcf18f8e6847624738263265952f740375b86cfcc9c9fe00bc344b0c6cc08",
+            "detail": {
+              "game_dir": "games\\kb_tactics",
+              "logic_files": [
+                "game.mjs",
+                "level.mjs"
+              ],
+              "test_argv": [
+                "node",
+                "--test",
+                "logic.test.mjs",
+                "properties.test.mjs"
+              ],
+              "test_files_scelles": [
+                "logic.test.mjs",
+                "properties.test.mjs"
+              ],
+              "baseline_ok": true,
+              "total": 51,
+              "killed": 50,
+              "survived": 1,
+              "survivants_non_tries": [],
+              "gate_checked": true,
+              "mutation_exception": true,
+              "triaged_survivors": [
+                "ge->gt@L13"
+              ],
+              "code_sha256": {
+                "e2e.mjs": "925c6d1284e5c23bf6d8636055f6b7068433f91104c1bc47f72a7565e429c124",
+                "game.mjs": "33a7acc4e234e41a1145d6fcc4749360215f2e34098b7249dafd9e21e7d013cd",
+                "level.mjs": "35adccacc346820e3d7893c1963eeb40e3bcbf59ebdaa2d5f969436fa3c3b4f2",
+                "logic.test.mjs": "67169642b8541f2877fabada38619f9a8ec2b348dcc2df40c42bd95b1413b617",
+                "properties.test.mjs": "acbaebc2245795226d86ff913ab4b992c6719f0227cb5266848965398302a137",
+                "run-oracle.mjs": "57f1afd897b84e01aa44f1a3cc25ddc643da86a69b0d36ee6c5a4d468637e6af"
+              },
+              "triage_sha256": "84a80bfa1069d442a741533c43278ad642d034bcc3fa87802aad6b9b9ce6c1bd"
+            },
+            "ts": 1783867208.5928998,
+            "evidence_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kb_tactics\\mutation_kb_tactics-INGEST-20260712.json"
+          },
+          "signature": "ffe0082e9a898cd54db3f440af413fdfeff92a5464788ab04207ce251c3b6f0d"
+        }
+      },
+      "ts": 0.0,
+      "evidence_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kb_tactics\\oracle_kb_tactics.log"
+    },
+    "archi": {
+      "oracle_id": "archi",
+      "run_id": "kb_tactics-INGEST-20260712",
+      "status": "SKIPPED",
+      "evidence_sha256": "",
+      "detail": {
+        "reason": "assemblage KB — pas de blueprint s4 formel"
+      },
+      "ts": 0.0,
+      "evidence_path": ""
+    },
+    "wiremap": {
+      "oracle_id": "wiremap",
+      "run_id": "kb_tactics-INGEST-20260712",
+      "status": "SKIPPED",
+      "evidence_sha256": "",
+      "detail": {
+        "reason": "traçabilité via games/kb_tactics/assembly_manifest.json"
+      },
+      "ts": 0.0,
+      "evidence_path": ""
+    }
+  },
+  "redteam_reviewer": "claude-blind (fallback)",
+  "redteam_ran": false,
+  "provenance_ok": true,
+  "git_head": "f6bfab8d663b0d3f37ff28aa7056bbcb0c5978c3",
+  "nonce": "0b8f3d3647b14e732270a09b5518dd3e",
+  "ts": 1783867208.6168795,
+  "redteam_advisory": [
+    "red-team indépendant appliqué au VALIDATEUR KB, pas à ce build (KB_REDTEAM_ADJUDICATION.md)"
+  ],
+  "humangate_flags": [
+    "archi non vérifiée (oracle sauté dans ce profil)",
+    "wiremap non vérifiée (oracle sauté dans ce profil)",
+    "mutation: 1 survivant(s) trié(s) par le producteur (ge->gt@L13) — équivalence NON vérifiée mécaniquement, ratification HumanGate obligatoire avant tout claim positif",
+    "red-team dégradé: reviewer indépendant n'a pas tourné (fallback)"
+  ],
+  "hmac": "f83b7726dde7d00051489109c4a388444899ffa3d6b1587e74cc6013b5f8f635"
+}

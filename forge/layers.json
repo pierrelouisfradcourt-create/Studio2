@@ -1,0 +1,105 @@
+{
+ "schema_version": 1,
+ "description": "VOCABULAIRE DES LAYERS — source unique. Une layer est une ZONE OU UNE BOUCLE PEUT CASSER, jamais un agent, un role, un fichier ni une capacite. Test d appartenance : « si cette zone tombe, quelle boucle cesse de se refermer ? ». Ratifie Pierre 2026-08-04 (LAYER_VOCABULARY_PROPOSAL_V1). Ce fichier est LU par check_mutation_registry.mjs (validation) et par candidate_selector.mjs (decision) — il n est pas documentaire.",
+ "layers": [
+  {
+   "id": "s1-prisme",
+   "chain": "amont",
+   "broken_loop": "l exigence produite ne decrit pas ce que le jeu doit prouver",
+   "since": "2026-08-04"
+  },
+  {
+   "id": "s2-worldscan",
+   "chain": "amont",
+   "broken_loop": "le manifeste de genre est incomplet ou indiscriminant",
+   "since": "2026-08-04"
+  },
+  {
+   "id": "s3-decompo",
+   "chain": "amont",
+   "broken_loop": "la decomposition fonctionnelle ne couvre pas les exigences",
+   "since": "2026-08-04"
+  },
+  {
+   "id": "s4-archi-contract",
+   "chain": "amont",
+   "broken_loop": "l architecture ne couvre pas le besoin, avant tout build",
+   "since": "2026-08-04"
+  },
+  {
+   "id": "s5-wiremap-contract",
+   "chain": "amont",
+   "broken_loop": "le squelette ne correspond pas a l architecture declaree",
+   "since": "2026-08-04"
+  },
+  {
+   "id": "repair",
+   "chain": "transverse",
+   "broken_loop": "la reparation d un artefact rejete ne converge pas",
+   "since": "2026-08-04"
+  },
+  {
+   "id": "quality",
+   "chain": "transverse",
+   "broken_loop": "le signal de qualite ne detecte pas le defaut, ou le deplace ailleurs",
+   "since": "2026-08-04"
+  },
+  {
+   "id": "driver",
+   "chain": "transverse",
+   "broken_loop": "l execution de la chaine elle-meme : ordre des etapes, timeout, materialisation, vie du run",
+   "since": "2026-08-04"
+  },
+  {
+   "id": "preflight",
+   "chain": "transverse",
+   "broken_loop": "un run demarre alors qu une condition mecaniquement verifiable n est pas remplie ; l echec surgit plusieurs etapes plus loin, loin de sa cause",
+   "since": "2026-08-04",
+   "introduced_by": ["forge.preflight_oracle_registration"]
+  },
+  {
+   "id": "build",
+   "chain": "aval",
+   "broken_loop": "le code produit satisfait toutes ses preuves et le jeu reste inutilisable",
+   "since": "2026-08-04",
+   "introduced_by": ["forge.entrypoint_is_undeclared_invariant"]
+  },
+  {
+   "id": "oracle-produit",
+   "chain": "aval",
+   "broken_loop": "l oracle du jeu construit rend un verdict qui ne correspond pas a ce qu il mesure",
+   "since": "2026-08-04",
+   "introduced_by": [
+    "forge.oracle_fail_vs_not_measured_marker",
+    "forge.forge_oracle_convention_undocumented",
+    "forge.new_proof_needs_declared_executor",
+    "forge.hardcoded_expected_state_breaks_on_growth",
+    "forge.test_green_via_wrong_causal_path",
+    "forge.mutation_survivor_equivalence_requires_mechanical_proof"
+   ]
+  },
+  {
+   "id": "knowledge",
+   "chain": "transverse",
+   "broken_loop": "la connaissance existe et la production ne s en sert pas",
+   "since": "2026-08-04",
+   "introduced_by": [
+    "forge.kb_humangate_to_controlled_autonomy",
+    "forge.reuse_tracking_oracle_dead_since_inception"
+   ]
+  },
+  {
+   "id": "feedback-loop",
+   "chain": "transverse",
+   "broken_loop": "une cause racine est identifiee et rien n est corrige",
+   "note": "Nommee `feedback-loop` et PAS `orchestration` : `orchestrator` et `run_orchestrator` sont deja deux ROLES de roles.yaml. Une layer portant le nom d un role rendrait indistinguables « la boucle de retour a casse » et « l agent orchestrateur a echoue ».",
+   "since": "2026-08-04",
+   "introduced_by": [
+    "forge.broken_loop_repair_not_report",
+    "forge.diagnosis_is_not_workflow_end",
+    "forge.architecture_check_before_human_escalation",
+    "forge.escalation_costs_avoid_default_route"
+   ]
+  }
+ ]
+}

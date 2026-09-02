@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_chest_01",
+  "archetype": "chest",
+  "params": {
+    "size": {
+      "w": 0.9,
+      "d": 0.6,
+      "h": 0.7
+    },
+    "color": [
+      0.45,
+      0.32,
+      0.18,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_chest_01_body",
+    "gen_chest_01_lid_closed",
+    "gen_chest_01_lid_open"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 5192,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

@@ -1,0 +1,1496 @@
+{
+ "schema_version": 2,
+ "game_id": "bomberman_3d",
+ "run_id": "bomberman_3d-cablage-20260810",
+ "dispatch_marker": null,
+ "statut_artefact": "PROPOSED",
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "roles_utilises": [
+  "orchestrator"
+ ],
+ "genre_bible": null,
+ "genre_refusals": [],
+ "reference_amont": "docs/forge/BOMBERMAN_3D_L0_CONTRACT.md",
+ "parametres_de_design_source": "05_SYSTEMS/params/params.gd",
+ "systems": [
+  {
+   "id": "app_state",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "arena",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "bombs",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "damage",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "explosion",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "game_loop",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "game_state",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "grid_nav",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "map_schema",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "map_validator",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "movement_rules",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "params",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "powerups",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "rng",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "score",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "sound_cues",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "sudden_death",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "victory",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "systeme de regles pur (RefCounted)"
+  },
+  {
+   "id": "audio",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "content_provider",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "palette",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "presentation_3d",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "proof_harness",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "runtime_loop",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "score_store",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "solvability_bot",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "ui_shell",
+   "category": "system.adapter",
+   "allowed_deps": [],
+   "role": "adaptateur runtime"
+  },
+  {
+   "id": "arena_chambres",
+   "category": "level",
+   "allowed_deps": [],
+   "role": "arene jouable, donnee de contenu"
+  },
+  {
+   "id": "arena_classic",
+   "category": "level",
+   "allowed_deps": [],
+   "role": "arene jouable, donnee de contenu"
+  },
+  {
+   "id": "arena_couloirs",
+   "category": "level",
+   "allowed_deps": [],
+   "role": "arene jouable, donnee de contenu"
+  }
+ ],
+ "lines": [
+  {
+   "id": "system.app_state",
+   "category": "system",
+   "system_parent": "app_state",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/app_state/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/app_state/app_state.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme app_state",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "game.restart",
+    "game.pause"
+   ],
+   "preuve_capacites": {
+    "game.restart": "symbole producteur verifie dans le code : doit_demarrer",
+    "game.pause": "symbole producteur verifie dans le code : PAUSE"
+   }
+  },
+  {
+   "id": "system.arena",
+   "category": "system",
+   "system_parent": "arena",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/arena/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/arena/arena.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme arena",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "requires": [
+    "game.params"
+   ]
+  },
+  {
+   "id": "system.bombs",
+   "category": "system",
+   "system_parent": "bombs",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/bombs/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/bombs/bombs.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme bombs",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.damage",
+   "category": "system",
+   "system_parent": "damage",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/damage/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/damage/damage.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme damage",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.explosion",
+   "category": "system",
+   "system_parent": "explosion",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/explosion/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/explosion/explosion.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme explosion",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.game_loop",
+   "category": "system",
+   "system_parent": "game_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/game_loop/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_loop/loop.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme game_loop",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "game.loop",
+    "game.events"
+   ],
+   "preuve_capacites": {
+    "game.loop": "symbole producteur verifie dans le code : func step",
+    "game.events": "symbole producteur verifie dans le code : events"
+   },
+   "requires": [
+    "game.params",
+    "game.end"
+   ]
+  },
+  {
+   "id": "system.game_state",
+   "category": "system",
+   "system_parent": "game_state",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/game_state/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_state/state.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme game_state",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "game.state"
+   ],
+   "preuve_capacites": {
+    "game.state": "symbole producteur verifie dans le code : func initial"
+   },
+   "requires": [
+    "game.params",
+    "game.playable_speed",
+    "error.guard"
+   ]
+  },
+  {
+   "id": "system.grid_nav",
+   "category": "system",
+   "system_parent": "grid_nav",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/grid_nav/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/grid_nav/grid_nav.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme grid_nav",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.map_schema",
+   "category": "system",
+   "system_parent": "map_schema",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/map_schema/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/map_schema/map_schema.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme map_schema",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "requires": [
+    "game.params"
+   ]
+  },
+  {
+   "id": "system.map_validator",
+   "category": "system",
+   "system_parent": "map_validator",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/map_validator/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/map_validator/map_validator.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme map_validator",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "error.guard"
+   ],
+   "preuve_capacites": {
+    "error.guard": "symbole producteur verifie dans le code : carte_validee"
+   },
+   "requires": [
+    "game.params"
+   ]
+  },
+  {
+   "id": "system.movement_rules",
+   "category": "system",
+   "system_parent": "movement_rules",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/movement_rules/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/movement_rules/movement.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme movement_rules",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.params",
+   "category": "system",
+   "system_parent": "params",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/params/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/params/params.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme params",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "game.params",
+    "game.playable_speed"
+   ],
+   "preuve_capacites": {
+    "game.params": "symbole producteur verifie dans le code : TICKS_PAR_SECONDE",
+    "game.playable_speed": "symbole producteur verifie dans le code : MOVE_COOLDOWN_BASE"
+   },
+   "requires": [
+    "game.loop"
+   ]
+  },
+  {
+   "id": "system.powerups",
+   "category": "system",
+   "system_parent": "powerups",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/powerups/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/powerups/powerups.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme powerups",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.rng",
+   "category": "system",
+   "system_parent": "rng",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/rng/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/rng/rng.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme rng",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.score",
+   "category": "system",
+   "system_parent": "score",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/score/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/score/score.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme score",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.sound_cues",
+   "category": "system",
+   "system_parent": "sound_cues",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/sound_cues/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/sound_cues/sound_cues.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme sound_cues",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "system.sudden_death",
+   "category": "system",
+   "system_parent": "sudden_death",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/sudden_death/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/sudden_death/sudden_death.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme sudden_death",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "requires": [
+    "game.params"
+   ]
+  },
+  {
+   "id": "system.victory",
+   "category": "system",
+   "system_parent": "victory",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/victory/",
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/victory/victory.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "regles pures du systeme victory",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "game.end"
+   ],
+   "preuve_capacites": {
+    "game.end": "symbole producteur verifie dans le code : func evaluer"
+   },
+   "requires": [
+    "game.params"
+   ]
+  },
+  {
+   "id": "adapter.audio",
+   "category": "system.adapter",
+   "system_parent": "audio",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/audio/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/audio/audio.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime audio",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "audio.cue"
+   ],
+   "preuve_capacites": {
+    "audio.cue": "symbole producteur verifie dans le code : func consommer"
+   },
+   "requires": [
+    "game.events"
+   ]
+  },
+  {
+   "id": "adapter.content_provider",
+   "category": "system.adapter",
+   "system_parent": "content_provider",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/content_provider/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/content_provider/content_provider.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime content_provider",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "adapter.palette",
+   "category": "system.adapter",
+   "system_parent": "palette",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/palette/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/palette/palette.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime palette",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED",
+   "requires": [
+    "game.params"
+   ]
+  },
+  {
+   "id": "adapter.presentation_3d",
+   "category": "system.adapter",
+   "system_parent": "presentation_3d",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/presentation_3d/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/presentation_3d/arena_view_3d.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime presentation_3d",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "render.frame"
+   ],
+   "preuve_capacites": {
+    "render.frame": "symbole producteur verifie dans le code : func rafraichir"
+   },
+   "requires": [
+    "game.params"
+   ]
+  },
+  {
+   "id": "adapter.proof_harness",
+   "category": "system.adapter",
+   "system_parent": "proof_harness",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/proof_harness/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/proof_harness/purete_visuelle.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime proof_harness",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "adapter.runtime_loop",
+   "category": "system.adapter",
+   "system_parent": "runtime_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/runtime_loop/runtime_loop.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime runtime_loop",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "game.boot",
+    "input.action"
+   ],
+   "preuve_capacites": {
+    "game.boot": "symbole producteur verifie dans le code : _ready",
+    "input.action": "symbole producteur verifie dans le code : Input"
+   },
+   "requires": [
+    "game.events",
+    "game.loop",
+    "game.state",
+    "game.params",
+    "game.pause",
+    "game.restart",
+    "error.guard",
+    "render.frame",
+    "audio.cue",
+    "game.best_score"
+   ]
+  },
+  {
+   "id": "adapter.score_store",
+   "category": "system.adapter",
+   "system_parent": "score_store",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/score_store/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/score_store/score_store.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime score_store",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED",
+   "provides": [
+    "game.best_score"
+   ],
+   "preuve_capacites": {
+    "game.best_score": "symbole producteur verifie dans le code : func ecrire"
+   }
+  },
+  {
+   "id": "adapter.solvability_bot",
+   "category": "system.adapter",
+   "system_parent": "solvability_bot",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/solvability_bot/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/solvability_bot/bot_policy.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime solvability_bot",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED",
+   "requires": [
+    "game.params",
+    "game.playable_speed"
+   ]
+  },
+  {
+   "id": "adapter.ui_shell",
+   "category": "system.adapter",
+   "system_parent": "ui_shell",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/ui_shell/",
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/ui_shell/ui_shell.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "adaptateur runtime ui_shell",
+   "preuve": "produit lance en fenetre GPU 300 frames sans erreur ; volets FORGE_ORACLE core_audio / core_render_frame / lisibilite_powerups / musique_piste rendus OK par product_oracle_godot",
+   "statut": "IMPLEMENTED",
+   "requires": [
+    "game.params",
+    "game.pause"
+   ]
+  },
+  {
+   "id": "core.boot",
+   "category": "system.adapter",
+   "system_parent": "runtime_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.boot",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.main_loop",
+   "category": "system",
+   "system_parent": "game_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/game_loop/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.main_loop",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.input",
+   "category": "system.adapter",
+   "system_parent": "runtime_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.input",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.game_state",
+   "category": "system",
+   "system_parent": "game_state",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/game_state/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.game_state",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.end_condition",
+   "category": "system",
+   "system_parent": "victory",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/victory/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.end_condition",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.restart",
+   "category": "system",
+   "system_parent": "app_state",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/app_state/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.restart",
+   "preuve": "test_app_state : empreinte complete d'un etat neuf identique apres relance, aucun residu",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.exit",
+   "category": "system.adapter",
+   "system_parent": "runtime_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.exit",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.render",
+   "category": "system.adapter",
+   "system_parent": "presentation_3d",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/presentation_3d/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.render",
+   "preuve": "volet pixel core_render_frame OK en fenetre GPU via product_oracle_godot (mode_execution gpu_window)",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.audio",
+   "category": "system.adapter",
+   "system_parent": "audio",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "06_RUNTIME/adapters/audio/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.audio",
+   "preuve": "volet core_audio OK : 5 declenchements, 16639 echantillons REELLEMENT synthetises sur une partie jouee",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.error_handling",
+   "category": "system",
+   "system_parent": "map_validator",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "05_SYSTEMS/map_validator/",
+   "fichiers": [],
+   "fonction": "exigence CORE core.error_handling",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "godot.solvability",
+   "category": "godot.project_root",
+   "system_parent": "solvability_bot",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": ".",
+   "fichiers": [
+    {
+     "path": "solvability.gd",
+     "category": "godot.project_root"
+    }
+   ],
+   "fonction": "artefact impose par le moteur ou son oracle",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "godot.main_scene",
+   "category": "godot.project_root",
+   "system_parent": "runtime_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": ".",
+   "fichiers": [
+    {
+     "path": "main.tscn",
+     "category": "godot.project_root"
+    }
+   ],
+   "fonction": "artefact impose par le moteur ou son oracle",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "godot.project",
+   "category": "godot.project_root",
+   "system_parent": "runtime_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": ".",
+   "fichiers": [
+    {
+     "path": "project.godot",
+     "category": "godot.project_root"
+    }
+   ],
+   "fonction": "artefact impose par le moteur ou son oracle",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "godot.harness",
+   "category": "godot.project_tests",
+   "system_parent": "proof_harness",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "tests",
+   "fichiers": [
+    {
+     "path": "tests/run_tests.gd",
+     "category": "godot.project_tests"
+    }
+   ],
+   "fonction": "artefact impose par le moteur ou son oracle",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.fixtures",
+   "category": "test.unit",
+   "system_parent": "proof_harness",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/fixtures.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve fixtures",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_app_state",
+   "category": "test.unit",
+   "system_parent": "app_state",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_app_state.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_app_state",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_audio_score",
+   "category": "test.unit",
+   "system_parent": "audio",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_audio_score.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_audio_score",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_explosion",
+   "category": "test.unit",
+   "system_parent": "explosion",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_explosion.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_explosion",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_lisibilite",
+   "category": "test.unit",
+   "system_parent": "palette",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_lisibilite.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_lisibilite",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_loop_and_rules",
+   "category": "test.unit",
+   "system_parent": "game_loop",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_loop_and_rules.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_loop_and_rules",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_map_validator",
+   "category": "test.unit",
+   "system_parent": "map_validator",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_map_validator.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_map_validator",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_movement_bombs",
+   "category": "test.unit",
+   "system_parent": "movement_rules",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_movement_bombs.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_movement_bombs",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_pause_musique",
+   "category": "test.unit",
+   "system_parent": "app_state",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_pause_musique.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_pause_musique",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_playable_speed",
+   "category": "test.unit",
+   "system_parent": "params",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_playable_speed.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_playable_speed",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.unit.test_sudden_death",
+   "category": "test.unit",
+   "system_parent": "sudden_death",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/unit",
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/test_sudden_death.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "volet de preuve test_sudden_death",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.oracle.core_audio",
+   "category": "test.oracle",
+   "system_parent": "audio",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/oracle",
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/core_audio.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "volet de preuve core_audio",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.oracle.core_render_frame",
+   "category": "test.oracle",
+   "system_parent": "presentation_3d",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/oracle",
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/core_render_frame.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "volet de preuve core_render_frame",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.oracle.lisibilite_powerups",
+   "category": "test.oracle",
+   "system_parent": "presentation_3d",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/oracle",
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/lisibilite_powerups.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "volet de preuve lisibilite_powerups",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "test.oracle.musique_piste",
+   "category": "test.oracle",
+   "system_parent": "audio",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "07_TESTS/oracle",
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/musique_piste.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "volet de preuve musique_piste",
+   "preuve": "harnais tests/run_tests.gd : 462 assertions vertes ; mutation forge.mutation 105/113 tues sur 11 systemes (campagne du 2026-08-10), 8 survivants tries EQUIVALENT (mutation_triage.json), check_mutation_gate passed=true",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "level.arena_chambres",
+   "category": "level",
+   "system_parent": "arena_chambres",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "03_WORLD/levels/arena_chambres/",
+   "fichiers": [
+    {
+     "path": "03_WORLD/levels/arena_chambres/level.json",
+     "category": "level"
+    }
+   ],
+   "fonction": "arene jouable arena_chambres",
+   "preuve": "carte validee par map_validator et jouee par l'oracle de solvabilite",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "level.arena_classic",
+   "category": "level",
+   "system_parent": "arena_classic",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "03_WORLD/levels/arena_classic/",
+   "fichiers": [
+    {
+     "path": "03_WORLD/levels/arena_classic/level.json",
+     "category": "level"
+    }
+   ],
+   "fonction": "arene jouable arena_classic",
+   "preuve": "carte validee par map_validator et jouee par l'oracle de solvabilite",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "level.arena_couloirs",
+   "category": "level",
+   "system_parent": "arena_couloirs",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "03_WORLD/levels/arena_couloirs/",
+   "fichiers": [
+    {
+     "path": "03_WORLD/levels/arena_couloirs/level.json",
+     "category": "level"
+    }
+   ],
+   "fonction": "arene jouable arena_couloirs",
+   "preuve": "carte validee par map_validator et jouee par l'oracle de solvabilite",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "asset.meshes",
+   "category": "asset.mesh",
+   "system_parent": "presentation_3d",
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "address": "04_ASSETS/meshes",
+   "fichiers": [
+    {
+     "path": "04_ASSETS/meshes/gen_barrel_01.glb",
+     "category": "asset.mesh"
+    },
+    {
+     "path": "04_ASSETS/meshes/gen_barrel_01.glb.import",
+     "category": "asset.mesh"
+    },
+    {
+     "path": "04_ASSETS/meshes/gen_crate_wood_01.glb",
+     "category": "asset.mesh"
+    },
+    {
+     "path": "04_ASSETS/meshes/gen_crate_wood_01.glb.import",
+     "category": "asset.mesh"
+    },
+    {
+     "path": "04_ASSETS/meshes/gen_pillar_stone_01.glb",
+     "category": "asset.mesh"
+    },
+    {
+     "path": "04_ASSETS/meshes/gen_pillar_stone_01.glb.import",
+     "category": "asset.mesh"
+    }
+   ],
+   "fonction": "geometries 3D du decor et des blocs",
+   "preuve": "references mesurees dans arena_view_3d.gd ; rendues en fenetre GPU par le volet core_render_frame",
+   "statut": "IMPLEMENTED"
+  }
+ ],
+ "discarded": [],
+ "fog": []
+}

@@ -1,0 +1,129 @@
+# Contrat d'agent Forge — étape 9 : Builder
+# Schéma : forge/contracts/SCHEMA.md
+# Source : planète s9-build de llm-lego/library/chain-forge.json, complétée au schéma canonique 16 champs.
+# Règle : un champ Critique vide/absent => non activable. skill/plugin peuvent valoir `aucun`, jamais absents.
+
+# --- 1. Identité / posture cognitive (Critique) ---
+# `role` = posture/persona injectée dans le prompt. `capability_role` = clé résolue
+# par le registry local (roles.yaml) vers un runtime — JAMAIS de modèle en dur (ADR-002 gate 1).
+role: >-
+  Builder (délégation bornée par l'ownership). Point de vue : développeur
+  discipliné qui reste dans son module.
+capability_role: builder
+exigences_cognitives: >-
+  Exécution bornée, micro-commits, tenue à jour de la WireMap. Discipline de
+  périmètre supérieure à la vitesse : ne déborde jamais l'ownership.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Consomme le blueprint (étape 7) qui fixe son ownership et la WireMap (étape 5)
+  qu'il doit tenir à jour. Conventions : CLAUDE.md + rules/ (par lane). Le repo a
+  déjà été créé à l'étape 8 (Create Repo).
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - "le blueprint.yaml (ownership) qui borne strictement sa zone d'écriture"
+  - "la WireMap produite à l'étape 5 (fichiers/fonction/version/preuve/statut)"
+
+# --- 2bis. SEARCH d'abord (amendement 2026-07-13, STUDIO_AGENT_ATLAS.md §2.4) ---
+# AVANT d'écrire une pièce de logique (combat, procgen, IA, ...) dans son ownership,
+# le builder DOIT interroger knowledge_base/search.mjs avec une requête en langage
+# libre décrivant le besoin ("node knowledge_base/search.mjs \"<intention>\""). Un
+# résultat pertinent (tier=validated de préférence) DOIT être IMPORTÉ RÉELLEMENT
+# (import ES vers son chemin knowledge_base/systems/..., jamais une copie du code) —
+# le builder n'écrit alors que le DELTA (la logique qui ne préexiste pas). Si aucun
+# résultat pertinent n'existe, écrire la pièce normalement (candidate, propose-only
+# côté catalogue — le builder ne modifie jamais catalog.json lui-même, hors scope ici).
+# Mesuré, pas jugé : forge/reuse_ratio.mjs sur le dossier du jeu en fin d'étape
+# (evidence_path du final_report — un reuse_ratio bas n'est PAS un échec en soi, c'est
+# un fait rapporté, jamais un motif de blocage automatique).
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Produire le code borné à l'ownership, avec la WireMap tenue à jour. Micro-commits
+  exécutés. Consulter knowledge_base/search.mjs avant d'écrire une pièce de logique
+  réutilisable, importer réellement ce qui matche, n'écrire que le delta (§2bis).
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Implémentation du code UNIQUEMENT dans l'ownership défini par le blueprint ;
+  mise à jour de la WireMap (colonnes fichiers/fonction/version/preuve/statut).
+out_of_scope: >-
+  Ne sort JAMAIS de son ownership (blueprint). Ne touche pas à tests/** (zone
+  protégée). Ne modifie pas l'architecture (blueprint, deps).
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo entier. write: UNIQUEMENT les fichiers de son ownership + la WireMap.
+  run: l'oracle code (cargo/pytest/vitest via forge/oracles.json). create:
+  fichiers de son ownership uniquement. delete: aucun. INTERDIT: tests/**.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  Respecte l'ownership : n'écrit que dans les fichiers que le blueprint lui
+  attribue. Micro-commits. Ne franchit pas les deps interdites du blueprint.
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  Code dans l'ownership (aucun fichier hors périmètre modifié) ; oracle code vert ;
+  WireMap à jour. Pour un JEU (objectif/condition de victoire joueur) : oracle de
+  SOLVABILITÉ vert (un bot joue et GAGNE réellement) ET preuve e2e verte (click-through
+  navigateur réel, cf. forge/contracts/PLAYABLE_CONTRACT.md).
+tests_oracles: >-
+  Oracle CODE déterministe non-LLM : cargo / pytest / vitest via
+  forge/oracles.json selon la lane. Jamais de LLM-as-judge. Pour un JEU :
+  l'oracle CODE inclut OBLIGATOIREMENT un volet SOLVABILITÉ (solvability.mjs câblé
+  dans run-oracle.mjs) — les mécaniques testées EN ISOLATION ne suffisent pas : un
+  jeu aux objectifs inatteignables passe tous les tests de mécanique tout en étant
+  injouable. Le volet mesure l'enveloppe d'action réelle du moteur, vérifie que les
+  objectifs requis y sont, et fait JOUER un bot qui doit gagner. Modèle :
+  forge/templates/solvability.template.mjs. L'oracle CODE d'un JEU inclut
+  AUSSI OBLIGATOIREMENT un volet e2e (e2e.mjs, click-through navigateur réel câblé
+  dans run-oracle.mjs) conforme au contrat de jouabilité
+  (forge/contracts/PLAYABLE_CONTRACT.md) : la garde structurelle
+  forge.static_oracles.check_e2e_harness REJETTE un e2e absent, non câblé, ou
+  coquille (qui imprime PASS sans piloter). Enfin, pour un JEU, l'oracle-code inclut
+  un GATE MUTATION (forge.mutation.run_mutation_test sur game.mjs +
+  forge.static_oracles.check_mutation_gate) : « 100% des mutants tués OU chaque
+  survivant trié équivalent avec justification dans GAMES/<projet>/mutation_triage.json ».
+  Un survivant non justifié => oracle rouge (auto-correction).
+final_report: >-
+  software/evidence/claim séparés ; cite l'oracle code utilisé ; liste les fichiers
+  touchés vs ownership ; cite la sortie de reuse_ratio.mjs (evidence_path) et les
+  requêtes SEARCH effectuées avant écriture (§2bis) ; claim_verdict: NO_CLAIM_ALLOWED.
+  Sans oracle disponible => remonte un besoin HumanGate (fog), pas de claim.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+# --- 8. Restitution (Critique) ---
+# DIVERGENCE EXÉCUTEUR CONNUE (P6, lot dégel 2) : les « micro-commits » ci-dessous
+# sont SUSPENDUS par l'exécuteur réel — `run_real._STEP_DISALLOWED` pose
+# `Bash(git:*)`/`PowerShell(git:*)` en interdit absolu (aucun commit possible par
+# l'agent). Le diff reste dû, il est constaté par le driver, jamais commité par
+# le builder. Cette clause décrit le plafond d'intention historique.
+output_contract: >-
+  diff (micro-commits) + WireMap à jour (colonnes fichiers/fonction/version/preuve/
+  statut) + reçu reuse_ratio.mjs (forge/reuse_ratio.mjs <dossier du jeu>).
+  Pour un JEU : un volet solvability.mjs (bot-joue-et-gagne) ET un e2e.mjs
+  (click-through navigateur réel, contrat de jouabilité) tous deux câblés dans
+  run-oracle.mjs, en plus des mécaniques.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape 9, en aval du Blueprint Gate (7)/Create Repo (8), en amont des Oracles (10).

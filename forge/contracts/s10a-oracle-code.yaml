@@ -1,0 +1,82 @@
+# Contrat d'agent Forge — étape 10a : Oracle CODE (déterministe non-LLM)
+# Schéma : forge/contracts/SCHEMA.md
+# Source : étape aval du Build (9), porte de sortie déterministe. Complétée au schéma canonique 16 champs.
+# Règle : un champ Critique vide/absent => non activable. skill/plugin peuvent valoir `aucun`, jamais absents.
+
+# --- 1. Identité / posture cognitive (Critique) ---
+# `role` = posture/persona injectée dans le prompt. `capability_role` = clé résolue
+# par le registry local (roles.yaml) vers un runtime — JAMAIS de modèle en dur (ADR-002 gate 1).
+# Ici `capability_role: deterministic` résout vers 'non-llm' : AUCUN raisonnement LLM.
+role: >-
+  Oracle CODE (déterministe non-LLM). Point de vue : preuve mécanique, aucun jugement.
+capability_role: deterministic
+exigences_cognitives: >-
+  aucun raisonnement LLM — exécution déterministe reproductible.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Consomme l'artefact de Build (étape 9) ; connaît les oracles code du projet
+  déclarés dans forge/oracles.json (cargo/pytest/vitest). Conventions :
+  CLAUDE.md + rules/. L'evidence se dépose dans EVIDENCE/bundles.
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - forge/oracles.json
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Prouver CODE : les tests passent. Émettre PASS/FAIL déterministe + evidence.
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Exécuter l'oracle code du projet, capturer l'evidence, émettre PASS/FAIL.
+out_of_scope: >-
+  aucun jugement LLM, aucune interprétation subjective ; ne modifie pas le code.
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo entier. run: l'oracle code (forge/oracle.py + oracles.json).
+  write: UNIQUEMENT l'evidence log dans EVIDENCE/bundles. create: l'evidence log.
+  delete: aucun.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  JAMAIS de LLM-as-judge.
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  evidence log complet {commande, exit_code, tests_pass, tests_fail, hash} ;
+  verdict PASS/FAIL déterministe.
+tests_oracles: >-
+  forge/oracle.py + oracles.json (cargo/pytest/vitest) — déterministe.
+final_report: >-
+  software/evidence/claim séparés ; cite l'oracle code utilisé ;
+  software_verdict OK/FAIL selon PASS/FAIL de l'oracle ; claim_verdict:
+  NO_CLAIM_ALLOWED. Sans oracle disponible => remonte un besoin HumanGate (fog),
+  pas de claim.
+  RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) —
+  aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat.
+  Termine TOUJOURS par ce bloc, succes comme echec :
+  `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache ·
+  `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient
+  d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" ·
+  `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement
+  obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as
+  appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur
+  doit agir OU pourquoi la chaine causale est FERMEE et se termine ici.
+  Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu
+  le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la
+  meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as
+  essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non
+  resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction
+  reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  evidence log : {commande, exit_code, tests_pass, tests_fail, hash}. PASS/FAIL.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Étape 10a, oracle en aval du Build (9).

@@ -1,0 +1,55 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "$id": "mutation_graph.schema.json",
+ "title": "MUTATION_GRAPH_V1",
+ "description": "Le graphe des mutations. Il porte le LIGNAGE et les FAITS OBSERVES. Il ne porte AUCUNE recompense, AUCUN classement, AUCUN score : la recompense appartient au root_problem. Un graphe qui noterait ses propres noeuds serait un score global ayant simplement change de forme.",
+ "type": "object",
+ "required": ["schema_version", "nodes", "edges"],
+ "additionalProperties": false,
+ "properties": {
+  "schema_version": { "const": 1 },
+  "nodes": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["mutation_id", "root_problem_ids", "observed_effects", "risks", "evidence_refs"],
+    "properties": {
+     "mutation_id": {
+      "description": "Cle etrangere vers mutation_registry.json. Le registre reste la source unique : le graphe ne recopie ni hypothese, ni mesure, ni statut.",
+      "type": "string"
+     },
+     "root_problem_ids": {
+      "description": "Problemes que cette mutation ADRESSE. Une mutation peut en toucher plusieurs, mais elle ne sera jamais comparee qu a l interieur d un seul a la fois.",
+      "type": "array",
+      "items": { "type": "string" }
+     },
+     "observed_effects": {
+      "description": "Effets CONSTATES, y compris indesirables. Un effet negatif garde toute sa place : c est precisement ce qui evite d y retourner dans six mois.",
+      "type": "array",
+      "items": { "type": "string" }
+     },
+     "risks": { "type": "array", "items": { "type": "string" } },
+     "evidence_refs": { "type": "array", "items": { "type": "string" } }
+    }
+   }
+  },
+  "edges": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["parent", "child", "relation"],
+    "properties": {
+     "parent": { "type": "string" },
+     "child": { "type": "string" },
+     "relation": {
+      "description": "`derived_from` = l enfant a ete concu EN PARTANT du parent, sans presumer qu il fait mieux. M-ws2 derive de M-ws1 et s est revelee PIRE (1/3 contre 2/3) : encodee comme « ameliore », elle mentirait ; encodee comme branche exploree, elle informe. `replaces` = le parent est supersede. `contradicts` = les deux ne peuvent coexister dans un meme genome.",
+      "enum": ["derived_from", "replaces", "contradicts"]
+     }
+    }
+   }
+  }
+ },
+ "$comment": "INTERDITS STRUCTURELS. `additionalProperties: false` partout signifie qu aucun champ reward, score, rank, weight ou fitness ne peut etre ajoute a un noeud ou a une arete sans modifier CE fichier — donc sans que la decision soit visible dans un diff. L interdiction n est pas une consigne, c est une propriete du schema."
+}

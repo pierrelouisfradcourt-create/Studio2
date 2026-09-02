@@ -1,0 +1,61 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.oracle_fail_vs_not_measured_marker
+statement: Un volet d'oracle produit qui ne peut etre mesure dans le mode d'execution
+  courant (ex. rendu pixel en headless) doit rendre NOT_MEASURED, jamais FAIL -- product_oracle_godot.py
+  n'exempte aujourd'hui qu'un seul nom de volet code en dur (core_render_frame) au
+  lieu d'une regle generique par marqueur, ce qui a fait rendre FAIL a 3 volets render
+  de Breakout reellement verts (confirmes par capture GPU).
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-oracle_fail_vs_not_measured_marker
+  kind: pattern
+  function: Un volet d'oracle produit qui ne peut etre mesure dans le mode d'execution
+    courant (ex. rendu pixel en headless) doit rendre NOT_MEASURED, jamais FAIL --
+    product_oracle_godot.py n'exempte aujourd'hui qu'un seul nom de volet code en
+    dur (core_render_frame) au lieu d'une regle generique par marqueur, ce qui a fait
+    rendre FAIL a 3 volets render de Breakout reellement verts (confirmes par capture
+    GPU).
+  source: Forge lesson 'forge.oracle_fail_vs_not_measured_marker' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.oracle_fail_vs_not_measured_marker
+    supporting_runs:
+    - breakout_v2-run3-20260731-111149
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-01T14:55:15.838330+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - breakout_v2
+  invariants:
+  - Un volet d'oracle produit qui ne peut etre mesure dans le mode d'execution courant
+    (ex. rendu pixel en headless) doit rendre NOT_MEASURED, jamais FAIL -- product_oracle_godot.py
+    n'exempte aujourd'hui qu'un seul nom de volet code en dur (core_render_frame)
+    au lieu d'une regle generique par marqueur, ce qui a fait rendre FAIL a 3 volets
+    render de Breakout reellement verts (confirmes par capture GPU).
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - breakout_v2-run3-20260731-111149
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-02T11:48:55+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T05:58:59+00:00'

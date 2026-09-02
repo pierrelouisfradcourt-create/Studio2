@@ -1,0 +1,1516 @@
+{
+ "catalog_version": 1,
+ "entries": [
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-kenney-survivor1-stand",
+   "source": "Kenney — Top-down Shooter",
+   "license": "CC0-1.0",
+   "provenance_url": "https://www.kenney.nl/assets/top-down-shooter",
+   "style": "flat-top-down",
+   "genre": [
+    "tactical",
+    "survival",
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 1,
+   "sha256": "b589c0daff787b5fe7172656de614ae90dc36d08a762e0bad905c876fdc99af8",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/characters/kenney_survivor1_stand.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-kenney-manblue-stand",
+   "source": "Kenney — Top-down Shooter",
+   "license": "CC0-1.0",
+   "provenance_url": "https://www.kenney.nl/assets/top-down-shooter",
+   "style": "flat-top-down",
+   "genre": [
+    "tactical",
+    "survival",
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 1,
+   "sha256": "0c40a319cc9e0a641a39def32573906ca2df971816535fd798a0e8692287b3c6",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/characters/kenney_manBlue_stand.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-kenney-zombie1-stand",
+   "source": "Kenney — Top-down Shooter",
+   "license": "CC0-1.0",
+   "provenance_url": "https://www.kenney.nl/assets/top-down-shooter",
+   "style": "flat-top-down",
+   "genre": [
+    "tactical",
+    "survival",
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 1,
+   "sha256": "215e8442f1272ce4f34c900b78f267fab05165d47358e4c91735e632f64dd981",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/creatures/kenney_zombie1_stand.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-quaternius-ultimate-modular-men",
+   "source": "Quaternius — Ultimate Modular Men Pack",
+   "license": "CC0-1.0",
+   "provenance_url": "https://quaternius.com/packs/ultimatemodularmen.html",
+   "style": "lowpoly",
+   "genre": [
+    "rpg",
+    "tactical"
+   ],
+   "biome": null,
+   "format": "3D",
+   "size_kb": null,
+   "sha256": null,
+   "runtime": "godot",
+   "ingested": false,
+   "path": null,
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-kaykit-dungeon-remastered",
+   "source": "KayKit — Dungeon Remastered Pack",
+   "license": "CC0-1.0",
+   "provenance_url": "https://kaylousberg.itch.io/kaykit-dungeon-remastered",
+   "style": "lowpoly",
+   "genre": [
+    "rpg",
+    "roguelike"
+   ],
+   "biome": "dungeon",
+   "format": "3D",
+   "size_kb": null,
+   "sha256": null,
+   "runtime": "godot",
+   "ingested": false,
+   "path": null,
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-polyhaven-rock-boulder-01",
+   "source": "Poly Haven — Rock Boulder 01",
+   "license": "CC0-1.0",
+   "provenance_url": "https://polyhaven.com/a/rock_boulder_01",
+   "style": "photoscan-pbr",
+   "genre": [
+    "environment"
+   ],
+   "biome": "outdoor",
+   "format": "3D",
+   "size_kb": null,
+   "sha256": null,
+   "runtime": "godot",
+   "ingested": false,
+   "path": null,
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-damage-floor",
+   "kind": "pattern",
+   "function": "degat_effectif = max(1, brut - reduction) — anti-stalemate au combat",
+   "source": "Battle for Wesnoth — CombatMechanics (concept cite, zero code)",
+   "provenance_url": "https://wiki.wesnoth.org/CombatMechanics",
+   "license": "GPL-2.0-or-later",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "tactical",
+    "rpg",
+    "roguelike"
+   ],
+   "invariants": [
+    "degat_effectif >= 1 pour tout (brut>=0, reduction>=0)",
+    "monotonie en brut a reduction fixe",
+    "deterministe"
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": "knowledge_base/patterns/tactical_combat/damage_floor.md",
+   "sha256": "83346fed7846db4c70bcaadbc38dba3c63671f564300fc917b739122e7857cbb",
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-full-reachability",
+   "kind": "pattern",
+   "function": "un niveau genere n'est valide que si tout objectif requis est atteignable (BFS complet)",
+   "source": "Shattered Pixel Dungeon — generation de donjon (concept cite, zero code)",
+   "provenance_url": "https://github.com/00-Evan/shattered-pixel-dungeon",
+   "license": "GPL-3.0-only",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "roguelike",
+    "tactical",
+    "survival"
+   ],
+   "invariants": [
+    "BFS(depart) contient tous les objectifs requis",
+    "deterministe (meme seed -> meme niveau)",
+    "reparation/regeneration bornee"
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": "knowledge_base/patterns/world_sim/full_reachability.md",
+   "sha256": "299edd9596ef980c8ee9e1c3c6a0bcc0afee97137462c7cbc00f8ab44f152c8a",
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-zone-of-control",
+   "kind": "pattern",
+   "function": "une unite projette une zone de controle ; l'ennemi qui y entre stoppe son deplacement",
+   "source": "Battle for Wesnoth — ZoneOfControl (concept cite, zero code)",
+   "provenance_url": "https://wiki.wesnoth.org/ZoneOfControl",
+   "license": "GPL-2.0-or-later",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "tactical"
+   ],
+   "invariants": [
+    "case adjacente a un ennemi = controlee pour le camp adverse",
+    "deplacement penetrant une case controlee est tronque a cette case",
+    "deterministe"
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": "knowledge_base/patterns/tactical_combat/zone_of_control.md",
+   "sha256": "1bb46c4e412fd36fb1a41df00b2384369221a1efb36653c512c72470edf7d203",
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "sys-damage-floor",
+   "kind": "system",
+   "function": "fonction pure de degats a plancher + application a un hp borne a 0",
+   "source": "reecriture propre inspiree de pat-damage-floor (aucun code Wesnoth)",
+   "provenance_url": null,
+   "license": "MIT",
+   "runtime": "html",
+   "dependencies": [
+    "pat-damage-floor"
+   ],
+   "parameters": {
+    "floor": {
+     "type": "int",
+     "range": [
+      1,
+      99
+     ],
+     "default": 1
+    }
+   },
+   "genre_compatible": [
+    "tactical",
+    "rpg",
+    "roguelike",
+    "survival"
+   ],
+   "invariants": [
+    "effectiveDamage >= floor",
+    "monotone en rawDamage",
+    "deterministe",
+    "applyHit borne hp a 0"
+   ],
+   "proof_of_use": "knowledge_base/proofs/kb_tactics_oracle.log",
+   "tier": "validated",
+   "path": "knowledge_base/systems/combat/damage_floor.mjs",
+   "sha256": "b9e75ca2a043d0458426d6bfdd7cf7962030100fceb8a7ef9cc451792f3f387c",
+   "tests": "knowledge_base/systems/combat/damage_floor.test.mjs",
+   "advisory_only": false,
+   "affordances": {},
+   "usage_examples": [
+    "games/kb_tactics/game.mjs",
+    "games/shmup_slice/logic/collisions.mjs"
+   ]
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "sys-reachability",
+   "kind": "system",
+   "function": "BFS d'atteignabilite 4-connexe sur grille + verdict niveau-jouable",
+   "source": "reecriture propre inspiree de pat-full-reachability (aucun code SPD)",
+   "provenance_url": null,
+   "license": "MIT",
+   "runtime": "html",
+   "dependencies": [
+    "pat-full-reachability"
+   ],
+   "parameters": {},
+   "genre_compatible": [
+    "roguelike",
+    "tactical",
+    "survival"
+   ],
+   "invariants": [
+    "reachable est un sous-ensemble des cases libres",
+    "start inclus s'il est libre",
+    "deterministe (meme grille -> meme resultat)",
+    "isLevelReachable.ok <=> tous objectifs dans reachable"
+   ],
+   "proof_of_use": "knowledge_base/proofs/kb_tactics_oracle.log",
+   "tier": "validated",
+   "path": "knowledge_base/systems/procgen/reachability.mjs",
+   "sha256": "2ec8ae4c238b2d6e7526d65086f464f36d85bb6c9bd40d584bccd36db0b38180",
+   "tests": "knowledge_base/systems/procgen/reachability.test.mjs",
+   "advisory_only": false,
+   "affordances": {},
+   "usage_examples": [
+    "games/kb_tactics/game.mjs",
+    "games/kb_tactics/level.mjs"
+   ]
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "sys-pursuer-mobile",
+   "kind": "system",
+   "function": "deplacement de poursuite pur, discret par cases (distance de Chebyshev), un axe a la fois, jamais au-dela de la cible — convient aux jeux a plateau/grille (rogue-like, tactique tour par tour)",
+   "source": "ORIGINAL — aucune inspiration externe citee — implementation gloutonne Chebyshev, ecrite pour role-pursuer-mobile (knowledge_base/roles/pursuer-mobile.yaml)",
+   "provenance_url": null,
+   "license": "MIT",
+   "runtime": "html",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "tactical",
+    "roguelike"
+   ],
+   "invariants": [
+    "deplacement Chebyshev par tick <= speed, jamais depasse",
+    "distance a la cible ne peut jamais augmenter apres un pas",
+    "deterministe",
+    "speed < 0 ou non fini leve RangeError"
+   ],
+   "proof_of_use": "knowledge_base/proofs/role_sim_pursuer_mobile_validation.log",
+   "tier": "validated",
+   "path": "knowledge_base/systems/ai/pursuer.mjs",
+   "sha256": "e275ebc1d8832119774c50d3ca42b77cdf881a6a717d2f6133ecf61694d3d937",
+   "tests": "knowledge_base/systems/ai/pursuer.test.mjs",
+   "advisory_only": false,
+   "affordances": {
+    "movement": {
+     "type": "stepToward(pos, targetPos, speed) -> pos",
+     "description": "se deplace d'au plus speed pas (Chebyshev) vers targetPos, un axe a la fois, jamais au-dela de la cible. Pur, deterministe."
+    },
+    "distance_metric": {
+     "type": "chebyshevDistance(a, b) -> number",
+     "description": "distance de Chebyshev entre deux positions {x,y}."
+    }
+   }
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "sys-evader-basic",
+   "kind": "system",
+   "function": "fuite pure : avance au plus speed pas (Chebyshev) directement a l opposee d une menace, axe par axe",
+   "source": "ORIGINAL — aucune inspiration externe citee — adversaire de simulation minimal pour knowledge_base/role_sim.mjs",
+   "provenance_url": null,
+   "license": "MIT",
+   "runtime": "html",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "tactical",
+    "action",
+    "survival",
+    "roguelike"
+   ],
+   "invariants": [
+    "deplacement Chebyshev par tick <= speed, jamais depasse",
+    "distance a la menace ne peut jamais diminuer apres un pas",
+    "cas degenere (menace sur la meme case) ne bloque jamais",
+    "deterministe",
+    "speed < 0 ou non fini leve RangeError"
+   ],
+   "proof_of_use": "knowledge_base/proofs/role_sim_pursuer_mobile_validation.log",
+   "tier": "validated",
+   "path": "knowledge_base/systems/ai/evader.mjs",
+   "sha256": "787c16b37984be473e0bf185f15173fd61cb06fc0c5129ee3e38ccda38ef2866",
+   "tests": "knowledge_base/systems/ai/evader.test.mjs",
+   "advisory_only": false,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "sys-guardian-zoc",
+   "kind": "system",
+   "function": "zone de controle statique, PURE : tronque le mouvement a la premiere case NOUVELLEMENT entree dans la zone dun gardien fixe",
+   "source": "reecriture propre inspiree de pat-zone-of-control (aucun code Wesnoth repris)",
+   "provenance_url": null,
+   "license": "MIT",
+   "runtime": "html",
+   "dependencies": [
+    "pat-zone-of-control"
+   ],
+   "parameters": {},
+   "genre_compatible": [
+    "tactical",
+    "action",
+    "roguelike"
+   ],
+   "invariants": [
+    "deplacement Chebyshev par tick <= speed, jamais depasse",
+    "si deja dans la zone en debut de tick, aucune troncature ce tick",
+    "une entree fraiche dans la zone tronque le mouvement a la case dentree",
+    "deterministe",
+    "speed < 0 ou non fini leve RangeError"
+   ],
+   "proof_of_use": "knowledge_base/proofs/role_sim_guardian_static_validation.log",
+   "tier": "validated",
+   "path": "knowledge_base/systems/ai/zone_of_control.mjs",
+   "sha256": "e6d96629215e3f25b1aceb02f50fc70de995a64a436b0344421ad3e4b4a3f49f",
+   "tests": "knowledge_base/systems/ai/zone_of_control.test.mjs",
+   "advisory_only": false,
+   "affordances": {
+    "zone_check": {
+     "type": "isInZone(pos, guardianPos, zocRadius) -> boolean",
+     "description": "vrai si pos est dans la zone de controle du gardien (distance de Chebyshev <= zocRadius)."
+    },
+    "movement_with_zone": {
+     "type": "stepTowardWithZoC(pos, targetPos, speed, guardianPos, zocRadius) -> pos",
+     "description": "se deplace vers targetPos comme un mouvement de poursuite standard, mais s'arrete des l'entree fraiche dans la zone."
+    }
+   }
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "sys-pursuer-continuous",
+   "kind": "system",
+   "function": "poursuite vectorielle, pure : direction normalisee, les deux axes bougent simultanement (vitesse en unites par seconde multipliee par le temps ecoule), ne depasse jamais la cible — convient aux jeux a defilement libre, arcade, action en temps reel",
+   "source": "ORIGINAL — aucune inspiration externe citee — mouvement de recherche (seek) inspire du concept classique steering behaviors (Craig Reynolds 1999, domaine algorithmique general, aucun code source ni licence logicielle associee a citer). Trou identifie par un test independant (2026-07-13, games/chase_prototype/) : sys-pursuer-mobile est inadapte au mouvement continu.",
+   "provenance_url": null,
+   "license": "MIT",
+   "runtime": "html",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "action",
+    "survival",
+    "shooter",
+    "arcade"
+   ],
+   "invariants": [
+    "deplacement <= speed*dt (norme euclidienne), jamais depasse",
+    "ne depasse jamais la cible (clampe a la distance restante)",
+    "distance a la cible ne peut jamais augmenter apres un pas",
+    "deterministe",
+    "speed ou dt < 0 ou non fini leve RangeError",
+    "distance nulle, speed=0 ou dt=0 -> aucun mouvement, jamais de NaN"
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": "knowledge_base/systems/ai/pursuer_continuous.mjs",
+   "sha256": "4eb4121fd3e571def1602f058a4995e6f8b2d1f98e5aae476f8bc8e9b494eee1",
+   "tests": "knowledge_base/systems/ai/pursuer_continuous.test.mjs",
+   "advisory_only": false,
+   "affordances": {}
+  },
+  {
+   "entry_type": "role",
+   "role_id": "role-pursuer-mobile",
+   "archetype": "poursuivant mobile qui rattrape une cible fuyante en terrain ouvert (pas d'obstacles) ; la difficulte mesuree est le temps de capture sur une distribution de departs, pas le fait binaire de capturer",
+   "requires": {
+    "movement": {
+     "type": "fn(pos, targetPos, speed) -> pos",
+     "description": "se deplace d'au plus speed pas (Chebyshev) vers targetPos, un axe a la fois, jamais au-dela de la cible. Pur, deterministe."
+    },
+    "distance_metric": {
+     "type": "fn(a, b) -> number",
+     "description": "distance de Chebyshev entre deux positions {x,y}, utilisee pour detecter la capture (distance <= catch_radius)."
+    }
+   },
+   "fulfilled_by": [
+    "sys-pursuer-mobile"
+   ],
+   "tier": "validated",
+   "license": "MIT",
+   "path": "knowledge_base/roles/pursuer-mobile.yaml",
+   "proof_of_use": "knowledge_base/proofs/role_sim_pursuer_mobile_validation.log"
+  },
+  {
+   "entry_type": "role",
+   "role_id": "role-guardian-static",
+   "archetype": "entite statique qui projette une zone de controle : tout attaquant qui y penetre voit son deplacement stoppe pour le tick en cours ; la difficulte mesuree est le retard de traversee, pas l'atteinte de l'objectif",
+   "requires": {
+    "zone_check": {
+     "type": "fn(pos, guardianPos, zocRadius) -> boolean",
+     "description": "vrai si pos est dans la zone de controle du gardien (distance de Chebyshev <= zocRadius)."
+    },
+    "movement_with_zone": {
+     "type": "fn(pos, targetPos, speed, guardianPos, zocRadius) -> pos",
+     "description": "se deplace vers targetPos comme un mouvement de poursuite standard, mais s'arrete des l'entree FRAICHE dans la zone."
+    }
+   },
+   "fulfilled_by": [
+    "sys-guardian-zoc"
+   ],
+   "tier": "validated",
+   "license": "MIT",
+   "path": "knowledge_base/roles/guardian-static.yaml",
+   "proof_of_use": "knowledge_base/proofs/role_sim_guardian_static_validation.log"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-candycane",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 6,
+   "sha256": "f690578910f30e790e280318afde4a5587afd78f936784e12eaa3c6d7a0084cd",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_candycane.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-candycorn",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 5,
+   "sha256": "544f354bf8fbc23b39b3c399653dbac054586bc278cc89a52aa0987ee7b8d236",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_candycorn.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-candyhumbug",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 7,
+   "sha256": "76da5deb7e503dc0412e8eec8fec979c9ced9a2508c2555a692581758c7b7312",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_candyhumbug.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-lollipop-blue",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 7,
+   "sha256": "367fe033cd3d427b88353e81123180ac701c79d11ec98614dd7f8e0a392dc47d",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_lollipop_blue.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-lollipop-green",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 7,
+   "sha256": "3b3fe2bb9d8f6de67ed306aaf50a070bec2e4beec3585bf989daddcfebe8c7a5",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_lollipop_green.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-jellybig-red",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 15,
+   "sha256": "1151b9591efa2c665b297c33512bc88b379b9820e79405582100998475aea21e",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_jellybig_red.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-bean-purple",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 3,
+   "sha256": "0645378ccf9ba8e27f3007c5511c07f79fe0895052ca3b4924d4f2e18955b9c3",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_bean_purple.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-heart-red",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 1,
+   "sha256": "a1b2a50cc6e23d52a20674253e65bde96a45b93a0497a04acf28d595ce618b10",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_heart_red.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-explosion-pink-01",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 7,
+   "sha256": "a9b3f672c07b790805ac6dd083936d9d2e395ee6610ab59decced4dcfcf14088",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_explosionpink01.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-explosion-pink-02",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 8,
+   "sha256": "0a67360fa1af0cf49a85479c9920489e2e53cdb68c7f52200079e964969f28bb",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_explosionpink02.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-explosion-pink-03",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 6,
+   "sha256": "33737215423fc5afad9cf32aa42ad721d59e6c1d11243f80e5631e8daf59c93c",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_explosionpink03.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-explosion-pink-04",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 5,
+   "sha256": "9b6fe435ad531915f428069c9bcd6e25fcdd825491c954f56cf5996ee994f815",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_explosionpink04.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "asset",
+   "asset_id": "asset-candypack1-explosion-pink-05",
+   "source": "Candy Pack 1 (lumimae, thecandyjam.com)",
+   "license": "CC0-1.0",
+   "provenance_url": "https://opengameart.org/content/candy-pack-1",
+   "style": "candy-pop",
+   "genre": [
+    "shooter"
+   ],
+   "biome": null,
+   "format": "2D",
+   "size_kb": 3,
+   "sha256": "6c3ec1f5534f9b6d3c5430086415b239ff2ec642bfa9ed8466abbea9d5335506",
+   "runtime": "html",
+   "ingested": true,
+   "path": "knowledge_base/assets/props/candypack1_explosionpink05.png",
+   "usage_examples": [],
+   "tier": "candidate"
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "sys-grid-nav-m01",
+   "kind": "system",
+   "function": "BFS déterministe sur grille 4-directions; next_step retourne le premier pas du chemin optimal; path_length retourne la distance du chemin le plus court ou -1",
+   "source": "ORIGINAL — aucune inspiration externe citee",
+   "provenance_url": null,
+   "license": "MIT",
+   "runtime": "godot",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "tactical",
+    "roguelike",
+    "survival",
+    "puzzle"
+   ],
+   "invariants": [
+    "déterministe (même seed -> même résultat)",
+    "pur (pas d'état global, pas de modification d'arguments)",
+    "déplacement en 4 directions seulement (haut, droite, bas, gauche)",
+    "respecte les murs fournis",
+    "retourne -1 si cible inatteignable ou exploration > 10000 cellules"
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": "knowledge_base/systems/navigation/grid_nav.gd",
+   "sha256": "f064870f736c147e10454387ac4636316432843914afce81e00366c2750d8b55",
+   "tests": "knowledge_base/systems/navigation/run_tests.gd",
+   "advisory_only": false,
+   "affordances": {
+    "next_step": {
+     "type": "fn(from: Vector2i, to: Vector2i, walls: Dictionary) -> Vector2i",
+     "description": "premier pas du chemin le plus court de from vers to en evitant les murs ; rend from si to est inatteignable. Pur, deterministe, 4 directions."
+    },
+    "path_length": {
+     "type": "fn(from: Vector2i, to: Vector2i, walls: Dictionary) -> int",
+     "description": "longueur du chemin le plus court de from vers to, -1 si inatteignable ou si l'exploration depasse 10000 cellules. Pur, deterministe."
+    },
+    "next_step_expansions": {
+     "type": "fn(from: Vector2i, to: Vector2i, walls: Dictionary) -> int",
+     "description": "nombre d'expansions de noeuds effectuees par le BFS sous-jacent — rend le TRAVAIL observable, pas seulement le resultat. Pur, aucun etat partage entre appels."
+    }
+   },
+   "learned_from": {
+    "game": "grid_nav_probe",
+    "reference": "Pac-Man (1980)"
+   }
+  },
+  {
+   "entry_type": "role",
+   "role_id": "role-grid-navigator",
+   "archetype": "Une entité qui doit atteindre une position cible fixe à travers un espace comportant des obstacles, en suivant à chaque instant le plus court chemin disponible vers cette cible.",
+   "requires": {
+    "next_step": {
+     "type": "fn(from, to, walls) -> pos",
+     "description": "premier pas du chemin le plus court de from vers to en evitant walls, ou from si to est inatteignable. Pur, deterministe, 4 directions."
+    },
+    "path_length": {
+     "type": "fn(from, to, walls) -> int",
+     "description": "longueur du chemin le plus court de from vers to, -1 si inatteignable. Pur, deterministe."
+    }
+   },
+   "fulfilled_by": [
+    "sys-grid-nav-m01"
+   ],
+   "tier": "candidate",
+   "license": "MIT",
+   "path": "knowledge_base/roles/grid-navigator.yaml",
+   "proof_of_use": null
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-preflight_oracle_registration",
+   "kind": "pattern",
+   "function": "L'enregistrement du projet dans scripts/forge/oracles.json est un prerequis mecaniquement verifiable AVANT le premier dispatch LLM d'une campagne, mais rien ne le verifie au lancement : son absence n'est visible qu'a s10a, apres un build complet -- un builder entier peut tourner pour rien.",
+   "source": "Forge lesson 'forge.preflight_oracle_registration' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.preflight_oracle_registration",
+    "supporting_runs": [
+     "breakout_v2-run1-20260731-082705"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-01T14:55:15.819329+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "breakout_v2"
+   ],
+   "invariants": [
+    "L'enregistrement du projet dans scripts/forge/oracles.json est un prerequis mecaniquement verifiable AVANT le premier dispatch LLM d'une campagne, mais rien ne le verifie au lancement : son absence n'est visible qu'a s10a, apres un build complet -- un builder entier peut tourner pour rien."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-timeout_greenfield_by_profile",
+   "kind": "pattern",
+   "function": "Un step-timeout de dispatch (defaut 1800s) est insuffisant pour un s9 greenfield Godot construit depuis zero sur un squelette de wiremap de taille standard (~50 lignes) ; 5400s a suffi pour un build complet reel (~40 min). Le defaut actuel est calibre pour du correctif, pas pour un greenfield.",
+   "source": "Forge lesson 'forge.timeout_greenfield_by_profile' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.timeout_greenfield_by_profile",
+    "supporting_runs": [
+     "breakout_v2-run1-20260731-082705"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-01T14:55:15.809290+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "breakout_v2"
+   ],
+   "invariants": [
+    "Un step-timeout de dispatch (defaut 1800s) est insuffisant pour un s9 greenfield Godot construit depuis zero sur un squelette de wiremap de taille standard (~50 lignes) ; 5400s a suffi pour un build complet reel (~40 min). Le defaut actuel est calibre pour du correctif, pas pour un greenfield."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-wiremap_concept_reuse_requalification",
+   "kind": "pattern",
+   "function": "Une ligne de wiremap reused_from.type=CONCEPT transposee d'un jeu a un autre peut porter une promesse (expected_proof) fausse dans le nouveau contexte si le genre change de nature (ex. grille discrete -> physique continue temps reel) ; la provenance seule ne prouve pas la transposabilite, une justification explicite de compatibilite de genre devrait etre exigee.",
+   "source": "Forge lesson 'forge.wiremap_concept_reuse_requalification' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.wiremap_concept_reuse_requalification",
+    "supporting_runs": [
+     "breakout_v2-run3-20260731-111149"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-01T14:55:15.828330+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "breakout_v2"
+   ],
+   "invariants": [
+    "Une ligne de wiremap reused_from.type=CONCEPT transposee d'un jeu a un autre peut porter une promesse (expected_proof) fausse dans le nouveau contexte si le genre change de nature (ex. grille discrete -> physique continue temps reel) ; la provenance seule ne prouve pas la transposabilite, une justification explicite de compatibilite de genre devrait etre exigee."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-oracle_fail_vs_not_measured_marker",
+   "kind": "pattern",
+   "function": "Un volet d'oracle produit qui ne peut etre mesure dans le mode d'execution courant (ex. rendu pixel en headless) doit rendre NOT_MEASURED, jamais FAIL -- product_oracle_godot.py n'exempte aujourd'hui qu'un seul nom de volet code en dur (core_render_frame) au lieu d'une regle generique par marqueur, ce qui a fait rendre FAIL a 3 volets render de Breakout reellement verts (confirmes par capture GPU).",
+   "source": "Forge lesson 'forge.oracle_fail_vs_not_measured_marker' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.oracle_fail_vs_not_measured_marker",
+    "supporting_runs": [
+     "breakout_v2-run3-20260731-111149"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-01T14:55:15.838330+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "breakout_v2"
+   ],
+   "invariants": [
+    "Un volet d'oracle produit qui ne peut etre mesure dans le mode d'execution courant (ex. rendu pixel en headless) doit rendre NOT_MEASURED, jamais FAIL -- product_oracle_godot.py n'exempte aujourd'hui qu'un seul nom de volet code en dur (core_render_frame) au lieu d'une regle generique par marqueur, ce qui a fait rendre FAIL a 3 volets render de Breakout reellement verts (confirmes par capture GPU)."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-forge_oracle_convention_undocumented",
+   "kind": "pattern",
+   "function": "La convention de sonde observable FORGE_ORACLE (marqueur litteral, format de sortie stdout 'FORGE_ORACLE <volet> {json}', decouverte par grep du code) n'existe que dans le code executant (product_oracle_godot.py) et par precedent (games/snake/07_TESTS/oracle/), jamais declaree dans scripts/forge/standard/SCHEMA.md -- un builder ne peut la decouvrir que par un exemple donne explicitement dans sa tache.",
+   "source": "Forge lesson 'forge.forge_oracle_convention_undocumented' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.forge_oracle_convention_undocumented",
+    "supporting_runs": [
+     "breakout_v2-run3-20260731-111149"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-01T14:55:15.847914+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "breakout_v2"
+   ],
+   "invariants": [
+    "La convention de sonde observable FORGE_ORACLE (marqueur litteral, format de sortie stdout 'FORGE_ORACLE <volet> {json}', decouverte par grep du code) n'existe que dans le code executant (product_oracle_godot.py) et par precedent (games/snake/07_TESTS/oracle/), jamais declaree dans scripts/forge/standard/SCHEMA.md -- un builder ne peut la decouvrir que par un exemple donne explicitement dans sa tache."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-broken_loop_repair_not_report",
+   "kind": "pattern",
+   "function": "Une boucle cassee dont la cause racine est identifiee et la solution connue doit etre REPAREE immediatement, pas remontee comme observation. Le role de la Forge n'est pas de signaler les ecarts mais de reconnecter les boucles : diagnostic -> cause -> correction -> test -> preuve, exactement comme pour un bug. On repare le mecanisme generique, jamais le cas particulier en exception.",
+   "source": "Forge lesson 'forge.broken_loop_repair_not_report' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.broken_loop_repair_not_report",
+    "supporting_runs": [
+     "tetris-fullgodot-20260803-084719"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-03T11:31:51.387425+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "tetris-fullgodot-20260803-084719"
+   ],
+   "invariants": [
+    "Une boucle cassee dont la cause racine est identifiee et la solution connue doit etre REPAREE immediatement, pas remontee comme observation. Le role de la Forge n'est pas de signaler les ecarts mais de reconnecter les boucles : diagnostic -> cause -> correction -> test -> preuve, exactement comme pour un bug. On repare le mecanisme generique, jamais le cas particulier en exception."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-kb_humangate_to_controlled_autonomy",
+   "kind": "pattern",
+   "function": "La HumanGate sur l'ingestion KB etait une securite de PHASE DE CONSTRUCTION, destinee a eviter de polluer la connaissance avant que les mecanismes de preuve existent. Une fois la KB cablee, les validations mecaniques en place, les propositions structurees et les preuves produites, elle doit evoluer vers une AUTONOMIE CONTROLEE : recherche, extraction, proposition, validation mecanique et ingestion automatiques sous conditions de preuve. La securite anti-derive reste obligatoire mais passe par des controles mecaniques, pas par un blocage humain permanent -- sinon la Forge ne monte jamais en competence.",
+   "source": "Forge lesson 'forge.kb_humangate_to_controlled_autonomy' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.kb_humangate_to_controlled_autonomy",
+    "supporting_runs": [
+     "tetris-fullgodot-20260803-084719"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-03T11:31:51.387425+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "tetris-fullgodot-20260803-084719"
+   ],
+   "invariants": [
+    "La HumanGate sur l'ingestion KB etait une securite de PHASE DE CONSTRUCTION, destinee a eviter de polluer la connaissance avant que les mecanismes de preuve existent. Une fois la KB cablee, les validations mecaniques en place, les propositions structurees et les preuves produites, elle doit evoluer vers une AUTONOMIE CONTROLEE : recherche, extraction, proposition, validation mecanique et ingestion automatiques sous conditions de preuve. La securite anti-derive reste obligatoire mais passe par des controles mecaniques, pas par un blocage humain permanent -- sinon la Forge ne monte jamais en competence."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-architecture_check_before_human_escalation",
+   "kind": "pattern",
+   "function": "Avant toute escalade humaine sur un blocage, la Forge doit verifier le Master Schema et les contrats associes, dans cet ordre : blocage -> recherche de la boucle PREVUE par l'architecture -> verification (composant non builde ? existant mais non cable ? mal cable ? consommateur absent ? contrat incomplet ?) -> correction automatique si cause et solution evidentes -> escalade humaine UNIQUEMENT si une decision est necessaire. Premiere hypothese obligatoire : la capacite existe deja dans l'architecture mais n'est pas branchee. Ne jamais remonter un manque de capacite sans avoir cherche l'ecart entre design et implementation.",
+   "source": "Forge lesson 'forge.architecture_check_before_human_escalation' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.architecture_check_before_human_escalation",
+    "supporting_runs": [
+     "tetris-fullgodot-20260803-084719"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-03T11:31:51.387425+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "tetris-fullgodot-20260803-084719"
+   ],
+   "invariants": [
+    "Avant toute escalade humaine sur un blocage, la Forge doit verifier le Master Schema et les contrats associes, dans cet ordre : blocage -> recherche de la boucle PREVUE par l'architecture -> verification (composant non builde ? existant mais non cable ? mal cable ? consommateur absent ? contrat incomplet ?) -> correction automatique si cause et solution evidentes -> escalade humaine UNIQUEMENT si une decision est necessaire. Premiere hypothese obligatoire : la capacite existe deja dans l'architecture mais n'est pas branchee. Ne jamais remonter un manque de capacite sans avoir cherche l'ecart entre design et implementation."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-diagnosis_is_not_workflow_end",
+   "kind": "pattern",
+   "function": "Un diagnostic n'est PAS une fin de workflow. Quand la Forge identifie la cause racine, le composant responsable et la correction evidente, elle applique la correction AVANT de demander une validation humaine. La sortie attendue est PROBLEM / CAUSE / ACTION / VALIDATION / ESCALADE-si-choix-humain-restant, jamais PROBLEM / CAUSE / QUESTION. Ne jamais transformer un bug d'implementation en decision humaine. Grille avant escalade : prevu au Master Schema ? deja contracte ? cause identifiee ? solution determinee ? risque acceptable ? Si oui aux cinq : reparer, tester, documenter.",
+   "source": "Forge lesson 'forge.diagnosis_is_not_workflow_end' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.diagnosis_is_not_workflow_end",
+    "supporting_runs": [
+     "tetris-fullgodot-20260803-084719"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-03T11:32:30.815423+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "tetris-fullgodot-20260803-084719"
+   ],
+   "invariants": [
+    "Un diagnostic n'est PAS une fin de workflow. Quand la Forge identifie la cause racine, le composant responsable et la correction evidente, elle applique la correction AVANT de demander une validation humaine. La sortie attendue est PROBLEM / CAUSE / ACTION / VALIDATION / ESCALADE-si-choix-humain-restant, jamais PROBLEM / CAUSE / QUESTION. Ne jamais transformer un bug d'implementation en decision humaine. Grille avant escalade : prevu au Master Schema ? deja contracte ? cause identifiee ? solution determinee ? risque acceptable ? Si oui aux cinq : reparer, tester, documenter."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-escalation_costs_avoid_default_route",
+   "kind": "pattern",
+   "function": "Une escalade humaine a un cout reel : interruption du flux, consommation de contexte, perte de temps, dilution de la mission. L'humain n'est pas la route par defaut quand une correction est determinee. Avant de solliciter l'humain, verifier : est-ce une decision de conception ? un changement d'invariant ? un choix produit ? existe-t-il plusieurs solutions valides ? Si non aux quatre et que cause, correction et maitrise du risque sont acquises, la Forge applique. Chaque escalade doit etre justifiee par une NECESSITE DE DECISION, jamais par une incapacite a appliquer une solution deja trouvee.",
+   "source": "Forge lesson 'forge.escalation_costs_avoid_default_route' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.escalation_costs_avoid_default_route",
+    "supporting_runs": [
+     "tetris-fullgodot-20260803-084719"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "Pierre",
+     "validated_at": "2026-08-03T11:32:30.815423+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "tetris-fullgodot-20260803-084719"
+   ],
+   "invariants": [
+    "Une escalade humaine a un cout reel : interruption du flux, consommation de contexte, perte de temps, dilution de la mission. L'humain n'est pas la route par defaut quand une correction est determinee. Avant de solliciter l'humain, verifier : est-ce une decision de conception ? un changement d'invariant ? un choix produit ? existe-t-il plusieurs solutions valides ? Si non aux quatre et que cause, correction et maitrise du risque sont acquises, la Forge applique. Chaque escalade doit etre justifiee par une NECESSITE DE DECISION, jamais par une incapacite a appliquer une solution deja trouvee."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-run_status_not_liveness_proof",
+   "kind": "pattern",
+   "function": "Un champ run_status: RUNNING dans un state.json n'est pas une preuve de vie du run : quand un run long est lance depuis le shell d'un sous-agent orchestrateur plutot que depuis la session de supervision, la mort de ce sous-agent tue son process d'arriere-plan sans mettre a jour l'etat. Le step-timeout ne peut pas se declencher car il vit dans le process mort. Avant de croire un RUNNING, verifier qu'un process existe reellement et l'age du dernier updated_ts.",
+   "source": "Forge lesson 'forge.run_status_not_liveness_proof' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.run_status_not_liveness_proof",
+    "supporting_runs": [
+     "pong_r3"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "INGESTION_AUTOMATIQUE sous FORGE_CAPITALISATION_V1 (recuperation retroactive Pong/Snake autorisee par Pierre le 2026-08-03) — validation MECANIQUE kb-validate uniquement ; le CONTENU de cette lecon n'a PAS ete relu par Pierre",
+     "validated_at": "2026-08-03T14:10:36.006543+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "pong_r3"
+   ],
+   "invariants": [
+    "Un champ run_status: RUNNING dans un state.json n'est pas une preuve de vie du run : quand un run long est lance depuis le shell d'un sous-agent orchestrateur plutot que depuis la session de supervision, la mort de ce sous-agent tue son process d'arriere-plan sans mettre a jour l'etat. Le step-timeout ne peut pas se declencher car il vit dans le process mort. Avant de croire un RUNNING, verifier qu'un process existe reellement et l'age du dernier updated_ts."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-new_proof_needs_declared_executor",
+   "kind": "pattern",
+   "function": "Un test ecrit pendant un run n'existe dans la chaine qualite que si la commande d'oracle du projet le liste explicitement. Un builder peut produire de nouveaux fichiers de preuve, tous verts a la main, sans qu'aucun oracle amont ne les invoque -- le jeu passe alors ses oracles sans qu'aucune des preuves neuves ne tourne. Toute nouvelle preuve doit arriver avec son executeur nomme dans scripts/forge/oracles.json, sinon elle ne compte pas.",
+   "source": "Forge lesson 'forge.new_proof_needs_declared_executor' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.new_proof_needs_declared_executor",
+    "supporting_runs": [
+     "pong_r3"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "INGESTION_AUTOMATIQUE sous FORGE_CAPITALISATION_V1 (recuperation retroactive Pong/Snake autorisee par Pierre le 2026-08-03) — validation MECANIQUE kb-validate uniquement ; le CONTENU de cette lecon n'a PAS ete relu par Pierre",
+     "validated_at": "2026-08-03T14:10:36.006543+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "pong_r3"
+   ],
+   "invariants": [
+    "Un test ecrit pendant un run n'existe dans la chaine qualite que si la commande d'oracle du projet le liste explicitement. Un builder peut produire de nouveaux fichiers de preuve, tous verts a la main, sans qu'aucun oracle amont ne les invoque -- le jeu passe alors ses oracles sans qu'aucune des preuves neuves ne tourne. Toute nouvelle preuve doit arriver avec son executeur nomme dans scripts/forge/oracles.json, sinon elle ne compte pas."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-hardcoded_expected_state_breaks_on_growth",
+   "kind": "pattern",
+   "function": "Un test qui code en dur une liste d'etat attendu (noms de fichiers, chemin de dossier de run) au lieu de la deriver d'une source declarative rougit pour des raisons qui ne sont pas des defauts du produit : le jeu gagne legitimement un systeme, ou un run est archive et deplace. Le signal devient rouge alors que la realite est saine -- c'est la definition d'un faux signal. Deriver l'attendu de la source declarative (ex. categories de la wiremap) et comparer un etat donne a un etat donne (snapshot), jamais a une cible mouvante.",
+   "source": "Forge lesson 'forge.hardcoded_expected_state_breaks_on_growth' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.hardcoded_expected_state_breaks_on_growth",
+    "supporting_runs": [
+     "pong_r2",
+     "pong_r2_ref"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "INGESTION_AUTOMATIQUE sous FORGE_CAPITALISATION_V1 (recuperation retroactive Pong/Snake autorisee par Pierre le 2026-08-03) — validation MECANIQUE kb-validate uniquement ; le CONTENU de cette lecon n'a PAS ete relu par Pierre",
+     "validated_at": "2026-08-03T14:10:36.006543+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "pong_r2",
+    "pong_r2_ref"
+   ],
+   "invariants": [
+    "Un test qui code en dur une liste d'etat attendu (noms de fichiers, chemin de dossier de run) au lieu de la deriver d'une source declarative rougit pour des raisons qui ne sont pas des defauts du produit : le jeu gagne legitimement un systeme, ou un run est archive et deplace. Le signal devient rouge alors que la realite est saine -- c'est la definition d'un faux signal. Deriver l'attendu de la source declarative (ex. categories de la wiremap) et comparer un etat donne a un etat donne (snapshot), jamais a une cible mouvante."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-test_green_via_wrong_causal_path",
+   "kind": "pattern",
+   "function": "Un test peut rester vert non pas parce que la propriete testee est vraie, mais parce que ses assertions sont satisfaites par un chemin de code different de celui qu'il pretend verifier. Un test de non-tunneling qui verifie vx<0, x<=limite et score=0 peut passer parce qu'un point marque par erreur a recentre la balle (nouveau service), pas parce que la balle a ete correctement renvoyee -- le test devient une preuve de vert, pas une preuve de correction. Toujours tracer le CHEMIN qui satisfait chaque assertion, pas seulement leur valeur finale.",
+   "source": "Forge lesson 'forge.test_green_via_wrong_causal_path' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.test_green_via_wrong_causal_path",
+    "supporting_runs": [
+     "pong_r2"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "INGESTION_AUTOMATIQUE sous FORGE_CAPITALISATION_V1 (recuperation retroactive Pong/Snake autorisee par Pierre le 2026-08-03) — validation MECANIQUE kb-validate uniquement ; le CONTENU de cette lecon n'a PAS ete relu par Pierre",
+     "validated_at": "2026-08-03T14:10:36.006543+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "pong_r2"
+   ],
+   "invariants": [
+    "Un test peut rester vert non pas parce que la propriete testee est vraie, mais parce que ses assertions sont satisfaites par un chemin de code different de celui qu'il pretend verifier. Un test de non-tunneling qui verifie vx<0, x<=limite et score=0 peut passer parce qu'un point marque par erreur a recentre la balle (nouveau service), pas parce que la balle a ete correctement renvoyee -- le test devient une preuve de vert, pas une preuve de correction. Toujours tracer le CHEMIN qui satisfait chaque assertion, pas seulement leur valeur finale."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-reuse_tracking_oracle_dead_since_inception",
+   "kind": "pattern",
+   "function": "Deux volets d'oracle destines a mesurer la reutilisation de briques du catalogue (search_consulted, reuse_ratio_wired) ne sont jamais passes verts sur AUCUN run de la Forge observe, depuis le premier (pong_r2) jusqu'aux runs les plus recents (10 runs Snake, puis Breakout) -- toujours 'aucune recherche journalisee' et 'run-oracle.mjs absent'. Comme ces deux volets ne bloquent jamais le verdict final (des runs Snake OK/HUMANGATE_READY_WITH_OBJECTION les ont toujours en FAIL), ils fonctionnent en pratique comme du bruit permanent dans le rapport plutot que comme un signal. Un volet d'oracle qui echoue 100% du temps sur toute l'histoire mesuree et ne conditionne jamais une decision doit etre soit cable, soit retire du rapport -- le laisser en l'etat forme un signal rouge qu'on apprend a ignorer, ce qui degrade la confiance dans les VRAIS signaux rouges.",
+   "source": "Forge lesson 'forge.reuse_tracking_oracle_dead_since_inception' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.reuse_tracking_oracle_dead_since_inception",
+    "supporting_runs": [
+     "pong_r2",
+     "snake-_run_reel_20260729",
+     "snake-_run_cal1_20260730",
+     "breakout_v2"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "INGESTION_AUTOMATIQUE sous FORGE_CAPITALISATION_V1 (recuperation retroactive Pong/Snake autorisee par Pierre le 2026-08-03) — validation MECANIQUE kb-validate uniquement ; le CONTENU de cette lecon n'a PAS ete relu par Pierre",
+     "validated_at": "2026-08-03T14:10:36.006543+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "pong_r2",
+    "snake-_run_reel_20260729",
+    "snake-_run_cal1_20260730",
+    "breakout_v2"
+   ],
+   "invariants": [
+    "Deux volets d'oracle destines a mesurer la reutilisation de briques du catalogue (search_consulted, reuse_ratio_wired) ne sont jamais passes verts sur AUCUN run de la Forge observe, depuis le premier (pong_r2) jusqu'aux runs les plus recents (10 runs Snake, puis Breakout) -- toujours 'aucune recherche journalisee' et 'run-oracle.mjs absent'. Comme ces deux volets ne bloquent jamais le verdict final (des runs Snake OK/HUMANGATE_READY_WITH_OBJECTION les ont toujours en FAIL), ils fonctionnent en pratique comme du bruit permanent dans le rapport plutot que comme un signal. Un volet d'oracle qui echoue 100% du temps sur toute l'histoire mesuree et ne conditionne jamais une decision doit etre soit cable, soit retire du rapport -- le laisser en l'etat forme un signal rouge qu'on apprend a ignorer, ce qui degrade la confiance dans les VRAIS signaux rouges."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-entrypoint_is_undeclared_invariant",
+   "kind": "pattern",
+   "function": "Un projet peut satisfaire toutes ses preuves Forge (assertions, mutation, solvabilite, verify_run AUTHENTIQUE) et etre impossible a lancer : les index et cartes de projet prouvent la coherence de ce qui est DECLARE, jamais l'exhaustivite de ce qui est NECESSAIRE. Un point d'entree (scene principale, bootstrap, entrypoint runtime) doit etre un invariant structurel explicite du contrat, verifie en ABSENCE comme en presence -- sinon un oracle vert ne peut pas voir manquer ce que personne n'a declare.",
+   "source": "Forge lesson 'forge.entrypoint_is_undeclared_invariant' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.entrypoint_is_undeclared_invariant",
+    "supporting_runs": [
+     "snake-_run_reel_20260729"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "INGESTION_AUTOMATIQUE sous FORGE_CAPITALISATION_V1 (recuperation retroactive Pong/Snake autorisee par Pierre le 2026-08-03) — validation MECANIQUE kb-validate uniquement ; le CONTENU de cette lecon n'a PAS ete relu par Pierre",
+     "validated_at": "2026-08-03T14:10:36.006543+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "snake-_run_reel_20260729"
+   ],
+   "invariants": [
+    "Un projet peut satisfaire toutes ses preuves Forge (assertions, mutation, solvabilite, verify_run AUTHENTIQUE) et etre impossible a lancer : les index et cartes de projet prouvent la coherence de ce qui est DECLARE, jamais l'exhaustivite de ce qui est NECESSAIRE. Un point d'entree (scene principale, bootstrap, entrypoint runtime) doit etre un invariant structurel explicite du contrat, verifie en ABSENCE comme en presence -- sinon un oracle vert ne peut pas voir manquer ce que personne n'a declare."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-mutation_survivor_equivalence_requires_mechanical_proof",
+   "kind": "pattern",
+   "function": "Quand un producteur (builder) trie lui-meme un mutant survivant comme 'equivalent' (le mutant ne change pas le comportement observable), cette affirmation n'est PAS une preuve mecanique tant qu'aucun oracle independant ne l'a verifiee -- elle reste une auto-evaluation du meme agent qui a ecrit le code. Le studio a correctement traite ce cas comme une objection HumanGate plutot qu'un vert silencieux, mais le mecanisme de triage ne distingue pas aujourd'hui un survivant verifie d'un survivant simplement affirme.",
+   "source": "Forge lesson 'forge.mutation_survivor_equivalence_requires_mechanical_proof' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.mutation_survivor_equivalence_requires_mechanical_proof",
+    "supporting_runs": [
+     "snake-_run_obs_20260729",
+     "snake-_run_reel_20260729"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "INGESTION_AUTOMATIQUE sous FORGE_CAPITALISATION_V1 (recuperation retroactive Pong/Snake autorisee par Pierre le 2026-08-03) — validation MECANIQUE kb-validate uniquement ; le CONTENU de cette lecon n'a PAS ete relu par Pierre",
+     "validated_at": "2026-08-03T14:10:36.006543+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "snake-_run_obs_20260729",
+    "snake-_run_reel_20260729"
+   ],
+   "invariants": [
+    "Quand un producteur (builder) trie lui-meme un mutant survivant comme 'equivalent' (le mutant ne change pas le comportement observable), cette affirmation n'est PAS une preuve mecanique tant qu'aucun oracle independant ne l'a verifiee -- elle reste une auto-evaluation du meme agent qui a ecrit le code. Le studio a correctement traite ce cas comme une objection HumanGate plutot qu'un vert silencieux, mais le mecanisme de triage ne distingue pas aujourd'hui un survivant verifie d'un survivant simplement affirme."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  },
+  {
+   "entry_type": "brick",
+   "brick_id": "pat-forge-instrument_assumes_instead_of_reads",
+   "kind": "pattern",
+   "function": "Le mode de panne dominant d'une premiere campagne sur un nouveau runtime (ici : premiere cible Godot apres un regime uniquement web/JS) n'est pas un bug isole mais une famille : un instrument de la chaine de preuve SUPPOSE une topologie (web) au lieu de LIRE celle declaree par le projet. Chaque instrument corrige un a un finit par re-tomber sur la meme cause. Avant d'ajouter un correctif ponctuel a un oracle qui echoue sur un nouveau type de jeu, verifier s'il lit la topologie declaree ou s'il presuppose celle du jeu precedent.",
+   "source": "Forge lesson 'forge.instrument_assumes_instead_of_reads' (lab/reports/lessons.jsonl, forge.learning_memory)",
+   "provenance_url": null,
+   "provenance_internal": {
+    "lessons_source": "lab/reports/lessons.jsonl",
+    "lesson_id": "forge.instrument_assumes_instead_of_reads",
+    "supporting_runs": [
+     "snake-_run_reel_20260729",
+     "snake-_run_runtime_20260729"
+    ],
+    "validation": {
+     "status": "validated",
+     "validated_by": "INGESTION_AUTOMATIQUE sous FORGE_CAPITALISATION_V1 (recuperation retroactive Pong/Snake autorisee par Pierre le 2026-08-03) — validation MECANIQUE kb-validate uniquement ; le CONTENU de cette lecon n'a PAS ete relu par Pierre",
+     "validated_at": "2026-08-03T14:10:36.006543+00:00"
+    }
+   },
+   "license": "CC0-1.0",
+   "runtime": "agnostic",
+   "dependencies": [],
+   "parameters": {},
+   "genre_compatible": [
+    "forge_process",
+    "snake-_run_reel_20260729",
+    "snake-_run_runtime_20260729"
+   ],
+   "invariants": [
+    "Le mode de panne dominant d'une premiere campagne sur un nouveau runtime (ici : premiere cible Godot apres un regime uniquement web/JS) n'est pas un bug isole mais une famille : un instrument de la chaine de preuve SUPPOSE une topologie (web) au lieu de LIRE celle declaree par le projet. Chaque instrument corrige un a un finit par re-tomber sur la meme cause. Avant d'ajouter un correctif ponctuel a un oracle qui echoue sur un nouveau type de jeu, verifier s'il lit la topologie declaree ou s'il presuppose celle du jeu precedent."
+   ],
+   "proof_of_use": null,
+   "tier": "candidate",
+   "path": null,
+   "sha256": null,
+   "tests": null,
+   "advisory_only": true,
+   "affordances": {}
+  }
+ ]
+}

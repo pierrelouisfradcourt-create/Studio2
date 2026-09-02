@@ -1,0 +1,249 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "$id": "root_problem.schema.json",
+ "title": "ROOT_PROBLEM_V1",
+ "description": "Un probleme racine de la Forge, et LA POLITIQUE DE RECOMPENSE qui lui appartient. Regle cardinale : la recompense n appartient PAS au graphe des mutations, elle appartient au probleme. Deux mutations qui repondent a deux questions differentes ne sont jamais comparables — les classer ensemble reviendrait a demander laquelle, de la cle ou du tournevis, est le meilleur outil.",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "root_problems"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "root_problems": {
+   "type": "array",
+   "items": {
+    "$ref": "#/definitions/root_problem"
+   }
+  }
+ },
+ "definitions": {
+  "root_problem": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "description",
+    "layer",
+    "lesson_ids",
+    "metrics",
+    "reward_contract",
+    "forbidden_aggregation"
+   ],
+   "properties": {
+    "id": {
+     "description": "Identifiant du probleme, en MAJUSCULES. C est LUI que l Agent Factory interrogera (« je veux resoudre PROMPT_TRUNCATION »), et non un identifiant de mutation.",
+     "type": "string",
+     "pattern": "^[A-Z][A-Z0-9_]*$"
+    },
+    "description": {
+     "type": "string",
+     "minLength": 1
+    },
+    "layer": {
+     "enum": [
+      "s1-prisme",
+      "s2-worldscan",
+      "s3-decompo",
+      "s4-archi-contract",
+      "s5-wiremap-contract",
+      "repair",
+      "quality",
+      "driver",
+      "preflight",
+      "build",
+      "oracle-produit",
+      "knowledge",
+      "feedback-loop"
+     ],
+     "description": "Zone ou une boucle peut casser. VOCABULAIRE : forge/layers.json (source unique, lue par check_mutation_registry et candidate_selector). Cette copie est verifiee par test contre la source."
+    },
+    "lesson_ids": {
+     "description": "Lecons de EVIDENCE/reports/lessons.jsonl (schema forge.lesson.v1) qui documentent ce probleme. On CITE l existant au lieu de le redecrire : une seconde description du meme fait finit toujours par diverger de la premiere.",
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "metrics": {
+     "description": "Metriques mesurables sur ce probleme. Toute metrique citee par le reward_contract DOIT y figurer — sinon le contrat optimiserait une grandeur que personne n a definie.",
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "name",
+       "description",
+       "unit"
+      ],
+      "properties": {
+       "name": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+       },
+       "description": {
+        "type": "string",
+        "minLength": 1
+       },
+       "unit": {
+        "enum": [
+         "ratio",
+         "count",
+         "tokens",
+         "milliseconds"
+        ]
+       }
+      }
+     }
+    },
+    "reward_contract": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "objective",
+      "constraints",
+      "penalties",
+      "forbidden",
+      "measurement_method",
+      "evidence_required",
+      "forbidden_inference"
+     ],
+     "properties": {
+      "objective": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "metric",
+        "direction"
+       ],
+       "properties": {
+        "metric": {
+         "type": "string"
+        },
+        "direction": {
+         "enum": [
+          "maximize",
+          "minimize"
+         ]
+        }
+       }
+      },
+      "constraints": {
+       "description": "Conditions ELIMINATOIRES. Une mutation qui les viole est ecartee AVANT toute comparaison : elle n est pas « moins bonne », elle est hors-jeu. C est ce qui empeche un gain spectaculaire de racheter un faux positif.",
+       "type": "array",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "metric",
+         "operator",
+         "value"
+        ],
+        "properties": {
+         "metric": {
+          "type": "string"
+         },
+         "operator": {
+          "enum": [
+           "max",
+           "min",
+           "equals"
+          ]
+         },
+         "value": {
+          "type": [
+           "number",
+           "string"
+          ]
+         }
+        }
+       }
+      },
+      "penalties": {
+       "description": "Ce qui degrade une mutation sans l eliminer. NOMME, jamais pondere en secret : une ponderation cachee est un score global qui n ose pas dire son nom.",
+       "type": "array",
+       "items": {
+        "enum": [
+         "regression",
+         "cost_tokens",
+         "cost_runtime",
+         "maintenance"
+        ]
+       }
+      },
+      "forbidden": {
+       "description": "Formes d agregation explicitement interdites pour ce probleme. Ecrire l interdit DANS le contrat le rend verifiable par machine.",
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "measurement_method": {
+       "description": "Comment la metrique se calcule, en toutes lettres. Sans cela deux mesures du meme nom peuvent compter deux choses differentes.",
+       "type": "string",
+       "minLength": 1
+      },
+      "evidence_required": {
+       "description": "Fichiers qu une mutation DOIT fournir pour que sa valeur soit recevable.",
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "forbidden_inference": {
+       "description": "Deductions explicitement interdites depuis cette metrique. Ecrire ce qu elle NE prouve PAS est ce qui empeche de la lire comme une preuve de qualite.",
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "forbidden_aggregation": {
+     "description": "Doit contenir les trois noms bannis. Aucun score global ne peut apparaitre sous quelque forme que ce soit.",
+     "type": "array",
+     "minItems": 3,
+     "items": {
+      "enum": [
+       "mutation_score",
+       "quality_score",
+       "global_score",
+       "aggregate_quality_score"
+      ]
+     }
+    },
+    "winning_strategy": {
+     "description": "Composition mesuree qui ferme ce probleme. Ce n est PAS un score : c est un CHEMIN (quelle generation, quelle reparation), designe par des ids de mutations du registre.",
+     "type": [
+      "object",
+      "null"
+     ],
+     "additionalProperties": false,
+     "required": [
+      "generation",
+      "repair",
+      "evidence"
+     ],
+     "properties": {
+      "generation": {
+       "type": "string"
+      },
+      "repair": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "evidence": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  }
+ }
+}

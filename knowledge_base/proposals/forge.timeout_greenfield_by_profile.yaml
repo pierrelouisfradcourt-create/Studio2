@@ -1,0 +1,57 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.timeout_greenfield_by_profile
+statement: Un step-timeout de dispatch (defaut 1800s) est insuffisant pour un s9 greenfield
+  Godot construit depuis zero sur un squelette de wiremap de taille standard (~50
+  lignes) ; 5400s a suffi pour un build complet reel (~40 min). Le defaut actuel est
+  calibre pour du correctif, pas pour un greenfield.
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-timeout_greenfield_by_profile
+  kind: pattern
+  function: Un step-timeout de dispatch (defaut 1800s) est insuffisant pour un s9
+    greenfield Godot construit depuis zero sur un squelette de wiremap de taille standard
+    (~50 lignes) ; 5400s a suffi pour un build complet reel (~40 min). Le defaut actuel
+    est calibre pour du correctif, pas pour un greenfield.
+  source: Forge lesson 'forge.timeout_greenfield_by_profile' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.timeout_greenfield_by_profile
+    supporting_runs:
+    - breakout_v2-run1-20260731-082705
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-01T14:55:15.809290+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - breakout_v2
+  invariants:
+  - Un step-timeout de dispatch (defaut 1800s) est insuffisant pour un s9 greenfield
+    Godot construit depuis zero sur un squelette de wiremap de taille standard (~50
+    lignes) ; 5400s a suffi pour un build complet reel (~40 min). Le defaut actuel
+    est calibre pour du correctif, pas pour un greenfield.
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - breakout_v2-run1-20260731-082705
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-02T11:48:55+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T05:58:59+00:00'

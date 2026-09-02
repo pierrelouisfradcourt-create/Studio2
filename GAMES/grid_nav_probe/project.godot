@@ -1,0 +1,19 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   name=value ; assign values
+;   name=value ; 2 lines form a dictionary
+;   name=value ; 3 lines form a dictionary
+; It can also be edited in a terse way and a line
+; can omit the value or new line formatting.
+
+config_version=5
+
+[application]
+
+config/name="GridNavProbe"
+config/version="0.1.0"
+config/features=PackedStringArray("4.6")

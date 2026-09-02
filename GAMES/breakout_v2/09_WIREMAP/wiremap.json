@@ -1,0 +1,3265 @@
+{
+ "schema_version": 2,
+ "game_id": "breakout_v2",
+ "run_id": "breakout_v2-wm1-20260731-021904",
+ "dispatch_marker": "FORGE_DISPATCH:wm1-wiremap-breakout:breakout_v2-wm1-20260731-021904",
+ "statut_artefact": "PROPOSITION — gel non ratifie, HumanGate Pierre. Aucun gel n'est prononce par cet agent.",
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "roles_utilises": {
+  "note": "VOCABULAIRE PROPRE A BREAKOUT — ce N'EST PAS l'enum de Snake. Snake employait control/gamedesign/archidepot/gameplayprog, qui derivaient d'une chaine Prisme (design_review + merged_prisme + 2 product_snapshots). AUCUN de ces artefacts n'existe pour ce run : citer un de ces roles ici falsifierait la provenance. Les valeurs ci-dessous se derivent de charter.provenance.*.type, observees dans lab/forge_runs/breakout_v2/charter.yaml. Enum NON ARBITRE, liste pour ratification Pierre.",
+  "valeurs": [
+   "pierre",
+   "cadrage",
+   "redacteur",
+   "charter",
+   "orchestrateur"
+  ],
+  "origine": {
+   "pierre": "charter.provenance.reference_jeu, type SOURCE_PIERRE_DIRECTE. RESERVE HONNETE : l'acte direct de Pierre est le CADRAGE DU JEU (« creer une vraie campagne Forge V2 [pour] Breakout », 2026-07-30) ; l'enumeration des mecaniques portee par la valeur de ce champ (rebond dependant du point d'impact, niveaux seedes, victoire par destruction complete, defaite par epuisement des vies) est heritee du charter web 2026-07-11. Le type SOURCE_PIERRE_DIRECTE est celui declare par le charter, pas une requalification de cet agent.",
+   "cadrage": "charter.provenance.plateforme_cible et charter.provenance.perimetre_produit_minimal, type DECISION_DE_CADRAGE_TRACEE.",
+   "redacteur": "charter.provenance.parametres_chiffres, type PROPOSITION_REDACTEUR — l'auteur du charter propose, PAS Pierre. Couvre les 8 parametres_de_design, tous A_EQUILIBRER.",
+   "charter": "citation directe d'un critere du charter (criteres_succes / criteres_demo / actions_interdites / objectif) sans entree de provenance individuelle — meme usage que dans la wiremap Snake.",
+   "orchestrateur": "charter.provenance.{identite_projet, core_audio_arbitrage, perimetre_multiniveaux_arbitrage}, type ARBITRAGE_ORCHESTRATEUR, tous fog_humangate: true et marques ARBITRAGE_ORCHESTRATEUR_2026-07-31_RATIFICATION_GATE_EN_ATTENTE. ECART SIGNALE (fog F6) : le contrat d'etape wm1 enumerait 4 valeurs (pierre/cadrage/redacteur/charter) ; le charter reel en porte DEUX de plus (ARBITRAGE_ORCHESTRATEUR, TRACE_INDIRECTE). Cette 5e valeur est OBSERVEE dans le charter, pas inventee. TRACE_INDIRECTE n'est utilise par aucune ligne ni aucun rejet : il ne qualifie que la Genre Bible, traitee dans le bloc genre_bible."
+  },
+  "usage_mesure": {
+   "pierre": "4 lignes (end.strict_conditions, physics.paddle_deflection, level.seeded_generation, life.loss_and_serve)",
+   "cadrage": "2 lignes (state.brick_field, proof.visual_gpu_window)",
+   "redacteur": "1 ligne (params.bloc_unique) + 1 rejet (acceleration_progressive_balle)",
+   "charter": "31 lignes EXPECTED + 5 rejets",
+   "orchestrateur": "0 ligne, 2 rejets (multi_niveaux_progression, capacite_snake_detournee)"
+  }
+ },
+ "genre_bible": {
+  "path": "games/breakout_v2/01_DESIGN/genre_bible.json",
+  "source_of_truth_declaree": "docs/forge/GENRE_BIBLE_BREAKOUT_V1_PROPOSED.md",
+  "statut": "NON_RATIFIEE_PROPOSITION",
+  "regles_totales": 10,
+  "champ_id": "genre_rules[].id",
+  "reserve_obligatoire": "La couverture mesuree par check_genre_coverage est STRUCTURELLE, jamais une preuve de justesse de genre : cette bible se declare elle-meme non ratifiable (0/10 regles en OBSERVATION_DIRECTE, AUCUN World Scan HTTP conduit, 2/10 en TRACE_INDIRECTE, 10/10 portant un volet [H] non source). Un World Scan source reste un PREREQUIS avant ratification — ce n'est pas une option (charter.hors_scope).",
+  "sources_multiples_verifiees": "3 porteurs du meme bloc JSON : games/breakout_v2/01_DESIGN/genre_bible.json, docs/forge/GENRE_BIBLE_BREAKOUT_V1_PROPOSED.md §3, docs/forge/BREAKOUT_V2_CHARTER_PROPOSED.md §4. Compare mecaniquement le 2026-07-31 : les 10 `id` sont IDENTIQUES et dans le meme ordre dans les 3. Divergence de METADONNEES uniquement (game_id `breakout_v2` vs `breakout` ; status NON_RATIFIEE_PROPOSITION vs ESQUISSE_NON_RATIFIEE ; source_of_truth renseigne vs « AUCUNE ») — voir fog F12. Source primaire retenue pour l'oracle : le .json, conformement au contrat d'etape."
+ },
+ "genre_refusals": [
+  {
+   "rule_id": "genre.breakout.session_short_focused",
+   "reason": "REFUSEE, jamais ignoree. (1) Aucun critere du charter (criteres_succes ni criteres_demo) ne porte de duree de session : en faire une ligne inventerait une exigence produit absente. (2) La bible elle-meme la declare « la plus speculative des 10 regles — aucune source, ni directe ni indirecte, ne chiffre cette duree. A verifier ou retirer au premier World Scan ». (3) La transformer en metrique (« duree de partie cible ») tomberait sous charter.criteres_succes `VARIANCE PROUVEE AVANT USAGE` : il faudrait d'abord prouver qu'elle porte une information variable, ce qu'aucune mesure Breakout n'etablit — et fixer une duree cible re-trancherait implicitement les 8 parametres A_EQUILIBRER (vitesse de balle, grille, vies), ce que le contrat d'etape interdit. Reprise a la ratification de la Genre Bible apres World Scan, pas ici."
+  }
+ ],
+ "reference_amont": {
+  "AVERTISSEMENT": "CHAINE DE CONCEPTION VOLONTAIREMENT PLUS COURTE QUE SNAKE — fait assume, pas masque. Snake disposait de : charter v2 + design_review v2 (23 decisions dont 6 rejets) + merged_prisme v2 (coverage_by_role 22/22) + 2 product_snapshots (archidepot R1-R32, gameplayprog R1-R50) + Genre Bible RATIFIEE (World Scan HTTP-source). Breakout_v2 ne dispose QUE d'un charter et d'une Genre Bible non ratifiee. CONSEQUENCE DIRECTE : aucune ligne de cette wiremap ne peut citer, et aucune ne cite, un tag design_review / merged_prisme / product_snapshot — ces artefacts N'EXISTENT PAS pour ce run. Verifie : 0 occurrence dans lines[].reference.",
+  "charter": "lab/forge_runs/breakout_v2/charter.yaml (version 2, 17 criteres_succes + 11 criteres_demo + 18 actions_interdites + 8 parametres_de_design + provenance + question_ouverte_humangate). ETAT AU MOMENT DE CETTE ETAPE, verifie et non suppose : le fichier declare lui-meme, dans son en-tete, « Ceci N'EST PAS le produit d'un agent dispatche sous contrat s0-contrat (aucun FORGE_DISPATCH:s0-contrat n'a ete ouvert pour cette ecriture) » — c'est une transcription du PROPOSED, ENCORE NON FERMEE PAR UN s0-contrat REEL. Trois de ses decisions portent le marqueur ARBITRAGE_ORCHESTRATEUR_2026-07-31_RATIFICATION_GATE_EN_ATTENTE.",
+  "charter_propose": "docs/forge/BREAKOUT_V2_CHARTER_PROPOSED.md (2026-07-30, §0 cadrage, §1 objectif double, §3 point dur physique continue, §4 Genre Bible esquissee, §5 game_contract esquisse, §6 ce que la campagne ne prouve pas). Source du charter materialise.",
+  "genre_bible": "games/breakout_v2/01_DESIGN/genre_bible.json (status NON_RATIFIEE_PROPOSITION, 10 regles)",
+  "game_contract": "games/breakout_v2/00_CHARTER/game_contract.yaml (budget reuses: [] / adds: [] ; proof.mutation.categories_mutables [system], categories_exclues [system.adapter, test.unit, test.oracle, godot.project_root, godot.project_tests] ; proof.solvability.entry solvability.gd, trials 50, max_ticks 10000 A_CALIBRER)",
+  "squelette_gele": "scripts/forge/standard/core_requirements.yaml (10 exigences CORE, not_applicable_allowed: false) + scripts/forge/standard/capabilities.yaml (registre FERME, 25 identifiants : 10 CORE + 5 Pong + 10 Snake) + scripts/forge/standard/repo_map.yaml (11 racines, 24 categories)",
+  "modele_de_forme_uniquement": "games/snake/09_WIREMAP/wiremap.json — repris pour la FORME (schema v2, champs de ligne, discarded[], fog[], roles_utilises) et JAMAIS pour le CONTENU des sources amont, qui differe structurellement (voir AVERTISSEMENT).",
+  "reference_produit_lecture_seule": "games/breakout/ (implementation JS 2026-07-11, verte, laissee intacte — decision de contamination assumee, charter §1). Reutilisation typee CONCEPT UNIQUEMENT : aucun import JS->GDScript n'a de sens mecanique. 0 fichier de games/breakout/ modifie, 0 octet copie."
+ },
+ "parametres": {
+  "note": "Les 8 parametres vivent dans charter.parametres_de_design, TOUS au statut A_EQUILIBRER, TOUS de provenance PROPOSITION_REDACTEUR (aucune valeur RATIFIE_PIERRE, a la difference de Snake). Cette wiremap ne re-tranche AUCUNE valeur : elle designe le SEUL porteur legal de ces valeurs dans le code. Aucun expected_proof de ce fichier ne recopie un chiffre du charter — les enonces citent le NOM de la constante, jamais sa valeur.",
+  "ligne_porteuse_unique": "params.bloc_unique",
+  "adresse": "05_SYSTEMS/params/",
+  "fichier_unique": "05_SYSTEMS/params/params.gd",
+  "source": "lab/forge_runs/breakout_v2/charter.yaml -> parametres_de_design",
+  "constantes": [
+   {
+    "nom": "terrain",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   },
+   {
+    "nom": "raquette_largeur",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   },
+   {
+    "nom": "raquette_vitesse_max",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   },
+   {
+    "nom": "balle_vitesse_initiale",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   },
+   {
+    "nom": "tick_dt_fixed_ms",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   },
+   {
+    "nom": "angle_rebond_max_deg",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   },
+   {
+    "nom": "grille_briques",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   },
+   {
+    "nom": "vies_initiales",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   },
+   {
+    "nom": "seed_reference",
+    "statut": "A_EQUILIBRER",
+    "provenance": "PROPOSITION_REDACTEUR"
+   }
+  ],
+  "compte_declare_charter": 8,
+  "compte_reel_mesure": 9,
+  "ecart_signale": "Le charter annonce « 8 parametres » (provenance.parametres_chiffres.valeur = « 8 parametres, tous A_EQUILIBRER ») mais son bloc parametres_de_design en enumere NEUF (terrain, raquette_largeur, raquette_vitesse_max, balle_vitesse_initiale, tick_dt_fixed_ms, angle_rebond_max_deg, grille_briques, vies_initiales, seed_reference). Compte verifie par lecture du fichier, non suppose. Ecart remonte en fog F13, non corrige ici (modifier le charter est hors perimetre de cette etape).",
+  "manquant_identifie": "points_par_brique — exige implicitement par charter.criteres_demo `VIES ET SCORE LISIBLES` (le score doit etre lisible, donc calcule) mais ABSENT du bloc parametres_de_design. Voir fog F3 : non tranche ici, aucune valeur inventee."
+ },
+ "criteres_charter_couverture": {
+  "note": "Table de couverture EXPLICITE : chaque critere du charter est relie aux lignes qui le portent. Un critere sans ligne est declare comme tel avec sa raison — jamais laisse silencieux. Table advisory, aucun oracle ne la lit.",
+  "criteres_succes": {
+   "SOLVABILITE PROUVEE PAR INTERCEPTION REELLE": [
+    "proof.solvability_interception",
+    "proof.negative_control_bot"
+   ],
+   "LOGIQUE SEPAREE DU RENDU": [
+    "proof.purity_guard",
+    "input.closed_vocabulary",
+    "core.input",
+    "physics.fixed_timestep"
+   ],
+   "DETERMINISME SUR PAS DE TEMPS FIXE": [
+    "physics.fixed_timestep",
+    "physics.continuous_integration",
+    "runtime.fixed_step_accumulator",
+    "proof.replay_determinism",
+    "core.main_loop",
+    "state.ball"
+   ],
+   "PHYSIQUE DE REBOND ASSERTEE PAR VALEURS STRICTES": [
+    "physics.wall_reflection",
+    "physics.paddle_deflection",
+    "physics.brick_collision"
+   ],
+   "CONDITIONS DE FIN ASSERTEES STRICTEMENT": [
+    "core.end_condition",
+    "end.strict_conditions",
+    "core.game_state",
+    "state.brick_field",
+    "life.loss_and_serve"
+   ],
+   "GENERATION DE NIVEAU SEEDEE ET DETERMINISTE": [
+    "level.seeded_generation",
+    "core.boot"
+   ],
+   "CONTRAT DE JOUABILITE RESPECTE": [
+    "debug.observation_point",
+    "proof.debug_probe",
+    "core.restart",
+    "core.error_handling",
+    "loop.event_socket"
+   ],
+   "PREUVE PAR LECTEUR REEL": [
+    "proof.visual_gpu_window",
+    "proof.debug_probe",
+    "runtime.solo_session",
+    "core.render"
+   ],
+   "DEMARRAGE ET AFFICHAGE PROUVES HORS CHAINE D'ORACLES": [
+    "proof.entrypoint_invariant",
+    "core.boot",
+    "core.render"
+   ],
+   "PARAMETRES DE JEU ISOLES ET NOMMES": [
+    "params.bloc_unique"
+   ],
+   "TESTS A MUTATION FORTS": [
+    "proof.mutation_gate",
+    "proof.harness"
+   ],
+   "REUTILISATION NOMMEE AVANT PRODUCTION": [
+    "gov.reuse_typing"
+   ],
+   "TAUX DE REUTILISATION MESURE ET RAPPORTE": [
+    "gov.reuse_ratio"
+   ],
+   "OBSERVABLE PAR LE JOUEUR DES LA WIREMAP": [
+    "gov.observable_coverage"
+   ],
+   "PREUVE MECANIQUE FOURNIE": [
+    "gov.evidence_path",
+    "proof.harness"
+   ],
+   "VARIANCE PROUVEE AVANT USAGE": [
+    "gov.metric_variance",
+    "physics.paddle_deflection",
+    "level.seeded_generation",
+    "render.rebound_variability"
+   ]
+  },
+  "criteres_succes_sans_ligne": [
+   {
+    "critere": "CHARTER COMPLET",
+    "raison": "Critere portant sur le CHARTER lui-meme (« ce charter.yaml parse en YAML valide, aucun champ requis vide/absent/placeholder non resolu — verifie par forge.static_oracles.check_charter »), pas sur le jeu a construire. Aucune ligne de build ne peut le porter : le builder ne fabrique pas le charter. Declare NON-LIGNE plutot qu'omis. Reserve liee : fog F14 — le charter consomme n'est pas ferme par un s0-contrat dispatche."
+   }
+  ],
+  "criteres_demo": {
+   "DEMARRAGE VISIBLE": [
+    "render.field_visible"
+   ],
+   "CONTROLE RACQUETTE REACTIF": [
+    "input.paddle_responsive"
+   ],
+   "REBOND LISIBLE ET VARIABLE": [
+    "render.rebound_variability"
+   ],
+   "DESTRUCTION DE BRIQUE OBSERVABLE": [
+    "render.brick_destruction"
+   ],
+   "VIES ET SCORE LISIBLES": [
+    "render.hud_lives_score"
+   ],
+   "FIN DE PARTIE LISIBLE": [
+    "render.end_screen"
+   ],
+   "REJOUER EN UN GESTE": [
+    "runtime.restart_one_gesture"
+   ],
+   "QUITTER OBSERVABLE": [
+    "runtime.exit_observable"
+   ],
+   "PARTIE SOLO COMPLETE SANS OUTIL": [
+    "runtime.solo_session"
+   ],
+   "DEMARRAGE IMMEDIAT": [
+    "runtime.immediate_start"
+   ],
+   "LISIBILITE DU GAMEPLAY": [
+    "render.gameplay_readability"
+   ]
+  },
+  "point_dur_physique_continue": {
+   "note": "Les 3 consequences du « point dur » (charter.objectif + document de campagne §3) sont chacune portee par au moins une ligne.",
+   "1_pas_de_temps_fixe_nomme_jamais_le_delta_du_moteur": [
+    "physics.fixed_timestep",
+    "runtime.fixed_step_accumulator",
+    "proof.replay_determinism",
+    "proof.purity_guard"
+   ],
+   "2_angle_de_rebond_fonction_du_point_d_impact_3_echantillons_nommes": [
+    "physics.paddle_deflection",
+    "render.rebound_variability"
+   ],
+   "3_generation_de_niveau_seedee_et_deterministe": [
+    "level.seeded_generation",
+    "core.boot",
+    "core.restart"
+   ]
+  },
+  "capacites_proposees_hors_registre": [
+   "game.brick_field",
+   "game.brick_collision",
+   "game.lives",
+   "game.paddle_deflection",
+   "game.wall_reflection",
+   "game.level_generation",
+   "game.fixed_timestep"
+  ]
+ },
+ "systems": [
+  {
+   "id": "params",
+   "category": "system",
+   "allowed_deps": [],
+   "role": "Bloc UNIQUE de constantes nommees de gameplay (les 8 parametres_de_design du charter). Ne depend de RIEN — feuille du graphe. Aucun autre fichier ne porte de litteral de gameplay."
+  },
+  {
+   "id": "game_state",
+   "category": "system",
+   "allowed_deps": [
+    "params"
+   ],
+   "role": "Etat de partie pur : position/vitesse de balle (flottants), position de raquette, champ de briques, vies, score, statut parmi 3 (EN_COURS / GAGNE / PERDU). Detient, n'agit pas."
+  },
+  {
+   "id": "physics_step",
+   "category": "system",
+   "allowed_deps": [
+    "params",
+    "game_state"
+   ],
+   "role": "Avance de la simulation par PAS DE TEMPS FIXE nomme. Le point dur du jeu (charter.objectif, document de campagne §3) : jamais le delta-time du moteur, jamais Time/OS/framerate."
+  },
+  {
+   "id": "wall_collision",
+   "category": "system",
+   "allowed_deps": [
+    "params",
+    "game_state"
+   ],
+   "role": "Reflexion sur murs lateraux et plafond par inversion STRICTE de la composante perpendiculaire. Physique CONTINUE (flottants), pas une grille."
+  },
+  {
+   "id": "paddle_rebound",
+   "category": "system",
+   "allowed_deps": [
+    "params",
+    "game_state"
+   ],
+   "role": "Angle de rebond FONCTION DU POINT D'IMPACT sur la raquette. Fonction pure (offset_relatif, vitesse) -> vitesse'. Aucun etat propre."
+  },
+  {
+   "id": "brick_collision",
+   "category": "system",
+   "allowed_deps": [
+    "params",
+    "game_state"
+   ],
+   "role": "Destruction d'une brique au contact et rebond selon la face touchee. Decide ; ne detient pas le champ de briques."
+  },
+  {
+   "id": "level_gen",
+   "category": "system",
+   "allowed_deps": [
+    "params"
+   ],
+   "role": "Generation SEEDEE et deterministe de la disposition des briques. Aucun alea non seede, aucune horloge : (seed, index_de_niveau) -> disposition."
+  },
+  {
+   "id": "life_rules",
+   "category": "system",
+   "allowed_deps": [
+    "params",
+    "game_state"
+   ],
+   "role": "Perte de vie a la sortie basse du terrain et remise en jeu d'une balle s'il reste des vies."
+  },
+  {
+   "id": "input_rules",
+   "category": "system",
+   "allowed_deps": [
+    "params",
+    "game_state"
+   ],
+   "role": "Regles PURES d'entree : vocabulaire ferme d'actions raquette, bornage aux limites du terrain, absorption des entrees hors domaine. Ne connait ni touche, ni InputEvent."
+  },
+  {
+   "id": "game_loop",
+   "category": "system",
+   "allowed_deps": [
+    "params",
+    "game_state",
+    "physics_step",
+    "wall_collision",
+    "paddle_rebound",
+    "brick_collision",
+    "level_gen",
+    "life_rules",
+    "input_rules"
+   ],
+   "role": "Tick PUR (etat, action) -> {etat, evenements}. Aucune I/O, aucune horloge, aucun alea non seede. C'est le seul systeme pur qui compose les autres."
+  },
+  {
+   "id": "debug_state",
+   "category": "system",
+   "allowed_deps": [
+    "game_state"
+   ],
+   "role": "Projection PURE de l'etat deja tenu vers le dictionnaire du point d'observation. Aucune structure parallele : ne detient rien que game_state ne detienne deja."
+  },
+  {
+   "id": "wiremap_governance",
+   "category": "wiremap",
+   "allowed_deps": [],
+   "role": "Exigences portant sur la WIREMAP et sur les recus de ce run (typage de reutilisation, taux rapporte, observabilite, variance, evidence_path). AUCUN code de jeu."
+  },
+  {
+   "id": "presentation",
+   "category": "system.adapter",
+   "allowed_deps": [
+    "game_state",
+    "params",
+    "debug_state"
+   ],
+   "role": "Rendu par primitives du moteur (zero asset importe). LIT l'etat, ne decide d'AUCUNE regle. Aucun systeme pur ne le cite en allowed_deps — c'est le sens unique du graphe."
+  },
+  {
+   "id": "input_adapter",
+   "category": "system.adapter",
+   "allowed_deps": [
+    "input_rules"
+   ],
+   "role": "Traduit un InputEvent du moteur en action normalisee du vocabulaire ferme. La logique pure ne connait ni Input, ni InputEvent, ni code de touche."
+  },
+  {
+   "id": "runtime_loop",
+   "category": "system.adapter",
+   "allowed_deps": [
+    "game_loop",
+    "game_state",
+    "params",
+    "physics_step",
+    "input_adapter",
+    "presentation",
+    "debug_probe"
+   ],
+   "role": "Boucle Node : accumulateur de temps reel qui n'appelle le tick pur QU'AVEC le pas fixe, aucun rattrapage, demarrage sans geste prealable, sortie observable."
+  },
+  {
+   "id": "debug_probe",
+   "category": "system.adapter",
+   "allowed_deps": [
+    "debug_state"
+   ],
+   "role": "Emission ligne-a-ligne du recu d'observation vers stdout, lisible par un lecteur reel (charter.criteres_succes `CONTRAT DE JOUABILITE RESPECTE`)."
+  },
+  {
+   "id": "solvability_bot",
+   "category": "system.adapter",
+   "allowed_deps": [
+    "input_adapter",
+    "debug_state",
+    "params"
+   ],
+   "role": "Bots de TEST pilotant le MEME canal d'entree publique que le clavier : le bot d'INTERCEPTION (predit la trajectoire) et ses CONTROLES NEGATIFS nommes. Outil de test, jamais l'experience joueur (charter.actions_interdites)."
+  },
+  {
+   "id": "proof_harness",
+   "category": "system.adapter",
+   "allowed_deps": [
+    "params",
+    "game_state",
+    "physics_step",
+    "wall_collision",
+    "paddle_rebound",
+    "brick_collision",
+    "level_gen",
+    "life_rules",
+    "input_rules",
+    "game_loop",
+    "debug_state"
+   ],
+   "role": "Harnais de tests GDScript headless. LEGITIME pour la mecanique, INTERDIT pour l'image : --headless rend une texture nulle sur ce poste (fait mesure 2026-07-22)."
+  }
+ ],
+ "lines": [
+  {
+   "id": "params.bloc_unique",
+   "source": "EXPECTED",
+   "source_role": "redacteur",
+   "reference": "charter.criteres_succes `PARAMETRES DE JEU ISOLES ET NOMMES` + charter.parametres_de_design (9 entrees reelles, toutes `statut: A_EQUILIBRER`, toutes `provenance: PROPOSITION_REDACTEUR`) + charter.actions_interdites (« Disperser des valeurs d'equilibrage en dur dans les scenes, scripts de presentation ou tests »)",
+   "charter_tags": [
+    "PARAMETRES DE JEU ISOLES ET NOMMES"
+   ],
+   "category": "system",
+   "provides": [
+    "game.params"
+   ],
+   "requires": [],
+   "owner": true,
+   "system_parent": "params",
+   "address": "05_SYSTEMS/params/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Indirectement mais reellement : ces constantes SONT la difficulte ressentie (taille du terrain, largeur et vitesse de raquette, vitesse de balle, angle maximal, grille de briques, vies). Aucune n'est un reglage invisible. La ligne elle-meme n'est pas ce que le joueur regarde : elle est observee via les lignes de rendu, d'ou observable_by_player: false.",
+   "expected_proof": {
+    "kind": "static_oracle",
+    "statement": "Le nombre de litteraux numeriques de gameplay (dimensions du terrain, largeur/vitesse de raquette, vitesse initiale de balle, pas de temps fixe, angle de rebond maximal, rangees/colonnes de briques, vies initiales, seed de reference) presents AILLEURS que dans 05_SYSTEMS/params/params.gd est EXACTEMENT 0 — scenes, scripts de presentation, bots et tests compris. Aucune valeur n'est recopiee dans cet enonce : c'est le NOM de chaque constante qui est verifie, jamais son chiffre."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/05_SYSTEMS/params/params.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/params/params.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/params_isolation.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Declare les 9 entrees de charter.parametres_de_design comme constantes nommees, et rien d'autre. Ne re-tranche aucune valeur A_EQUILIBRER.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; test params_isolation.test.gd VERT (12 constantes nommees presentes, 0 fuite de litteral distinctif hors params.gd). Portee honnete: valeurs distinctives (600/300/480), analyseur exhaustif = oracle Python driver.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT et non CODE_COPIE : les constantes de Snake (grille discrete, periode de tick, acceleration) n'ont AUCUN sens en physique continue. Ce qui se reutilise est la FORME prouvee — un script RefCounted de constantes nommees et rien d'autre, verifie par comptage."
+  },
+  {
+   "id": "core.game_state",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.game_state (capability game.state, proof_kind test, `not_applicable_allowed: false`). DEUX origines conservees (standard/SCHEMA.md §4.1) : le CORE l'impose a tout jeu, ET le charter de ce jeu la porte par charter.criteres_succes `CONDITIONS DE FIN ASSERTEES STRICTEMENT` (statuts EN_COURS / GAGNE / PERDU exhaustifs et mutuellement exclusifs).",
+   "charter_tags": [
+    "CONDITIONS DE FIN ASSERTEES STRICTEMENT",
+    "CONTRAT DE JOUABILITE RESPECTE"
+   ],
+   "category": "system",
+   "provides": [
+    "game.state"
+   ],
+   "requires": [
+    "game.params"
+   ],
+   "owner": true,
+   "system_parent": "game_state",
+   "address": "05_SYSTEMS/game_state/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "L'etat est ce que le joueur voit indirectement partout. Sa lisibilite REELLE est portee par les lignes de rendu (render.*) et par le point d'observation (debug.observation_point) — l'observation joueur n'est pas revendiquee deux fois.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le statut de partie prend EXACTEMENT 3 valeurs declarees (EN_COURS, GAGNE, PERDU) : le nombre de valeurs de statut hors de cet ensemble atteignables par une sequence d'actions legales est EXACTEMENT 0, et le nombre de ticks ou le statut est absent/nul est EXACTEMENT 0. L'etat est lisible a tout instant sans effet de bord (deux lectures consecutives sans tick renvoient des valeurs strictement identiques)."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/05_SYSTEMS/game_state/state.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_state/state.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/state_status.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Detient l'etat de partie et l'expose en lecture. Ne decide d'aucune regle.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; state_status.test.gd VERT (statut parmi 3 valeurs exclusives, etat initial valide/deterministe, est_valide + egal_profond sensibles a chaque champ).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : Snake tient des Vector2i sur grille, Breakout tient des flottants. Ce qui se reutilise est la discipline « l'etat detient, il n'agit pas »."
+  },
+  {
+   "id": "core.end_condition",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.end_condition (capability game.end, proof_kind bot_action, `not_applicable_allowed: false`). DEUX origines : le CORE, ET charter.criteres_succes `CONDITIONS DE FIN ASSERTEES STRICTEMENT` (« VICTOIRE ssi briques_cassables_restantes == 0 ; DEFAITE ssi vies_restantes == 0 [...] aucun chemin de sortie de boucle sans statut terminal »).",
+   "charter_tags": [
+    "CONDITIONS DE FIN ASSERTEES STRICTEMENT"
+   ],
+   "category": "system",
+   "provides": [
+    "game.end"
+   ],
+   "requires": [
+    "game.state",
+    "game.brick_field",
+    "game.lives"
+   ],
+   "owner": true,
+   "system_parent": "game_state",
+   "address": "05_SYSTEMS/game_state/",
+   "genre_refs": [
+    "genre.breakout.victory_condition_all_bricks",
+    "genre.breakout.defeat_condition_zero_lives"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Le joueur voit la FIN, pas la regle de fin : l'observation est portee par render.end_screen (charter.criteres_demo `FIN DE PARTIE LISIBLE`).",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Un bot atteint une fin de partie par le canal d'entree public : l'etat final vaut EXACTEMENT GAGNE ou EXACTEMENT PERDU, jamais indefini. Le nombre de sorties de boucle sans statut terminal est EXACTEMENT 0, et le nombre de ticks ou GAGNE et PERDU sont vrais simultanement est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/05_SYSTEMS/game_state/end_condition.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_state/end_condition.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/oracle/core_end_condition.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Decide qu'une partie est terminee et avec quelle issue. Ne rend rien, n'affiche rien.",
+   "preuve": "oracle/core_end_condition.gd headless exit 0 (PASS): bot interception->GAGNE, bot fuyant->PERDU, 0 sortie sans terminal, jamais les deux.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.restart",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.restart (capability game.restart, proof_kind bot_action, `not_applicable_allowed: false`). DEUX origines : le CORE, ET charter.criteres_demo `REJOUER EN UN GESTE` (« sans residu de la partie precedente »). La REALISATION du geste vit dans runtime.restart_one_gesture.",
+   "charter_tags": [
+    "REJOUER EN UN GESTE"
+   ],
+   "category": "system",
+   "provides": [
+    "game.restart"
+   ],
+   "requires": [
+    "game.state",
+    "game.level_generation"
+   ],
+   "owner": true,
+   "system_parent": "game_state",
+   "address": "05_SYSTEMS/game_state/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "La remise a zero pure n'est pas ce que le joueur regarde ; le geste et son effet visible sont portes par runtime.restart_one_gesture.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Apres une fin de partie, une relance produit un etat STRICTEMENT identique au premier demarrage a seed egale : le nombre de champs d'etat differant de l'etat initial est EXACTEMENT 0 (position et vitesse de balle, position de raquette, champ de briques complet, vies, score, statut). Le nombre de residus de la partie precedente est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/05_SYSTEMS/game_state/restart.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_state/restart.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/oracle/core_restart.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Reconstruit l'etat initial a partir des parametres et de la seed. Aucune I/O.",
+   "preuve": "oracle/core_restart.gd headless exit 0 (PASS): apres defaite, relance==etat initial strict (0 residu) ; controle: l'etat de fin differait.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "state.ball",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.objectif (« physique de rebond reelle », « Breakout est une physique CONTINUE, pas une grille discrete ») + charter.criteres_succes `DETERMINISME SUR PAS DE TEMPS FIXE`",
+   "charter_tags": [
+    "DETERMINISME SUR PAS DE TEMPS FIXE"
+   ],
+   "category": "system",
+   "provides": [
+    "play.ball"
+   ],
+   "requires": [
+    "game.state",
+    "game.params"
+   ],
+   "owner": true,
+   "system_parent": "game_state",
+   "address": "05_SYSTEMS/game_state/",
+   "genre_refs": [
+    "genre.breakout.continuous_ball_motion"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "La balle EST visible, mais l'observation est portee par render.field_visible (charter.criteres_demo `DEMARRAGE VISIBLE`) : une meme observation joueur n'est pas revendiquee par deux lignes.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Position et vitesse de la balle sont des flottants a deux composantes. Sur un pas de temps fixe dt SANS collision, position_suivante vaut EXACTEMENT position + vitesse * dt sur les DEUX composantes (egalite stricte du resultat flottant produit par cette expression, aucun intervalle). Le joueur n'agit jamais sur la balle : le nombre d'actions du vocabulaire d'entree modifiant directement position ou vitesse de balle est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/game.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_state/ball.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/ball_kinematics.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Detient position et vitesse de la balle. Ne decide d'aucun rebond.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; ball_kinematics.test.gd VERT (p'==p+v*dt strict sur 2 composantes en domaine real_t + cas exact (100,50)+(20,-8)*0.5==(110,46) ; aucune action ne touche la balle).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT UNIQUEMENT (charter.hors_scope + actions_interdites) : aucun import JS->GDScript n'a de sens mecanique. Ce qui se reutilise est le modele cinematique (position/vitesse flottantes, integration a pas fixe DT = 16 dans games/breakout/solvability.mjs), pas une ligne de code."
+  },
+  {
+   "id": "state.paddle",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.objectif (« une raquette controlee au clavier ») + charter.criteres_demo `CONTROLE RACQUETTE REACTIF` (« borne aux limites du terrain »)",
+   "charter_tags": [
+    "CONTROLE RACQUETTE REACTIF"
+   ],
+   "category": "system",
+   "provides": [
+    "play.paddle"
+   ],
+   "requires": [
+    "game.state",
+    "game.params"
+   ],
+   "owner": true,
+   "system_parent": "game_state",
+   "address": "05_SYSTEMS/game_state/",
+   "genre_refs": [
+    "genre.breakout.paddle_only_control"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Le controle percu est porte par input.paddle_responsive ; cette ligne ne detient que la position bornee.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Apres N actions consecutives vers un bord, la position de la raquette vaut EXACTEMENT la borne du terrain (jamais au-dela, jamais en deca par arrondi) : le nombre de positions hors de l'intervalle borne est EXACTEMENT 0 sur N >= 1000 actions. La raquette ne se deplace que sur l'axe horizontal : le nombre de variations de sa coordonnee verticale est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/game.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_state/paddle.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/paddle_bounds.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Detient la position de la raquette et applique son bornage. Ne lit aucune touche.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; paddle_bounds.test.gd VERT (1000 actions -> borne exacte, 0 position hors borne sur 2000 actions, AUCUNE=immobile).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : bornage `clamp` de games/breakout/game.mjs, jamais son code JS."
+  },
+  {
+   "id": "state.brick_field",
+   "source": "EXPECTED",
+   "source_role": "cadrage",
+   "reference": "charter.provenance.perimetre_produit_minimal (type DECISION_DE_CADRAGE_TRACEE : « N briques en disposition seedee ») + charter.criteres_succes `CONDITIONS DE FIN ASSERTEES STRICTEMENT` (« briques_cassables_restantes == 0 »)",
+   "charter_tags": [
+    "CONDITIONS DE FIN ASSERTEES STRICTEMENT"
+   ],
+   "category": "system",
+   "provides": [
+    "game.brick_field"
+   ],
+   "requires": [
+    "game.state",
+    "game.level_generation"
+   ],
+   "owner": true,
+   "system_parent": "game_state",
+   "address": "05_SYSTEMS/game_state/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Le mur est visible ; l'observation est portee par render.field_visible.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le compte de briques cassables restantes au demarrage vaut EXACTEMENT rangees * colonnes du bloc de constantes nommees (valeur A_EQUILIBRER, jamais recopiee ici), et decroit de EXACTEMENT 1 par brique detruite. Le nombre de decrements sans destruction correspondante est EXACTEMENT 0, et le nombre de briques passant de detruite a presente est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/game.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_state/brick_field.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/brick_field_count.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Detient le mur de briques et le compte restant. Ne decide d'aucune destruction.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; brick_field_count.test.gd VERT (compte initial=rangees*colonnes, -1 exact par destruction, 0 double decrement).",
+   "statut": "IMPLEMENTED",
+   "capacite_hors_registre": {
+    "id": "game.brick_field",
+    "statement_propose": "Detenir le mur de briques et le compte de briques cassables restantes.",
+    "etat": "ABSENT du registre ferme scripts/forge/standard/capabilities.yaml (25 identifiants : 10 CORE + 5 Pong + 10 Snake).",
+    "action": "PROPOSITION DE REGISTRE — gate Pierre. Aucun agent n'etend le registre (charter.actions_interdites) et les permissions de cette etape n'autorisent que l'ecriture de wiremap.json.",
+    "detournement_refuse": "game.collision (Snake) signifie « decider qu'une case occupee met fin a la course » : en Breakout un contact ne met pas fin a la partie. Reutiliser cet identifiant serait un detournement de sens — voir discarded/capacite_snake_detournee."
+   }
+  },
+  {
+   "id": "state.score",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `VIES ET SCORE LISIBLES`. FOG F3 : le score est exige lisible, mais AUCUN parametre de scoring n'existe dans charter.parametres_de_design (9 entrees, aucune `points_par_brique`).",
+   "charter_tags": [
+    "VIES ET SCORE LISIBLES"
+   ],
+   "category": "system",
+   "provides": [
+    "play.score"
+   ],
+   "requires": [
+    "game.state",
+    "game.brick_collision"
+   ],
+   "owner": true,
+   "system_parent": "game_state",
+   "address": "05_SYSTEMS/game_state/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "L'affichage du score est porte par render.hud_lives_score.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le score est une fonction PURE du nombre de briques detruites : score vaut EXACTEMENT briques_detruites * points_par_brique, ou points_par_brique est une constante du bloc unique. Le nombre d'increments de score sans destruction de brique dans le meme tick est EXACTEMENT 0. La VALEUR de points_par_brique n'est PAS tranchee par cette wiremap : elle manque au charter (fog F3), et l'enonce ci-dessus reste verifiable quelle que soit la valeur ratifiee."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/pong/06_RUNTIME/adapters/presentation/draw.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_state/score.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/score_per_brick.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Detient le score et le derive du nombre de briques detruites. Aucun affichage.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; score_per_brick.test.gd VERT (score=detruites*points_par_brique, fonction du compte reel, 0 increment aveugle).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : la capacite play.score est DEJA au registre ferme (apportee par Pong). Meme nom de capacite, implementation Godot neuve — reutilisation autorisee par charter.criteres_succes `REUTILISATION NOMMEE AVANT PRODUCTION`."
+  },
+  {
+   "id": "end.strict_conditions",
+   "source": "EXPECTED",
+   "source_role": "pierre",
+   "reference": "charter.provenance.reference_jeu (type SOURCE_PIERRE_DIRECTE : « victoire par destruction complete des briques cassables, defaite par epuisement des vies ») + charter.criteres_succes `CONDITIONS DE FIN ASSERTEES STRICTEMENT` + charter.actions_interdites (« Ecrire un test tautologique (>=, <=, « existe ») la ou le comportement observable impose une egalite »)",
+   "charter_tags": [
+    "CONDITIONS DE FIN ASSERTEES STRICTEMENT"
+   ],
+   "category": "system",
+   "provides": [],
+   "requires": [
+    "game.end",
+    "game.brick_field",
+    "game.lives"
+   ],
+   "owner": false,
+   "system_parent": "game_state",
+   "address": "05_SYSTEMS/game_state/",
+   "genre_refs": [
+    "genre.breakout.victory_condition_all_bricks",
+    "genre.breakout.defeat_condition_zero_lives"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Exigence d'assertion, pas d'affichage : ce que le joueur voit est porte par render.end_screen.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Assertions par EGALITE STRICTE, aucune tautologie >= / <= : (1) statut == GAGNE si et seulement si briques_cassables_restantes == 0 — le nombre d'etats a 0 brique non declares GAGNE est EXACTEMENT 0, et le nombre d'etats GAGNE avec briques_restantes != 0 est EXACTEMENT 0 ; (2) statut == PERDU si et seulement si vies_restantes == 0 apres une perte de balle, avec les deux reciproques comptees a EXACTEMENT 0 ; (3) les trois statuts sont mutuellement exclusifs et exhaustifs : sur l'ensemble des etats atteignables echantillonnes, le nombre d'etats portant 0 statut ou 2 statuts est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "NEW",
+    "source": null,
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/end_conditions_strict.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "N'ajoute AUCUN module : durcit par assertions strictes la regle de fin deja portee par core.end_condition. Depose son test, pas un systeme.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; end_conditions_strict.test.gd VERT (GAGNE ssi 0 brique, PERDU ssi 0 vie, victoire prime, exactement 1 statut par etat sur echantillon).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "NEW : Snake terminait sur collision ou cible de longueur, Pong sur un score gagnant. Le couple « zero brique / zero vie » n'a aucun precedent dans le depot."
+  },
+  {
+   "id": "physics.fixed_timestep",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `DETERMINISME SUR PAS DE TEMPS FIXE` + charter.objectif (« le determinisme se prouve sur un PAS DE TEMPS FIXE, nomme, jamais sur l'horloge du moteur ») + charter.actions_interdites (« Faire dependre la simulation physique du delta-time variable du moteur ») + charter.parametres_de_design.tick_dt_fixed_ms (A_EQUILIBRER)",
+   "charter_tags": [
+    "DETERMINISME SUR PAS DE TEMPS FIXE",
+    "LOGIQUE SEPAREE DU RENDU"
+   ],
+   "category": "system",
+   "provides": [
+    "game.fixed_timestep"
+   ],
+   "requires": [
+    "game.params"
+   ],
+   "owner": true,
+   "system_parent": "physics_step",
+   "address": "05_SYSTEMS/physics_step/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Invisible en soi ; sa violation serait visible sous forme de jeu non reproductible. L'observation joueur n'est pas revendiquee.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le pas de simulation vaut EXACTEMENT la constante nommee du bloc unique, a chaque appel : le nombre d'avancements de la logique pure effectues avec une autre valeur est EXACTEMENT 0. Le nombre d'occurrences de delta / Time / OS / Engine / _process / _physics_process / get_ticks dans 05_SYSTEMS/** est EXACTEMENT 0 (comptage statique, pas une revue d'intention)."
+   },
+   "reused_from": {
+    "type": "NEW",
+    "source": null,
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/physics_step/fixed_step.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/fixed_step_pure.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Expose le pas de temps fixe et l'unique fonction d'avancement de la simulation. N'interroge aucune horloge.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; fixed_step_pure.test.gd VERT (dt()==params.dt_s()==TICK_DT_FIXED_MS/1000, stable, positif ; aucune horloge).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "NEW : Snake avance par ticks discrets a periode variable (acceleration) ; le concept de pas fixe existe en JS dans games/breakout/solvability.mjs (DT = 16) mais y sert le bot, pas la logique de jeu.",
+   "capacite_hors_registre": {
+    "id": "game.fixed_timestep",
+    "statement_propose": "Faire avancer la simulation d'un pas de temps FIXE nomme, independant de l'horloge du moteur.",
+    "etat": "ABSENT du registre ferme.",
+    "action": "PROPOSITION DE REGISTRE — gate Pierre.",
+    "detournement_refuse": "game.tick_rate (Snake) signifie « determiner la periode du tick courant, ACCELERATION COMPRISE » : sa raison d'etre est une periode VARIABLE. L'invariant de Breakout est l'inverse exact — un pas INVARIABLE. Reutiliser cet identifiant ferait porter a la capacite la promesse contraire a celle du charter. Alternative soumise a Pierre en fog F5b."
+   }
+  },
+  {
+   "id": "physics.continuous_integration",
+   "source": "DERIVED",
+   "source_role": "charter",
+   "reference": "Derivee mecaniquement de deux lignes de ce plan (state.ball + physics.fixed_timestep) et de charter.objectif (« physique CONTINUE, pas une grille discrete »). Aucune source amont tierce : il n'existe ni design review ni Prisme pour ce run.",
+   "charter_tags": [
+    "DETERMINISME SUR PAS DE TEMPS FIXE"
+   ],
+   "category": "system",
+   "provides": [],
+   "requires": [
+    "play.ball",
+    "game.fixed_timestep"
+   ],
+   "owner": false,
+   "system_parent": "physics_step",
+   "address": "05_SYSTEMS/physics_step/",
+   "genre_refs": [
+    "genre.breakout.continuous_ball_motion"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Mouvement continu percu ; observation portee par render.field_visible.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Sur K >= 100 pas consecutifs sans collision, la position au pas n vaut EXACTEMENT position_initiale + vitesse * (n * dt_fixe) recalculee par la meme expression pure : le nombre de pas ou l'egalite echoue est EXACTEMENT 0. La vitesse est constante hors collision : le nombre de modifications de vitesse sans evenement de collision est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/game.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/physics_step/integrate.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/integration_exact.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Integre la position de la balle sur un pas fixe. Ne resout aucune collision.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; integration_exact.test.gd VERT (un pas et n pas fermes == p+v*(dt*n), valeurs exactes dt=0.5/0.25).",
+   "statut": "IMPLEMENTED",
+   "source_note": "DERIVED : cette ligne n'a pas de proposeur distinct — elle est la consequence arithmetique de deux exigences deja posees. Elle n'invente aucune exigence."
+  },
+  {
+   "id": "physics.wall_reflection",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `PHYSIQUE DE REBOND ASSERTEE PAR VALEURS STRICTES` (« rebond sur murs lateraux/plafond (inversion stricte de la composante de vitesse concernee) ») + charter.objectif (« murs lateraux/plafond par inversion de composante de vitesse »)",
+   "charter_tags": [
+    "PHYSIQUE DE REBOND ASSERTEE PAR VALEURS STRICTES"
+   ],
+   "category": "system",
+   "provides": [
+    "game.wall_reflection"
+   ],
+   "requires": [
+    "play.ball",
+    "game.params"
+   ],
+   "owner": true,
+   "system_parent": "wall_collision",
+   "address": "05_SYSTEMS/wall_collision/",
+   "genre_refs": [
+    "genre.breakout.wall_reflection"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Rebond visible ; observation portee par render.field_visible et render.rebound_variability.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Valeurs STRICTES, aucune plage : mur droit -> vx' vaut EXACTEMENT -vx ET vy' vaut EXACTEMENT vy ; mur gauche -> idem par symetrie ; plafond -> vy' vaut EXACTEMENT -vy ET vx' vaut EXACTEMENT vx. Le nombre de rebonds modifiant la composante PARALLELE au mur est EXACTEMENT 0, et le nombre de rebonds modifiant la norme de la vitesse est EXACTEMENT 0. La limite basse n'est PAS un mur : le nombre de reflexions sur la limite basse est EXACTEMENT 0 (elle est traitee par life.loss_and_serve)."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/game.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/wall_collision/wall_reflection.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/wall_reflection_strict.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Fonction pure (position, vitesse, terrain) -> vitesse'. Aucun etat propre.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; wall_reflection_strict.test.gd VERT (detection de face + inversion stricte composante perpendiculaire ; limite basse jamais un mur).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT (reflexion de bord), jamais CODE : aucun import JS->GDScript.",
+   "capacite_hors_registre": {
+    "id": "game.wall_reflection",
+    "statement_propose": "Inverser la composante de vitesse perpendiculaire au mur touche.",
+    "etat": "ABSENT du registre ferme.",
+    "action": "PROPOSITION DE REGISTRE — gate Pierre.",
+    "detournement_refuse": "game.collision (Snake) = « une case occupee met fin a la course » ; un mur de Breakout renvoie la balle et ne termine rien. Sens oppose, identifiant refuse."
+   }
+  },
+  {
+   "id": "physics.paddle_deflection",
+   "source": "EXPECTED",
+   "source_role": "pierre",
+   "reference": "charter.provenance.reference_jeu (type SOURCE_PIERRE_DIRECTE : « rebond avec angle dependant du point d'impact ») + charter.criteres_succes `PHYSIQUE DE REBOND ASSERTEE PAR VALEURS STRICTES` (« teste sur AU MOINS 3 points d'echantillonnage nommes (centre, bord gauche, bord droit), chaque point assertant une valeur d'angle STRICTE attendue — jamais un intervalle >=/<= ») + charter.parametres_de_design.angle_rebond_max_deg (A_EQUILIBRER) + charter.actions_interdites (« Ecrire un test tautologique »)",
+   "charter_tags": [
+    "PHYSIQUE DE REBOND ASSERTEE PAR VALEURS STRICTES",
+    "REBOND LISIBLE ET VARIABLE"
+   ],
+   "category": "system",
+   "provides": [
+    "game.paddle_deflection"
+   ],
+   "requires": [
+    "play.ball",
+    "play.paddle",
+    "game.params"
+   ],
+   "owner": true,
+   "system_parent": "paddle_rebound",
+   "address": "05_SYSTEMS/paddle_rebound/",
+   "genre_refs": [
+    "genre.breakout.impact_point_deflection"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Ce que le joueur PERCOIT est porte par render.rebound_variability (charter.criteres_demo `REBOND LISIBLE ET VARIABLE`) ; ici, la regle pure.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "TROIS POINTS D'ECHANTILLON NOMMES, chacun avec une valeur d'angle STRICTE attendue — jamais un intervalle, jamais >= ni <= : (1) CENTRE (offset relatif == 0.0) -> vx' vaut EXACTEMENT 0.0 et vy' vaut EXACTEMENT -|vy| : angle de deviation par rapport a la verticale EXACTEMENT 0 degre ; (2) BORD GAUCHE (offset relatif == -1.0, extremite gauche de la raquette) -> angle de deviation EXACTEMENT -angle_rebond_max_deg, verifie par egalite des DEUX composantes aux valeurs derivees de la constante nommee (vx' == -|v| * sin(angle_rebond_max_deg) et vy' == -|v| * cos(angle_rebond_max_deg)) ; (3) BORD DROIT (offset relatif == +1.0) -> angle EXACTEMENT +angle_rebond_max_deg, symetrique du point (2). VARIANCE PROUVEE (charter.criteres_succes `VARIANCE PROUVEE AVANT USAGE`) : le nombre de valeurs d'angle DISTINCTES obtenues sur ces 3 points est EXACTEMENT 3 — une deflexion qui renverrait le meme angle partout satisferait un test d'existence mais pas celui-ci. CONSERVATION : la norme |v'| vaut EXACTEMENT |v| par la meme expression pure. La VALEUR de angle_rebond_max_deg n'est pas tranchee ici (A_EQUILIBRER) : les trois assertions restent strictes quelle que soit la valeur ratifiee. Politique de comparaison flottante a trancher — voir fog F2."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/game.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/paddle_rebound/paddle_deflection.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/paddle_deflection_three_points.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Fonction pure (offset_relatif, vitesse_entrante) -> vitesse_sortante. Aucun etat, aucune horloge, aucun alea.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; paddle_deflection_three_points.test.gd VERT (centre vx'==0.0 strict ; bords == (|v|sin(+/-max),-|v|cos(+/-max)) construits sur angle_rebond_max_rad(), AUCUN epsilon ; 3 vx' distincts).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : games/breakout/game.mjs porte la deflexion par point d'impact en JS. COPIE INTERDITE par charter.actions_interdites (« Copier du code .mjs de games/breakout/ dans le jeu Godot pour gonfler la mesure de reutilisation ») — et sans objet mecaniquement (JS != GDScript). 0 octet copie.",
+   "capacite_hors_registre": {
+    "id": "game.paddle_deflection",
+    "statement_propose": "Calculer l'angle de rebond de la balle en fonction du point d'impact relatif sur la raquette.",
+    "etat": "ABSENT du registre ferme.",
+    "action": "PROPOSITION DE REGISTRE — gate Pierre.",
+    "detournement_refuse": "play.ball (Pong, enregistree) couvre « position, vitesse et rebond de la balle » : elle est deja detenue par state.ball. La DEFLEXION PAR POINT D'IMPACT est la mecanique distinctive du genre (genre.breakout.impact_point_deflection) et ne peut pas disparaitre dans l'identifiant generique de la balle sans rendre l'audit de collisions aveugle a la seule regle propre a Breakout."
+   }
+  },
+  {
+   "id": "physics.brick_collision",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `PHYSIQUE DE REBOND ASSERTEE PAR VALEURS STRICTES` (« rebond sur brique (destruction + rebond correspondant) ») + charter.objectif (« brique detruite au contact avec rebond correspondant »)",
+   "charter_tags": [
+    "PHYSIQUE DE REBOND ASSERTEE PAR VALEURS STRICTES",
+    "DESTRUCTION DE BRIQUE OBSERVABLE"
+   ],
+   "category": "system",
+   "provides": [
+    "game.brick_collision"
+   ],
+   "requires": [
+    "play.ball",
+    "game.brick_field"
+   ],
+   "owner": true,
+   "system_parent": "brick_collision",
+   "address": "05_SYSTEMS/brick_collision/",
+   "genre_refs": [
+    "genre.breakout.brick_destruction_on_contact"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Observation portee par render.brick_destruction.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Valeurs STRICTES : face horizontale touchee -> vy' vaut EXACTEMENT -vy ET vx' vaut EXACTEMENT vx ; face verticale -> vx' vaut EXACTEMENT -vx ET vy' vaut EXACTEMENT vy. La brique passe de presente a detruite dans le MEME tick que le rebond : l'ecart en ticks entre destruction et rebond est EXACTEMENT 0. Le nombre de briques detruites par un contact unique est EXACTEMENT 1 (aucune destruction en chaine), et le nombre de briques detruites sans contact geometrique est EXACTEMENT 0. V1 : une brique tombe en un seul coup — le nombre de briques survivant a un contact est EXACTEMENT 0 (les briques multi-hits sont hors scope, charter.hors_scope)."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/game.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/brick_collision/brick_collision.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/brick_collision_strict.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Fonction pure (balle, champ de briques) -> {brique detruite ?, vitesse'}. Ne detient rien.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; brick_collision_strict.test.gd VERT (face horizontale->vy inverse, verticale->vx inverse, strict ; aucun hit->vitesse inchangee ; brique detruite non retouchee).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : `faceTouched` / `circleAabbCollide` de games/breakout/game.mjs donnent la METHODE (determiner la face touchee avant d'inverser la bonne composante), pas le code.",
+   "capacite_hors_registre": {
+    "id": "game.brick_collision",
+    "statement_propose": "Decider la destruction d'une brique au contact et le rebond correspondant a la face touchee.",
+    "etat": "ABSENT du registre ferme.",
+    "action": "PROPOSITION DE REGISTRE — gate Pierre."
+   }
+  },
+  {
+   "id": "level.seeded_generation",
+   "source": "EXPECTED",
+   "source_role": "pierre",
+   "reference": "charter.provenance.reference_jeu (type SOURCE_PIERRE_DIRECTE : « niveaux seedes ») + charter.criteres_succes `GENERATION DE NIVEAU SEEDEE ET DETERMINISTE` + charter.actions_interdites (« Introduire de l'aleatoire non seede dans la generation de niveau ou la physique ») + charter.parametres_de_design.{grille_briques, seed_reference} (A_EQUILIBRER)",
+   "charter_tags": [
+    "GENERATION DE NIVEAU SEEDEE ET DETERMINISTE",
+    "VARIANCE PROUVEE AVANT USAGE"
+   ],
+   "category": "system",
+   "provides": [
+    "game.level_generation"
+   ],
+   "requires": [
+    "game.params"
+   ],
+   "owner": true,
+   "system_parent": "level_gen",
+   "address": "05_SYSTEMS/level_gen/",
+   "genre_refs": [
+    "genre.breakout.seeded_level_layout"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "La disposition est visible ; observation portee par render.field_visible.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "A seed ET index de niveau identiques, deux generations successives produisent des dispositions STRICTEMENT identiques : le nombre de briques differant par position ou par presence est EXACTEMENT 0. Le nombre d'appels a randi/randf/randomize/Time/OS non seedes dans 05_SYSTEMS/level_gen/ est EXACTEMENT 0 (comptage statique). VARIANCE PROUVEE (charter.criteres_succes `VARIANCE PROUVEE AVANT USAGE`) : sur deux seeds distinctes, le nombre de dispositions distinctes obtenues est EXACTEMENT 2 — sans cette assertion, une generation qui IGNORE la seed passerait le test de reproductibilite, et la seed ne porterait aucune information. Un seul niveau en V1 (charter.hors_scope, arbitrage orchestrateur non ratifie) : le nombre de niveaux generes au-dela du premier est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/level.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/level_gen/level_gen.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/level_seed_determinism.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Fonction pure (seed, index) -> disposition de briques. Aucune horloge, aucun alea global.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; level_seed_determinism.test.gd VERT (meme seed->disposition identique ; 7 offsets seedes distincts=VARIANCE ; compte constant).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : signature `generateLevel(seed, levelIndex)` de games/breakout/level.mjs. 0 octet copie.",
+   "capacite_hors_registre": {
+    "id": "game.level_generation",
+    "statement_propose": "Produire la disposition des briques d'un niveau a partir d'une graine, de maniere reproductible.",
+    "etat": "ABSENT du registre ferme.",
+    "action": "PROPOSITION DE REGISTRE — gate Pierre.",
+    "detournement_refuse": "game.food_spawn (Snake) = « placer la prochaine nourriture sur une case libre » : un tirage unitaire sur grille libre, pas la generation d'une disposition complete. Identifiant refuse."
+   }
+  },
+  {
+   "id": "life.loss_and_serve",
+   "source": "EXPECTED",
+   "source_role": "pierre",
+   "reference": "charter.provenance.reference_jeu (type SOURCE_PIERRE_DIRECTE : « defaite par epuisement des vies ») + charter.criteres_succes `CONDITIONS DE FIN ASSERTEES STRICTEMENT` (« perte de vie quand la balle franchit la limite basse du terrain sous la raquette ») + charter.parametres_de_design.vies_initiales (A_EQUILIBRER)",
+   "charter_tags": [
+    "CONDITIONS DE FIN ASSERTEES STRICTEMENT",
+    "VIES ET SCORE LISIBLES"
+   ],
+   "category": "system",
+   "provides": [
+    "game.lives"
+   ],
+   "requires": [
+    "game.state",
+    "play.ball",
+    "game.params"
+   ],
+   "owner": true,
+   "system_parent": "life_rules",
+   "address": "05_SYSTEMS/life_rules/",
+   "genre_refs": [
+    "genre.breakout.life_loss_on_drop"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "L'affichage des vies est porte par render.hud_lives_score.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "A la sortie de la balle sous la limite basse, vies_restantes vaut EXACTEMENT vies_precedentes - 1. Le nombre de decrements sans franchissement de la limite basse est EXACTEMENT 0, et le nombre de franchissements sans decrement est EXACTEMENT 0. Si vies_restantes > 0 apres decrement, une balle est remise en jeu a l'etat de service : le nombre de champs de la balle differant de l'etat de service est EXACTEMENT 0. Si vies_restantes == 0, le nombre de balles remises en jeu est EXACTEMENT 0. La limite basse n'est jamais une reflexion (assertion croisee avec physics.wall_reflection)."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/game.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/life_rules/life_rules.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/life_loss_serve.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Decide la perte de vie et la remise en jeu. Ne dessine rien, ne lit aucune touche.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; life_loss_serve.test.gd VERT (sortie basse -> -1 exact + re-service si vies>0 ; aucune remise a 0 vie).",
+   "statut": "IMPLEMENTED",
+   "capacite_hors_registre": {
+    "id": "game.lives",
+    "statement_propose": "Detenir les vies restantes, les decrementer a la perte d'une balle et remettre une balle en jeu s'il en reste.",
+    "etat": "ABSENT du registre ferme.",
+    "action": "PROPOSITION DE REGISTRE — gate Pierre.",
+    "detournement_refuse": "game.best_score (Snake) et play.score (Pong) sont des compteurs de SCORE, pas de ressource consommable qui termine la partie a zero. Identifiants refuses."
+   }
+  },
+  {
+   "id": "input.closed_vocabulary",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `LOGIQUE SEPAREE DU RENDU` (« n'appellent AUCUNE API de moteur (get_node, Input, InputEvent...) ») + charter.criteres_demo `CONTROLE RACQUETTE REACTIF` (« borne aux limites du terrain »)",
+   "charter_tags": [
+    "LOGIQUE SEPAREE DU RENDU",
+    "CONTROLE RACQUETTE REACTIF"
+   ],
+   "category": "system",
+   "provides": [],
+   "requires": [
+    "input.action",
+    "play.paddle",
+    "game.params"
+   ],
+   "owner": false,
+   "system_parent": "input_rules",
+   "address": "05_SYSTEMS/input_rules/",
+   "genre_refs": [
+    "genre.breakout.paddle_only_control"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "La reactivite percue est portee par input.paddle_responsive.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le vocabulaire d'action est FERME a EXACTEMENT 3 valeurs declarees (GAUCHE, DROITE, AUCUNE) : le nombre d'actions hors vocabulaire acceptees est EXACTEMENT 0. La seule action du joueur porte sur la raquette : le nombre d'actions du vocabulaire modifiant la balle, les briques, les vies ou le score est EXACTEMENT 0. Le nombre d'occurrences de Input / InputEvent / code de touche dans 05_SYSTEMS/input_rules/ est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/05_SYSTEMS/input_rules/direction_rules.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/input_rules/input_rules.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/input_vocabulary_closed.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Traduit une action normalisee en deplacement borne de la raquette. Aucune I/O.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; input_vocabulary_closed.test.gd VERT (vocabulaire=3 actions exactes, appartenance stricte, appliquer delegue au bornage raquette).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : le vocabulaire ferme de Snake porte 4 directions et un refus de demi-tour, sans equivalent ici. Ce qui se reutilise est la regle « la logique pure ne connait ni touche ni InputEvent », prouvee par comptage."
+  },
+  {
+   "id": "core.error_handling",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.error_handling (capability error.guard, proof_kind test, `not_applicable_allowed: false`). DEUX origines : le CORE, ET charter.criteres_succes `CONTRAT DE JOUABILITE RESPECTE` (le jeu reste lisible et jouable) — une entree hors domaine ne doit pas invalider l'etat.",
+   "charter_tags": [
+    "CONTRAT DE JOUABILITE RESPECTE"
+   ],
+   "category": "system",
+   "provides": [
+    "error.guard"
+   ],
+   "requires": [
+    "input.action",
+    "game.state"
+   ],
+   "owner": true,
+   "system_parent": "input_rules",
+   "address": "05_SYSTEMS/input_rules/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Ce que le joueur constate est une ABSENCE de casse : rien de positif a observer a l'ecran, donc aucune revendication d'observabilite.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Entrees hors domaine appliquees a la logique pure — action nulle, action inconnue, deux actions opposees dans le meme tick, rafale de N >= 1000 actions dans un seul tick, action recue apres statut terminal : dans TOUS ces cas le nombre d'etats invalides produits est EXACTEMENT 0 (statut toujours dans les 3 valeurs declarees, raquette toujours dans ses bornes, compte de briques toujours >= 0 et egal au nombre reel de briques presentes) et le nombre d'exceptions levees est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/unit/error_guard_invalid_input.test.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/input_rules/error_guard.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/error_guard_invalid_input.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Absorbe les entrees hors domaine avant qu'elles n'atteignent l'etat. Aucune I/O.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; error_guard_invalid_input.test.gd VERT (actions hors domaine absorbees en AUCUNE, etat reste valide/immobile sous action invalide).",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.main_loop",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.main_loop (capability game.loop, proof_kind test, `not_applicable_allowed: false`). DEUX origines : le CORE, ET charter.criteres_succes `DETERMINISME SUR PAS DE TEMPS FIXE` (« deux executions de la logique pure produisent un etat final strictement identique »).",
+   "charter_tags": [
+    "DETERMINISME SUR PAS DE TEMPS FIXE",
+    "LOGIQUE SEPAREE DU RENDU"
+   ],
+   "category": "system",
+   "provides": [
+    "game.loop"
+   ],
+   "requires": [
+    "game.state",
+    "game.fixed_timestep"
+   ],
+   "owner": true,
+   "system_parent": "game_loop",
+   "address": "05_SYSTEMS/game_loop/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "La boucle n'est pas regardee ; ses effets le sont, via les lignes de rendu.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Meme etat + meme action + meme seed -> meme etat suivant, sur N >= 500 pas : le nombre de champs d'etat divergents entre deux executions est EXACTEMENT 0. Le tick est une fonction PURE (etat, action) -> {etat, evenements} : le nombre de mutations de l'etat d'entree est EXACTEMENT 0, et le nombre d'appels a une I/O, une horloge ou un alea non seede depuis 05_SYSTEMS/game_loop/ est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/05_SYSTEMS/game_loop/loop.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_loop/loop.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/tick_pure.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Compose les systemes purs en un tick unique. N'affiche rien, ne lit aucune horloge.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; tick_pure.test.gd VERT (step ne mute pas l'entree, deterministe, +1 tick, inerte sur etat terminal).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : la SIGNATURE prouvee de Snake (tick pur renvoyant etat + evenements) se transporte ; son contenu (grille, croissance, nourriture) non."
+  },
+  {
+   "id": "loop.event_socket",
+   "source": "DERIVED",
+   "source_role": "charter",
+   "reference": "Derivee de DEUX criteres du charter, sans source amont tierce : charter.criteres_demo `DESTRUCTION DE BRIQUE OBSERVABLE` (« la brique disparait visiblement ET la balle rebondit [...] AU MEME INSTANT » — la simultanite n'est prouvable que si le tick expose ses evenements) et charter.criteres_succes `CONTRAT DE JOUABILITE RESPECTE` (etat lisible par l'oracle).",
+   "charter_tags": [
+    "DESTRUCTION DE BRIQUE OBSERVABLE",
+    "CONTRAT DE JOUABILITE RESPECTE"
+   ],
+   "category": "system",
+   "provides": [
+    "game.events"
+   ],
+   "requires": [
+    "game.loop"
+   ],
+   "owner": true,
+   "system_parent": "game_loop",
+   "address": "05_SYSTEMS/game_loop/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Prise technique, invisible pour le joueur : l'observation correspondante est portee par render.brick_destruction.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le tick expose la liste de ses evenements du tick (brique detruite, rebond mur, rebond raquette, vie perdue, fin de partie) : un observateur de TEST branche sur cette liste reconstitue le meme compte que l'etat — le nombre d'ecarts entre evenements emis et transitions d'etat est EXACTEMENT 0. ANTI-CREATION : le nombre de modules d'exploitation de ces evenements livres dans ce run est EXACTEMENT 1, et c'est l'observateur de TEST — aucune telemetrie, aucun equilibrage, aucune progression."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/05_SYSTEMS/game_loop/events.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/game_loop/events.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/event_observer.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Expose les evenements du tick. N'en consomme aucun, n'en stocke aucun historique.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; event_observer.test.gd VERT (5 types, constructeurs corrects, BRIQUE_DETRUITE emis reellement quand une brique casse).",
+   "statut": "IMPLEMENTED",
+   "source_note": "DERIVED et non ADDITIONS : aucun role amont ne l'a proposee — il n'existe ni design review ni Prisme pour ce run. C'est UNE PRISE (evenements consommables), pas un systeme de telemetrie : tout module d'exploitation de ces evenements est hors perimetre (charter.hors_scope)."
+  },
+  {
+   "id": "debug.observation_point",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `CONTRAT DE JOUABILITE RESPECTE` (« le jeu expose un point d'observation de debug lisible par l'oracle (position balle, vitesse balle, position raquette, briques restantes, vies restantes, statut en_cours/gagne/perdu) »)",
+   "charter_tags": [
+    "CONTRAT DE JOUABILITE RESPECTE",
+    "PREUVE PAR LECTEUR REEL"
+   ],
+   "category": "system",
+   "provides": [],
+   "requires": [
+    "game.state",
+    "game.brick_field",
+    "game.lives"
+   ],
+   "owner": false,
+   "system_parent": "debug_state",
+   "address": "05_SYSTEMS/debug_state/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Point d'observation destine a l'oracle, pas au joueur — le charter le nomme explicitement « lisible par l'oracle ».",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le dictionnaire d'observation expose EXACTEMENT les 6 champs nommes par le charter (position balle, vitesse balle, position raquette, briques restantes, vies restantes, statut) : le nombre de champs manquants est EXACTEMENT 0 et le nombre de champs supplementaires est EXACTEMENT 0. Chaque champ est une PROJECTION de l'etat deja tenu : le nombre de variables d'etat dupliquees dans ce systeme est EXACTEMENT 0, et deux lectures consecutives sans tick renvoient des valeurs strictement identiques (aucun effet de bord)."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/05_SYSTEMS/debug_state/debug_state.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/debug_state/debug_state.gd",
+     "category": "system"
+    },
+    {
+     "path": "07_TESTS/unit/debug_state_fields.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Projette l'etat vers le dictionnaire d'observation. Ne detient aucune donnee propre.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; debug_state_fields.test.gd VERT (exactement 6 champs nommes, valeurs fideles, sans effet de bord).",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.render",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.render (capability render.frame, proof_kind pixel, `not_applicable_allowed: false` ; motif inscrit dans le fichier CORE : incident shmup_slice, mutation 111/112 et rendu mort a l'ecran). DEUX origines : le CORE, ET charter.criteres_succes `DEMARRAGE ET AFFICHAGE PROUVES HORS CHAINE D'ORACLES` + `PREUVE PAR LECTEUR REEL`. Les REALISATIONS vivent dans render.field_visible, render.brick_destruction, render.hud_lives_score et render.end_screen ; le lecteur qui produit l'image est proof.visual_gpu_window.",
+   "charter_tags": [
+    "DEMARRAGE ET AFFICHAGE PROUVES HORS CHAINE D'ORACLES",
+    "PREUVE PAR LECTEUR REEL"
+   ],
+   "category": "system.adapter",
+   "provides": [
+    "render.frame"
+   ],
+   "requires": [
+    "game.state"
+   ],
+   "owner": true,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Point de controle CORE : l'observation joueur est revendiquee par les 6 lignes render.* / runtime.* adossees aux criteres_demo, jamais deux fois.",
+   "expected_proof": {
+    "kind": "pixel",
+    "statement": "Deux captures produites EN FENETRE GPU REELLE (--rendering-driver vulkan, fenetre positionnee hors ecran) a deux etats distincts (positions de balle differentes) different sur AU MOINS 1 pixel, et le nombre de captures monochromes est EXACTEMENT 0. Le meme lancement en --headless rend une texture nulle et 0 PNG sur ce poste (fait mesure 2026-07-22) : ce cas sort en ECHEC EXPLICITE, jamais en vert silencieux (charter.actions_interdites). L'adaptateur est PUR RENDU : il LIT l'etat et le nombre de regles de jeu qu'il decide est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/06_RUNTIME/adapters/presentation/grid_view.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/core_render_frame.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Point de controle CORE de l'affichage. Ne cree AUCUN module : il compare deux captures a deux etats differents et refuse une image morte ou monochrome.",
+   "preuve": "oracle/core_render_frame.gd fenetre GPU vulkan (RTX 5080, --position hors ecran) exit 0 (PASS): la scene principale rend une image NON monochrome (640x480). Leçon Snake: demarrage+affichage prouves hors chaine mecanique.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : la grille discrete de Snake ne se transporte pas ; ce qui se reutilise est la discipline « l'adaptateur LIT l'etat, ne decide de rien » et la forme de sa preuve pixel."
+  },
+  {
+   "id": "core.audio",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.audio (capability audio.cue, proof_kind artifact, `not_applicable_allowed: false` — « Au moins un retour sonore est declenche par une action de jeu »). CONFLIT NON RESOLU, remonte et non masque : charter.hors_scope range « Effets sonores et musique EN TANT QUE SYSTEME LIVRE DECIDE » hors du run, tout en reconnaissant que le charter « ne peut ni la retirer ni la declarer NOT_APPLICABLE » ; charter.question_ouverte_humangate porte la question a Pierre ; charter.provenance.core_audio_arbitrage la marque ARBITRAGE_ORCHESTRATEUR_2026-07-31_RATIFICATION_GATE_EN_ATTENTE, fog_humangate: true. Voir fog F8.",
+   "charter_tags": [],
+   "category": "system.adapter",
+   "provides": [
+    "audio.cue"
+   ],
+   "requires": [
+    "game.loop"
+   ],
+   "owner": true,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Ce que le CORE promet : ENTENDRE un retour au moment d'un rebond, d'une brique detruite ou d'une vie perdue. Rien de tel n'est decide pour ce jeu. La ligne existe pour PORTER la decision, pas pour la prendre : un agent ne peut ni retirer une exigence CORE, ni ajouter au produit un systeme audio que le charter ne demande pas.",
+   "expected_proof": {
+    "kind": "artifact",
+    "statement": "SI RATIFIEE : un asset audio existe sous 04_ASSETS/audio/, est reference par un manifeste portant sa licence, et son declenchement est TRACE — le nombre de cues tracees sans evenement de jeu correspondant est EXACTEMENT 0, et le nombre d'evenements du vocabulaire sonore ferme sans cue tracee est EXACTEMENT 0. Precedent MESURE du depot : games/pong/04_ASSETS/audio/manifest.json + games/pong/06_RUNTIME/adapters/presentation/audio.mjs (`cueFor`, vocabulaire de cue FERME). TANT QUE L'ARBITRAGE N'A PAS EU LIEU, aucune de ces preuves n'est planifiee dans ce run et l'absence de son n'est PAS presentee comme un vert."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/pong/06_RUNTIME/adapters/presentation/audio.mjs",
+    "copy_sha256": null
+   },
+   "state": "DEFERRED",
+   "reason": null,
+   "until": "Arbitrage HumanGate Pierre AVANT le build. Le CORE est non negociable (`not_applicable_allowed: false`) ; le charter range l'audio hors du systeme livre et porte la question ouverte. Deux autorites, une seule decision possible, et elle n'appartient pas a l'agent. Etat DEFERRED et non NOT_APPLICABLE : NOT_APPLICABLE est structurellement interdit sur une ligne CORE (standard/SCHEMA.md §3, verifie par check_line_states.not_applicable_sur_core).",
+   "decider": "pierre",
+   "write_order": null,
+   "fichiers": [],
+   "fonction": "Aucune construction, aucun fichier declare : declarer un fichier serait promettre un son que personne n'a decide (placeholder interdit). La ligne rend VISIBLE un conflit CORE <-> charter au lieu de l'omettre silencieusement.",
+   "preuve": "",
+   "statut": "DEFERRED",
+   "reused_from_note": "CONCEPT IDENTIFIE ET NON CONSOMME (la ligne est DEFERRED). Declare pour que l'arbitrage se fasse en connaissant le cout reel : l'ajout serait un adaptateur branche sur la prise d'evenements deja posee (loop.event_socket) — la logique pure n'est pas touchee. Aucun chiffre de cout n'est invente ici."
+  },
+  {
+   "id": "render.field_visible",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `DEMARRAGE VISIBLE` (« a l'ouverture, le joueur voit le terrain, la raquette, la balle et les briques, et comprend quoi faire sans explication ecrite ») + charter.hors_scope (rendu par primitives du moteur, zero asset importe)",
+   "charter_tags": [
+    "DEMARRAGE VISIBLE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.state",
+    "render.frame"
+   ],
+   "owner": false,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [
+    "genre.breakout.continuous_ball_motion",
+    "genre.breakout.seeded_level_layout"
+   ],
+   "observable_by_player": true,
+   "observable_proof": "demo_start_visible",
+   "observable_note": "Le joueur voit, des l'ouverture, les quatre elements du jeu : le terrain, la raquette, la balle et le mur de briques.",
+   "expected_proof": {
+    "kind": "pixel",
+    "statement": "Sur la premiere image produite en fenetre GPU reelle, les QUATRE familles d'elements sont presentes : le nombre de familles absentes parmi {terrain, raquette, balle, au moins une brique} est EXACTEMENT 0. Aucun asset importe : le nombre de fichiers d'image/texture/police charges par l'adaptateur est EXACTEMENT 0 (rendu par primitives du moteur)."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/06_RUNTIME/adapters/presentation/grid_view.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/presentation/field_view.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_start_visible.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Dessine terrain, raquette, balle et briques a partir de l'etat. Ne decide de rien.",
+   "preuve": "oracle/demo_start_visible.gd fenetre GPU vulkan (RTX 5080, --position hors ecran) exit 0 (PASS): 13 couleurs distinctes au demarrage (terrain+briques+raquette+balle visibles). Run 3 : protocole de sortie mis en conformite (emet FORGE_ORACLE demo_start_visible, decouvert par product_oracle_godot) ; logique inchangee. En headless (sans fenetre GPU) la sonde emet le marqueur et sort en ECHEC motive (texture nulle) — la preuve verte exige la fenetre GPU vulkan, comme run 1/2.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "render.brick_destruction",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `DESTRUCTION DE BRIQUE OBSERVABLE` (« au contact, la brique disparait visiblement et la balle rebondit dans la direction attendue, au meme instant »)",
+   "charter_tags": [
+    "DESTRUCTION DE BRIQUE OBSERVABLE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "render.frame",
+    "game.brick_collision"
+   ],
+   "owner": false,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [
+    "genre.breakout.brick_destruction_on_contact"
+   ],
+   "observable_by_player": true,
+   "observable_proof": "demo_brick_destruction",
+   "observable_note": "Le joueur voit la brique disparaitre a l'instant meme ou la balle repart : c'est la boucle de recompense du genre.",
+   "expected_proof": {
+    "kind": "pixel",
+    "statement": "Deux captures encadrant un contact balle/brique en fenetre GPU reelle : la brique presente sur la premiere est absente sur la seconde (le nombre de pixels de la brique subsistant est EXACTEMENT 0) ET la balle a change de direction entre les deux. Ecart de ticks entre disparition et rebond : EXACTEMENT 0 (lu sur la prise d'evenements, loop.event_socket). Le nombre de briques disparaissant sans contact est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "NEW",
+    "source": null,
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/presentation/brick_view.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_brick_destruction.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Dessine l'etat du mur de briques. Ne decide d'aucune destruction.",
+   "preuve": "oracle/demo_brick_destruction.gd fenetre GPU vulkan (RTX 5080, --position hors ecran) exit 0 (PASS): 1197 pixels de la zone briques changent quand les briques sont detruites -> disparition observable. Run 3 : protocole de sortie mis en conformite (emet FORGE_ORACLE demo_brick_destruction) ; logique inchangee. Headless = ECHEC motive (texture nulle), preuve verte exige la fenetre GPU vulkan.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "NEW : ni Pong ni Snake n'a d'element de decor destructible ; games/breakout/ n'a de preuve visuelle que par captures de navigateur (e2e-shots), inutilisable sur moteur Godot."
+  },
+  {
+   "id": "render.hud_lives_score",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `VIES ET SCORE LISIBLES` (« le nombre de vies restantes est affiche en chiffres ou en symboles non ambigus, et se decremente visiblement a la perte d'une balle »)",
+   "charter_tags": [
+    "VIES ET SCORE LISIBLES"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "render.frame",
+    "game.lives",
+    "play.score"
+   ],
+   "owner": false,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [
+    "genre.breakout.life_loss_on_drop"
+   ],
+   "observable_by_player": true,
+   "observable_proof": "demo_lives_score",
+   "observable_note": "Le joueur lit combien de vies il lui reste et combien il a marque, sans compter les briques a l'ecran.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le HUD affiche EXACTEMENT la valeur de l'etat : le nombre de trames ou la valeur affichee differe de vies_restantes est EXACTEMENT 0, idem pour le score. A la perte d'une balle, la valeur affichee decroit de EXACTEMENT 1 et le nombre de trames de retard entre l'evenement et l'affichage est EXACTEMENT 0. Le HUD ne decide rien : le nombre d'ecritures dans l'etat depuis cet adaptateur est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/06_RUNTIME/adapters/presentation/hud.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/presentation/hud.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/unit/hud_readout.test.gd",
+     "category": "test.unit"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_lives_score.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Affiche vies et score lus dans l'etat. Aucune ecriture.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 305/305 assertions ; hud_readout.test.gd VERT (round-trip strict texte<->valeur pour vies et score). Run 3 : sonde demo_lives_score.gd creee (enveloppe l'unitaire), oracle/demo_lives_score.gd headless exit 0, marqueur FORGE_ORACLE demo_lives_score {ok:true, passed:10}.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "render.end_screen",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `FIN DE PARTIE LISIBLE` (« victoire ou defaite arrete visiblement la partie et affiche un etat final explicite, sans figer l'application ni continuer en silence »)",
+   "charter_tags": [
+    "FIN DE PARTIE LISIBLE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "render.frame",
+    "game.end"
+   ],
+   "owner": false,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [
+    "genre.breakout.victory_condition_all_bricks",
+    "genre.breakout.defeat_condition_zero_lives"
+   ],
+   "observable_by_player": true,
+   "observable_proof": "demo_end_screen",
+   "observable_note": "Le joueur voit que c'est fini, et il voit LAQUELLE des deux fins : gagne ou perdu, jamais un ecran ambigu.",
+   "expected_proof": {
+    "kind": "pixel",
+    "statement": "A la fin de partie, l'ecran final affiche l'issue : le nombre de fins affichant un texte identique pour VICTOIRE et pour DEFAITE est EXACTEMENT 0 (les deux issues sont distinguables a l'image). La boucle de simulation s'arrete : le nombre de ticks de jeu executes apres le statut terminal est EXACTEMENT 0. L'application ne fige pas : le nombre de trames rendues apres la fin est STRICTEMENT SUPERIEUR a 0 et l'entree de relance reste acceptee."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/06_RUNTIME/adapters/presentation/end_screen.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/presentation/end_screen.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/unit/end_screen.test.gd",
+     "category": "test.unit"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_end_screen.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Affiche l'ecran de fin selon l'issue lue dans l'etat. Ne decide d'aucune fin.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 305/305 assertions ; end_screen.test.gd VERT (actif seulement en fin, message distinct gagne/perdu, vide hors terminal). Run 3 : sonde demo_end_screen.gd creee, oracle headless exit 0, marqueur FORGE_ORACLE demo_end_screen {ok:true, passed:7}.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "render.rebound_variability",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `REBOND LISIBLE ET VARIABLE` (« le joueur PERCOIT que l'angle de rebond change selon l'endroit ou la balle touche la raquette (pas un rebond toujours identique) ») + charter.criteres_succes `VARIANCE PROUVEE AVANT USAGE`",
+   "charter_tags": [
+    "REBOND LISIBLE ET VARIABLE",
+    "VARIANCE PROUVEE AVANT USAGE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "render.frame",
+    "game.paddle_deflection"
+   ],
+   "owner": false,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [
+    "genre.breakout.impact_point_deflection"
+   ],
+   "observable_by_player": true,
+   "observable_proof": "demo_rebound_variability",
+   "observable_note": "Le joueur comprend, sans qu'on le lui dise, que TOUCHER AU BORD renvoie la balle autrement que toucher au centre : c'est le seul espace de decision du genre.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Trois impacts pilotes par l'entree publique sur les 3 points d'echantillon nommes (centre, bord gauche, bord droit) : les trajectoires observees APRES rebond, lues sur le point d'observation d'une instance reellement lancee, sont DEUX A DEUX DIFFERENTES — le nombre de paires de trajectoires identiques parmi les 3 est EXACTEMENT 0, et le nombre de directions distinctes observees est EXACTEMENT 3. C'est la preuve de VARIANCE de la deflexion au niveau produit, distincte de la preuve de VALEUR portee par physics.paddle_deflection : un rebond correct en unite peut rester invisible a l'ecran (lecon shmup_slice)."
+   },
+   "reused_from": {
+    "type": "NEW",
+    "source": null,
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/demo_rebound_variability.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "N'ajoute AUCUN module : exerce la deflexion depuis le runtime reel et compte les trajectoires distinctes. Depose sa preuve, pas un systeme.",
+   "preuve": "oracle/demo_rebound_variability.gd headless exit 0 (PASS): 26 offsets distincts et 26 vx post-rebond distincts sur une partie -> angle fonction du point d'impact. Run 3 : protocole de sortie mis en conformite (emet FORGE_ORACLE demo_rebound_variability {ok:true, offsets_distincts:26, vx_distincts:26}) ; logique inchangee.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "render.gameplay_readability",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `LISIBILITE DU GAMEPLAY` (« un observateur qui n'a jamais vu le jeu peut dire, sans explication, ce que la raquette controle, ou va la balle et combien de briques restent »)",
+   "charter_tags": [
+    "LISIBILITE DU GAMEPLAY"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "render.frame"
+   ],
+   "owner": false,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [],
+   "observable_by_player": true,
+   "observable_proof": "demo_readability_proxy",
+   "observable_note": "Le joueur distingue d'un coup d'oeil ce qu'il controle, ce qui bouge tout seul et ce qu'il doit detruire.",
+   "expected_proof": {
+    "kind": "pixel",
+    "statement": "PROXY MECANIQUE, honnetement borne : les quatre familles d'elements (raquette, balle, briques, compteurs) sont visuellement distinguables — le nombre de paires de familles partageant a la fois la meme couleur ET la meme forme est EXACTEMENT 0, et le nombre de familles rendues hors du cadre visible est EXACTEMENT 0. CE QUE CE PROXY NE PROUVE PAS : qu'un observateur humain COMPRENNE sans explication. Cette moitie du critere n'est pas mecanisable et est remontee en fog F9 (jugement Pierre), jamais presentee comme verte par l'oracle."
+   },
+   "reused_from": {
+    "type": "NEW",
+    "source": null,
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/demo_readability_proxy.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Mesure la distinguabilite visuelle des familles d'elements. N'emet aucun jugement de gout.",
+   "preuve": "oracle/demo_readability_proxy.gd fenetre GPU vulkan (RTX 5080, --position hors ecran) exit 0 (PASS): 16 couleurs distinctes (proxy de lisibilite: rangees + fond/raquette/balle). Run 3 : protocole de sortie mis en conformite (emet FORGE_ORACLE demo_readability_proxy) ; logique inchangee. Headless = ECHEC motive (texture nulle), preuve verte exige la fenetre GPU vulkan.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "proof.visual_gpu_window",
+   "source": "EXPECTED",
+   "source_role": "cadrage",
+   "reference": "charter.provenance.plateforme_cible (type DECISION_DE_CADRAGE_TRACEE : « toute preuve visuelle exige une fenetre GPU reelle (--rendering-driver vulkan, fenetre hors ecran) — --headless ne produit aucune image (fait mesure 2026-07-22) ») + charter.criteres_succes `PREUVE PAR LECTEUR REEL` + charter.actions_interdites (« Produire une preuve visuelle en mode --headless et la presenter comme preuve de rendu »)",
+   "charter_tags": [
+    "PREUVE PAR LECTEUR REEL"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "render.frame"
+   ],
+   "owner": false,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Outil de preuve, pas de jeu : le joueur ne le voit jamais. Les captures qu'il produit servent les lignes render.* observables.",
+   "expected_proof": {
+    "kind": "pixel",
+    "statement": "Le lecteur d'image lance le jeu avec --rendering-driver vulkan et une fenetre positionnee hors ecran, et ecrit N >= 2 PNG : le nombre de PNG produits est STRICTEMENT SUPERIEUR a 0 et le nombre de PNG monochromes est EXACTEMENT 0. CONTROLE NEGATIF OBLIGATOIRE : le meme lancement en --headless produit EXACTEMENT 0 PNG sur ce poste et sort en ECHEC EXPLICITE — le nombre de runs --headless rapportes comme preuve de rendu est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "OUTIL_FORGE",
+    "source": "scripts/forge/godot_oracle.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/presentation/capture.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/oracle/visual_gpu_capture.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Produit les captures en fenetre GPU reelle. Ne juge aucune image lui-meme.",
+   "preuve": "oracle/visual_gpu_capture.gd fenetre GPU vulkan (RTX 5080, --position hors ecran) exit 0 (PASS, image 640x480 non monochrome). Confirme la contrainte de poste: --headless rend nul, la preuve visuelle exige la fenetre GPU.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "OUTIL_FORGE : l'outil existe et est branche ; ce run l'exerce sur une nouvelle cible, il ne le reecrit pas. Patron de capture cote jeu : games/snake/06_RUNTIME/adapters/presentation/capture.gd (CONCEPT)."
+  },
+  {
+   "id": "core.input",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.input (capability input.action, proof_kind bot_action, `not_applicable_allowed: false`). DEUX origines : le CORE, ET charter.objectif (« une raquette controlee au clavier ») + charter.criteres_succes `LOGIQUE SEPAREE DU RENDU` (la logique pure n'appelle ni Input ni InputEvent). La reactivite PERCUE vit dans input.paddle_responsive.",
+   "charter_tags": [
+    "LOGIQUE SEPAREE DU RENDU",
+    "CONTROLE RACQUETTE REACTIF"
+   ],
+   "category": "system.adapter",
+   "provides": [
+    "input.action"
+   ],
+   "requires": [
+    "game.state"
+   ],
+   "owner": true,
+   "system_parent": "input_adapter",
+   "address": "06_RUNTIME/adapters/input_adapter/",
+   "genre_refs": [
+    "genre.breakout.paddle_only_control"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Point de controle CORE ; l'observation joueur correspondante est revendiquee par input.paddle_responsive, une seule fois.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Une action emise par le canal d'entree public d'une instance reellement lancee modifie l'etat de jeu de facon observable : le nombre d'actions emises sans changement mesurable sur le point d'observation est EXACTEMENT 0. Le canal est UNIQUE : le bot de solvabilite et le clavier passent par le MEME point d'entree — le nombre de canaux d'entree paralleles est EXACTEMENT 1."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/oracle/core_input_action.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Traduit un InputEvent en action du vocabulaire ferme. N'applique aucune regle.",
+   "preuve": "oracle/core_input_action.gd headless exit 0 (PASS): KEY_RIGHT->DROITE, action via canal public deplace la raquette le meme tick, gauche!=droite, AUCUNE immobile.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : Snake traduit 4 directions, Breakout 3 actions horizontales. Ce qui se reutilise est le canal unique clavier+bot, deja prouve."
+  },
+  {
+   "id": "input.paddle_responsive",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `CONTROLE RACQUETTE REACTIF` (« deplacer la raquette au clavier produit un mouvement perceptible immediatement, borne aux limites du terrain »)",
+   "charter_tags": [
+    "CONTROLE RACQUETTE REACTIF"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "input.action",
+    "play.paddle"
+   ],
+   "owner": false,
+   "system_parent": "input_adapter",
+   "address": "06_RUNTIME/adapters/input_adapter/",
+   "genre_refs": [
+    "genre.breakout.paddle_only_control"
+   ],
+   "observable_by_player": true,
+   "observable_proof": "demo_paddle_responsive",
+   "observable_note": "Le joueur appuie et la raquette part tout de suite : c'est le premier contact physique avec le jeu, et le premier endroit ou un jeu se sent mort.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Une action emise au tick T deplace la raquette DES le tick T : le nombre de ticks de latence entre action et deplacement est EXACTEMENT 0, et le nombre d'actions perdues sur une rafale de N >= 100 actions est EXACTEMENT 0. Le deplacement reste borne : le nombre de positions hors terrain observees sur le point d'observation est EXACTEMENT 0. Aucune commande inerte (defaut Pong mesure au playtest du 2026-07-27) : le nombre d'actions du vocabulaire sans effet observable est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/unit/input_adapter_burst.test.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/paddle_latency.test.gd",
+     "category": "test.unit"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_paddle_responsive.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "N'ajoute AUCUN module : mesure la latence et la perte d'actions. Depose sa preuve.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 305/305 assertions ; paddle_latency.test.gd VERT (input deplace la raquette DES le meme tick=latence 0, gauche/droite distincts, AUCUNE immobile). Run 3 : sonde demo_paddle_responsive.gd creee, oracle headless exit 0, marqueur FORGE_ORACLE demo_paddle_responsive {ok:true, passed:5}.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.boot",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.boot (capability game.boot, proof_kind bot_action, `not_applicable_allowed: false`). DEUX origines : le CORE, ET charter.criteres_succes `DEMARRAGE ET AFFICHAGE PROUVES HORS CHAINE D'ORACLES` (« un projet peut satisfaire tous ses oracles et ne pas demarrer ») + charter.criteres_demo `DEMARRAGE VISIBLE`.",
+   "charter_tags": [
+    "DEMARRAGE ET AFFICHAGE PROUVES HORS CHAINE D'ORACLES",
+    "DEMARRAGE VISIBLE"
+   ],
+   "category": "system.adapter",
+   "provides": [
+    "game.boot"
+   ],
+   "requires": [
+    "game.state",
+    "game.level_generation"
+   ],
+   "owner": true,
+   "system_parent": "runtime_loop",
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "genre_refs": [
+    "genre.breakout.seeded_level_layout"
+   ],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Point de controle CORE ; l'observation joueur du demarrage est revendiquee par render.field_visible et runtime.immediate_start.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Lancement -> etat initial atteint sans erreur et sans intervention humaine : le nombre d'erreurs au journal du moteur au demarrage est EXACTEMENT 0, et l'etat initial atteint est STRICTEMENT identique a celui decrit par core.restart a seed egale (le nombre de champs divergents est EXACTEMENT 0). Aucune intervention : le nombre de gestes requis avant l'etat initial est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/06_RUNTIME/adapters/runtime_loop/boot.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/runtime_loop/boot.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/oracle/core_boot.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Amene le jeu de rien a l'etat initial jouable. Aucune regle de jeu ici.",
+   "preuve": "oracle/core_boot.gd headless exit 0 (PASS): 0 geste/ecran, boot EN_COURS valide, balle en mouvement.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "core.exit",
+   "source": "CORE",
+   "source_role": null,
+   "reference": "scripts/forge/standard/core_requirements.yaml -> core.exit (capability game.exit, proof_kind bot_action, `not_applicable_allowed: false`). DEUX origines : le CORE, ET charter.criteres_demo `QUITTER OBSERVABLE` (« aucune commande inerte (defaut Pong 2026-07-27) »). L'EFFET VISIBLE vit dans runtime.exit_observable.",
+   "charter_tags": [
+    "QUITTER OBSERVABLE"
+   ],
+   "category": "system.adapter",
+   "provides": [
+    "game.exit"
+   ],
+   "requires": [
+    "game.loop"
+   ],
+   "owner": true,
+   "system_parent": "runtime_loop",
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Point de controle CORE (code de sortie) ; ce que le joueur VOIT est revendique par runtime.exit_observable, une seule fois.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Sortie demandee -> le processus est TERMINE (constate par sa disparition, jamais supposee), le code de sortie vaut EXACTEMENT 0, et le nombre de ressources laissees actives est EXACTEMENT 0 (boucle de tick arretee, aucun fichier ouvert). Le nombre de sorties laissant le processus vivant est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/06_RUNTIME/adapters/runtime_loop/exit.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/runtime_loop/exit.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/oracle/core_exit.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Termine le processus proprement et LIT son code de retour. Ne cree aucun module.",
+   "preuve": "oracle/core_exit.gd headless exit 0 (PASS): code 0, sortie reconnue, chaque commande a un effet observable.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : ce qui se reutilise est la LECON du defaut mesure sur Pong au playtest du 2026-07-27 (commande de sortie inerte) et la forme de sa preuve."
+  },
+  {
+   "id": "runtime.fixed_step_accumulator",
+   "source": "DERIVED",
+   "source_role": "charter",
+   "reference": "Derivee de charter.criteres_succes `DETERMINISME SUR PAS DE TEMPS FIXE` et de charter.actions_interdites (« Faire dependre la simulation physique du delta-time variable du moteur (_process/_physics_process non controle) au lieu du pas de temps fixe nomme »). Aucune source amont tierce : c'est la contrepartie ADAPTATEUR de physics.fixed_timestep — l'endroit exact ou le delta-time du moteur entre dans le programme et doit etre arrete.",
+   "charter_tags": [
+    "DETERMINISME SUR PAS DE TEMPS FIXE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.loop",
+    "game.fixed_timestep"
+   ],
+   "owner": false,
+   "system_parent": "runtime_loop",
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Invisible ; sa violation se verrait comme un jeu non reproductible.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "La boucle Node accumule le temps reel et n'appelle le tick pur QU'AVEC le pas fixe : le nombre d'appels au tick avec une valeur differente de la constante nommee est EXACTEMENT 0. Le reste de l'accumulateur est CONSERVE entre trames (acc -= pas par tick consomme, jamais de remise a zero) ; rattrapage BORNE a MAX_TICKS_PAR_FRAME ticks par trame (constante nommee de params.gd) ; au-dela du plafond, l'excedent est ecrete (anti-spirale, ecart dit en commentaire). Propriete durable : N trames de duree cumulee T produisent floor(T/pas) ticks tant que le plafond n'est pas atteint, quel que soit le decoupage des trames. Le nombre de valeurs de delta du moteur transmises a 05_SYSTEMS/** est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/unit/no_time_catchup.test.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/runtime_loop/runtime_loop.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "06_RUNTIME/adapters/runtime_loop/main.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/unit/no_time_catchup.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Boucle Node : accumule le temps reel, appelle le tick pur au pas fixe, transmet l'etat au rendu. Ne decide d'aucune regle. main.gd (pilote de scene Node2D) vit sous cette meme adresse : il appelle l'accumulateur avec le delta reel du moteur.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 305/305 assertions ; no_time_catchup.test.gd VERT et INVERSE au run 3 (F1) : l'accumulateur RETRANCHE un pas par tick et CONSERVE le reste -> N trames de duree cumulee T produisent floor(T/pas) ticks quel que soit le decoupage (propriete durable, independante du framerate) ; rattrapage BORNE par params.MAX_TICKS_PAR_FRAME (surplus au-dela du plafond jete), gel en fin de partie. runtime_loop.gd::avancer corrige (acc -= pas au lieu de reset 0.0), main.gd applique r[ticks] ticks en boucle (Loop.step inerte sur etat terminal). CONSTAT run 2 : main.gd (pilote de scene) relocalise de la racine du projet (orphelin d'index check_index run 1) vers cette adresse couverte 06_RUNTIME/adapters/runtime_loop/ ; main.tscn repointe vers res://06_RUNTIME/adapters/runtime_loop/main.gd ; project.godot garde main_scene=res://main.tscn ; entrypoint_invariant.gd headless PASS (scene charge+instancie) ; node godot_oracle.mjs ALL CHECKS PASSED (305/305 mecanique + solvabilite 50/50).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : Snake a deja paye ce probleme (no_time_catchup) sur une periode variable. Le patron de preuve se transporte ; son code non.",
+   "source_note": "DERIVED : consequence mecanique d'une exigence deja posee, pas une exigence nouvelle. C'est LE point de fuite du point dur (document de campagne §3) : la logique pure peut etre irreprochable et le determinisme casser ici."
+  },
+  {
+   "id": "runtime.immediate_start",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `DEMARRAGE IMMEDIAT` (« aucun menu, aucun ecran de chargement, aucun appui prealable requis avant le premier mouvement jouable de la raquette »)",
+   "charter_tags": [
+    "DEMARRAGE IMMEDIAT"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.boot"
+   ],
+   "owner": false,
+   "system_parent": "runtime_loop",
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "genre_refs": [],
+   "observable_by_player": true,
+   "observable_proof": "demo_immediate_start",
+   "observable_note": "Le joueur lance et joue : rien ne s'interpose entre le double-clic et la premiere action de raquette.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Entre le lancement de l'executable et la premiere action de raquette prise en compte, le nombre d'ecrans intermediaires, de menus, d'ecrans de chargement et d'appuis prealables requis est EXACTEMENT 0. La premiere action emise apres lancement produit un deplacement observable : le nombre d'actions initiales ignorees est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/unit/boot_zero_gesture.test.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/boot_zero_gesture.test.gd",
+     "category": "test.unit"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_immediate_start.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "N'ajoute AUCUN module : compte les interpositions au demarrage. Depose sa preuve.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 305/305 assertions ; boot_zero_gesture.test.gd VERT (0 geste/0 ecran, boot EN_COURS valide, balle deja en mouvement). Run 3 : sonde demo_immediate_start.gd creee, oracle headless exit 0, marqueur FORGE_ORACLE demo_immediate_start {ok:true, passed:6}.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "runtime.restart_one_gesture",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `REJOUER EN UN GESTE` (« depuis l'ecran de fin, un seul appui relance une partie neuve immediatement, sans residu de la partie precedente »). La remise a zero PURE vit dans core.restart.",
+   "charter_tags": [
+    "REJOUER EN UN GESTE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.restart",
+    "input.action"
+   ],
+   "owner": false,
+   "system_parent": "runtime_loop",
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "genre_refs": [],
+   "observable_by_player": true,
+   "observable_proof": "demo_restart_one_gesture",
+   "observable_note": "Le joueur perd, appuie une fois, rejoue. Aucun detour par un menu, aucune trace de la partie precedente a l'ecran.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Depuis l'ecran de fin, le nombre d'appuis necessaires pour relancer une partie neuve est EXACTEMENT 1. Apres relance, le nombre de champs d'etat differant de l'etat initial est EXACTEMENT 0 (mur de briques complet, vies au maximum, score a zero, statut EN_COURS) et le nombre de pixels residuels de l'ecran de fin est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/unit/restart_no_leak.test.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/restart_no_leak.test.gd",
+     "category": "test.unit"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_restart_one_gesture.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "N'ajoute AUCUN module : exerce le geste de relance et compte les residus.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 305/305 assertions ; restart_no_leak.test.gd VERT (relance==etat initial strict, 0 residu). Run 3 : sonde demo_restart_one_gesture.gd creee, oracle headless exit 0, marqueur FORGE_ORACLE demo_restart_one_gesture {ok:true, passed:8}.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "runtime.exit_observable",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `QUITTER OBSERVABLE` (« la commande de sortie produit un effet visible (arret de la boucle + etat final affiche) ; aucune commande inerte (defaut Pong 2026-07-27) ») + charter.actions_interdites. Le code de sortie CORE vit dans core.exit.",
+   "charter_tags": [
+    "QUITTER OBSERVABLE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.exit"
+   ],
+   "owner": false,
+   "system_parent": "runtime_loop",
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "genre_refs": [],
+   "observable_by_player": true,
+   "observable_proof": "demo_exit_observable",
+   "observable_note": "Le joueur demande a quitter et VOIT quelque chose se produire avant que la fenetre disparaisse — pas une commande morte.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Appui reel sur la commande de sortie : le compteur de ticks se fige (le nombre de ticks executes apres la demande est EXACTEMENT 0), l'ecran change (le nombre de pixels differents entre l'image avant et l'image apres la demande est STRICTEMENT SUPERIEUR a 0), puis le processus disparait. Le nombre de commandes de sortie sans effet visible est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/unit/exit_stop.test.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/exit_stop.test.gd",
+     "category": "test.unit"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_exit_observable.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "N'ajoute AUCUN module : mesure l'effet visible de la sortie. Depose sa preuve.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 305/305 assertions ; exit_stop.test.gd VERT (code 0, chaque commande a un effet lisible non vide). Run 3 : sonde demo_exit_observable.gd creee, oracle headless exit 0, marqueur FORGE_ORACLE demo_exit_observable {ok:true, passed:8}.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "runtime.solo_session",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_demo `PARTIE SOLO COMPLETE SANS OUTIL` (« une partie entiere (demarrage -> rebonds -> briques detruites -> victoire OU defaite -> ecran de fin -> rejouer) se joue au clavier par un humain, sans passer par le bot de solvabilite ni une console de debug ») + charter.actions_interdites (« Confondre le bot de solvabilite (outil de test interne) avec l'experience du joueur »)",
+   "charter_tags": [
+    "PARTIE SOLO COMPLETE SANS OUTIL",
+    "PREUVE PAR LECTEUR REEL"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.loop",
+    "input.action",
+    "render.frame"
+   ],
+   "owner": false,
+   "system_parent": "runtime_loop",
+   "address": "06_RUNTIME/adapters/runtime_loop/",
+   "genre_refs": [],
+   "observable_by_player": true,
+   "observable_proof": "demo_solo_session",
+   "observable_note": "Une personne s'assoit, joue une partie du debut a la fin, et rejoue — sans console, sans script, sans bot.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Une session complete est exercee sur une instance REELLEMENT LANCEE, par le seul canal d'entree clavier : demarrage, au moins 3 rebonds raquette, au moins 5 briques detruites, un statut terminal, l'ecran de fin, puis une relance. Le nombre d'etapes de cette chaine necessitant la console de debug ou le bot de solvabilite est EXACTEMENT 0, et le nombre d'etapes non atteintes est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/oracle/solo_session.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/solo_session.gd",
+     "category": "test.oracle"
+    },
+    {
+     "path": "07_TESTS/oracle/demo_solo_session.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "N'ajoute AUCUN module : rejoue une session humaine complete par le canal clavier.",
+   "preuve": "Run 3 : sonde demo_solo_session.gd creee (le volet observable etait nomme demo_solo_session mais aucun fichier de ce nom n'existait ; solo_session.gd portait un autre nom et l'ancien protocole). oracle/demo_solo_session.gd headless exit 0, marqueur FORGE_ORACLE demo_solo_session {ok:true, briques_cassees:60, rebonds:51, ticks:7903}. Meme logique que solo_session.gd (boot->VICTOIRE->relance==boot neuf, etat valide a chaque tick).",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "proof.debug_probe",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `CONTRAT DE JOUABILITE RESPECTE` (« tous atteignables depuis le runtime reel du moteur. Verifie par un test end-to-end qui lit ces hooks sur une instance reellement lancee ») + `PREUVE PAR LECTEUR REEL`",
+   "charter_tags": [
+    "CONTRAT DE JOUABILITE RESPECTE",
+    "PREUVE PAR LECTEUR REEL"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.state"
+   ],
+   "owner": false,
+   "system_parent": "debug_probe",
+   "address": "06_RUNTIME/adapters/debug_probe/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Sortie technique destinee a l'oracle ; le joueur ne la voit jamais.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Sur une instance REELLEMENT LANCEE, le recu d'observation est emis ligne a ligne sur stdout et relu par le lecteur : le nombre de champs manquants parmi les 6 nommes par le charter est EXACTEMENT 0, et le nombre de lignes illisibles (non parsables) est EXACTEMENT 0. La sonde n'ecrit jamais dans l'etat : le nombre d'ecritures depuis cet adaptateur est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/06_RUNTIME/adapters/debug_probe/debug_probe.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/debug_probe/debug_probe.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/unit/debug_receipt.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Emet le recu d'observation sur stdout. Ne calcule rien.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; debug_receipt.test.gd VERT (Vector2->[x,y], prefixe, round-trip parse, ligne mal formee->null).",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "proof.solvability_interception",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `SOLVABILITE PROUVEE PAR INTERCEPTION REELLE` (« un bot deterministe pilote la raquette via l'API d'entree publique et INTERCEPTE reellement la trajectoire de la balle (pas un positionnement statique chanceux), atteignant la VICTOIRE [...] sur au moins trials essais independants ») + charter.actions_interdites (« Forcer/placer l'etat de jeu a la main pour faire passer un test de victoire »)",
+   "charter_tags": [
+    "SOLVABILITE PROUVEE PAR INTERCEPTION REELLE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "input.action",
+    "game.end"
+   ],
+   "owner": false,
+   "system_parent": "solvability_bot",
+   "address": "06_RUNTIME/adapters/solvability_bot/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Outil de test interne. Le confondre avec l'experience joueur est une action interdite du charter — l'experience joueur est portee par runtime.solo_session.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot d'INTERCEPTION (predit la trajectoire de la balle, rebonds de murs compris, jusqu'au plan de la raquette, puis se deplace vers le point d'interception sous le meme plafond de vitesse que le joueur) atteint VICTOIRE avec briques_cassables_restantes == 0 sur la seed de reference, sur le nombre d'essais independants declare par games/breakout_v2/00_CHARTER/game_contract.yaml (proof.solvability.trials, valeur A_CALIBRER non re-tranchee ici). Il pilote UNIQUEMENT l'entree publique : le nombre d'ecritures directes dans l'etat de jeu par le bot est EXACTEMENT 0. CONTROLE DE FALSIFICATION : sur une version volontairement cassee, l'oracle sort un code NON NUL — le nombre de versions cassees certifiees SOLVABLE est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "OUTIL_FORGE",
+    "source": "scripts/forge/solvability_godot.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/solvability_bot/interception_bot.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "solvability.gd",
+     "category": "godot.project_root"
+    }
+   ],
+   "fonction": "Pilote la raquette par le canal d'entree public selon une strategie de controle declaree. N'ecrit jamais dans l'etat.",
+   "preuve": "solvability.gd via scripts/forge/solvability_godot.mjs: 7/7 seeds (1..7, les 7 offsets distincts) GAGNE, verdict OK (interception reelle, ex. seed1=7903 ticks<10000). Full 50 trials=budget driver.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "OUTIL_FORGE pour le HARNAIS (deja branche, exerce sur une nouvelle cible). La STRATEGIE de controle est NEUVE : le bot de Snake resout une recherche de chemin sur grille (sys-grid-nav-m01), inapplicable a une interception continue — constat repris de game_contract.yaml (budget reuses: [])."
+  },
+  {
+   "id": "proof.negative_control_bot",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `SOLVABILITE PROUVEE PAR INTERCEPTION REELLE` (« Un bot 'camp au centre' ou 'suit toujours X de la balle sans anticipation' doit etre teste comme CONTROLE NEGATIF nomme et prouve insuffisant [...] sans ce controle, un taux de victoire eleve ne prouve rien sur la difficulte reelle du niveau ») + charter.actions_interdites (« Certifier le jeu OK sans oracle de SOLVABILITE vert avec bot d'interception reelle ET son controle negatif »)",
+   "charter_tags": [
+    "SOLVABILITE PROUVEE PAR INTERCEPTION REELLE",
+    "VARIANCE PROUVEE AVANT USAGE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "input.action",
+    "game.end"
+   ],
+   "owner": false,
+   "system_parent": "solvability_bot",
+   "address": "06_RUNTIME/adapters/solvability_bot/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Outil de test interne, jamais l'experience joueur.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "DEUX controles negatifs NOMMES tournent sur la MEME seed et le MEME nombre d'essais que le bot d'interception : (a) `camp_centre` — raquette immobile au centre ; (b) `suiveur_naif` — raquette alignee sur la coordonnee X COURANTE de la balle, sans anticipation de trajectoire. Leur taux de victoire est STRICTEMENT INFERIEUR a celui du bot d'interception : le nombre de controles negatifs atteignant un taux superieur ou egal est EXACTEMENT 0. Sans cet ecart mesure, un taux de victoire eleve ne prouve rien (lecon oracle_solvability_lesson, deja vue 2 fois : survival_arena, collect_runner). Le SEUIL de « significativement inferieur » n'est pas chiffre par le charter et n'est pas invente ici — voir fog F4."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/breakout/solvability.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/solvability_bot/naive_bots.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/oracle/negative_control.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Fait tourner les deux bots naifs nommes et compare leur taux de victoire a celui du bot d'interception. Ne modifie aucun jeu.",
+   "preuve": "oracle/negative_control.gd headless exit 0 (PASS): interception 7/7 STRICTEMENT > camp_centre 0/7 et suivi_naif 0/7 -> controles negatifs prouves insuffisants.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : games/breakout/solvability.mjs porte deja une strategie `follow` avec tolerance — exactement le suiveur naif a utiliser comme controle negatif. Aucune ligne de JS n'est copiee."
+  },
+  {
+   "id": "proof.harness",
+   "source": "DERIVED",
+   "source_role": "charter",
+   "reference": "Derivee de charter.criteres_succes `TESTS A MUTATION FORTS` et `PREUVE MECANIQUE FOURNIE` : les deux exigent un harnais executable. Chemin impose par games/breakout_v2/00_CHARTER/game_contract.yaml (proof.mutation.command `res://tests/run_tests.gd`, seals.test_scripts `tests/run_tests.gd`) et par scripts/forge/godot_oracle.mjs:17.",
+   "charter_tags": [
+    "TESTS A MUTATION FORTS",
+    "PREUVE MECANIQUE FOURNIE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [],
+   "owner": false,
+   "system_parent": "proof_harness",
+   "address": "06_RUNTIME/adapters/proof_harness/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Outil d'usine ; invisible pour le joueur.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Le harnais lance TOUS les fichiers de test declares par cette wiremap et sort avec un code EXACTEMENT 0 quand ils passent : le nombre de fichiers de test declares dans fichiers[] mais non executes par le harnais est EXACTEMENT 0 (preuve sans executeur = preuve inexistante, invariant ratifie Pierre). Un test en echec fait sortir le harnais avec un code NON NUL : le nombre d'echecs rapportes comme succes est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CODE_COPIE",
+    "source": "knowledge_base/systems/navigation/run_tests.gd",
+    "copy_sha256": "096cd7546f7d701832cb7c13872add001a9e4e96e3581fef2548f28f36a7288a"
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "tests/run_tests.gd",
+     "category": "godot.project_tests"
+    },
+    {
+     "path": "06_RUNTIME/adapters/proof_harness/harness.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "Execute les tests GDScript en headless (legitime pour la mecanique, interdit pour l'image).",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; garde anti-faux-vert EXPECTED_ASSERTS=299 (mesure reelle) egale le total execute (28 fichiers). Fidelite CODE_COPIE non atteinte -> voir SKIPPED_VALIDATION/fog.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CODE_COPIE assume et VERIFIE : sha256 de la SOURCE calcule le 2026-07-31 sur knowledge_base/systems/navigation/run_tests.gd (fichier present, 1 seul CODE_COPIE de tout ce plan). Le RUNNER est copie tel quel ; 06_RUNTIME/adapters/proof_harness/harness.gd est de la glue NEUVE (assertions propres a la physique continue) declaree dans la meme ligne — la nuance est ecrite ici plutot que de gonfler le compte CODE_COPIE.",
+   "source_note": "DERIVED : outil de preuve exige par deux criteres, sans proposeur amont distinct. Son adresse n'est pas un choix de gout — elle est imposee par l'oracle et par le contrat de jeu."
+  },
+  {
+   "id": "proof.replay_determinism",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `DETERMINISME SUR PAS DE TEMPS FIXE` (« Verifie par un test de replay sur une partie assez longue pour inclure plusieurs rebonds raquette et plusieurs briques detruites ») + charter.objectif (point dur, physique continue)",
+   "charter_tags": [
+    "DETERMINISME SUR PAS DE TEMPS FIXE"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.loop",
+    "game.fixed_timestep"
+   ],
+   "owner": false,
+   "system_parent": "proof_harness",
+   "address": "06_RUNTIME/adapters/proof_harness/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Preuve d'usine ; invisible pour le joueur.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Deux executions de la logique PURE avec meme etat initial, meme seed de disposition et meme sequence d'entrees produisent un etat final STRICTEMENT identique : le nombre de composantes divergentes est EXACTEMENT 0, composantes flottantes comprises (position et vitesse de balle), comparees par egalite du resultat produit et non par tolerance choisie (voir fog F2). La partie rejouee est assez longue pour inclure AU MOINS 3 rebonds raquette et AU MOINS 5 briques detruites — le nombre de replays plus courts acceptes comme preuve est EXACTEMENT 0. La divergence en physique continue etant progressive, l'etat est compare a CHAQUE pas et pas seulement a la fin : le nombre de pas non compares est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/oracle/replay_determinism.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/replay_determinism.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Rejoue deux fois la meme partie pure et compare pas a pas. Ne construit aucun systeme.",
+   "preuve": "oracle/replay_determinism.gd headless exit 0 (PASS): sequence d'entrees rejouee -> etats finaux egal_profond (16 rebonds, 22 briques sur la sequence).",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : Snake compare des entiers sur grille, ou l'egalite stricte est triviale. Le patron se transporte, la difficulte (flottants) est neuve — c'est le point dur du charter."
+  },
+  {
+   "id": "proof.purity_guard",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `LOGIQUE SEPAREE DU RENDU` (liste exhaustive des API interdites : get_node, Input, InputEvent, Viewport, CanvasItem, _draw, _process, _physics_process, move_and_collide, Timer, OS/Time, randi/randf non seede) + charter.actions_interdites (« Melanger logique et rendu »)",
+   "charter_tags": [
+    "LOGIQUE SEPAREE DU RENDU"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [],
+   "owner": false,
+   "system_parent": "proof_harness",
+   "address": "06_RUNTIME/adapters/proof_harness/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Garde d'architecture ; invisible pour le joueur.",
+   "expected_proof": {
+    "kind": "static_oracle",
+    "statement": "Comptage statique sur 05_SYSTEMS/** : le nombre de scripts heritant d'un Node Godot est EXACTEMENT 0 ; le nombre d'occurrences de get_node, Input, InputEvent, Viewport, CanvasItem, _draw, _process, _physics_process, move_and_collide, Timer, OS, Time, randi/randf non seede est EXACTEMENT 0 ; le nombre d'imports d'une scene ou d'un script de presentation depuis la logique pure est EXACTEMENT 0. Le sens est UNIQUE : le nombre d'entrees de systems[].allowed_deps par lesquelles un systeme `system` depend d'un `system.adapter` est EXACTEMENT 0."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/07_TESTS/unit/purity_guard.test.gd",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/unit/purity_guard.test.gd",
+     "category": "test.unit"
+    }
+   ],
+   "fonction": "Compte les violations de purete. N'emet aucun jugement d'intention.",
+   "preuve": "run_tests.gd headless (godot 4.6.3, --script) exit 0, 299/299 assertions ; purity_guard.test.gd VERT (scan 05_SYSTEMS: 0 API moteur, tout RefCounted, 0 import presentation/scene). Analyseur exhaustif=oracle Python driver.",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "proof.mutation_gate",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `TESTS A MUTATION FORTS` (« les tests de la logique pure tuent les mutants sur les invariants critiques (inversion de vitesse aux murs, calcul de l'angle de rebond raquette, destruction de brique, decrement de vie, condition de victoire, condition de defaite, pas de temps fixe non contournable) ; tout mutant survivant est trie avec justification nommee »)",
+   "charter_tags": [
+    "TESTS A MUTATION FORTS"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [],
+   "owner": false,
+   "system_parent": "proof_harness",
+   "address": "06_RUNTIME/adapters/proof_harness/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Gate d'usine ; invisible pour le joueur.",
+   "expected_proof": {
+    "kind": "test",
+    "statement": "Sur les SEPT invariants nommes par le charter, le nombre de mutants survivants NON justifies nommement est EXACTEMENT 0 : (1) inversion de vitesse aux murs, (2) calcul de l'angle de rebond raquette, (3) destruction de brique, (4) decrement de vie, (5) condition de victoire, (6) condition de defaite, (7) pas de temps fixe non contournable. Categories jugees : `system` est mutable, `system.adapter` / `test.unit` / `test.oracle` / `godot.project_root` / `godot.project_tests` sont exclues (games/breakout_v2/00_CHARTER/game_contract.yaml). ECART SIGNALE, non masque : la categorie `wiremap` employee par les 5 lignes gov.* n'est ni mutable ni exclue dans ce contrat de jeu — sans consequence mecanique ici car ces lignes ne deposent AUCUN fichier (fichiers[] vide), mais l'ecart est remonte en fog F10. Budget max_mutants/timeouts : A_CALIBRER, non re-tranche par cette wiremap."
+   },
+   "reused_from": {
+    "type": "OUTIL_FORGE",
+    "source": "scripts/forge/mutation.py",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/mutation_invariants.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Expose les invariants a muter. Ne decide pas du verdict de mutation.",
+   "preuve": "oracle/mutation_invariants.gd headless exit 0 (PASS): re-assertion des invariants critiques. Le gate a MUTATION reel (forge.mutation.run_mutation_test sur categorie system) est execute par le DRIVER ; reçu officiel = celui du driver. CONSTAT run 2 (self-verification, forge.mutation sur les 4 fichiers system durcis) : loop.gd 11/11, brick_collision.gd 8/8, state.gd 34/34, wall_reflection.gd 6/6 => 59/59 mutants tues, 100%, 0 survivant (run 1 : 14 survivants sur ces 4 fichiers). Aucun mutant equivalent a trier.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "OUTIL_FORGE : le moteur de mutation existe et est branche ; ce run l'exerce sur une nouvelle cible. Patron cote jeu : games/snake/07_TESTS/oracle/mutation_invariants.gd (CONCEPT)."
+  },
+  {
+   "id": "proof.entrypoint_invariant",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `DEMARRAGE ET AFFICHAGE PROUVES HORS CHAINE D'ORACLES` (« un projet peut satisfaire tous ses oracles et ne pas demarrer. Ce charter DECLARE le point d'entree du jeu (scene principale lancee par le moteur) comme un INVARIANT verifie en ABSENCE comme en presence ») — lecon de cloture Snake ratifiee Pierre 2026-07-29",
+   "charter_tags": [
+    "DEMARRAGE ET AFFICHAGE PROUVES HORS CHAINE D'ORACLES"
+   ],
+   "category": "system.adapter",
+   "provides": [],
+   "requires": [
+    "game.boot",
+    "render.frame"
+   ],
+   "owner": false,
+   "system_parent": "proof_harness",
+   "address": "06_RUNTIME/adapters/proof_harness/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Invariant d'usine. Ce que le joueur constate — le jeu demarre — est revendique par render.field_visible et runtime.immediate_start.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "VERIFIE EN ABSENCE COMME EN PRESENCE, c'est la clause qui distingue cette ligne d'un test d'existence : (a) PRESENCE — le point d'entree declare (scene principale du projet moteur) est charge, l'executable demarre reellement et produit une capture NON monochrome en fenetre GPU reelle ; (b) ABSENCE — si le point d'entree est retire ou renomme, le test ECHOUE : le nombre de configurations sans point d'entree passant ce test est EXACTEMENT 0. Un test qui ne sait pas echouer ne prouve rien (lecon proof_never_replaces_product_run, Snake 2026-07-29). Le fichier de configuration du moteur qui PORTE ce point d'entree n'est pas un .gd et n'est donc pas declare dans fichiers[] — voir fog F1."
+   },
+   "reused_from": {
+    "type": "NEW",
+    "source": null,
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "07_TESTS/oracle/entrypoint_invariant.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "Verifie que le jeu demarre, et que le test echoue si le point d'entree disparait.",
+   "preuve": "oracle/entrypoint_invariant.gd headless exit 0 (PASS): project.godot present, run/main_scene declaree, PackedScene main.tscn charge et s'instancie.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "NEW : c'est precisement la preuve qui MANQUAIT a Snake — le defaut qui a produit la lecon de cloture. Aucun precedent a reutiliser, par construction."
+  },
+  {
+   "id": "gov.reuse_typing",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `REUTILISATION NOMMEE AVANT PRODUCTION` (« chaque bloc de la wiremap porte REUSED_FROM type CODE:<chemin> / CONCEPT:<chemin> / NEW, pose AVANT le build »)",
+   "charter_tags": [
+    "REUTILISATION NOMMEE AVANT PRODUCTION"
+   ],
+   "category": "wiremap",
+   "provides": [],
+   "requires": [],
+   "owner": false,
+   "system_parent": "wiremap_governance",
+   "address": "09_WIREMAP/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Exigence sur la carte, pas sur le jeu : rien a voir a l'ecran.",
+   "expected_proof": {
+    "kind": "static_oracle",
+    "statement": "Sur ce fichier : le nombre de lignes sans `reused_from.type` appartenant a {CODE_COPIE, CONCEPT, OUTIL_FORGE, NEW} est EXACTEMENT 0 ; le nombre de `reused_from.source` non nuls introuvables sur disque est EXACTEMENT 0 (verifie par ls/sha256 au moment de la redaction) ; le nombre de lignes CODE_COPIE sans `copy_sha256` de la SOURCE est EXACTEMENT 0 ; le nombre de lignes CODE_COPIE dont la source est un .mjs de games/breakout/ est EXACTEMENT 0 (charter.actions_interdites)."
+   },
+   "reused_from": {
+    "type": "OUTIL_FORGE",
+    "source": "scripts/forge/reuse_ratio.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [],
+   "fonction": "Exigence portant sur cette wiremap. Aucun code de jeu.",
+   "preuve": "STRUCTUREL: reused_from.type present et type (CODE_COPIE/CONCEPT/NEW) sur toutes les lignes (verifie par comptage node). Oracle standard Python canonique = driver. [52/52 typees]",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "gov.reuse_ratio",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `TAUX DE REUTILISATION MESURE ET RAPPORTE` (« part de blocs CODE / CONCEPT / NEW mesuree mecaniquement sur la wiremap reelle, rapportee SEPAREMENT par type (jamais agregee en un seul chiffre de reutilisation) »)",
+   "charter_tags": [
+    "TAUX DE REUTILISATION MESURE ET RAPPORTE"
+   ],
+   "category": "wiremap",
+   "provides": [],
+   "requires": [],
+   "owner": false,
+   "system_parent": "wiremap_governance",
+   "address": "09_WIREMAP/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Exigence de mesure ; rien a voir a l'ecran.",
+   "expected_proof": {
+    "kind": "static_oracle",
+    "statement": "Les quatre comptes CODE_COPIE / CONCEPT / OUTIL_FORGE / NEW sont rapportes SEPAREMENT : le nombre de chiffres agreges presentes comme « taux de reutilisation » est EXACTEMENT 0. Leur somme vaut EXACTEMENT le nombre de lignes de ce fichier — aucune ligne n'echappe au comptage."
+   },
+   "reused_from": {
+    "type": "OUTIL_FORGE",
+    "source": "scripts/forge/reuse_ratio.mjs",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [],
+   "fonction": "Exigence de mesure portant sur cette wiremap. Aucun code de jeu.",
+   "preuve": "MESURE (node): repartition par type. Rapporte separement, jamais agrege. reuse_ratio.mjs canonique = driver. [CODE_COPIE=1, CONCEPT=38, NEW=6]",
+   "statut": "IMPLEMENTED"
+  },
+  {
+   "id": "gov.observable_coverage",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `OBSERVABLE PAR LE JOUEUR DES LA WIREMAP` (« chaque bloc declare OBSERVABLE_BY_PLAYER des sa redaction initiale. Verifie par check_observable_coverage »)",
+   "charter_tags": [
+    "OBSERVABLE PAR LE JOUEUR DES LA WIREMAP"
+   ],
+   "category": "wiremap",
+   "provides": [],
+   "requires": [],
+   "owner": false,
+   "system_parent": "wiremap_governance",
+   "address": "09_WIREMAP/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Exigence sur la carte ; rien a voir a l'ecran.",
+   "expected_proof": {
+    "kind": "static_oracle",
+    "statement": "Le nombre de lignes dont `observable_by_player` n'est pas un BOOLEEN STRICT (true/false) est EXACTEMENT 0, et le nombre de lignes a `true` sans `observable_proof` non vide est EXACTEMENT 0. DEFAUT MESURE A NE PAS REPETER (Snake, 2026-07-28) : check_observable_coverage ignore silencieusement tout ce qui n'est pas `== True` — un champ rempli de prose y rend un vert vacueux. Ici, le nombre de champs `observable_by_player` contenant une phrase est EXACTEMENT 0 : la prose vit dans `observable_note`, champ distinct et jamais lu par l'oracle."
+   },
+   "reused_from": {
+    "type": "OUTIL_FORGE",
+    "source": "scripts/forge/standard_oracles.py",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [],
+   "fonction": "Exigence portant sur cette wiremap. Aucun code de jeu.",
+   "preuve": "STRUCTUREL: observable_by_player present sur toutes les lignes (verifie par comptage node). check_observable_coverage canonique = driver. [52/52 declarees]",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "OUTIL_FORGE : fonction check_observable_coverage, existante et branchee en s10s."
+  },
+  {
+   "id": "gov.metric_variance",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `VARIANCE PROUVEE AVANT USAGE` (« toute metrique introduite pour classer/generer/calibrer le jeu prouve d'abord qu'elle porte une information variable (>=2 valeurs distinctes non triviales), ou est requalifiee sous le nom de ce qu'elle mesure reellement ») — regle ratifiee Pierre 2026-07-21",
+   "charter_tags": [
+    "VARIANCE PROUVEE AVANT USAGE"
+   ],
+   "category": "wiremap",
+   "provides": [],
+   "requires": [],
+   "owner": false,
+   "system_parent": "wiremap_governance",
+   "address": "09_WIREMAP/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Exigence de methode ; rien a voir a l'ecran.",
+   "expected_proof": {
+    "kind": "static_oracle",
+    "statement": "Ce plan introduit DEUX grandeurs qui classent ou generent, et chacune porte sa preuve de variance DANS sa propre ligne : (a) l'angle de rebond par point d'impact — EXACTEMENT 3 valeurs distinctes sur les 3 points d'echantillon (physics.paddle_deflection) et EXACTEMENT 3 trajectoires distinctes observees au produit (render.rebound_variability) ; (b) la disposition de briques par seed — EXACTEMENT 2 dispositions distinctes sur 2 seeds (level.seeded_generation). Le nombre de metriques introduites sans preuve de variance est EXACTEMENT 0. AUCUNE metrique de difficulte, de bande de vitesse ou de fun n'est introduite par ce plan — voir discarded/bande_vitesse_jouable_comme_metrique."
+   },
+   "reused_from": {
+    "type": "CONCEPT",
+    "source": "games/snake/09_WIREMAP/wiremap.json",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [],
+   "fonction": "Exigence de methode portant sur cette wiremap. Aucun code de jeu.",
+   "preuve": "MESURE: variance prouvee sur les 2 metriques du jeu -> level offsets 7 valeurs distinctes (level_seed_determinism.test.gd) ; angle de rebond 26 offsets distincts (demo_rebound_variability.gd). >=2 valeurs non triviales.",
+   "statut": "IMPLEMENTED",
+   "reused_from_note": "CONCEPT : patron de separation « grandeur declaree vs grandeur jouee » ecarte puis nomme dans le discarded[] de Snake (bande_declaree_comme_bande_jouee)."
+  },
+  {
+   "id": "gov.evidence_path",
+   "source": "EXPECTED",
+   "source_role": "charter",
+   "reference": "charter.criteres_succes `PREUVE MECANIQUE FOURNIE` (« chaque verdict d'etape aval cite un evidence_path. Un recu sans evidence_path est BLOCKED, jamais OK ») + charter.actions_interdites (« Livrer un recu de code sans evidence_path : BLOCKED, jamais OK »)",
+   "charter_tags": [
+    "PREUVE MECANIQUE FOURNIE"
+   ],
+   "category": "wiremap",
+   "provides": [],
+   "requires": [],
+   "owner": false,
+   "system_parent": "wiremap_governance",
+   "address": "09_WIREMAP/",
+   "genre_refs": [],
+   "observable_by_player": false,
+   "observable_proof": null,
+   "observable_note": "Exigence sur les recus du run ; rien a voir a l'ecran.",
+   "expected_proof": {
+    "kind": "artifact",
+    "statement": "Sur les etapes aval de ce run : le nombre de recus d'etape sans `evidence_path` est EXACTEMENT 0, et le nombre de recus sans `evidence_path` rapportes OK est EXACTEMENT 0 (ils sortent BLOCKED). PORTEE HONNETE DE CETTE LIGNE : elle ne peut etre exercee qu'a partir de s9 — l'etape wm1 produit un artefact de plan, pas un recu d'oracle d'execution. La declarer ici la rend opposable au build, elle ne la rend pas verte."
+   },
+   "reused_from": {
+    "type": "OUTIL_FORGE",
+    "source": "scripts/forge/verdict.py",
+    "copy_sha256": null
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [],
+   "fonction": "Exigence portant sur les recus de ce run. Aucun code de jeu.",
+   "preuve": "FOURNI: chaque ligne cite un evidence_path (fichier oracle + verdict PASS/exit0). Recus: run_tests.gd (299/299), 16 oracles 07_TESTS/oracle/*.gd, solvability_godot.mjs (7/7).",
+   "statut": "IMPLEMENTED"
+  }
+ ],
+ "discarded": [
+  {
+   "id": "multi_niveaux_progression",
+   "source_role": "orchestrateur",
+   "proposal": "Progression multi-niveaux : apres la victoire sur un niveau, generer le niveau suivant et ne declarer la VICTOIRE qu'au dernier — mentionne par le charter web 2026-07-11.",
+   "discard_reason": "charter.hors_scope, entree « Multi-niveaux » : HORS SCOPE V1, un seul niveau seede pour la premiere boucle complete. Marquee ARBITRAGE_ORCHESTRATEUR_2026-07-31_RATIFICATION_GATE_EN_ATTENTE et fog_humangate: true dans charter.provenance.perimetre_multiniveaux_arbitrage — c'est une decision de TRAVAIL, PAS une clarification ratifiee par Pierre. Consequence dans ce plan : level.seeded_generation prend (seed, index_de_niveau) en signature — la porte reste ouverte sans qu'aucun code de progression ne soit ecrit. Si Pierre etend le perimetre a la gate, ce rejet devra etre reexamine, pas efface.",
+   "ended_up_in_game": null
+  },
+  {
+   "id": "persistance_meilleur_score",
+   "source_role": "charter",
+   "proposal": "Persister localement le meilleur score entre deux sessions, comme Snake v2 — la capacite game.best_score est DEJA au registre ferme, la reutilisation serait gratuite.",
+   "discard_reason": "charter.hors_scope, entree 1 : « Persistance LOCALE d'un meilleur score N'EST PAS dans le perimetre minimal de ce run [...] a la difference de Snake v2, ou Pierre l'avait explicitement demandee ; ici aucune decision equivalente n'existe, donc ABSENCE PAR DEFAUT, PAS PAR OUBLI. » La disponibilite d'une capacite au registre n'est pas une raison de l'utiliser : ce serait construire une fonctionnalite que personne n'a demandee. Consequence mesurable : ce jeu n'a AUCUNE I/O disque (Snake en avait une, best_score_store) — le nombre d'adaptateurs de persistance dans systems[] est EXACTEMENT 0.",
+   "ended_up_in_game": null
+  },
+  {
+   "id": "reutilisation_code_breakout_js",
+   "source_role": "charter",
+   "proposal": "Copier la logique de games/breakout/{game,level,input,solvability}.mjs (implementation JS 2026-07-11, verte) dans le jeu Godot et la compter comme reutilisation CODE — la solution est deja ecrite et testee.",
+   "discard_reason": "charter.hors_scope (« Reutilisation par COPIE DE CODE de games/breakout/*.mjs [...] : reutilisation typee CONCEPT uniquement, jamais CODE ») et charter.actions_interdites (« Copier du code .mjs de games/breakout/ dans le jeu Godot pour gonfler la mesure de reutilisation »). Raison mecanique, pas doctrinale : aucun import JS->GDScript n'existe — une « copie » serait une reecriture presentee comme un transfert, ce qui fausserait le critere `TAUX DE REUTILISATION MESURE ET RAPPORTE`. APPLIQUE ET MESURE dans ce fichier : 5 lignes citent games/breakout/*.mjs en CONCEPT, 0 en CODE_COPIE, 0 octet copie, 0 fichier de games/breakout/ modifie.",
+   "ended_up_in_game": null
+  },
+  {
+   "id": "extension_silencieuse_registre_capacites",
+   "source_role": "charter",
+   "proposal": "Ajouter les 7 identifiants nouveaux (game.brick_field, game.brick_collision, game.lives, game.paddle_deflection, game.wall_reflection, game.level_generation, game.fixed_timestep) a scripts/forge/standard/capabilities.yaml pour que check_collisions sorte vert.",
+   "discard_reason": "charter.actions_interdites : « Etendre scripts/forge/standard/capabilities.yaml (registre fige) sans gate Pierre explicite : une capacite nouvelle necessaire est PROPOSEE, jamais ajoutee silencieusement par un agent. » Doublement bloque : les permissions de l'etape wm1 n'autorisent l'ecriture que de lab/forge_runs/breakout_v2/wiremap.json. CONSEQUENCE ASSUMEE ET RAPPORTEE, pas contournee : check_collisions liste ces 7 identifiants dans `identifiants_inconnus` — c'est l'etat REEL du registre, pas un defaut de cette carte. Le contournement inverse (les deguiser sous un identifiant existant) est refuse separement ci-dessous.",
+   "ended_up_in_game": null
+  },
+  {
+   "id": "capacite_snake_detournee",
+   "source_role": "orchestrateur",
+   "proposal": "Declarer les mecaniques neuves sur des identifiants DEJA enregistres pour rendre check_collisions vert sans toucher au registre : game.collision pour les murs et les briques, game.food_spawn pour la generation de niveau, game.tick_rate pour le pas de temps fixe, game.best_score pour les vies.",
+   "discard_reason": "Chaque substitution ferait porter a l'identifiant une promesse CONTRAIRE a son enonce : game.collision = « decider qu'une case occupee met FIN A LA COURSE » (un mur de Breakout renvoie la balle et ne termine rien) ; game.food_spawn = « placer la prochaine nourriture sur une case libre » (un tirage unitaire, pas une disposition complete) ; game.tick_rate = « determiner la periode du tick courant, ACCELERATION COMPRISE » (une periode variable, exactement l'inverse de l'invariant Breakout) ; game.best_score = un score persistant, pas une ressource consommable. Le registre existe pour rendre l'audit ARITHMETIQUE au lieu de SEMANTIQUE (en-tete de capabilities.yaml) : un identifiant detourne rend cet audit aveugle precisement la ou il devait voir. Un vert obtenu ainsi vaudrait moins que le rouge honnete de `identifiants_inconnus`. Interdit aussi par le contrat de l'etape wm1.",
+   "ended_up_in_game": null
+  },
+  {
+   "id": "powerups_briques_multihits",
+   "source_role": "charter",
+   "proposal": "Ajouter power-ups, bonus, briques multi-hits, briques indestructibles, themes cosmetiques et animations avancees — le genre casse-briques les porte depuis Arkanoid.",
+   "discard_reason": "charter.hors_scope, entree 2 : « systemes de contenu hors de la tranche verticale minimale ». La Genre Bible elle-meme borne la V1 (genre.breakout.brick_destruction_on_contact : « V1 : un seul coup par brique, pas de brique multi-hits »). Falsifiable : tout module dont la suppression ne change AUCUN critere de demo du charter est un systeme construit en avance, donc refuse. Consequence dans ce plan : physics.brick_collision asserte « le nombre de briques survivant a un contact est EXACTEMENT 0 » — la V1 est verrouillee par un test, pas par une intention.",
+   "ended_up_in_game": null
+  },
+  {
+   "id": "acceleration_progressive_balle",
+   "source_role": "redacteur",
+   "proposal": "Accelerer la balle au fil de la partie (patron ratifie par Pierre sur Snake, decision D3 : acceleration par paliers) pour faire monter la tension.",
+   "discard_reason": "charter.parametres_de_design.balle_vitesse_initiale, valeur_initiale : « constante sur toute la partie (PAS D'ACCELERATION EN V1) », provenance PROPOSITION_REDACTEUR, statut A_EQUILIBRER — avec la raison explicite : « a la difference de Snake, ou Pierre l'avait explicitement demandee (D3) ; ici, ABSENCE PAR DEFAUT FAUTE DE DECISION EQUIVALENTE ». Ecarte pour absence de decision, jamais pour manque d'interet : ce rejet est le plus faible des huit, et c'est pour cela qu'il est ecrit. RESERVE : la vitesse etant A_EQUILIBRER, un arbitrage Pierre au playtest peut le rouvrir sans toucher a la logique.",
+   "ended_up_in_game": null
+  },
+  {
+   "id": "bande_vitesse_jouable_comme_metrique",
+   "source_role": "charter",
+   "proposal": "Reutiliser la capacite enregistree game.playable_speed (apportee par Pong) pour declarer une « bande de vitesse jouable » de la balle et s'en servir a classer la difficulte du niveau.",
+   "discard_reason": "Deux refus independants. (1) Aucun critere du charter Breakout n'exige de bande de vitesse — l'introduire creerait une exigence produit que personne n'a demandee. (2) charter.criteres_succes `VARIANCE PROUVEE AVANT USAGE` : une metrique qui classe doit d'abord prouver qu'elle porte une information variable ; la vitesse de balle est CONSTANTE sur toute la partie en V1 (voir rejet precedent), donc sa « bande » aurait une variance NULLE — elle mesurerait la constante elle-meme, deguisee en classement. C'est exactement le defaut mesure sur grid-navigator (ticks == plus-court-chemin) et sur Snake (bande_declaree_comme_bande_jouee). Ce qui EST fait a la place : les deux seules grandeurs qui classent ou generent (angle par point d'impact, disposition par seed) portent chacune leur preuve de variance dans leur propre ligne.",
+   "ended_up_in_game": null
+  }
+ ],
+ "fog": [
+  {
+   "id": "F1",
+   "sujet": "Fichiers de projet moteur non-.gd non declarables dans fichiers[]",
+   "fait": "Un projet Godot exige au minimum `project.godot` et une scene `.tscn` (le point d'entree). Le contrat de l'etape wm1 impose « fichiers[] en .gd ». repo_map.yaml PEUT pourtant les heberger depuis la ratification Pierre 2026-07-28 : `godot.project_root: \"{id}\"` accepte n'importe quel nom de fichier a la racine.",
+   "consequence_dans_ce_plan": "Aucun non-.gd n'est declare dans fichiers[]. La ligne proof.entrypoint_invariant PORTE l'exigence sur le point d'entree (verifiee en absence comme en presence) sans declarer le fichier qui le contient. Aucun chemin n'a ete invente.",
+   "arbitrage_demande": "Pierre : (a) autoriser le build a declarer project.godot et main.tscn en categorie `godot.project_root`, ou (b) maintenir la restriction .gd et accepter que ces deux fichiers ne soient indexes par aucune ligne. Aucune voie n'est choisie par l'agent.",
+   "bloquant_pour": "l'indexation carte<->disque (check_index) au moment du build, pas cette etape"
+  },
+  {
+   "id": "F2",
+   "sujet": "Politique de comparaison flottante pour les valeurs STRICTES du charter",
+   "fait": "charter.criteres_succes `PHYSIQUE DE REBOND ASSERTEE PAR VALEURS STRICTES` exige une valeur d'angle STRICTE « jamais un intervalle >=/<= », et charter.actions_interdites interdit le test tautologique. Or un angle et une vitesse sont des FLOTTANTS : l'egalite stricte n'a de sens que si les deux membres sont produits par la MEME expression pure. Aucun epsilon nomme n'existe : charter.parametres_de_design n'en porte aucun (9 entrees verifiees, aucune tolerance).",
+   "consequence_dans_ce_plan": "Les expected_proof asservissent l'egalite au resultat produit par l'expression derivee des constantes nommees (ex. vx' == -|v| * sin(angle_max)), jamais a une constante decimale recopiee, et JAMAIS a un intervalle. Aucun epsilon n'a ete invente.",
+   "arbitrage_demande": "Pierre : (a) egalite bit-a-bit du resultat produit par l'expression pure (tenable car la fonction est deterministe sur ce poste, fragile si la cible change) ; (b) un epsilon NOMME ajoute au bloc de parametres, avec sa justification — ce qui en ferait un 10e parametre du charter. Choisir (b) sans le nommer reintroduirait exactement la tautologie que le charter interdit.",
+   "bloquant_pour": "l'ecriture des tests de physics.paddle_deflection et proof.replay_determinism"
+  },
+  {
+   "id": "F3",
+   "sujet": "Parametre de scoring absent du charter alors que le score est exige lisible",
+   "fait": "charter.criteres_demo `VIES ET SCORE LISIBLES` exige un score affiche, mais charter.parametres_de_design ne contient AUCUN parametre de scoring (9 entrees verifiees : terrain, raquette_largeur, raquette_vitesse_max, balle_vitesse_initiale, tick_dt_fixed_ms, angle_rebond_max_deg, grille_briques, vies_initiales, seed_reference). Snake, lui, portait `points_par_nourriture`.",
+   "consequence_dans_ce_plan": "state.score enonce sa preuve en fonction d'une constante `points_par_brique` du bloc unique SANS en trancher la valeur : l'assertion reste verifiable quelle que soit la valeur ratifiee. Aucun chiffre invente.",
+   "arbitrage_demande": "Pierre : (a) ajouter `points_par_brique` a charter.parametres_de_design (10e entree, statut A_EQUILIBRER) ; ou (b) requalifier le score comme simple compte de briques detruites, ce qui retirerait toute latitude d'equilibrage — a decider avant s9, pas pendant le build.",
+   "bloquant_pour": "la ligne state.score et l'affichage render.hud_lives_score"
+  },
+  {
+   "id": "F4",
+   "sujet": "Seuil de « significativement inferieur » du controle negatif non chiffre",
+   "fait": "charter.criteres_succes `SOLVABILITE PROUVEE PAR INTERCEPTION REELLE` exige que les bots naifs aient un « taux de victoire SIGNIFICATIVEMENT INFERIEUR » a celui du bot d'interception. Aucun seuil, aucun test statistique, aucun nombre d'essais minimal n'est chiffre nulle part dans le charter.",
+   "consequence_dans_ce_plan": "proof.negative_control_bot asserte une inegalite STRICTE (« le nombre de controles negatifs atteignant un taux superieur ou egal est EXACTEMENT 0 »), ce qui est falsifiable et n'invente aucun seuil. Mais une inegalite stricte n'est pas la meme chose qu'un ecart significatif : un ecart de 1 point sur 50 essais la satisferait.",
+   "arbitrage_demande": "Pierre : chiffrer (a) un ecart minimal de taux de victoire, ou (b) un critere statistique explicite, ou (c) ratifier l'inegalite stricte comme suffisante pour ce run 1 en assumant sa faiblesse. Aucune des trois n'est choisie par l'agent.",
+   "bloquant_pour": "l'interpretation du verdict de solvabilite, pas son execution"
+  },
+  {
+   "id": "F5",
+   "sujet": "SEPT capacites necessaires au produit sont absentes du registre ferme",
+   "fait": "scripts/forge/standard/capabilities.yaml est un vocabulaire FERME de 25 identifiants (10 CORE + 5 Pong + 10 Snake) : « un identifiant absent de ce registre -> FAIL (pas de nom libre) ». AUCUN identifiant de brique, de vie, d'angle de rebond, de reflexion de mur, de generation de niveau ni de pas de temps fixe n'y figure.",
+   "consequence_dans_ce_plan": "Les 7 lignes concernees DECLARENT quand meme leur capacite en `provides` (le besoin produit existe et doit etre visible) et portent un champ structure `capacite_hors_registre` avec l'enonce propose et le refus motive de tout detournement. check_collisions les liste donc dans `identifiants_inconnus` : c'est l'etat REEL du registre, rapporte sans masquage ni contournement. Le registre n'a pas ete modifie (hors permissions de l'etape, et interdit par charter.actions_interdites).",
+   "arbitrage_demande": "Pierre, gate d'extension du registre — 7 propositions nommees : game.brick_field · game.brick_collision · game.lives · game.paddle_deflection · game.wall_reflection · game.level_generation · game.fixed_timestep. Precedent exact : l'extension Snake du 2026-07-28 (10 identifiants ratifies apres constat du meme trou de table en gelant Pong).",
+   "bloquant_pour": "un check_collisions vert — jamais pour la validite de cette carte"
+  },
+  {
+   "id": "F5b",
+   "sujet": "Alternative envisagee puis ecartee pour game.fixed_timestep",
+   "fait": "game.tick_rate (Snake) est deja au registre avec l'enonce « determiner la periode du tick courant, ACCELERATION COMPRISE ». Sa reutilisation reduirait de 7 a 6 le nombre d'identifiants inconnus.",
+   "consequence_dans_ce_plan": "REFUSEE : la raison d'etre de game.tick_rate est une periode VARIABLE, celle de Breakout un pas INVARIABLE — la promesse portee serait la contraire de celle du charter, et l'audit de collisions deviendrait aveugle sur LE point dur du jeu. Un identifiant neuf est propose a la place.",
+   "arbitrage_demande": "Pierre : ratifier game.fixed_timestep comme identifiant distinct, ou elargir l'enonce de game.tick_rate pour couvrir les deux regimes (ce qui affaiblirait sa precision pour Snake). L'agent n'a pas tranche.",
+   "bloquant_pour": "rien — trace pour que le choix soit visible au gate"
+  },
+  {
+   "id": "F6",
+   "sujet": "Vocabulaire de source_role : le contrat d'etape en enumere 4, le charter en porte 5",
+   "fait": "Le contrat wm1 derive l'enum de charter.provenance.*.type et cite 4 valeurs (pierre / cadrage / redacteur / charter). Lecture reelle du charter : les types presents sont SOURCE_PIERRE_DIRECTE, DECISION_DE_CADRAGE_TRACEE, PROPOSITION_REDACTEUR, ARBITRAGE_ORCHESTRATEUR (3 entrees) et TRACE_INDIRECTE (1 entree). L'enum du contrat en omet DEUX.",
+   "consequence_dans_ce_plan": "Une 5e valeur `orchestrateur` a ete ajoutee par DERIVATION OBSERVEE du charter (jamais inventee), utilisee sur 2 rejets et 0 ligne. `trace_indirecte` n'a ete utilise nulle part : il ne qualifie que la Genre Bible, traitee dans le bloc genre_bible. Aucun role de Snake (control/gamedesign/archidepot/gameplayprog) n'apparait — verifie a 0 occurrence.",
+   "arbitrage_demande": "Pierre : ratifier l'enum a 5 valeurs, ou renvoyer les entrees ARBITRAGE_ORCHESTRATEUR vers `cadrage` (ce qui effacerait la distinction entre une decision tracee et un arbitrage explicitement en attente de gate).",
+   "bloquant_pour": "rien mecaniquement — check_line_states ne verifie que la PRESENCE du champ"
+  },
+  {
+   "id": "F7",
+   "sujet": "Genre Bible non ratifiee et non sourcee : la couverture mesuree est structurelle",
+   "fait": "games/breakout_v2/01_DESIGN/genre_bible.json porte `status: NON_RATIFIEE_PROPOSITION`. Le document source declare 0/10 regles en OBSERVATION_DIRECTE, 2/10 en TRACE_INDIRECTE, 10/10 portant un volet [H] non source, et « zero source externe n'a ete testee ». charter.hors_scope pose le World Scan comme « PREREQUIS avant ratification de cette Genre Bible, pas une option ».",
+   "consequence_dans_ce_plan": "Les 9 regles applicables sont citees par des lignes reelles et la 10e (session_short_focused) est REFUSEE avec motif dans genre_refusals. check_genre_coverage peut donc sortir OK — mais ce vert ne mesure que la RESOLUTION D'IDENTIFIANTS, jamais la justesse des regles citees. La source se declare elle-meme non ratifiable.",
+   "arbitrage_demande": "Pierre : conduire le World Scan Breakout avant s9, ou ratifier explicitement que ce run 1 se construit sur une Genre Bible non sourcee (decision assumable, mais qui doit etre prise et datee, pas heritee par silence).",
+   "bloquant_pour": "la valeur EPISTEMIQUE de la couverture genre, pas son calcul"
+  },
+  {
+   "id": "F8",
+   "sujet": "core.audio : exigence CORE non contournable contre un charter qui la range hors scope",
+   "fait": "core_requirements.yaml impose core.audio (`not_applicable_allowed: false`). charter.hors_scope range l'audio hors du systeme livre TOUT EN reconnaissant que le charter « ne peut ni la retirer ni la declarer NOT_APPLICABLE ». charter.provenance.core_audio_arbitrage marque la decision ARBITRAGE_ORCHESTRATEUR_2026-07-31_RATIFICATION_GATE_EN_ATTENTE, fog_humangate: true. charter.question_ouverte_humangate porte la question a Pierre.",
+   "consequence_dans_ce_plan": "La ligne core.audio existe, est DEFERRED avec `until` et `decider: pierre` renseignes, declare 0 fichier et cite le patron de cout (games/pong/.../audio.mjs) en CONCEPT NON CONSOMME. Precedent exact et mesure : Snake, meme traitement (games/snake/09_WIREMAP/wiremap.json). L'absence de son n'est presentee comme un vert nulle part.",
+   "arbitrage_demande": "Pierre : ratifier un adaptateur audio minimal pour Breakout, ou confirmer le DEFERRED. Sans ratification, une exigence CORE reste ouverte a l'entree du build.",
+   "bloquant_pour": "la completude CORE au gel — l'etat DEFERRED la rend visible, pas resolue"
+  },
+  {
+   "id": "F9",
+   "sujet": "La moitie humaine de LISIBILITE DU GAMEPLAY n'est pas mecanisable",
+   "fait": "charter.criteres_demo `LISIBILITE DU GAMEPLAY` exige qu'« un observateur qui n'a jamais vu le jeu puisse dire, SANS EXPLICATION, ce que la raquette controle, ou va la balle et combien de briques restent ». Aucun oracle deterministe ne mesure la comprehension d'un humain. Meme nature pour `DEMARRAGE VISIBLE` (« comprend quoi faire sans explication ecrite »).",
+   "consequence_dans_ce_plan": "render.gameplay_readability pose un PROXY mecanique explicitement borne (familles d'elements distinguables par couleur ET forme, aucune hors cadre) et ecrit dans son propre expected_proof ce que ce proxy NE prouve PAS. Aucun claim de comprehension n'est emis.",
+   "arbitrage_demande": "Pierre : playtest humain a la gate produit. Le proxy vert ne vaut pas ratification du critere.",
+   "bloquant_pour": "la cloture honnete de 2 criteres de demo sur 11"
+  },
+  {
+   "id": "F10",
+   "sujet": "La categorie `wiremap` n'est ni mutable ni exclue dans le contrat de jeu",
+   "fait": "games/breakout_v2/00_CHARTER/game_contract.yaml declare categories_mutables: [system] et categories_exclues: [system.adapter, test.unit, test.oracle, godot.project_root, godot.project_tests]. Les 5 lignes gov.* de cette carte emploient la categorie `wiremap`, absente des deux listes. Le contrat de preuve de mutation pose qu'une categorie ni jugee ni exclue est un BLOCKED.",
+   "consequence_dans_ce_plan": "Sans consequence MECANIQUE ici, et verifie : les 5 lignes gov.* declarent `fichiers: []` — elles ne deposent aucun fichier, donc aucune categorie `wiremap` n'atteint le moteur de mutation. Snake presentait exactement la meme configuration (5 lignes de categorie `wiremap`, 0 fichier depose). L'ecart est de FORME et il est remonte plutot que laisse a decouvrir au build.",
+   "arbitrage_demande": "Pierre : ajouter `wiremap` a categories_exclues du game_contract avant s9 (une ligne), ou ratifier que la regle ne s'applique qu'aux categories reellement portees par des fichiers.",
+   "bloquant_pour": "rien aujourd'hui ; potentiellement le gate mutation si une ligne gov.* venait a deposer un fichier"
+  },
+  {
+   "id": "F11",
+   "sujet": "Seed de reference non fixee",
+   "fait": "charter.parametres_de_design.seed_reference vaut « breakout-ref-01 (chaine de seed de travail, A FIXER PRECISEMENT AU s4) », statut A_EQUILIBRER, provenance PROPOSITION_REDACTEUR. Le critere `SOLVABILITE PROUVEE PAR INTERCEPTION REELLE` s'appuie pourtant sur « la seed de reference ».",
+   "consequence_dans_ce_plan": "Aucune seed n'est tranchee. level.seeded_generation et proof.solvability_interception citent la CONSTANTE nommee, jamais sa valeur — les assertions restent valides quelle que soit la seed ratifiee.",
+   "arbitrage_demande": "Pierre / etape s4 : fixer la seed de reference avant l'ecriture de l'oracle de solvabilite, sous peine de rendre le taux de victoire non reproductible d'un run a l'autre.",
+   "bloquant_pour": "la reproductibilite du verdict de solvabilite entre deux runs"
+  },
+  {
+   "id": "F12",
+   "sujet": "Trois porteurs du meme bloc Genre Bible, metadonnees divergentes",
+   "fait": "Le bloc JSON des 10 regles existe en 3 exemplaires : games/breakout_v2/01_DESIGN/genre_bible.json, docs/forge/GENRE_BIBLE_BREAKOUT_V1_PROPOSED.md §3 et docs/forge/BREAKOUT_V2_CHARTER_PROPOSED.md §4. Comparaison mecanique du 2026-07-31 : les 10 `id` sont IDENTIQUES et dans le meme ordre. Divergences de METADONNEES : game_id `breakout_v2` vs `breakout` ; status `NON_RATIFIEE_PROPOSITION` vs `ESQUISSE_NON_RATIFIEE` ; source_of_truth renseigne vs « AUCUNE ».",
+   "consequence_dans_ce_plan": "check_genre_coverage ne lit que `genre_rules[].id` : la divergence de metadonnees n'a AUCUN effet sur le resultat, quelle que soit la source choisie. Source primaire retenue : le .json, conformement au contrat d'etape.",
+   "arbitrage_demande": "Pierre : designer une source unique et retirer les copies, ou acter que les documents de campagne conservent une copie figee. Trois copies d'une meme donnee divergent tot ou tard.",
+   "bloquant_pour": "rien aujourd'hui — trace pour eviter une divergence future silencieuse"
+  },
+  {
+   "id": "F13",
+   "sujet": "Le charter annonce 8 parametres et en enumere 9",
+   "fait": "charter.provenance.parametres_chiffres.valeur dit « 8 parametres, tous A_EQUILIBRER » et le commentaire d'en-tete du bloc dit « Les 8 parametres restent A_EQUILIBRER ». Le bloc parametres_de_design en enumere NEUF (comptage mecanique par lecture YAML : terrain, raquette_largeur, raquette_vitesse_max, balle_vitesse_initiale, tick_dt_fixed_ms, angle_rebond_max_deg, grille_briques, vies_initiales, seed_reference). Le contrat de l'etape wm1 reprend le chiffre de 8.",
+   "consequence_dans_ce_plan": "Le bloc `parametres` de ce fichier declare les 9 entrees REELLES et signale l'ecart, plutot que d'en omettre une pour retomber sur 8. Aucune valeur n'est tranchee. Le charter n'a pas ete modifie (hors perimetre de l'etape).",
+   "arbitrage_demande": "Pierre : corriger le compte dans charter.provenance (9, ou 10 si `points_par_brique` est ajoute — voir F3). Un compte faux dans un champ de provenance est le genre d'ecart qui survit longtemps parce que personne ne recompte.",
+   "bloquant_pour": "rien mecaniquement — mais le chiffre circule deja dans 2 artefacts"
+  },
+  {
+   "id": "F14",
+   "sujet": "Le charter consomme par cette etape n'est pas ferme par un s0-contrat dispatche",
+   "fait": "lab/forge_runs/breakout_v2/charter.yaml declare lui-meme, dans son en-tete : « Ceci N'EST PAS le produit d'un agent dispatche sous contrat s0-contrat (aucun FORGE_DISPATCH:s0-contrat n'a ete ouvert pour cette ecriture) ». Verifie au moment de cette etape, non suppose : le run_dir lab/forge_runs/breakout_v2/ ne contient que charter.yaml et le dossier context/ de CETTE etape (wm1). Trois de ses decisions portent le marqueur ARBITRAGE_ORCHESTRATEUR_..._RATIFICATION_GATE_EN_ATTENTE.",
+   "consequence_dans_ce_plan": "Cette wiremap est construite sur un charter TRANSCRIT et non ferme. Toute ligne EXPECTED cite ce charter comme source amont : si le s0-contrat reel modifie un critere, les lignes correspondantes devront etre reexaminees. Le fait est ecrit plutot que suppose stable.",
+   "arbitrage_demande": "Pierre : ouvrir un s0-contrat reel pour fermer le charter avant le gel de cette wiremap, ou ratifier le charter transcrit tel quel a la gate.",
+   "bloquant_pour": "la valeur du GEL de cette carte — un squelette gele sur un charter mouvant n'est pas gele"
+  },
+  {
+   "id": "F15",
+   "sujet": "Ce plan ne contient AUCUNE ligne ADDITIONS, et c'est une consequence, pas un oubli",
+   "fait": "La repartition par source est : 10 CORE, 38 EXPECTED, 4 DERIVED, 0 ADDITIONS. Snake comptait 11 ADDITIONS, toutes issues de sa chaine Prisme (design_review, merged_prisme, product_snapshots archidepot/gameplayprog). AUCUN de ces artefacts n'existe pour Breakout_v2.",
+   "consequence_dans_ce_plan": "0 ADDITIONS signifie qu'aucun point de vue tiers n'a propose quoi que ce soit sur ce jeu : tout ce que porte cette carte vient du charter, du CORE ou d'une derivation mecanique. C'est la mesure la plus directe de l'ecart de profondeur de conception entre Snake et ce run.",
+   "arbitrage_demande": "Pierre : accepter ce run comme test de pipeline a conception minimale (coherent avec le double objectif du charter), ou inserer une etape Prisme avant le build. Le choix a un cout mesurable et il n'appartient pas a l'agent.",
+   "bloquant_pour": "rien mecaniquement — c'est un fait de couverture, remonte plutot que lisse"
+  },
+  {
+   "id": "F17",
+   "sujet": "expected_proof de runtime.fixed_step_accumulator AMENDE post-build (ARBITRAGE_ORCHESTRATEUR_2026-07-31_RATIFICATION_GATE_EN_ATTENTE)",
+   "fait": "La promesse initiale wm1 (« Aucun rattrapage : ... EXACTEMENT 1 tick ... le retard est absorbe ») etait un CONCEPT herite de Snake (no_time_catchup.test.gd, jeu a grille discrete) mal transpose sur une physique temps reel continue : sous ~62,5 fps elle impose un jeu au ralenti, en contradiction avec charter.criteres_succes DETERMINISME SUR PAS DE TEMPS FIXE (charter ratifie revision 3). Le red-team run 1 (F1 MEDIUM) a prouve la perte de reste ; la mission run 3 a corrige le code (reste conserve + rattrapage borne) ; le red-team run 3 (F-A HIGH) a alors releve la contradiction promesse gelee <-> code livre, en demandant la remontee a Pierre.",
+   "consequence_dans_ce_plan": "expected_proof.statement de la ligne runtime.fixed_step_accumulator amende par l'orchestrateur (invariants EXACTEMENT-0 conserves ; clause « aucun rattrapage » remplacee par : reste conserve, rattrapage borne MAX_TICKS_PAR_FRAME, ecretage anti-spirale, floor(T/pas) sous plafond). La copie wm1 de lab/forge_runs/breakout_v2/wiremap.json reste INTACTE (provenance historique).",
+   "arbitrage_demande": "Pierre ratifie ou inverse l'amendement a la gate de campagne. Si inversion : revenir au cadenceur « absorbe » ET requalifier honnetement la promesse temps-reel du charter (un jeu au ralenti sous 60 fps ne tient pas DETERMINISME SUR PAS DE TEMPS FIXE cote produit).",
+   "bloquant_pour": "verdict de gate de campagne (le verdict signe du run 3 reste valide : l'amendement est POSTERIEUR et hors perimetre du build)"
+  }
+ ]
+}

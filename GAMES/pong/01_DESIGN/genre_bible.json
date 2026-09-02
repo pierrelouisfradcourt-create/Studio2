@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "game_id": "pong",
+  "status": "PROPOSED",
+  "source_document": "docs/forge/GENRE_BIBLE_PONG_V1_PROPOSED.md",
+  "_comment": "Emplacement machine-lisible de la Genre Bible Pong (mission r1-preuves-boucle-mecaniques, 2026-07-27) : categorie repo_map.yaml 'design.doc' -> 01_DESIGN/ (convention du standard, cf. scripts/forge/standard/repo_map.yaml). Le document redige (prose, provenance detaillee, statistiques) reste docs/forge/GENRE_BIBLE_PONG_V1_PROPOSED.md -- source de verite humaine. Ce fichier est un SOUS-ENSEMBLE structure (id + statement + applies_to_wiremap_line) extrait pour etre lu par forge.standard_oracles.check_genre_coverage. Aucun oracle ne lisait ce champ avant cette mission.",
+  "genre_rules": [
+    {
+      "id": "genre.pong.two_paddles_vertical",
+      "statement": "Deux raquettes deplacables verticalement, bornees par le haut et le bas de l'aire de jeu.",
+      "applies_to_wiremap_line": "play.paddle"
+    },
+    {
+      "id": "genre.pong.continuous_ball_rebound",
+      "statement": "Une balle en mouvement continu, rebondissant sur les bords horizontaux et sur les raquettes, sans jamais traverser.",
+      "applies_to_wiremap_line": "play.ball"
+    },
+    {
+      "id": "genre.pong.score_visible_on_exit",
+      "statement": "Un point est marque quand la balle sort du cote adverse ; le score est affiche de facon lisible par le joueur.",
+      "applies_to_wiremap_line": "play.score"
+    },
+    {
+      "id": "genre.pong.solo_mode_expected",
+      "statement": "Un jeu 1v1 doit exposer un mode ou un seul joueur humain peut valider/pratiquer le jeu contre un adversaire automatique, distinct de tout bot de test interne.",
+      "applies_to_wiremap_line": "play.solo_opponent"
+    },
+    {
+      "id": "genre.pong.readable_score_and_end_state",
+      "statement": "L'etat decisif (score, victoire/defaite) doit etre lisible par un joueur en un coup d'oeil : chiffres plutot que pips seuls, etat final explicite, relance offerte.",
+      "applies_to_wiremap_line": "play.score / core.end_condition / core.restart"
+    },
+    {
+      "id": "genre.pong.playable_speed_range",
+      "statement": "La vitesse de service doit laisser un temps d'anticipation mesurable (cible actuelle : ball_crossing_time entre 1.0s et 1.5s) permettant plusieurs echanges.",
+      "applies_to_wiremap_line": "play.playable_speed"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+schema: kb.proposal.v1
+status: PROPOSED
+proposal_id: asset.gen_chest_01
+origine: asset_library_v1 — scripts/forge/asset_producer/propose_asset.py
+statement: 'Ingerer l''asset 3D ''gen_chest_01'' (chest) dans la bibliotheque : geometrie
+  mesuree independamment et jugee OK par l''Asset Geometry Oracle.'
+entree_catalogue_proposee:
+  entry_type: asset
+  asset_id: asset-gen-chest-01
+  source: ORIGINAL — aucune inspiration externe citee — scripts/forge/asset_producer/build_asset.py
+  license: CC0-1.0
+  provenance_url: null
+  style: lowpoly
+  genre:
+  - generic
+  biome: null
+  format: 3D
+  size_kb: 5
+  sha256: 65cefb14430a2838ad65b1c3eea2bf3ae2a51e07f58a8af8c8332ec4f003423f
+  runtime: godot
+  ingested: true
+  path: knowledge_base/assets/props3d/gen_chest_01.glb
+  usage_examples: []
+  tier: candidate
+  category: chest
+  geometry_status: OK
+  geometry_manifest: knowledge_base/assets/props3d/gen_chest_01.glb.geometry.json
+  consumer:
+  - coffre a butin
+  - recompense de fin de salle
+  variants:
+  - lid_closed
+  - lid_open
+preuve:
+  oracle: scripts/forge/asset_geometry/oracle.py
+  verdict: OK
+  measurement_space: gltf_bind_pose
+  skin_evaluated: false
+  anchor_basis: MAIN+SECONDARY hors ['collider'] (3 noeuds)
+  checks:
+    manifest_stale: OK
+    ground_contact: OK
+    no_buried_geometry: OK
+    pivot_at_base: OK
+    scale_within_band: OK
+    all_meshes_declared: OK
+    declaration_mismatch: OK
+  census:
+  - name: gen_chest_01_body
+    classification: MAIN
+    declared_role: main
+  - name: gen_chest_01_lid_closed
+    classification: SECONDARY
+    declared_role: variant
+  - name: gen_chest_01_lid_open
+    classification: SECONDARY
+    declared_role: variant
+  declaration_producteur: <asset>.glb.metadata.json — DECLARATION, confrontee par
+    declaration_mismatch, jamais une preuve
+  generation_report: gen_chest_01.generation_report.json
+ratification:
+  statut: EN_ATTENTE
+  decideur: null
+  commande: python -m scripts.forge.kb_proposal --apply asset.gen_chest_01 --ratifie-par
+    "<humain>"

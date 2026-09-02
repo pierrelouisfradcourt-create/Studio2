@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_door_wood_01",
+  "archetype": "door",
+  "params": {
+    "size": {
+      "w": 1.2,
+      "d": 0.15,
+      "h": 2.1
+    },
+    "color": [
+      0.48,
+      0.34,
+      0.2,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_door_wood_01_jamb_left",
+    "gen_door_wood_01_jamb_right",
+    "gen_door_wood_01_lintel",
+    "gen_door_wood_01_panel"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 6660,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "_note": "Perimetres de commit DECLARES. Consomme par forge/commit_scope_guard.py, qui compare l'index reel (`git diff --cached`) a ces prefixes. Un perimetre absent de ce fichier est un REFUS, jamais une devinette. Ne decrit pas ce qu'un commit veut dire, seulement ce qu'il a le droit de contenir.",
+  "scopes": {
+    "asset_library": [
+      "forge/asset_geometry",
+      "forge/asset_producer",
+      "forge/commit_scope_guard.py",
+      "forge/commit_scopes.json",
+      "forge/contracts/roles.yaml",
+      "forge/tests/test_asset_geometry.py",
+      "forge/tests/test_asset_proposal.py",
+      "forge/tests/test_asset_worker_contract.py",
+      "forge/tests/test_asset_loop.py",
+      "forge/tests/test_asset_lesson_lifecycle.py",
+      "forge/tests/test_roles_registry_integrity.py",
+      "forge/tests/test_commit_scope_guard.py",
+      "knowledge_base/kb-validate.mjs",
+      "knowledge_base/kb-validate-3d.test.mjs",
+      "knowledge_base/assets/props3d",
+      "knowledge_base/assets/_failed_cases",
+      "knowledge_base/proposals",
+      "EVIDENCE/bundles/asset_lessons",
+      "docs/forge/ASSET_GEOMETRY_ORACLE_V1_DESIGN.md",
+      "docs/forge/ASSET_GEOMETRY_PIPELINE_BOUNDARY_V1.md",
+      "docs/forge/ASSET_LEARNING_LOOP_V1_SPEC.md",
+      "docs/forge/ASSET_CONTRACT_V0.md",
+      ".claude/skills/asset-generator"
+    ]
+  }
+}

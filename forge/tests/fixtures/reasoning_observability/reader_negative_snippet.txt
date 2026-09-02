@@ -1,0 +1,17 @@
+# Fixture de contrôle — maillon 2 (NÉGATIF) : ce fragment parle DE la notion de
+# raisonnement en prose (variable nommée différemment, champ non lu) sans jamais
+# accéder au champ `reasoning` d'un modèle — le scan doit rendre reads_reasoning
+# = False ici, exactement comme sur le code de production réel.
+
+def resolve_model(role: str) -> str:
+    """Résout un modèle par rôle. Ne lit AUCUN champ de raisonnement/effort —
+    seulement l'identifiant du modèle, comme control_plane.registry."""
+    for model in load_models():
+        if role in model.get("roles", []):
+            return model["id"]
+    return None
+
+
+def unrelated_variable():
+    thinking_level = "high"  # nom volontairement proche, mais PAS "reasoning"
+    return thinking_level

@@ -1,0 +1,50 @@
+schema: kb.proposal.v1
+status: PROPOSED
+proposal_id: lesson.asset.chest_exige_declaration_variantes
+origine: asset_library_v1 — scripts/forge/asset_producer/analyze_batch.py
+statement: 'Lecon tiree du lot ''props3d-2026-08-06'' sur les assets de type ''chest''
+  : Les specs de type ''chest'' ne declarent pas leurs etats mutuellement exclusifs
+  en amont ; le blocage arrive donc APRES production, quand un humain doit trancher.'
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-asset-chest-exige-declaration-variantes
+  kind: pattern
+  function: Les specs de type 'chest' ne declarent pas leurs etats mutuellement exclusifs
+    en amont ; le blocage arrive donc APRES production, quand un humain doit trancher.
+  source: ORIGINAL — aucune inspiration externe citee — lecon Forge (analyze_batch)
+  provenance_url: null
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - generic
+  invariants:
+  - Exiger `variants` non vide dans la spec AVANT production, pour que le besoin de
+    recensement soit connu d'avance.
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+preuve:
+  batch_id: props3d-2026-08-06
+  asset_type: chest
+  defauts_detectes:
+  - oracle: scripts/forge/asset_geometry/oracle.py
+    check: all_meshes_declared
+    verdict: BLOCKED
+    assets:
+    - gen_chest_01
+    detail: 1/1 asset(s) de type 'chest' ont exige un manifeste HumanGate avant de
+      passer
+  verification_mecanique:
+    kind: dispatch_blocked
+    archetype: chest
+    expected_reason: SPEC_VIOLATES_BATCH_CONSTRAINT
+  attendu: BLOCKED · SPEC_VIOLATES_BATCH_CONSTRAINT
+  lesson_ref: lab/forge_evidence/asset_lessons/asset.chest_exige_declaration_variantes.json
+ratification:
+  statut: EN_ATTENTE
+  decideur: null
+  commande: python -m scripts.forge.kb_proposal --apply lesson.asset.chest_exige_declaration_variantes
+    --ratifie-par "<humain>"

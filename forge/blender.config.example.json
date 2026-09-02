@@ -1,0 +1,5 @@
+{
+  "_comment": "Copier en blender.config.json (gitignore) et adapter au poste. Le chemin est celui du binaire DANS la distro WSL, pas un chemin Windows.",
+  "blender_bin": "/home/<utilisateur>/3d-pipeline/blender/blender-<version>-linux-x64/blender",
+  "wsl_distro": "Ubuntu-24.04"
+}

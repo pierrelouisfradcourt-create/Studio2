@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "game_id": "breakout_v2",
+  "status": "NON_RATIFIEE_PROPOSITION",
+  "source_of_truth": "docs/forge/GENRE_BIBLE_BREAKOUT_V1_PROPOSED.md",
+  "genre_rules": [
+    {
+      "id": "genre.breakout.continuous_ball_motion",
+      "statement": "La balle est en mouvement continu permanent (vitesse constante ou quasi-constante) ; le joueur n'agit jamais directement sur la balle, seulement sur la raquette.",
+      "applies_to_wiremap_line": "core.physics"
+    },
+    {
+      "id": "genre.breakout.paddle_only_control",
+      "statement": "La seule action du joueur est de déplacer la raquette horizontalement, bornée aux limites du terrain.",
+      "applies_to_wiremap_line": "core.input"
+    },
+    {
+      "id": "genre.breakout.impact_point_deflection",
+      "statement": "L'angle de rebond de la balle sur la raquette dépend du point d'impact relatif (centre = rebond vertical, bords = déviation croissante) — mécanique distinctive du genre depuis Arkanoid, citée en germe dans le charter web 2026-07-11.",
+      "applies_to_wiremap_line": "core.paddle_rebound"
+    },
+    {
+      "id": "genre.breakout.brick_destruction_on_contact",
+      "statement": "Une brique touchée par la balle est détruite au contact (V1 : un seul coup par brique, pas de brique multi-hits) et la balle rebondit selon la face touchée.",
+      "applies_to_wiremap_line": "core.brick_collision"
+    },
+    {
+      "id": "genre.breakout.wall_reflection",
+      "statement": "La balle rebondit sur les murs latéraux et le plafond par inversion de la composante de vitesse perpendiculaire au mur touché.",
+      "applies_to_wiremap_line": "core.wall_collision"
+    },
+    {
+      "id": "genre.breakout.life_loss_on_drop",
+      "statement": "Une vie est perdue quand la balle franchit la limite basse du terrain sans avoir été interceptée par la raquette ; une nouvelle balle est servie si des vies restent.",
+      "applies_to_wiremap_line": "core.life_loss"
+    },
+    {
+      "id": "genre.breakout.victory_condition_all_bricks",
+      "statement": "La victoire est atteinte quand toutes les briques cassables du niveau sont détruites.",
+      "applies_to_wiremap_line": "core.end"
+    },
+    {
+      "id": "genre.breakout.defeat_condition_zero_lives",
+      "statement": "La défaite est atteinte quand le nombre de vies restantes atteint zéro après une perte de balle.",
+      "applies_to_wiremap_line": "core.end"
+    },
+    {
+      "id": "genre.breakout.seeded_level_layout",
+      "statement": "La disposition des briques d'un niveau est déterminée par une graine, reproductible à seed identique — condition héritée du charter web 2026-07-11, pas observée dans une source de genre externe à ce stade.",
+      "applies_to_wiremap_line": "core.level_generation"
+    },
+    {
+      "id": "genre.breakout.session_short_focused",
+      "statement": "Une partie individuelle (un niveau, une vie) dure typiquement de l'ordre de la minute — non chiffré par une source HTTP consultée, proposition non ratifiable en l'état.",
+      "applies_to_wiremap_line": "session.pacing"
+    }
+  ]
+}

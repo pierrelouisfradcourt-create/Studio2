@@ -1,0 +1,105 @@
+# BREAKOUT_V2 — contrat de jeu (budget). Campagne Forge V2 test-de-pipeline.
+# Format : scripts/forge/standard/SCHEMA.md §1 — gabarit games/snake/00_CHARTER/game_contract.yaml
+#
+# IDENTITÉ : game_id = breakout_v2 (arbitrage orchestrateur 2026-07-31, voir
+# lab/forge_runs/breakout_v2/charter.yaml provenance.identite_projet) — jamais 'breakout',
+# pour ne pas collisionner avec games/breakout/ (référence JS 2026-07-11, intangible).
+#
+# PROVENANCE : transcription de l'esquisse §5 de docs/forge/BREAKOUT_V2_CHARTER_PROPOSED.md,
+# avec game_id et proof.mutation.cwd corrigés vers breakout_v2. Budget honnête (reuses/adds
+# vides) et valeurs A_CALIBRER conservées TELLES QUELLES — aucune valeur mesurée inventée.
+#
+# GAP node : COMBLÉ. L'esquisse §5 du charter proposé omettait le champ `node` (int) exigé
+# par le schéma fermé (check_contract_completeness échouait — cause classée TRANSMISSION,
+# corrigée sur le livrable, pas sur l'oracle). node: 3 posé par arbitrage orchestrateur
+# 2026-07-31 (précédent mécanique Pong=1/Snake=2), RATIFIE_GATE_2026-07-31 (« GATES
+# VALIDÉES », charter révision 3). check_contract_completeness re-exécuté : passed=True.
+
+schema_version: 1
+game_id: breakout_v2
+# node: 3 — ARBITRAGE_ORCHESTRATEUR_2026-07-31, RATIFIE_GATE_2026-07-31 (« GATES VALIDÉES »,
+# charter révision 3) : suit le précédent MÉCANIQUE de capabilities.yaml (« apportées par
+# PONG (noeud 1) / SNAKE (noeud 2) »), Breakout désigné par Pierre comme campagne suivante.
+# L'arbitrage du curriculum FAISANT FOI (Détail H vs CURRICULUM_JEUX_v1) reste un chantier
+# distinct — cette valeur suit l'arbre de fait, pas la table non ratifiée.
+node: 3
+runtimes: [rules, godot]
+
+budget:
+  # reuses: VIDE. Vérifié [M] dans le charter proposé : la seule brique Godot du catalogue
+  # tier=validated ou candidate est sys-grid-nav-m01 (grid_nav.gd, navigation sur grille
+  # discrète) — sans application à une physique continue de balle/raquette. games/pong/
+  # (Concept-only, canvas JS) et games/breakout/ (Concept-only, canvas JS) ne sont PAS des
+  # bibliothèques Godot validées. Déclarer un reuse ici sans brique réelle en bibliothèque
+  # validée ferait échouer le volet budget (même règle que Snake).
+  reuses: []
+  # adds: VIDE. Ce build ne PROMET aucun dépôt en bibliothèque — cohérent avec Snake (« pas
+  # d'extension d'infrastructure » tant qu'aucune brique n'est mesurée en usage réel). Si le
+  # forgeron juge qu'un système (ex. calcul d'angle de rebond réutilisable) mérite d'être
+  # légué, le budget le BLOQUE et le remonte — comportement voulu, pas un échec.
+  adds: []
+
+assets:
+  # Aucun asset visuel externe prévu (rendu par primitives du moteur). core.audio DEFERRED,
+  # decider: pierre — RATIFIE_GATE_2026-07-31 (« GATES VALIDÉES », charter révision 3,
+  # précédent Snake). Si Pierre ratifie un jour un adaptateur audio, ce bloc devra être
+  # révisé avant le s9 concerné pour déclarer le plan (cc0 ou generated), jamais laissé en
+  # 'none' (refus mécanique du standard).
+  plan: cc0   # valable UNIQUEMENT si aucun asset audio n'est ratifié ; à revoir sinon
+
+# =====================================================================================
+# DESCRIPTEUR DE PREUVE — contrat docs/forge/CONTRAT_PREUVE_MUTATION_V1.md (FIGÉ).
+# =====================================================================================
+proof:
+  schema_version: 1
+  runtime: godot
+
+  mutation:
+    # Catégories à confirmer contre la wiremap RÉELLE une fois posée (règle de forme 4 du
+    # contrat : une catégorie ni jugée ni exclue est un BLOCKED). Valeurs ci-dessous sont
+    # une PROPOSITION calquée sur Snake, à vérifier catégorie par catégorie au moment du gel
+    # de wiremap — ne pas les copier aveuglément si la wiremap réelle diffère.
+    categories_mutables: [system]
+    categories_exclues:
+      - system.adapter        # rendu/runtime -> oracle produit, pas mutation (même règle que Snake)
+      - test.unit
+      - test.oracle
+      - godot.project_root
+      - godot.project_tests
+      # Ajoutees le 2026-08-17 (GO Pierre). PREVENTIF ici : la wiremap de breakout_v2
+      # n'emploie encore NI l'une NI l'autre, donc son run passe aujourd'hui. Mais la meme
+      # omission a bloque tetris et bomberman_3d des que leur wiremap a adopte ces categories
+      # — la regression etait ARMEE ici aussi, en attente d'une carte enrichie.
+      # EXCLUES : ce n'est pas du code (meme critere que les lignes ci-dessus).
+      - reference.observation # GAME_REFERENCE/*.md + observation_manifest.json : documentation
+      - asset.mesh            # 04_ASSETS/meshes/*.glb + *.import : binaires, rien a muter
+
+    command: ["<bin:godot>", "--headless", "--path", ".", "--script", "res://tests/run_tests.gd"]
+    cwd: "games/breakout_v2"
+    binary_ref: godot
+    expects_exit_zero: true
+
+    budget:
+      # NON CALIBRÉ — Snake avait mesuré 64 mutants réels à 0,27 s/exécution avant de fixer
+      # ces marges. Breakout_v2 n'a AUCUNE mesure équivalente : ces valeurs sont un point de
+      # départ [H], PAS une valeur ratifiée. À recalibrer sur mesure réelle avant s9, pas
+      # après un premier dépassement silencieux.
+      max_mutants: 200          # A_CALIBRER — repris de Snake sans mesure Breakout_v2
+      timeout_per_mutant_s: 30  # A_CALIBRER
+      total_timeout_s: 900      # A_CALIBRER
+      cost_class: engine
+
+    seals:
+      wrapper: []
+      test_scripts: ["tests/run_tests.gd"]
+
+  solvability:
+    entry: "solvability.gd"
+    # max_ticks : Snake avait mesuré une PARTIE GAGNÉE entre 266 et 417 ticks, et découvert
+    # que la valeur par défaut historique (200) produisait un FAUX NÉGATIF (0/50). Breakout_v2
+    # n'a AUCUNE mesure équivalente : la valeur ci-dessous est un point de départ large [H],
+    # à ne jamais présenter comme calibrée avant une mesure réelle sur le bot d'interception
+    # défini au document de campagne §3.
+    max_ticks: 10000            # A_CALIBRER — pas de mesure Breakout_v2, marge large volontaire
+    trials: 50                  # repris de Snake par cohérence de méthode, pas par mesure
+    trial_timeout_ms: 60000

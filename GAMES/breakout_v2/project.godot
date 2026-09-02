@@ -1,0 +1,17 @@
+; project.godot — configuration du projet Godot (categorie godot.project_root).
+; Point d'entree du jeu : main_scene = res://main.tscn (POINT DUR #5 du charter — le projet
+; DOIT demarrer). Rendu par primitives du moteur, zero asset importe. Hors-ligne, entree clavier.
+
+config_version=5
+
+[application]
+
+config/name="Breakout V2"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.6")
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=480
+window/stretch/mode="canvas_items"

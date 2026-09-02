@@ -1,0 +1,435 @@
+{
+ "schema_version": 1,
+ "nodes": [
+  {
+   "mutation_id": "M-ws1",
+   "root_problem_ids": [
+    "PROMPT_FIELD_OMISSION"
+   ],
+   "observed_effects": [
+    "durcir un champ pousse l omission sur un autre champ non enumere"
+   ],
+   "risks": [
+    "aucune mesure du cout en tokens"
+   ],
+   "evidence_refs": []
+  },
+  {
+   "mutation_id": "M-ws2",
+   "root_problem_ids": [
+    "PROMPT_FIELD_OMISSION"
+   ],
+   "observed_effects": [
+    "un exemple de valeur dans un prompt est recopie tel quel par le modele"
+   ],
+   "risks": [],
+   "evidence_refs": []
+  },
+  {
+   "mutation_id": "M-ws3",
+   "root_problem_ids": [
+    "PROMPT_FIELD_OMISSION"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "le champ qui saute est celui qui SUIT un bloc imbrique long — hypothese non testee isolement"
+   ],
+   "evidence_refs": []
+  },
+  {
+   "mutation_id": "M-retry-identique",
+   "root_problem_ids": [
+    "REPAIR_NON_CONVERGENCE"
+   ],
+   "observed_effects": [
+    "double le cout sans changer le resultat"
+   ],
+   "risks": [
+    "non teste a temperature > 0"
+   ],
+   "evidence_refs": []
+  },
+  {
+   "mutation_id": "M-rep-gabarit-vide",
+   "root_problem_ids": [
+    "REPAIR_NON_CONVERGENCE"
+   ],
+   "observed_effects": [
+    "toute valeur montree dans un prompt peut etre recopiee telle quelle"
+   ],
+   "risks": [],
+   "evidence_refs": [
+    "forge/repair_loop.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-rep-forme-fictive",
+   "root_problem_ids": [
+    "REPAIR_NON_CONVERGENCE"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "mesure sur un seul jeu"
+   ],
+   "evidence_refs": [
+    "forge/repair_loop.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "REPAIR-LOOP-V1",
+   "root_problem_ids": [
+    "REPAIR_NON_CONVERGENCE"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "la boucle converge vers l ORACLE, pas vers la qualite : un oracle de non-vacuite fait ecrire des valeurs non vides, pas justes"
+   ],
+   "evidence_refs": [
+    "forge/repair_loop.test.mjs",
+    "forge/repair_step.test.mjs",
+    "forge/tests/test_run_real_repair_wiring.py",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-conv-decroissance-stricte",
+   "root_problem_ids": [
+    "REPAIR_NON_CONVERGENCE"
+   ],
+   "observed_effects": [
+    "un oracle qui remonte ses problemes UN PAR UN ferait stopper la boucle des le 1er cycle"
+   ],
+   "risks": [
+    "aucun oracle du depot ne remonte ses problemes un par un — non verifie sur un oracle futur"
+   ],
+   "evidence_refs": [
+    "forge/repair_loop.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-rep-par-champ",
+   "root_problem_ids": [
+    "REPAIR_NON_CONVERGENCE"
+   ],
+   "observed_effects": [
+    "le nombre d appels croit avec le nombre de champs fautifs"
+   ],
+   "risks": [],
+   "evidence_refs": [
+    "forge/repair_loop.test.mjs",
+    "forge/repair_step.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "Q1-DISCRIMINANCE",
+   "root_problem_ids": [
+    "ORACLE_FALSE_NEGATIVE"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "ne compare que le MEME champ entre entrees : une contamination inter-champs lui est invisible (comblee par M-Q5-A)"
+   ],
+   "evidence_refs": [
+    "EVIDENCE/bundles/Q1-DISCRIMINANCE/worldscan_before.json",
+    "EVIDENCE/bundles/Q1-DISCRIMINANCE/worldscan_after.json",
+    "EVIDENCE/bundles/Q1-DISCRIMINANCE/metrics.json",
+    "forge/oracle_quality.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "Q2-LANGUE",
+   "root_problem_ids": [
+    "ORACLE_FALSE_NEGATIVE"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "toute phrase de moins de 6 mots — c est-a-dire exactement le cas qui a motive la regle"
+   ],
+   "evidence_refs": [
+    "forge/oracle_quality.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "Q3-RECOPIE",
+   "root_problem_ids": [
+    "ORACLE_FALSE_NEGATIVE"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "seuil calibre sur n=15 exigences, toutes issues d un seul modele"
+   ],
+   "evidence_refs": [
+    "forge/oracle_quality.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-Q4-ANCRAGE",
+   "root_problem_ids": [
+    "ORACLE_FALSE_NEGATIVE"
+   ],
+   "observed_effects": [
+    "bruit sur les champs sains"
+   ],
+   "risks": [],
+   "evidence_refs": [
+    "EVIDENCE/bundles/M-Q4-ANCRAGE/metrics.json",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-Q5-A",
+   "root_problem_ids": [
+    "DEFECT_DISPLACEMENT"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "ignore volontairement les coincidences INTRA-entree (a Bomberman le but du joueur EST la condition de victoire) — et c est precisement la que le defaut a migre ensuite, jaccard 1,000, sans qu on puisse trancher mecaniquement entre coincidence legitime et 4e deplacement"
+   ],
+   "evidence_refs": [
+    "EVIDENCE/bundles/M-Q5-A/worldscan_before.json",
+    "EVIDENCE/bundles/M-Q5-A/worldscan_after.json",
+    "EVIDENCE/bundles/M-Q5-A/metrics.json",
+    "EVIDENCE/bundles/M-Q5-A/diff.json",
+    "forge/cross_field_quality.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-Q5-B",
+   "root_problem_ids": [
+    "DEFECT_DISPLACEMENT"
+   ],
+   "observed_effects": [],
+   "risks": [],
+   "evidence_refs": [
+    "EVIDENCE/bundles/M-Q5-A/worldscan_before.json",
+    "forge/cross_field_quality.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-Q5-C",
+   "root_problem_ids": [
+    "DEFECT_DISPLACEMENT"
+   ],
+   "observed_effects": [],
+   "risks": [],
+   "evidence_refs": [
+    "EVIDENCE/bundles/M-Q5-A/worldscan_before.json",
+    "forge/cross_field_quality.test.mjs"
+   ]
+  },
+  {
+   "mutation_id": "M-Q5-D",
+   "root_problem_ids": [
+    "DEFECT_DISPLACEMENT"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "la liste de paires incompatibles n a ete validee sur aucun corpus reel"
+   ],
+   "evidence_refs": [
+    "EVIDENCE/bundles/M-Q5-A/worldscan_before.json",
+    "forge/cross_field_quality.test.mjs"
+   ]
+  },
+  {
+   "mutation_id": "M-schema-artefacts-amont",
+   "root_problem_ids": [],
+   "observed_effects": [
+    "3 tests existants ont du changer de decor : ils utilisaient s1/s3 comme etape neutre"
+   ],
+   "risks": [
+    "le chemin PANEL de s1-prisme ne passe pas par la materialisation : lance par le panel, l etape n ecrit toujours pas prisme.json"
+   ],
+   "evidence_refs": [
+    "forge/tests/test_run_real_upstream_artifacts.py",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-schema-claim",
+   "root_problem_ids": [],
+   "observed_effects": [],
+   "risks": [
+    "la regle ne rejette que l egalite EXACTE : une quasi-recopie a 0,526 passe (comblee partiellement par Q3-RECOPIE)"
+   ],
+   "evidence_refs": [
+    "forge/upstream_schema.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-workflow-oracle-moment",
+   "root_problem_ids": [
+    "ORACLE_FALSE_NEGATIVE"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "aucun code Python n executait les 5 oracles amont avant le cablage de la boucle de reparation"
+   ],
+   "evidence_refs": [
+    "forge/check_blueprint_contract.test.mjs",
+    "forge/check_wiremap_contract.test.mjs",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-workflow-capteur-pas-juge",
+   "root_problem_ids": [],
+   "observed_effects": [],
+   "risks": [
+    "personne ne consomme encore le bloc de mesure attache au resultat d etape"
+   ],
+   "evidence_refs": [
+    "forge/tests/test_run_real_repair_wiring.py",
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-model-rappel-vs-transformation",
+   "root_problem_ids": [],
+   "observed_effects": [],
+   "risks": [
+    "n=3 jeux, 1 execution par cellule : la tendance est nette, la significativite ne l est pas",
+    "aucune baseline Claude sous contrat identique : la comparaison Claude/Qwen reste NON COMPARABLE"
+   ],
+   "evidence_refs": [
+    "studio_brain/00_CURRENT_CONTEXT.md"
+   ]
+  },
+  {
+   "mutation_id": "M-ws4",
+   "root_problem_ids": [
+    "PROMPT_FIELD_OMISSION"
+   ],
+   "observed_effects": [
+    "H2 et/ou H3 coutent le second jeu : H1 seule (M-ws5) atteint 0,889 la ou H1+H2+H3 plafonne a 0,5"
+   ],
+   "risks": [
+    "un seul run : la perte du 2e jeu n est pas prouvee systematique"
+   ],
+   "evidence_refs": [
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/before.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/after.json"
+   ]
+  },
+  {
+   "mutation_id": "M-ws5",
+   "root_problem_ids": [
+    "PROMPT_FIELD_OMISSION"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "un seul run",
+    "2 champs sur 18 restent vides : l oracle ne passe pas"
+   ],
+   "evidence_refs": [
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/before.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/after.json"
+   ]
+  },
+  {
+   "mutation_id": "M-ws6",
+   "root_problem_ids": [
+    "PROMPT_FIELD_OMISSION"
+   ],
+   "observed_effects": [],
+   "risks": [
+    "Les valeurs ecrites sont pauvres : « I have enjoyed playing Cookie Clicker and found it to be a delightful experience. » ne repond pas a « qu est-ce qui fait REVENIR le joueur », et l anglais n a pas ete signale. Tous les criteres declares sont pourtant satisfaits : la composition ferme le trou MESURE, pas le trou reel.",
+    "un seul run"
+   ],
+   "evidence_refs": [
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/before.json",
+    "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/after.json"
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "parent": "M-ws1",
+   "child": "M-ws2",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "M-ws2",
+   "child": "M-ws3",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "M-rep-gabarit-vide",
+   "child": "M-rep-forme-fictive",
+   "relation": "replaces"
+  },
+  {
+   "parent": "M-retry-identique",
+   "child": "REPAIR-LOOP-V1",
+   "relation": "contradicts"
+  },
+  {
+   "parent": "REPAIR-LOOP-V1",
+   "child": "M-conv-decroissance-stricte",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "REPAIR-LOOP-V1",
+   "child": "M-rep-par-champ",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "Q1-DISCRIMINANCE",
+   "child": "M-Q4-ANCRAGE",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "Q1-DISCRIMINANCE",
+   "child": "M-Q5-A",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "M-Q5-A",
+   "child": "M-Q5-B",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "M-Q5-A",
+   "child": "M-Q5-C",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "M-Q5-A",
+   "child": "M-Q5-D",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "M-ws3",
+   "child": "M-ws4",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "M-ws4",
+   "child": "M-ws5",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "M-ws5",
+   "child": "M-ws6",
+   "relation": "derived_from"
+  },
+  {
+   "parent": "REPAIR-LOOP-V1",
+   "child": "M-ws6",
+   "relation": "derived_from"
+  }
+ ]
+}

@@ -1,0 +1,27 @@
+{
+  "_comment": "CONTROLE ANTI-THEATRE (contrat §6). Brique volontairement MAL INDEXEE. Le validateur DOIT la rejeter. Si ce catalogue passe, le tier 'validated' est un tampon. Fichier reference: knowledge_base/systems/combat/damage_floor.mjs (reel), mais sha256 FAUX + licence GPL en kind:system + tier validated SANS proof_of_use + dependance inconnue.",
+  "catalog_version": 1,
+  "entries": [
+    {
+      "entry_type": "brick",
+      "brick_id": "sys-control-broken",
+      "kind": "system",
+      "function": "brique de controle deliberement non conforme",
+      "source": "controle anti-theatre",
+      "provenance_url": null,
+      "license": "GPL-3.0-only",
+      "runtime": "html",
+      "dependencies": ["sys-inexistant"],
+      "parameters": {},
+      "genre_compatible": ["tactical"],
+      "invariants": ["cette brique doit etre rejetee"],
+      "proof_of_use": null,
+      "tier": "validated",
+      "path": "knowledge_base/systems/combat/damage_floor.mjs",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "tests": "knowledge_base/systems/combat/damage_floor.test.mjs",
+      "advisory_only": false,
+      "affordances": {}
+    }
+  ]
+}

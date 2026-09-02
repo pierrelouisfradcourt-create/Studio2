@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "game_id": "tetris",
+  "status": "NON_RATIFIEE_PROPOSITION",
+  "source_of_truth": "docs/forge/GENRE_BIBLE_TETRIS_V1_PROPOSED.md",
+  "genre_rules": [
+    {
+      "id": "genre.tetris.discrete_gravity",
+      "statement": "La piece active descend d'exactement une case a intervalle regulier, sans intervention du joueur.",
+      "applies_to_wiremap_line": "core.gravity"
+    },
+    {
+      "id": "genre.tetris.irreversible_stack",
+      "statement": "Une piece figee ne bouge plus jamais. Aucune action ne peut la deplacer, la retirer ou l'annuler.",
+      "applies_to_wiremap_line": "core.lock_rules"
+    },
+    {
+      "id": "genre.tetris.line_clear_compaction",
+      "statement": "Une rangee entierement remplie disparait et tout ce qui est au-dessus descend d'autant. C'est le SEUL moyen de liberer de l'espace.",
+      "applies_to_wiremap_line": "core.line_clear"
+    },
+    {
+      "id": "genre.tetris.seven_tetrominoes",
+      "statement": "L'ensemble des pieces est exactement les 7 tetrominos (I, O, T, S, Z, J, L). Aucune autre forme n'apparait.",
+      "applies_to_wiremap_line": "core.piece_bag"
+    },
+    {
+      "id": "genre.tetris.rotation_bounded_by_terrain",
+      "statement": "Une rotation dont la position resultante collisionne est refusee. Le terrain contraint la rotation ; la rotation ne deforme jamais le terrain.",
+      "applies_to_wiremap_line": "core.rotation_rules"
+    },
+    {
+      "id": "genre.tetris.player_controls_active_piece_only",
+      "statement": "Le joueur n'agit que sur la piece active : translation horizontale, rotation, acceleration de chute. Jamais sur la pile.",
+      "applies_to_wiremap_line": "core.input_rules"
+    },
+    {
+      "id": "genre.tetris.loss_by_blocking",
+      "statement": "La partie se termine lorsqu'une piece entrante ne peut pas apparaitre legalement. La defaite est une consequence de l'etat, jamais un compteur qui expire.",
+      "applies_to_wiremap_line": "core.game_state"
+    },
+    {
+      "id": "genre.tetris.no_victory_in_marathon",
+      "statement": "Il n'existe pas d'etat gagne en mode marathon. Toute partie se termine par une perte ou un plafond. Cette asymetrie est constitutive, pas un manque.",
+      "applies_to_wiremap_line": "core.game_state"
+    },
+    {
+      "id": "genre.tetris.superlinear_multi_clear_reward",
+      "statement": "Nettoyer N lignes simultanement rapporte strictement plus PAR LIGNE que de les nettoyer separement. Le rapport cree la tension ; sa valeur est un equilibrage.",
+      "applies_to_wiremap_line": "core.scoring"
+    },
+    {
+      "id": "genre.tetris.full_information_single_screen",
+      "statement": "L'etat necessaire a la decision (terrain, piece active, apercu, score) est visible en permanence, sans action du joueur.",
+      "applies_to_wiremap_line": "render.playfield"
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/asset_geometry/report_schema.json",
+  "title": "ASSET_GEOMETRY_REPORT v1.0",
+  "description": "Rapport de l'Asset Geometry Oracle V1. Produit par oracle.py a partir d'un measurement produit par measure.py. Vocabulaire de verdict ferme OK/FAIL/BLOCKED -- REVIEW_REQUIRED n'existe pas (ratifie Pierre 2026-08-06).",
+  "type": "object",
+  "required": [
+    "schema_version", "asset_file", "sha256", "verdict", "checks", "census",
+    "anchor_basis", "measurement_space", "skin_evaluated", "up_axis"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "asset_file": { "type": "string", "minLength": 1 },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Hash de l'asset mesure. Lie le rapport a l'octet pres."
+    },
+    "verdict": {
+      "enum": ["OK", "FAIL", "BLOCKED"],
+      "description": "OK = tous les checks passent. FAIL = defaut geometrique MESURE. BLOCKED = bien forme, aucune decision automatique possible -> HumanGate."
+    },
+    "reason": {
+      "type": ["string", "null"],
+      "description": "Porte la nuance que le vocabulaire ferme n'exprime pas (ex. SECONDARY_GEOMETRY_WITHOUT_CONTRACT, BLENDER_EXECUTOR_UNAVAILABLE)."
+    },
+    "up_axis": {
+      "const": "Y",
+      "description": "glTF est Y-up par specification, comme Godot. Blender affiche du Z-up parce que son importeur convertit."
+    },
+    "measurement_space": {
+      "const": "gltf_bind_pose",
+      "description": "Espace de mesure. Limite declaree, jamais cachee."
+    },
+    "skin_evaluated": {
+      "const": false,
+      "description": "La mesure n'evalue pas le skinning. Exacte pour min_y sur le corpus de reference, divergence <=9% sur max_y."
+    },
+    "anchor_basis": {
+      "type": "string",
+      "description": "Sur quelle geometrie portent les checks d'ancrage (MAIN+SECONDARY hors colliders, ou ALL_NODES en cas degrade)."
+    },
+    "main_geometry_undetermined": {
+      "type": "boolean",
+      "description": "true = aucun MAIN identifie, repli sur tous les noeuds. Cas degrade JAMAIS silencieux."
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "verdict", "detail"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "enum": [
+              "asset_readable", "producer_environment", "manifest_present",
+              "manifest_stale", "ground_contact", "no_buried_geometry",
+              "pivot_at_base", "scale_within_band", "all_meshes_declared",
+              "declaration_mismatch"
+            ]
+          },
+          "verdict": { "enum": ["OK", "FAIL", "BLOCKED"] },
+          "detail": { "type": "string" },
+          "measured": {},
+          "threshold": {},
+          "threshold_source": {
+            "type": ["string", "null"],
+            "enum": ["rules.yaml", "asset_request", "manifest", null],
+            "description": "Provenance du seuil effectif. Aucun seuil n'est implicite."
+          },
+          "expression": {
+            "type": ["string", "null"],
+            "description": "Persistence lineage : la preuve s'ancre sur une EXPRESSION, pas sur un numero de ligne. La ligne n'est qu'un index de recherche."
+          }
+        }
+      }
+    },
+    "census": {
+      "type": "array",
+      "description": "Recensement de CHAQUE noeud mesh. L'oracle ne nettoie jamais, ne supprime jamais, n'exclut jamais en silence.",
+      "items": {
+        "type": "object",
+        "required": ["name", "vertices", "classification"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "vertices": { "type": "integer", "minimum": 0 },
+          "share": { "type": "number" },
+          "has_material": { "type": "boolean" },
+          "is_skinned": { "type": "boolean" },
+          "parent": { "type": ["string", "null"] },
+          "min_y": { "type": "number" },
+          "max_y": { "type": "number" },
+          "classification": {
+            "enum": ["MAIN", "SECONDARY", "UNKNOWN"],
+            "description": "UNKNOWN = geometrie presente non expliquee -> force une decision humaine."
+          },
+          "declared_role": {
+            "type": ["string", "null"],
+            "enum": ["main", "collider", "socket", "variant", "lod", "fx", "decor", null]
+          }
+        }
+      }
+    },
+    "fog": {
+      "type": ["string", "null"],
+      "description": "Ce que la mesure mecanique n'evalue PAS. Une resolution mecanique n'est jamais un satisfecit visuel."
+    }
+  }
+}

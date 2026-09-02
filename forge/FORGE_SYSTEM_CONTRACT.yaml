@@ -1,0 +1,166 @@
+# CONTRAT DE SYSTÈME — Forge
+#
+# Date : 2026-07-22 · Source : formulation de Pierre, session Opus du 2026-07-22.
+# Statut : PROPOSED — ratification Pierre requise. claim_verdict: NO_CLAIM_ALLOWED.
+#
+# CE QUE CE DOCUMENT N'EST PAS : un contrat d'agent. Ceux-là vivent dans
+# `forge/contracts/<etape>.yaml` (17 champs, validés par la porte) et décrivent
+# COMMENT piloter un agent. Celui-ci décrit ce qu'EST la Forge et ce qui ne doit jamais
+# s'y dédoubler.
+
+identite:
+  nom: Forge
+  principe: >-
+    Forge est un système UNIQUE exposé par plusieurs surfaces. Le skill est l'interface de
+    pilotage. Les composants runtime sont les mécanismes d'exécution — PAS une seconde
+    Forge. Les règles métier ont une source canonique unique et ne doivent jamais être
+    réécrites en parallèle.
+  correction_de_nommage: >-
+    Il n'existe pas et il n'existera pas de point d'entrée `./forge`. Créer un alias
+    fabriquerait une seconde identité, c'est-à-dire exactement le problème que ce contrat
+    existe pour empêcher. Un seul Forge ; plusieurs composants.
+
+surfaces:
+  pilotage:
+    fichier: .claude/skills/forge/skill.md
+    role: >-
+      Interface de pilotage. Décide, aiguille, arbitre, remonte à HumanGate. Elle CITE les
+      règles canoniques ; elle ne les réécrit jamais.
+  execution:
+    fichiers:
+      - forge/run_real.py      # exécuteur réel : lance chaque étape LLM en sous-processus
+      - forge/driver.py        # boucle, renvois, escalade, agrégation des oracles
+      - forge/dispatch.py      # la porte : valide le contrat, fabrique le payload borné
+    role: >-
+      Mécanismes d'exécution, internes au système. Ils IMPLÉMENTENT les règles canoniques ;
+      ils n'en inventent aucune.
+
+# ------------------------------------------------------------------------------------
+# LE CŒUR : chaque règle métier a UNE source, nommée. Ailleurs, on l'appelle ou on la cite.
+# ------------------------------------------------------------------------------------
+regles_canoniques:
+
+  - regle: escalade de tier (haiku -> sonnet -> opus, bornée)
+    source: forge/escalate.py::escalation_decision
+    appelee_par: [forge/driver.py::_maybe_escalate]
+    incident_fondateur: >-
+      Cette règle a existé en DEUX exemplaires : décrite en prose dans le skill, et
+      implémentée en code dans le driver. Le code contenait une garde `"s9-build" not in
+      self.order` qui rendait toute la boucle INERTE pour le profil `standard` — le skill
+      continuait de décrire une escalade qui ne tournait pas. Trouvé le 2026-07-22.
+
+  - regle: validation de contrat d'agent et fabrication du payload
+    source: forge/dispatch.py::prepare_dispatch
+    appelee_par: [forge/run_real.py, .claude/skills/forge/skill.md]
+
+  - regle: résolution rôle-de-capacité -> runtime (jamais de modèle en dur)
+    source: forge/contracts/roles.yaml
+    appelee_par: [forge/contract.py]
+
+  - regle: ordre des étapes et profils de chaîne
+    source: forge/dispatch.py::ORDER, PROFILES, order_for_profile
+
+  - regle: verdict signé et sa re-vérification
+    source: [forge/verdict.py, forge/verify_run.py]
+
+  - regle: oracles déterministes d'architecture et de wiremap
+    source: forge/static_oracles.py
+
+  - regle: oracles du STANDARD (complétude, budget, états, placement, index, collisions)
+    source: forge/standard_oracles.py
+    specification: forge/standard/SCHEMA.md
+
+  - regle: budget d'empilement (un seul système neuf par jeu)
+    source: forge/standard_oracles.py::check_budget
+    note: >-
+      `deposited_bricks` se calcule par DIFFÉRENTIEL du catalogue (instantané au démarrage
+      du run vs état à l'oracle), jamais depuis le budget déclaré — cette dernière forme est
+      une tautologie, corrigée le 2026-07-22.
+
+  - regle: décision de pool / re-tentative au même tier
+    source: forge/pool.py::pool_decision
+
+  - regle: télémétrie de run (tokens, durée, erreurs, correctifs)
+    source: forge/studio_link.py
+
+interdits:
+  - >-
+    Réécrire une règle canonique ailleurs que dans sa source — y compris **en prose** dans
+    le skill. Une prose qui décrit la règle EST une seconde implémentation : elle vieillit
+    séparément et personne ne voit la divergence.
+  - >-
+    Créer une identité concurrente (`./forge`, un second skill, un second driver).
+  - >-
+    Faire diverger silencieusement une règle entre pilotage et exécution.
+
+# ------------------------------------------------------------------------------------
+# CE QUI A LE DROIT DE DIFFÉRER — sinon le contrat est violé dès le premier jour
+# ------------------------------------------------------------------------------------
+mecanismes_specifiques:
+  principe: >-
+    Les RÈGLES sont identiques partout. Les MÉCANISMES diffèrent nécessairement d'une
+    surface à l'autre — c'est la raison même d'avoir plusieurs surfaces. Un mécanisme
+    spécifique est autorisé s'il est DÉCLARÉ ici. Non déclaré, il est une divergence.
+  declares:
+    - surface: pilotage
+      mecanisme: spawn via l'outil Agent ; aucun timeout couperet ; intervention humaine
+        possible en cours de run.
+    - surface: execution
+      mecanisme: spawn via sous-processus `claude -p` ; timeout dur par étape
+        (`--step-timeout`) ; aucune intervention possible une fois lancé.
+      fait_mesure: >-
+        Un sous-agent ne peut PAS spawner de sous-agent (`Agent is not a valid tool name`,
+        vérifié par absence du fichier de preuve le 2026-07-22). C'est pourquoi
+        l'automatisation passe par des sous-processus et non par l'outil Agent.
+
+# ------------------------------------------------------------------------------------
+# VÉRIFICATION — sans capteur, ce contrat est une couche de plus
+# ------------------------------------------------------------------------------------
+verification:
+  capteur: forge/contract_sync.py
+  point_entree: >-
+    python -m forge.contract_sync <repoRoot> [--json], cwd scripts/ — sortie machine
+    (--json) agrégée par forge/studio_selfaudit.mjs::auditContractSync, câblée
+    dans runSelfAudit et dans le tableau de faits docs/forge/STUDIO_STATUS.generated.md.
+  controle: >-
+    Pour chaque entrée de `regles_canoniques`, vérifier que le fichier de pilotage CITE le
+    symbole source (nom de module/fonction). Une règle décrite sans citation de sa source
+    est un drapeau : elle a été réécrite.
+  limite_declaree: >-
+    Ce contrôle détecte l'ABSENCE DE CITATION, pas la duplication sémantique. Une prose qui
+    cite correctement sa source tout en la contredisant passerait. Garantie partielle,
+    assumée comme telle — ne pas la présenter comme une preuve de non-divergence.
+
+# ------------------------------------------------------------------------------------
+# BOUCLE D'AMÉLIORATION — une seule, alimentée par les runs, appliquée au système entier
+# ------------------------------------------------------------------------------------
+boucle_amelioration:
+  principe: >-
+    Il n'existe qu'UNE boucle d'amélioration. Elle observe les runs, propose, valide par
+    preuve, applique une version. Interdit : une mémoire d'amélioration côté pilotage et
+    une autre côté exécution — ce serait la même divergence, un étage plus haut.
+  observer:
+    sources:
+      - EVIDENCE/runs/<run>/state.json          # tentatives, renvois, escalades, statuts
+      - EVIDENCE/bundles/forge_telemetry.jsonl # tokens par étape, durée
+      - EVIDENCE/runs/<run>/verdict.json        # verdict signé + flags HumanGate
+      - knowledge_base/learning_curve.jsonl      # reuse_ratio, itérations d'oracle
+  proposer:
+    portee: [regles canoniques, contrats d'agent, oracles, profils]
+  valider:
+    exige:
+      - une PREUVE qui a motivé le changement (sortie réelle, pas une impression)
+      - un contrôle de non-régression (la suite reste verte, les profils existants inchangés)
+      - que le changement soit montré EN TRAIN D'ÉCHOUER sur le cas qu'il prétend attraper
+  appliquer:
+    exige:
+      - >-
+        version incrémentée de ce contrat
+      - >-
+        entrée de journal : pourquoi · preuve · fichiers touchés · comment vérifier
+      - >-
+        retour arrière possible
+  autorite: >-
+    HumanGate (Pierre) décide. Toute écriture durable est propose-only jusqu'à ratification.
+
+version: 1

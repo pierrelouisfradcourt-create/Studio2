@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_barrel_01",
+  "archetype": "barrel",
+  "params": {
+    "size": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 0.9
+    },
+    "color": [
+      0.4,
+      0.3,
+      0.2,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_barrel_01"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 6400,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

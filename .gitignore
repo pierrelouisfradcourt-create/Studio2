@@ -1,0 +1,57 @@
+# .gitignore — Studio V2
+#
+# RÉCUPÉRÉ de V1 (`58095ba9`), pas réinventé — et RESTREINT aux surfaces qui existent en V2.
+# Les règles Rocky (`src/`, `ml/`, `bench/`), lane STUDIO et `lab/` ne sont PAS reprises : leurs
+# surfaces n'existent pas ici, et les importer réintroduirait V1 par la bande.
+#
+# ⚠ Ce fichier N'EST PAS un simple confort de dépôt : `forge.evidence_seal` s'en sert comme
+# CRITÈRE — une preuve n'est scellée que si elle est versionnable. Une règle manquante ici change
+# ce qui est reconnu comme preuve. Modifier ce fichier, c'est modifier un mécanisme de preuve.
+
+# --- Clé de signature : propre au poste, JAMAIS versionnée ---
+forge/.forge_key
+
+# --- Caches Python ---
+**/__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+venv/
+
+# --- Node ---
+node_modules/
+
+# --- Journaux : BRUIT par défaut (critère lu par evidence_seal) ---
+*.log
+# EXCEPTION reprise de V1 : ces journaux-là sont des PREUVES permanentes, pas du bruit.
+!knowledge_base/proofs/*.log
+
+# --- Configuration d'outil portant un chemin de poste PAR CONSTRUCTION ---
+# (`godot_bin.mjs`, `blender_bin.py`). Les GABARITS restent versionnés : sans eux, un poste
+# neuf devine la forme du fichier.
+# Pourquoi un motif et non une énumération : la règle V1 était écrite à la main, une ligne
+# par outil, et un troisième outil aurait fui par simple omission. Mais **un motif ne dit pas
+# QUI il protège** — les instances connues restent donc NOMMÉES ici, en commentaire :
+#   forge/godot.config.json · forge/blender.config.json
+forge/*.config.json
+!forge/*.config.example.json
+
+# --- Sorties de run régénérées, jamais du contenu à versionner ---
+EVIDENCE/runs/_orphan_context/
+/context/
+EVIDENCE/reports/*.tmp
+EVIDENCE/reports/*.txt
+EVIDENCE/reports/latest_*.json
+EVIDENCE/reports/selfaudit_last.json
+EVIDENCE/reports/observer/
+EVIDENCE/chains/output/
+EVIDENCE/chains/CHAIN_HISTORY.jsonl
+
+# --- Bruit de l'éditeur Godot (ratifié Pierre 2026-07-28, incident témoin Pong) ---
+# `.godot/` = cache d'import + shader cache Vulkan, régénéré à chaque ouverture.
+# `*.uid` = identifiants générés par Godot 4.4+. Aucun des deux n'est du contenu à versionner.
+# PORTÉE HONNÊTE : ceci élimine le BRUIT, il ne protège PAS `project.godot` d'un écrasement
+# par l'éditeur — c'est une dette distincte, héritée telle quelle de V1.
+.godot/
+*.uid
+**/.godot/editor/

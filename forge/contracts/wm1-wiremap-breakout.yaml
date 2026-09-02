@@ -1,0 +1,258 @@
+# Contrat d'agent Forge — mission WM1 : wiremap Breakout v2 (jumeau de wm1-wiremap-snake.yaml)
+# Schéma : forge/contracts/SCHEMA.md. Dispatch hors profil (allow_unprofiled assumé — le
+# régime STANDARD n'a pas d'étape wiremap native, même situation que Snake).
+# Contexte : docs/forge/BREAKOUT_V2_CAMPAIGN_PREP.md §2.3 (« Contrat wm1-wiremap-breakout —
+# n'existe pas, calqué sur wm1-wiremap-snake ... À répliquer à l'identique pour Breakout »),
+# docs/forge/BREAKOUT_V2_CHARTER_PROPOSED.md (charter + Genre Bible esquissée, encore PROPOSED).
+# Projet : breakout_v2 — jeu GAMES/breakout_v2/, run_dir EVIDENCE/runs/breakout_v2/. JAMAIS
+# GAMES/breakout/ ni EVIDENCE/runs/breakout/, qui sont la référence intangible (run navigateur
+# 2026-07-11) d'une expérience externe, lisible en CONCEPT uniquement, jamais éditée ni copiée
+# en CODE (JS→GDScript n'a aucun sens mécanique).
+# DIFFÉRENCE STRUCTURELLE ASSUMÉE vs Snake (à ne pas maquiller) : Breakout n'a NI run Prisme, NI
+# product_snapshot, NI design_review, NI World Scan HTTP-sourcé. Ce contrat en tire les
+# conséquences honnêtement dans `memoire`, `objectif` et `gardeFou` plutôt que de recopier
+# l'enum de rôles ou la source de discarded[] de Snake comme si elles s'appliquaient telles
+# quelles.
+
+role: >-
+  Cartographe du standard (mission WM1, jumeau Breakout de la mission M-G Snake). Point de vue
+  imposé : la wiremap est une CARTE À REMPLIR pour le forgeron — chaque exigence a une adresse,
+  un état attendu, une preuve attendue. Le builder n'aura pas le droit d'ajouter hors plan. Tu
+  produis la carte, tu ne codes rien.
+
+capability_role: wiremap
+
+exigences_cognitives: >-
+  Pensée structurelle stricte au schéma v2 du standard (systems[], lines[], discarded[]).
+  Chaque ligne traçable à sa source amont — mais la source amont de Breakout N'EST PAS celle de
+  Snake : aucune chaîne Prisme n'existe (pas de design_review, pas de merged_prisme, pas de
+  product_snapshot), donc aucune ligne ne peut citer un rôle control/gamedesign/archidepot/
+  gameplayprog — ces rôles N'EXISTENT PAS pour ce run et une ligne qui les invente falsifie sa
+  provenance. La seule source amont réelle est le charter lui-même (criteres_succes,
+  criteres_demo, actions_interdites, §3 « point dur » physique continue, parametres_de_design,
+  provenance par champ, question_ouverte_humangate) et le squelette gelé. Godot-first :
+  fichiers .gd, projet Godot propre, même discipline que Snake. Rigueur supplémentaire exigée
+  ici : Breakout est une physique CONTINUE (position/vitesse en flottants, angle de rebond
+  fonction du point d'impact) — les expected_proof ne tolèrent AUCUNE tautologie >=/<= là où le
+  charter exige une valeur stricte (angle de rebond sur 3 points d'échantillon nommés en
+  particulier).
+
+memoire: >-
+  Consomme une chaîne de conception VOLONTAIREMENT PLUS COURTE que Snake — fait à assumer, pas à
+  masquer. Snake disposait de : charter v2 + design_review v2 (23 décisions dont 6 rejets) +
+  merged_prisme v2 (coverage_by_role) + 2 product_snapshots (archidepot/gameplayprog) + Genre
+  Bible RATIFIÉE (World Scan HTTP-sourcé). Breakout ne dispose QUE d'un charter — encore
+  PROPOSED au moment de la rédaction de ce contrat (docs/forge/BREAKOUT_V2_CHARTER_PROPOSED.md),
+  matérialisé depuis en EVIDENCE/runs/breakout_v2/charter.yaml (transcription du PROPOSED,
+  encore non fermée par un dispatch s0-contrat réel — vérifie l'état exact au moment du
+  dispatch réel de CETTE étape, ne le suppose pas figé) — et d'une Genre Bible dédiée,
+  docs/forge/GENRE_BIBLE_BREAKOUT_V1_PROPOSED.md + GAMES/breakout_v2/01_DESIGN/genre_bible.json
+  (`status: NON_RATIFIEE_PROPOSITION`), gabarit de forme calqué sur Snake mais explicitement
+  non sourcée HTTP : un World Scan réel reste un PRÉREQUIS non fait avant ratification.
+  Conséquences directes pour cette wiremap :
+  (1) `source_role` NE PEUT PAS réutiliser l'enum de Snake (control/gamedesign/archidepot/
+  gameplayprog). Les seules valeurs légitimes se dérivent de `charter.provenance.*.type`, un
+  vocabulaire DIFFÉRENT de celui de Snake (constaté dans le charter proposé §`provenance`) :
+  `pierre` (type SOURCE_PIERRE_DIRECTE, ou `decider: pierre` d'une entrée de
+  question_ouverte_humangate), `cadrage` (type DECISION_DE_CADRAGE_TRACEE — ex. plateforme_
+  cible, perimetre_produit_minimal), `redacteur` (type PROPOSITION_REDACTEUR — l'auteur du
+  charter, PAS Pierre ; couvre notamment les 8 parametres_de_design, tous A_EQUILIBRER et non
+  ratifiés ici), `charter` (citation directe d'un critère sans entrée de provenance individuelle
+  — même usage que Snake). Liste ces valeurs observées dans un champ racine `roles_utilises`
+  comme Snake, pour ratification Pierre — et NOTE explicitement qu'il s'agit d'un vocabulaire
+  distinct, pas d'une réutilisation de celui de Snake.
+  (2) `genre_refs[]` peut résolument citer les 10 `genre.breakout.*` du bloc JSON esquissé (la
+  résolution mécanique de `check_genre_coverage` ne juge que l'existence de l'id, pas sa
+  ratification) MAIS le final_report doit dire EXPLICITEMENT que cette couverture est
+  structurelle, pas une preuve de justesse de genre — la source elle-même se déclare non
+  ratifiable.
+  (3) Capacités NOUVELLES : forge/standard/capabilities.yaml est un registre FERMÉ
+  (« un identifiant absent de ce registre -> FAIL (pas de nom libre) », en-tête du fichier) qui
+  ne connaît QUE le CORE (game.boot/loop/state/end/restart/exit/input.action/render.frame/
+  audio.cue/error.guard) + Pong (play.paddle/play.ball/play.score/game.playable_speed/
+  game.solo_opponent) + Snake (game.collision/food_spawn/direction_rules/growth/pause/
+  best_score/params/tick_rate/events). AUCUNE capacité brique/vie/angle-de-rebond/réflexion-
+  mur/génération-de-niveau n'existe. Le charter (actions_interdites) interdit d'étendre ce
+  registre sans gate Pierre explicite, et les `permissions` de CE contrat n'autorisent
+  l'écriture que de wiremap.json — tu ne PEUX matériellement pas l'étendre même si tu le
+  voulais. Conséquence mécanique assumée, à RAPPORTER et non à contourner : `check_collisions`
+  va légitimement lister ces identifiants nouveaux dans `identifiants_inconnus` tant que Pierre
+  n'a pas ratifié l'extension du registre — ce n'est pas un défaut de ta wiremap, c'est l'état
+  réel et actuel du registre.
+  (4) Réutilisation depuis GAMES/breakout/ (JS, 2026-07-11, verte, laissée dans l'arbre comme
+  référence lisible — décision de contamination assumée du charter §1) : CONCEPT UNIQUEMENT,
+  jamais CODE — aucun import JS→GDScript n'a de sens mécanique (règle identique à Pong→Snake).
+  Modèle de référence pour la FORME (schéma v2, champs de ligne, discarded[], fog[]) :
+  GAMES/snake/09_WIREMAP/wiremap.json — jamais pour le CONTENU des sources amont, qui diffère
+  structurellement comme décrit ci-dessus.
+
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - forge/standard/SCHEMA.md
+  - forge/standard/core_requirements.yaml
+  - forge/standard/capabilities.yaml
+  - forge/standard/repo_map.yaml
+  - EVIDENCE/runs/breakout_v2/charter.yaml
+  - GAMES/breakout_v2/01_DESIGN/genre_bible.json
+  - docs/forge/GENRE_BIBLE_BREAKOUT_V1_PROPOSED.md
+  - docs/forge/BREAKOUT_V2_CHARTER_PROPOSED.md
+  - GAMES/snake/09_WIREMAP/wiremap.json
+
+objectif: >-
+  Produire EVIDENCE/runs/breakout_v2/wiremap.json au schéma v2 du standard : passe 1 systems[]
+  (catégories system / system.adapter, allowed_deps à sens unique — la logique pure de
+  physique/collision ne dépend jamais de la présentation) ; passe 2 lines[] couvrant CHAQUE
+  critère du charter applicable (criteres_succes + criteres_demo + les 3 conséquences du §3
+  « point dur » : pas de temps fixe nommé et jamais le delta-time du moteur, angle de rebond
+  fonction du point d'impact testé sur AU MOINS 3 points d'échantillon nommés — centre, bord
+  gauche, bord droit —, génération de niveau seedée et déterministe) et les 10 exigences CORE
+  de core_requirements.yaml ; passe 3 discarded[] — à la différence de Snake il n'existe AUCUNE
+  design review à dépouiller, mais discarded[] N'EST PAS vide par défaut pour autant : toute
+  proposition explicitement écartée par le charter lui-même y va (multi-niveaux reporté hors
+  périmètre minimal, persistance de meilleur score absente par défaut faute de décision
+  équivalente à Snake, réutilisation CODE de GAMES/breakout/ interdite, extension silencieuse
+  du registre de capacités interdite), source_role `charter` ou `redacteur` selon provenance
+  réelle, ended_up_in_game: null — JAMAIS un rejet de design review inventé pour combler la
+  liste. CHAQUE ligne porte : source/source_role/reference (vocabulaire de source_role propre à
+  Breakout, voir memoire) · genre_refs[] résolus (ids EXACTS des 10 `genre.breakout.*` du bloc
+  JSON de la Genre Bible esquissée — une règle applicable est citée ou refusée via
+  genre_refusals, jamais ignorée) · observable_by_player : un BOOLÉEN `true`/`false` STRICT,
+  JAMAIS une phrase (défaut mesuré sur Snake le 2026-07-28 : `check_observable_coverage` ignore
+  silencieusement tout ce qui n'est pas `== True`, un champ rempli de prose y rend un vert
+  vacueux — ne PAS répéter cette erreur) · observable_proof : le NOM COURT d'un volet de reçu
+  d'oracle, jamais une description de méthode · expected_proof {kind, statement} falsifiable,
+  valeurs STRICTES jamais >=/<= (contrainte nommée du charter, en particulier l'angle de rebond
+  par point d'impact) · reused_from {type: CODE_COPIE|CONCEPT|OUTIL_FORGE|NEW, source:
+  <chemin réel vérifié>, copy_sha256: <sha256 de la SOURCE si CODE_COPIE, null sinon>} —
+  play.paddle/play.ball/play.score (capabilities.yaml, apportées par Pong) sont réutilisables
+  en CONCEPT sur cette base (mêmes noms de capacité, implémentation Godot neuve) ; toute
+  capacité NOUVELLE nécessaire au produit (brique, vie, angle de rebond, réflexion sur mur,
+  génération de niveau seedée...) n'existe PAS dans le registre fermé — la ligne la déclare
+  quand même en `provides` (le besoin produit existe et doit être visible), mais le
+  final_report DOIT la lister nommément comme PROPOSITION DE REGISTRE en attente de gate
+  Pierre, jamais tenter de l'ajouter à capabilities.yaml (hors permissions de ce contrat) ni la
+  déguiser sous un identifiant existant qui ne correspond pas au sens réel · fichiers[] en .gd
+  avec category déclarée à la création · address légale selon repo_map.yaml (une adresse que
+  repo_map ne peut pas héberger légalement = fog remonté, jamais une invention). Un bloc/ligne
+  PARAMETRES isolé unique (les 8 parametres_de_design du charter — terrain, raquette_largeur,
+  raquette_vitesse_max, balle_vitesse_initiale, tick_dt_fixed_ms, angle_rebond_max_deg,
+  grille_briques, vies_initiales, seed_reference —, tous A_EQUILIBRER : AUCUNE valeur n'est
+  re-tranchée ici, aucun littéral de gameplay ailleurs). Extensibilité = PRISES (événements
+  consommables + point d'observation), AUCUN système de télémétrie/équilibrage/progression
+  complet (même discipline anti-création que Snake).
+
+in_scope: >-
+  ÉCRITURE d'UN fichier : EVIDENCE/runs/breakout_v2/wiremap.json. Lecture du dépôt entier —
+  charter, squelette gelé, Genre Bible esquissée, GAMES/breakout/ (LECTURE SEULE, réutilisation
+  CONCEPT uniquement), knowledge_base/ et GAMES/snake/** (candidats CODE_COPIE légitimes).
+  Vérification d'existence (ls/grep/sha256) des sources de briques citées.
+
+out_of_scope: >-
+  Aucun code de jeu, aucun GAMES/breakout_v2/ créé (le dépôt du jeu naît au build s9-build-
+  godot-standard). Ne modifie ni le charter, ni la Genre Bible, ni le squelette gelé
+  (core_requirements.yaml/capabilities.yaml/repo_map.yaml — registres FIGÉS, toute extension
+  est un gate Pierre distinct et hors du périmètre de cette mission). Ne tranche AUCUNE valeur
+  A_EQUILIBRER du charter (les 8 paramètres restent tous non arbitrés). N'ouvre jamais
+  GAMES/breakout/*.mjs dans l'intention d'en COPIER du code (aucun import JS→GDScript n'a de
+  sens mécanique) ; ne modifie ni ne supprime aucun fichier de GAMES/breakout/ (référence
+  intangible d'une expérience externe — JAMAIS le projet cible de ce run) ni de GAMES/pong/**
+  ni de GAMES/snake/** (témoins de régression gelés, lecture seule pour CODE_COPIE/CONCEPT) ni
+  de tests/** ni de scripts/**. Aucun git commit/push.
+
+permissions: >-
+  read: dépôt entier. write/create: EVIDENCE/runs/breakout_v2/wiremap.json UNIQUEMENT — ni
+  EVIDENCE/runs/breakout/ (run 2026-07-11, navigateur, intangible), ni GAMES/breakout_v2/, ni
+  GAMES/breakout/. run: python/node one-liners de validation en lecture (json parse, sha256,
+  forge.standard_oracles, forge.contract) — le calcul de copy_sha256 sur une source réelle est
+  autorisé. delete: aucun.
+
+gardeFou: >-
+  (1) Schéma v2 STRICT — mêmes clés que forge/standard/SCHEMA.md, champs conditionnels
+  honorés (source_role obligatoire si EXPECTED/ADDITIONS, reason si NOT_APPLICABLE, until/
+  decider si DEFERRED — vérifiable par check_line_states(wiremap, core_requirements)). (2)
+  Chaque ligne cite sa provenance amont dans `reference` — pour Breakout, EXCLUSIVEMENT un
+  tag/passage du charter (criteres_succes, criteres_demo, actions_interdites, §3, parametres_
+  de_design, question_ouverte_humangate) ou une règle `genre.breakout.*` — JAMAIS un tag
+  design_review/merged_prisme/product_snapshot, qui n'existent pas pour ce run ; une ligne qui
+  invente une telle source falsifie sa provenance, interdiction absolue. (3) reused_from.source
+  pointe un chemin RÉEL vérifié ; introuvable = INTROUVABLE explicite, jamais supposé.
+  CODE_COPIE interdit depuis GAMES/breakout/*.mjs (aucun sens mécanique JS→GDScript, même si
+  la copie était techniquement possible) — CODE_COPIE légitime seulement depuis
+  knowledge_base/systems/ ou GAMES/snake/**, avec copy_sha256 de la SOURCE calculé maintenant.
+  (4) genre_refs : chaque id cité doit exister dans le bloc JSON de la Genre Bible dédiée
+  (GAMES/breakout_v2/01_DESIGN/genre_bible.json) — vérifie par script, cite le compte
+  résolu/revendiqué, ET rapporte explicitement le statut `NON_RATIFIEE_PROPOSITION` de cette
+  bible (gabarit de forme calqué sur Snake, non sourcé HTTP) — la couverture mécanique
+  n'est pas une preuve de justesse de genre. (5) discarded[] n'est pas vide s'il existe une
+  proposition explicitement écartée par le charter (voir objectif) — mais ne JAMAIS inventer un
+  rejet de design review qui n'a pas eu lieu pour l'y faire ressembler à Snake. (6) Capacités
+  absentes du registre fermé (brique, vie, angle de rebond, réflexion mur, génération de
+  niveau...) : la ligne les déclare quand même en `provides`, MAIS le final_report les liste
+  nommément comme PROPOSITION DE REGISTRE pour gate Pierre — jamais une tentative d'écriture
+  dans capabilities.yaml (hors permissions), jamais un détournement d'un identifiant existant
+  dont le sens ne correspond pas. (7) Aucune tautologie >=/<= là où le charter exige une valeur
+  stricte (angle de rebond en particulier, sur les 3 points d'échantillon nommés). (8) Aucun
+  placeholder. (9) Doute => fog dans un champ structuré, pas un commentaire.
+
+success_criteria: >-
+  wiremap.json parse ; check_line_states(wiremap, core_requirements) passed ; check_placement
+  contre repo_map.yaml passed ; check_collisions exécuté et RAPPORTÉ fidèlement — les
+  identifiants de capacité nouvelle non enregistrés dans capabilities.yaml sont un résultat
+  ATTENDU dans `identifiants_inconnus` tant que Pierre n'a pas étendu le registre ; ce n'est PAS
+  un critère de blocage de cette mission, c'est un état à rapporter sans le masquer ni le
+  contourner ; check_genre_coverage sur la Genre Bible Breakout dédiée : 0 citation non
+  résolue et taux_resolution rapporté, avec la réserve NON_RATIFIEE_PROPOSITION explicite ; chaque
+  ligne a expected_proof + observable_by_player (booléen strict) + reused_from typé ; bloc
+  paramètres unique (8 paramètres du charter, tous A_EQUILIBRER) ; comptes CODE_COPIE/CONCEPT/
+  OUTIL_FORGE/NEW rapportés séparément, jamais agrégés (règle charter TAUX DE REUTILISATION
+  MESURE ET RAPPORTE) ; les 3 points d'échantillon d'angle de rebond (centre, bord gauche,
+  bord droit) présents, chacun avec une valeur d'angle stricte attendue, jamais un intervalle.
+
+tests_oracles: >-
+  Lance TOI-MÊME et joins les sorties : (a) parse json du wiremap produit ; (b)
+  PYTHONIOENCODING=utf-8 PYTHONPATH=scripts .venv312/Scripts/python.exe avec
+  forge.standard_oracles.check_line_states(wiremap, core_requirements),
+  check_placement(wiremap, repo_map), check_collisions(wiremap, capabilities) — rapporte
+  identifiants_inconnus SANS les masquer ni les faire disparaître par un id détourné — et
+  check_genre_coverage(wiremap, genre_bible) où genre_bible = le bloc JSON de
+  GAMES/breakout_v2/01_DESIGN/genre_bible.json (source primaire, cf. son propre champ
+  `source_of_truth` pointant docs/forge/GENRE_BIBLE_BREAKOUT_V1_PROPOSED.md) ; si ce fichier
+  n'existe pas encore au moment du dispatch réel, replier sur le bloc JSON esquissé en §4 de
+  docs/forge/BREAKOUT_V2_CHARTER_PROPOSED.md — fog remonté explicitement si plusieurs sources
+  existent et divergent ; (c) sha256 des sources CODE_COPIE réellement citées. La pertinence architecturale
+  et l'arbitrage des identifiants_inconnus / capacités proposées = fog HumanGate.
+
+final_report: >-
+  Comptes : lignes par source (CORE/EXPECTED/ADDITIONS/DERIVED) · CODE_COPIE/CONCEPT/
+  OUTIL_FORGE/NEW · genre_refs résolus/revendiqués + taux (avec la réserve NON_RATIFIEE_
+  PROPOSITION explicite) · discarded[] et leur provenance réelle (charter/redacteur, jamais un
+  Prisme fictif) · capacités NOUVELLES proposées hors du registre fermé, listées nommément pour
+  gate Pierre, distinctes des identifiants déjà enregistrés · sorties brutes des checks
+  (check_line_states/check_placement/check_collisions/check_genre_coverage) · fogs remontés ·
+  software/evidence/claim séparés · claim_verdict: NO_CLAIM_ALLOWED · section
+  SKIPPED_VALIDATION explicite (`aucun` si rien n'a été sauté).
+
+output_contract: >-
+  wiremap.json : {schema_version: 2, game_id: breakout_v2, systems[], lines[] (schéma v2 +
+  reused_from typé CODE_COPIE|CONCEPT|OUTIL_FORGE|NEW), discarded[], fog[], roles_utilises[]
+  (vocabulaire propre à Breakout — pierre/cadrage/redacteur/charter, voir memoire), parametres:
+  référence au bloc unique de constantes nommées}.
+
+skill: aucun
+plugin: aucun
+
+delegation_context: >-
+  Jumeau de la mission M-G (wm1-wiremap-snake.yaml), premier contrat wiremap ad hoc du régime
+  STANDARD répliqué sur un DEUXIÈME jeu — campagne Breakout V2, dont l'objectif déclaré est
+  double : produire un jeu ET tester le pipeline Forge V2 observable (docs/forge/
+  BREAKOUT_V2_CHARTER_PROPOSED.md §1b). Référencé explicitement comme prérequis bloquant dans
+  docs/forge/BREAKOUT_V2_CAMPAIGN_PREP.md §2.3 (« n'existe pas, calqué sur wm1-wiremap-snake ...
+  à répliquer à l'identique pour Breakout »). En amont : charter Breakout, encore PROPOSED,
+  HumanGate en attente sur plusieurs points (voir question_ouverte_humangate du charter :
+  statut de core.audio, périmètre multi-niveaux, valeurs chiffrées non sourcées). En aval : gel
+  du jeu de règles, build s9-build-godot-standard, oracles s10a-oracle-code/s10s-oracle-
+  standard, red-team s11 (advisory), verdict s12. Consommateurs : forgeron s9,
+  check_line_states/check_placement/check_collisions/check_genre_coverage/
+  check_observable_coverage (s10s), mesure de réutilisation (reuse typé + empreintes), Pierre
+  (ratification de la wiremap ET arbitrage des capacités proposées / de l'extension du
+  registre).

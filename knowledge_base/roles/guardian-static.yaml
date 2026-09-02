@@ -1,0 +1,83 @@
+# Contrat ROLE gameplay — gardien statique à zone de contrôle
+# Schéma : knowledge_base/roles/SCHEMA.md (13 champs, règle des 3 états)
+# 2e ROLE réel (2026-07-13) — construit pour tester la GÉNÉRALISATION du mécanisme
+# Role-Sim au-delà de la poursuite (cf. knowledge_base/roles/RESULTS_pursuer_mobile.md §5).
+# Reprend le concept déjà cité comme PATTERN dans le catalogue : pat-zone-of-control
+# (Battle for Wesnoth — ZoneOfControl, GPL, concept only, zéro code repris).
+
+role_id: role-guardian-static
+
+archetype: >-
+  Une entité STATIQUE (ne se déplace jamais) qui projette une zone de contrôle : tout
+  attaquant qui y pénètre voit son déplacement stoppé pour le tick en cours (mais reste
+  libre de continuer ensuite — la zone surprend, elle n'emprisonne pas). Le défi produit
+  n'est PAS "l'attaquant atteint-il son objectif" (presque toujours oui, la zone ralentit,
+  elle ne bloque pas) mais "de combien de temps la présence du gardien retarde la
+  traversée, selon la trajectoire empruntée" — la bande de difficulté mesure ce délai.
+
+requires:
+  zone_check: >-
+    fn(pos, guardianPos, zocRadius) -> boolean — vrai si pos est dans la zone de contrôle
+    du gardien (distance de Chebyshev <= zocRadius).
+  movement_with_zone: >-
+    fn(pos, targetPos, speed, guardianPos, zocRadius) -> pos — se déplace vers targetPos
+    comme un mouvement de poursuite standard, mais s'arrête dès l'entrée FRAÎCHE dans la
+    zone (si déjà dedans en début de tick, pas de troncature ce tick-ci).
+
+fulfilled_by:
+  - sys-guardian-zoc
+
+simulation_module: knowledge_base/systems/ai/guardian_scenario.mjs
+
+simulation_config:
+  trials: 300
+  seed_start: 1000
+  max_ticks: 60
+  arena_half_size: 20
+  zoc_radius: 4
+  attacker_speed: 2
+  crossing_half_distance: 11
+
+# Bande de difficulté DÉCLARÉE — métrique = MAX, pas médiane (choix motivé par la
+# calibration, voir calibration_note : la majorité des traversées ne touchent jamais la
+# zone, donc la MÉDIANE reste égale au baseline sans zone et ne prouve rien sur le rôle ;
+# le MAX, lui, ne peut atteindre 12 QUE si au moins une traversée a réellement été
+# retardée par la zone — c'est la métrique qui teste effectivement le mécanisme).
+difficulty_target:
+  metric: ticks_to_reach_goal_max
+  min: 12
+  max: 20
+
+calibration_note: >-
+  Mesure exploratoire du 2026-07-13, 300 essais réels (seeds 1..300), simulation_config
+  ci-dessus SAUF seed_start=1 (pas 1000). Résultat brut : min=11, médiane=11, max=12,
+  300/300 succès. 1re tentative (distance ET hauteur aléatoires ensemble) avait produit
+  une bande IDENTIQUE avec zoc_radius=4 et zoc_radius=0 (aucun effet mesurable — vérifié,
+  pas supposé, cf. knowledge_base/roles/RESULTS_pursuer_mobile.md §5bis) : la variance de
+  distance de base noyait l'effet de la zone. Corrigé en fixant la distance de croisement
+  (`crossing_half_distance`) et en ne faisant varier QUE la hauteur d'approche — l'effet
+  devient alors mesurable : exactement les traversées à hauteur |y| <= zoc_radius
+  subissent +1 tick, jamais plus, jamais moins (prouvé par test direct contre un
+  scénario SANS zone, systems/ai/guardian_scenario.test.mjs). D'où le choix de MAX comme
+  métrique (pas médiane, insensible à cet effet minoritaire). Bande [12,20] : min=12 EXIGE
+  qu'au moins une traversée ait été réellement retardée (sinon max resterait 11, comme
+  démontré sans zone) — pas une marge autour d'une mesure, un seuil qui teste le mécanisme
+  lui-même. Preuve : knowledge_base/proofs/role_sim_guardian_static_calibration.log.
+  NOTE MÉTHODE : `seed_start` ci-dessus vaut 1000 (pas 1) — la calibration a tourné sur
+  les seeds 1..300 ; toute exécution officielle de ce fichier tourne sur un échantillon
+  DISJOINT (1000..1299), pour éviter de valider sur les mêmes données que celles ayant
+  servi à choisir la bande déclarée.
+
+proof_of_use: knowledge_base/proofs/role_sim_guardian_static_validation.log
+
+tier: validated
+
+license: MIT
+
+path: knowledge_base/roles/guardian-static.yaml
+
+out_of_scope: >-
+  Ne couvre pas un gardien MOBILE (patrouille), ni plusieurs gardiens dont les zones se
+  chevauchent, ni un attaquant qui route intelligemment pour éviter la zone (l'attaquant
+  simulé ici marche en ligne droite vers son objectif, sans détour — un attaquant qui
+  contourne délibérément serait un rôle/scénario distinct).

@@ -1,0 +1,91 @@
+# design_review_checklist.yaml — checklist de la Design Review du Prisme (générique, tous jeux)
+# Statut : PROPOSED (chantier chaîne architecte, Pierre 2026-07-28 — « le Prisme complet »).
+# Source du contenu : checklist Pierre×GPT 2026-07-28, structurée en champs (règle
+# « aucune décision dans un commentaire », ratifiée 2026-07-23).
+#
+# CONSOMMATEURS (règle de câblage — aucun artefact sans lecteur) :
+#   · contrat de la Gameplay Review (M-E) : chaque item DOIT recevoir une réponse
+#     {statut: oui|non|na, raison, impact_architecture?} dans design_review.md ;
+#   · check_gameplay_review.mjs (à créer, M-E) : vérifie mécaniquement que chaque id
+#     ci-dessous a sa réponse structurée — le silence sur un item est un échec ;
+#   · lentilles du Prisme : cadre de lecture (chaque lentille couvre les catégories
+#     marquées de son nom dans `lens`).
+#
+# Un item non applicable se répond `na` + raison — jamais par le silence.
+
+version: 1
+categories:
+  - id: game_design
+    titre: GAME DESIGN — boucle principale
+    lens: [gamedesign]
+    items:
+      - id: gd.action_30s
+        question: "Le joueur sait-il quoi faire dans les 30 premières secondes ?"
+      - id: gd.boucles
+        question: "La boucle minute → session existe-t-elle (et une raison de revenir demain) ?"
+      - id: gd.progression_visible
+        question: "La progression est-elle visible pour le joueur ?"
+      - id: gd.comprehension_amelioration
+        question: "Le joueur comprend-il son amélioration (skill ou système) ?"
+  - id: metagame
+    titre: MÉTAGAME — ce qui donne envie de continuer
+    lens: [gamedesign]
+    items:
+      - id: meta.objectif_long_terme
+        question: "Existe-t-il un objectif long terme ?"
+      - id: meta.collection
+        question: "Existe-t-il une collection ?"
+      - id: meta.deblocages
+        question: "Existe-t-il des déblocages ?"
+      - id: meta.maitrise
+        question: "Existe-t-il une maîtrise (profondeur de skill mesurable) ?"
+      - id: meta.retention
+        question: "Existe-t-il un système de rétention explicite (et lequel) ?"
+  - id: game_feel
+    titre: GAME FEEL
+    lens: [gamedesign, gameplayprog]
+    items:
+      - id: feel.actions_satisfaisantes
+        question: "Les actions de base sont-elles satisfaisantes (latence, réponse) ?"
+      - id: feel.feedback_visuel
+        question: "Chaque action/événement clé a-t-il un feedback visuel ?"
+      - id: feel.feedback_sonore
+        question: "Chaque action/événement clé a-t-il un feedback sonore ?"
+      - id: feel.recompenses_frequentes
+        question: "Les récompenses sont-elles fréquentes aux premiers horizons ?"
+  - id: architecture
+    titre: ARCHITECTURE
+    lens: [archidepot]
+    items:
+      - id: archi.systemes_separes
+        question: "Les systèmes sont-ils séparés (logique pure vs présentation) ?"
+      - id: archi.dependances_sens_unique
+        question: "Les dépendances vont-elles dans un seul sens ?"
+      - id: archi.brique_existante
+        question: "Une brique existante (KB, Pong, externe) aurait-elle pu être utilisée pour chaque système NEW ?"
+      - id: archi.reutilisable
+        question: "Chaque système produit est-il réutilisable par le prochain jeu du curriculum ?"
+  - id: technique_api
+    titre: TECHNIQUE — API
+    lens: [gameplayprog, archidepot]
+    items:
+      - id: api.besoin
+        question: "Une API est-elle nécessaire, ou le local suffit-il ?"
+      - id: api.contrat
+        question: "Si API : le contrat est-il défini, et la gestion d'erreurs prévue ?"
+  - id: technique_data
+    titre: TECHNIQUE — données/persistance
+    lens: [gameplayprog, archidepot]
+    items:
+      - id: data.persistance
+        question: "Quelles données persistent, et le format de sauvegarde est-il défini ?"
+      - id: data.migration_offline
+        question: "Migration prévue ? Fonctionnement offline possible ?"
+  - id: technique_stack
+    titre: TECHNIQUE — framework / librairies (les matériaux)
+    lens: [archidepot]
+    items:
+      - id: stack.moteur
+        question: "Le moteur/runtime est-il choisi et tracé à une source (charter) ?"
+      - id: stack.librairies
+        question: "Les librairies sont-elles validées (licence compatible, communauté, risque d'abandon) ?"

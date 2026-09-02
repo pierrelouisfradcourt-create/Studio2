@@ -1,0 +1,96 @@
+{
+  "permissions": {
+    "allow": [
+      "Write(studio_core/**)",
+      "Edit(studio_core/**)",
+      "Write(studio/openclaw-workspace/**)",
+      "Edit(studio/openclaw-workspace/**)",
+      "Edit(autopilot.py)",
+      "Write(.claude/**)",
+      "Edit(.claude/**)"
+    ],
+    "ask": [
+      "Write(lab/chains/**)",
+      "Edit(lab/chains/**)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f *)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -fd*)",
+      "Read(**\\.env*)",
+      "Bash(cat *.env*)",
+      "Write(.claude/HUMAN_GIT_OVERRIDE.json)",
+      "Edit(.claude/HUMAN_GIT_OVERRIDE.json)",
+      "Write(scripts/forge/reference_protected.yaml)",
+      "Edit(scripts/forge/reference_protected.yaml)",
+      "Write(.claude/settings.json)",
+      "Edit(.claude/settings.json)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/pretool_forge_guard.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/pretool_forge_guard.py"
+          },
+          {
+            "type": "command",
+            "command": "python .claude/hooks/pretool_agent_classify.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/pretool_git_guard.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/pretool_git_guard.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/posttool_forge_executed.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/posttool_forge_executed.py"
+          }
+        ]
+      }
+    ]
+  }
+}

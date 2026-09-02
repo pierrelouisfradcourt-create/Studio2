@@ -1,0 +1,87 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.reuse_tracking_oracle_dead_since_inception
+statement: Deux volets d'oracle destines a mesurer la reutilisation de briques du
+  catalogue (search_consulted, reuse_ratio_wired) ne sont jamais passes verts sur
+  AUCUN run de la Forge observe, depuis le premier (pong_r2) jusqu'aux runs les plus
+  recents (10 runs Snake, puis Breakout) -- toujours 'aucune recherche journalisee'
+  et 'run-oracle.mjs absent'. Comme ces deux volets ne bloquent jamais le verdict
+  final (des runs Snake OK/HUMANGATE_READY_WITH_OBJECTION les ont toujours en FAIL),
+  ils fonctionnent en pratique comme du bruit permanent dans le rapport plutot que
+  comme un signal. Un volet d'oracle qui echoue 100% du temps sur toute l'histoire
+  mesuree et ne conditionne jamais une decision doit etre soit cable, soit retire
+  du rapport -- le laisser en l'etat forme un signal rouge qu'on apprend a ignorer,
+  ce qui degrade la confiance dans les VRAIS signaux rouges.
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-reuse_tracking_oracle_dead_since_inception
+  kind: pattern
+  function: Deux volets d'oracle destines a mesurer la reutilisation de briques du
+    catalogue (search_consulted, reuse_ratio_wired) ne sont jamais passes verts sur
+    AUCUN run de la Forge observe, depuis le premier (pong_r2) jusqu'aux runs les
+    plus recents (10 runs Snake, puis Breakout) -- toujours 'aucune recherche journalisee'
+    et 'run-oracle.mjs absent'. Comme ces deux volets ne bloquent jamais le verdict
+    final (des runs Snake OK/HUMANGATE_READY_WITH_OBJECTION les ont toujours en FAIL),
+    ils fonctionnent en pratique comme du bruit permanent dans le rapport plutot que
+    comme un signal. Un volet d'oracle qui echoue 100% du temps sur toute l'histoire
+    mesuree et ne conditionne jamais une decision doit etre soit cable, soit retire
+    du rapport -- le laisser en l'etat forme un signal rouge qu'on apprend a ignorer,
+    ce qui degrade la confiance dans les VRAIS signaux rouges.
+  source: Forge lesson 'forge.reuse_tracking_oracle_dead_since_inception' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.reuse_tracking_oracle_dead_since_inception
+    supporting_runs:
+    - pong_r2
+    - snake-_run_reel_20260729
+    - snake-_run_cal1_20260730
+    - breakout_v2
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-03T14:10:36.006543+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - pong_r2
+  - snake-_run_reel_20260729
+  - snake-_run_cal1_20260730
+  - breakout_v2
+  invariants:
+  - Deux volets d'oracle destines a mesurer la reutilisation de briques du catalogue
+    (search_consulted, reuse_ratio_wired) ne sont jamais passes verts sur AUCUN run
+    de la Forge observe, depuis le premier (pong_r2) jusqu'aux runs les plus recents
+    (10 runs Snake, puis Breakout) -- toujours 'aucune recherche journalisee' et 'run-oracle.mjs
+    absent'. Comme ces deux volets ne bloquent jamais le verdict final (des runs Snake
+    OK/HUMANGATE_READY_WITH_OBJECTION les ont toujours en FAIL), ils fonctionnent
+    en pratique comme du bruit permanent dans le rapport plutot que comme un signal.
+    Un volet d'oracle qui echoue 100% du temps sur toute l'histoire mesuree et ne
+    conditionne jamais une decision doit etre soit cable, soit retire du rapport --
+    le laisser en l'etat forme un signal rouge qu'on apprend a ignorer, ce qui degrade
+    la confiance dans les VRAIS signaux rouges.
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - pong_r2
+  - snake-_run_reel_20260729
+  - snake-_run_cal1_20260730
+  - breakout_v2
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-03T14:10:46+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T14:11:04+00:00'

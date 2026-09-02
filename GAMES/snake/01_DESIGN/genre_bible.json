@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "game_id": "snake",
+  "status": "RATIFIE_PIERRE_2026-07-28",
+  "source_of_truth": "docs/forge/GENRE_BIBLE_SNAKE_V1_PROPOSED.md",
+  "genre_rules": [
+    {
+      "id": "genre.snake.continuous_forward_motion",
+      "statement": "Le serpent est en mouvement continu et ne peut jamais s'arreter ; la seule action du joueur est de changer la direction du prochain deplacement.",
+      "applies_to_wiremap_line": "core.movement"
+    },
+    {
+      "id": "genre.snake.growth_on_food_immediate",
+      "statement": "Chaque nourriture consommee rallonge immediatement le corps d'un segment, effet cumulatif et visible au tick meme de la collision.",
+      "applies_to_wiremap_line": "core.growth"
+    },
+    {
+      "id": "genre.snake.collision_ends_run",
+      "statement": "Une collision met fin immediatement a la partie du joueur touche : mur ou son propre corps en variante solo ; n'importe quel autre serpent (y compris soi-meme) en variante multijoueur.",
+      "applies_to_wiremap_line": "core.collision"
+    },
+    {
+      "id": "genre.snake.space_as_primary_antagonist",
+      "statement": "A mesure que le serpent grandit, l'espace de manoeuvre disponible retrecit et devient la contrainte dominante de difficulte -- observee comme independante de la vitesse dans au moins une variante (Google Snake : vitesse stable, difficulte due PUREMENT a la longueur/occupation de grille selon la source).",
+      "applies_to_wiremap_line": "core.space"
+    },
+    {
+      "id": "genre.snake.discrete_tick_loop",
+      "statement": "La boucle de jeu avance par pas de temps discrets et deterministes (tick), sans physique continue. Sequence de tick (ordre reconstruit, voir confiance) : (1) lire la derniere direction validee, en rejetant un demi-tour direct sur le cou ; (2) avancer la tete dans cette direction ; (3) verifier collision mur/soi -- si oui, fin de partie ; (4) verifier collision nourriture -- si oui, grandir et faire apparaitre une nouvelle nourriture, sinon retirer le dernier segment de la queue ; (5) rafraichir l'affichage.",
+      "applies_to_wiremap_line": "session.tick_loop"
+    },
+    {
+      "id": "genre.snake.no_reverse_into_self",
+      "statement": "Le serpent ne peut pas inverser sa direction pour rentrer directement dans son propre cou : une commande dans la direction opposee au mouvement courant est ignoree par le systeme d'entree.",
+      "applies_to_wiremap_line": "session.tick_loop"
+    },
+    {
+      "id": "genre.snake.session_loop_four_horizons",
+      "statement": "La boucle de session suit 4 horizons observables et distincts : minute 1 (apprentissage immediat, premiere nourriture en 5-10s, causalite instantanee) ; minute 10 (rampe de difficulte -- vitesse et/ou occupation spatiale --, premiers frolements de collision) ; heure 5 / fin de partie soutenue (charge cognitive elevee, quasi-puzzle spatial, sessions courtes de 15-60s) ; fin de partie (mort par collision, ecran de score, relance immediate sans penalite persistante).",
+      "applies_to_wiremap_line": "session.four_horizons"
+    },
+    {
+      "id": "genre.snake.zero_penalty_instant_restart",
+      "statement": "A la mort, aucune penalite persistante n'est appliquee (pas de perte de progression sauvegardee) et une relance immediate de la partie est proposee au joueur.",
+      "applies_to_wiremap_line": "session.retention"
+    },
+    {
+      "id": "genre.snake.skill_gated_progression_not_rng",
+      "statement": "Le resultat de chaque partie depend de l'habilete du joueur (planification spatiale, reflexes, gestion du risque) et non d'un tirage aleatoire -- creant une motivation intrinseque de progression personnelle.",
+      "applies_to_wiremap_line": "session.retention"
+    },
+    {
+      "id": "genre.snake.playable_speed_reference",
+      "statement": "Il n'existe pas UNE vitesse de genre universelle : deux strategies de design concurrentes sont observees. (a) vitesse FIXE, difficulte pilotee par l'occupation spatiale seule (Google Snake, valeur de reference : ~1 case de grille par 200 ms au demarrage, stable dans la duree). (b) vitesse CROISSANTE par palier de score (Nokia, magnitude exacte non chiffree dans les sources disponibles).",
+      "applies_to_wiremap_line": "play.speed"
+    },
+    {
+      "id": "genre.snake.grid_readability",
+      "statement": "Lisibilite de la grille : deux chiffres de reference observes, non consolides en norme -- taille de cellule ~8x8 a 10x10 pixels (reference generique, non rattachee a un jeu precis dans la source) ; plateau ~20x20 cases mentionne pour Google Snake en fin de partie.",
+      "applies_to_wiremap_line": "play.grid_readability"
+    },
+    {
+      "id": "genre.snake.input_latency_buffering",
+      "statement": "Deux modeles d'entree opposes sont observes : entree directe non bufferisee (Nokia -- une commande hors-tick est simplement ignoree) contre entree bufferisee (Google Snake -- une commande emise juste avant le prochain tick est mise en file et executee au tick suivant, ce qui ameliore la reactivite percue selon la source).",
+      "applies_to_wiremap_line": "play.input_latency"
+    }
+  ]
+}

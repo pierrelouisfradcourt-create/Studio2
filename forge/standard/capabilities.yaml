@@ -1,0 +1,181 @@
+# REGISTRE DE CAPACITES — vocabulaire FERME.
+#
+# A quoi ca sert : rendre l'audit de collisions ARITHMETIQUE au lieu de semantique.
+# Sans vocabulaire ferme, il faudrait demander a un LLM si « restart » et « rejouer »
+# sont la meme chose — on ne veut aucun juge LLM dans un oracle. Avec ce registre,
+# les deux DOIVENT se declarer sur `game.restart`, et la collision saute toute seule.
+#
+# Ce n'est pas un vocabulaire universel ecrit d'avance : il demarre avec ce dont le
+# premier jeu a besoin et grandit d'un jeu a l'autre. Toute ligne de wiremap declare
+# `provides` / `requires` sur ces identifiants, et rien d'autre.
+#
+# Regles verifiees mecaniquement a la reconciliation :
+#   - deux `provides` de la meme capacite            -> COLLISION
+#   - un `requires` sans aucun fournisseur           -> TROU
+#   - deux `owner: true` sur la meme capacite        -> DOUBLE PROPRIETAIRE
+#   - plusieurs ecrivains d'un meme etat             -> ORDRE OBLIGATOIREMENT DECLARE
+#   - un identifiant absent de ce registre           -> FAIL (pas de nom libre)
+#
+# `single_owner: true` = un seul fournisseur autorise dans un jeu donne. Les
+# consommateurs multiples restent permis et sains : que trois systemes REAGISSENT
+# au score est normal ; que deux systemes le DECIDENT ne l'est pas.
+#
+# Dette remboursee par ce fichier : les wiremaps produites jusqu'ici emploient
+# quatre mots pour l'etat d'une ligne (« fait » 26x, « construit » 39x, « DONE » 13x,
+# « PLANNED » 25x) — trois d'entre eux veulent dire la meme chose. Personne ne s'en
+# est apercu parce que chaque run etait coherent avec lui-meme.
+
+schema_version: 1
+
+capabilities:
+
+  # ---------- exigees par le CORE (tout jeu) ----------
+  - id: game.boot
+    statement: "Amener le jeu de rien a un etat initial jouable."
+    single_owner: true
+  - id: game.loop
+    statement: "Faire avancer l'etat de jeu d'un tick au suivant."
+    single_owner: true
+  - id: game.state
+    statement: "Detenir et exposer l'etat de partie courant."
+    single_owner: true
+  - id: game.end
+    statement: "Decider qu'une partie est terminee, et avec quelle issue."
+    single_owner: true
+  - id: game.restart
+    statement: "Remettre le jeu dans son etat initial pour une nouvelle partie."
+    single_owner: true
+  - id: game.exit
+    statement: "Terminer le processus proprement."
+    single_owner: true
+  - id: input.action
+    statement: "Traduire une entree joueur en action de jeu."
+    single_owner: true
+  - id: render.frame
+    statement: "Produire l'image de l'etat courant."
+    single_owner: true
+  - id: audio.cue
+    statement: "Declencher un retour sonore lie a un evenement de jeu."
+    single_owner: true
+  - id: error.guard
+    statement: "Absorber une entree invalide sans invalider l'etat de jeu."
+    single_owner: true
+
+  # ---------- apportees par PONG (noeud 1) ----------
+  - id: play.paddle
+    statement: "Position et deplacement borne d'une raquette."
+    single_owner: true
+  - id: play.ball
+    statement: "Position, vitesse et rebond de la balle."
+    single_owner: true
+  - id: play.score
+    statement: "Comptage des points et detection du point marque."
+    single_owner: true
+  # Enregistrees le 2026-07-28 (ratification Pierre) : les lignes de jouabilite V2
+  # du 27-07 les employaient sans les declarer — trou de table constate en gelant
+  # Pong (check_collisions: 2 identifiants inconnus). Le jeu n'est pas modifie.
+  - id: game.playable_speed
+    statement: "Vitesse de jeu percue comme jouable par un humain, bande declaree et verifiee."
+    single_owner: true
+  - id: game.solo_opponent
+    statement: "Adversaire automatique permettant une partie solo, distinct du bot de solvabilite."
+    single_owner: true
+
+  # ---------- apportees par SNAKE (noeud 2, ratification Pierre 2026-07-28) ----------
+  # Regle appliquee a cette extension : SEULES les capacites du JEU entrent ici.
+  # Les preoccupations d'usine (execution d'oracles, manifeste de preuve, gate de
+  # mutation, rapports de wiremap, sondes de debug, garde de purete, rejeu de
+  # determinisme) restent des preuves/outils et n'ont AUCUN identifiant de capacite.
+  - id: game.collision
+    statement: "Decider qu'une case occupee met fin a la course (mur ou corps)."
+    single_owner: true
+  - id: game.food_spawn
+    statement: "Placer la prochaine nourriture sur une case libre."
+    single_owner: true
+  - id: game.direction_rules
+    statement: "Accepter ou refuser un changement de direction (dont le demi-tour)."
+    single_owner: true
+  - id: game.growth
+    statement: "Allonger le corps a la consommation d'une nourriture."
+    single_owner: true
+  - id: game.pause
+    statement: "Suspendre et reprendre la partie sans alterer l'etat."
+    single_owner: true
+  - id: game.best_score
+    statement: "Detenir le meilleur score, persistant entre les sessions."
+    single_owner: true
+  - id: game.params
+    statement: "Detenir les parametres de jeu equilibrables, isoles en un seul bloc."
+    single_owner: true
+  - id: game.tick_rate
+    statement: "Determiner la periode du tick courant, acceleration comprise."
+    single_owner: true
+  - id: game.events
+    statement: "Exposer les evenements du tick a un consommateur externe (prise d'extensibilite)."
+    single_owner: true
+
+  # ---------- apportees par BREAKOUT_V2 (noeud 3, GATES VALIDEES Pierre 2026-07-31) ----------
+  # Regle identique a l'extension Snake : SEULES les capacites du JEU entrent ici.
+  # Les 7 ids ci-dessous sont DERIVES des `provides` declares par la wiremap wm1
+  # (EVIDENCE/runs/breakout_v2/wiremap.json, 52 lignes) — check_collisions les avait
+  # listes en identifiants_inconnus SANS masquage (comportement contractualise) ;
+  # aucun id invente, extension = ratification du besoin declare.
+  - id: game.brick_field
+    statement: "Maintenir le champ de briques : etat initial seede, retrait a l'impact, comptage des cassables restantes."
+    single_owner: true
+  - id: game.brick_collision
+    statement: "Detecter et resoudre la collision balle-brique (retrait de la brique + rebond de la balle)."
+    single_owner: true
+  - id: game.lives
+    statement: "Compter les vies : perte a la sortie basse de la balle, defaite stricte a zero vie."
+    single_owner: true
+  - id: game.paddle_deflection
+    statement: "Calculer l'angle de rebond en fonction du point d'impact sur la raquette (3 points d'echantillon a valeurs strictes)."
+    single_owner: true
+  - id: game.wall_reflection
+    statement: "Reflechir la balle sur les murs lateraux et superieur (reflexion speculaire, energie conservee)."
+    single_owner: true
+  - id: game.level_generation
+    statement: "Generer la disposition des briques depuis une seed (meme seed + meme index => meme disposition)."
+    single_owner: true
+  - id: game.fixed_timestep
+    statement: "Avancer la simulation a pas de temps FIXE nomme (tick_dt_fixed_ms), jamais le delta-time du moteur."
+    single_owner: true
+
+  # ---------- apportees par TETRIS (noeud 4, ratification Pierre 2026-08-10) ----------
+  # Provenance : les 42 propositions `capability_gap` de
+  # EVIDENCE/reports/forge_capability_gap_proposals.jsonl, emises par driver.py::
+  # _propose_capability_gaps depuis les `identifiants_inconnus` de check_collisions
+  # (runs tetris-fullgodot-20260803-084719 et tetris-witness-20260803-175558).
+  # Aucun id invente : extension = ratification du besoin declare, comme pour
+  # Snake et Breakout_V2. Les `statement` sont derives du comportement REEL des
+  # systemes (GAMES/tetris/05_SYSTEMS/*.gd), pas d'une intention supposee.
+  #
+  # 7 ids sur les 8 proposes. `game.debug_state` (ligne wiremap debug.observation_point)
+  # est DELIBEREMENT ABSENT : la regle du bloc SNAKE ci-dessus exclut les preoccupations
+  # d'usine, et nomme explicitement les « sondes de debug ». L'inscrire ici contredirait
+  # une regle deja ratifiee ; l'arbitrage revient a Pierre, et tant qu'il n'est pas rendu
+  # `check_collisions` continuera de signaler cet identifiant — signal conserve, pas etouffe.
+  - id: game.piece_source
+    statement: "Emettre la suite des pieces jouables : composition garantie par sac, ordre deterministe par graine."
+    single_owner: true
+  - id: game.gravity
+    statement: "Faire descendre la piece active d'exactement un pas a intervalle regulier, et signaler le contact quand la descente est bloquee."
+    single_owner: true
+  - id: game.rotation
+    statement: "Changer l'orientation de la piece active si la position resultante est legale, la refuser sinon — le terrain contraint l'orientation, jamais l'inverse."
+    single_owner: true
+  - id: game.lock
+    statement: "Integrer la piece active a la pile de facon irreversible : une fois figee, elle ne bouge plus jamais."
+    single_owner: true
+  - id: game.line_clear
+    statement: "Retirer les rangees completes et compacter le reste d'EXACTEMENT le nombre de rangees retirees (jamais un >=)."
+    single_owner: true
+  - id: game.score
+    statement: "Convertir un nombre de lignes nettoyees simultanement en points, selon un bareme superlineaire declare."
+    single_owner: true
+  # Distinct de `input.action` (produire l'intention depuis une entree physique) :
+  # `game.input` APPLIQUE une intention deja traduite, et seulement a la piece active.
+  - id: game.input
+    statement: "Appliquer une intention de jeu deja traduite a la SEULE piece active, sans jamais ecrire la pile."
+    single_owner: true

@@ -1,0 +1,130 @@
+# BOMBERMAN 3D — contrat de jeu. Nœud 5 du curriculum.
+# STATUT : PROPOSITION L0 (2026-08-10). Mécaniquement validé (check_contract_completeness
+# + check_budget) mais NON RATIFIÉ. Déposé hors games/ tant que L0 n'est pas validé.
+# Format : scripts/forge/standard/SCHEMA.md §1 — schéma FERMÉ, 6 clés obligatoires + `proof`.
+schema_version: 1
+game_id: bomberman_3d
+node: 5
+runtimes: [rules, godot]
+
+budget:
+  # reuses: VIDE, et c'est une CONTRAINTE MÉCANIQUE, pas un choix.
+  # `check_budget` exige que tout `reuses[i]` soit au tier `validated`. Mesuré le
+  # 2026-08-10 sur knowledge_base/catalog.json : 28 briques, UNE SEULE au runtime godot
+  # (`sys-grid-nav-m01`), et elle est au tier `candidate`. Aucune brique Godot n'est
+  # donc DÉCLARABLE ici aujourd'hui. Débloquer cette ligne = promotion F.6
+  # (candidate -> validated), décision HumanGate en attente depuis l'étape 0.
+  reuses: []
+  # adds: VIDE. Ce build ne PROMET aucun dépôt en bibliothèque — `check_budget` fait de
+  # `adds` une OBLIGATION (violation `promis_non_depose` si la brique n'est pas déposée),
+  # donc une promesse tenue par optimisme se paie en rouge. Candidat le plus probable au
+  # dépôt, à trancher sur code réel et non sur intention : la chaîne
+  # descripteur -> légende fermée -> verdict structurel + topologique -> carte validée.
+  # Si le forgeron juge qu'elle mérite d'être léguée, le budget BLOQUE et le remonte —
+  # comportement voulu, identique à Tetris.
+  adds: []
+
+assets:
+  # `cc0` (plan A) et non `generated` (plan B). Lecture du champ : `generated` signifie
+  # « aucun CC0 ne convenait, il a fallu produire ». Or le vertical slice rend par
+  # primitives du moteur (BoxMesh/StandardMaterial3D, patron chess_tcg/ui/game3d.gd), et
+  # les 7 props 3D consommés à partir du lot 8 sont DÉJÀ en bibliothèque sous licence
+  # CC0-1.0. Aucune génération d'asset n'est prévue (décision F.4 : « ne pas créer
+  # artificiellement de nouveaux assets si une primitive ou un asset existant suffit »).
+  plan: cc0
+
+# =====================================================================================
+# DESCRIPTEUR DE PREUVE — contrat docs/forge/CONTRAT_PREUVE_MUTATION_V1.md (FIGÉ).
+# =====================================================================================
+proof:
+  schema_version: 1
+  runtime: godot
+
+  mutation:
+    # Règle de forme 4 : une catégorie ni jugée ni exclue est un BLOCKED. Les catégories
+    # ci-dessous sont celles que l'architecture L0 emploie, et RIEN d'autre.
+    # `entity.*` est délibérément ABSENT : le vertical slice place la logique d'acteur
+    # dans 05_SYSTEMS (partagée entre joueur et bots), donc aucune entité n'est créée.
+    # À reprendre si un lot ultérieur introduit `entity.player`.
+    categories_mutables: [system]
+    categories_exclues:
+      - system.adapter        # rendu/runtime -> oracle produit, pas mutation
+      - level                 # donnée de carte, pas du code
+      - world.rules           # tables power-ups / victoire, pas du code
+      - test.unit
+      - test.oracle
+      - godot.project_root
+      - godot.project_tests
+      # Ajoutees le 2026-08-17 (GO Pierre). Regression mesuree : la taxonomie s'est enrichie
+      # cote Forge (d623334, 2788ab4), la wiremap a adopte les nouvelles categories (8 fichiers
+      # en `asset.mesh`), mais le contrat ne les classait pas -> `evaluate_proof_descriptor`
+      # rejetait le descripteur (contrat §2 regle 4). EXCLUES, meme critere que `level` et
+      # `world.rules` deux lignes plus haut : ce n'est pas du code.
+      - reference.observation # GAME_REFERENCE/*.md + observation_manifest.json : documentation
+      - asset.mesh            # 04_ASSETS/meshes/*.glb + *.import : binaires, rien a muter
+
+    command: ["<bin:godot>", "--headless", "--path", ".", "--script", "res://tests/run_tests.gd"]
+    cwd: "games/bomberman_3d"
+    binary_ref: godot
+    expects_exit_zero: true
+
+    budget:
+      # NON CALIBRÉ. Aucune mesure Bomberman n'existe — ce sont des points de départ [H]
+      # repris de Tetris, à recalibrer sur mesure réelle avant s9, jamais après un
+      # dépassement silencieux.
+      max_mutants: 200          # A_CALIBRER
+      timeout_per_mutant_s: 30  # A_CALIBRER
+      total_timeout_s: 900      # A_CALIBRER
+      cost_class: engine
+
+    seals:
+      wrapper: []
+      test_scripts: ["tests/run_tests.gd"]
+
+  solvability:
+    entry: "solvability.gd"
+    # ATTENTION — piège propre à ce jeu, nommé d'avance. Un bot qui ne pose JAMAIS de
+    # bombe survit très bien et peut « gagner » un LAST_STANDING par élimination mutuelle
+    # des autres. Le critère de solvabilité exige donc une VICTOIRE PAR ÉLIMINATION
+    # ACTIVE : au moins une mort adverse attribuée à une bombe du bot testeur. Sans cette
+    # clause on prouve la survie, pas la jouabilité. Même famille que survival_arena et
+    # collect_runner (oracles verts, jeu injouable).
+    # CALIBRE (2026-08-10) : manche bornee a 3600 + 143*20 = 6460 ticks (107,7 s).
+    # 12000 laisse une marge de 1,85x sans jamais masquer une partie qui ne finit pas.
+    max_ticks: 12000
+    # RATIFIE PIERRE 2026-08-11 : 20 essais, pas 50. C'est une REDUCTION ASSUMEE de la
+    # surface de preuve, decidee par HumanGate — pas un ajustement technique. Motif mesure :
+    # 50 x ~12 s = 602 s depassent le timeout de 300 s de oracle.py (jamais surcharge), donc
+    # 50 essais rendaient un FAIL par depassement meme avec un bot parfait. 20 x ~12 s ≈ 240 s.
+    # DETTE CONNUE : cette valeur est declaree DEUX FOIS (ici et dans scripts/forge/oracles.json)
+    # et c'est oracles.json qui est REELLEMENT lu par godot_oracle.mjs. Les deux sont tenues
+    # coherentes a la main, aucun oracle ne le verifie.
+    #   -> DETTE FERMEE le 2026-08-17 : `solvability_budget_audit` (commit 5190859) compare
+    #      desormais les deux declarations et signale CONTRAT_IGNORE / DIVERGENT. C'est lui
+    #      qui a impose d'aligner CE fichier en meme temps qu'oracles.json.
+    #
+    # SECONDE REDUCTION 20 -> 14, ratifiee Pierre 2026-08-18. LA PREMISSE DE 2026-08-11 A
+    # CHANGE : elle reposait sur ~12 s/essai (« 20 x ~12 s ≈ 240 s »). MESURE DU 2026-08-18,
+    # par invocation directe : ~19 s/essai — identique a 12000, 30000 et 60000 ticks, la
+    # partie se terminant naturellement bien avant le plafond. Le cout a donc AUGMENTE, et
+    # 20 essais demandent ~380 s : au-dela des 300 s de oracle.py. La reduction de 2026-08-11
+    # etait juste dans sa METHODE et perimee dans sa DONNEE.
+    #
+    # 14 x 19 = 266 s, + 1 s de mecanique (T_mecanique MESURE isolement : 691 assertions en
+    # 1 s — l'hypothese « 45 s » etait fausse d'un facteur 45) = 267 s < 300 s.
+    #
+    # POURQUOI REDUIRE PLUTOT QUE SE CONTENTER DU FILET : avec `total_timeout_s` SEUL,
+    # bomberman_3d ne pourrait JAMAIS rendre autre chose que BLOCKED — 20 essais sont hors de
+    # portee, donc la preuve serait definitivement « incomplete » : honnete, mais jamais
+    # concluante. 14 essais rendent un VERDICT REEL possible. Arbitrage Pierre entre
+    # « ne jamais conclure » et « conclure sur moins d'essais ».
+    trials: 14
+    # FILET DE SECURITE, pas dimensionnement — role DIFFERENT de `trials`. En regime mesure
+    # il ne se declenche PAS (13 x 19 = 247 s < 250, le 14e demarre et termine la boucle) :
+    # il n'agit que si un essai deborde son regime. Verifie AVANT chaque essai, jamais
+    # pendant — un essai commence va a son terme, d'ou la borne `300 - 1 - 19 = 280 s`.
+    # EXPERIENCE DU 2026-08-18, budget instrumental de 200 s : arret a 209 s, 11/20 essais,
+    # won 3 / lost 8 CONSERVES, BLOCKED motive. Exactement la prediction arithmetique.
+    # Sans lui, le processus etait TUE a 300 s sans rien rendre (runs proof4/proof5).
+    total_timeout_s: 250
+    trial_timeout_ms: 60000

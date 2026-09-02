@@ -1,0 +1,213 @@
+{
+ "world_interpretation": [
+  {
+   "fact": "Le cout du premier batiment doit rester proche de 15 unites (ancrage Cookie Clicker mesure dans le World Scan).",
+   "source": "worldscan:dimensions[1].variables[0]"
+  },
+  {
+   "fact": "Le ton du monde est chaleureux et mignon, centre sur des chatons recueillis.",
+   "source": "story_bible:tone"
+  },
+  {
+   "fact": "La palette visuelle est pastel avec des affordances rondes et lisibles.",
+   "source": "art_bible:visual_language"
+  }
+ ],
+ "loops": {
+  "core_loop": {
+   "steps": [
+    {"id": "core_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur caresse la pelote de chatons.", "metric_ref": "core_reactions_per_caress", "proof_ref": "proof_core", "affordance": "pelote"},
+    {"id": "core_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "Le chaton le plus proche reagit visiblement (leve la tete).", "metric_ref": "core_reactions_per_caress", "proof_ref": "proof_core"},
+    {"id": "core_reward", "kind": "reward", "actor": "SYSTEM", "why": "Un ronron sonore et un pop confirment la caresse.", "metric_ref": "core_reactions_per_caress", "proof_ref": "proof_core"},
+    {"id": "core_progression", "kind": "progression", "actor": "SYSTEM", "why": "Les ronrons s'accumulent vers le seuil du premier geste.", "metric_ref": "core_reactions_per_caress", "proof_ref": "proof_core"},
+    {"id": "core_decision", "kind": "decision", "actor": "PLAYER", "why": "Le joueur decide de caresser court (rythme) ou long (un chaton vient).", "metric_ref": "core_reactions_per_caress", "proof_ref": "proof_core"}
+   ],
+   "produces": "ronrons + attention des chatons",
+   "consumes": ["meta_loop"],
+   "unlocks": ["gameplay_loop"],
+   "transformation_perceptible": {
+    "text": "le chaton le plus proche reagit a chaque caresse (tete levee, frottement) au lieu d'un simple compteur qui bouge.",
+    "proof_ref": "proof_core"
+   },
+   "metric_propre": "core_reactions_per_caress"
+  },
+  "gameplay_loop": {
+   "steps": [
+    {"id": "gameplay_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur accueille un chaton et le place dans le refuge.", "metric_ref": "gameplay_possibilities_per_minute", "proof_ref": "proof_gameplay"},
+    {"id": "gameplay_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "Le chaton entre en scene et se comporte dans le refuge.", "metric_ref": "gameplay_possibilities_per_minute", "proof_ref": "proof_gameplay"},
+    {"id": "gameplay_reward", "kind": "reward", "actor": "SYSTEM", "why": "Le refuge devient visiblement plus vivant.", "metric_ref": "gameplay_possibilities_per_minute", "proof_ref": "proof_gameplay"},
+    {"id": "gameplay_progression", "kind": "progression", "actor": "SYSTEM", "why": "La prochaine possibilite jouable est affichee (hud.ensuite).", "metric_ref": "gameplay_possibilities_per_minute", "proof_ref": "proof_gameplay"},
+    {"id": "gameplay_decision", "kind": "decision", "actor": "PLAYER", "why": "Decision 1 : adopter (passif) ou amenager (actif) au meme cout.", "metric_ref": "gameplay_possibilities_per_minute", "proof_ref": "proof_gameplay"}
+   ],
+   "produces": "monde peuple + choix joues",
+   "consumes": ["core_loop", "economy_loop"],
+   "unlocks": ["progression_loop"],
+   "transformation_perceptible": {
+    "text": "un chaton ou un objet supplementaire occupe visiblement le refuge apres chaque accueil.",
+    "proof_ref": "proof_gameplay"
+   },
+   "metric_propre": "gameplay_possibilities_per_minute"
+  },
+  "progression_loop": {
+   "steps": [
+    {"id": "prog_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur franchit le prochain jalon affiche.", "metric_ref": "progression_new_possibilities_per_tier", "proof_ref": "proof_progression"},
+    {"id": "prog_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "Le jalon passe visiblement de LOCKED a AVAILABLE.", "metric_ref": "progression_new_possibilities_per_tier", "proof_ref": "proof_progression"},
+    {"id": "prog_reward", "kind": "reward", "actor": "SYSTEM", "why": "La possibilite elle-meme est la recompense (jamais +X%).", "metric_ref": "progression_new_possibilities_per_tier", "proof_ref": "proof_progression"},
+    {"id": "prog_progression", "kind": "progression", "actor": "SYSTEM", "why": "Le palier de production suivant se rapproche.", "metric_ref": "progression_new_possibilities_per_tier", "proof_ref": "proof_progression"},
+    {"id": "prog_decision", "kind": "decision", "actor": "PLAYER", "why": "Le joueur choisit quel jalon poursuivre quand deux sont finançables.", "metric_ref": "progression_new_possibilities_per_tier", "proof_ref": "proof_progression"}
+   ],
+   "produces": "possibilites nouvelles (jalons ouverts)",
+   "consumes": ["gameplay_loop"],
+   "unlocks": ["content_loop", "skill_loop"],
+   "transformation_perceptible": {
+    "text": "un noeud du graphe de progression passe LOCKED -> AVAILABLE, visible sur la carte.",
+    "proof_ref": "proof_progression"
+   },
+   "metric_propre": "progression_new_possibilities_per_tier"
+  },
+  "content_loop": {
+   "steps": [
+    {"id": "content_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur obtient/place le contenu ouvert par la progression.", "metric_ref": "content_chain_length", "proof_ref": "proof_content"},
+    {"id": "content_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "Le nouvel element (chaton/objet) est ajoute a la scene avec un comportement.", "metric_ref": "content_chain_length", "proof_ref": "proof_content"},
+    {"id": "content_reward", "kind": "reward", "actor": "SYSTEM", "why": "Le monde change visiblement.", "metric_ref": "content_chain_length", "proof_ref": "proof_content"},
+    {"id": "content_progression", "kind": "progression", "actor": "SYSTEM", "why": "L'element ajoute appelle le maillon de contenu suivant.", "metric_ref": "content_chain_length", "proof_ref": "proof_content"},
+    {"id": "content_decision", "kind": "decision", "actor": "PLAYER", "why": "Le joueur decide quel contenu obtenir en premier (chaton ou objet).", "metric_ref": "content_chain_length", "proof_ref": "proof_content"}
+   ],
+   "produces": "chaine de contenu debloquee (chatons/objets/animations)",
+   "consumes": ["progression_loop"],
+   "unlocks": ["world_loop"],
+   "transformation_perceptible": {
+    "text": "le banc pose appelle visiblement les fleurs disponibles ensuite (hud.ensuite se met a jour).",
+    "proof_ref": "proof_content"
+   },
+   "metric_propre": "content_chain_length"
+  },
+  "economy_loop": {
+   "steps": [
+    {"id": "eco_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur depense des ronrons pour acheter un objet.", "metric_ref": "economy_transformations_per_spend", "proof_ref": "proof_economy", "resource": "chatons"},
+    {"id": "eco_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "Le stock de ronrons diminue visiblement au moment de l'achat.", "metric_ref": "economy_transformations_per_spend", "proof_ref": "proof_economy", "resource": "chatons"},
+    {"id": "eco_reward", "kind": "reward", "actor": "SYSTEM", "why": "La depense transforme la scene (jamais un nombre seul).", "metric_ref": "economy_transformations_per_spend", "proof_ref": "proof_economy", "resource": "chatons"},
+    {"id": "eco_progression", "kind": "progression", "actor": "SYSTEM", "why": "Le nouveau pouvoir d'achat augmente le rendement futur.", "metric_ref": "economy_transformations_per_spend", "proof_ref": "proof_economy"},
+    {"id": "eco_decision", "kind": "decision", "actor": "PLAYER", "why": "Le joueur decide entre epargner ou depenser immediatement.", "metric_ref": "economy_transformations_per_spend", "proof_ref": "proof_economy"}
+   ],
+   "produces": "ressources + decisions de depense",
+   "consumes": ["gameplay_loop"],
+   "unlocks": ["gameplay_loop", "meta_loop"],
+   "transformation_perceptible": {
+    "text": "chaque depense transforme la scene (un objet apparait) au lieu de seulement decrementer un compteur.",
+    "proof_ref": "proof_economy"
+   },
+   "metric_propre": "economy_transformations_per_spend"
+  },
+  "skill_loop": {
+   "steps": [
+    {"id": "skill_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur acquiert une competence dans la branche choisie.", "metric_ref": "skill_verbs_acquired", "proof_ref": "proof_skill"},
+    {"id": "skill_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "Le nouveau verbe (caresse_longue, appeler, brosser) devient disponible.", "metric_ref": "skill_verbs_acquired", "proof_ref": "proof_skill"},
+    {"id": "skill_reward", "kind": "reward", "actor": "SYSTEM", "why": "Une interaction inedite avec les chatons est possible.", "metric_ref": "skill_verbs_acquired", "proof_ref": "proof_skill"},
+    {"id": "skill_progression", "kind": "progression", "actor": "SYSTEM", "why": "Le noeud suivant de l'arbre de competence se rapproche.", "metric_ref": "skill_verbs_acquired", "proof_ref": "proof_skill"},
+    {"id": "skill_decision", "kind": "decision", "actor": "PLAYER", "why": "Le joueur decide quelle branche approfondir d'abord.", "metric_ref": "skill_verbs_acquired", "proof_ref": "proof_skill"}
+   ],
+   "produces": "verbes jouables acquis",
+   "consumes": ["progression_loop"],
+   "unlocks": ["quest_loop"],
+   "transformation_perceptible": {
+    "text": "le verbe 'appeler' rassemble visiblement les chatons a l'ecran une fois acquis.",
+    "proof_ref": "proof_skill"
+   },
+   "metric_propre": "skill_verbs_acquired"
+  },
+  "world_loop": {
+   "steps": [
+    {"id": "world_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur ouvre ou developpe un lieu (jardin, grenier).", "metric_ref": "world_playable_location_ratio", "proof_ref": "proof_world"},
+    {"id": "world_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "Le lieu change d'etat (LOCKED -> AVAILABLE -> ACTIVE).", "metric_ref": "world_playable_location_ratio", "proof_ref": "proof_world"},
+    {"id": "world_reward", "kind": "reward", "actor": "SYSTEM", "why": "L'espace vit visiblement (oiseau, vent, lumiere).", "metric_ref": "world_playable_location_ratio", "proof_ref": "proof_world"},
+    {"id": "world_progression", "kind": "progression", "actor": "SYSTEM", "why": "La carte s'etend (refuge -> jardin -> grenier).", "metric_ref": "world_playable_location_ratio", "proof_ref": "proof_world"},
+    {"id": "world_decision", "kind": "decision", "actor": "PLAYER", "why": "Decision 2 : developper le jardin (album) ou ouvrir le grenier (production).", "metric_ref": "world_playable_location_ratio", "proof_ref": "proof_world"}
+   ],
+   "produces": "espaces jouables + etats de lieu",
+   "consumes": ["content_loop"],
+   "unlocks": ["quest_loop", "meta_loop"],
+   "transformation_perceptible": {
+    "text": "le jardin passe de volets fermes a volets entrouverts (teasing) puis ouverts, cliquable a chaque etat.",
+    "proof_ref": "proof_world"
+   },
+   "metric_propre": "world_playable_location_ratio"
+  },
+  "quest_loop": {
+   "steps": [
+    {"id": "quest_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur accomplit l'objectif affiche (hud.objectif).", "metric_ref": "quest_rewards_delivered", "proof_ref": "proof_quest"},
+    {"id": "quest_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "L'objectif accompli est marque (album colore, coche).", "metric_ref": "quest_rewards_delivered", "proof_ref": "proof_quest"},
+    {"id": "quest_reward", "kind": "reward", "actor": "SYSTEM", "why": "Une recompense explicite est attachee a l'objectif.", "metric_ref": "quest_rewards_delivered", "proof_ref": "proof_quest"},
+    {"id": "quest_progression", "kind": "progression", "actor": "SYSTEM", "why": "Le prochain objectif, reellement different, s'affiche.", "metric_ref": "quest_rewards_delivered", "proof_ref": "proof_quest"},
+    {"id": "quest_decision", "kind": "decision", "actor": "PLAYER", "why": "Le joueur decide quel objectif secondaire poursuivre.", "metric_ref": "quest_rewards_delivered", "proof_ref": "proof_quest"}
+   ],
+   "produces": "objectifs accomplis + recompenses delivrees",
+   "consumes": ["world_loop", "gameplay_loop", "skill_loop"],
+   "unlocks": ["meta_loop"],
+   "transformation_perceptible": {
+    "text": "l'album se colore d'une case supplementaire des que l'objectif est accompli.",
+    "proof_ref": "proof_quest"
+   },
+   "metric_propre": "quest_rewards_delivered"
+  },
+  "meta_loop": {
+   "steps": [
+    {"id": "meta_action", "kind": "action", "actor": "PLAYER", "why": "Le joueur prestige au jalon de maitrise (5 places + jardin).", "metric_ref": "meta_resets_observed", "proof_ref": "proof_meta"},
+    {"id": "meta_feedback", "kind": "feedback", "actor": "SYSTEM", "why": "Un ecran de fin de portee confirme le reset.", "metric_ref": "meta_resets_observed", "proof_ref": "proof_meta"},
+    {"id": "meta_reward", "kind": "reward", "actor": "SYSTEM", "why": "Une saison/ruban/album colore recompense le prestige.", "metric_ref": "meta_resets_observed", "proof_ref": "proof_meta"},
+    {"id": "meta_progression", "kind": "progression", "actor": "SYSTEM", "why": "Le prochain palier de prestige devient accessible.", "metric_ref": "meta_resets_observed", "proof_ref": "proof_meta"},
+    {"id": "meta_decision", "kind": "decision", "actor": "PLAYER", "why": "Le joueur decide de prestiger maintenant ou de pousser l'album.", "metric_ref": "meta_resets_observed", "proof_ref": "proof_meta"}
+   ],
+   "produces": "transformation du monde + collection conservee",
+   "consumes": ["progression_loop", "quest_loop", "world_loop"],
+   "unlocks": ["core_loop"],
+   "transformation_perceptible": {
+    "text": "le monde revient au Core dans une saison differente (nouvelle palette, grenier deja entrouvert).",
+    "proof_ref": "proof_meta"
+   },
+   "metric_propre": "meta_resets_observed"
+  }
+ },
+ "economy_model": {
+  "resources": [
+   {"id": "chatons", "unit": "chatons", "sources": ["click", "cursor"], "sinks": ["achat_cursor", "achat_garden"], "initial_stock": 0}
+  ],
+  "formulas": [
+   {"id": "cout_cursor", "text": "cout(n) = 15 * 1.15^n", "params": {"base": 15, "growth": 1.15}}
+  ]
+ },
+ "progression_metrics": [
+  {"id": "core_reactions_per_caress", "kind": "target", "range": {"min": 1, "max": 3}, "unit": "reactions", "why": "Chaque caresse doit produire entre 1 et 3 reactions de chatons observables, sinon l'interaction lit comme un bouton."},
+  {"id": "gameplay_possibilities_per_minute", "kind": "observation", "unit": "possibilites/min", "why": "Nombre de possibilites jouables ajoutees par minute, mesure non bloquant."},
+  {"id": "progression_new_possibilities_per_tier", "kind": "target", "range": {"min": 1, "max": 5}, "unit": "possibilites", "why": "Chaque palier doit ouvrir au moins une possibilite nouvelle, jamais un simple +X%."},
+  {"id": "content_chain_length", "kind": "observation", "unit": "maillons", "why": "Longueur de la chaine de contenu debloquee, mesure la coherence de l'enchainement plutot que le nombre d'assets."},
+  {"id": "economy_transformations_per_spend", "kind": "invariant", "value": 1, "unit": "transformation", "why": "Chaque depense doit transformer la scene exactement une fois — une depense sans transformation est un defaut."},
+  {"id": "skill_verbs_acquired", "kind": "observation", "unit": "verbes", "why": "Nombre de verbes jouables acquis par le joueur, mesure la progression de competence."},
+  {"id": "world_playable_location_ratio", "kind": "invariant", "value": 1, "unit": "ratio", "why": "Ratio lieux jouables / lieux affiches ancre a 1 — un lieu affiche mais non interactif est l'anti-modele mesure (V5/V6)."},
+  {"id": "quest_rewards_delivered", "kind": "observation", "unit": "recompenses", "why": "Nombre de recompenses d'objectif reellement delivrees, jamais zero (anti-modele mesure : 0/6 versions)."},
+  {"id": "meta_resets_observed", "kind": "observation", "unit": "resets", "why": "Nombre de prestiges observes, seule boucle deja mesuree aujourd'hui (audit C.3)."}
+ ],
+ "proof_model": [
+  {"id": "proof_core", "measures": "core_reactions_per_caress", "how": "player_loop", "expected": "sonde clic -> hud.ronrons + reaction du chaton focal dans la scene"},
+  {"id": "proof_gameplay", "measures": "gameplay_possibilities_per_minute", "how": "hud", "expected": "hud.ensuite affiche la prochaine possibilite apres chaque geste"},
+  {"id": "proof_progression", "measures": "progression_new_possibilities_per_tier", "how": "decision", "expected": "le noeud passe LOCKED -> AVAILABLE observe par la sonde appears"},
+  {"id": "proof_content", "measures": "content_chain_length", "how": "hud", "expected": "hud.ensuite change apres chaque maillon de contenu ajoute"},
+  {"id": "proof_economy", "measures": "economy_transformations_per_spend", "how": "registry", "expected": "economy.json.invariants contient economy_transformations_per_spend=1"},
+  {"id": "proof_skill", "measures": "skill_verbs_acquired", "how": "player_loop", "expected": "chaque verbe acquis est joue par la sonde au moins une fois"},
+  {"id": "proof_world", "measures": "world_playable_location_ratio", "how": "registry", "expected": "economy.json.invariants contient world_playable_location_ratio=1"},
+  {"id": "proof_quest", "measures": "quest_rewards_delivered", "how": "hud", "expected": "hud.objectif se marque et une recompense s'affiche"},
+  {"id": "proof_meta", "measures": "meta_resets_observed", "how": "decision", "expected": "resets + appears post-prestige observes par la sonde"}
+ ],
+ "grey_blocks": [
+  {"id": "garden", "type": "LOCATION", "role": "PROGRESSION_GATE", "state": "LOCKED", "requires": ["world_playable_location_ratio"], "player_meaning": "Le jardin est le prochain lieu a debloquer.", "builder_contract": "Afficher le jardin verrouille avec volets fermes tant que placed_kittens < 5, puis entrouverts en teasing.", "proof_ref": "proof_world"},
+  {"id": "cursor", "type": "ITEM", "role": "AFFORDANCE", "state": "AVAILABLE", "requires": [], "player_meaning": "Le curseur produit des ronrons au clic.", "builder_contract": "Bouton cliquable visible des le depart.", "proof_ref": "proof_core"},
+  {"id": "kitten_actor", "type": "ACTOR", "role": "REWARD", "state": "AVAILABLE", "requires": ["garden"], "player_meaning": "Chaque chaton place est une recompense visible.", "builder_contract": "Afficher le chaton anime quand place, avec un comportement propre.", "proof_ref": "proof_content"},
+  {"id": "hud_counter", "type": "UI", "role": "FEEDBACK", "state": "AVAILABLE", "requires": [], "player_meaning": "Le compteur de ronrons informe la progression.", "builder_contract": "HUD toujours visible en haut de l'ecran.", "proof_ref": "proof_gameplay"}
+ ],
+ "artist_requirements": [
+  {"id": "ar_garden", "grey_block": "garden", "states_to_show": ["LOCKED", "AVAILABLE"], "visible_reason": true, "visible_requirement": "5 chatons places", "preview": true, "affordance_visual": "volets fermes puis entrouverts", "readability": "contraste AA sur fond pastel"},
+  {"id": "ar_cursor", "grey_block": "cursor", "states_to_show": ["AVAILABLE"], "visible_reason": false, "visible_requirement": "aucune", "preview": false, "affordance_visual": "bouton rond cliquable", "readability": "icone claire a distance"},
+  {"id": "ar_kitten", "grey_block": "kitten_actor", "states_to_show": ["PLACED"], "visible_reason": false, "visible_requirement": "aucune", "preview": false, "affordance_visual": "sprite anime distinct", "readability": "silhouette lisible sur l'herbe"},
+  {"id": "ar_hud", "grey_block": "hud_counter", "states_to_show": ["AVAILABLE"], "visible_reason": false, "visible_requirement": "aucune", "preview": false, "affordance_visual": "texte blanc sur bandeau", "readability": "contraste eleve, taille 16px minimum"}
+ ]
+}

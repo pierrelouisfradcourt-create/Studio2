@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_platform_stone_01",
+  "archetype": "platform",
+  "params": {
+    "size": {
+      "w": 2.0,
+      "d": 2.0,
+      "h": 0.25
+    },
+    "color": [
+      0.45,
+      0.45,
+      0.48,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_platform_stone_01"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 1972,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

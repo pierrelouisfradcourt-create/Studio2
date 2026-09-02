@@ -1,0 +1,151 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "$id": "agent_recipe.schema.json",
+ "title": "AGENT_RECIPE_V1",
+ "description": "RECETTE d agent : la configuration a assembler pour une mission, pas un agent. Un agent n est pas une entite fixe — c est une mission resolue en chaine de capacites, puis assignee a des runtimes. Nommer une recette `WorldScanAgent` recreerait exactement l entite permanente qu on cherche a eviter : la recette porte donc un nom de CONFIGURATION, pas de personnage. SCHEMA SEUL : aucune generation automatique, aucun orchestrateur, aucune hierarchie.",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "recipes"
+ ],
+ "additionalProperties": false,
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "recipes": {
+   "type": "array",
+   "items": {
+    "$ref": "#/definitions/recipe"
+   }
+  }
+ },
+ "definitions": {
+  "recipe": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "mission",
+    "root_problem",
+    "capability_chain",
+    "runtime_roles",
+    "evidence_requirements",
+    "validation_contract",
+    "proven"
+   ],
+   "properties": {
+    "id": {
+     "type": "string",
+     "pattern": "^[a-z][a-z0-9_]*_v[0-9]+$"
+    },
+    "mission": {
+     "type": "string",
+     "minLength": 1
+    },
+    "root_problem": {
+     "description": "UN root_problem_id existant. Une recette sans probleme racine ne sait pas ce qu elle resout.",
+     "type": "string",
+     "minLength": 1
+    },
+    "capability_chain": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "capability",
+       "evidence"
+      ],
+      "properties": {
+       "capability": {
+        "type": "string"
+       },
+       "evidence": {
+        "description": "Mutation du registre qui PROUVE cette capacite.",
+        "type": "string"
+       }
+      }
+     }
+    },
+    "runtime_roles": {
+     "description": "Assignation capacite -> role de roles.yaml. Un role runtime n est JAMAIS une preuve de competence : il dit qui execute, pas ce qui est prouve. `null` = aucun role declare pour cette capacite (a signaler, jamais a inventer).",
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "capability",
+       "capability_role"
+      ],
+      "properties": {
+       "capability": {
+        "type": "string"
+       },
+       "capability_role": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "enum": [
+         "architect",
+         "art_director",
+         "builder",
+         "contract_author",
+         "decompose",
+         "deterministic",
+         "forge_toolsmith",
+         "game_forger",
+         "orchestrator",
+         "prisme",
+         "redteam_code",
+         "redteam_reviewer",
+         "repair_runtime",
+         "run_orchestrator",
+         "wiremap",
+         "worldscan",
+         null
+        ]
+       }
+      }
+     }
+    },
+    "evidence_requirements": {
+     "type": "array",
+     "minItems": 1,
+     "items": {
+      "type": "string"
+     }
+    },
+    "validation_contract": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "objective_metric",
+      "constraints",
+      "oracle"
+     ],
+     "properties": {
+      "objective_metric": {
+       "type": "string"
+      },
+      "constraints": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "oracle": {
+       "type": "string"
+      }
+     }
+    },
+    "proven": {
+     "description": "true UNIQUEMENT si la chaine complete a ete EXECUTEE et MESUREE. Une composition plausible mais non executee reste false.",
+     "type": "boolean"
+    }
+   }
+  }
+ }
+}

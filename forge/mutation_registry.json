@@ -1,0 +1,1778 @@
+{
+ "schema_version": 1,
+ "mutations": [
+  {
+   "id": "M-ws1",
+   "title": "World Scan : enumerer partiellement les champs obligatoires dans le prompt",
+   "mutation_class": "PROMPT",
+   "layer": "s2-worldscan",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "prompt s2-worldscan",
+   "hypothesis": "Nommer explicitement retention_answer dans les regles dures empeche son omission.",
+   "implementation": "Ajout de retention_answer et player_goal a la liste des regles dures du prompt.",
+   "expected_gain": "3 jeux valides sur 3 au lieu de 1.",
+   "expected_risk": "Aucun anticipe.",
+   "measured_gain": "1/3 -> 2/3 sur l oracle check_worldscan, MAIS le jeu qui echoue change : cookie passe de OK a FAIL (loops.endgame vide). Deplacement, pas amelioration monotone.",
+   "measured_cost": {
+    "token_cost": "UNKNOWN",
+    "runtime_cost": "UNKNOWN",
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": "UNKNOWN",
+   "sample_size": 3,
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "durcir un champ pousse l omission sur un autre champ non enumere"
+   ],
+   "known_blind_spots": [
+    "aucune mesure du cout en tokens"
+   ],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "VIOLATES_CONTRACT_CONSTRAINT",
+    "note": "completion 1,0 mais discriminance_count=1 > 0 : eliminee AVANT comparaison par la contrainte qui protege du saboteur. Mesure rejouable, decision non negociable."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws1/before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws1/after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws1/oracle_before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws1/oracle_after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws1/measured_metrics.json"
+    ],
+    "tests": [],
+    "reports": [],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/check_worldscan.mjs EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws1/after.json",
+    "inputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws1/after.json"
+    ],
+    "deterministic": false
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "PROMPT_FIELD_OMISSION",
+   "reward_contract_ref": "PROMPT_FIELD_OMISSION#reward_contract",
+   "evaluation_context": {
+    "dataset": "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "dataset_sha256": "d1da5019951363e1",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "field_completion_without_regression": 1,
+    "discriminance_count": 1,
+    "cross_field_count": 0,
+    "completion_tokens": 596
+   }
+  },
+  {
+   "id": "M-ws2",
+   "title": "World Scan : invariant general « aucune chaine vide » SANS enumeration",
+   "mutation_class": "PROMPT",
+   "layer": "s2-worldscan",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "prompt s2-worldscan",
+   "hypothesis": "Une regle cardinale generale remplace avantageusement l enumeration champ par champ.",
+   "implementation": "Suppression de l enumeration, ajout d une regle cardinale unique avec un exemple de formulation.",
+   "expected_gain": "Couvrir tous les champs d un coup.",
+   "expected_risk": "Le modele pourrait recopier l exemple.",
+   "measured_gain": "1/3 — la PIRE des quatre formulations. Le risque anticipe s est realise : la phrase d exemple a ete recopiee mot pour mot dans deux artefacts.",
+   "measured_cost": {
+    "token_cost": "UNKNOWN",
+    "runtime_cost": "UNKNOWN",
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": "UNKNOWN",
+   "sample_size": 3,
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "un exemple de valeur dans un prompt est recopie tel quel par le modele"
+   ],
+   "known_blind_spots": [],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "NO_MEASURED_GAIN",
+    "note": "seule survivante des contraintes (discriminance 0) mais completion 0,5. Avec une seule mutation retenue, il n y a rien a ordonner : aucune conclusion comparative."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws2/before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws2/after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws2/oracle_before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws2/oracle_after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws2/measured_metrics.json"
+    ],
+    "tests": [],
+    "reports": [],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/check_worldscan.mjs EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws2/after.json",
+    "inputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws2/after.json"
+    ],
+    "deterministic": false
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "PROMPT_FIELD_OMISSION",
+   "reward_contract_ref": "PROMPT_FIELD_OMISSION#reward_contract",
+   "evaluation_context": {
+    "dataset": "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "dataset_sha256": "d1da5019951363e1",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "field_completion_without_regression": 0.5,
+    "discriminance_count": 0,
+    "cross_field_count": 0,
+    "completion_tokens": 312
+   }
+  },
+  {
+   "id": "M-ws3",
+   "title": "World Scan : regle cardinale ET enumeration exhaustive numerotee",
+   "mutation_class": "PROMPT",
+   "layer": "s2-worldscan",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "prompt s2-worldscan",
+   "hypothesis": "L invariant general et l enumeration sont complementaires, pas substituables.",
+   "implementation": "Regle cardinale + liste numerotee des 9 champs texte obligatoirement non vides + exemple explicitement fictif.",
+   "expected_gain": "3/3.",
+   "expected_risk": "Prompt plus long.",
+   "measured_gain": "2/3. Le plafond n a jamais ete franchi en 4 formulations : la panne restante est deterministe a temperature 0 (rejouer a l identique redonne le meme echec).",
+   "measured_cost": {
+    "token_cost": "UNKNOWN",
+    "runtime_cost": "UNKNOWN",
+    "complexity_cost": "LOW",
+    "maintenance_cost": "MEDIUM"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": "UNKNOWN",
+   "sample_size": 3,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "le champ qui saute est celui qui SUIT un bloc imbrique long — hypothese non testee isolement"
+   ],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "VIOLATES_CONTRACT_CONSTRAINT",
+    "note": "completion 1,0 mais discriminance_count=2 > 0 : eliminee AVANT comparaison."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws3/before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws3/after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws3/oracle_before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws3/oracle_after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws3/measured_metrics.json"
+    ],
+    "tests": [],
+    "reports": [],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/check_worldscan.mjs EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws3/after.json",
+    "inputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws3/after.json"
+    ],
+    "deterministic": false
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "PROMPT_FIELD_OMISSION",
+   "reward_contract_ref": "PROMPT_FIELD_OMISSION#reward_contract",
+   "evaluation_context": {
+    "dataset": "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "dataset_sha256": "d1da5019951363e1",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "field_completion_without_regression": 1,
+    "discriminance_count": 2,
+    "cross_field_count": 0,
+    "completion_tokens": 659
+   }
+  },
+  {
+   "id": "M-retry-identique",
+   "title": "Rejouer le meme prompt a l identique apres un echec d oracle",
+   "mutation_class": "REPAIR",
+   "layer": "repair",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "strategie de reprise",
+   "hypothesis": "Un second essai identique peut passer la ou le premier a echoue.",
+   "implementation": "Aucune — relance du meme appel, memes parametres.",
+   "expected_gain": "Rattraper les echecs stochastiques.",
+   "expected_risk": "Payer deux fois le meme echec.",
+   "measured_gain": "AUCUN. A temperature 0 la panne est DETERMINISTE : le rejeu redonne exactement le meme echec, sur les memes deux champs.",
+   "measured_cost": {
+    "token_cost": "UNKNOWN",
+    "runtime_cost": "UNKNOWN",
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": 0,
+   "sample_size": 1,
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "double le cout sans changer le resultat"
+   ],
+   "known_blind_spots": [
+    "non teste a temperature > 0"
+   ],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "NO_MEASURED_GAIN",
+    "note": "Zero probleme resolu sur entree versionnee (2 -> 2). Mesure rejouable : EVIDENCE/bundles/M-retry-identique/."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/REPAIR_NON_CONVERGENCE/worldscan_input.json",
+     "EVIDENCE/bundles/M-retry-identique/worldscan_after.json",
+     "EVIDENCE/bundles/M-retry-identique/oracle_result.json",
+     "EVIDENCE/bundles/M-retry-identique/measured_metrics.json"
+    ],
+    "tests": [],
+    "reports": [],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/repair_step.mjs s2-worldscan EVIDENCE/bundles/M-retry-identique/run --no-repair",
+    "inputs": [
+     "EVIDENCE/bundles/REPAIR_NON_CONVERGENCE/worldscan_input.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/M-retry-identique/worldscan_after.json"
+    ],
+    "deterministic": false
+   },
+   "requires": [],
+   "conflicts": [
+    "REPAIR-LOOP-V1"
+   ],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "REPAIR_NON_CONVERGENCE",
+   "reward_contract_ref": "REPAIR_NON_CONVERGENCE#reward_contract",
+   "evaluation_context": {
+    "dataset": "EVIDENCE/bundles/REPAIR_NON_CONVERGENCE/worldscan_input.json",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3",
+    "dataset_sha256": "51aaf8d73a54d175"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "problems_resolved_ratio": 0,
+    "completion_tokens": 0,
+    "regression_count": 0,
+    "discriminance_count": 0
+   }
+  },
+  {
+   "id": "M-rep-gabarit-vide",
+   "title": "Prompt de reparation contenant un gabarit pre-rempli de chaines vides",
+   "mutation_class": "PROMPT",
+   "layer": "repair",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "construirePromptReparation",
+   "hypothesis": "Montrer la forme attendue aide le modele a rendre le bon format.",
+   "implementation": "Le prompt affichait {\"chemin\": \"\"} comme modele de sortie.",
+   "expected_gain": "Format de sortie respecte.",
+   "expected_risk": "Aucun anticipe.",
+   "measured_gain": "NEGATIF : le modele a renvoye le gabarit VIDE tel quel. 3 cycles, 81 tokens, 0 probleme resolu.",
+   "measured_cost": {
+    "token_cost": 81,
+    "runtime_cost": 1425,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": 0,
+   "sample_size": 1,
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "toute valeur montree dans un prompt peut etre recopiee telle quelle"
+   ],
+   "known_blind_spots": [],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "REFUTED_FALSE_POSITIVE",
+    "note": "Refutee par l execution : le gabarit vide est recopie, la boucle ecrit des valeurs invalides et l oracle reste au meme compte. Remplacee par M-rep-forme-fictive."
+   },
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/repair_loop.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node --test forge/repair_loop.test.mjs",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "REPAIR_NON_CONVERGENCE",
+   "reward_contract_ref": "REPAIR_NON_CONVERGENCE#reward_contract",
+   "evaluation_context": {
+    "dataset": "World Scan gele M-ws3, 3 jeux",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {}
+  },
+  {
+   "id": "M-rep-forme-fictive",
+   "title": "Prompt de reparation decrivant la FORME avec un exemple explicitement fictif",
+   "mutation_class": "PROMPT",
+   "layer": "repair",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "construirePromptReparation",
+   "hypothesis": "Ne jamais montrer de valeur copiable supprime la recopie de gabarit.",
+   "implementation": "Suppression du gabarit pre-rempli ; description de la forme + exemple marque comme fictif + interdiction explicite de la chaine vide.",
+   "expected_gain": "Convergence en 1 cycle.",
+   "expected_risk": "Le modele pourrait rendre un format libre.",
+   "measured_gain": "1 cycle, 71 tokens, convergence — la ou le gabarit vide donnait 3 cycles et 0 resolution.",
+   "measured_cost": {
+    "token_cost": 71,
+    "runtime_cost": 1199,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": 1,
+   "sample_size": 1,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "mesure sur un seul jeu"
+   ],
+   "accepted": true,
+   "production_ready": true,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/repair_loop.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node --test forge/repair_loop.test.mjs",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [
+    "M-rep-gabarit-vide"
+   ],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "REPAIR_NON_CONVERGENCE",
+   "reward_contract_ref": "REPAIR_NON_CONVERGENCE#reward_contract",
+   "evaluation_context": {
+    "dataset": "World Scan gele M-ws3, 3 jeux",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "PRODUCTION",
+   "measured_metrics": {}
+  },
+  {
+   "id": "REPAIR-LOOP-V1",
+   "title": "Reparation locale sous liste blanche de chemins",
+   "mutation_class": "REPAIR",
+   "layer": "repair",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "forge/repair_loop.mjs",
+   "hypothesis": "Redemander uniquement les champs rejetes converge la ou la regeneration echoue, pour une fraction du cout.",
+   "implementation": "Findings de l oracle -> liste blanche de chemins -> patch filtre -> non-regression calculee par diff des chemins-feuilles.",
+   "expected_gain": "Passer de 2/3 a 3/3 sans regression.",
+   "expected_risk": "Le modele reecrit des champs deja valides.",
+   "measured_gain": "2/3 -> 3/3 en 1 cycle, 71 tokens de completion, 0 regression, 1,2 s. Diff structurel : 2 chemins modifies, 0 perdu.",
+   "measured_cost": {
+    "token_cost": 71,
+    "runtime_cost": 1201,
+    "complexity_cost": "MEDIUM",
+    "maintenance_cost": "MEDIUM"
+   },
+   "false_positive": 0,
+   "true_positive": 1,
+   "sample_size": 3,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "la boucle converge vers l ORACLE, pas vers la qualite : un oracle de non-vacuite fait ecrire des valeurs non vides, pas justes"
+   ],
+   "accepted": true,
+   "production_ready": true,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/REPAIR_NON_CONVERGENCE/worldscan_input.json",
+     "EVIDENCE/bundles/REPAIR-LOOP-V1/worldscan_after.json",
+     "EVIDENCE/bundles/REPAIR-LOOP-V1/oracle_result.json",
+     "EVIDENCE/bundles/REPAIR-LOOP-V1/measured_metrics.json"
+    ],
+    "tests": [
+     "forge/repair_loop.test.mjs",
+     "forge/repair_step.test.mjs",
+     "forge/tests/test_run_real_repair_wiring.py"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/repair_step.mjs s2-worldscan EVIDENCE/bundles/REPAIR-LOOP-V1/run",
+    "inputs": [
+     "EVIDENCE/bundles/REPAIR_NON_CONVERGENCE/worldscan_input.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/REPAIR-LOOP-V1/worldscan_after.json"
+    ],
+    "deterministic": false
+   },
+   "requires": [
+    "M-rep-forme-fictive"
+   ],
+   "conflicts": [
+    "M-retry-identique"
+   ],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "REPAIR_NON_CONVERGENCE",
+   "reward_contract_ref": "REPAIR_NON_CONVERGENCE#reward_contract",
+   "evaluation_context": {
+    "dataset": "EVIDENCE/bundles/REPAIR_NON_CONVERGENCE/worldscan_input.json",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3",
+    "dataset_sha256": "51aaf8d73a54d175"
+   },
+   "status": "PRODUCTION",
+   "measured_metrics": {
+    "problems_resolved_ratio": 1,
+    "completion_tokens": 68,
+    "regression_count": 0,
+    "discriminance_count": 0
+   }
+  },
+  {
+   "id": "M-conv-decroissance-stricte",
+   "title": "Arreter la boucle sur decroissance STRICTE du nombre de problemes",
+   "mutation_class": "REPAIR",
+   "layer": "repair",
+   "worker": "aucun",
+   "target": "forge/repair_loop.mjs",
+   "hypothesis": "« Des champs ont ete ecrits » n est pas un signal de progres ; seul le compte de problemes en est un.",
+   "implementation": "Arret motive quand problems_apres >= problems_avant, meme si des champs ont ete ecrits.",
+   "expected_gain": "Ne plus payer maxCycles appels pour zero resolution.",
+   "expected_risk": "Arret premature si un oracle ne remonte qu un probleme a la fois.",
+   "measured_gain": "Le cas reel qui l a motivee coutait 3 cycles et 81 tokens pour un compte de problemes identique (2 -> 2 -> 2). Apres : arret au 1er cycle.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": 1,
+   "sample_size": 1,
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "un oracle qui remonte ses problemes UN PAR UN ferait stopper la boucle des le 1er cycle"
+   ],
+   "known_blind_spots": [
+    "aucun oracle du depot ne remonte ses problemes un par un — non verifie sur un oracle futur"
+   ],
+   "accepted": true,
+   "production_ready": true,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/repair_loop.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node --test forge/repair_loop.test.mjs",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [
+    "REPAIR-LOOP-V1"
+   ],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "REPAIR_NON_CONVERGENCE",
+   "reward_contract_ref": "REPAIR_NON_CONVERGENCE#reward_contract",
+   "evaluation_context": {
+    "dataset": "World Scan gele M-ws3, 3 jeux",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "PRODUCTION",
+   "measured_metrics": {}
+  },
+  {
+   "id": "M-rep-par-champ",
+   "title": "Un appel modele PAR CHAMP, sortie {path, value}",
+   "mutation_class": "PROMPT",
+   "layer": "repair",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "construirePromptChamp",
+   "hypothesis": "Le format de sortie le plus etroit est la contrainte la plus solide : a qui on demande une paire, le modele rend une paire.",
+   "implementation": "FIELD_TO_REPAIR / FAILURE_REASON / VALID_CONTEXT / FORBIDDEN -> {path, value} ; le path rendu est re-verifie contre le chemin demande.",
+   "expected_gain": "Aucune paire mal adressee ne peut entrer dans le patch.",
+   "expected_risk": "N appels au lieu d un seul.",
+   "measured_gain": "Une paire mal adressee est effectivement rejetee (test dedie). Cout reel mesure : 66 tokens pour 2 champs sur s2-worldscan, 41 pour 1 champ sur s1-prisme.",
+   "measured_cost": {
+    "token_cost": 66,
+    "runtime_cost": 1195,
+    "complexity_cost": "MEDIUM",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": 2,
+   "sample_size": 2,
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "le nombre d appels croit avec le nombre de champs fautifs"
+   ],
+   "known_blind_spots": [],
+   "accepted": true,
+   "production_ready": true,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/repair_loop.test.mjs",
+     "forge/repair_step.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node --test forge/repair_loop.test.mjs",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [
+    "REPAIR-LOOP-V1"
+   ],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "REPAIR_NON_CONVERGENCE",
+   "reward_contract_ref": "REPAIR_NON_CONVERGENCE#reward_contract",
+   "evaluation_context": {
+    "dataset": "World Scan gele M-ws3, 3 jeux",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "PRODUCTION",
+   "measured_metrics": {}
+  },
+  {
+   "id": "Q1-DISCRIMINANCE",
+   "title": "Signaler deux entrees distinctes decrites par la MEME phrase",
+   "mutation_class": "ORACLE",
+   "layer": "quality",
+   "worker": "aucun",
+   "target": "forge/oracle_quality.mjs",
+   "hypothesis": "Une valeur repetee entre deux entrees porte zero information : la regle de variance des metriques appliquee au contenu.",
+   "implementation": "Regroupement des feuilles par motif de chemin (indices remplaces par *), detection des valeurs normalisees identiques.",
+   "expected_gain": "Attraper des artefacts vides de sens que l oracle mecanique declare OK.",
+   "expected_risk": "Fausses alertes sur des champs legitimement repetes (ex. une meme source citee par deux jeux).",
+   "measured_gain": "0 faux positif sur 5 artefacts de reference ; signale 5 worldscans Qwen sur 5, dont 3 declares OK par l oracle mecanique.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": 1,
+   "sample_size": 5,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "ne compare que le MEME champ entre entrees : une contamination inter-champs lui est invisible (comblee par M-Q5-A)"
+   ],
+   "accepted": true,
+   "production_ready": false,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/Q1-DISCRIMINANCE/worldscan_before.json",
+     "EVIDENCE/bundles/Q1-DISCRIMINANCE/worldscan_after.json",
+     "EVIDENCE/bundles/Q1-DISCRIMINANCE/metrics.json"
+    ],
+    "tests": [
+     "forge/oracle_quality.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/oracle_quality.mjs EVIDENCE/bundles/Q1-DISCRIMINANCE/worldscan_before.json",
+    "inputs": [
+     "EVIDENCE/bundles/Q1-DISCRIMINANCE/worldscan_before.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/Q1-DISCRIMINANCE/metrics.json"
+    ],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "ORACLE_FALSE_NEGATIVE",
+   "reward_contract_ref": "ORACLE_FALSE_NEGATIVE#reward_contract",
+   "evaluation_context": {
+    "dataset": "5 artefacts de reference + 7 sorties Qwen validees",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "oracle_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "ACCEPTED",
+   "measured_metrics": {
+    "false_positive_count": 0
+   }
+  },
+  {
+   "id": "Q2-LANGUE",
+   "title": "Signaler un champ redige dans une autre langue que l artefact",
+   "mutation_class": "ORACLE",
+   "layer": "quality",
+   "worker": "aucun",
+   "target": "forge/oracle_quality.mjs",
+   "hypothesis": "Un champ dans une autre langue signale un contenu venu d ailleurs (recopie, reparation hors contexte).",
+   "implementation": "Repartition des mots-outils FR/EN, avec abstention sous 6 mots et absence de langue dominante nette.",
+   "expected_gain": "Attraper les reparations hors contexte.",
+   "expected_risk": "Fausse alerte sur les phrases courtes.",
+   "measured_gain": "0 faux positif sur 5 references, mais AUCUN vrai positif sur l echantillon : le cas reel qui l a motivee (« Proceed with caution near ghosts. ») fait 5 mots et tombe sous le seuil de decidabilite.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "MEDIUM"
+   },
+   "false_positive": 0,
+   "true_positive": 0,
+   "sample_size": 5,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "toute phrase de moins de 6 mots — c est-a-dire exactement le cas qui a motive la regle"
+   ],
+   "accepted": true,
+   "production_ready": false,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/oracle_quality.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node --test forge/oracle_quality.test.mjs",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "ORACLE_FALSE_NEGATIVE",
+   "reward_contract_ref": "ORACLE_FALSE_NEGATIVE#reward_contract",
+   "evaluation_context": {
+    "dataset": "5 artefacts de reference + 7 sorties Qwen validees",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "oracle_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "ACCEPTED",
+   "measured_metrics": {
+    "false_positive_count": 0
+   }
+  },
+  {
+   "id": "Q3-RECOPIE",
+   "title": "Signaler un champ qui reformule son voisin sans rien ajouter",
+   "mutation_class": "ORACLE",
+   "layer": "quality",
+   "worker": "aucun",
+   "target": "forge/oracle_quality.mjs",
+   "hypothesis": "Deux champs voisins qui se recouvrent au-dela d un seuil : le second n apporte rien.",
+   "implementation": "Jaccard sur tokens normalises entre champs de sens du meme conteneur, seuil 0,45.",
+   "expected_gain": "Attraper les claim qui recopient l observation.",
+   "expected_risk": "Seuil arbitraire.",
+   "measured_gain": "0 faux positif sur 5 references ; 1 vrai positif (quasi-recopie a 0,526 dans un prisme Qwen). Seuil calibre sur 15 exigences reelles dont 14 sous 0,30.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "MEDIUM"
+   },
+   "false_positive": 0,
+   "true_positive": 1,
+   "sample_size": 5,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "seuil calibre sur n=15 exigences, toutes issues d un seul modele"
+   ],
+   "accepted": true,
+   "production_ready": false,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/oracle_quality.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node --test forge/oracle_quality.test.mjs",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "ORACLE_FALSE_NEGATIVE",
+   "reward_contract_ref": "ORACLE_FALSE_NEGATIVE#reward_contract",
+   "evaluation_context": {
+    "dataset": "5 artefacts de reference + 7 sorties Qwen validees",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "oracle_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "ACCEPTED",
+   "measured_metrics": {
+    "false_positive_count": 0
+   }
+  },
+  {
+   "id": "M-Q4-ANCRAGE",
+   "title": "Exiger qu un champ de sens partage un mot significatif avec son conteneur",
+   "mutation_class": "ORACLE",
+   "layer": "quality",
+   "worker": "aucun",
+   "target": "prototype non conserve",
+   "hypothesis": "Un champ qui ne partage aucun mot avec le reste de son entree parle d autre chose.",
+   "implementation": "Prototype : intersection des mots significatifs entre un champ et les autres champs de sens du meme parent.",
+   "expected_gain": "Attraper « Proceed with caution near ghosts. » dans un artefact francais.",
+   "expected_risk": "Fausses alertes sur un vocabulaire legitimement different.",
+   "measured_gain": "REFUTEE : 1 faux positif sur worldscanReference (AdVenture Capitalist decrit legitimement avec un autre vocabulaire) et 8 signaux sur un artefact dont la plupart des champs sont sains.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "UNKNOWN"
+   },
+   "false_positive": 1,
+   "true_positive": 8,
+   "sample_size": 5,
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "bruit sur les champs sains"
+   ],
+   "known_blind_spots": [],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "REFUTED_FALSE_POSITIVE",
+    "note": "1 faux positif sur un artefact de reference. Un signal qui crie sur la reference est du bruit, et le bruit finit ignore, donc redevient un angle mort. Ne pas reessayer telle quelle."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/M-Q4-ANCRAGE/metrics.json"
+    ],
+    "tests": [],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": null,
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": false
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "ORACLE_FALSE_NEGATIVE",
+   "reward_contract_ref": "ORACLE_FALSE_NEGATIVE#reward_contract",
+   "evaluation_context": {
+    "dataset": "5 artefacts de reference + 7 sorties Qwen validees",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "oracle_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "false_positive_count": 1
+   }
+  },
+  {
+   "id": "M-Q5-A",
+   "title": "Cross-field : egalite normalisee entre entrees DIFFERENTES",
+   "mutation_class": "ORACLE",
+   "layer": "quality",
+   "worker": "aucun",
+   "target": "forge/cross_field_quality.mjs",
+   "hypothesis": "Un champ qui reprend mot pour mot un AUTRE champ d une AUTRE entree ne decrit plus son entree : c est un deplacement de defaut.",
+   "implementation": "Comparaison des paires de champs de noms differents appartenant a des entrees d index differents ; egalite apres normalisation.",
+   "expected_gain": "Detecter les deplacements crees par la reparation elle-meme.",
+   "expected_risk": "Fausses alertes sur des roles legitimement proches (player_goal / victory_condition).",
+   "measured_gain": "0 faux positif sur 12 artefacts connus-bons ; 1 vrai positif sur le deplacement reellement observe. Reparation V3 : WARNING -> PASS, source protegee, oracle mecanique toujours vert.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": 1,
+   "sample_size": 12,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "ignore volontairement les coincidences INTRA-entree (a Bomberman le but du joueur EST la condition de victoire) — et c est precisement la que le defaut a migre ensuite, jaccard 1,000, sans qu on puisse trancher mecaniquement entre coincidence legitime et 4e deplacement"
+   ],
+   "accepted": true,
+   "production_ready": false,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/M-Q5-A/worldscan_before.json",
+     "EVIDENCE/bundles/M-Q5-A/worldscan_after.json",
+     "EVIDENCE/bundles/M-Q5-A/metrics.json",
+     "EVIDENCE/bundles/M-Q5-A/diff.json"
+    ],
+    "tests": [
+     "forge/cross_field_quality.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/cross_field_quality.mjs EVIDENCE/bundles/M-Q5-A/worldscan_before.json",
+    "inputs": [
+     "EVIDENCE/bundles/M-Q5-A/worldscan_before.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/M-Q5-A/metrics.json"
+    ],
+    "deterministic": true
+   },
+   "requires": [
+    "Q1-DISCRIMINANCE"
+   ],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "DEFECT_DISPLACEMENT",
+   "reward_contract_ref": "DEFECT_DISPLACEMENT#reward_contract",
+   "evaluation_context": {
+    "dataset": "12 artefacts connus-bons + 1 contamination reconstruite",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "cross_field_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "ACCEPTED",
+   "measured_metrics": {
+    "false_positive_count": 0
+   }
+  },
+  {
+   "id": "M-Q5-B",
+   "title": "Cross-field : similarite de Jaccard entre entrees differentes",
+   "mutation_class": "ORACLE",
+   "layer": "quality",
+   "worker": "aucun",
+   "target": "forge/cross_field_quality.mjs",
+   "hypothesis": "Un seuil de similarite attrape aussi les contaminations reformulees, pas seulement les copies exactes.",
+   "implementation": "Jaccard sur tokens normalises, seuil 0,7, entre entrees d index differents.",
+   "expected_gain": "Couverture superieure a l egalite stricte.",
+   "expected_risk": "Un seuil de plus a regler et a defendre.",
+   "measured_gain": "0 faux positif sur 12 connus-bons, mais EXACTEMENT le meme vrai positif que M-Q5-A : aucun cas supplementaire attrape sur cet echantillon.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "MEDIUM"
+   },
+   "false_positive": 0,
+   "true_positive": 1,
+   "sample_size": 12,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "NO_MEASURED_GAIN",
+    "note": "Introduit un seuil sans gagner un seul vrai positif de plus que M-Q5-A. Risque non paye. A REVISITER si l echantillon grandit et fait apparaitre des contaminations reformulees."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/M-Q5-A/worldscan_before.json"
+    ],
+    "tests": [
+     "forge/cross_field_quality.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/cross_field_quality.mjs EVIDENCE/bundles/M-Q5-A/worldscan_before.json --strategie B",
+    "inputs": [
+     "EVIDENCE/bundles/M-Q5-A/worldscan_before.json"
+    ],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "DEFECT_DISPLACEMENT",
+   "reward_contract_ref": "DEFECT_DISPLACEMENT#reward_contract",
+   "evaluation_context": {
+    "dataset": "12 artefacts connus-bons + 1 contamination reconstruite",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "cross_field_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "false_positive_count": 0
+   }
+  },
+  {
+   "id": "M-Q5-C",
+   "title": "Cross-field : champs freres uniquement",
+   "mutation_class": "ORACLE",
+   "layer": "quality",
+   "worker": "aucun",
+   "target": "forge/cross_field_quality.mjs",
+   "hypothesis": "Deux champs identiques dans le meme conteneur signalent une contamination.",
+   "implementation": "Egalite normalisee restreinte aux champs partageant le meme parent.",
+   "expected_gain": "Detecter les contaminations locales.",
+   "expected_risk": "Aveugle aux contaminations entre entrees.",
+   "measured_gain": "0 faux positif sur 12 connus-bons, 0 vrai positif : aveugle au seul deplacement reellement observe.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": 0,
+   "sample_size": 12,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "BLIND_TO_TESTED_DEFECT",
+    "note": "N a rien detecte sur le defaut mesure. Conservee au depot car elle ne coute rien, mais jamais activee sans une mesure qui la justifie."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/M-Q5-A/worldscan_before.json"
+    ],
+    "tests": [
+     "forge/cross_field_quality.test.mjs"
+    ],
+    "reports": [],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/cross_field_quality.mjs EVIDENCE/bundles/M-Q5-A/worldscan_before.json --strategie C",
+    "inputs": [
+     "EVIDENCE/bundles/M-Q5-A/worldscan_before.json"
+    ],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "DEFECT_DISPLACEMENT",
+   "reward_contract_ref": "DEFECT_DISPLACEMENT#reward_contract",
+   "evaluation_context": {
+    "dataset": "12 artefacts connus-bons + 1 contamination reconstruite",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "cross_field_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "false_positive_count": 0
+   }
+  },
+  {
+   "id": "M-Q5-D",
+   "title": "Cross-field : graphe de roles incompatibles",
+   "mutation_class": "ORACLE",
+   "layer": "quality",
+   "worker": "aucun",
+   "target": "forge/cross_field_quality.mjs",
+   "hypothesis": "Certaines paires de roles ne peuvent pas etre remplies par la meme phrase sans perte (ex. player_goal et retention_answer).",
+   "implementation": "Liste declaree de paires incompatibles + seuil de similarite, toutes entrees confondues.",
+   "expected_gain": "Attraper les confusions de role.",
+   "expected_risk": "La liste de paires est un jugement, pas une mesure.",
+   "measured_gain": "0 faux positif sur 12 connus-bons, 0 vrai positif sur le deplacement mesure. Attrape en revanche ce pour quoi elle est faite (test dedie : player_goal confondu avec retention_answer).",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "MEDIUM",
+    "maintenance_cost": "HIGH"
+   },
+   "false_positive": 0,
+   "true_positive": 0,
+   "sample_size": 12,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "la liste de paires incompatibles n a ete validee sur aucun corpus reel"
+   ],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "BLIND_TO_TESTED_DEFECT",
+    "note": "Aveugle au defaut mesure. Sa liste de paires releve du jugement et coutera cher a maintenir : ne l activer qu apres avoir observe une vraie confusion de role en production."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/M-Q5-A/worldscan_before.json"
+    ],
+    "tests": [
+     "forge/cross_field_quality.test.mjs"
+    ],
+    "reports": [],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/cross_field_quality.mjs EVIDENCE/bundles/M-Q5-A/worldscan_before.json --strategie D",
+    "inputs": [
+     "EVIDENCE/bundles/M-Q5-A/worldscan_before.json"
+    ],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "DEFECT_DISPLACEMENT",
+   "reward_contract_ref": "DEFECT_DISPLACEMENT#reward_contract",
+   "evaluation_context": {
+    "dataset": "12 artefacts connus-bons + 1 contamination reconstruite",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "cross_field_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "false_positive_count": 0
+   }
+  },
+  {
+   "id": "M-schema-artefacts-amont",
+   "title": "Materialiser prisme.json et featuremap.json comme artefacts deterministes",
+   "mutation_class": "SCHEMA",
+   "layer": "driver",
+   "worker": "aucun",
+   "target": "forge/run_real.py (_ARTIFACT_BY_STEP)",
+   "hypothesis": "Un worker n est mesurable que s il materialise un artefact deterministe ; les 5 etapes non mesurables etaient exactement les 5 absentes de cette table.",
+   "implementation": "Deux entrees dans _ARTIFACT_BY_STEP + deux validateurs de schema appliques AVANT ecriture.",
+   "expected_gain": "Rendre s1-prisme et s3-decompo jugeables par un oracle.",
+   "expected_risk": "Une etape dont l agent oublie le bloc JSON echoue desormais franchement.",
+   "measured_gain": "4 oracles d avant-build deviennent applicables. featuremap.json est le pivot : sans lui, ni la couverture d architecture ni celle de wiremap ne sont verifiables.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": "UNKNOWN",
+   "sample_size": "UNKNOWN",
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "3 tests existants ont du changer de decor : ils utilisaient s1/s3 comme etape neutre"
+   ],
+   "known_blind_spots": [
+    "le chemin PANEL de s1-prisme ne passe pas par la materialisation : lance par le panel, l etape n ecrit toujours pas prisme.json"
+   ],
+   "accepted": true,
+   "production_ready": true,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/tests/test_run_real_upstream_artifacts.py"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "python -m pytest forge/tests/test_run_real_upstream_artifacts.py",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": null,
+   "reward_contract_ref": null,
+   "evaluation_context": {
+    "dataset": "non declare",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "non declare",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "OBSERVED",
+   "measured_metrics": {}
+  },
+  {
+   "id": "M-schema-claim",
+   "title": "Chaine de falsifiabilite : observation -> claim -> enonce, les trois DIFFERENTS",
+   "mutation_class": "SCHEMA",
+   "layer": "s1-prisme",
+   "worker": "aucun",
+   "target": "forge/upstream_schema.mjs (validateChaine)",
+   "hypothesis": "Sans maillon intermediaire, on ne peut pas dire si une panne vient d une donnee fausse ou d une deduction fausse.",
+   "implementation": "Champ claim obligatoire ; les trois maillons doivent differer apres normalisation.",
+   "expected_gain": "Localiser la panne dans la chaine.",
+   "expected_risk": "Un modele peut recopier un maillon dans l autre.",
+   "measured_gain": "Sur 15 exigences Qwen reelles, 14 maillons genuinement distincts, 1 quasi-recopie a 0,526.",
+   "measured_cost": {
+    "token_cost": "UNKNOWN",
+    "runtime_cost": 0,
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": "UNKNOWN",
+   "sample_size": 15,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "la regle ne rejette que l egalite EXACTE : une quasi-recopie a 0,526 passe (comblee partiellement par Q3-RECOPIE)"
+   ],
+   "accepted": true,
+   "production_ready": true,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/upstream_schema.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node --test forge/upstream_schema.test.mjs",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [
+    "M-schema-artefacts-amont"
+   ],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": null,
+   "reward_contract_ref": null,
+   "evaluation_context": {
+    "dataset": "non declare",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "non declare",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "OBSERVED",
+   "measured_metrics": {}
+  },
+  {
+   "id": "M-workflow-oracle-moment",
+   "title": "Separer l oracle d AVANT build de celui d APRES build",
+   "mutation_class": "WORKFLOW",
+   "layer": "driver",
+   "worker": "aucun",
+   "target": "check_blueprint_contract.mjs / check_wiremap_contract.mjs",
+   "hypothesis": "check_architecture n est pas casse : il est appele au mauvais moment. Sur un src vide il ne trouve aucun import, donc aucune violation.",
+   "implementation": "AJOUT de deux oracles d avant-build (couverture featuremap) ; check_architecture et check_wiremap INTOUCHES.",
+   "expected_gain": "Un blueprint creux ne passe plus.",
+   "expected_risk": "Deux oracles de plus a maintenir.",
+   "measured_gain": "Le blueprint historique de 82 octets, qui passait 34 runs sur 34, est declare passed:true par check_architecture (avant build, src vide) et FAIL par check_blueprint_contract avec 6 findings nommes.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "MEDIUM",
+    "maintenance_cost": "MEDIUM"
+   },
+   "false_positive": 0,
+   "true_positive": 1,
+   "sample_size": 1,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "aucun code Python n executait les 5 oracles amont avant le cablage de la boucle de reparation"
+   ],
+   "accepted": true,
+   "production_ready": true,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/check_blueprint_contract.test.mjs",
+     "forge/check_wiremap_contract.test.mjs"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node --test forge/check_blueprint_contract.test.mjs",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [
+    "M-schema-artefacts-amont"
+   ],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "ORACLE_FALSE_NEGATIVE",
+   "reward_contract_ref": "ORACLE_FALSE_NEGATIVE#reward_contract",
+   "evaluation_context": {
+    "dataset": "5 artefacts de reference + 7 sorties Qwen validees",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "oracle_quality.mjs v1",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "PRODUCTION",
+   "measured_metrics": {
+    "false_positive_count": 0
+   }
+  },
+  {
+   "id": "M-workflow-capteur-pas-juge",
+   "title": "La boucle de reparation modifie l artefact mais ne change pas le verdict de l etape",
+   "mutation_class": "WORKFLOW",
+   "layer": "driver",
+   "worker": "aucun",
+   "target": "forge/run_real.py (run_repair_step)",
+   "hypothesis": "Changer la semantique d un verdict est une decision HumanGate, pas un effet de bord d un branchement.",
+   "implementation": "La mesure est attachee au resultat de l etape ; ok/fail inchange. Degradation sure : node absent / reparateur injoignable / sortie illisible => None.",
+   "expected_gain": "Brancher la self-correction sans deplacer une frontiere de decision.",
+   "expected_risk": "Un artefact repare peut passer inapercu si personne ne lit la mesure.",
+   "measured_gain": "15 tests de cablage verts, dont 5 qui prouvent qu aucune etape post-build ne declenche la boucle.",
+   "measured_cost": {
+    "token_cost": 0,
+    "runtime_cost": 0,
+    "complexity_cost": "MEDIUM",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": "UNKNOWN",
+   "sample_size": "UNKNOWN",
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "personne ne consomme encore le bloc de mesure attache au resultat d etape"
+   ],
+   "accepted": true,
+   "production_ready": true,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [
+     "forge/tests/test_run_real_repair_wiring.py"
+    ],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "python -m pytest forge/tests/test_run_real_repair_wiring.py",
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": true
+   },
+   "requires": [
+    "REPAIR-LOOP-V1"
+   ],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": null,
+   "reward_contract_ref": null,
+   "evaluation_context": {
+    "dataset": "non declare",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "non declare",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "OBSERVED",
+   "measured_metrics": {}
+  },
+  {
+   "id": "M-model-rappel-vs-transformation",
+   "title": "Qwen : deux regimes selon la nature de la tache",
+   "mutation_class": "MODEL",
+   "layer": "driver",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "allocation des workers",
+   "hypothesis": "La frontiere Claude/Qwen n est pas l etape mais le type de tache : la verite est-elle dans le prompt ou hors du prompt ?",
+   "implementation": "Aucune modification de code — regle d allocation.",
+   "expected_gain": "Confier a Qwen ce qu il fait bien.",
+   "expected_risk": "Generaliser depuis trop peu de cas.",
+   "measured_gain": "RAPPEL (s2-worldscan, citer des sources) : plafond 2/3 en 4 formulations, citations qui derivent (5 a 7 URLs distinctes la ou 3 sont attendues, a temperature 0), Rickroll cite comme source. TRANSFORMATION (s1-prisme, World Scan gele) : 3/3 du premier coup, 15/15 exigences actionnables.",
+   "measured_cost": {
+    "token_cost": "UNKNOWN",
+    "runtime_cost": "UNKNOWN",
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": "UNKNOWN",
+   "sample_size": 3,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "n=3 jeux, 1 execution par cellule : la tendance est nette, la significativite ne l est pas",
+    "aucune baseline Claude sous contrat identique : la comparaison Claude/Qwen reste NON COMPARABLE"
+   ],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "NOT_REPRODUCIBLE",
+    "note": "Regle d allocation appuyee sur des sorties de modele non versionnees. La lecon est en memoire durable ; la mesure doit etre rejouee avec export propre avant d etre acceptee."
+   },
+   "evidence_refs": {
+    "artifacts": [],
+    "tests": [],
+    "reports": [
+     "studio_brain/00_CURRENT_CONTEXT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": null,
+    "inputs": [],
+    "expected_outputs": [],
+    "deterministic": false
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": null,
+   "reward_contract_ref": null,
+   "evaluation_context": {
+    "dataset": "non declare",
+    "worker_model": "aucun",
+    "temperature": "UNKNOWN",
+    "oracle_version": "non declare",
+    "dataset_sha256": "UNKNOWN"
+   },
+   "status": "OBSERVED",
+   "measured_metrics": {}
+  },
+  {
+   "id": "M-ws4",
+   "title": "World Scan : separation stricte des instances + aucun exemple copiable + relecture avant emission",
+   "mutation_class": "PROMPT",
+   "layer": "s2-worldscan",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "prompt s2-worldscan",
+   "hypothesis": "Traiter les 2 jeux comme deux taches independantes (H1), ne fournir aucune phrase reutilisable (H2) et demander une relecture cote a cote (H3) supprime la discriminance sans perdre en completude.",
+   "implementation": "Prompt H1+H2+H3, meme spec gelee, meme oracle, meme modele, temperature 0.",
+   "expected_gain": "completion > 0,5 ET discriminance_count = 0.",
+   "expected_risk": "Les consignes de separation pourraient couter du budget de generation.",
+   "measured_gain": "discriminance 0 ATTEINTE (contre 1 pour M-ws1 et 2 pour M-ws3), mais completion 0,5 : le modele n a produit qu 1 jeu sur 2 (9 champs sur 18). Le risque anticipe s est realise : les 3 consignes de separation ont consomme l attention au detriment du 2e jeu.",
+   "measured_cost": {
+    "token_cost": 440,
+    "runtime_cost": "UNKNOWN",
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": "UNKNOWN",
+   "sample_size": 1,
+   "confidence": "AUTO",
+   "known_side_effects": [
+    "H2 et/ou H3 coutent le second jeu : H1 seule (M-ws5) atteint 0,889 la ou H1+H2+H3 plafonne a 0,5"
+   ],
+   "known_blind_spots": [
+    "un seul run : la perte du 2e jeu n est pas prouvee systematique"
+   ],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "NO_MEASURED_GAIN",
+    "note": "completion 0,5, identique a M-ws2 qui satisfaisait deja la contrainte. Discriminance 0 obtenue mais aucun gain sur la metrique objectif : la cible completion > 0,5 n est pas atteinte."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/oracle_before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/oracle_after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/measured_metrics.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/prompt.txt"
+    ],
+    "tests": [],
+    "reports": [
+     "docs/forge/PROMPT_FIELD_OMISSION_AUDIT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/check_worldscan.mjs EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/after.json",
+    "inputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws4/after.json"
+    ],
+    "deterministic": false
+   },
+   "requires": [],
+   "conflicts": [
+    "M-ws5"
+   ],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "PROMPT_FIELD_OMISSION",
+   "reward_contract_ref": "PROMPT_FIELD_OMISSION#reward_contract",
+   "evaluation_context": {
+    "dataset": "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "dataset_sha256": "d1da5019951363e1",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "field_completion_without_regression": 0.5,
+    "discriminance_count": 0,
+    "cross_field_count": 0,
+    "completion_tokens": 440
+   }
+  },
+  {
+   "id": "M-ws5",
+   "title": "World Scan : separation stricte des instances (H1 SEULE)",
+   "mutation_class": "PROMPT",
+   "layer": "s2-worldscan",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "prompt s2-worldscan",
+   "hypothesis": "La separation des instances suffit a supprimer la discriminance sans couter le second jeu. Isolee en retirant H2 et H3 du prompt de M-ws4.",
+   "implementation": "Prompt de M-ws4 moins les blocs H2 et H3 (2121 -> 1491 caracteres).",
+   "expected_gain": "completion > 0,5 ET discriminance_count = 0.",
+   "expected_risk": "H1 seule pourrait ne pas suffire a supprimer la discriminance.",
+   "measured_gain": "completion 0,889 (16/18, 2 jeux) et discriminance 0. DECOMPOSITION CAUSALE : H1 porte le gain, H2+H3 coutaient le second jeu (M-ws4 : 0,5 avec 1 seul jeu). Meilleure completion mesuree sur ce probleme racine. MAIS l oracle echoue encore : 2 probleme(s) restant(s).",
+   "measured_cost": {
+    "token_cost": 569,
+    "runtime_cost": "UNKNOWN",
+    "complexity_cost": "LOW",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": "UNKNOWN",
+   "true_positive": "UNKNOWN",
+   "sample_size": 1,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "un seul run",
+    "2 champs sur 18 restent vides : l oracle ne passe pas"
+   ],
+   "accepted": false,
+   "production_ready": false,
+   "rejected_reason": {
+    "code": "VIOLATES_CONTRACT_CONSTRAINT",
+    "note": "Metrique objectif ATTEINTE (0,889 > 0,5) et contrainte discriminance_count=0 SATISFAITE, mais la contrainte oracle_pass ne l est pas : 2 probleme(s) subsistent. Acceptation = decision HumanGate, pas un arrondi."
+   },
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/oracle_before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/oracle_after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/measured_metrics.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/prompt.txt"
+    ],
+    "tests": [],
+    "reports": [
+     "docs/forge/PROMPT_FIELD_OMISSION_AUDIT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/check_worldscan.mjs EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/after.json",
+    "inputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/after.json"
+    ],
+    "deterministic": false
+   },
+   "requires": [],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "PROMPT_FIELD_OMISSION",
+   "reward_contract_ref": "PROMPT_FIELD_OMISSION#reward_contract",
+   "evaluation_context": {
+    "dataset": "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "dataset_sha256": "d1da5019951363e1",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3"
+   },
+   "status": "REPRODUCIBLE",
+   "measured_metrics": {
+    "field_completion_without_regression": 0.889,
+    "discriminance_count": 0,
+    "cross_field_count": 0,
+    "completion_tokens": 569
+   }
+  },
+  {
+   "id": "M-ws6",
+   "title": "Composition : generation H1 (M-ws5) + reparation locale (REPAIR-LOOP-V1)",
+   "mutation_class": "WORKFLOW",
+   "layer": "s2-worldscan",
+   "worker": "qwen2.5-14b-instruct",
+   "target": "chaine generate -> oracle -> repair -> oracle",
+   "hypothesis": "La meilleure architecture n est pas un prompt monolithique mais un agent specialise suivi d une reparation locale specialisee.",
+   "implementation": "Aucun nouveau prompt : l artefact VERSIONNE de M-ws5 est passe a repair_step.mjs (REPAIR_LOOP_V1). Meme spec, meme oracle, meme modele.",
+   "expected_gain": "oracle PASS avec completion >= 0,889 et discriminance 0.",
+   "expected_risk": "La reparation pourrait introduire une regression ou de la discriminance.",
+   "measured_gain": "0,889 -> 1,0 (18/18), oracle FAIL -> OK, 2 champs repares, 0 regression, 70 tokens, discriminance restee a 0. La composition ferme le probleme racine la ou aucun prompt seul n y est parvenu en 5 tentatives.",
+   "measured_cost": {
+    "token_cost": 70,
+    "runtime_cost": "UNKNOWN",
+    "complexity_cost": "MEDIUM",
+    "maintenance_cost": "LOW"
+   },
+   "false_positive": 0,
+   "true_positive": 1,
+   "sample_size": 1,
+   "confidence": "AUTO",
+   "known_side_effects": [],
+   "known_blind_spots": [
+    "Les valeurs ecrites sont pauvres : « I have enjoyed playing Cookie Clicker and found it to be a delightful experience. » ne repond pas a « qu est-ce qui fait REVENIR le joueur », et l anglais n a pas ete signale. Tous les criteres declares sont pourtant satisfaits : la composition ferme le trou MESURE, pas le trou reel.",
+    "un seul run"
+   ],
+   "accepted": true,
+   "production_ready": false,
+   "rejected_reason": null,
+   "evidence_refs": {
+    "artifacts": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/oracle_before.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/oracle_after.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/repair_request.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/repair_response.json",
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/measured_metrics.json"
+    ],
+    "tests": [
+     "forge/repair_step.test.mjs"
+    ],
+    "reports": [
+     "docs/forge/PROMPT_FIELD_OMISSION_AUDIT.md"
+    ],
+    "telemetry": [],
+    "commits": []
+   },
+   "evidence_status": "VERSIONED",
+   "reproducibility": {
+    "command": "node forge/check_worldscan.mjs EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/after.json",
+    "inputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws5/after.json"
+    ],
+    "expected_outputs": [
+     "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/M-ws6/after.json"
+    ],
+    "deterministic": false
+   },
+   "requires": [
+    "M-ws5",
+    "REPAIR-LOOP-V1"
+   ],
+   "conflicts": [],
+   "timestamp": "2026-08-04",
+   "root_problem_id": "PROMPT_FIELD_OMISSION",
+   "reward_contract_ref": "PROMPT_FIELD_OMISSION#reward_contract",
+   "evaluation_context": {
+    "dataset": "EVIDENCE/bundles/PROMPT_FIELD_OMISSION/input.json",
+    "dataset_sha256": "d1da5019951363e1",
+    "worker_model": "qwen2.5-14b-instruct",
+    "temperature": 0,
+    "oracle_version": "check_worldscan.mjs v0.3"
+   },
+   "status": "ACCEPTED",
+   "measured_metrics": {
+    "field_completion_without_regression": 1,
+    "discriminance_count": 0,
+    "cross_field_count": 0,
+    "completion_tokens": 70
+   }
+  }
+ ]
+}

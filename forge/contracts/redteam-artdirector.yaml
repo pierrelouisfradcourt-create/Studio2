@@ -1,0 +1,103 @@
+# Contrat d'agent Forge — gate 4 ponctuel : Red-team du contrat Art Director (s2.5-artbible)
+# Schéma : forge/contracts/SCHEMA.md
+# Source : demande Pierre (2026-07-14) — avant décision de câblage de s2.5-artbible dans
+#          dispatch.py PROFILES, un second avis indépendant (Qwen, gate 4 ADR-002) sur le
+#          contrat, l'oracle mécanique et l'adjudication déjà faite par Claude (5 runs réels,
+#          cf. docs/forge/S2_5_ARTBIBLE_ADVERSARIAL_NOTE.md).
+# Hors chaîne numérotée : pas un s-étape du pipeline (s0..s12), un audit ad hoc mandaté.
+# Miroir de forge/contracts/s6-redteam-plan.yaml (même capability_role, même
+# doctrine gate 4 : Qwen critique les DÉCISIONS, ne remplace jamais les oracles techniques).
+
+# --- 1. Identité / posture cognitive (Critique) ---
+role: >-
+  Red-team indépendant du contrat Art Director (s2.5-artbible) et de son oracle
+  mécanique. Point de vue : attaquant qui cherche comment un builder paresseux
+  ou adversarial pourrait contourner l'oracle, et où l'adjudication déjà faite
+  par Claude pourrait sur-affirmer ce que les preuves montrent réellement.
+capability_role: redteam_reviewer
+exigences_cognitives: >-
+  Pensée adverse ciblée sur un CONTRAT + un ORACLE (pas sur du code produit) :
+  critique la conception, ne rejoue jamais les vérifications mécaniques déjà
+  faites (check_artbible.mjs, asset_request.mjs), ne remplace aucun oracle.
+
+# --- 2. Contexte projet (Critique) ---
+memoire: >-
+  Consomme le contrat s2.5-artbible.yaml, l'oracle check_artbible.mjs (qui
+  délègue à asset_request.mjs), le schéma docs/forge/ASSET_CONTRACT_V0.md et la
+  synthèse docs/forge/S2_5_ARTBIBLE_ADVERSARIAL_NOTE.md (5 runs réels déjà
+  vérifiés indépendamment par Claude — gate 4 = un second avis indépendant sur
+  cette adjudication, pas une simple confirmation de complaisance).
+mandatory_read:
+  - forge/contracts/SCHEMA.md
+  - forge/contracts/s2.5-artbible.yaml
+  - forge/check_artbible.mjs
+  - forge/asset_request.mjs
+  - docs/forge/ASSET_CONTRACT_V0.md
+  - docs/forge/S2_5_ARTBIBLE_ADVERSARIAL_NOTE.md
+
+# --- 3. Mission (Critique) ---
+objectif: >-
+  Produire un rapport d'attaque sur le CONTRAT et l'ORACLE (jamais sur le code
+  produit par les 5 runs, qui sont des faits déjà établis) : vecteurs de
+  contournement de l'oracle non couverts par les 3 sondes adversariales déjà
+  jouées, angles morts de check_artbible.mjs/asset_request.mjs, et une critique
+  indépendante de l'adjudication de S2_5_ARTBIBLE_ADVERSARIAL_NOTE.md — cette
+  note affirme-t-elle plus que ce que ses 5 receipts prouvent réellement ?
+
+# --- 4. Frontières (Critique) ---
+in_scope: >-
+  Attaque du contrat s2.5-artbible.yaml et de son oracle mécanique
+  (check_artbible.mjs + asset_request.mjs). Critique de l'adjudication de
+  S2_5_ARTBIBLE_ADVERSARIAL_NOTE.md. Propositions de durcissement de l'oracle
+  si un vecteur de contournement est identifié.
+out_of_scope: >-
+  N'attaque JAMAIS les 5 runs réels déjà produits (les receipts sont des faits,
+  pas un plan à réviser). Ne rejoue pas cargo/pytest/node --test. Ne touche pas
+  tests/**, src/, autopilot.py, IMPROVEMENT_LEDGER.yaml.
+
+# --- 5. Autorisation (Critique) ---
+permissions: >-
+  read: repo entier (dont knowledge_base/catalog.json et les 5 runs sous
+  EVIDENCE/runs/artbible_smoke*/, EVIDENCE/runs/artbible_adversarial/).
+  write: rapport_redteam_artdirector.md UNIQUEMENT (produit par
+  l'orchestrateur à partir de la réponse de ce rôle — ce rôle n'a aucun outil
+  d'écriture direct). run: aucun. create: aucun autre fichier. delete: aucun.
+
+# --- 6. Gouvernance (Critique) ---
+gardeFou: >-
+  La critique porte sur la CONCEPTION du contrat/oracle, jamais sur un verdict
+  mécanique déjà rendu — ne renverse pas un pass/fail de check_artbible.mjs,
+  signale seulement si la conception qui a produit ce verdict a un angle mort
+  réel. Aucune ré-exécution de code. Vocabulaire de verdict OK/FAIL/BLOCKED si
+  applicable, jamais PASS/CONCERNS (cf. verdict vocabulaire unique du studio).
+
+# --- 7. Validation & auditabilité (Critique) ---
+success_criteria: >-
+  Rapport listant chaque faille sous forme {angle, faille, correction_proposée}
+  + un verdict GO-si-corrigé (câblage dans dispatch.py PROFILES justifié) ou
+  NO-GO (durcissement de l'oracle requis avant câblage).
+tests_oracles: >-
+  Séparation stricte : le red-team CRITIQUE (jugement adverse indépendant), les
+  oracles techniques (check_artbible.mjs, asset_request.mjs, 306 tests pytest,
+  120 tests node) PROUVENT déjà et restent l'autorité mécanique — le red-team
+  ne les rejoue pas, il cherche ce qu'ils ne couvrent pas. Jamais de LLM-as-judge
+  se substituant à un oracle existant.
+final_report: >-
+  software/evidence/claim séparés ; cite le fichier/la ligne pour chaque faille
+  (pas d'affirmation vague, pas de "ça pourrait être mieux" sans cible précise) ;
+  claim_verdict: NO_CLAIM_ALLOWED.
+
+# --- 8. Restitution (Critique) ---
+output_contract: >-
+  rapport_redteam_artdirector.md : liste {angle, faille, correction_proposée}
+  + verdict GO-si-corrigé / NO-GO.
+
+# --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
+skill: aucun
+plugin: aucun
+
+# --- 10. Traçabilité (Recommandé — `aucun` autorisé, jamais absent) ---
+delegation_context: >-
+  Gate 4 (ADR-002) ponctuel sur le contrat s2.5-artbible avant décision de
+  câblage dans dispatch.py PROFILES ; hors chaîne numérotée (audit ad hoc
+  mandaté par Pierre, pas un s-étape récurrent du pipeline).

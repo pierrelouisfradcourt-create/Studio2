@@ -1,0 +1,66 @@
+[
+  {
+    "name": "true->false",
+    "line": 45,
+    "fichier": "05_SYSTEMS/explosion/explosion.gd",
+    "expression": "vus_bombe[i] = true",
+    "justification": "`vus_bombe` est un Dictionary employe UNIQUEMENT comme ENSEMBLE d'appartenance. RECENSEMENT EXHAUSTIF de ses lectures (grep sur 05_SYSTEMS/, 06_RUNTIME/, 07_TESTS/) : explosion.gd:44 `if not vus_bombe.has(i)` et :82 `if not vus_bombe.has(autre)`. Toutes testent la PRESENCE DE LA CLE ou leur NOMBRE ; aucun chemin d'execution ne lit la VALEUR associee. Remplacer `true` par `false` laisse la cle inseree a l'identique : `has()`, `keys()` et `size()` rendent le meme resultat sur toute entree. Mutant equivalent : aucun test ne peut le distinguer sans tester une propriete que le code de production n'a jamais. VERIFIE MECANIQUEMENT le 2026-08-10 : la mutation a ete appliquee par forge.mutation et le harnais relance a rendu 406 passed / 0 failed, exit 0 — strictement la ligne de base, aucune assertion deplacee.",
+    "verdict": "EQUIVALENT"
+  },
+  {
+    "name": "true->false",
+    "line": 64,
+    "fichier": "05_SYSTEMS/explosion/explosion.gd",
+    "expression": "flammes[centre] = true",
+    "justification": "`flammes` est un Dictionary employe UNIQUEMENT comme ENSEMBLE d'appartenance. RECENSEMENT EXHAUSTIF de ses lectures (grep sur 05_SYSTEMS/, 06_RUNTIME/, 07_TESTS/) : explosion.gd:89 `\"flammes\": flammes.keys()`. Toutes testent la PRESENCE DE LA CLE ou leur NOMBRE ; aucun chemin d'execution ne lit la VALEUR associee. Remplacer `true` par `false` laisse la cle inseree a l'identique : `has()`, `keys()` et `size()` rendent le meme resultat sur toute entree. Mutant equivalent : aucun test ne peut le distinguer sans tester une propriete que le code de production n'a jamais. VERIFIE MECANIQUEMENT le 2026-08-10 : la mutation a ete appliquee par forge.mutation et le harnais relance a rendu 406 passed / 0 failed, exit 0 — strictement la ligne de base, aucune assertion deplacee.",
+    "verdict": "EQUIVALENT"
+  },
+  {
+    "name": "true->false",
+    "line": 73,
+    "fichier": "05_SYSTEMS/explosion/explosion.gd",
+    "expression": "flammes[c] = true",
+    "justification": "`flammes` est un Dictionary employe UNIQUEMENT comme ENSEMBLE d'appartenance. RECENSEMENT EXHAUSTIF de ses lectures (grep sur 05_SYSTEMS/, 06_RUNTIME/, 07_TESTS/) : explosion.gd:89 `\"flammes\": flammes.keys()`. Toutes testent la PRESENCE DE LA CLE ou leur NOMBRE ; aucun chemin d'execution ne lit la VALEUR associee. Remplacer `true` par `false` laisse la cle inseree a l'identique : `has()`, `keys()` et `size()` rendent le meme resultat sur toute entree. Mutant equivalent : aucun test ne peut le distinguer sans tester une propriete que le code de production n'a jamais. VERIFIE MECANIQUEMENT le 2026-08-10 : la mutation a ete appliquee par forge.mutation et le harnais relance a rendu 406 passed / 0 failed, exit 0 — strictement la ligne de base, aucune assertion deplacee.",
+    "verdict": "EQUIVALENT"
+  },
+  {
+    "name": "true->false",
+    "line": 78,
+    "fichier": "05_SYSTEMS/explosion/explosion.gd",
+    "expression": "detruites[c] = true",
+    "justification": "`detruites` est un Dictionary employe UNIQUEMENT comme ENSEMBLE d'appartenance. RECENSEMENT EXHAUSTIF de ses lectures (grep sur 05_SYSTEMS/, 06_RUNTIME/, 07_TESTS/) : explosion.gd:90 `\"detruites\": detruites.keys()`. Toutes testent la PRESENCE DE LA CLE ou leur NOMBRE ; aucun chemin d'execution ne lit la VALEUR associee. Remplacer `true` par `false` laisse la cle inseree a l'identique : `has()`, `keys()` et `size()` rendent le meme resultat sur toute entree. Mutant equivalent : aucun test ne peut le distinguer sans tester une propriete que le code de production n'a jamais. VERIFIE MECANIQUEMENT le 2026-08-10 : la mutation a ete appliquee par forge.mutation et le harnais relance a rendu 406 passed / 0 failed, exit 0 — strictement la ligne de base, aucune assertion deplacee.",
+    "verdict": "EQUIVALENT"
+  },
+  {
+    "name": "true->false",
+    "line": 83,
+    "fichier": "05_SYSTEMS/explosion/explosion.gd",
+    "expression": "vus_bombe[autre] = true",
+    "justification": "`vus_bombe` est un Dictionary employe UNIQUEMENT comme ENSEMBLE d'appartenance. RECENSEMENT EXHAUSTIF de ses lectures (grep sur 05_SYSTEMS/, 06_RUNTIME/, 07_TESTS/) : explosion.gd:44 `if not vus_bombe.has(i)` et :82 `if not vus_bombe.has(autre)`. Toutes testent la PRESENCE DE LA CLE ou leur NOMBRE ; aucun chemin d'execution ne lit la VALEUR associee. Remplacer `true` par `false` laisse la cle inseree a l'identique : `has()`, `keys()` et `size()` rendent le meme resultat sur toute entree. Mutant equivalent : aucun test ne peut le distinguer sans tester une propriete que le code de production n'a jamais. VERIFIE MECANIQUEMENT le 2026-08-10 : la mutation a ete appliquee par forge.mutation et le harnais relance a rendu 406 passed / 0 failed, exit 0 — strictement la ligne de base, aucune assertion deplacee.",
+    "verdict": "EQUIVALENT"
+  },
+  {
+    "name": "true->false",
+    "line": 111,
+    "fichier": "05_SYSTEMS/explosion/explosion.gd",
+    "expression": "d[centre] = true",
+    "justification": "`d` est un Dictionary employe UNIQUEMENT comme ENSEMBLE d'appartenance. RECENSEMENT EXHAUSTIF de ses lectures (grep sur 05_SYSTEMS/, 06_RUNTIME/, 07_TESTS/) : arena_view_3d.gd:277 `for c in Explosion.zone_menacee(state).keys()` ; test_lisibilite.gd:100 `.size()`, :103-113 `.has(...)`. Toutes testent la PRESENCE DE LA CLE ou leur NOMBRE ; aucun chemin d'execution ne lit la VALEUR associee. Remplacer `true` par `false` laisse la cle inseree a l'identique : `has()`, `keys()` et `size()` rendent le meme resultat sur toute entree. Mutant equivalent : aucun test ne peut le distinguer sans tester une propriete que le code de production n'a jamais. VERIFIE MECANIQUEMENT le 2026-08-10 : la mutation a ete appliquee par forge.mutation et le harnais relance a rendu 406 passed / 0 failed, exit 0 — strictement la ligne de base, aucune assertion deplacee.",
+    "verdict": "EQUIVALENT"
+  },
+  {
+    "name": "true->false",
+    "line": 117,
+    "fichier": "05_SYSTEMS/explosion/explosion.gd",
+    "expression": "d[c] = true",
+    "justification": "`d` est un Dictionary employe UNIQUEMENT comme ENSEMBLE d'appartenance. RECENSEMENT EXHAUSTIF de ses lectures (grep sur 05_SYSTEMS/, 06_RUNTIME/, 07_TESTS/) : arena_view_3d.gd:277 `for c in Explosion.zone_menacee(state).keys()` ; test_lisibilite.gd:100 `.size()`, :103-113 `.has(...)`. Toutes testent la PRESENCE DE LA CLE ou leur NOMBRE ; aucun chemin d'execution ne lit la VALEUR associee. Remplacer `true` par `false` laisse la cle inseree a l'identique : `has()`, `keys()` et `size()` rendent le meme resultat sur toute entree. Mutant equivalent : aucun test ne peut le distinguer sans tester une propriete que le code de production n'a jamais. VERIFIE MECANIQUEMENT le 2026-08-10 : la mutation a ete appliquee par forge.mutation et le harnais relance a rendu 406 passed / 0 failed, exit 0 — strictement la ligne de base, aucune assertion deplacee.",
+    "verdict": "EQUIVALENT"
+  },
+  {
+    "name": "false->true",
+    "line": 34,
+    "fichier": "05_SYSTEMS/powerups/powerups.gd",
+    "expression": "return false",
+    "justification": "Garde defensive de la BRANCHE 'nature != stat' dans PowerUps.appliquer. RECENSEMENT EXHAUSTIF des natures declarees dans params.POWERUP_DEFS (grep '\"nature\": \"[a-z]*\"' sur params.gd) : une seule valeur existe, 'stat', pour les trois power-ups du registre. La condition 'String(d[nature]) != \"stat\"' est donc FAUSSE pour toute entree atteignable, et le 'return false' mute n'est JAMAIS EXECUTE. Mutant equivalent par INATTEIGNABILITE, pas par indistinguabilite : le distinguer exigerait d ajouter au registre de regles une nature qui n existe pas, c est-a-dire de modifier le PRODUIT pour satisfaire un test. La garde est conservee a dessein : elle protege l ajout futur d une nature non-stat (drapeaux PIERCE/BOMB_PASS prevus au lot L11). VERIFIE MECANIQUEMENT le 2026-08-10 : mutation appliquee par forge.mutation, harnais relance -> suite verte, identique a la ligne de base.",
+    "verdict": "EQUIVALENT"
+  }
+]

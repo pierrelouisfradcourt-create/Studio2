@@ -1,0 +1,143 @@
+# Contrat d'agent Forge — mission WM1 : wiremap Tetris (jumeau de wm1-wiremap-breakout.yaml)
+# Schéma : forge/contracts/SCHEMA.md. Dispatch hors profil (le régime STANDARD n'a pas
+# d'étape wiremap native — même situation que Snake et Breakout).
+# Projet : tetris — jeu GAMES/tetris/, run_dir EVIDENCE/runs/tetris/.
+#
+# DIFFÉRENCE STRUCTURELLE ASSUMÉE vs Breakout, à ne pas maquiller :
+#  1. Tetris DISPOSE d'un World Scan réel, HTTP-sourcé et validé par oracle
+#     (GAMES/tetris/GAME_REFERENCE/, check_worldscan OK, 2 jeux / 9 sources). C'est la
+#     PREMIÈRE campagne du curriculum dans ce cas. Une ligne peut donc citer le World Scan
+#     comme source amont — ce qui était impossible pour Breakout.
+#  2. Tetris DISPOSE d'une Genre Bible proposée qui distingue explicitement le CONSTITUTIF
+#     de la VARIANTE, et laisse 4 décisions ouvertes (§3). Une ligne qui trancherait l'une
+#     de ces 4 décisions sortirait de son mandat.
+#  3. Il EXISTE déjà un squelette de wiremap (GAMES/tetris/09_WIREMAP/wiremap.json,
+#     `statut_artefact: SQUELETTE_BOOTSTRAP_NON_GELE`). Ce n'est PAS ta sortie : c'est une
+#     entrée à critiquer, corriger et compléter. Tu n'as aucune obligation de le conserver.
+
+role: >-
+  Cartographe du standard (mission WM1, jumeau Tetris). Point de vue imposé : la wiremap est
+  une CARTE À REMPLIR pour le forgeron — chaque exigence a une adresse, un état attendu, une
+  preuve attendue. Le builder n'aura pas le droit d'ajouter hors plan. Tu produis la carte,
+  tu ne codes rien.
+
+capability_role: wiremap
+
+exigences_cognitives: >-
+  Pensée structurelle stricte au schéma v2 du standard (systems[], lines[], discarded[]).
+  Chaque ligne traçable à sa source amont RÉELLE. Pour Tetris les sources amont légitimes
+  sont exactement trois : le charter (produit par s0), la Genre Bible
+  (GAMES/tetris/01_DESIGN/genre_bible.json), et le World Scan
+  (GAMES/tetris/GAME_REFERENCE/). Citer un rôle de chaîne Prisme (control, gamedesign,
+  archidepot, gameplayprog) falsifierait la provenance : aucun run Prisme n'existe pour ce
+  projet.
+  Difficulté propre à ce jeu : Tetris n'a PAS d'état gagné en marathon. Toute ligne, toute
+  preuve attendue et tout critère de solvabilité construits sur « le joueur gagne » sont
+  faux par construction. C'est le piège principal de cette mission.
+
+memoire: >-
+  Leçons validées du curriculum, à ne pas répéter :
+  - `forge.wiremap_concept_reuse_requalification` : une ligne `reused_from.type=CONCEPT`
+    transposée d'un autre jeu DOIT porter une requalification non vide (`reused_from_note`),
+    sinon l'oracle standard la remonte. Le squelette en fournit 5 déjà requalifiées — les
+    relire, ne pas les recopier sans les vérifier.
+  - `forge.forge_oracle_convention_undocumented` : la convention de sonde `FORGE_ORACLE` est
+    désormais déclarée dans forge/standard/SCHEMA.md. La lire avant de rédiger un
+    `expected_proof` de type oracle produit.
+  - `forge.oracle_fail_vs_not_measured_marker` : un volet non mesurable dans le mode
+    d'exécution courant se déclare `requires_gpu_window: true` — il ne se maquille pas en
+    échec ni en succès.
+  Précédent Breakout : 52 lignes, 38 CONCEPT, dont 19 sans requalification au moment de
+  l'audit. Ne pas reproduire ce ratio.
+
+mandatory_read:
+  - forge/standard/SCHEMA.md
+  - GAMES/tetris/01_DESIGN/genre_bible.json
+  - GAMES/tetris/GAME_REFERENCE/mechanics_analysis.md
+  - GAMES/tetris/GAME_REFERENCE/architecture_guess.md
+  - GAMES/tetris/00_CHARTER/game_contract.yaml
+  - GAMES/tetris/09_WIREMAP/wiremap.json
+  - forge/standard/core_requirements.yaml
+
+objectif: >-
+  Produire la wiremap v2 GELABLE de Tetris : chaque exigence du charter et chaque règle
+  constitutive de la Genre Bible a exactement une ligne propriétaire, avec adresse, état,
+  et un `expected_proof.statement` RÉDIGÉ (le squelette les laisse tous à null — c'est
+  précisément le trou que cette mission comble). Les lignes rejetées vont dans
+  `discarded[]` avec leur raison, jamais supprimées silencieusement.
+
+in_scope:
+  - GAMES/tetris/09_WIREMAP/wiremap.json
+  - EVIDENCE/runs/tetris/ (artefacts de run)
+
+out_of_scope:
+  - GAMES/tetris/05_SYSTEMS/**   # aucun code : c'est la mission du builder
+  - GAMES/tetris/01_DESIGN/genre_bible.json   # bible en entrée, jamais réécrite ici
+  - GAMES/tetris/GAME_REFERENCE/**            # World Scan figé, lecture seule
+  - GAMES/breakout_v2/**, GAMES/snake/**, GAMES/pong/**   # références, jamais éditées
+
+permissions:
+  read: true
+  write: [GAMES/tetris/09_WIREMAP/, EVIDENCE/runs/tetris/]
+  execute: []
+
+gardeFou: >-
+  1. Tu ne codes rien. Aucun fichier .gd n'est écrit par cette mission.
+  2. Tu ne tranches AUCUNE des 4 décisions ouvertes de la Genre Bible §3 (wall kick,
+     réserve, profondeur d'aperçu, condition de fin haute). Si une ligne en dépend, elle
+     porte l'état DEFERRED avec `decider: pierre` — jamais un choix implicite.
+  3. Aucune valeur numérique d'équilibrage n'est inventée. Le barème et la courbe de
+     gravité du World Scan appartiennent à des versions précises ; les transposer serait
+     une promesse trop forte. Ils restent A_CALIBRER.
+  4. Aucune ligne ne prétend `observable_by_player: true` sans désigner un des faits
+     listés dans GAME_REFERENCE/ux_flow.md. Les autres portent false + une note.
+  5. `no_victory_in_marathon` : aucune preuve attendue, aucun critère ne peut supposer un
+     état gagné.
+  6. claim_verdict: NO_CLAIM_ALLOWED dans le rapport final.
+
+success_criteria: >-
+  - `check_line_states` passe sur la wiremap produite, gel inclus.
+  - `check_placement` passe : chaque adresse déclarée correspond à la structure réelle de
+    GAMES/tetris/.
+  - Zéro ligne avec `expected_proof.statement` à null.
+  - Zéro ligne `reused_from.type=CONCEPT` sans requalification non vide.
+  - Les 10 règles de la Genre Bible §1 sont chacune couvertes par au moins une ligne
+    (`genre_refs`), et aucune règle rejetée en §2 n'a produit de ligne.
+  - Les 10 exigences CORE de `forge/standard/core_requirements.yaml` sont CHACUNE
+    couvertes par exactement une ligne dont l'`id` reproduit littéralement l'`id` du
+    registre CORE (ex. `core.boot`, `core.main_loop`, `core.input`, `core.end_condition`,
+    `core.restart`, `core.exit`, `core.render`, `core.audio`, `core.error_handling`, en plus
+    de `core.game_state` déjà couvert) — sinon `check_line_states.core_omis` échoue
+    silencieusement en aval (leçon `forge.validator_without_producer`, réparation
+    2026-08-03 : le bootstrap non gelé de Tetris omettait ces 9 lignes, comme le jumeau
+    Breakout l'exige explicitement à sa ligne 108-109 et que ce contrat omettait).
+
+tests_oracles:
+  - node forge/check_worldscan.mjs GAMES/tetris/GAME_REFERENCE
+  - python -c "from forge.standard_oracles import check_line_states, check_placement"  # via driver s10s
+
+final_report: >-
+  Format imposé : STATUS / LIGNES_PRODUITES / COUVERTURE_GENRE_BIBLE (10 règles → lignes) /
+  DECISIONS_DEFERRED (les 4 ouvertes + toute autre) / DISCARDED (avec raisons) /
+  ORACLES / RISQUES / software_verdict / evidence_verdict / claim_verdict.
+
+output_contract: >-
+  Un seul artefact : GAMES/tetris/09_WIREMAP/wiremap.json, schéma v2, avec
+  `statut_artefact` mis à jour (plus SQUELETTE_BOOTSTRAP_NON_GELE) et `fog[]` vidé de tout
+  trou effectivement comblé — un fog qui ment est pire qu'un fog vide.
+
+skill: aucun
+plugin: aucun
+
+delegation_context: >-
+  Jumeau de wm1-wiremap-breakout.yaml, TROISIÈME réplication du contrat wiremap ad hoc du
+  régime STANDARD (Snake -> Breakout V2 -> Tetris). En amont : World Scan validé par oracle
+  (une première dans le curriculum), Genre Bible proposée, charter mécaniquement valide,
+  squelette de wiremap non gelé. En attente HumanGate : les 4 décisions ouvertes de la Genre
+  Bible §3, et la définition même de la solvabilité — Tetris n'ayant pas d'état gagné, le
+  critère « un bot gagne » utilisé jusqu'ici dans le curriculum ne s'applique pas et doit être
+  remplacé par un critère de survie ou de nettoyage, arbitré par Pierre. En aval : gel du jeu
+  de règles, build s9-build-godot-standard, oracles s10a/s10s, red-team s11 (advisory),
+  verdict s12. Consommateurs : forgeron s9, check_line_states / check_placement /
+  check_collisions / check_genre_coverage / check_observable_coverage (s10s), et Pierre
+  (ratification de la wiremap et arbitrage des décisions ouvertes).

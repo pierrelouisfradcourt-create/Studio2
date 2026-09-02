@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "asset_id": "gen_crate_wood_01",
+  "archetype": "crate",
+  "params": {
+    "size": {
+      "w": 0.8,
+      "d": 0.8,
+      "h": 0.8
+    },
+    "color": [
+      0.55,
+      0.4,
+      0.25,
+      1.0
+    ]
+  },
+  "objects_created": [
+    "gen_crate_wood_01"
+  ],
+  "blender_version": "5.1.1",
+  "glb_bytes": 2048,
+  "manifest_written": false,
+  "manifest_note": "le producteur n'ecrit JAMAIS <asset>.glb.geometry.json : le recensement des roles appartient au HumanGate"
+}

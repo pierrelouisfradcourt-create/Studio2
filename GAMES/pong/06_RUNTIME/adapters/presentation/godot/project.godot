@@ -1,0 +1,21 @@
+; PONG — adaptateur Godot (presentation). Rend un ETAT (produit par la logique JS
+; pure, lu depuis un JSON) et capture un PNG. Aucune logique de jeu ici : Godot est
+; un backend de render.frame, pas un fournisseur de capacite de jeu.
+config_version=5
+
+[application]
+
+config/name="Pong (adaptateur Godot)"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.6")
+
+[display]
+
+window/size/viewport_width=800
+window/size/viewport_height=480
+window/size/resizable=false
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+environment/defaults/default_clear_color=Color(0.047, 0.055, 0.078, 1)

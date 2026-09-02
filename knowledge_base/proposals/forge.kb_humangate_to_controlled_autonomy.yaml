@@ -1,0 +1,69 @@
+schema: kb.proposal.v1
+status: APPLIQUEE
+lesson_id: forge.kb_humangate_to_controlled_autonomy
+statement: 'La HumanGate sur l''ingestion KB etait une securite de PHASE DE CONSTRUCTION,
+  destinee a eviter de polluer la connaissance avant que les mecanismes de preuve
+  existent. Une fois la KB cablee, les validations mecaniques en place, les propositions
+  structurees et les preuves produites, elle doit evoluer vers une AUTONOMIE CONTROLEE
+  : recherche, extraction, proposition, validation mecanique et ingestion automatiques
+  sous conditions de preuve. La securite anti-derive reste obligatoire mais passe
+  par des controles mecaniques, pas par un blocage humain permanent -- sinon la Forge
+  ne monte jamais en competence.'
+entree_catalogue_proposee:
+  entry_type: brick
+  brick_id: pat-forge-kb_humangate_to_controlled_autonomy
+  kind: pattern
+  function: 'La HumanGate sur l''ingestion KB etait une securite de PHASE DE CONSTRUCTION,
+    destinee a eviter de polluer la connaissance avant que les mecanismes de preuve
+    existent. Une fois la KB cablee, les validations mecaniques en place, les propositions
+    structurees et les preuves produites, elle doit evoluer vers une AUTONOMIE CONTROLEE
+    : recherche, extraction, proposition, validation mecanique et ingestion automatiques
+    sous conditions de preuve. La securite anti-derive reste obligatoire mais passe
+    par des controles mecaniques, pas par un blocage humain permanent -- sinon la
+    Forge ne monte jamais en competence.'
+  source: Forge lesson 'forge.kb_humangate_to_controlled_autonomy' (lab/reports/lessons.jsonl,
+    forge.learning_memory)
+  provenance_url: null
+  provenance_internal:
+    lessons_source: lab/reports/lessons.jsonl
+    lesson_id: forge.kb_humangate_to_controlled_autonomy
+    supporting_runs:
+    - tetris-fullgodot-20260803-084719
+    validation:
+      status: validated
+      validated_by: Pierre
+      validated_at: '2026-08-03T11:31:51.387425+00:00'
+  license: CC0-1.0
+  runtime: agnostic
+  dependencies: []
+  parameters: {}
+  genre_compatible:
+  - forge_process
+  - tetris-fullgodot-20260803-084719
+  invariants:
+  - 'La HumanGate sur l''ingestion KB etait une securite de PHASE DE CONSTRUCTION,
+    destinee a eviter de polluer la connaissance avant que les mecanismes de preuve
+    existent. Une fois la KB cablee, les validations mecaniques en place, les propositions
+    structurees et les preuves produites, elle doit evoluer vers une AUTONOMIE CONTROLEE
+    : recherche, extraction, proposition, validation mecanique et ingestion automatiques
+    sous conditions de preuve. La securite anti-derive reste obligatoire mais passe
+    par des controles mecaniques, pas par un blocage humain permanent -- sinon la
+    Forge ne monte jamais en competence.'
+  proof_of_use: null
+  tier: candidate
+  path: null
+  sha256: null
+  tests: null
+  advisory_only: true
+  affordances: {}
+provenance:
+  lessons_source: lab/reports/lessons.jsonl
+  supporting_runs:
+  - tetris-fullgodot-20260803-084719
+  drift_source: lecon_routee_sans_consommateur (Observer)
+  genere_le: '2026-08-03T11:31:51+00:00'
+  genere_par: kb_proposal.py --generate
+ratification:
+  decideur: Pierre
+  statut: APPLIQUEE
+  date: '2026-08-03T11:31:52+00:00'

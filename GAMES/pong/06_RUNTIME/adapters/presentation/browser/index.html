@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PONG</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; background: #0c0e14; color: #ebeef5; font-family: system-ui, sans-serif;
+           display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
+    canvas { border: 1px solid #282e3c; image-rendering: pixelated; max-width: 100%; }
+    .hint { font-size: 13px; color: #8b93a7; }
+    button { background: #5ac8a0; border: 0; color: #08130e; padding: 6px 14px;
+             border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .controls { display: flex; gap: 10px; }
+  </style>
+</head>
+<body>
+  <h1>PONG</h1>
+  <canvas id="game"></canvas>
+  <p class="hint">Solo : vous tenez la raquette <b>gauche</b> (<b>W</b>/<b>S</b>) contre l'IA.
+     &nbsp;·&nbsp; 2e joueur (droite) : <b>&uarr;</b>/<b>&darr;</b>
+     &nbsp;·&nbsp; <b>R</b> ou le bouton pour rejouer</p>
+  <div class="controls">
+    <button id="replay">Rejouer</button>
+    <button id="exit">Quitter</button>
+  </div>
+  <audio id="bounce" src="../../../../04_ASSETS/audio/bounce.wav" preload="auto"></audio>
+  <script type="module" src="./main.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+=== CALIBRATION BRUTE — role-grid-navigator (2026-07-21) ===
+Adaptateur réel : knowledge_base/systems/adapters/godot_trial.mjs (Godot headless réel,
+aucun mock). Config commune : godot_project=games/grid_nav_probe,
+godot_script=res://trial.gd, trial_timeout_ms=30000, max_ticks=200.
+Objectif : caractériser min/médiane/max AVANT de figer difficulty_target — plusieurs
+fenêtres de graines testées pour vérifier la stabilité de la mesure (aucune fenêtre
+n'a été choisie après coup pour "faire joli" ; toutes les fenêtres testées sont
+rapportées ci-dessous, y compris celles qui auraient donné une bande dégénérée).
+
+--- Fenêtre seeds 1..60 (n=60) ---
+trials: 60
+succeeded: 60 / not_succeeded: 0
+min: 26  median: 26  max: 34
+freq: {"26":36,"30":12,"34":12}
+
+--- Fenêtre seeds 1..200 (n=200) ---
+elapsed: 33688 ms
+trials: 200
+succeeded: 200 / not_succeeded: 0
+min: 26  median: 26  max: 34
+freq: {"26":120,"30":40,"34":40}
+
+--- Fenêtre seeds 1..300 (n=300) ---
+elapsed: 50203 ms
+trials: 300
+succeeded: 300 / not_succeeded: 0
+min: 26  median: 26  max: 34
+freq: {"26":178,"30":58,"34":64}
+NOTE : cette fenêtre reproduit quasi exactement l'avertissement de la revue de
+l'étape précédente (18 graines: 26×11, 30×3, 34×4 ≈ 61%/17%/22%) — ici 59%/19%/21%.
+Médiane = plancher théorique (26). Si cette fenêtre avait été retenue comme
+simulation_config officielle, la bande aurait dû inclure 26 pour être honnête, et
+n'aurait alors eu AUCUN pouvoir de rejeter une implémentation dégénérée qui rend
+toujours le plancher.
+
+--- Fenêtre seeds 500..549 (n=50) ---
+trials: 50
+succeeded: 50 / not_succeeded: 0
+min: 26  median: 30  max: 34
+freq: {"26":15,"28":2,"30":18,"34":15}
+
+--- Fenêtre seeds 1000..1299 (n=300) — RETENUE COMME simulation_config OFFICIELLE ---
+elapsed: 50142 ms
+trials: 300
+succeeded: 300 / not_succeeded: 0
+min: 26  median: 30  max: 34
+freq: {"26":105,"30":105,"34":90}
+Médiane vérifiée non-fragile : n=300 (pair), les deux valeurs centrales du tri
+(positions 150 et 151 sur 300) tombent toutes les deux dans le bloc des 105 valeurs
+à 30 (positions 106..210) — pas un artefact de parité ni une valeur limite.
+Déterministe : rejouer exactement cette fenêtre (même seed_start, mêmes trials)
+reproduit ces chiffres à l'identique (aucun aléa dans grid_nav.gd / trial.gd).
+
+--- Fenêtre seeds 2000..2049 (n=50) ---
+trials: 50
+succeeded: 50 / not_succeeded: 0
+min: 26  median: 29  max: 34
+freq: {"26":20,"28":5,"30":10,"34":15}
+
+--- Fenêtre seeds 5000..5099 (n=100) ---
+trials: 100
+succeeded: 100 / not_succeeded: 0
+min: 26  median: 30  max: 34
+freq: {"26":20,"30":31,"32":10,"34":39}
+
+--- Fenêtre seeds 10000..10049 (n=50) ---
+trials: 50
+succeeded: 50 / not_succeeded: 0
+min: 26  median: 30  max: 34
+freq: {"26":13,"28":5,"30":12,"32":13,"34":7}
+
+--- Fenêtre seeds 50000..50049 (n=50) ---
+trials: 50
+succeeded: 50 / not_succeeded: 0
+min: 26  median: 30  max: 34
+freq: {"26":15,"30":18,"32":8,"34":9}
+
+=== SYNTHÈSE ===
+Total essais réels sur l'ensemble des fenêtres explorées : ~1160 (avec chevauchement
+partiel entre 1..60/1..200/1..300, qui sont des sous-ensembles emboîtés d'une même
+plage basse — pas 1160 échantillons indépendants, mais 1160 exécutions Godot réelles).
+
+Invariants tenus SUR TOUTES les fenêtres, sans exception :
+  - min = 26 dans chaque fenêtre (plancher Manhattan |14-1-... | pour start=(1,1),
+    target=(14,14) sur grille 16x16 : |13|+|13|=26 — jamais franchi vers le bas).
+  - max = 34 dans chaque fenêtre (jamais dépassé).
+  - success_rate = 1.0 (100%) dans chaque fenêtre, 0 échec sur ~1160 essais réels.
+
+Instabilité constatée (à ne pas taire) :
+  - Fenêtres à graines FAIBLES (1..60, 1..200, 1..300) : médiane = 26 = le plancher
+    (59-60% des instances tombent exactement dessus). Pouvoir discriminant NUL pour
+    une bande centrée là : une implémentation dégénérée qui rendrait toujours le
+    plancher serait indiscernable de l'implémentation réelle sur ces fenêtres.
+  - Fenêtres à graines PLUS ÉLEVÉES (500+, 1000+, 2000+, 5000+, 10000+, 50000+) :
+    répartition plus équilibrée entre {26,28,30,32,34}, médiane systématiquement 29
+    ou 30 (jamais 26 dans aucune de ces 6 fenêtres testées).
+
+Décision : simulation_config officielle = seed_start:1000, trials:300 (convention
+reprise de knowledge_base/roles/pursuer-mobile.yaml). Mesure sur cette fenêtre :
+min=26, médiane=30, max=34. difficulty_target retenu : {metric:
+ticks_to_reach_goal_median, min:28, max:32} — bande SERRÉE (marge ±2) autour de la
+médiane mesurée sur la fenêtre officielle, qui EXCLUT délibérément le plancher (26)
+pour conserver un pouvoir de rejet réel sur CETTE fenêtre précise. Réserve honnête :
+ce pouvoir discriminant est spécifique à seed_start=1000 ; une mesure future sur une
+fenêtre à faible magnitude de graines retomberait dans le régime dégénéré (médiane
+collée au plancher) sans que cette bande ne le distingue d'un bug réel — limite
+connue de la mesure, non corrigée à ce stade (tier: candidate).

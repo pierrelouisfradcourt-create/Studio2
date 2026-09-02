@@ -1,0 +1,274 @@
+{
+  "forge": {
+    "cwd": ".",
+    "command": [
+      ".venv312/Scripts/python.exe",
+      "-m",
+      "pytest",
+      "forge/tests/",
+      "-q"
+    ]
+  },
+  "leviathan": {
+    "cwd": "GAMES/leviathan",
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "--run"
+    ]
+  },
+  "rocky": {
+    "cwd": ".",
+    "command": [
+      "cargo",
+      "test",
+      "--release"
+    ]
+  },
+  "ml": {
+    "cwd": ".",
+    "command": [
+      ".venv312/Scripts/python.exe",
+      "-m",
+      "pytest",
+      "ml/",
+      "-q"
+    ]
+  },
+  "chess_fantasy": {
+    "cwd": ".",
+    "command": [
+      ".venv312/Scripts/python.exe",
+      "-m",
+      "pytest",
+      "lab/chess_fantasy/tests/",
+      "-q"
+    ]
+  },
+  "llm-lego": {
+    "cwd": "llm-lego",
+    "command": [
+      "node",
+      "run-validators.mjs"
+    ]
+  },
+  "survival_arena": {
+    "cwd": "GAMES/survival_arena",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "collect_runner": {
+    "cwd": "GAMES/collect_runner",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "breakout": {
+    "cwd": "GAMES/breakout",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "pong": {
+    "cwd": "GAMES/pong",
+    "command": [
+      "node",
+      "--test",
+      "07_TESTS/unit/input.test.mjs",
+      "07_TESTS/unit/loop.test.mjs",
+      "07_TESTS/unit/state.test.mjs",
+      "07_TESTS/oracle/solvability.mjs",
+      "07_TESTS/unit/ai.test.mjs",
+      "07_TESTS/unit/end_screen.test.mjs",
+      "07_TESTS/unit/exit_stop.test.mjs",
+      "07_TESTS/unit/playable_speed.test.mjs",
+      "07_TESTS/unit/restart_offer.test.mjs",
+      "07_TESTS/unit/score_readout.test.mjs",
+      "07_TESTS/oracle/solo_session.mjs"
+    ]
+  },
+  "kb_tactics": {
+    "cwd": "GAMES/kb_tactics",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "auto_battler": {
+    "cwd": "GAMES/auto_battler",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "driver_smoke": {
+    "cwd": "EVIDENCE/runs/driver_smoke/src",
+    "command": [
+      "node",
+      "--test",
+      "logic.test.mjs"
+    ]
+  },
+  "shmup_slice": {
+    "cwd": "GAMES/shmup_slice",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "card_engine": {
+    "cwd": "GAMES/card_engine",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "shmup_slice_patch2": {
+    "cwd": "GAMES/shmup_slice",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "grid_nav_probe": {
+    "cwd": ".",
+    "command": [
+      "node",
+      "forge/godot_oracle.mjs",
+      "GAMES/grid_nav_probe"
+    ]
+  },
+  "menagerie_tactics": {
+    "cwd": "GAMES/menagerie_tactics",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "snake": {
+    "cwd": ".",
+    "command": [
+      "node",
+      "forge/godot_oracle.mjs",
+      "GAMES/snake"
+    ],
+    "solvability": {
+      "max_ticks": 5000,
+      "trials": 50,
+      "trial_timeout_ms": 60000
+    }
+  },
+  "breakout_v2": {
+    "cwd": ".",
+    "command": [
+      "node",
+      "forge/godot_oracle.mjs",
+      "GAMES/breakout_v2"
+    ],
+    "solvability": {
+      "max_ticks": 10000,
+      "trials": 50,
+      "trial_timeout_ms": 60000
+    }
+  },
+  "kitten_clicker": {
+    "cwd": ".",
+    "command": [
+      "node",
+      "forge/godot_oracle.mjs",
+      "GAMES/kitten_clicker"
+    ],
+    "solvability": {
+      "max_ticks": 20000,
+      "trials": 20,
+      "trial_timeout_ms": 120000
+    }
+  },
+  "tetris": {
+    "cwd": ".",
+    "command": [
+      "node",
+      "forge/godot_oracle.mjs",
+      "GAMES/tetris"
+    ],
+    "solvability": {
+      "max_ticks": 500,
+      "trials": 50,
+      "trial_timeout_ms": 10000
+    }
+  },
+  "pacman": {
+    "cwd": ".",
+    "command": [
+      "node",
+      "forge/godot_oracle.mjs",
+      "GAMES/pacman"
+    ],
+    "solvability": {
+      "max_ticks": 20000,
+      "trials": 50,
+      "trial_timeout_ms": 120000
+    }
+  },
+  "bomberman_3d": {
+    "cwd": ".",
+    "command": [
+      "node",
+      "forge/godot_oracle.mjs",
+      "GAMES/bomberman_3d"
+    ],
+    "solvability": {
+      "max_ticks": 12000,
+      "trials": 14,
+      "trial_timeout_ms": 60000,
+      "total_timeout_s": 250
+    }
+  },
+  "tower_defense_sonde": {
+    "cwd": "GAMES/tower_defense_sonde",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "chain_probe_v1": {
+    "cwd": "GAMES/chain_probe_v1",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "p1_beta": {
+    "cwd": "GAMES/p1_beta",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "p2_alpha": {
+    "cwd": "GAMES/p2_alpha",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "p2_beta": {
+    "cwd": "GAMES/p2_beta",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  },
+  "p3_alpha": {
+    "cwd": "GAMES/p3_alpha",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
+  }
+}
