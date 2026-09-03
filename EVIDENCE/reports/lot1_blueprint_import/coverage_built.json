@@ -1,0 +1,29 @@
+{
+ "status": "JOINED",
+ "regime": "JOINED",
+ "forme_satisfaite": true,
+ "advisory": true,
+ "exit_code": 0,
+ "capacites": 10,
+ "capacites_couvertes": 10,
+ "lignes": 9,
+ "lignes_sans_couvre": 0,
+ "capacites_non_couvertes": 0,
+ "couverture_fantome": 0,
+ "problems": 0,
+ "maillon_non_lie": 0,
+ "exemples": [],
+ "which": "built",
+ "inputs": {
+  "feature_map": {
+   "version": 1,
+   "content_sha256": "b5a0e68f92d9eb043e2ffcbf7c0f8eec65a6ff9d072511206d63d121d7d59fec",
+   "source_sha256": "ec58f9f4a1e9b3eddbd8f2b55c94d48da4cc0a1b2e48a8f43efc0eb1f63dc2fa"
+  },
+  "wiremap": {
+   "version": 1,
+   "entry": "built",
+   "source_sha256": "1ab17326ac13f5f2df6d07ddfe6e39d34056c5d73c2b6376e9c7b670ea24abc3"
+  }
+ }
+}

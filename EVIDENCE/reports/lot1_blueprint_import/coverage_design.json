@@ -1,0 +1,33 @@
+{
+ "status": "NOT_JOINED",
+ "regime": "EMPTY_FORM",
+ "forme_satisfaite": false,
+ "advisory": true,
+ "exit_code": 1,
+ "capacites": 10,
+ "capacites_couvertes": 0,
+ "lignes": 9,
+ "lignes_sans_couvre": 9,
+ "capacites_non_couvertes": 10,
+ "couverture_fantome": 0,
+ "problems": 9,
+ "maillon_non_lie": 0,
+ "exemples": [
+  "capacite 'R1c1_hud_objectif_nonvide' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+  "capacite 'R2c1_entree_touches_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+  "capacite 'R2c2_effet_deplacement_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)"
+ ],
+ "which": "design",
+ "inputs": {
+  "feature_map": {
+   "version": 1,
+   "content_sha256": "b5a0e68f92d9eb043e2ffcbf7c0f8eec65a6ff9d072511206d63d121d7d59fec",
+   "source_sha256": "ec58f9f4a1e9b3eddbd8f2b55c94d48da4cc0a1b2e48a8f43efc0eb1f63dc2fa"
+  },
+  "wiremap": {
+   "version": 1,
+   "entry": "design",
+   "source_sha256": "599b96f40faa868a8a2494c24c25446958662e4c9a8fe538e4a17bd1d1cce1ed"
+  }
+ }
+}
