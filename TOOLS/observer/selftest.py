@@ -50,7 +50,7 @@ SCHEMA_VERSION = "observer.selftest.v0"
 # une sortie stable sous le depot.
 DEFAULT_REPO = default_repo_root()
 DEFAULT_TRANSCRIPTS = default_transcripts_root(DEFAULT_REPO)
-DEFAULT_OUT = DEFAULT_REPO / "lab" / "reports" / "observer" / "_selftest"
+DEFAULT_OUT = DEFAULT_REPO / "EVIDENCE" / "reports" / "observer" / "_selftest"
 
 _TOP_NOTES_LIMIT = 15
 _DUPLICATE_EXAMPLES_LIMIT = 3

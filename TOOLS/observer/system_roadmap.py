@@ -1529,7 +1529,7 @@ if __name__ == "__main__":
     _project = "breakout_v2"
     _ctx = ObserverContext.build(_repo_root, _project, _transcripts_root)
 
-    _report_dir = _repo_root / "lab" / "reports" / "observer" / _project
+    _report_dir = _repo_root / "EVIDENCE" / "reports" / "observer" / _project
     with (_report_dir / "observer_run.json").open("r", encoding="utf-8-sig") as _fh:
         _result = json.load(_fh)
 

@@ -104,10 +104,10 @@ class OutputScopeViolation(RuntimeError):
     """
 
 
-# `lab/reports/observer/` — seul endroit ou l'Observer depose son rapport quand la
+# `EVIDENCE/reports/observer/` (V2, ex-`lab/reports/observer/`) — seul endroit ou l'Observer depose son rapport quand la
 # destination n'est pas donnee explicitement. Tuple plutot que chaine : le separateur
 # ne s'ecrit alors nulle part, et la valeur reste la meme sous Windows et POSIX.
-_OUTPUT_SUBPATH = ("lab", "reports", "observer")
+_OUTPUT_SUBPATH = ("EVIDENCE", "reports", "observer")
 
 
 def observer_output_root(repo_root: Path) -> Path:

@@ -336,7 +336,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Etalonnage Observer (lecture seule)")
     parser.add_argument(
         "--observer-dir", type=Path,
-        default=default_repo_root() / "lab" / "reports" / "observer" / "breakout_v2")
+        default=default_repo_root() / "EVIDENCE" / "reports" / "observer" / "breakout_v2")
     args = parser.parse_args(argv)
 
     result = run_bench(args.observer_dir)

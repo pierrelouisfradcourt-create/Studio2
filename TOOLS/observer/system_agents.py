@@ -1286,7 +1286,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     ctx = ObserverContext.build(args.repo, args.project, args.transcripts)
 
-    report_dir = args.repo / "lab" / "reports" / "observer" / args.project
+    report_dir = args.repo / "EVIDENCE" / "reports" / "observer" / args.project
     result_path = report_dir / "observer_run.json"
     events_path = report_dir / "events.jsonl"
 

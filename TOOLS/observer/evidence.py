@@ -732,14 +732,14 @@ def _write_registry(ctx: Any, project: str,
                     decisions: list[dict[str, Any]]) -> tuple[Optional[str], Optional[str]]:
     """La SEULE ecriture de ce module : le registre normalise, VUE derivee
     reecrite en entier a chaque run. Garde dure identique a system_planning :
-    refuse d'ecrire hors de lab/reports/observer/ — jamais studio_brain/,
+    refuse d'ecrire hors de EVIDENCE/reports/observer/ — jamais studio_brain/,
     jamais scripts/forge/, jamais un store canonique."""
-    out_path = (ctx.repo_root / "lab" / "reports" / "observer" / project).resolve()
-    guard_root = (ctx.repo_root / "lab" / "reports" / "observer").resolve()
+    out_path = (ctx.repo_root / "EVIDENCE" / "reports" / "observer" / project).resolve()
+    guard_root = (ctx.repo_root / "EVIDENCE" / "reports" / "observer").resolve()
     try:
         out_path.relative_to(guard_root)
     except ValueError:
-        why = (f"chemin de sortie {out_path} hors de lab/reports/observer/ — "
+        why = (f"chemin de sortie {out_path} hors de EVIDENCE/reports/observer/ — "
                "ecriture refusee")
         LOG.error(why)
         return None, why
@@ -756,18 +756,18 @@ def _write_format_ratifie(
     ctx: Any, project: str, total: int, sans_resultat_n: int,
 ) -> tuple[Optional[str], Optional[str]]:
     """Ecrit le document `DECISION_FORMAT_V2_RATIFIE.md` sous
-    lab/reports/observer/<projet>/ — meme garde dure que _write_registry.
+    EVIDENCE/reports/observer/<projet>/ — meme garde dure que _write_registry.
     Statut : RATIFIE Pierre 2026-08-02, adoption MANUELLE (gabarit pret a
     coller dans le decision-log). Remplace DECISION_FORMAT_PROPOSED.md
     (supprime s'il existe, dans le meme dossier de sortie uniquement)."""
     from datetime import date as _date
 
-    out_path = (ctx.repo_root / "lab" / "reports" / "observer" / project).resolve()
-    guard_root = (ctx.repo_root / "lab" / "reports" / "observer").resolve()
+    out_path = (ctx.repo_root / "EVIDENCE" / "reports" / "observer" / project).resolve()
+    guard_root = (ctx.repo_root / "EVIDENCE" / "reports" / "observer").resolve()
     try:
         out_path.relative_to(guard_root)
     except ValueError:
-        why = (f"chemin de sortie {out_path} hors de lab/reports/observer/ — "
+        why = (f"chemin de sortie {out_path} hors de EVIDENCE/reports/observer/ — "
                "ecriture refusee")
         LOG.error(why)
         return None, why
@@ -1022,7 +1022,7 @@ if __name__ == "__main__":
     transcripts_root = default_transcripts_root(repo_root)
     ctx = ObserverContext.build(repo_root, "breakout_v2", transcripts_root)
 
-    report_dir = repo_root / "lab" / "reports" / "observer" / "breakout_v2"
+    report_dir = repo_root / "EVIDENCE" / "reports" / "observer" / "breakout_v2"
     with (report_dir / "observer_run.json").open("r", encoding="utf-8-sig") as fh:
         result = json.load(fh)
 

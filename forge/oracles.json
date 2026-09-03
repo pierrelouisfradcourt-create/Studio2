@@ -2,7 +2,7 @@
   "forge": {
     "cwd": ".",
     "command": [
-      ".venv312/Scripts/python.exe",
+      ".venv/Scripts/python.exe",
       "-m",
       "pytest",
       "forge/tests/",
@@ -29,7 +29,7 @@
   "ml": {
     "cwd": ".",
     "command": [
-      ".venv312/Scripts/python.exe",
+      ".venv/Scripts/python.exe",
       "-m",
       "pytest",
       "ml/",
@@ -39,7 +39,7 @@
   "chess_fantasy": {
     "cwd": ".",
     "command": [
-      ".venv312/Scripts/python.exe",
+      ".venv/Scripts/python.exe",
       "-m",
       "pytest",
       "lab/chess_fantasy/tests/",

@@ -528,7 +528,7 @@ def _write_proposition(ctx: Any, out_dir: Optional[Path],
         return None, None
 
     out_path = Path(out_dir).resolve()
-    guard_root = (ctx.repo_root / "lab" / "reports" / "observer").resolve()
+    guard_root = (ctx.repo_root / "EVIDENCE" / "reports" / "observer").resolve()
     try:
         out_path.relative_to(guard_root)
     except ValueError:
@@ -618,7 +618,7 @@ if __name__ == "__main__":
     project = "breakout_v2"
     ctx = ObserverContext.build(repo_root, project, transcripts_root)
 
-    report_dir = repo_root / "lab" / "reports" / "observer" / project
+    report_dir = repo_root / "EVIDENCE" / "reports" / "observer" / project
     with (report_dir / "observer_run.json").open("r", encoding="utf-8-sig") as fh:
         result = json.load(fh)
 

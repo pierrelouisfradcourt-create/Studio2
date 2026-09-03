@@ -292,7 +292,7 @@ def _ligne_attempt(
         tokens_cell = _cell(
             tokens_total if tokens_total else NOT_OBSERVABLE,
             {
-                "path": f"lab/reports/observer/{projet}/observer_run.json",
+                "path": f"EVIDENCE/reports/observer/{projet}/observer_run.json",
                 "field": "runs[].totals.tokens_measured_in_transcripts",
             },
             "aucun transcript rattache a ce run dans la reconstruction courante",
@@ -455,7 +455,7 @@ if __name__ == "__main__":
     _transcripts_root = default_transcripts_root(_repo_root)
     _current_project = "breakout_v2"
     _current_result_path = (
-        _repo_root / "lab" / "reports" / "observer" / _current_project / "observer_run.json"
+        _repo_root / "EVIDENCE" / "reports" / "observer" / _current_project / "observer_run.json"
     )
     with _current_result_path.open("r", encoding="utf-8") as _fh:
         _current_result = json.load(_fh)

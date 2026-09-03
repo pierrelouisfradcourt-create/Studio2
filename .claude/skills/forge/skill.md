@@ -9,7 +9,7 @@ Enchaîne la chaîne d'ingénierie Forge. **Invariant central : aucun sous-agent
 
 > Règles absolues (CLAUDE.md + ADR-002) : `claim_verdict: NO_CLAIM_ALLOWED` ; séparer `software_verdict`/`evidence_verdict`/`claim_verdict` ; **HumanGate (Pierre) décide** merge/reject ; zones protégées `tests/**` jamais modifiées. Modèles = full Claude (producteurs) + **Qwen = red-team indépendant** ; oracles = déterministes non-LLM.
 
-> **Résolution rôle → runtime : source unique `scripts/forge/contracts/roles.yaml`** (lue par `forge.contract`). Ne déduis jamais un modèle d'ici — ce fichier fait foi, y compris pour le rôle `orchestrator` et pour l'échelle d'escalade des builders. Le contrat de système (`scripts/forge/FORGE_SYSTEM_CONTRACT.yaml`) interdit de réécrire cette règle ailleurs ; le capteur `forge.contract_sync` vérifie que ce fichier la CITE au lieu de la redire.
+> **Résolution rôle → runtime : source unique `forge/contracts/roles.yaml`** (lue par `forge.contract`). Ne déduis jamais un modèle d'ici — ce fichier fait foi, y compris pour le rôle `orchestrator` et pour l'échelle d'escalade des builders. Le contrat de système (`forge/FORGE_SYSTEM_CONTRACT.yaml`) interdit de réécrire cette règle ailleurs ; le capteur `forge.contract_sync` vérifie que ce fichier la CITE au lieu de la redire.
 
 > **Deux rôles distincts, ne jamais les confondre** (séparation ratifiée Pierre 2026-07-23, source : `roles.yaml`) :
 > **`orchestrator`** = la SESSION qui pilote /forge (Fable, mode superpowers) — entrée purement DESCRIPTIVE de `roles.yaml`, jamais résolue par le code : c'est Pierre qui choisit son modèle en ouvrant la session.
@@ -32,14 +32,14 @@ Enchaîne la chaîne d'ingénierie Forge. **Invariant central : aucun sous-agent
 
 ## Le socle (déjà câblé, à réutiliser — ne pas réimplémenter)
 
-- Contrats : `scripts/forge/contracts/<etape>.yaml` (schéma `SCHEMA.md`, 17 champs).
-- Dispatch gouverné : `scripts/forge/dispatch.py` — `prepare_dispatch(etape, run_id)` valide le contrat, fabrique le payload borné, trace l'audit. **Ne spawn pas** : c'est TOI (l'orchestrateur) qui spawnes avec le payload.
-- Oracle / gate / verdict : `scripts/forge/{oracle,gate,verdict}.py` (déterministes, HMAC).
+- Contrats : `forge/contracts/<etape>.yaml` (schéma `SCHEMA.md`, 17 champs).
+- Dispatch gouverné : `forge/dispatch.py` — `prepare_dispatch(etape, run_id)` valide le contrat, fabrique le payload borné, trace l'audit. **Ne spawn pas** : c'est TOI (l'orchestrateur) qui spawnes avec le payload.
+- Oracle / gate / verdict : `forge/{oracle,gate,verdict}.py` (déterministes, HMAC).
 
 ## Étape préliminaire — planifier (obligatoire)
 
 ```bash
-PYTHONPATH=scripts .venv312/Scripts/python.exe -m forge.dispatch --dry-run [--profile patch]
+./.venv/Scripts/python.exe -m forge.dispatch --dry-run [--profile patch]
 ```
 
 Affiche les étapes du profil et leur runtime résolu (13 en `full`, 4 en `patch`). Si une étape lève `ContractIncomplete`/`RoleUnresolved`, **STOP** : un contrat est cassé, corrige-le avant de lancer quoi que ce soit.
@@ -76,8 +76,8 @@ en amont** dans un squelette : chaque exigence y a déjà une adresse, un état 
 attendue. Le forgeron ne reçoit donc pas « fais un Pong » — il reçoit une carte à remplir, et il
 n'a **pas le droit d'ajouter hors plan**.
 
-Ne redis rien du format ici : la spécification est `scripts/forge/standard/SCHEMA.md`, et les
-tables figées qu'elle utilise sont `scripts/forge/standard/{core_requirements,repo_map,capabilities}.yaml`.
+Ne redis rien du format ici : la spécification est `forge/standard/SCHEMA.md`, et les
+tables figées qu'elle utilise sont `forge/standard/{core_requirements,repo_map,capabilities}.yaml`.
 
 - **Étape de build** : `s9-build-standard` (rôle `game_forger`, résolu par `roles.yaml` — pas un
   `builder`, cf. son contrat pour la proportionnalité rôle/effort).
@@ -124,7 +124,7 @@ Pour chaque `etape` dans l'ordre `forge.dispatch.ORDER` :
    >     import json
    >     from pathlib import Path
    >     from forge.static_oracles import frozen_features_from_wiremap
-   >     run_dir = Path("lab/forge_runs/<projet>")   # même run_dir qu'à s10c
+   >     run_dir = Path("EVIDENCE/runs/<projet>")   # même run_dir qu'à s10c
    >     (run_dir / "wiremap_frozen.json").write_text(
    >         json.dumps({"features": frozen_features_from_wiremap(wiremap)}, ensure_ascii=False),
    >         encoding="utf-8")
@@ -155,7 +155,7 @@ Pour chaque `etape` dans l'ordre `forge.dispatch.ORDER` :
 3. **Étape déterministe** (`etape` ∈ `forge.dispatch.DETERMINISTIC`) : **ne spawne pas d'agent**. Lance l'oracle correspondant :
    - `s10a-oracle-code` → `forge.gate.forge_gate("<projet>")` (commande via `oracles.json`, verdict signé). Garde `code = forge_gate(...)`.
      > **Oracle d'un JEU à UI = click-through Playwright**, pas des tests unitaires. La commande `oracles.json` du jeu lance un e2e qui **clique chaque bouton et parcourt chaque chemin** (déterministe, `returncode` = pass/fail, captures sous `e2e-shots/`). Il mappe 1:1 le Prisme (s1) : *le joueur voit/fait* → clique X, vérifie Y. Harnais de référence : `llm-lego/experiments/belote-claude/web/e2e-lib.mjs` (`startServer` + clics DOM `page.click(...)` + assertions d'état). **Claude-in-Chrome = exploratoire, PAS l'oracle** (LLM, non déterministe).
-     > **Oracle d'un JEU = AUSSI la SOLVABILITÉ, pas seulement les mécaniques.** Un jeu aux objectifs inatteignables passe TOUS les tests de mécanique en isolation (« collectCoin marche SI on place le joueur sur la pièce ») tout en étant injouable — prouvé 2× (survival_arena tir/poursuite non testés ; collect_runner pièces hors de portée de saut, 14 tests + e2e verts, injouable au playtest). L'oracle code d'un jeu **inclut obligatoirement** un volet `solvability.mjs` (câblé dans `run-oracle.mjs`) qui : **(1)** mesure l'enveloppe d'action RÉELLE du moteur (ex. hauteur de saut — mesurée, pas hardcodée), **(2)** vérifie que chaque objectif requis y est, **(3)** fait **jouer un bot déterministe qui doit GAGNER**. Modèle à copier : `scripts/forge/templates/solvability.template.mjs` ; réf. vivante : `games/collect_runner/solvability.mjs`. Contractualisé en s9 (`success_criteria`/`tests_oracles`/`output_contract`).
+     > **Oracle d'un JEU = AUSSI la SOLVABILITÉ, pas seulement les mécaniques.** Un jeu aux objectifs inatteignables passe TOUS les tests de mécanique en isolation (« collectCoin marche SI on place le joueur sur la pièce ») tout en étant injouable — prouvé 2× (survival_arena tir/poursuite non testés ; collect_runner pièces hors de portée de saut, 14 tests + e2e verts, injouable au playtest). L'oracle code d'un jeu **inclut obligatoirement** un volet `solvability.mjs` (câblé dans `run-oracle.mjs`) qui : **(1)** mesure l'enveloppe d'action RÉELLE du moteur (ex. hauteur de saut — mesurée, pas hardcodée), **(2)** vérifie que chaque objectif requis y est, **(3)** fait **jouer un bot déterministe qui doit GAGNER**. Modèle à copier : `forge/templates/solvability.template.mjs` ; réf. vivante : `games/collect_runner/solvability.mjs`. Contractualisé en s9 (`success_criteria`/`tests_oracles`/`output_contract`).
      > **Renforcer/valider les oracles** (au-delà des exemples à seed fixe, qui ratent les mutants) : **(1) property-based** — invariants sur beaucoup de seeds + inputs aléatoires seedés (déterminisme, bornes, monotonies) ; réf. `games/collect_runner/properties.test.mjs`, câblé dans `run-oracle.mjs`. **(2) mutation testing** — le MÉTA-oracle « tes tests attrapent-ils un bug ? » : `PYTHONPATH=scripts python -m forge.mutation <src> --cwd <dir> -- node --test <tests>` mute le code (`>=`→`>`, `&&`→`||`…) et rend un **score de tués/total** + la liste des mutants **survivants** (bugs non détectés) à corriger. Un `>=` tautologique survit → signal direct.
      > **Gate e2e déterministe (renfort 2026-07-11) — la doctrine Playwright ci-dessus est désormais APPLIQUÉE.** Pour un JEU, avant de conclure l'oracle-code, lance la garde structurelle non-LLM :
      > ```python
@@ -163,7 +163,7 @@ Pour chaque `etape` dans l'ordre `forge.dispatch.ORDER` :
      > from forge.static_oracles import check_e2e_harness
      > e2e_guard = check_e2e_harness(Path("games/<projet>"))   # contribue à l'oracle_ok combiné (consolidé après s10c)
      > ```
-     > Si `not e2e_guard["passed"]` : traite l'oracle comme ÉCHOUÉ (raisons = `e2e_guard["raisons"]`), ce qui alimente la boucle d'escalade (2. ci-dessus, `oracle_ok` combiné) → ré-spawn du contrat s9, modèle ↑, cap `MAX_ESCALATIONS`. Au sommet toujours rouge : verdict BLOCKED + `humangate_flags: ["e2e non prouvé"]`. La garde rejette : `e2e.mjs` absent, non câblé dans `run-oracle.mjs`, ou coquille (< 3 observations de `window.__game`/`#overlay`/`#restart`). Cf. `scripts/forge/contracts/PLAYABLE_CONTRACT.md`.
+     > Si `not e2e_guard["passed"]` : traite l'oracle comme ÉCHOUÉ (raisons = `e2e_guard["raisons"]`), ce qui alimente la boucle d'escalade (2. ci-dessus, `oracle_ok` combiné) → ré-spawn du contrat s9, modèle ↑, cap `MAX_ESCALATIONS`. Au sommet toujours rouge : verdict BLOCKED + `humangate_flags: ["e2e non prouvé"]`. La garde rejette : `e2e.mjs` absent, non câblé dans `run-oracle.mjs`, ou coquille (< 3 observations de `window.__game`/`#overlay`/`#restart`). Cf. `forge/contracts/PLAYABLE_CONTRACT.md`.
      > **Gate mutation (renfort 2026-07-11, axe 3) — « 100% ou survivant justifié ».** Pour un JEU, après l'oracle-code, mute **les fichiers logiques déclarés par la WireMap** (pas seulement `game.mjs` : la logique est répartie — `game.mjs`, `level.mjs`, … ; les fichiers `.mjs` non-test cités dans `wiremap["features"][*]["fichiers"]`) et agrège les résultats :
      > ```python
      > from forge.mutation import run_mutation_test
@@ -185,7 +185,7 @@ Pour chaque `etape` dans l'ordre `forge.dispatch.ORDER` :
      > ```python
      > from pathlib import Path
      > from forge.static_oracles import check_feature_set_frozen, load_frozen_features
-     > run_dir = Path("lab/forge_runs/<projet>")   # même run_dir qu'à s5
+     > run_dir = Path("EVIDENCE/runs/<projet>")   # même run_dir qu'à s5
      > frozen = check_feature_set_frozen(wiremap, load_frozen_features(run_dir))
      > if not frozen["passed"]:
      >     # NON auto-corrigeable => verdict BLOCKED, NE BOUCLE PAS. Flag honnête selon la cause :
@@ -241,7 +241,7 @@ propose_project_record(project, stage, folder)            # PROPOSED
 ```
 **Avant de présenter à Pierre, VÉRIFIE mécaniquement le verdict** — ne dis jamais « HMAC OK » sans avoir lancé la commande :
 ```bash
-PYTHONPATH=scripts .venv312/Scripts/python.exe -m forge.verify_run lab/forge_runs/<projet>/verdict.json
+./.venv/Scripts/python.exe -m forge.verify_run EVIDENCE/runs/<projet>/verdict.json
 ```
 Trois issues, trois lectures — ne les confonds jamais. Depuis V1 (2026-07-26, séparation intégrité/verdict — mémoire pong_r2), le code de sortie répond à UNE seule question, l'**authenticité**, jamais à la couleur du verdict logiciel : la sortie porte deux lignes distinctes, `INTÉGRITÉ : AUTHENTIQUE|REJET` et `VERDICT LOGICIEL : <software_verdict> / <decision>`.
 - **Exit 0** = **intégrité authentique** (HMAC re-signé + évidence re-lue + preuve mutation authentique + git_head comparé), **quel que soit le verdict logiciel affiché** → un FAIL/BLOCKED honnête (gate mutation rouge légitime, ex. pong_r2) sort désormais exit 0 avec `VERDICT LOGICIEL : FAIL / BLOCKED` : ce n'est PAS un succès, c'est un constat authentique à remonter tel quel à **Pierre**. Le seul cas où un gate mutation rouge fait encore échouer l'intégrité (exit 2) est un verdict qui **prétend** `software_verdict=OK` alors que son propre reçu mutation embarqué ne l'est pas (vert non prouvé — gate de cohérence, jamais relâché).
@@ -379,8 +379,8 @@ claim_verdict: NO_CLAIM_ALLOWED
 
 ## Limites v0 (à dire honnêtement, ne pas surjouer)
 
-- **Étapes contractualisées** : la chaîne canonique `full` couvre s0→s12 ; les contrats vivent dans `scripts/forge/contracts/`. Compte exact et profils : `--dry-run` (ci-dessus), jamais une liste recopiée ici.
+- **Étapes contractualisées** : la chaîne canonique `full` couvre s0→s12 ; les contrats vivent dans `forge/contracts/`. Compte exact et profils : `--dry-run` (ci-dessus), jamais une liste recopiée ici.
 - **Contrats orphelins connus** (écrits, référencés dans AUCUN profil ni aucun code — vérifié 2026-07-23) : `s10d-oracle-visual`, `s9-build-godot`, `redteam-artdirector`. Ne les invoque pas en croyant qu'ils sont câblés ; leur existence sur disque ne prouve rien (« déclaré ≠ exécuté »).
-- **Synchronisation de ce fichier avec le code** : contrôlée mécaniquement par `forge.contract_sync`, agrégée dans `node scripts/forge/studio_selfaudit.mjs`. Limite déclarée : elle détecte l'ABSENCE de citation d'une règle canonique, **pas** une prose qui cite sa source tout en la contredisant. Ce n'est pas une preuve de non-divergence.
+- **Synchronisation de ce fichier avec le code** : contrôlée mécaniquement par `forge.contract_sync`, agrégée dans `node forge/studio_selfaudit.mjs`. Limite déclarée : elle détecte l'ABSENCE de citation d'une règle canonique, **pas** une prose qui cite sa source tout en la contredisant. Ce n'est pas une preuve de non-divergence.
 - **Connecteurs studio branchés** (ADR-002) : télémétrie (3), Kaizen-propose (4), mémoire projet (5), pré-mortem (6) via `forge.studio_link`, tous **propose-only**. **Connecteur 2 (hook dur) ACTIF** depuis 2026-07-10 (MAJ ADR-002 §7) : `pretool_forge_guard` (`PreToolUse`/`Task`, câblé dans `.claude/settings.json`) bloque tout spawn portant le marqueur `FORGE_DISPATCH:<etape>:<run_id>` sans ligne d'audit HMAC valide — **fail-CLOSED en périmètre Forge**, fail-open hors-forge. Portée honnête : contrôle la présence d'un dispatch signé, pas la conformité modèle/outils/prompt. L'enforcement passage-par-contrat combine donc **le hook (technique) + la porte Python** `dispatch.prepare_dispatch` + la discipline de ce skill.
 - Forge **propose**, n'écrit jamais seul dans les mémoires de référence (ledger, projets) : toute écriture durable = HumanGate.

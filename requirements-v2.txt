@@ -1,0 +1,12 @@
+# Environnement Python V2 (D1, ratifié Pierre 2026-09-03) — Studio/.venv, Python 3.12.
+# Strictement ce que forge/ et forge/tests/ importent hors stdlib (mesuré : grep des imports).
+#   yaml      -> forge.contract, forge.run_real, ... (PyYAML)
+#   numpy     -> forge/asset_geometry/measure.py
+#   pygltflib -> forge/asset_geometry/measure.py
+#   pytest    -> forge/tests, TOOLS/observer/tests
+# Installation : py -3.12 -m venv .venv && .venv\Scripts\python.exe -m pip install -r requirements-v2.txt
+# Invocation canonique (TOPOLOGY O1) : depuis Studio/, .venv\Scripts\python.exe -m forge.<module>
+PyYAML==6.0.3
+numpy==2.5.2
+pygltflib==1.16.5
+pytest==9.1.1

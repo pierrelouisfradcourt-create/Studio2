@@ -471,7 +471,7 @@ class ForgeDriver:
         # fournit un runner factice (aucun vrai sous-processus) pour couvrir
         # succès/échec/timeout sans jamais appeler le CLI Observer réel. None =>
         # comportement de PRODUCTION (`_default_observer_runner`, sous-processus
-        # réel `scripts/observer/cli.py --project <projet>`).
+        # réel `TOOLS/observer/cli.py --project <projet>`).
         self.observer_runner = observer_runner or self._default_observer_runner
         # P4 (ranimer RUN_INDEX en fin de run, 2026-08-08) : chemin injectable
         # comme lessons_path/failure_events_path ci-dessus. À LA DIFFÉRENCE de
@@ -1630,7 +1630,7 @@ class ForgeDriver:
             self._run_micro_redeclaration(state, side)
 
     def _default_observer_runner(self, project: str):
-        """Comportement de PRODUCTION de `observer_runner` : `scripts/observer/
+        """Comportement de PRODUCTION de `observer_runner` : `TOOLS/observer/
         cli.py --project <projet>`, exécuté depuis la racine du dépôt (chemins
         relatifs de l'Observer), avec `sys.executable` (jamais un chemin de
         python en dur — le venv actif peut différer d'une machine à l'autre).
@@ -1649,7 +1649,7 @@ class ForgeDriver:
         spec = OracleSpec(
             project=f"observer-{project}",
             cwd=_REPO_ROOT,
-            command=[sys.executable, "scripts/observer/cli.py", "--project", project],
+            command=[sys.executable, "TOOLS/observer/cli.py", "--project", project],
         )
         return run_oracle(spec, evidence_dir=self.run_dir / "evidence", timeout=300)
 

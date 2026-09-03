@@ -670,7 +670,7 @@ def build_views(result: dict[str, Any], events: list[dict],
 
         from observer.system_planning import build_planning_views
 
-        planning_out = (ctx.repo_root / "lab" / "reports" / "observer"
+        planning_out = (ctx.repo_root / "EVIDENCE" / "reports" / "observer"
                         / ctx.project)
         system_views.update(
             build_planning_views(ctx, result, events, out_dir=planning_out)

@@ -942,7 +942,7 @@ if __name__ == "__main__":
     transcripts_root = default_transcripts_root(repo_root)
     ctx = ObserverContext.build(repo_root, "breakout_v2", transcripts_root)
 
-    report_dir = repo_root / "lab" / "reports" / "observer" / "breakout_v2"
+    report_dir = repo_root / "EVIDENCE" / "reports" / "observer" / "breakout_v2"
     with (report_dir / "observer_run.json").open("r", encoding="utf-8-sig") as fh:
         result = json.load(fh)
 

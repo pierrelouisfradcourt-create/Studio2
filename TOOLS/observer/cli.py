@@ -1,9 +1,9 @@
 """Point d'entree de Forge Observer V0.
 
-    python scripts/observer/cli.py --project breakout_v2
+    python TOOLS/observer/cli.py --project breakout_v2
 
 Observer lit les traces existantes, reconstruit le run et ecrit SON PROPRE
-rapport sous `lab/reports/observer/<projet>/`. Il n'ecrit jamais ailleurs, et
+rapport sous `EVIDENCE/reports/observer/<projet>/`. Il n'ecrit jamais ailleurs, et
 ne modifie aucune source qu'il a lue.
 """
 
@@ -21,6 +21,11 @@ from typing import Any
 _HERE = Path(__file__).resolve().parent
 if str(_HERE.parent) not in sys.path:  # rend `import observer` possible sans install
     sys.path.insert(0, str(_HERE.parent))
+# V2 (disposition L1, TOPOLOGY §5) : `forge/` vit a la racine du depot, plus a cote de
+# l'Observer — la racine est ajoutee pour que `from forge.… import` resolve sans PYTHONPATH.
+_REPO_ROOT_V2 = _HERE.parents[1]
+if str(_REPO_ROOT_V2) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT_V2))
 
 from observer.adapters import load_adapters  # noqa: E402
 from observer.correlate import prompt_drift, reconstruct  # noqa: E402

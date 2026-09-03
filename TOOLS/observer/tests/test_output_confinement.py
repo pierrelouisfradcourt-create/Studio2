@@ -4,16 +4,16 @@
 DEFAUT MESURE. `cli.py` promet dans sa docstring :
 
     « Observer lit les traces existantes, reconstruit le run et ecrit SON PROPRE
-      rapport sous `lab/reports/observer/<projet>/`. Il n'ecrit jamais ailleurs. »
+      rapport sous `EVIDENCE/reports/observer/<projet>/`. Il n'ecrit jamais ailleurs. »
 
 Le code contredit cette promesse. `cli.py:247` fait :
 
-    out_dir = args.out or (args.repo / "lab" / "reports" / "observer" / args.project)
+    out_dir = args.out or (args.repo / "EVIDENCE" / "reports" / "observer" / args.project)
     out_dir.mkdir(parents=True, exist_ok=True)
 
 `args.project` est concatene SANS normalisation ni contrainte. Mesure :
 
-    --project ../../evade  ->  lab/reports/observer/../../evade   (HORS du repertoire promis)
+    --project ../../evade  ->  EVIDENCE/reports/observer/../../evade   (HORS du repertoire promis)
 
 ASYMETRIE A L'ORIGINE DU DEFAUT. L'Observer possede DEJA une garde de confinement, mais
 seulement pour ce qu'il LIT : `ObserverContext._check` (sources.py:222) resout le chemin et
@@ -71,7 +71,7 @@ def _racine(tmp_path):
 def test_le_chemin_nominal_est_SOUS_le_repertoire_promis(tmp_path):
     repo = _racine(tmp_path)
     out = resolve_output_dir(repo, "tetris")
-    assert out == (repo / "lab" / "reports" / "observer" / "tetris").resolve()
+    assert out == (repo / "EVIDENCE" / "reports" / "observer" / "tetris").resolve()
 
 
 def test_AUCUN_repertoire_n_est_CREE_par_la_resolution(tmp_path):
@@ -79,7 +79,7 @@ def test_AUCUN_repertoire_n_est_CREE_par_la_resolution(tmp_path):
     accepte ne doit pas devancer la decision de l'appelant."""
     repo = _racine(tmp_path)
     resolve_output_dir(repo, "tetris")
-    assert not (repo / "lab").exists()
+    assert not (repo / "EVIDENCE").exists()
 
 
 # --- les echappements, refuses ------------------------------------------------------------
@@ -186,7 +186,7 @@ def test_la_CLI_REFUSE_AVANT_de_reconstruire(tmp_path):
     repo = _racine(tmp_path)
     repo.mkdir(parents=True)
     assert cli.main(["--project", "..", "--repo", str(repo)]) == 2
-    assert not (repo / "lab").exists(), "aucune ecriture ne doit avoir eu lieu"
+    assert not (repo / "EVIDENCE").exists(), "aucune ecriture ne doit avoir eu lieu"
 
 
 def test_driver_py_est_l_appelant_reel_de_cette_surface():
@@ -194,9 +194,9 @@ def test_driver_py_est_l_appelant_reel_de_cette_surface():
     etait atteignable depuis la chaine Forge, pas seulement en usage manuel. Ce test fige
     la raison pour laquelle ce lot n'est pas cosmetique."""
     from pathlib import Path as _P
-    src = _P(__file__).resolve().parents[2] / "forge" / "driver.py"
+    src = _P(__file__).resolve().parents[3] / "forge" / "driver.py"  # V2 : TOOLS/observer/tests -> Studio/forge/driver.py
     texte = src.read_text(encoding="utf-8")
-    assert 'scripts/observer/cli.py", "--project"' in texte
+    assert 'TOOLS/observer/cli.py", "--project"' in texte
 
 
 # --- symetrie avec la garde de lecture ----------------------------------------------------
