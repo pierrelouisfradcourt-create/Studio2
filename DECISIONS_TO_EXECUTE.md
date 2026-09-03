@@ -1,5 +1,11 @@
 # DÉCISIONS RATIFIÉES — NON ENCORE EXÉCUTÉES
 
+> ## ✅ BASELINE M ter — ratifiée 2026-09-03
+> **13/13 · verdict signé · `verify_run` AUTHENTIQUE.** Le Forge transplanté sait produire un
+> verdict authentifiable de bout en bout — voir `BASELINE_M_TER.md`.
+> ⚠ `EVIDENCE/runs/runm_breakout/` **ne doit être ni déplacé ni écrasé** : le reçu d'oracle porte
+> un chemin relatif. Un prochain run doit porter **un autre nom de projet**.
+>
 > ## ⏹ STOP AUDIT — 2026-09-02
 > **Le prochain chantier n'est plus J / P / W / U. C'est l'inventaire de récupération V1 → V2.**
 > Les lignes restantes ci-dessous ne sont **ni annulées, ni urgentes** : elles sortent du chemin
@@ -64,6 +70,8 @@ G        décider du régime du gate — forme (iv) à étudier
 | **U-2** ⏸ | régime `UNADDRESSABLE` distinct de `NOT_APPLICABLE` + compteurs `leaves_total` · `leaves_addressable` · `leaves_unaddressable` · `leaves_covered` | 2026-09-02 (J-3) | **NON EXÉCUTÉE** | — |
 | **U-3** ⏸ | vérifier qu'un `couvre[]` ne mélange pas `feature.id` et `leaf.id` — l'interdiction n'a **aucun mécanisme** aujourd'hui | 2026-09-02 (J-3) | **NON EXÉCUTÉE** | — |
 | **P-1** ⏸ | étendre le contrôle d'existence des fichiers cités par `preuve` au-delà de `.gd` — **ADVISORY**, `check_wiremap.passed` NON modifié ; `vérifiable → FOUND/MISSING`, `format non reconnu → NOT_MEASURED` | 2026-09-02 (J-5) | **NON EXÉCUTÉE** | — |
+| ~~**D-1-tuyau**~~ | enveloppe réparée + compteurs du reçu alignés + **test sur le chemin RÉEL** | 2026-09-03 | ✅ **EXÉCUTÉE 2026-09-03** → `LOT_D1_TUYAU.md` · non commitée | — |
+| ~~**ESC-1**~~ | l'override d'escalade porte le nom de son étape ; le reviewer indépendant conserve son routage | 2026-09-03 | ✅ **EXÉCUTÉE 2026-09-03** → `LOT_ESC1.md` · non commitée | — |
 | ~~**V-2**~~ | vérifier **READ-ONLY** la valeur probante du volet 3c sur `pong` | 2026-09-02 (J-4) | ✅ **EXÉCUTÉE** → `V2_POND_VALEUR_PROBANTE.md` | — |
 | ~~**W-2**~~ | découpler le statut de `check_visual_capture` par moteur | 2026-09-02 (V-2) | ✅ **EXÉCUTÉE 2026-09-02** → `W2_EXECUTION.md` · non commitée | — |
 | ~~**W-1**~~ | fabriquer des adaptateurs de capture | — | **ABANDONNÉ comme chantier** (STOP AUDIT) — les adaptateurs existants se **copient** | — |

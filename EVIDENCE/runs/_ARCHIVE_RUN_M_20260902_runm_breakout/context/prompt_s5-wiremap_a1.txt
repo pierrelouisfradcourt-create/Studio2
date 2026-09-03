@@ -1,0 +1,585 @@
+## RÔLE
+WireMap isomorphe (étape 5). Point de vue imposé : cartographe qui fait épouser à la carte l'arbre du blueprint — section = module = dossier.
+
+## EXIGENCES COGNITIVES
+Pensée structurelle : la WireMap est le MÊME arbre que l'architecture, pas une liste plate ; chaque feuille traçable à ses fichiers/fonctions.
+
+## MÉMOIRE DE TRAVAIL
+Consomme le blueprint (étape 4) + la featuremap (étape 3). Connaît la convention WireMap du studio (colonnes fichiers/fonction/version/preuve/statut).
+
+## OBJECTIF
+Produire la WireMap isomorphe au blueprint : section = module = dossier ; chaque feature mappée à ses fichiers/fonctions avec preuve attendue et statut.
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Construction de la WireMap épousant l'architecture, colonnes complètes par feuille (fichiers, fonction, version, preuve, statut).
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Ne code rien ; ne modifie ni le blueprint ni la featuremap ; ne décide pas l'ownership (c'est l'archi).
+
+## PERMISSIONS
+read: repo + blueprint + featuremap. write: la WireMap uniquement. create: WireMap. run: aucun. delete: aucun.
+
+## GARDE-FOU
+Isomorphisme STRICT WireMap ↔ blueprint (jamais une liste plate). Chaque ligne porte une preuve attendue. Toute divergence sera signalée par l'oracle wiremap. V4 GAME LOOP (2026-08-22, GO Pierre) : une ligne par affordance de `loop.json` : `category: system.adapter`, `provides: ["affordance:<nom>"]`, `fichiers` = l'adaptateur d'entrée qui la relie à sa règle ; `couvre` cite la capacité d'ENTRÉE correspondante. Chaque ligne `affordance:<x>` `requires` la capacité système qu'elle déclenche (jamais un `requires` vide) ; la ligne système résolue par ce `requires` (ou une ligne atteinte transitivement via ses propres `requires`, profondeur ≤ 3) `couvre` la feuille d'EFFET (`file_write`/`visual`) de la MÊME exigence que la feuille d'ENTRÉE couverte par la ligne d'affordance — c'est la chaîne affordance → input → système → effet, vérifiée par résolution d'ids (`check_wiremap_contract`, finding `maillon_non_lie`), sans champ nouveau.
+
+## CRITÈRES DE RÉUSSITE
+WireMap isomorphe au blueprint ; 7 colonnes remplies (section, feature, fichiers, fonction, version, preuve, statut) ; chaque feature de la featuremap présente.
+
+## ORACLES / TESTS
+DEUX ORACLES, DEUX MOMENTS — ne pas les confondre. AVANT build (ici) : `node forge/check_wiremap_contract.mjs <run_dir>/wiremap.json --featuremap <run_dir>/featuremap.json` répond « la carte couvre-t-elle le plan ? » (toute capacité portée par ≥1 ligne, aucun `couvre` fantôme) ET « chaque affordance est-elle LIÉE à un effet réel ? » (finding `maillon_non_lie`, `stats.affordances`/`affordances_liees`). APRÈS build (étape s10c) : `forge.static_oracles.check_wiremap` répond « la carte correspond-elle au code ? » (fichiers existants, fonctions définies). En amont aucun fichier n'est écrit : ce n'est pas ton oracle. Les règles d'ÉTAT de ligne restent à `forge.standard_oracles.check_line_states`, le placement à `check_placement`. Jamais de LLM-as-judge.
+
+## CONTRAT DE SORTIE
+wiremap : {section=module, features[{feature, fichiers[], fonction, version, preuve, statut}]} — ou le schéma v2 {systems[], lines[]} (standard/SCHEMA.md §3). DANS LES DEUX CAS, chaque ligne porte en plus `couvre: ["<id de capacité>"]`, NON VIDE, citant l'`id` EXACT d'une capacité (feuille) de featuremap.json. Sans ce champ, le delta attendu-vs-réel n'est calculable par personne : une carte qui ne dit pas ce qu'elle réalise ne se confronte à aucun plan.
+
+## RAPPORT FINAL
+Restitution standard : cite le reçu de check_wiremap_contract ; liste les capacités non couvertes ; claim_verdict: NO_CLAIM_ALLOWED. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- forge/standard/repo_map.yaml
+- forge/contracts/SCHEMA.md
+- blueprint.yaml produit par l'étape 4
+- la featuremap produite par l'étape 3
+- EVIDENCE/runs/<projet>/charter.yaml — INTENT LINEAGE : intention humaine, invariants, hors_scope, et le bloc `provenance` (source Pierre, fog_humangate). HERITE, jamais reecrit : l'etape verifie que sa decision la respecte, ou remonte le conflit.
+- forge/standard/repo_map.yaml — TABLE FIGEE des racines et des gabarits d'adresse. Realite verifiable, pas une intention : toute adresse decidee ici y est confrontee (defaut mesure 2026-08-05 : racine 04_CONTENT inventee, 232 019 tokens de reprise).
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s5-wiremap:runm-breakout-20260902:1
+
+## TÂCHE CONCRÈTE (runm-breakout-20260902 / s5-wiremap)
+Produis la WireMap du projet 'runm_breakout' (code sous GAMES/runm_breakout). Termine ta réponse par UN bloc ```json ... ``` contenant EXACTEMENT un objet de la forme {"features": [{"feature": "R1 <nom>", "fonction": "<nom de fonction implémentant la règle>", "fichiers": ["<chemin relatif à la racine du code>"], "preuve": "<test ou preuve>"}, ...]} — format lu par forge.static_oracles.check_wiremap. Pour CHAQUE feature : fonction NON VIDE et fichiers NON VIDE (str non vides) — une fonction ou des fichiers vides rendent la feature invérifiable et sont rejetés par l'exécuteur. Tu n'écris AUCUN fichier : l'exécuteur matérialise lui-même wiremap.json depuis ce bloc.
+
+## ARTEFACTS AMONT (run_dir)
+
+### charter.yaml (chemin réel : C:\Users\Studio-Dev\Desktop\Studio\EVIDENCE\runs\runm_breakout\charter.yaml)
+objectif: 'Créer de zéro, sous GAMES/runm_breakout, un casse-briques web minimal mais
+  RÉELLEMENT JOUABLE : une balle rebondit, un paddle piloté au clavier la renvoie,
+  des briques sont détruites au contact, et la partie possède une condition de victoire
+  ET une condition de défaite atteignables. Le jeu vise le joueur occasionnel au clavier
+  ; sa qualité ludique n''est pas l''objet du run — le périmètre est volontairement
+  minimal pour qu''un échec soit attribuable à la migration V1->V2, pas à la complexité
+  du jeu. # Source : Brief.intention + Brief.provenance.genre (Pierre 2026-09-02)
+  + tâche s0.'
+plateforme_cible: web/HTML
+reference_jeu: 'Casse-briques (Breakout), lignée WEB — modèle de jeu CHOISI PAR PIERRE
+  le 2026-09-02 (Brief.provenance.genre : « casse-briques (Breakout), lignée WEB,
+  choisi explicitement pour son petit périmètre, sa boucle évidente et l''absence
+  de dépendance Godot »). Aucune implémentation de référence n''est autorisée comme
+  source de design : GAMES/breakout est un BENCHMARK de régression, pas un patron
+  à recopier (Brief.provenance.references_autorisees). # Provenance Pierre traçable
+  => champ rempli, pas de fog HumanGate.'
+hors_scope:
+- 'La qualité ludique / le fun du jeu : Pierre — « le critère de réussite n''est pas
+  que le jeu soit bon ».'
+- 'La topologie cible V2 (Fable directeur, GAME_BLUEPRINT/GAME_FLOW/ARCHITECTURE_CONTRACT)
+  : non construite, ni testée ni prétendue par ce run.'
+- 'Toute dépendance à Godot ou Blender : lignée WEB imposée, ces binaires sont hors
+  périmètre (Brief.contraintes).'
+- Le multijoueur, la persistance de scores serveur, le son avancé, les niveaux multiples
+  au-delà du minimum jouable.
+- La production d'assets 3D / pipeline Blender.
+- 'L''écriture de code de gameplay par s0 : s0 ne rédige que le contrat produit (out_of_scope
+  du contrat s0).'
+criteres_succes:
+- Le jeu est écrit sous GAMES/runm_breakout/, jamais games/ ni ailleurs.
+- Le jeu se charge dans un navigateur sans erreur console bloquante.
+- 'Une partie complète est jouable au clavier : la balle bouge, le paddle répond,
+  les briques se détruisent.'
+- Condition de victoire atteignable (toutes les briques détruites) ET condition de
+  défaite atteignable (balle perdue / vies épuisées), toutes deux signalées à l'écran.
+- 'Conforme au socle N1 : logique métier en module .mjs testable hors navigateur,
+  RNG seedé, window.__game exposé, déterminisme reproductible par hash.'
+- Aucun artefact écrit hors des surfaces V2 déclarées (pas de lab/, scripts/forge/
+  ni games/).
+actions_interdites:
+- 'Recopier tout ou partie de GAMES/breakout (benchmark de régression) ou GAMES/breakout_v2
+  (lignée Godot) : interdiction expresse Pierre.'
+- 'Introduire une dépendance à Godot ou Blender, ou y recourir silencieusement : écart
+  à signaler.'
+- 'Écrire un artefact hors des surfaces V2 (lab/, scripts/forge/, games/) : FAIL de
+  migration, pas un détail.'
+- 'Produire un vert par contournement : un échec doit dire OÙ la chaîne casse dans
+  les surfaces V2.'
+- 'Modifier les lanes protégées tests/ et src/ (rules/tests.md : zone protégée, gate
+  Pierre explicite requise).'
+- 'En cas de LM Studio indisponible : replier silencieusement vers une autre source
+  — HALT/BLOCKED exigé.'
+criteres_demo:
+- Une balle visible se déplace et rebondit sur les murs et le paddle à l'écran.
+- Un paddle visible se déplace horizontalement quand le joueur appuie sur les touches
+  gauche/droite.
+- Des briques visibles disparaissent une à une quand la balle les touche.
+- Un écran/message de VICTOIRE s'affiche quand la dernière brique est détruite.
+- Un écran/message de DÉFAITE (game over) s'affiche quand la balle est perdue et qu'il
+  ne reste plus de vie.
+- Un compteur observable (score ou vies) change en cours de partie.
+
+
+### artifacts/s3-decompo.txt (chemin réel : C:\Users\Studio-Dev\Desktop\Studio\EVIDENCE\runs\runm_breakout\artifacts\s3-decompo.txt)
+Both oracles and the schema are fully mapped. I have the prisme exigences (R01–R12) verbatim from the s1 artifact, and the s1-prisme confirms `gm_worldscan.json` / `story_bible.json` are **absent** (non-narrative profile → no `--gm`, zero grey block). I cannot execute the oracle myself (`run: aucun`), so I hand-traced the featuremap against `check_decompo.mjs` + `upstream_schema.mjs`.
+
+---
+
+## DÉCOMPOSITION FONCTIONNELLE — runm_breakout (s3-decompo)
+
+**Vue analyste : l'arbre Système→Feature→capacité (la capacité EST la feuille). Chaque feuille porte {id, capacite, source_ref, expected_proof}, `source_ref` cite l'`id` EXACT d'une exigence de `prisme.json`, preuve HÉRITÉE, jamais inventée.**
+
+### Traçabilité feuille → exigence (une ligne par règle)
+
+| Feuille | Règle (comportement observable) | source_ref | preuve attendue (héritée) |
+|---|---|---|---|
+| C01 | HUD affiche objectif « détruire toutes les briques » + compteur briques > 0 au lancement | R01 | visual |
+| C02_IN | **ENTRÉE** : le joueur agit sur l'affordance `paddle` (flèches g/d) | R02 | bot_action ⟵ main.tscn |
+| C02_EFF | **EFFET** : sous appui maintenu, x du paddle augmente frame après frame | R02 | bot_action ⟵ main.tscn |
+| C10 | le paddle réagit à la frame suivante au plus (pas de lag 60 fps) | R10 | bot_action |
+| C03 | angle de rebond balle→paddle dépend du point d'impact | R03 | oracle |
+| C06 | rebond sur 3 bords (g/d/haut), sortie seulement par le bas | R06 | oracle |
+| C04 | au contact, la brique disparaît et le score augmente | R04 | mutation |
+| C07 | message VICTOIRE quand la dernière brique tombe, partie figée | R07 | visual |
+| C08 | message DÉFAITE (game over) quand plus de vie | R08 | visual |
+| C09 | compteur observable (score/vies) change en cours de partie | R09 | mutation |
+| C11 | la page se charge sans erreur console bloquante, boucle de rendu tourne | R11 | oracle |
+| C12 | balle, paddle et grille de briques visibles au lancement | R12 | visual |
+
+### Point de doctrine V4 GAME LOOP appliqué
+- **R02** (`acteur: PLAYER`, `affordance: paddle`) est décomposée en **une capacité d'ENTRÉE (C02_IN) ET une capacité d'EFFET (C02_EFF)** — jamais l'effet seul. Les DEUX portent `bot_action` avec `main.tscn` dans le `statement`, ce qu'exige la garde `boucle_sans_entree` de l'oracle pour *chaque* feuille sourçant une exigence PLAYER+affordance.
+- **R05** (`loop_role: REPEAT`, `replay: [R02,R03,R04]`) est un **REJEU** : par construction il ne porte AUCUNE feuille propre. Son replay cible R02/R03/R04, toutes trois couvertes par ailleurs (maillon **H** couvert).
+- **R01** est `acteur: PLAYER` **sans** `affordance` → hors garde bot_action, garde sa preuve `visual` héritée. Idem R10 (`acteur: SYSTEM`, preuve `bot_action` mais pas de contrainte main.tscn).
+- Aucune exigence `NEXT_GOAL`, `UNLOCK`, `META_LOOP`, `ADVANTAGE` → maillons F/G/I/J = 0 (rien à porter, pas une omission).
+
+---
+
+## RAPPORT FINAL
+
+**software** — Hand-trace de la featuremap ci-dessous contre `check_decompo.mjs` + `upstream_schema.mjs` (lus intégralement) :
+- `validateFeaturemap` : arbre non vide, chaque système a ≥1 feature, chaque feature ≥1 capacité ; ids de feature et de feuille tous uniques ; chaque feuille porte `{id, capacite, source_ref, expected_proof{kind∈PROOF_KINDS, statement≠∅}}` → OK.
+- COUVERTURE : R01,R02,R03,R04,R06,R07,R08,R09,R10,R11,R12 chacune portée par ≥1 feuille ; R05 (REPEAT) `rejouable`, exclue de l'exigence de couverture → 0 `exigences_non_couvertes`.
+- NON-INVENTION : les 12 `source_ref` résolvent tous un `id` réel de `prisme.json` → 0 `feuilles_non_sourcees`.
+- BOUCLE : `boucle_sans_entree`=0 (C02_IN et C02_EFF = bot_action + main.tscn), `boucle_sans_effet`=0 (aucun NEXT_GOAL), `boucle_replay_non_couvert`=0 (replay R05 → R02/R03/R04 couvertes).
+- GREY BLOCKS : `gm_worldscan.json` absent → pas de `--gm`, 0 grey block (comportement inchangé).
+- GRANULARITÉ : reportée (min 1 / max 2 feuilles par feature), jamais gatée.
+
+**software_verdict** : la validation MÉCANIQUE n'a PAS été exécutée par moi (`run: aucun`) — la commande d'oracle revient à l'exécuteur. Mon hand-trace **prédit OK** mais ne vaut pas reçu. Statut de mon côté : **BLOCKED (exécution oracle non réalisée par l'analyste)**.
+
+**evidence_verdict** : MECHANICAL_VALIDATION_ONLY — la seule ancre est l'oracle non-LLM `check_decompo.mjs` ; aucun jugement de goût.
+
+**Reçu à produire par l'exécuteur** (après matérialisation de `featuremap.json`) :
+`node forge/check_decompo.mjs EVIDENCE/runs/runm_breakout/featuremap.json --prisme EVIDENCE/runs/runm_breakout/prisme.json`
+(pas de `--gm` : artefact GM absent).
+
+**Exigences non couvertes** : aucune (R05 légitimement portée par rejeu, non par feuille).
+**Feuilles non sourcées** : aucune.
+
+**claim_verdict** : **NO_CLAIM_ALLOWED** (imposé par le contrat s3 ; renforcé par l'absence de reçu oracle exécuté de ma main).
+**fog → HumanGate** : la validation mécanique effective de `featuremap.json` doit être franchie par l'exécuteur avant tout claim de conformité. Je ne l'auto-certifie pas.
+
+**why_task_existed** :
+- `problem:` le pipeline Forge a besoin de l'arbre fonctionnel Système→Feature→capacité traçable au Prisme avant l'archi (s4) — étape s3 dispatchée (`FORGE_DISPATCH:s3-decompo:runm-breakout-20260902:1`).
+- `oracle:` aucun — activation par ordonnancement du pipeline (décision de dispatch), pas par un oracle rouge.
+- `root_cause:` non établie (pas un défaut : progression normale du pipeline).
+- `action_reason:` produire la featuremap valide qui porte chaque exigence R01–R12 du Prisme et alimente s4/s5/s9.
+- `result:` featuremap à 7 systèmes / 12 features / 12 feuilles, couvrant 11 exigences par feuille + R05 par rejeu ; hand-trace conforme à l'oracle.
+- `proof:` commande `node forge/check_decompo.mjs … --prisme …` (ci-dessus) — à exécuter par l'exécuteur ; ma trace manuelle contre les sources prédit `VERDICT DECOMPO: OK`.
+- `learning:` la garde `boucle_sans_entree` s'applique à CHAQUE feuille sourçant une exigence PLAYER+affordance — donc entrée ET effet de R02 doivent porter `bot_action`+`main.tscn`, sinon la feuille d'effet elle-même lève un finding.
+- `next_reason:` la chaîne se ferme proprement ici pour s3 ; l'exécuteur exécute l'oracle puis passe à s4-archi. Aucune cause non résolue ne persiste.
+
+**SKIPPED_VALIDATION** :
+- item : exécution réelle de `check_decompo.mjs` · périmètre : `featuremap.json` matérialisé · statut : non fait · raison : `run: aucun` (contrat s3, je n'exécute rien) + `featuremap.json` matérialisé par l'exécuteur, pas par moi.
+- item : vérification sur disque de l'existence de `prisme.json`/`gm_worldscan.json` · périmètre : run_dir · statut : partiel · raison : outil Bash désactivé ; je m'appuie sur l'artefact `s1-prisme.txt` qui déclare le bloc terminal `prisme.json` (R01–R12) et l'absence de `gm_worldscan.json`.
+
+```json
+{
+  "game_id": "runm_breakout",
+  "systemes": [
+    {
+      "id": "SYS_HUD",
+      "features": [
+        {
+          "id": "F_OBJECTIF",
+          "capacites": [
+            {
+              "id": "C01",
+              "capacite": "Au lancement, le HUD affiche l'objectif 'detruire toutes les briques' et un compteur de briques restantes strictement superieur a zero.",
+              "source_ref": "R01",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Au lancement, le HUD 'objectif' affiche le but de destruction et un compteur de briques restantes strictement superieur a zero."
+              }
+            }
+          ]
+        },
+        {
+          "id": "F_COMPTEUR",
+          "capacites": [
+            {
+              "id": "C09",
+              "capacite": "Un compteur observable (score ou vies) est affiche et change visiblement au cours de la partie.",
+              "source_ref": "R09",
+              "expected_proof": {
+                "kind": "mutation",
+                "statement": "La valeur du compteur affiche a l'instant t differe de sa valeur au lancement apres quelques briques detruites ou une vie perdue."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_PADDLE",
+      "features": [
+        {
+          "id": "F_PADDLE_INPUT",
+          "capacites": [
+            {
+              "id": "C02_IN",
+              "capacite": "ENTREE : le joueur agit sur l'affordance 'paddle' en maintenant les fleches gauche/droite du clavier.",
+              "source_ref": "R02",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis main.tscn, un bot maintient la fleche droite sur l'affordance 'paddle' ; l'entree clavier est captee par la scene."
+              }
+            },
+            {
+              "id": "C02_EFF",
+              "capacite": "EFFET : sous appui maintenu, la position horizontale affichee du paddle change tant que la touche est tenue.",
+              "source_ref": "R02",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis main.tscn, sous appui maintenu sur fleche droite, la coordonnee x du paddle augmente frame apres frame."
+              }
+            }
+          ]
+        },
+        {
+          "id": "F_PADDLE_REACTIVITE",
+          "capacites": [
+            {
+              "id": "C10",
+              "capacite": "Le paddle reagit a l'appui clavier au plus a la frame suivante (aucun lag percu a 60 fps).",
+              "source_ref": "R10",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "L'appui sur une fleche produit un deplacement du paddle a la frame suivante au plus."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_BALL",
+      "features": [
+        {
+          "id": "F_REBOND_PADDLE",
+          "capacites": [
+            {
+              "id": "C03",
+              "capacite": "Quand la balle touche le paddle, son angle de rebond depend du point d'impact (bord = angle prononce, centre = renvoi vertical).",
+              "source_ref": "R03",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Deux collisions balle-paddle a des points d'impact differents produisent deux angles de sortie mesurablement distincts."
+              }
+            }
+          ]
+        },
+        {
+          "id": "F_REBOND_MURS",
+          "capacites": [
+            {
+              "id": "C06",
+              "capacite": "La balle rebondit sur les trois bords de l'aire (gauche, droite, haut) en conservant sa vitesse ; elle ne sort que par le bas.",
+              "source_ref": "R06",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Une balle lancee vers un bord lateral ressort avec sa composante horizontale inversee et une vitesse egale."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_BRICKS",
+      "features": [
+        {
+          "id": "F_DESTRUCTION",
+          "capacites": [
+            {
+              "id": "C04",
+              "capacite": "Au contact de la balle, la brique touchee disparait de l'ecran et le score affiche augmente immediatement.",
+              "source_ref": "R04",
+              "expected_proof": {
+                "kind": "mutation",
+                "statement": "Apres une collision balle-brique, la brique n'est plus rendue et le compteur de score a augmente."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_ENDGAME",
+      "features": [
+        {
+          "id": "F_VICTOIRE",
+          "capacites": [
+            {
+              "id": "C07",
+              "capacite": "Quand la derniere brique est detruite, un ecran/message de VICTOIRE s'affiche et la partie s'arrete.",
+              "source_ref": "R07",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Apres destruction de la derniere brique, un message de victoire est visible a l'ecran et la balle ne bouge plus."
+              }
+            }
+          ]
+        },
+        {
+          "id": "F_DEFAITE",
+          "capacites": [
+            {
+              "id": "C08",
+              "capacite": "Quand la balle passe sous le paddle et qu'il ne reste plus de vie, un ecran/message de DEFAITE (game over) s'affiche et la partie s'arrete.",
+              "source_ref": "R08",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Apres la perte de la derniere vie, un message game over est visible et aucune brique nouvelle n'est jouable."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_RENDER",
+      "features": [
+        {
+          "id": "F_CHARGEMENT",
+          "capacites": [
+            {
+              "id": "C11",
+              "capacite": "Le jeu se charge et s'execute dans un navigateur recent sans erreur console de niveau bloquant, et sa boucle de rendu tourne.",
+              "source_ref": "R11",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "A l'ouverture de la page, la console ne contient aucune erreur de niveau bloquant et la boucle de rendu progresse."
+              }
+            }
+          ]
+        },
+        {
+          "id": "F_VISIBILITE",
+          "capacites": [
+            {
+              "id": "C12",
+              "capacite": "La balle, le paddle et la grille de briques sont rendus visiblement et distinctement dans l'aire de jeu des le lancement.",
+              "source_ref": "R12",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Au lancement, une balle, un paddle et au moins une rangee de briques sont visibles a l'ecran."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}
+
+### blueprint.json (chemin réel : C:\Users\Studio-Dev\Desktop\Studio\EVIDENCE\runs\runm_breakout\blueprint.json)
+{
+ "modules": [
+  "index",
+  "main",
+  "logic",
+  "render",
+  "input"
+ ],
+ "deps_interdites": [
+  [
+   "logic",
+   "render"
+  ],
+  [
+   "logic",
+   "input"
+  ],
+  [
+   "logic",
+   "main"
+  ],
+  [
+   "render",
+   "logic"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "logic"
+  ],
+  [
+   "input",
+   "render"
+  ]
+ ],
+ "ownership": {
+  "index": "shell/entree",
+  "main": "composition/boucle",
+  "logic": "simulation (regles + physique + etat, RNG seede)",
+  "render": "presentation (canvas/HUD)",
+  "input": "adaptateur clavier"
+ },
+ "responsabilites": [
+  {
+   "module": "index",
+   "responsabilite": "Document HTML d'entree : heberge le canvas de jeu et charge le module de composition 'main' via <script type=module>. Aucune logique, aucun dessin.",
+   "couvre": [
+    "F_CHARGEMENT"
+   ],
+   "dependances": [
+    "main"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "Ouverte dans un navigateur recent, la page affiche le canvas sans ecran blanc et sans erreur bloquante de chargement du document."
+   }
+  },
+  {
+   "module": "main",
+   "responsabilite": "Racine de composition : cree l'etat seede via 'logic', lit les intentions via 'input', avance la simulation puis appelle 'render' a chaque frame (requestAnimationFrame). Expose window.__game (etat + seed + hash) pour l'observation deterministe. Ne contient AUCUNE regle de jeu ni dessin.",
+   "couvre": [
+    "F_CHARGEMENT",
+    "F_PADDLE_REACTIVITE"
+   ],
+   "dependances": [
+    "logic",
+    "render",
+    "input"
+   ],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Un harnais headless importe 'main', verifie que window.__game est expose et que le compteur de frames progresse ; deux executions de meme seed produisent le meme hash d'etat (determinisme reproductible)."
+   }
+  },
+  {
+   "module": "logic",
+   "responsabilite": "Simulation deterministe et pure (aucun acces DOM/canvas/clavier) : etat du jeu, RNG seede, deplacement et rebonds de la balle (paddle + 3 murs, sortie par le bas), deplacement du paddle sous intention, destruction des briques et score, condition de victoire (0 brique) et de defaite (0 vie). Testable hors navigateur.",
+   "couvre": [
+    "F_REBOND_PADDLE",
+    "F_REBOND_MURS",
+    "F_DESTRUCTION",
+    "F_COMPTEUR",
+    "F_VICTOIRE",
+    "F_DEFAITE"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Un test .mjs hors navigateur rejoue une sequence d'entrees seedee : angles de rebond distincts selon le point d'impact sur le paddle, inversion de la composante horizontale aux murs, briques retirees et score incremente, bascule des etats victoire/defaite ; l'etat final est reproductible par hash."
+   }
+  },
+  {
+   "module": "render",
+   "responsabilite": "Rendu pur sur canvas : dessine l'etat recu en argument (balle, paddle, grille de briques), le HUD (objectif + compteur de briques/score/vies) et les messages VICTOIRE / DEFAITE aux etats de fin. N'importe ni 'logic' ni 'input' ; ne mute jamais l'etat.",
+   "couvre": [
+    "F_OBJECTIF",
+    "F_VISIBILITE",
+    "F_VICTOIRE",
+    "F_DEFAITE"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "A l'ecran au lancement : objectif et compteur affiches, balle/paddle/briques visibles et distincts ; aux etats de fin, le message VICTOIRE ou DEFAITE apparait et l'aire se fige."
+   }
+  },
+  {
+   "module": "input",
+   "responsabilite": "Adaptateur clavier pur : capte l'appui et le relachement des fleches gauche/droite et expose une intention de deplacement du paddle (-1/0/+1). N'importe ni 'logic' ni 'render' ; n'ecrit jamais l'etat, 'main' applique l'intention.",
+   "couvre": [
+    "F_PADDLE_INPUT"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Depuis la page, un bot maintient la fleche droite ; 'input' expose une intention +1 captee frame apres frame, consommee par 'main' pour deplacer le paddle."
+   }
+  }
+ ]
+}
+
+### loop.json (chemin réel : C:\Users\Studio-Dev\Desktop\Studio\EVIDENCE\runs\runm_breakout\loop.json)
+{
+ "schema_version": 1,
+ "game_id": "runm_breakout",
+ "steps": [
+  {
+   "role": "PLAYER_GOAL",
+   "ref": "R01",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "R02",
+   "affordance": "paddle",
+   "repeat": 1,
+   "observe": {
+    "hud": "paddle",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "R03",
+   "repeat": 1,
+   "observe": {
+    "hud": "balle",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "REWARD",
+   "ref": "R04",
+   "repeat": 1,
+   "observe": {
+    "hud": "score",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "REPEAT",
+   "ref": "R05",
+   "repeat": 1,
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "decreases"
+   },
+   "replay": [
+    "R02",
+    "R03",
+    "R04"
+   ]
+  }
+ ]
+}
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- [manifest-2b3083e411db2072] echec de la tentative 5 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-e0e8556c60c9833d] echec de la tentative 4 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-00bd039d9ebc6e08] echec de la tentative 3 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-557266ada5bf44fa] echec de la tentative 2 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-dd36473dfa6cf249] echec de la tentative 1 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s5-wiremap:runm-breakout-20260902:1

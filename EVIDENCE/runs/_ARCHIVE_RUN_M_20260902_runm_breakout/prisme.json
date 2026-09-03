@@ -1,0 +1,223 @@
+{
+ "game_id": "runm_breakout",
+ "exigences": [
+  {
+   "id": "R01",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].objectives[0].victory_condition",
+   "observation": "Le World Scan note que Breakout affiche un mur de briques a detruire et declare la victoire quand les deux murs (48 briques) sont detruits.",
+   "claim": "Un casse-briques n'est lisible que si le but (vider l'aire de ses briques) est affiche au joueur des le depart, jamais deduit.",
+   "enonce": "L'ecran affiche en permanence un objectif 'detruire toutes les briques' et un compteur de briques restantes des le lancement.",
+   "acteur": "PLAYER",
+   "loop_role": "PLAYER_GOAL",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   },
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "Au lancement, le HUD 'objectif' affiche le but de destruction et un compteur de briques restantes strictement superieur a zero."
+   },
+   "destination": "s3-decompo"
+  },
+  {
+   "id": "R02",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].loops.minute_1",
+   "observation": "Le World Scan decrit qu'en minute 1 le joueur controle le paddle et percoit une latence d'action sous 100 ms.",
+   "claim": "La seule entree du joueur etant le deplacement lateral du paddle, sa reactivite clavier conditionne toute la jouabilite du produit.",
+   "enonce": "Le joueur deplace le paddle horizontalement en maintenant les fleches gauche/droite ; la position du paddle a l'ecran change tant qu'une touche est maintenue.",
+   "acteur": "PLAYER",
+   "loop_role": "PLAYER_ACTION",
+   "affordance": "paddle",
+   "observe": {
+    "hud": "paddle",
+    "predicate": "changes"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Un appui maintenu sur fleche droite deplace le paddle vers la droite ; la coordonnee x du paddle augmente frame apres frame."
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R03",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].loops.minute_10",
+   "observation": "Le World Scan releve qu'au bout de ~10 min le joueur comprend les zones (tiers) du paddle qui determinent l'angle de rebond.",
+   "claim": "Le rebond dependant du point d'impact est ce qui transforme un renvoi passif en visee intentionnelle : c'est le coeur d'adresse du genre.",
+   "enonce": "Quand la balle touche le paddle, son angle de rebond depend du point d'impact (bord = angle prononce, centre = renvoi vertical).",
+   "acteur": "SYSTEM",
+   "loop_role": "GAME_RESPONSE",
+   "observe": {
+    "hud": "balle",
+    "predicate": "changes"
+   },
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "Deux collisions balle-paddle a des points d'impact differents produisent deux angles de sortie mesurablement distincts."
+   },
+   "destination": "s5-wiremap"
+  },
+  {
+   "id": "R04",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].loops.minute_1",
+   "observation": "Le World Scan indique que la destruction d'une brique declenche un feedback visuel plus audio immediat et un gain de points.",
+   "claim": "Le retrait visible de la brique touchee est la recompense minimale sans laquelle l'action de viser n'a aucune consequence percue.",
+   "enonce": "Au contact de la balle, la brique touchee disparait de l'ecran et le score affiche augmente immediatement.",
+   "acteur": "SYSTEM",
+   "loop_role": "REWARD",
+   "observe": {
+    "hud": "score",
+    "predicate": "increases"
+   },
+   "expected_proof": {
+    "kind": "mutation",
+    "statement": "Apres une collision balle-brique, la brique n'est plus rendue et le compteur de score a augmente."
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R05",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].retention_answer",
+   "observation": "Le World Scan decrit une boucle d'adresse ou la balle renvoyee revient tant que le joueur ne la perd pas, chaque partie durant 8-15 min.",
+   "claim": "La boucle du produit n'est pas un enchainement d'etapes uniques mais la repetition serree viser-renvoyer-casser jusqu'a vider l'aire.",
+   "enonce": "Tant que la balle est en jeu, le cycle deplacer-le-paddle vers renvoyer vers detruire une brique se rejoue a chaque aller-retour de la balle.",
+   "acteur": "PLAYER",
+   "loop_role": "REPEAT",
+   "replay": [
+    "R02",
+    "R03",
+    "R04"
+   ],
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "decreases"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Sur une session, les actions deplacer/renvoyer/detruire s'observent plusieurs fois de suite avant toute fin de partie, et les briques restantes decroissent."
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R06",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].loops.minute_1",
+   "observation": "Le World Scan pose le rebond de la balle comme mecanique noyau (paddle plus trajectoire), la balle evoluant dans une aire bornee.",
+   "claim": "Sans bords qui renvoient la balle, elle sort de l'aire et la boucle s'interrompt : les murs sont une contrainte de jouabilite, pas un decor.",
+   "enonce": "La balle rebondit sur les trois bords de l'aire (gauche, droite, haut) en conservant sa vitesse ; elle ne sort que par le bas, sous le paddle.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "Une balle lancee vers un bord lateral ressort avec sa composante horizontale inversee et une vitesse egale."
+   },
+   "destination": "s5-wiremap"
+  },
+  {
+   "id": "R07",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].objectives[0].victory_condition",
+   "observation": "Le World Scan declare la victoire de Breakout atteinte quand toutes les briques structurelles sont detruites.",
+   "claim": "Une victoire non signalee a l'ecran est indistinguable d'un jeu qui continue a vide ; le charter exige un etat de victoire atteignable ET affiche.",
+   "enonce": "Quand la derniere brique est detruite, un ecran/message de VICTOIRE s'affiche et la partie s'arrete.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "Apres destruction de la derniere brique, un message de victoire est visible a l'ecran et la balle ne bouge plus."
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R08",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].objectives[0].defeat_condition",
+   "observation": "Le World Scan fixe la defaite de Breakout a la perte de la balle sous le paddle trois fois (vies epuisees).",
+   "claim": "Sans condition de defaite atteignable et affichee il n'y a aucun enjeu ; le charter la declare obligatoire au meme titre que la victoire.",
+   "enonce": "Quand la balle passe sous le paddle et qu'il ne reste plus de vie, un ecran/message de DEFAITE (game over) s'affiche et la partie s'arrete.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "Apres la perte de la derniere vie, un message game over est visible et aucune brique nouvelle n'est jouable."
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R09",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].loops.hour_5",
+   "observation": "Le World Scan note qu'en cours de partie le score depasse 100 points et que la precision demandee augmente par rang.",
+   "claim": "Un compteur qui evolue en direct est le seul retour continu qui dit au joueur qu'il progresse entre deux fins de partie.",
+   "enonce": "Un compteur observable (score ou vies) est affiche et change visiblement au cours de la partie.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "mutation",
+    "statement": "La valeur du compteur affiche a l'instant t differe de sa valeur au lancement apres quelques briques detruites ou une vie perdue."
+   },
+   "destination": "s3-decompo"
+  },
+  {
+   "id": "R10",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan",
+   "reference": "worldscan:games[0].loops.minute_1",
+   "observation": "Le World Scan mesure une latence d'action percue sous 100 ms en minute 1 de Breakout.",
+   "claim": "Au clavier, tout retard sensible entre l'appui et le mouvement du paddle casse la visee ; la reactivite est une exigence produit, pas un reglage.",
+   "enonce": "Le paddle reagit a l'appui clavier au plus a la frame suivante (aucun lag percu a 60 fps).",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "L'appui sur une fleche produit un deplacement du paddle a la frame suivante au plus."
+   },
+   "destination": "s4-archi"
+  },
+  {
+   "id": "R11",
+   "source": "ADDITIONS",
+   "source_role": "s1-prisme",
+   "reference": null,
+   "observation": "Le charter fixe la plateforme cible a web/HTML et exige un chargement sans erreur console bloquante ; le World Scan ne documente aucun comportement propre au navigateur.",
+   "claim": "Un casse-briques web n'est 'reellement jouable' que s'il s'affiche et tourne dans un navigateur sans erreur console qui interrompt la boucle.",
+   "enonce": "Le jeu se charge et s'execute dans un navigateur recent sans erreur console de niveau bloquant, et sa boucle de rendu tourne.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "A l'ouverture de la page, la console ne contient aucune erreur de niveau bloquant et la boucle de rendu progresse."
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R12",
+   "source": "ADDITIONS",
+   "source_role": "s1-prisme",
+   "reference": null,
+   "observation": "Les criteres de demo du charter exigent une balle, un paddle et des briques VISIBLES a l'ecran, exigence de rendu que le World Scan presuppose sans la specifier.",
+   "claim": "Le produit fini se juge a l'ecran : si balle, paddle et briques ne sont pas rendus visiblement, aucune des regles de boucle n'est observable ni testable.",
+   "enonce": "La balle, le paddle et la grille de briques sont rendus visiblement et distinctement dans l'aire de jeu des le lancement.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "Au lancement, une balle, un paddle et au moins une rangee de briques sont visibles a l'ecran."
+   },
+   "destination": "s9-build"
+  }
+ ]
+}

@@ -1,0 +1,132 @@
+{
+ "features": [
+  {
+   "feature": "R1 objectif affiché",
+   "fonction": "renderObjective",
+   "fichiers": [
+    "render.mjs",
+    "index.html"
+   ],
+   "version": "v1",
+   "preuve": "E1 (visual) — renderer.renderObjective() écrire dans #objective un texte non vide",
+   "statut": "implémenté",
+   "couvre": [
+    "R1c1_hud_objectif_nonvide"
+   ]
+  },
+  {
+   "feature": "R2 contrôle raquette",
+   "fonction": "movePaddle",
+   "fichiers": [
+    "engine.mjs",
+    "input.mjs"
+   ],
+   "version": "v2",
+   "preuve": "E2 (bot_action) — input.InputAdapter capture Flèche-Gauche/Droite, engine.movePaddle applique. v2 : le pas de déplacement dérive du pas logique nommé (PADDLE_SPEED * DT_SECONDS) au lieu d'un littéral 0.016 recopié — valeur bit à bit identique, aucun état mesuré ne change",
+   "statut": "implémenté",
+   "couvre": [
+    "R2c1_entree_touches_raquette",
+    "R2c2_effet_deplacement_raquette"
+   ]
+  },
+  {
+   "feature": "R3 rebond conservatif",
+   "fonction": "reflectBall",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "version": "v1",
+   "preuve": "E3 (oracle node) — engine.reflectBall inverse le signe et conserve |v|",
+   "statut": "implémenté",
+   "couvre": [
+    "R3c1_reflexion_conservative"
+   ]
+  },
+  {
+   "feature": "R4 destruction une frappe",
+   "fonction": "destroyBrick",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "version": "v1",
+   "preuve": "E4 (oracle) — après contact balle-brique, brick.destroyed=true, bricksRemaining--",
+   "statut": "implémenté",
+   "couvre": [
+    "R4c1_brique_disparait_un_tick"
+   ]
+  },
+  {
+   "feature": "R5 progrès mesurable",
+   "fonction": "destroyBrick",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "version": "v1",
+   "preuve": "E5 (oracle node) — engine.destroyBrick() décrémente bricksRemaining d'exactement 1 après contact (re-pointé depuis 'decrementRemaining', qui ne correspondait à aucune fonction réelle — le décompte est inline dans destroyBrick)",
+   "statut": "implémenté",
+   "couvre": [
+    "R5c1_decrement_unitaire"
+   ]
+  },
+  {
+   "feature": "R6 victoire terminale",
+   "fonction": "checkWin",
+   "fichiers": [
+    "engine.mjs",
+    "render.mjs"
+   ],
+   "version": "v1",
+   "preuve": "E6 (visual) — à bricksRemaining=0, state='won' et render affiche VICTOIRE",
+   "statut": "implémenté",
+   "couvre": [
+    "R6c1_etat_won"
+   ]
+  },
+  {
+   "feature": "R7 défaite terminale",
+   "fonction": "checkLose",
+   "fichiers": [
+    "engine.mjs",
+    "render.mjs"
+   ],
+   "version": "v1",
+   "preuve": "E7 (visual) — quand ball.y > GAME_HEIGHT, state='lost' et render affiche DÉFAITE",
+   "statut": "implémenté",
+   "couvre": [
+    "R7c1_etat_lost"
+   ]
+  },
+  {
+   "feature": "R8 déterminisme",
+   "fonction": "hashState",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "version": "v1",
+   "preuve": "E9 (oracle node) — engine.hashState() produit un hash reproductible d'un état. Le pas de simulation est désormais DÉCLARÉ (TICK_MS=16, DT_SECONDS=TICK_MS/1000) au lieu d'être recopié en littéral dans deux fonctions : le pas logique du moteur est lisible statiquement, pas seulement inféré",
+   "statut": "implémenté",
+   "couvre": [
+    "R8c1_hash_stable_par_seed"
+   ]
+  },
+  {
+   "feature": "R9 état inspectable",
+   "fonction": "exposeGame",
+   "fichiers": [
+    "main.mjs"
+   ],
+   "version": "v2",
+   "preuve": "E10 (oracle node) — main.exposeGame() publie window.__game indépendamment du DOM. v2 : la garde de publication (window présent ET moteur instancié) était dupliquée mot pour mot dans exposeGame et updateGameWindow ; l'exemplaire d'updateGameWindow n'était atteignable qu'à travers celui d'exposeGame, donc jamais exerçable seul. Factorisée en canPublish(), un seul point à couvrir",
+   "statut": "implémenté",
+   "couvre": [
+    "R9c1_window_game_expose"
+   ],
+   "preuve_complementaire": [
+    "E11 (oracle node) — logic.test.mjs + properties.test.mjs : 65 tests couvrant initialisation, mouvement, rebond, destruction, transitions d'état, déterminisme, invariants (run-oracle.mjs volet a) — 65 pass / 0 fail",
+    "E12 (oracle node) — solvability.mjs : bot détruit tous les blocs et atteint state=won (run-oracle.mjs volet b) — PASS",
+    "E13 (oracle) — e2e.mjs + server.mjs : serveur démarre, click-through simulé (fallback simple test si Playwright absent), contrat de jouabilité respecté (run-oracle.mjs volet c) — PASS",
+    "E14 (gate mutation) — forge.mutation sur les 4 fichiers logiques de la WireMap (engine/input/main/render, test_argv = node --test logic.test.mjs properties.test.mjs) : 41/41 mutants tués, 0 survivant, mutation_triage.json = [] (aucune exception réclamée). Auparavant 41/42 : le survivant and->or@L42 était la garde dupliquée de main.mjs, structurellement intuable — tué par factorisation du code, jamais par un triage auto-déclaré"
+   ]
+  }
+ ]
+}

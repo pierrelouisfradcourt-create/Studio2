@@ -1,0 +1,123 @@
+{
+ "modules": [
+  "index",
+  "main",
+  "logic",
+  "render",
+  "input"
+ ],
+ "deps_interdites": [
+  [
+   "logic",
+   "render"
+  ],
+  [
+   "logic",
+   "input"
+  ],
+  [
+   "logic",
+   "main"
+  ],
+  [
+   "render",
+   "logic"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "logic"
+  ],
+  [
+   "input",
+   "render"
+  ]
+ ],
+ "ownership": {
+  "index": "shell/entree",
+  "main": "composition/boucle",
+  "logic": "simulation (regles + physique + etat, RNG seede)",
+  "render": "presentation (canvas/HUD)",
+  "input": "adaptateur clavier"
+ },
+ "responsabilites": [
+  {
+   "module": "index",
+   "responsabilite": "Document HTML d'entree : heberge le canvas de jeu et charge le module de composition 'main' via <script type=module>. Aucune logique, aucun dessin.",
+   "couvre": [
+    "F_CHARGEMENT"
+   ],
+   "dependances": [
+    "main"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "Ouverte dans un navigateur recent, la page affiche le canvas sans ecran blanc et sans erreur bloquante de chargement du document."
+   }
+  },
+  {
+   "module": "main",
+   "responsabilite": "Racine de composition : cree l'etat seede via 'logic', lit les intentions via 'input', avance la simulation puis appelle 'render' a chaque frame (requestAnimationFrame). Expose window.__game (etat + seed + hash) pour l'observation deterministe. Ne contient AUCUNE regle de jeu ni dessin.",
+   "couvre": [
+    "F_CHARGEMENT",
+    "F_PADDLE_REACTIVITE"
+   ],
+   "dependances": [
+    "logic",
+    "render",
+    "input"
+   ],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Un harnais headless importe 'main', verifie que window.__game est expose et que le compteur de frames progresse ; deux executions de meme seed produisent le meme hash d'etat (determinisme reproductible)."
+   }
+  },
+  {
+   "module": "logic",
+   "responsabilite": "Simulation deterministe et pure (aucun acces DOM/canvas/clavier) : etat du jeu, RNG seede, deplacement et rebonds de la balle (paddle + 3 murs, sortie par le bas), deplacement du paddle sous intention, destruction des briques et score, condition de victoire (0 brique) et de defaite (0 vie). Testable hors navigateur.",
+   "couvre": [
+    "F_REBOND_PADDLE",
+    "F_REBOND_MURS",
+    "F_DESTRUCTION",
+    "F_COMPTEUR",
+    "F_VICTOIRE",
+    "F_DEFAITE"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Un test .mjs hors navigateur rejoue une sequence d'entrees seedee : angles de rebond distincts selon le point d'impact sur le paddle, inversion de la composante horizontale aux murs, briques retirees et score incremente, bascule des etats victoire/defaite ; l'etat final est reproductible par hash."
+   }
+  },
+  {
+   "module": "render",
+   "responsabilite": "Rendu pur sur canvas : dessine l'etat recu en argument (balle, paddle, grille de briques), le HUD (objectif + compteur de briques/score/vies) et les messages VICTOIRE / DEFAITE aux etats de fin. N'importe ni 'logic' ni 'input' ; ne mute jamais l'etat.",
+   "couvre": [
+    "F_OBJECTIF",
+    "F_VISIBILITE",
+    "F_VICTOIRE",
+    "F_DEFAITE"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "A l'ecran au lancement : objectif et compteur affiches, balle/paddle/briques visibles et distincts ; aux etats de fin, le message VICTOIRE ou DEFAITE apparait et l'aire se fige."
+   }
+  },
+  {
+   "module": "input",
+   "responsabilite": "Adaptateur clavier pur : capte l'appui et le relachement des fleches gauche/droite et expose une intention de deplacement du paddle (-1/0/+1). N'importe ni 'logic' ni 'render' ; n'ecrit jamais l'etat, 'main' applique l'intention.",
+   "couvre": [
+    "F_PADDLE_INPUT"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Depuis la page, un bot maintient la fleche droite ; 'input' expose une intention +1 captee frame apres frame, consommee par 'main' pour deplacer le paddle."
+   }
+  }
+ ]
+}

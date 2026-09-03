@@ -15,3 +15,4 @@
 {"subject":{"type":"game","id":"p2_beta"},"reuse_ratio":0,"oracle_iterations":5,"joust_delta":null,"no_comparison":true,"timestamp":"2026-08-31T14:54:24.759Z"}
 {"subject":{"type":"game","id":"p1_beta_E1"},"reuse_ratio":0,"oracle_iterations":1,"joust_delta":null,"no_comparison":true,"timestamp":"2026-08-31T15:51:48.128Z"}
 {"subject":{"type":"game","id":"p2_alpha"},"reuse_ratio":0,"oracle_iterations":5,"joust_delta":null,"no_comparison":true,"timestamp":"2026-08-31T20:08:35.494Z"}
+{"subject":{"type":"game","id":"runm_breakout"},"reuse_ratio":0,"oracle_iterations":5,"joust_delta":null,"no_comparison":true,"timestamp":"2026-09-03T06:52:36.634Z"}

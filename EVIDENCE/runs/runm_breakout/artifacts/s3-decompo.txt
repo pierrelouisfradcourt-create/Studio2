@@ -1,0 +1,229 @@
+## RAPPORT FINAL — s3-decompo / runm_breakout
+
+### software
+Arbre fonctionnel Système→Feature→capacité produit **en texte seul** (dispatch impose « aucun fichier écrit » ; l'exécuteur matérialise `featuremap.json`). 6 systèmes, 9 features, **10 feuilles (capacités)**. Chaque feuille porte `{capacite, source_ref, expected_proof}`. Toutes les preuves attendues sont **héritées verbatim** des `expected_proof` du Prisme (E1..E10) — aucune inventée.
+
+### evidence
+Sourçage de chaque feuille sur une exigence EXACTE de `prisme.json` :
+
+| Feature (règle) | Feuille(s) | source_ref | kind | rôle boucle |
+|---|---|---|---|---|
+| R1 Objectif affiché | R1c1 | **E1** | visual | PLAYER_GOAL |
+| R2 Contrôle raquette | R2c1 **ENTRÉE** + R2c2 **EFFET** | **E2** | bot_action | PLAYER_ACTION |
+| R3 Rebond conservatif | R3c1 | **E3** | oracle | GAME_RESPONSE |
+| R4 Destruction 1 frappe | R4c1 | **E4** | mutation | GAME_RESPONSE |
+| R5 Progrès mesurable | R5c1 | **E5** | oracle | REWARD |
+| R6 Victoire terminale | R6c1 | **E6** | visual | NONE |
+| R7 Défaite terminale | R7c1 | **E7** | visual | NONE |
+| R8 Déterminisme | R8c1 | **E9** | oracle | NONE |
+| R9 État inspectable | R9c1 | **E10** | oracle | NONE (socle N1) |
+| *(boucle rejouée)* | *aucune feuille* | **E8** *(replay)* | — | REPEAT / maillon H |
+
+**Application de la règle V4 GAME LOOP** : E2 (`acteur: PLAYER`, `affordance: raquette`) est la seule action joueur ; elle se décompose en **capacité d'ENTRÉE** (R2c1 — le joueur agit sur l'affordance nommée) **ET** capacité d'EFFET (R2c2 — la raquette se déplace), jamais l'effet seul. Adaptation lignée : la preuve reste `bot_action` mais l'affordance est **DOM/clavier** (jeu web socle N1), pas `main.tscn` (Godot) — cohérent avec le hors_scope charter « aucune dépendance Godot ». Preuve inchangée, héritée d'E2.
+
+**Maillon H (REPEAT = E8)** : rejeu, **n'exige aucune feuille propre** (doctrine F..J). Ses cibles `replay = [E2, E3, E5]` sont **toutes couvertes** par des feuilles → pas de `boucle_replay_non_couvert`. `loop.json` lu comme entrée, jamais réécrit.
+
+**Maillons F/G/I/J absents** : le genre arcade skill-loop (charter : objectif terminal unique, no next-level, no prestige, no unlock) ne les possède pas. `stats.maillons_couverts` attendu ≈ `{F:0, G:0, H:1, I:0, J:0}` — variance de granularité **reportée, jamais gatée** (règle ratifiée 2026-07-21). Ce n'est pas un défaut : c'est le gabarit V4 mono-genre (clicker) confronté à un run arcade, écart déjà consigné au pré-mortem (`manifest-a243e3bfb138847f`).
+
+**Couverture** : E1,E2,E3,E4,E5,E6,E7,E9,E10 portées par ≥1 feuille ; E8 satisfait par couverture de ses cibles de rejeu. **Exigences non couvertes : aucune.**
+**Non-invention** : chaque `source_ref` ∈ {E1..E10} résout dans `prisme.json`. **Feuilles non sourcées : aucune.**
+**Grey blocks GM** : `gm_worldscan.json` **absent du run_dir** (confirmé par la note du Prisme s1) → pas de `--gm`, **0 grey block mesuré**, comportement inchangé.
+
+### claim
+Reçu `check_decompo` : **NON PRODUIT**. La tâche est texte-seul (`run: aucun`, aucun `featuremap.json` écrit par moi) ; l'oracle `node forge/check_decompo.mjs <run_dir>/featuremap.json --prisme <run_dir>/prisme.json` ne peut s'exécuter qu'après matérialisation par l'exécuteur. Je ne peux donc adosser aucune affirmation à un oracle vert exécuté.
+**claim_verdict: NO_CLAIM_ALLOWED.** Besoin HumanGate (fog) remonté : faire tourner `check_decompo` sur le fichier matérialisé pour confirmer COUVERTURE / NON-INVENTION / COMPLÉTUDE avant de dériver un `software_verdict`.
+
+### SKIPPED_VALIDATION
+- **Exécution de `check_decompo.mjs`** — *où* : featuremap runm_breakout — *statut* : non fait — *raison* : dispatch texte-seul, aucun `featuremap.json` sur disque à parser ; validation mécanique délèguée à l'exécuteur/matérialiseur en aval.
+- **Sourçage grey blocks GM (`--gm`)** — *où* : couverture GM — *statut* : sans objet — *raison* : `gm_worldscan.json` absent du run_dir (0 grey block), `--gm` non applicable.
+
+---
+
+```json
+{
+  "game_id": "runm_breakout",
+  "systemes": [
+    {
+      "id": "S1_HUD_OBJECTIF",
+      "features": [
+        {
+          "id": "R1_objectif_affiche",
+          "capacites": [
+            {
+              "id": "R1c1_hud_objectif_nonvide",
+              "capacite": "Tant que la partie est en cours, le HUD `objectif` affiche un texte non vide décrivant la destruction du mur.",
+              "source_ref": "E1",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S2_CONTROLE_JOUEUR",
+      "features": [
+        {
+          "id": "R2_controle_raquette",
+          "capacites": [
+            {
+              "id": "R2c1_entree_touches_raquette",
+              "capacite": "ENTRÉE — Le joueur agit sur l'affordance `raquette` en maintenant Flèche-Gauche ou Flèche-Droite au clavier.",
+              "source_ref": "E2",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+              }
+            },
+            {
+              "id": "R2c2_effet_deplacement_raquette",
+              "capacite": "EFFET — La raquette se déplace horizontalement à l'écran : window.__game.paddle.x augmente sous Flèche-Droite, diminue sous Flèche-Gauche, reste constant sans touche.",
+              "source_ref": "E2",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S3_PHYSIQUE_COLLISIONS",
+      "features": [
+        {
+          "id": "R3_rebond_conservatif",
+          "capacites": [
+            {
+              "id": "R3c1_reflexion_conservative",
+              "capacite": "Au contact d'un mur ou de la raquette, la composante de vitesse concernée s'inverse et la norme |v| est conservée (aucune perte d'énergie non intentionnelle).",
+              "source_ref": "E3",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+              }
+            }
+          ]
+        },
+        {
+          "id": "R4_destruction_une_frappe",
+          "capacites": [
+            {
+              "id": "R4c1_brique_disparait_un_tick",
+              "capacite": "Au contact balle↔brique, la brique disparaît de la grille au même tick et n'est plus collidable ; la balle rebondit. Aucune brique n'exige un second contact.",
+              "source_ref": "E4",
+              "expected_proof": {
+                "kind": "mutation",
+                "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S4_PROGRESSION_RECOMPENSE",
+      "features": [
+        {
+          "id": "R5_progres_mesurable",
+          "capacites": [
+            {
+              "id": "R5c1_decrement_unitaire",
+              "capacite": "À chaque brique détruite, window.__game.bricksRemaining décroît d'exactement 1 et le compteur de briques restantes affiché suit.",
+              "source_ref": "E5",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S5_ETATS_TERMINAUX",
+      "features": [
+        {
+          "id": "R6_victoire_terminale",
+          "capacites": [
+            {
+              "id": "R6c1_etat_won",
+              "capacite": "Quand la dernière brique disparaît (bricksRemaining=0), window.__game.state vaut 'won', un panneau « VICTOIRE » s'affiche et la simulation se fige (aucun niveau suivant, aucun reset de prestige).",
+              "source_ref": "E6",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+              }
+            }
+          ]
+        },
+        {
+          "id": "R7_defaite_terminale",
+          "capacites": [
+            {
+              "id": "R7c1_etat_lost",
+              "capacite": "Quand la balle franchit le bord bas de l'aire sans vie restante, window.__game.state vaut 'lost', un panneau « DÉFAITE » s'affiche et la simulation se fige.",
+              "source_ref": "E7",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S6_SOCLE_N1",
+      "features": [
+        {
+          "id": "R8_determinisme",
+          "capacites": [
+            {
+              "id": "R8c1_hash_stable_par_seed",
+              "capacite": "À seed identique et suite d'entrées identique, deux exécutions du module .mjs produisent le même hash d'état final.",
+              "source_ref": "E9",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+              }
+            }
+          ]
+        },
+        {
+          "id": "R9_etat_inspectable",
+          "capacites": [
+            {
+              "id": "R9c1_window_game_expose",
+              "capacite": "window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}, indépendamment du rendu DOM.",
+              "source_ref": "E10",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+**RETURN LINEAGE**
+- `why_task_existed:`
+  - `problem:` non transmis (activation par dispatch `FORGE_DISPATCH:s3-decompo:runm-breakout-20260902:1` ; le Prisme s1 et le World Scan s2 sont produits, la décomposition fonctionnelle est l'étape 3 attendue).
+  - `oracle:` aucun — activation par séquencement de pipeline (décision de dispatch), pas par une mesure d'échec.
+  - `root_cause:` non établie (étape nominale de la chaîne, pas une réparation).
+  - `action_reason:` produire l'arbre Système→Feature→capacité pour que chaque exigence E1..E10 du Prisme soit portée par ≥1 feuille traçable, condition d'entrée de s4-archi.
+- `result:` featuremap texte-seul produite : 6 systèmes / 9 features / 10 feuilles ; couverture complète (E1..E7,E9,E10 portées ; E8 satisfait par rejeu couvert) ; 0 feuille non sourcée ; 0 grey block (GM absent). `check_decompo` non exécuté (texte-seul).
+- `proof:` aucune commande exécutée — `run: aucun`, aucun `featuremap.json` matérialisé par cet agent. Reçu oracle à produire par l'exécuteur : `node forge/check_decompo.mjs EVIDENCE/runs/runm_breakout/featuremap.json --prisme EVIDENCE/runs/runm_breakout/prisme.json`.
+- `learning:` le gabarit de boucle V4 (maillons F..J issus du genre clicker/idle) ne s'instancie que partiellement sur un genre arcade skill-loop : seul H (REPEAT=E8) existe, F/G/I/J sont légitimement vides — variance de granularité reportée, non gatée. Réutilisable pour tout futur run arcade.
+- `next_reason:` la chaîne causale ne se ferme pas ici pour un point unique : la preuve mécanique (`check_decompo` vert) manque car la sortie est texte-seul — l'exécuteur en aval doit matérialiser `featuremap.json` puis exécuter l'oracle pour confirmer COUVERTURE/NON-INVENTION/COMPLÉTUDE avant s4-archi. Aucune cause non résolue au-delà de cette matérialisation.
+
+SKIPPED_VALIDATION: voir section dédiée ci-dessus (2 items : exécution `check_decompo`, sourçage GM `--gm`).
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

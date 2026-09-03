@@ -1,0 +1,124 @@
+{
+ "schema_version": 1,
+ "game_id": "runm_breakout",
+ "steps": [
+  {
+   "role": "PLAYER_GOAL",
+   "ref": "R01_goal_clear",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "R02_action_left",
+   "affordance": "raquette_gauche",
+   "repeat": 1,
+   "observe": {
+    "hud": "raquette_x",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "R03_action_right",
+   "affordance": "raquette_droite",
+   "repeat": 1,
+   "observe": {
+    "hud": "raquette_x",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "R04_response_brick",
+   "repeat": 1,
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "decreases"
+   }
+  },
+  {
+   "role": "REWARD",
+   "ref": "R05_reward_score",
+   "repeat": 1,
+   "observe": {
+    "hud": "score",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "DECISION",
+   "ref": "R06_decision_angle",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "changes"
+   },
+   "options": [
+    "R02_action_left",
+    "R03_action_right"
+   ],
+   "metric": "score",
+   "horizon_frames": 300,
+   "policies": [
+    {
+     "name": "passif",
+     "click": null,
+     "every_frames": 0
+    },
+    {
+     "name": "actif_gauche",
+     "click": "raquette_gauche",
+     "every_frames": 3
+    }
+   ]
+  },
+  {
+   "role": "UNLOCK",
+   "ref": "R07_unlock_screen2",
+   "affordance": "derniere_brique_ecran1",
+   "repeat": 1,
+   "observe": {
+    "hud": "ecran",
+    "predicate": "appears:ecran_2",
+    "appears": "ecran_2"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "R08_nextgoal_screen1",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "R09_nextgoal_screen2",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "REPEAT",
+   "ref": "R10_repeat",
+   "repeat": 1,
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "increases"
+   },
+   "replay": [
+    "R02_action_left",
+    "R04_response_brick",
+    "R05_reward_score",
+    "R07_unlock_screen2"
+   ]
+  }
+ ]
+}

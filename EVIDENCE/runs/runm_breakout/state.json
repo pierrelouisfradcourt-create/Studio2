@@ -1,0 +1,903 @@
+{
+ "catalog_brick_ids_snapshot": [
+  "pat-damage-floor",
+  "pat-forge-architecture_check_before_human_escalation",
+  "pat-forge-broken_loop_repair_not_report",
+  "pat-forge-diagnosis_is_not_workflow_end",
+  "pat-forge-entrypoint_is_undeclared_invariant",
+  "pat-forge-escalation_costs_avoid_default_route",
+  "pat-forge-forge_oracle_convention_undocumented",
+  "pat-forge-hardcoded_expected_state_breaks_on_growth",
+  "pat-forge-instrument_assumes_instead_of_reads",
+  "pat-forge-kb_humangate_to_controlled_autonomy",
+  "pat-forge-mutation_survivor_equivalence_requires_mechanical_proof",
+  "pat-forge-new_proof_needs_declared_executor",
+  "pat-forge-oracle_fail_vs_not_measured_marker",
+  "pat-forge-preflight_oracle_registration",
+  "pat-forge-reuse_tracking_oracle_dead_since_inception",
+  "pat-forge-run_status_not_liveness_proof",
+  "pat-forge-test_green_via_wrong_causal_path",
+  "pat-forge-timeout_greenfield_by_profile",
+  "pat-forge-wiremap_concept_reuse_requalification",
+  "pat-full-reachability",
+  "pat-zone-of-control",
+  "sys-damage-floor",
+  "sys-evader-basic",
+  "sys-grid-nav-m01",
+  "sys-guardian-zoc",
+  "sys-pursuer-continuous",
+  "sys-pursuer-mobile",
+  "sys-reachability"
+ ],
+ "created_ts": 1788394531.3509364,
+ "escalations": 2,
+ "humangate_notes": [
+  "escalade #1: haiku -> sonnet (oracle FAIL)",
+  "next_reason de s9-build: la chaîne causale reste ouverte pour un point non-résolu par ce niveau : je n'ai pas pu ré-exécuter mécaniquement `check_feature_set_frozen`/`check_wiremap`/le gate mutation Python dans cet environnement (permission refusée) — le niveau supérieur (matérialiseur/driver, ou une session avec les permissions Python actives) doit relancer `s10a-oracle-code` puis `s10c-oracle-wiremap` pour obtenir la va",
+  "next_reason de s9-build: la chaîne causale reste ouverte pour un point non résolu par ce niveau : je n'ai pas pu ré-exécuter mécaniquement `check_feature_set_frozen`/`check_wiremap` (Python) dans cet environnement (permission refusée) — le niveau supérieur (driver s10a/s10c, avec ses propres permissions) doit relancer ces oracles pour obtenir la validation mécanique signée que ce niveau ne peut produire lui-même.",
+  "escalade #2: sonnet -> opus (oracle FAIL)",
+  "next_reason de s9-build: la chaîne causale du gate mutation est **FERMÉE**. Deux points restent ouverts pour le niveau supérieur, aucun corrigeable ici : (a) le driver doit relancer s10a/s10c avec ses propres permissions Python pour convertir mes vérifications Node en reçu **signé** — les miennes sont fidèles mais non signées ; (b) décision Pierre sur l'e2e qui rend 0 sans navigateur (Playwright absent), qui laisse le cri"
+ ],
+ "is_game": true,
+ "model_override": "opus",
+ "pool_attempts": 0,
+ "profile": "full",
+ "project": "runm_breakout",
+ "run_id": "runm-breakout-20260902",
+ "run_status": "DONE",
+ "steps": {
+  "s0-contrat": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s0-contrat.txt",
+    "artifact_sha256": "04467b28f83d882a3e10ecd5e24d89d1773bb9dd091fd8038cba93e6d5f04ba7",
+    "cache_creation_tokens": 118227,
+    "cache_read_tokens": 487918,
+    "cost_usd": 1.828983,
+    "duration_s": 242.0053288936615,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "le niveau supérieur (matérialiseur/driver) doit extraire ce bloc ```yaml```, écrire charter.yaml sous le run_dir V2 et lancer check_charter pour obtenir la validation mécanique que ce rôle ne peut pas produire. Chaîne causale du défaut de forme : FERMÉE ici (le fence est posé) ; la validation mécanique reste OUVERTE en aval par construction du mode texte-seul.",
+    "output_excerpt": "EMA.md` (OK), project_brief embarqué (OK), pré-mortem PILOU embarqué (OK), Project Bible `EVIDENCE/runs/runm_breakout/PROJECT_BIBLE.md` (ABSENT — constaté, non deviné).\n- `learning:` en mode texte-seul, s0 doit TOUJOURS émettre le charter en bloc ```yaml``` fencé (le matérialiseur inspecte l'output, il n'invente pas la forme) ; et l'oracle CHARTER exigeant un fichier, la validation mécanique à s0 texte-seul est structurellement reportée en aval — à signaler, pas à masquer.\n- `next_reason:` le niveau supérieur (matérialiseur/driver) doit extraire ce bloc ```yaml```, écrire charter.yaml sous le run_dir V2 et lancer check_charter pour obtenir la validation mécanique que ce rôle ne peut pas produire. Chaîne causale du défaut de forme : FERMÉE ici (le fence est posé) ; la validation mécanique reste OUVERTE en aval par construction du mode texte-seul.\n\n**SKIPPED_VALIDATION**\n- item : exécution de l'oracle CHARTER (check_charter) ; où : station s0-contrat, charter runm_breakout ; statut : non fait ; raison : `run: aucun` + dispatch texte-seul (aucun charter.yaml écrit sur disque à parser à ce stade). Reporté au matérialiseur/driver en aval.\n- item : vérification de non-recopie de GAMES/breakout ; où : reference_jeu ; statut : non fait ; raison : contrainte comportementale non vérifiable par un validateur de schéma (fait de gate HumanGate, pas de schéma).\n- item : provenance Pierre de reference_jeu ; où : reference_jeu ; statut : partiel (attesté par citation `provenance.genre`, non vérifiable mécaniquement) ; raison : la traçabilité à une source Pierre est un fait de gate, non contrôlable par check_charter.\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"en mode texte-seul, s0-contrat ne peut pas faire valider son charter par l'oracle CHARTER (aucun charter.yaml sur disque a parser, run: aucun) — la validation mecanique est structurellement reportee en aval\", \"root_cause\": \"le dispatch s0-contrat impose texte-seul alors que l'oracle CHARTER exige un fichier a parser\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 15831,
+    "tools_used": {
+     "Bash": 2,
+     "LSP": 1,
+     "Read": 7
+    },
+    "yaml_check": {
+     "champs": [
+      "actions_interdites",
+      "criteres_demo",
+      "criteres_succes",
+      "hors_scope",
+      "joueur_cible",
+      "objectif",
+      "plateforme_cible",
+      "reference_jeu"
+     ],
+     "check": {
+      "oracle": "check_charter",
+      "raisons": [],
+      "verdict": "PASS"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\charter.yaml",
+     "written": true
+    }
+   },
+   "next_reason": "le niveau supérieur (matérialiseur/driver) doit extraire ce bloc ```yaml```, écrire charter.yaml sous le run_dir V2 et lancer check_charter pour obtenir la validation mécanique que ce rôle ne peut pas produire. Chaîne causale du défaut de forme : FERMÉE ici (le fence est posé) ; la validation mécanique reste OUVERTE en aval par construction du mode texte-seul.",
+   "status": "OK",
+   "ts": 1788394773.5153832
+  },
+  "s1-prisme": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s1-prisme.txt",
+    "artifact_sha256": "986f175abd272d7ca7a1fe6f4d544aa5573c5573c1c7b284517bef6d2fe67592",
+    "cache_creation_tokens": 39531,
+    "cache_read_tokens": 299855,
+    "cost_usd": 1.1822975,
+    "duration_s": 340.47188901901245,
+    "loop_check": {
+     "check": {
+      "problems": [
+       "maillon F (UNLOCK) : au moins 1 exigence attendue (0 trouvee)",
+       "maillon G (NEXT_GOAL) : au moins 2 exigences attendues (0 trouvee(s))",
+       "maillon I (META_LOOP) : au moins 1 exigence attendue (0 trouvee)",
+       "maillon J (ADVANTAGE) : au moins 1 exigence attendue (0 trouvee)",
+       "maillon DECISION : au moins 1 exigence attendue (0 trouvee)"
+      ],
+      "verdict": "FAIL"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\loop.json",
+     "written": true
+    },
+    "markdown_check": {
+     "chars": 12976,
+     "check": {
+      "command": "node forge/prisme/check_prisme.mjs",
+      "returncode": 0,
+      "tail": [
+       "1/1 artefacts conformes structurellement.",
+       "RESULT: PASS"
+      ],
+      "verdict": "PASS"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\product_snapshot.md",
+     "written": true
+    },
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "output_excerpt": " que runm_breakout doit produire, à seed égal, exactement le même déroulé — condition testable hors navigateur, cœur du socle N1 du charter.\",\n      \"enonce\": \"À seed identique et suite d'entrées identique, deux exécutions du module .mjs produisent le même hash d'état final.\",\n      \"expected_proof\": { \"kind\": \"oracle\", \"statement\": \"Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux.\" },\n      \"destination\": \"s4-archi\"\n    },\n    {\n      \"id\": \"E10\",\n      \"source\": \"ADDITIONS\",\n      \"source_role\": \"s1-prisme\",\n      \"reference\": null,\n      \"acteur\": \"SYSTEM\",\n      \"loop_role\": \"NONE\",\n      \"observe\": { \"hud\": \"window.__game\", \"predicate\": \"nonempty\" },\n      \"observation\": \"Le charter impose (socle N1) une logique métier en module .mjs testable hors navigateur et un état inspectable window.__game.\",\n      \"claim\": \"J'en déduis que tout l'état de partie doit être lisible programmatiquement via window.__game, indépendamment du rendu DOM, pour rendre les règles R1..R9 testables hors navigateur.\",\n      \"enonce\": \"window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}.\",\n      \"expected_proof\": { \"kind\": \"oracle\", \"statement\": \"Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs.\" },\n      \"destination\": \"s4-archi\"\n    }\n  ]\n}\n```\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Le gabarit de boucle V4 (mono-genre idle/clicker) exige des maillons DECISION/UNLOCK/NEXT_GOAL x2/META_LOOP/ADVANTAGE que le casse-briques arcade minimal ciblé par le charter ne possede pas ; gm_worldscan.json absent du run_dir empeche tout sourcage GM des exigences de boucle (0/6).\", \"root_cause\": \"Absence de gabarit de boucle par genre et de gm_worldscan.json arcade dans le run_dir : un run non-clicker est evalue contre un gabarit clicker, sans Game Master present.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_prisme_manifest",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s1-prisme",
+     "TIME_MS": 12,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "43756ca22e29eead1f1232d4fc07ecb5187374a331b0ddfe9466782f38dea2b2",
+      "output_hash": "3983de604d2f27d8bf66272d627e91ac6496156ae6a1b606c8e76be1167b2029",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 25038,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 8
+    }
+   },
+   "status": "OK",
+   "ts": 1788395294.6967874
+  },
+  "s10a-oracle-code": {
+   "attempts": 5,
+   "detail": {
+    "art_response_dead": false,
+    "asset_consumption": {
+     "checked": false,
+     "reason": "aucun asset_requests.json produit par la chaîne amont",
+     "status": "SKIPPED"
+    },
+    "e2e": {
+     "passed": true,
+     "raisons": []
+    },
+    "economy_bypass_dead": false,
+    "evidence_path": "EVIDENCE/runs/runm_breakout/evidence/oracle_runm_breakout.log",
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "logic_files_source": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\wiremap.json",
+    "loop_dead": false,
+    "measure_tick": {
+     "checked": false,
+     "reason": "Brief sans 'mesure.tick_ms' valide — aucune contribution au gate (non-régression des profils/briefs existants)",
+     "status": "SKIPPED"
+    },
+    "mutation": {
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "categories_exclues": [],
+       "code_sha256": {
+        "e2e.mjs": "e3ad0ea640ba08de4582d17caf03894bed59aa1387b7246872241d029ceac01a",
+        "engine.mjs": "6be9118e835c1ef08ff4c35091858cb16239eb4966a3875cc54644483d6b4972",
+        "input.mjs": "b7840966664f40088251521245acd11ada8432f9d7cba7ac2392a55164bdb35a",
+        "logic.test.mjs": "41e5e9461fcf286afaae19e8d62c348800c43091684ea0ba7a216fe2d287c14c",
+        "main.mjs": "214f89b606236c5e3ebdeb144654a1c20d3f8fa2297f9d881ed502f9d9c1b21e",
+        "properties.test.mjs": "196e1340e11006ff28a5f342ee888da0fee8f483db3ffcc93f024db0f1ba25bc",
+        "render.mjs": "57fea42e4d9a060d2410a77189a119ab6339e49a28c58a7f3bfad31756193878",
+        "run-oracle.mjs": "b09420ee193d429318c0ff46b2f85a27c04c7d127a4f8d6af3f70784b0f7f1c2"
+       },
+       "compteurs_par_categorie": {
+        "sans_categorie": {
+         "fichiers": 4,
+         "jugee": true,
+         "killed": 41,
+         "total": 41
+        }
+       },
+       "game_dir": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\GAMES\\runm_breakout",
+       "gate_checked": true,
+       "killed": 41,
+       "logic_files": [
+        "engine.mjs",
+        "input.mjs",
+        "main.mjs",
+        "render.mjs"
+       ],
+       "mutation_exception": false,
+       "survivants_non_tries": [],
+       "survived": 0,
+       "test_argv": [
+        "node",
+        "--test",
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "test_files_scelles": [
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "total": 41,
+       "triage_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+       "triaged_survivors": []
+      },
+      "evidence_path": "EVIDENCE/runs/runm_breakout/evidence/mutation_runm-breakout-20260902.json",
+      "evidence_sha256": "fc7c0bd23e185285006d109da9bae476cd2e17db2798d66a3e451d4c7a5f602b",
+      "oracle_id": "mutation",
+      "run_id": "runm-breakout-20260902",
+      "status": "OK",
+      "ts": 1788418356.5529876
+     },
+     "signature": "64381b8f543eaca1e9426f1317f34eae932c73b1143a3a33673533251ff9f62c"
+    },
+    "product_oracle_godot_activation": {
+     "active": false,
+     "godot_capacity_present": false,
+     "proof_descriptor_present": false,
+     "reason": "aucun descripteur `proof:` bien formé dans game_contract.yaml ; aucun oracle FORGE_ORACLE trouvé sous C:\\Users\\Studio-Dev\\Desktop\\Studio\\GAMES\\runm_breakout/07_TESTS/oracle/",
+     "runtime_block": {
+      "active": false,
+      "reason": "pas de run/main_scene"
+     }
+    },
+    "regime_preuve": "historique",
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": true,
+     "raisons": []
+    },
+    "runtime_alive": {
+     "checked": false,
+     "passed": false,
+     "reason": "pas de run/main_scene (module bibliothèque)",
+     "status": "SKIPPED"
+    },
+    "search_consulted": {
+     "count": 6,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability": {
+     "checked": true,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability_mesure": {
+     "mesure": "cablage_du_harnais",
+     "ne_mesure_pas": "la solvabilite du jeu (won/trials) — un `passed: true` ne prouve AUCUNE partie gagnee",
+     "resultat_reel": "non remonte au recu : voir evidence/oracle_<jeu>.log, NON versionne (.gitignore:81)"
+    }
+   },
+   "last_oracle": "s10a-oracle-code",
+   "last_root_cause": "returncode=0; mutation=FAIL (volets rouges: runtime_alive)",
+   "responsible_level": "build",
+   "status": "OK",
+   "ts": 1788418356.5594938
+  },
+  "s10b-oracle-archi": {
+   "attempts": 5,
+   "detail": {
+    "debordements_ownership": {
+     "checked": false,
+     "items": []
+    },
+    "deps_interdites_violées": [],
+    "modules_sans_test": [
+     "main"
+    ],
+    "passed": true
+   },
+   "last_oracle": "s10a-oracle-code",
+   "last_root_cause": "returncode=0; mutation=FAIL (volets rouges: runtime_alive)",
+   "responsible_level": "build",
+   "status": "OK",
+   "ts": 1788418356.7313414
+  },
+  "s10c-oracle-wiremap": {
+   "attempts": 5,
+   "detail": {
+    "amont_traversal": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "facts": {
+      "boucles_recompense": {
+       "addresses": [
+        "worldscan:games[0].loops.minute_1",
+        "worldscan:games[0].loops.minute_10",
+        "worldscan:games[0].loops.hour_5",
+        "worldscan:games[0].loops.endgame",
+        "worldscan:games[1].loops.minute_1",
+        "worldscan:games[1].loops.minute_10",
+        "worldscan:games[1].loops.hour_5",
+        "worldscan:games[1].loops.endgame"
+       ],
+       "exigences": [
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E8"
+       ],
+       "files_present": true,
+       "leaves": [
+        "R2c1_entree_touches_raquette",
+        "R2c2_effet_deplacement_raquette",
+        "R3c1_reflexion_conservative",
+        "R4c1_brique_disparait_un_tick",
+        "R5c1_decrement_unitaire"
+       ],
+       "lines": [
+        "R2 contrôle raquette",
+        "R3 rebond conservatif",
+        "R4 destruction une frappe",
+        "R5 progrès mesurable"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_defaite": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].defeat_condition",
+        "worldscan:games[1].objectives[0].defeat_condition",
+        "worldscan:games[1].objectives[1].defeat_condition"
+       ],
+       "exigences": [
+        "E7"
+       ],
+       "files_present": true,
+       "leaves": [
+        "R7c1_etat_lost"
+       ],
+       "lines": [
+        "R7 défaite terminale"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_victoire": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].victory_condition",
+        "worldscan:games[1].objectives[0].victory_condition"
+       ],
+       "exigences": [
+        "E1",
+        "E6"
+       ],
+       "files_present": true,
+       "leaves": [
+        "R1c1_hud_objectif_nonvide",
+        "R6c1_etat_won"
+       ],
+       "lines": [
+        "R1 objectif affiché",
+        "R6 victoire terminale"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "contraintes_narratives": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "objectifs_joueur": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].player_goal",
+        "worldscan:games[1].objectives[0].player_goal",
+        "worldscan:games[1].objectives[1].player_goal"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "progression": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      }
+     },
+     "references": {
+      "adressables": 9,
+      "expected": 9,
+      "non_resolues": [],
+      "resolues": 9
+     },
+     "stages": [
+      "NOT_PRODUCED",
+      "PRODUCED",
+      "PRISME",
+      "GREY_BLOCKS",
+      "WIREMAP",
+      "BUILD"
+     ],
+     "verdict": "ADVISORY"
+    },
+    "features_manquantes": [],
+    "fonctions_renommées": [],
+    "obsoletes": [],
+    "passed": true,
+    "preuves_absentes": []
+   },
+   "last_oracle": "s10a-oracle-code",
+   "last_root_cause": "returncode=0; mutation=FAIL (volets rouges: runtime_alive)",
+   "responsible_level": "build",
+   "status": "OK",
+   "ts": 1788418356.868171
+  },
+  "s11-redteam-code": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s11-redteam-code.txt",
+    "artifact_sha256": "3914ddc61cfb3cf1ec9af8374ac7ddff45fd6edbabbd177dc158e0f139ab497e",
+    "cache_creation_tokens": 110830,
+    "cache_read_tokens": 833913,
+    "cost_usd": 2.6343485,
+    "duration_s": 581.9756348133087,
+    "model": "claude-opus-4-8",
+    "model_override": "opus",
+    "next_reason": "ESCALADE.** Trois causes non résolues persistent et sortent de mon périmètre (je ne corrige pas) : (1) F1 rend le verdict E13 du run non fiable tant que la présence de `playwright` n'est pas tranchée — c'est un doute sur une **preuve déjà comptée**, pas une amélioration ; (2) mes 14 reproductions sont **écrites mais non mesurées**, elles requièrent un passage oracle non-LLM avant d'alimenter quoi ",
+    "output_excerpt": "production\": \"Dans le harnais installFakeGameGlobals de logic.test.mjs:594 : const mod = await importMainFresh(); mod.stopGameLoop(); const before = env.rafCalls.length; mod.resetGame(1); console.log('state=', window.__game.state, 'frames depuis reset=', env.rafCalls.length - before); — attendu : state= playing frames depuis reset= 0\"}, {\"angle\": \"garde incoherente / fuite d'ecouteurs\", \"faille\": \"input.mjs:12 teste 'typeof window !== undefined' puis appelle document.addEventListener aux lignes 13 et 19 : la garde ne porte pas sur l'objet reellement utilise. Aucun removeEventListener n'existe, donc chaque new InputAdapter() (main.mjs:15, a chaque initGame) ajoute deux ecouteurs permanents sur document. Le test DOM (logic.test.mjs:298-328) installe un faux document fournissant addEventListener, ce qui masque l'incoherence de garde.\", \"severite\": \"LOW\", \"reproduction\": \"cd GAMES/runm_breakout && node -e \\\"globalThis.window={}; import('./input.mjs').then(({InputAdapter})=>{new InputAdapter();}).catch(e=>console.log('LEVE:',e.constructor.name,'-',e.message));\\\" — attendu : LEVE: ReferenceError - document is not defined\"}]}\n```\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"L'oracle e2e du run (e2e.mjs) se degrade silencieusement en un PASS sans navigateur quand playwright est absent, rendant le vert du volet (c) de run-oracle.mjs indistinguable de 'non teste' ; par ailleurs le champ seed du moteur est un etat mort, ce qui rend le critere R8c1 'hash_stable_par_seed' vrai par vacuite, et quatre tests de la suite E11 (logic.test.mjs:98, :134, :331 et properties.test.mjs:185) portent le nom d'une propriete que leur assertion ne peut pas faire echouer.\", \"root_cause\": \"Les oracles de ce run valident le code d'oracle (code de sortie) plutot que la propriete visee : run-oracle.mjs:35 reduit chaque volet a 'ok = code===0' et e2e.mjs:41-48 possede un chemin de repli non instrumente qui sort 0, si bien qu'aucun mecanisme ne distingue une preuve obtenue d'une preuve sautee.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [
+     "[HIGH] preuve factice / oracle e2e (volet c de run-oracle.mjs) — e2e.mjs:41-48 bascule sur simpleTest() si require('playwright') leve ; simpleTest() (e2e.mjs:135-148) demarre le serveur, le tue, imprime RESULT: PASS et process.exit(0) sans navigateur, sans page chargee, sans clic ni touche ni assertion UI. run-oracle.mjs:58 ne lit que le code de sortie (resultFromExit, ligne 35 : ok = code===0) : le PASS du volet (c) est indistinguable entre 'click-through navigateur reussi' et 'playwright absent'. E13 revendique 'click-through simule, contrat de jouabilite respecte' — faux sur le chemin de repli. Aggravant : aucun package.json n'existe dans GAMES/runm_breakout/ ni a la racine Studio/, donc playwright n'est declare nulle part sur la chaine de resolution. (repro: cd GAMES/runm_breakout && node -e \"require('playwright')\" ; echo exit=$? ; node e2e.mjs ; echo e2e_exit=$?  — attendu si playwright absent : sortie contenant '⚠ Playwright non disponible — test simplifié (sans navigateur)' ET 'RESULT: PASS' avec exit=0. Falsification renforcee : renommer index.html en index.html.bak puis relancer node e2e.mjs — sort toujours 0/PASS.)",
+     "[HIGH] ecart contrat/code — critere R8c1 non outille — engine.mjs:52-56 stocke this.seed mais init() (:58-75) et _generateBricks() (:77-92) n'utilisent que des constantes de module ; hashState() (:184-191) ne hache ni seed ni level. Deux moteurs de graines differentes produisent un etat initial et un hash identiques : le critere R8c1_hash_stable_par_seed est vrai par vacuite et resterait vert si la ligne this.seed = seed etait supprimee. Les deux tests de determinisme (logic.test.mjs:238-250, properties.test.mjs:170-182) ne comparent que des paires de MEME graine. this.level = 1 (engine.mjs:54) est mort de la meme facon tout en etant expose via main.mjs:63. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const a=new Engine({seed:1}),b=new Engine({seed:999});console.log('identiques:',a.hashState()===b.hashState());});\" — attendu : identiques: true)",
+     "[MEDIUM] preuve faible — E9 revendique un hash d'etat, le code hache une projection — engine.mjs:184-191 hache {paddle, ball, bricksRemaining, state} ; le tableau bricks — seul porteur de QUELLES briques sont tombees — est absent. Deux parties ayant detruit un nombre egal mais des briques differentes sont indiscernables par le hash, ce qui contredit la revendication E9 'hash reproductible d'un etat'. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const a=new Engine({seed:1});a.destroyBrick(a.bricks[0]);const b=new Engine({seed:1});b.destroyBrick(b.bricks[39]);console.log('etats differents:',JSON.stringify(a.bricks)!==JSON.stringify(b.bricks));console.log('meme hash:',a.hashState()===b.hashState());});\" — attendu : etats differents: true ET meme hash: true)",
+     "[MEDIUM] preuve factice + asymetrie de garde (R7c1) — engine.mjs:170-175 : checkLose() bascule en 'lost' des que state==='playing', sans jamais regarder la balle ; la condition ball.y > GAME_HEIGHT vit uniquement au site d'appel (engine.mjs:140). Asymetrie avec checkWin() (:163-168) qui verifie sa propre precondition. Le test qui la couvre, nomme 'checkLose sets state=lost when ball below boundary' (logic.test.mjs:134-142), ne place jamais la balle sous la limite : il appelle checkLose() sur un moteur neuf dont la balle est a y≈550, en plein terrain. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});e.ball.y=0;e.checkLose();console.log('ball.y=',e.ball.y,'state=',e.state,'over=',e.over);});\" — attendu : ball.y= 0 state= lost over= true (defaite avec la balle au plafond))",
+     "[MEDIUM] invariant manquant + test qui verrouille le bug (R4c1/R5c1/R6c1) — engine.mjs:158-161 : destroyBrick decremente sans garde d'idempotence ; bricksRemaining duplique bricks[] et checkWin() teste l'egalite STRICTE ===0 (engine.mjs:164), donc un seul decompte en trop fait sauter 0 et rend la victoire structurellement inatteignable, toutes briques detruites. logic.test.mjs:98-109 assert explicitement bricksRemaining === initial-2 apres double destruction avec le commentaire 'This test documents the current behavior' : un test de la suite ratifie la rupture d'invariant. L'invariant bricksRemaining === bricks.filter(b=>!b.destroyed).length n'est asserte nulle part dans properties.test.mjs. Atteignabilite : tick() protege sa boucle par !brick.destroyed (:132), la faille est latente et exposee aux appelants externes. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});e.destroyBrick(e.bricks[0]);e.destroyBrick(e.bricks[0]);let s=0;while(s<200000&&e.state==='playing'){const c=e.paddle.x+40;e.tick(e.ball.x<c-30?'left':e.ball.x>c+30?'right':null);s++;}console.log('vivantes=',e.bricks.filter(b=>!b.destroyed).length,'remaining=',e.bricksRemaining,'state=',e.state);});\" — attendu : vivantes= 0 remaining= -1 state= lost)",
+     "[MEDIUM] zone morte + ecart contrat/code sur R3 (rebond conservatif) — engine.mjs:148-156 : la branche mode==='collision' (:153-155) execute exactement le corps de la branche 'y' (:151-152) — chemin de code sans comportement propre. tick() appelle reflectBall('collision') pour TOUT contact balle-brique (:134) quelle que soit la geometrie : un impact sur la face laterale d'une brique inverse vy au lieu de vx, la balle conserve son sens horizontal et traverse la rangee. L'oracle E3 ne peut pas l'attraper — il verifie l'inversion de signe et la conservation de |v| pour l'axe passe en parametre, jamais que le bon axe est choisi (logic.test.mjs:58-84 et :175-187, ce dernier assertant l'equivalence 'collision' = 'y'). (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const p=new Engine();p.ball.vx=7;p.ball.vy=11;p.reflectBall('collision');const q=new Engine();q.ball.vx=7;q.ball.vy=11;q.reflectBall('y');console.log('collision===y:',p.ball.vx===q.ball.vx&&p.ball.vy===q.ball.vy);const e=new Engine({seed:1}),br=e.bricks[0];e.ball.x=br.x-6;e.ball.y=br.y+br.height/2;e.ball.vx=250;e.ball.vy=20;const sg=Math.sign(e.ball.vx);e.tick(null);console.log('detruite:',br.destroyed,'sens vx conserve:',Math.sign(e.ball.vx)===sg);});\" — attendu : collision===y: true ; detruite: true sens vx conserve: true)",
+     "[MEDIUM] ecart contrat/code sur R6c1 et R7c1 (render affiche VICTOIRE/DEFAITE) — render.mjs:29 : 'if (!this.ctx || !this.canvas) return;' precede le bloc overlay (:56-68). Sans contexte 2D, state='won' ou 'lost' n'affiche rien, l'overlay conserve sa classe hidden. E6/E7 enoncent l'affichage comme inconditionnel ; le code le subordonne au canvas. Les deux tests qui touchent ce chemin (logic.test.mjs:392-396 et :398-416) ratifient le couplage en assertant que render() est un no-op sans contexte. (repro: cd GAMES/runm_breakout && node -e \"import('./render.mjs').then(async({Renderer})=>{const {Engine}=await import('./engine.mjs');let hidden=true;const ov={classList:{add:()=>{hidden=true},remove:()=>{hidden=false},contains:()=>hidden},querySelector:()=>({textContent:''})};globalThis.document={getElementById:id=>id==='overlay'?ov:null};const r=new Renderer(),e=new Engine({seed:1});e.bricksRemaining=0;e.checkWin();r.render(e.snapshot());console.log('state=',e.state,'overlay cache:',hidden);});\" — attendu : state= won overlay cache: true)",
+     "[MEDIUM] chemin de crash + preuve factice (R1c1) — render.mjs:22 accede a document.getElementById sans la garde 'typeof document !== undefined' que setup() applique douze lignes plus haut (:13) — seule methode de Renderer capable de lever ; main.mjs:18 l'appelle sans condition depuis initGame(). Le test nomme 'Renderer: renderObjective writes to objective element' (logic.test.mjs:331-336) n'appelle PAS renderObjective() : il assert typeof renderer.render === 'function', avec le commentaire 'Cannot fully test without a real DOM', tout en comptant dans les 65 tests de E11. La couverture reelle existe ailleurs (logic.test.mjs:379-390) ; le defaut est la garde manquante et le test tautologique. (repro: cd GAMES/runm_breakout && node -e \"import('./render.mjs').then(({Renderer})=>{new Renderer().renderObjective();}).catch(e=>console.log('LEVE:',e.constructor.name,'-',e.message));\" — attendu : LEVE: ReferenceError - document is not defined)",
+     "[MEDIUM] zone morte + fuite de ressources + trou de couverture e2e — e2e.mjs:123 (process.exit(0) dans le try) et :126 (process.exit(1) dans le catch) terminent le processus immediatement ; le bloc finally de :128-132 — page.close(), browser.close(), srv.kill() — n'est atteint sur aucun des deux chemins terminaux, laissant un Chromium et un server.mjs orphelins sur le port 4504 a chaque execution en mode navigateur. Corollaire de couverture dans le meme fichier : le scenario force la defaite par la porte de debogage (:97, window.__game_debug.loseGame()) et ne teste jamais la victoire — R6c1 n'a aucune couverture e2e et la couverture e2e de R7c1 ne fait jamais tomber la balle sous le terrain. (repro: Ancre statique : e2e.mjs:123 et :126 precedent le finally de :128 ; process.exit() ne deroule pas les finally. Verification executable : cd GAMES/runm_breakout && node e2e.mjs ; echo exit=$? ; puis node -e \"require('node:http').get({port:4504,path:'/'},r=>console.log('serveur ENCORE vivant',r.statusCode)).on('error',()=>console.log('serveur bien arrete'));\" — attendu sur le chemin navigateur : serveur ENCORE vivant 200)",
+     "[MEDIUM] preuve factice + backdoor livree en production (R6c1/R7c1) — main.mjs:34-48 : exposeGame() est appelee sans condition par initGame() (:19), donc window.__game_debug existe dans la page servie aux joueurs, sans garde dev/prod. winGame() (:42-46) ecrit gameEngine.bricksRemaining = 0 SANS toucher aux briques puis appelle checkWin() : l'etat resultant est auto-contradictoire (state='won', bricksRemaining=0, 40 briques destroyed===false que le renderer continue de dessiner sous l'overlay VICTOIRE). C'est le chemin qu'empruntent le test de main.mjs (logic.test.mjs:665-676) et l'e2e (e2e.mjs:97) : les etats terminaux R6/R7 sont attestes par une transition forcee, jamais par une partie jouee. (repro: Dans le harnais installFakeGameGlobals de logic.test.mjs:594, apres 'await importMainFresh()' : window.__game_debug.winGame(); console.log(window.__game.state, window.__game.bricksRemaining); puis instrumenter ctx.fillRect avec un compteur et declencher env.rafCalls.at(-1).cb(); console.log('fillRect=', rects); — attendu : 'won 0' puis fillRect= 42 (fond + raquette + 40 briques vivantes) : victoire declaree sur un terrain plein.)",
+     "[MEDIUM] preuve factice — assertion tautologique dans le fichier des invariants — properties.test.mjs:185-208 : la boucle sort des que state!=='playing' et l'assertion finale (:204-207) est 'bricksRemaining === 0 || step < maxSteps'. Sur une defaite a l'etape 10 la boucle sort avec step=10 < 50000, la disjonction est vraie, le test passe. Il ne peut echouer que si le bot epuise les 50000 pas en etant encore en jeu — cas ou la boucle ne sort pas par cette porte. Un test nomme 'reaching bricksRemaining=0 is achievable' ne peut donc pas echouer sur une non-solvabilite. La propriete est reellement prouvee ailleurs (logic.test.mjs:473-479, runBot(1) avec assert won===true) : l'impact produit est limite, mais l'assertion gonfle le compte '65 tests' de E11 d'une preuve nulle. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});let step=0;while(step<50000&&e.state==='playing'){e.tick(null);step++;}console.log('state=',e.state,'remaining=',e.bricksRemaining,'step=',step);console.log('assertion du test:',(e.bricksRemaining===0||step<50000));});\" — attendu : state= lost, remaining non nul, assertion du test: true)",
+     "[LOW] source de verite dupliquee / drift silencieux — render.mjs:40 dessine la raquette avec les litteraux 'GAME_HEIGHT - 30, 80, 12' (duplicata de PADDLE_Y/PADDLE_WIDTH/PADDLE_HEIGHT, engine.mjs:15-18), :45 dessine la balle avec le rayon 5 (duplicata de BALL_RADIUS, engine.mjs:20), et _getDimensions() (:71-73) retourne {800,600} en dur au lieu d'importer GAME_DIMENSIONS — export public de engine.mjs:205 consomme uniquement par les deux fichiers de test, jamais par le module de rendu qui en est le destinataire naturel. snapshot() ampute volontairement la raquette de y/width/height (engine.mjs:195), donc le renderer ne PEUT pas obtenir la geometrie reelle. Aucun test ne compare la geometrie dessinee aux constantes du moteur. (repro: Repro de style mutation, hors lane protegee (porte sur engine.mjs) : remplacer 'const PADDLE_WIDTH = 80;' par '= 120' a engine.mjs:15, puis 'cd GAMES/runm_breakout && node --test logic.test.mjs properties.test.mjs'. Attendu : suite VERTE (les bornes assertees en logic.test.mjs:40 et :54 utilisent elles aussi le litteral 80) alors que la boite de collision fait 120 px et le rectangle dessine toujours 80. Restaurer la valeur apres mesure.)",
+     "[LOW] zone morte / flux de controle implicite — index.html:79 importe { initGame, resetGame } mais initGame n'est reference nulle part dans le script de la page — le demarrage vient du bloc auto-execute main.mjs:101-108. Corollaire : resetGame() (main.mjs:67-74) ne relance pas la boucle de jeu ; apres un stopGameLoop(), 'Rejouer' recree le moteur et publie state='playing' alors que rien ne tique — le jeu est gele tout en se declarant en cours. resetGame accede aussi a document (:71) derriere la garde 'if (renderer)', qui ne protege pas la bonne chose. Le test de reset (logic.test.mjs:711-727) assert l'etat et l'overlay, jamais qu'une frame a ete replanifiee. (repro: Dans le harnais installFakeGameGlobals de logic.test.mjs:594 : const mod = await importMainFresh(); mod.stopGameLoop(); const before = env.rafCalls.length; mod.resetGame(1); console.log('state=', window.__game.state, 'frames depuis reset=', env.rafCalls.length - before); — attendu : state= playing frames depuis reset= 0)",
+     "[LOW] garde incoherente / fuite d'ecouteurs — input.mjs:12 teste 'typeof window !== undefined' puis appelle document.addEventListener aux lignes 13 et 19 : la garde ne porte pas sur l'objet reellement utilise. Aucun removeEventListener n'existe, donc chaque new InputAdapter() (main.mjs:15, a chaque initGame) ajoute deux ecouteurs permanents sur document. Le test DOM (logic.test.mjs:298-328) installe un faux document fournissant addEventListener, ce qui masque l'incoherence de garde. (repro: cd GAMES/runm_breakout && node -e \"globalThis.window={}; import('./input.mjs').then(({InputAdapter})=>{new InputAdapter();}).catch(e=>console.log('LEVE:',e.constructor.name,'-',e.message));\" — attendu : LEVE: ReferenceError - document is not defined)"
+    ],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 44154,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 19
+    }
+   },
+   "next_reason": "ESCALADE.** Trois causes non résolues persistent et sortent de mon périmètre (je ne corrige pas) : (1) F1 rend le verdict E13 du run non fiable tant que la présence de `playwright` n'est pas tranchée — c'est un doute sur une **preuve déjà comptée**, pas une amélioration ; (2) mes 14 reproductions sont **écrites mais non mesurées**, elles requièrent un passage oracle non-LLM avant d'alimenter quoi ",
+   "status": "OK",
+   "ts": 1788418938.9874573
+  },
+  "s12-verdict": {
+   "attempts": 1,
+   "detail": {
+    "decision": "HUMANGATE_READY",
+    "software_verdict": "OK",
+    "verdict_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\verdict.json",
+    "verify_run": "AUTHENTIQUE"
+   },
+   "status": "OK",
+   "ts": 1788418939.2241967
+  },
+  "s2-worldscan": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s2-worldscan.txt",
+    "artifact_sha256": "99b4870f49a6fed31cef1ff53289b6659ee23eb3d18800b06427f634438785b1",
+    "cache_creation_tokens": 66916,
+    "cache_read_tokens": 450770,
+    "cost_usd": 0.462681,
+    "duration_s": 180.1107680797577,
+    "model": "claude-haiku-4-5-20251001",
+    "model_override": null,
+    "next_reason": "s2-worldscan complete. Causal chain closed: observation delivered, sources cited, advisory posture maintained (no prescriptions). runm_breakout charter constrains hors_scope=multièles/scores/persistance, rejecting Brick Breaker King's mobile escalation, but Breakout (1976) physics patterns directly inform implementation decisions (determinism, terminal victory, simple destruction). No further esca",
+    "output_excerpt": "Survival mode with has_win_state:false for Survival)\n  - Produced terminal JSON manifesto (no files written by agent, material via execution)\n\nproof:\n  WebSearch queries: \"Atari Breakout 1976 game mechanics\", \"web breakout game browser HTML5\", \"Breakout arcade game loop progression\", \"Brick Breaker puzzle game mobile\", \"Brick Breaker King.com gameplay\", \"Atari Breakout 1976 screenshot arcade cabinet\"\n  WebFetch: Wikipedia Breakout (game overview, mechanics), YouTube video timestamp 0:00-3:45\n  Sources verified: https://en.wikipedia.org/wiki/Breakout_(video_game) ✓, https://www.arcade-history.com ✓, https://play.google.com/store/apps/details?id=com.mobirix.brick ✓, https://gamefaqs.gamespot.com ✓\n\nlearning:\n  - Atari Breakout establishes terminal-victory arcade formula (2 screens, 3 lives, deterministic physics): core reference for minimal breakout implementations\n  - Brick Breaker King demonstrates casual-mobile escalation path (500+ stages, cosmetics, leaderboards, seasonal FOMO) which runm_breakout *explicitly rejects* per charter hors_scope\n  - Both share core deterministic physics engine (seed-stable collisions, angle-based rebound) and simple brick destruction (1-hit baseline, power-ups as optional layer)\n  - Retention patterns diverge: arcade (skill mastery + high score) vs casual (cosmetic collection + time-limited events). runm_breakout targets arcade retention model implicitly (simple, mastery-driven)\n\nnext_reason:\n  s2-worldscan complete. Causal chain closed: observation delivered, sources cited, advisory posture maintained (no prescriptions). runm_breakout charter constrains hors_scope=multièles/scores/persistance, rejecting Brick Breaker King's mobile escalation, but Breakout (1976) physics patterns directly inform implementation decisions (determinism, terminal victory, simple destruction). No further escalation required; next work is implementation (s3-design or production per runm dispatch roadmap).\n```\n\n**RETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}**",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_worldscan",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s2-worldscan",
+     "TIME_MS": 8,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "596245dbed291c6b7531dc17e055a1360b9f7b1742bbdbf5e74e17d7b5863e8d",
+      "output_hash": "4d8ed73ee1e875ac0b0f5329afa7f7f1e220ffa7f3cc0f5fedee1c9dc453fb5f",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-haiku-4-5-20251001",
+    "runner": "claude",
+    "tokens": 11869,
+    "tools_used": {
+     "Read": 6,
+     "WebFetch": 3,
+     "WebSearch": 8
+    }
+   },
+   "next_reason": "s2-worldscan complete. Causal chain closed: observation delivered, sources cited, advisory posture maintained (no prescriptions). runm_breakout charter constrains hors_scope=multièles/scores/persistance, rejecting Brick Breaker King's mobile escalation, but Breakout (1976) physics patterns directly inform implementation decisions (determinism, terminal victory, simple destruction). No further esca",
+   "status": "OK",
+   "ts": 1788394953.883994
+  },
+  "s3-decompo": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s3-decompo.txt",
+    "artifact_sha256": "8096c8b61be05835aa226c9d3415e54fb34c2c552aaa2b8ce73717bcc97abea4",
+    "cache_creation_tokens": 29047,
+    "cache_read_tokens": 35213,
+    "cost_usd": 0.6866665000000001,
+    "duration_s": 167.44581246376038,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne causale ne se ferme pas ici pour un point unique : la preuve mécanique (`check_decompo` vert) manque car la sortie est texte-seul — l'exécuteur en aval doit matérialiser `featuremap.json` puis exécuter l'oracle pour confirmer COUVERTURE/NON-INVENTION/COMPLÉTUDE avant s4-archi. Aucune cause non résolue au-delà de cette matérialisation.",
+    "output_excerpt": "        }\n      ]\n    }\n  ]\n}\n```\n\n---\n\n**RETURN LINEAGE**\n- `why_task_existed:`\n  - `problem:` non transmis (activation par dispatch `FORGE_DISPATCH:s3-decompo:runm-breakout-20260902:1` ; le Prisme s1 et le World Scan s2 sont produits, la décomposition fonctionnelle est l'étape 3 attendue).\n  - `oracle:` aucun — activation par séquencement de pipeline (décision de dispatch), pas par une mesure d'échec.\n  - `root_cause:` non établie (étape nominale de la chaîne, pas une réparation).\n  - `action_reason:` produire l'arbre Système→Feature→capacité pour que chaque exigence E1..E10 du Prisme soit portée par ≥1 feuille traçable, condition d'entrée de s4-archi.\n- `result:` featuremap texte-seul produite : 6 systèmes / 9 features / 10 feuilles ; couverture complète (E1..E7,E9,E10 portées ; E8 satisfait par rejeu couvert) ; 0 feuille non sourcée ; 0 grey block (GM absent). `check_decompo` non exécuté (texte-seul).\n- `proof:` aucune commande exécutée — `run: aucun`, aucun `featuremap.json` matérialisé par cet agent. Reçu oracle à produire par l'exécuteur : `node forge/check_decompo.mjs EVIDENCE/runs/runm_breakout/featuremap.json --prisme EVIDENCE/runs/runm_breakout/prisme.json`.\n- `learning:` le gabarit de boucle V4 (maillons F..J issus du genre clicker/idle) ne s'instancie que partiellement sur un genre arcade skill-loop : seul H (REPEAT=E8) existe, F/G/I/J sont légitimement vides — variance de granularité reportée, non gatée. Réutilisable pour tout futur run arcade.\n- `next_reason:` la chaîne causale ne se ferme pas ici pour un point unique : la preuve mécanique (`check_decompo` vert) manque car la sortie est texte-seul — l'exécuteur en aval doit matérialiser `featuremap.json` puis exécuter l'oracle pour confirmer COUVERTURE/NON-INVENTION/COMPLÉTUDE avant s4-archi. Aucune cause non résolue au-delà de cette matérialisation.\n\nSKIPPED_VALIDATION: voir section dédiée ci-dessus (2 items : exécution `check_decompo`, sourçage GM `--gm`).\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "ALLOWED_FIELDS": [],
+     "APPELS_MODELE": 0,
+     "ARRET": "aucun finding reparable localement",
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_decompo",
+     "PROBLEMS": [],
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [
+       "C"
+      ],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "FAIL",
+      "SEMANTIC_SIGNAL_BEFORE": "FAIL",
+      "SIGNAUX_APRES": {
+       "DISCRIMINANCE": 1
+      },
+      "SIGNAUX_AVANT": {
+       "DISCRIMINANCE": 1
+      }
+     },
+     "REGRESSION": [],
+     "STATUS": "ESCALADE",
+     "STEP": "s3-decompo",
+     "TIME_MS": 10,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "ce2027208bff65f2d86b6c28ff0c3b6758487ab5d5a66982bcacb9364a891cd4",
+      "output_hash": "ec58f9f4a1e9b3eddbd8f2b55c94d48da4cc0a1b2e48a8f43efc0eb1f63dc2fa",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 14469,
+    "tools_used": {}
+   },
+   "next_reason": "la chaîne causale ne se ferme pas ici pour un point unique : la preuve mécanique (`check_decompo` vert) manque car la sortie est texte-seul — l'exécuteur en aval doit matérialiser `featuremap.json` puis exécuter l'oracle pour confirmer COUVERTURE/NON-INVENTION/COMPLÉTUDE avant s4-archi. Aucune cause non résolue au-delà de cette matérialisation.",
+   "status": "OK",
+   "ts": 1788395462.3992634
+  },
+  "s4-archi": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s4-archi.txt",
+    "artifact_sha256": "443e10fc6d7888d4f323a61e8320b277179784ca5bf67451df7fa59dfb07861f",
+    "cache_creation_tokens": 94202,
+    "cache_read_tokens": 408068,
+    "cost_usd": 1.740462,
+    "duration_s": 339.5039236545563,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne ne se ferme pas ici sur un point unique — la preuve mécanique (`check_blueprint_contract` vert) manque car la sortie est texte-seul : l'exécuteur doit matérialiser `blueprint.json` puis exécuter l'oracle avant s5. Second point ouvert, remonté en fog : la racine `GAMES/runm_breakout/` (socle N1) hors `repo_map.yaml` — décision Pierre requise (le charter prime pour ce run, mais la table fi",
+    "output_excerpt": "esult:` blueprint texte-seul produit : 4 modules (engine/render/input/main), topologie en étoile, 9 paires interdites, 0 cycle, 9/9 features couvertes, 0 couverture fantôme, aucune dépendance déclarée présente dans deps_interdites. `check_blueprint_contract` non exécuté (run: aucun, texte-seul).\n- `proof:` aucune commande exécutée. Reçu à produire par l'exécuteur : `node forge/check_blueprint_contract.mjs EVIDENCE/runs/runm_breakout/blueprint.json --featuremap EVIDENCE/runs/runm_breakout/featuremap.json` (attendu : `VERDICT BLUEPRINT (avant build): OK`).\n- `learning:` `check_architecture._module_of` réduit un fichier de premier niveau à son *stem* — donc un socle N1 plat (`engine.mjs`…) donne directement des noms de modules `engine/render/input/main` sans dossiers ; réutilisable pour tout futur jeu web N1. Corollaire : durcir la topologie en étoile (seul `main` dépend) rend l'acyclicité structurelle plutôt que vérifiée après coup.\n- `next_reason:` la chaîne ne se ferme pas ici sur un point unique — la preuve mécanique (`check_blueprint_contract` vert) manque car la sortie est texte-seul : l'exécuteur doit matérialiser `blueprint.json` puis exécuter l'oracle avant s5. Second point ouvert, remonté en fog : la racine `GAMES/runm_breakout/` (socle N1) hors `repo_map.yaml` — décision Pierre requise (le charter prime pour ce run, mais la table figée ne l'enregistre pas).\n\nSKIPPED_VALIDATION: voir section dédiée ci-dessus (3 items : exécution `check_blueprint_contract`, confrontation `repo_map.yaml`, lecture ADVISORY `knowledge_packet.json`).\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"La racine de code GAMES/runm_breakout/ en layout plat socle N1 n'est pas representable dans forge/standard/repo_map.yaml, dont les racines figees sont la topologie V2 numerotee 00_CHARTER..10_FORGE explicitement hors_scope du run.\", \"root_cause\": \"repo_map.yaml ne modelise que la topologie V2 numerotee ; le socle N1 flat web impose par le charter n'y a aucune racine correspondante.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_blueprint_contract",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s4-archi-contract",
+     "TIME_MS": 6,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "6188e97666fb76f4aea24d46b9403cd800c6bb3d0ad1885e4c7e9bce8aa2f491",
+      "output_hash": "4fe6a48f976b936cbf5ed62790d412a1aa389c84496c0e744af30601c6e03b02",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 23353,
+    "tools_used": {
+     "Read": 8
+    }
+   },
+   "next_reason": "la chaîne ne se ferme pas ici sur un point unique — la preuve mécanique (`check_blueprint_contract` vert) manque car la sortie est texte-seul : l'exécuteur doit matérialiser `blueprint.json` puis exécuter l'oracle avant s5. Second point ouvert, remonté en fog : la racine `GAMES/runm_breakout/` (socle N1) hors `repo_map.yaml` — décision Pierre requise (le charter prime pour ce run, mais la table fi",
+   "status": "OK",
+   "ts": 1788395802.1498826
+  },
+  "s5-wiremap": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s5-wiremap.txt",
+    "artifact_sha256": "599b96f40faa868a8a2494c24c25446958662e4c9a8fe538e4a17bd1d1cce1ed",
+    "cache_creation_tokens": 48355,
+    "cache_read_tokens": 391718,
+    "cost_usd": 1.103079,
+    "duration_s": 234.208899974823,
+    "join_check": {
+     "advisory": true,
+     "capacites": 10,
+     "capacites_couvertes": 0,
+     "capacites_non_couvertes": 10,
+     "couverture_fantome": 0,
+     "exemples": [
+      "capacite 'R1c1_hud_objectif_nonvide' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+      "capacite 'R2c1_entree_touches_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+      "capacite 'R2c2_effet_deplacement_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)"
+     ],
+     "exit_code": 1,
+     "forme_satisfaite": false,
+     "lignes": 9,
+     "lignes_sans_couvre": 9,
+     "maillon_non_lie": 0,
+     "problems": 9,
+     "regime": "EMPTY_FORM",
+     "status": "NOT_JOINED"
+    },
+    "join_check_apres_reparation": {
+     "advisory": true,
+     "capacites": 10,
+     "capacites_couvertes": 0,
+     "capacites_non_couvertes": 10,
+     "couverture_fantome": 9,
+     "ecart_avec_avant": "EMPTY_FORM (agent) -> VOID (après réparation) — la boucle a modifié la jointure",
+     "exemples": [
+      "capacite 'R1c1_hud_objectif_nonvide' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+      "capacite 'R2c1_entree_touches_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+      "capacite 'R2c2_effet_deplacement_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+      "features[0].couvre: 'renderObjective' ne resout aucune capacite de la featuremap",
+      "features[1].couvre: 'movePaddle' ne resout aucune capacite de la featuremap",
+      "features[2].couvre: 'reflectBall' ne resout aucune capacite de la featuremap"
+     ],
+     "exit_code": 1,
+     "forme_satisfaite": true,
+     "lignes": 9,
+     "lignes_sans_couvre": 0,
+     "maillon_non_lie": 0,
+     "problems": 0,
+     "regime": "VOID",
+     "status": "NOT_JOINED"
+    },
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne ne se ferme pas ici sur un point : la preuve mécanique manque par construction (texte-seul + code non encore bâti). Le format concret du dispatch (`{features:[…]}`) ne porte pas `couvre`/le schéma v2, donc `check_wiremap_contract` (coverage + `maillon_non_lie`) n'est pas exécutable sur cet artefact — à traiter en amont/aval ; `check_wiremap` post-build reste à exécuter après s9. Aucune c",
+    "output_excerpt": "es (R1..R9), fonction et fichiers non vides pour chacune ; 10/10 capacités couvertes (E8 satisfait par rejeu couvert) ; 0 couvre fantôme. Aucun oracle exécuté (texte-seul + code absent).\n- `proof:` aucune commande exécutée — `run: aucun`. Reçus à produire en aval : `forge.static_oracles.check_wiremap` sur le `wiremap.json` matérialisé (post-build s10c).\n- `learning:` la racine de code N1 `GAMES/runm_breakout` reste hors de la table figée `repo_map.yaml` (topologie V2 numérotée) — l'isomorphisme WireMap se fait au blueprint (4 modules), le placement flat au charter N1, pas à repo_map ; écart connu (`manifest-e2b0f5c8ef6fed0e`), réutilisable pour tout run N1 flat web.\n- `next_reason:` la chaîne ne se ferme pas ici sur un point : la preuve mécanique manque par construction (texte-seul + code non encore bâti). Le format concret du dispatch (`{features:[…]}`) ne porte pas `couvre`/le schéma v2, donc `check_wiremap_contract` (coverage + `maillon_non_lie`) n'est pas exécutable sur cet artefact — à traiter en amont/aval ; `check_wiremap` post-build reste à exécuter après s9. Aucune cause non résolue au-delà de ces matérialisations.\n\nSKIPPED_VALIDATION: voir section dédiée ci-dessus (2 items : `check_wiremap_contract` non consommable sur ce format, `check_wiremap` post-build hors périmètre s5).\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Le format de sortie concret imposé par le dispatch s5 ({features:[{feature,fonction,fichiers,preuve}]}, lu par forge.static_oracles.check_wiremap) ne porte pas le champ couvre ni le schema v2 {systems,lines}, si bien que l'oracle AVANT-build check_wiremap_contract (coverage featuremap + finding maillon_non_lie) ne peut consommer l'artefact materialise.\", \"root_cause\": \"Deux oracles WireMap a deux moments (check_wiremap_contract pre-build vs check_wiremap post-build) attendent deux schemas differents, mais le dispatch n'impose que le schema post-build, laissant la verification de couverture pre-build sans artefact conforme a parser.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "ALLOWED_FIELDS": [
+      "features[0].couvre",
+      "features[1].couvre",
+      "features[2].couvre",
+      "features[3].couvre",
+      "features[4].couvre",
+      "features[5].couvre",
+      "features[6].couvre",
+      "features[7].couvre",
+      "features[8].couvre"
+     ],
+     "APPELS_MODELE": 9,
+     "ARRET": "aucun finding reparable localement",
+     "CYCLES": 1,
+     "FIELDS_CHANGED": [
+      "features[0].couvre",
+      "features[1].couvre",
+      "features[2].couvre",
+      "features[3].couvre",
+      "features[4].couvre",
+      "features[5].couvre",
+      "features[6].couvre",
+      "features[7].couvre",
+      "features[8].couvre"
+     ],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_wiremap_contract",
+     "PROBLEMS": [],
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 9,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "ESCALADE",
+     "STEP": "s5-wiremap-contract",
+     "TIME_MS": 3539,
+     "TOKENS": 230,
+     "TRACE": {
+      "input_hash": "232554fb8e495e52c52874439953d6d1c2f22c38ff22ef020e675c855d0227d4",
+      "output_hash": "5c74f9b1ac28bc707d7e5207bb7a46d1e3dc6975432a6844c19b5b4a324a6760",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 16443,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 7
+    }
+   },
+   "next_reason": "la chaîne ne se ferme pas ici sur un point : la preuve mécanique manque par construction (texte-seul + code non encore bâti). Le format concret du dispatch (`{features:[…]}`) ne porte pas `couvre`/le schéma v2, donc `check_wiremap_contract` (coverage + `maillon_non_lie`) n'est pas exécutable sur cet artefact — à traiter en amont/aval ; `check_wiremap` post-build reste à exécuter après s9. Aucune c",
+   "status": "OK",
+   "ts": 1788396040.216138
+  },
+  "s6-redteam-plan": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s6-redteam-plan.txt",
+    "artifact_sha256": "e7217ed89e1f2aee24e67fe02cd8420d1e2cbf48a72e17564dd52bfe5591c587",
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "cost_usd": 0.0,
+    "duration_s": 0.0,
+    "model": "qwen2.5-14b-instruct",
+    "model_override": null,
+    "output_excerpt": "consommer le blueprint gelé (étape 4) et la WireMap (étape 5). Ces documents contiennent l'architecture globale du système, y compris les composants, leurs interactions, et les dépendances entre eux.\n\n### Étape 2 : Analyse critique\nJe vais analyser ces artefacts pour identifier les points faibles potentiels. Cela inclut :\n- Rechercher des angles morts dans l'architecture.\n- Identifier des dépendances fragiles qui pourraient causer des problèmes en cas de changement ou d'échec.\n- Examiner le câblage pour détecter toute incohérence ou redondance.\n\n### Étape 3 : Proposition de corrections\nPour chaque faille identifiée, je proposerai une correction. Ces propositions seront basées sur des principes d'architecture solide et sécurisée, sans remettre en question les décisions techniques prises par l'équipe.\n\n### Étape 4 : Production du rapport\nJe vais produire un rapport détaillé qui listera chaque faille sous la forme `{angle, faille, correction_proposée}`. Le rapport inclura également un verdict `GO-si-corrigé` pour chaque point critique identifié.\n\n### Étape 5 : Ajustement des artefacts\nSur la base des corrections proposées, je vais ajuster les artefacts d'architecture et de wiremap (si nécessaire) pour refléter ces améliorations. Ces modifications seront faites uniquement dans le périmètre autorisé et sans toucher aux parties protégées du projet.\n\n### Étape 6 : Finalisation\nJe vais finaliser le rapport en y incluant la section `RETURN_REASON` qui résume si des problèmes ont été découverts ou non. Si aucun problème n'a été trouvé, je noterai cela clairement dans le rapport.\n\nVoici un exemple de ce que pourrait ressembler une entrée du rapport :\n\n```\n{\n  \"angle\": \"Architecture\",\n  \"faille\": \"Absence d'isolation entre les composants critiques A et B.\",\n  \"correction_proposée\": \"Ajouter des pare-feu virtuels pour isoler les communications entre A et B.\",\n  \"verdict\": \"GO-si-corrigé\"\n}\n```\n\nJe vais maintenant commencer l'analyse en consommant le blueprint gelé et la WireMap.",
+    "qwen_ok": true,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "qwen2.5-14b-instruct",
+    "runner": "qwen",
+    "tokens": 0
+   },
+   "status": "OK",
+   "ts": 1788396048.5731788
+  },
+  "s9-build": {
+   "attempts": 6,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s9-build.txt",
+    "artifact_sha256": "e561c7cb708f18425cdfcdacbccf6fdd556002d1eb5a267190a000a2f5741cf7",
+    "cache_creation_tokens": 173906,
+    "cache_read_tokens": 7783100,
+    "cost_usd": 6.795756999999998,
+    "duration_s": 687.6161115169525,
+    "model": "claude-haiku-4-5-20251001",
+    "model_override": "opus",
+    "next_reason": "la chaîne causale du gate mutation est **FERMÉE**. Deux points restent ouverts pour le niveau supérieur, aucun corrigeable ici : (a) le driver doit relancer s10a/s10c avec ses propres permissions Python pour convertir mes vérifications Node en reçu **signé** — les miennes sont fidèles mais non signées ; (b) décision Pierre sur l'e2e qui rend 0 sans navigateur (Playwright absent), qui laisse le cri",
+    "output_excerpt": "tio = 0.000` ; 4 recherches dans `knowledge_base/search_log.jsonl` horodatées `06:44–06:45Z`, postérieures au démarrage du dispatch (`08:41` local).\n- **learning:** un mutant survivant signale souvent une **duplication de code**, pas un trou de test — la garde répétée crée un point d'observation inaccessible, et la factoriser tue le mutant sans toucher aux tests (zone protégée préservée). Second enseignement, plus coûteux : un fichier de triage **syntaxiquement valide mais structurellement rejeté** échoue en silence — `load_mutation_triage` rend `None` sans journaliser, et le seul signal visible est un `triage_perimes: []` anormalement vide face à un fichier peuplé. Enfin, la liste « volets rouges » du pré-mortem confond `SKIPPED` motivé et FAIL réel : trois des quatre volets cités n'étaient pas des défauts produit.\n- **next_reason:** la chaîne causale du gate mutation est **FERMÉE**. Deux points restent ouverts pour le niveau supérieur, aucun corrigeable ici : (a) le driver doit relancer s10a/s10c avec ses propres permissions Python pour convertir mes vérifications Node en reçu **signé** — les miennes sont fidèles mais non signées ; (b) décision Pierre sur l'e2e qui rend 0 sans navigateur (Playwright absent), qui laisse le critère de jouabilité du Brief non prouvé.\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Le volet e2e du gate rend exit 0 et 'RESULT: PASS' sans jamais piloter de navigateur quand Playwright est absent ; la garde anti-coquille check_e2e_harness ne peut pas le voir car elle inspecte la source, pas la branche prise au runtime. Par ailleurs mutation_triage.json ecrit comme objet JSON etait silencieusement ignore par load_mutation_triage, qui n'accepte qu'un tableau au premier niveau.\", \"root_cause\": \"Deux gardes statiques jugent la FORME du harnais (tokens dans la source, schema du fichier) sans point de mesure sur son COMPORTEMENT reel : un repli runtime non instrumente et un rejet de schema non journalise passent tous deux pour des verts.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-haiku-4-5-20251001",
+    "runner": "claude",
+    "tokens": 46410,
+    "tools_used": {
+     "Bash": 53,
+     "Edit": 4,
+     "Read": 11,
+     "Write": 6
+    }
+   },
+   "last_oracle": "s10a-oracle-code",
+   "last_root_cause": "returncode=0; mutation=FAIL (volets rouges: runtime_alive)",
+   "next_reason": "la chaîne causale du gate mutation est **FERMÉE**. Deux points restent ouverts pour le niveau supérieur, aucun corrigeable ici : (a) le driver doit relancer s10a/s10c avec ses propres permissions Python pour convertir mes vérifications Node en reçu **signé** — les miennes sont fidèles mais non signées ; (b) décision Pierre sur l'e2e qui rend 0 sans navigateur (Playwright absent), qui laisse le cri",
+   "responsible_level": "build",
+   "status": "OK",
+   "ts": 1788418350.142588
+  }
+ },
+ "transition": "INCOMPLETE: observer cli.py returncode=2",
+ "updated_ts": 1788418939.415616
+}

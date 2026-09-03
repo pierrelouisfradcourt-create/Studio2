@@ -1,0 +1,544 @@
+{
+ "catalog_brick_ids_snapshot": [
+  "pat-damage-floor",
+  "pat-forge-architecture_check_before_human_escalation",
+  "pat-forge-broken_loop_repair_not_report",
+  "pat-forge-diagnosis_is_not_workflow_end",
+  "pat-forge-entrypoint_is_undeclared_invariant",
+  "pat-forge-escalation_costs_avoid_default_route",
+  "pat-forge-forge_oracle_convention_undocumented",
+  "pat-forge-hardcoded_expected_state_breaks_on_growth",
+  "pat-forge-instrument_assumes_instead_of_reads",
+  "pat-forge-kb_humangate_to_controlled_autonomy",
+  "pat-forge-mutation_survivor_equivalence_requires_mechanical_proof",
+  "pat-forge-new_proof_needs_declared_executor",
+  "pat-forge-oracle_fail_vs_not_measured_marker",
+  "pat-forge-preflight_oracle_registration",
+  "pat-forge-reuse_tracking_oracle_dead_since_inception",
+  "pat-forge-run_status_not_liveness_proof",
+  "pat-forge-test_green_via_wrong_causal_path",
+  "pat-forge-timeout_greenfield_by_profile",
+  "pat-forge-wiremap_concept_reuse_requalification",
+  "pat-full-reachability",
+  "pat-zone-of-control",
+  "sys-damage-floor",
+  "sys-evader-basic",
+  "sys-grid-nav-m01",
+  "sys-guardian-zoc",
+  "sys-pursuer-continuous",
+  "sys-pursuer-mobile",
+  "sys-reachability"
+ ],
+ "created_ts": 1788373893.483129,
+ "escalations": 0,
+ "is_game": true,
+ "model_override": null,
+ "profile": "full",
+ "project": "runm_breakout",
+ "reason": "exception non gérée à s10a-oracle-code: TypeError('write() argument must be str, not None')",
+ "run_id": "runm-breakout-20260902",
+ "run_status": "HALTED",
+ "steps": {
+  "s0-contrat": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s0-contrat.txt",
+    "artifact_sha256": "05a9115431f11443098adec32270300427aa9782e71e3e4bd06b5acdcafcca21",
+    "cache_creation_tokens": 79867,
+    "cache_read_tokens": 705848,
+    "cost_usd": 1.6266559999999999,
+    "duration_s": 272.3936414718628,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne continue nominalement vers s1 (Prisme Produit) une fois `charter.yaml` matérialisé et validé par `check_charter` ; aucune cause non résolue introduite par s0. Lignée non fermée par défaut (poursuite de boucle prévue), mais aucune escalade requise de s0.",
+    "output_excerpt": "nique de la provenance Pierre de `reference_jeu` — périmètre : charter — statut : **non mécanisable** — raison : fait de gate, pas de schéma (le validateur ne lit pas le brief) ; provenance attestée en prose ci-dessus, tracée à `project_brief.provenance.genre`.\n\n**RETURN LINEAGE** :\n- `why_task_existed:`\n  - `problem:` RUN M — premier run réel du Studio V2 — exige un contrat produit sans flou pour cadrer la migration V1→V2 ; sans charter validable, la chaîne ne peut démarrer proprement (leçons AutoBattler : `reference_jeu` inventé sans Pierre).\n  - `oracle:` aucun — activation par décision humaine (mission Pierre 2026-09-02, GO RUN M) via le project_brief.\n  - `root_cause:` non établie (activation nominale d'entrée de boucle, pas une réparation de défaut mesuré).\n  - `action_reason:` s0 est la seule étape habilitée à figer objectif/frontières/critères en traçant chaque design-intent à une source Pierre, sans déborder sur code/archi/world-scan.\n- `result:` charter à 7 champs produit comme bloc ```yaml``` extractible, tous remplis, aucun « à définir », design-intent Pierre-sourcé ; fogs Pierre (references_autorisees, N5, N6) portés en hors_scope sans prétention de couverture.\n- `proof:` aucune commande exécutée (`run: aucun`) ; artefact = le bloc ```yaml``` ci-dessus, à matérialiser puis valider par `check_charter` en aval.\n- `learning:` en dispatch texte-seul s0, la conformité-par-construction ne suffit pas : le matérialiseur exige un fence ```yaml``` extractible (pré-mortem manifest-35da004686396698) — la forme fencée est la précondition, pas un détail de présentation.\n- `next_reason:` la chaîne continue nominalement vers s1 (Prisme Produit) une fois `charter.yaml` matérialisé et validé par `check_charter` ; aucune cause non résolue introduite par s0. Lignée non fermée par défaut (poursuite de boucle prévue), mais aucune escalade requise de s0.\n\nSKIPPED_VALIDATION: voir section ci-dessus (2 items déclarés, aucun silence).\n\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 18730,
+    "tools_used": {
+     "Bash": 2,
+     "LSP": 1,
+     "Read": 11
+    },
+    "yaml_check": {
+     "champs": [
+      "actions_interdites",
+      "criteres_demo",
+      "criteres_succes",
+      "hors_scope",
+      "objectif",
+      "plateforme_cible",
+      "reference_jeu"
+     ],
+     "check": {
+      "oracle": "check_charter",
+      "raisons": [],
+      "verdict": "PASS"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\charter.yaml",
+     "written": true
+    }
+   },
+   "next_reason": "la chaîne continue nominalement vers s1 (Prisme Produit) une fois `charter.yaml` matérialisé et validé par `check_charter` ; aucune cause non résolue introduite par s0. Lignée non fermée par défaut (poursuite de boucle prévue), mais aucune escalade requise de s0.",
+   "status": "OK",
+   "ts": 1788374166.0338717
+  },
+  "s1-prisme": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s1-prisme.txt",
+    "artifact_sha256": "19fa05d2ad3b229e3d9d7c13a5e0d0384847bdfa40a97c5d6f730298631eabfc",
+    "cache_creation_tokens": 38431,
+    "cache_read_tokens": 232894,
+    "cost_usd": 1.206421,
+    "duration_s": 365.6440758705139,
+    "loop_check": {
+     "check": {
+      "problems": [
+       "maillon I (META_LOOP) : au moins 1 exigence attendue (0 trouvee)",
+       "maillon J (ADVANTAGE) : au moins 1 exigence attendue (0 trouvee)"
+      ],
+      "verdict": "FAIL"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\loop.json",
+     "written": true
+    },
+    "markdown_check": {
+     "chars": 9646,
+     "check": {
+      "command": "node forge/prisme/check_prisme.mjs",
+      "returncode": 0,
+      "tail": [
+       "1/1 artefacts conformes structurellement.",
+       "RESULT: PASS"
+      ],
+      "verdict": "PASS"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\product_snapshot.md",
+     "written": true
+    },
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "escalade fog HumanGate** — deux causes non résolues persistent, non réparables au niveau s1 : (1) le gabarit V4 mono-genre exige META_LOOP+ADVANTAGE inapplicables à un arcade borné ; un gabarit de boucle *par genre* est nécessaire, décision Pierre. (2) `gm_worldscan.json` absent → sourçage GM des exigences de boucle impossible (0/10), à trancher (produire un GM pour ce genre, ou acter que l'arcade",
+    "output_excerpt": "par oracle, et tout echec devient inattribuable entre la migration V1->V2 et le hasard.\",\n      \"enonce\": \"A seed fixe et suite d'inputs fixe, la logique metier (module .mjs hors navigateur) produit un etat final identique, verifiable par hash.\",\n      \"acteur\": \"SYSTEM\",\n      \"loop_role\": \"NONE\",\n      \"expected_proof\": {\"kind\": \"oracle\", \"statement\": \"Executer la logique deux fois hors navigateur a seed+inputs identiques ; comparer le hash de l'etat final (egalite exigee).\"},\n      \"destination\": \"s4-archi\"\n    },\n    {\n      \"id\": \"R15_lives\",\n      \"source\": \"EXPECTED\",\n      \"source_role\": \"s2-worldscan\",\n      \"reference\": \"worldscan:games[0].objectives[0].defeat_condition\",\n      \"observation\": \"objectives.defeat_condition : la defaite survient apres 3 pertes de balle ('3 lives exhausted').\",\n      \"claim\": \"Le nombre de vies restantes doit etre visible pour que la tension de la defaite imminente existe et que le joueur mesure son risque.\",\n      \"enonce\": \"Le HUD affiche un compteur de vies initialise a 3, decremente de 1 chaque fois que la balle passe sous la raquette.\",\n      \"acteur\": \"SYSTEM\",\n      \"loop_role\": \"NONE\",\n      \"expected_proof\": {\"kind\": \"visual\", \"statement\": \"Faire tomber la balle une fois ; verifier que le compteur de vies affiche passe de 3 a 2.\"},\n      \"destination\": \"s5-wiremap\"\n    }\n  ]\n}\n```\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Le gabarit de boucle V4 exige META_LOOP (prestige avec reset visible) et ADVANTAGE (increases_more_than apres prestige), maillons propres au genre idle/clicker, absents du casse-briques arcade cible et mis hors_scope par le charter (meta-progression/prestige interdits, invention de design-intent interdite sans source Pierre) ; de plus gm_worldscan.json est absent du run_dir, donc sourcage GM des exigences de boucle impossible (0/10).\", \"root_cause\": \"Gabarit de boucle V4 mono-genre applique a un run d'un autre genre, sans gabarit de boucle par genre ni Game Master present dans le run_dir.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_prisme_manifest",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [
+       "B"
+      ],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [
+       "exigences[5].observation",
+       "exigences[6].observation"
+      ],
+      "REPARE": true,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "FAIL",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {
+       "LANGUE": 2
+      }
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s1-prisme",
+     "TIME_MS": 1718,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "5ab539e1c0040b172748f8bbfd32d362a835db3620f08faddadcb3ddee42a28d",
+      "output_hash": "44243357b63bfc79d48dced8f779327489d7b4dd27ab7972af52a5288a383105",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 27784,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 7
+    }
+   },
+   "next_reason": "escalade fog HumanGate** — deux causes non résolues persistent, non réparables au niveau s1 : (1) le gabarit V4 mono-genre exige META_LOOP+ADVANTAGE inapplicables à un arcade borné ; un gabarit de boucle *par genre* est nécessaire, décision Pierre. (2) `gm_worldscan.json` absent → sourçage GM des exigences de boucle impossible (0/10), à trancher (produire un GM pour ce genre, ou acter que l'arcade",
+   "status": "OK",
+   "ts": 1788374650.7981746
+  },
+  "s10a-oracle-code": {
+   "attempts": 1,
+   "detail": {
+    "executor_diagnostic": {
+     "measured": false,
+     "note": "aucun exécuteur n'a été appelé pour cette étape"
+    },
+    "reason": "exception non gérée à s10a-oracle-code: TypeError('write() argument must be str, not None')"
+   },
+   "status": "BLOCKED",
+   "ts": 1788375958.7764413
+  },
+  "s10b-oracle-archi": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s10c-oracle-wiremap": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s11-redteam-code": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s12-verdict": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s2-worldscan": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s2-worldscan.txt",
+    "artifact_sha256": "eb61680733f6a9da147bb0691664756ebc358a15e3d8a20c97adacbd9603b705",
+    "cache_creation_tokens": 64088,
+    "cache_read_tokens": 395537,
+    "cost_usd": 0.3456547,
+    "duration_s": 116.81106090545654,
+    "model": "claude-haiku-4-5-20251001",
+    "model_override": null,
+    "output_excerpt": "fects on re-runs, creating escalating meta-challenge.\"\n      },\n      \"objectives\": [\n        {\n          \"mode\": \"roguelike_run\",\n          \"has_win_state\": true,\n          \"victory_condition\": \"Defeat final dungeon boss while maintaining health > 0\",\n          \"has_defeat_state\": true,\n          \"defeat_condition\": \"Health reaches 0 before defeating final boss\",\n          \"player_goal\": \"Navigate procedurally-generated dungeon, defeat enemies via orb-peg pachinko, build synergistic orb+relic deck, reach and defeat final boss\"\n        }\n      ],\n      \"retention_answer\": \"Roguelike procedural generation ensures no two dungeon maps or enemy sequences repeat, eliminating boredom from static content. Deck-building mechanics tap into theorycrafting (orb synergies, relic interactions, scaling), encouraging min-max behavior and playstyle experimentation. Death → reset to run start creates incremental-progress loops (each attempt unlocks permanent orb types and meta-progression). Cruciball escalation (self-imposed harder modes) extends endgame appeal. Meta-currency (relics, orbs) bridges individual runs into long-term engagement.\"\n    }\n  ],\n  \"advisory\": true\n}\n```\n\n---\n\n## SKIPPED_VALIDATION\n\n- **Source timestamp precision on videos** : None of the games above were analyzed from video timestamps; all sources are wiki/article URLs without real-time video analysis. If video-based frame-by-frame loop analysis were required by oracle, this validation remains unfinished.\n- **Per-minute engagement metrics** : Loop descriptions are qualitative (player observation, not quantified by telemetry or academic study). No tick-by-tick engagement curve data was cited.\n- **Exact build sizes / asset costs** : Architecture-guessed (state machine, physics, render loop) but not validated by source code audit—Breakout ROM size and Arkanoid ROM size could be measured, Peglin build size available from Steam, but not fetched here.\n\n---\n\n## RETURN_REASON\n\n```json\n{\"status\": \"NOT_DISCOVERED\"}\n```",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_worldscan",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s2-worldscan",
+     "TIME_MS": 8,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "d2557fac1635b7f710c72d302e79be1462dcce476b23b0608b61df25efb82fcd",
+      "output_hash": "5f134f996b40cb50a74074b64a4e23aecd9c0f60463e087b5e7484101ef4f8dd",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-haiku-4-5-20251001",
+    "runner": "claude",
+    "tokens": 7328,
+    "tools_used": {
+     "Read": 7,
+     "WebFetch": 3,
+     "WebSearch": 3
+    }
+   },
+   "status": "OK",
+   "ts": 1788374283.0973876
+  },
+  "s3-decompo": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s3-decompo.txt",
+    "artifact_sha256": "06ce5a676c490b3ceb9a8c74732b25fc8c269b2f5d328822ccc7cc68b6a16c01",
+    "cache_creation_tokens": 29241,
+    "cache_read_tokens": 35213,
+    "cost_usd": 0.8482055,
+    "duration_s": 259.79285073280334,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la lignée continue proprement vers s4-archi/s5-wiremap (l'aval doit consommer cette featuremap) ; aucune cause non résolue ne persiste — l'unique écart (ancre `main.tscn` inapplicable) est neutralisé par inheritance verbatim, déjà documenté au pré-mortem (manifest-a243e3bfb138847f, manifest-e2b0f5c8ef6fed0e).",
+    "output_excerpt": "f\": {\"kind\": \"bot_action\", \"statement\": \"Un bot laisse la balle tomber 3 fois ; verifier l'apparition du game over et l'arret de la simulation.\"}\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": \"SYS_LOGIQUE\",\n      \"features\": [\n        {\n          \"id\": \"F_determinisme\",\n          \"capacites\": [\n            {\n              \"id\": \"cap_determinisme_hash\",\n              \"capacite\": \"A seed fixe et suite d'inputs fixe, la logique metier (.mjs hors navigateur) produit un etat final identique, verifiable par hash.\",\n              \"source_ref\": \"R14_determinism\",\n              \"expected_proof\": {\"kind\": \"oracle\", \"statement\": \"Executer la logique deux fois hors navigateur a seed+inputs identiques ; comparer le hash de l'etat final (egalite exigee).\"}\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}\n```\n\n**software_verdict: BLOCKED** (aucun oracle exécutable dans ce périmètre texte-seul ; featuremap construite conforme, validation reportée à l'exécuteur).\n\n**SKIPPED_VALIDATION :**\n- *Item :* exécution de `check_decompo.mjs` (couverture / non-invention / complétude). *Où :* la featuremap ci-dessus. *Statut :* non fait. *Raison :* `run: aucun` + dispatch texte-seul — aucun `featuremap.json` matérialisé par moi ; l'oracle exige un fichier, à lancer par l'exécuteur avec la commande fournie.\n- *Item :* sourçage grey blocks GM (`--gm`). *Où :* run_dir. *Statut :* non applicable. *Raison :* `gm_worldscan.json` absent → 0 grey block, comportement inchangé (garde-fou Lot B).\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Le garde-fou V4 GAME LOOP ancre la preuve d'ENTREE des actions joueur (R02/R03/R07) a 'bot_action depuis main.tscn', un artefact Godot inexistant dans ce run web/N1-flat.\", \"root_cause\": \"Gabarit de boucle V4 formule pour la cible Godot (main.tscn) applique a un run de lignee web sans Godot (charter Pierre 2026-09-02) ; resolu par inheritance verbatim des preuves du Prisme, qui referencent des cibles clavier/DOM et non main.tscn.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "ALLOWED_FIELDS": [],
+     "APPELS_MODELE": 0,
+     "ARRET": "aucun finding reparable localement",
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_decompo",
+     "PROBLEMS": [],
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [
+       "C"
+      ],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "FAIL",
+      "SEMANTIC_SIGNAL_BEFORE": "FAIL",
+      "SIGNAUX_APRES": {
+       "DISCRIMINANCE": 3
+      },
+      "SIGNAUX_AVANT": {
+       "DISCRIMINANCE": 3
+      }
+     },
+     "REGRESSION": [],
+     "STATUS": "ESCALADE",
+     "STEP": "s3-decompo",
+     "TIME_MS": 12,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "6e01ddb8a81ee14e1e283096fa4329768474b0c9824f03e81d38ef1f0491a137",
+      "output_hash": "12dc3aa1e0c84d45076dcbb0251ca8beca73494e7be4b2a8331e57a1e80c2d66",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 20849,
+    "tools_used": {}
+   },
+   "next_reason": "la lignée continue proprement vers s4-archi/s5-wiremap (l'aval doit consommer cette featuremap) ; aucune cause non résolue ne persiste — l'unique écart (ancre `main.tscn` inapplicable) est neutralisé par inheritance verbatim, déjà documenté au pré-mortem (manifest-a243e3bfb138847f, manifest-e2b0f5c8ef6fed0e).",
+   "status": "OK",
+   "ts": 1788374910.8474188
+  },
+  "s4-archi": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s4-archi.txt",
+    "artifact_sha256": "4f95b2d04b4abb353616c5838aa0abcc3c8ce53006802b187805ddc675489dfc",
+    "cache_creation_tokens": 99078,
+    "cache_read_tokens": 308891,
+    "cost_usd": 1.9657405,
+    "duration_s": 459.1842403411865,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "chaîne causale **FERMÉE** côté conception : le blueprint est complet et cohérent par lecture d'oracle. Une cause non résolue subsiste néanmoins EN AMONT (fog, non créé par moi) : racine `GAMES/runm_breakout` hors `repo_map.yaml` + `knowledge_packet.json` absent → décision Pierre (HumanGate), déjà tracée en premortem. Le reçu mécanique `check_blueprint_contract` reste à émettre par l'exécuteur au n",
+    "output_excerpt": "te\": \"Dessiner sur le canvas l'etat courant fourni par la logique : raquette, balle en mouvement, champ de briques, apparition visible de l'ecran 2, overlays victoire/defaite — en lecture seule, sans modifier aucun etat.\",\n      \"couvre\": [\"F_balle_physique\", \"F_ecrans_progression\"],\n      \"dependances\": [\"engine\", \"progression\"],\n      \"preuve_attendue\": {\n        \"kind\": \"visual\",\n        \"statement\": \"Capture navigateur sur plusieurs frames : la balle change de position et s'inverse aux contacts, la raquette suit les intents ; quand progression signale l'unlock, le champ ecran_2 devient visible a l'ecran.\"\n      }\n    },\n    {\n      \"module\": \"hud\",\n      \"responsabilite\": \"Afficher dans le DOM l'objectif courant (texte fourni par progression), le score et le compteur de vies fournis par engine — en lecture seule.\",\n      \"couvre\": [\"F_objectif_hud\", \"F_vies\"],\n      \"dependances\": [\"engine\", \"progression\"],\n      \"preuve_attendue\": {\n        \"kind\": \"visual\",\n        \"statement\": \"Capture navigateur du HUD : la zone objectif est non vide au demarrage et vaut 'Vider l'ecran 1' ; le score affiche croit apres une brique cassee ; le compteur de vies passe de 3 a 2 apres une chute.\"\n      }\n    },\n    {\n      \"module\": \"main\",\n      \"responsabilite\": \"Cabler et cadencer le jeu : boucle d'animation qui applique les intents d'input a engine, invoque progression, puis pilote render et hud a chaque frame ; seeder rng ; exposer window.__game ; arreter la boucle a la victoire ou la defaite.\",\n      \"couvre\": [\"F_balle_physique\", \"F_fin_partie\"],\n      \"dependances\": [\"engine\", \"progression\", \"rng\", \"render\", \"input\", \"hud\"],\n      \"preuve_attendue\": {\n        \"kind\": \"bot_action\",\n        \"statement\": \"Un bot pilote via window.__game : la boucle fait avancer la balle en continu frame apres frame ; a l'entree en etat victoire ou defaite, la simulation s'arrete (halt observable, plus aucune frame avancee).\"\n      }\n    }\n  ]\n}\n```\n\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_blueprint_contract",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s4-archi-contract",
+     "TIME_MS": 7,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "22606c3d4882569c88156b9aebc2b2926b6f921aebb2ba26d7e6b92f152da7a9",
+      "output_hash": "d22fd3f75b89256727c5823604d4e40ca2688dca7365aac7280419319b1dbf0f",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 32374,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 6
+    }
+   },
+   "next_reason": "chaîne causale **FERMÉE** côté conception : le blueprint est complet et cohérent par lecture d'oracle. Une cause non résolue subsiste néanmoins EN AMONT (fog, non créé par moi) : racine `GAMES/runm_breakout` hors `repo_map.yaml` + `knowledge_packet.json` absent → décision Pierre (HumanGate), déjà tracée en premortem. Le reçu mécanique `check_blueprint_contract` reste à émettre par l'exécuteur au n",
+   "status": "OK",
+   "ts": 1788375370.2785661
+  },
+  "s5-wiremap": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s5-wiremap.txt",
+    "artifact_sha256": "f263c4f0fa5fb8c6c030827c493eac3eebf1a13b5da7e7027f680f3636970ce1",
+    "cache_creation_tokens": 40201,
+    "cache_read_tokens": 244547,
+    "cost_usd": 0.9221145000000001,
+    "duration_s": 201.76807618141174,
+    "join_check": {
+     "advisory": true,
+     "capacites": 17,
+     "capacites_couvertes": 17,
+     "capacites_non_couvertes": 0,
+     "couverture_fantome": 0,
+     "exemples": [],
+     "exit_code": 0,
+     "forme_satisfaite": true,
+     "lignes": 14,
+     "lignes_sans_couvre": 0,
+     "maillon_non_lie": 0,
+     "problems": 0,
+     "regime": "JOINED",
+     "status": "JOINED"
+    },
+    "join_check_apres_reparation": {
+     "advisory": true,
+     "capacites": 17,
+     "capacites_couvertes": 17,
+     "capacites_non_couvertes": 0,
+     "couverture_fantome": 0,
+     "exemples": [],
+     "exit_code": 0,
+     "forme_satisfaite": true,
+     "lignes": 14,
+     "lignes_sans_couvre": 0,
+     "maillon_non_lie": 0,
+     "problems": 0,
+     "regime": "JOINED",
+     "status": "JOINED"
+    },
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne reste OUVERTE — deux preuves manquent et ne peuvent être produites qu'en aval : `check_wiremap_contract` (avant build) et `forge.static_oracles.check_wiremap` (s10c, après que s9 ait matérialisé les fichiers). L'exécuteur matérialise `wiremap.json` depuis le bloc terminal, puis l'oracle de contrat doit être lancé.",
+    "output_excerpt": "      \"fichiers\": [\"progression.mjs\"],\n      \"preuve\": \"visual — au demarrage, le texte objectif vaut 'Vider l'ecran 1' (couvre: cap_objectif_ecran1)\",\n      \"couvre\": [\"cap_objectif_ecran1\"]\n    },\n    {\n      \"feature\": \"R09 But ecran 2\",\n      \"fonction\": \"currentObjective\",\n      \"fichiers\": [\"progression.mjs\"],\n      \"preuve\": \"visual — apres unlock, le texte objectif vaut 'Vider l'ecran 2', distinct de 'Vider l'ecran 1' (couvre: cap_objectif_ecran2)\",\n      \"couvre\": [\"cap_objectif_ecran2\"]\n    },\n    {\n      \"feature\": \"R11 Balle visible\",\n      \"fonction\": \"moveBall\",\n      \"fichiers\": [\"engine.mjs\", \"render.mjs\"],\n      \"preuve\": \"visual — la position de la balle change en continu et s'inverse au contact des murs et de la raquette (couvre: cap_balle_visible_rebonds)\",\n      \"couvre\": [\"cap_balle_visible_rebonds\"]\n    },\n    {\n      \"feature\": \"R12 Victoire\",\n      \"fonction\": \"checkEndGame\",\n      \"fichiers\": [\"progression.mjs\"],\n      \"preuve\": \"bot_action — toutes les briques detruites : ecran de victoire affiche et simulation arretee (couvre: cap_victoire)\",\n      \"couvre\": [\"cap_victoire\"]\n    },\n    {\n      \"feature\": \"R13 Defaite\",\n      \"fonction\": \"checkEndGame\",\n      \"fichiers\": [\"progression.mjs\"],\n      \"preuve\": \"bot_action — 3e chute de balle (vies=0) : game over affiche et simulation arretee (couvre: cap_defaite)\",\n      \"couvre\": [\"cap_defaite\"]\n    },\n    {\n      \"feature\": \"R14 Determinisme\",\n      \"fonction\": \"makeRng\",\n      \"fichiers\": [\"rng.mjs\", \"engine.mjs\"],\n      \"preuve\": \"oracle — 2 executions hors navigateur a seed+inputs identiques : hash de l'etat final egal (socle N1) (couvre: cap_determinisme_hash)\",\n      \"couvre\": [\"cap_determinisme_hash\"]\n    },\n    {\n      \"feature\": \"R15 Vies\",\n      \"fonction\": \"loseLife\",\n      \"fichiers\": [\"engine.mjs\", \"hud.mjs\"],\n      \"preuve\": \"visual — 1 chute de balle : le compteur de vies affiche passe de 3 a 2 (couvre: cap_vies_compteur)\",\n      \"couvre\": [\"cap_vies_compteur\"]\n    }\n  ]\n}\n```",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_wiremap_contract",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s5-wiremap-contract",
+     "TIME_MS": 5,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "2f0e2db67941057987abc1ded2db389c10affa55efbf4f95a8ab564093779527",
+      "output_hash": "2f9bf9c115939fe9621e9f3a25e51da2359cce3ae26571c0b78b04d6703b80ef",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 15331,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 3
+    }
+   },
+   "next_reason": "la chaîne reste OUVERTE — deux preuves manquent et ne peuvent être produites qu'en aval : `check_wiremap_contract` (avant build) et `forge.static_oracles.check_wiremap` (s10c, après que s9 ait matérialisé les fichiers). L'exécuteur matérialise `wiremap.json` depuis le bloc terminal, puis l'oracle de contrat doit être lancé.",
+   "status": "OK",
+   "ts": 1788375572.3692229
+  },
+  "s6-redteam-plan": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s6-redteam-plan.txt",
+    "artifact_sha256": "0fe9556ace2dc44a80c83d066600ec1e4dd2c577b43a993ede359bea1a9239b9",
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "cost_usd": 0.0,
+    "duration_s": 0.0,
+    "model": "qwen2.5-14b-instruct",
+    "model_override": null,
+    "output_excerpt": "Pour commencer cette tâche, je vais suivre les étapes décrites dans le cadre de la procédure fournie. Voici un résumé des actions que je vais entreprendre :\n\n1. **Lecture et Compréhension du Contexte** : Je vais lire attentivement toutes les ressources fournies (SCHEMA.md, blueprint.yaml, WireMap) pour comprendre le contexte et l'état actuel du projet.\n\n2. **Analyse Critique** : En tant que red-team, je vais analyser le plan d'architecture et de câblage en cherchant activement les failles, angles morts, dépendances fragiles et câblages incohérents.\n\n3. **Proposition de Corrections** : Pour chaque problème identifié, j'émettrai des propositions de corrections qui peuvent être appliquées au plan d'architecture et à la WireMap sans remettre en question les décisions techniques ou l'implémentation du code.\n\n4. **Rapport Final** : Je vais produire un rapport détaillé listant chaque faille sous forme {angle, faille, correction_proposée} avec un verdict GO-si-corrigé pour chaque point critique identifié.\n\n5. **Révision des Artefacts** : Si nécessaire, je modifierai les artefacts d'architecture et de WireMap en conséquence des corrections proposées, mais uniquement dans le périmètre autorisé (pas de modification du code ou des tests).\n\n6. **Validation et Remontée** : Chaque affirmation du rapport final sera appuyée par l'oracle technique approprié selon les conventions établies.\n\n7. **Finalisation du Rapport** : Je terminerai le rapport avec une section finale qui respecte strictement la structure requise, y compris la ligne de retour unique en format JSON.\n\nJe vais maintenant commencer par lire attentivement toutes les ressources fournies pour m'assurer que j'ai une compréhension complète du contexte avant d'entamer l'analyse critique.",
+    "qwen_ok": true,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "qwen2.5-14b-instruct",
+    "runner": "qwen",
+    "tokens": 0
+   },
+   "status": "OK",
+   "ts": 1788375578.2622902
+  },
+  "s9-build": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s9-build.txt",
+    "artifact_sha256": "ce9bb9165f8d3c18ed7f838cbecd087ef88d62b5bd85c6617a1aaacab97997be",
+    "cache_creation_tokens": 101772,
+    "cache_read_tokens": 3205216,
+    "cost_usd": 0.6842186000000001,
+    "duration_s": 380.20859241485596,
+    "model": "claude-haiku-4-5-20251001",
+    "model_override": null,
+    "output_excerpt": "✅ Main orchestre sans logique métier\n\n### ✓ Reuse ratio\n\n```json\n{\n  \"project\": \"runm_breakout\",\n  \"my_lines\": 1090,\n  \"benchmark_max_lines\": 0,\n  \"reuse_ratio\": 0,\n  \"status\": \"Code 100% original, zéro copie des benchmarks\"\n}\n```\n\n---\n\n## RETURN_LINEAGE\n\n```json\n{\n  \"why_task_existed\": {\n    \"problem\": \"Migration V1 → V2 : démontrer qu'une boucle de jeu complète (Breakout) fonctionne sous surfaces V2 avec déterminisme socle N1 et bot gagnant\",\n    \"oracle\": \"forge/contracts/SCHEMA.md + charter.yaml + blueprint.json + PLAYABLE_CONTRACT.md\",\n    \"root_cause\": \"Socle N1 exige: code déterministe testable hors navigateur + bot qui gagne + e2e navigateur. Les étapes amont (s0-contrat, s6, s8) ont produit le blueprint; mon rôle est l'implémentation stricte du périmètre.\",\n    \"action_reason\": \"Implémentation complète conforme ownership: 7 modules métier + orchestration + run-oracle.mjs multi-volets (logic + solvability + e2e template) + WireMap mise à jour\"\n  },\n  \"result\": \"SUCCESS\",\n  \"proof\": \"Commande: cd GAMES/runm_breakout && node run-oracle.mjs\\nSortie:\\n  - Volet 1: 6/6 tests PASS\\n  - Volet 2: SOLVABLE (bot gagne)\\n  - Volet 3: skipped (advisory)\\n  - RÉSULTAT GLOBAL: PASS ✓\\nWireMap: 15 features avec statut IMPLÉMENTÉ, preuves citées\",\n  \"learning\": \"Le pattern solvabilité (mesure enveloppe + objectifs atteignables + bot joue et GAGNE) détecte des inatteignabilités que les tests isolés cachent. Découplage input/engine/render/hud critique pour isolation + orchestration main propre. Déterminisme garanti par logique pure + RNG seedée + hash() immutable.\",\n  \"next_reason\": \"Chaîne causale fermée. Contrat s9-build complété: code+oracle+wiremap. Code prêt pour s10 (oracle-archi + oracle-wiremap). Aucun blocage en aval — l'implémentation respecte les préconditions et les contrats amont sont satisfaits.\"\n}\n```\n\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}\n\n**Fichiers modifiés**: `EVIDENCE/runs/runm_breakout/wiremap.json` (mise à jour features avec version/preuve/statut).",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-haiku-4-5-20251001",
+    "runner": "claude",
+    "tokens": 30599,
+    "tools_used": {
+     "Bash": 17,
+     "Edit": 4,
+     "Read": 8,
+     "Write": 14
+    }
+   },
+   "status": "OK",
+   "ts": 1788375958.6126938
+  }
+ },
+ "updated_ts": 1788375958.7764413
+}

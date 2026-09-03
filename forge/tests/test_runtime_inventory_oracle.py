@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import json
 
+from pathlib import Path
+
 import pytest
 
 from forge import runtime_inventory_oracle as rio
@@ -158,7 +160,19 @@ def test_le_depot_reel_expose_ses_appelants_de_modele_non_declares(attendu):
     assert attendu in code
 
 
-def test_council_est_importe_par_la_forge_donc_PAS_hors_perimetre():
-    """Fait mesuré : `forge/runtime.py` importe `council.QwenAdapter`. Un fichier
-    « legacy » importé par le runtime de la Forge est une dépendance, pas un vestige."""
-    assert "forge/runtime.py" in rio.importers_of("scripts/council.py")
+def test_la_forge_n_importe_PLUS_council_la_dependance_est_interne():
+    """Lot B (GO Pierre 2026-09-02) — INVERSION ASSUMÉE de ce test, avec sa raison.
+
+    Ce test affirmait : « `forge/runtime.py` importe `council.QwenAdapter` ; un fichier legacy
+    importé par le runtime est une dépendance, pas un vestige. » **Il avait raison, et il l'a dit
+    avant nous** : le 2026-09-02 au matin, `scripts/council.py` a été classé « hors périmètre V2 »
+    et CE test rangé en OUT_OF_SCOPE — alors que son nom même énonçait le contraire. RUN M s'est
+    arrêté à s6 sur le `ModuleNotFoundError` qu'il annonçait.
+
+    Il garde donc son rôle, retourné : la dépendance existe toujours, mais elle est désormais
+    INTERNE au paquet (`forge.lm_adapter`, extrait verbatim). Ce test devient la garde de
+    non-régression contre une ré-introduction de la dépendance sortante.
+    """
+    src = (Path(__file__).resolve().parents[1] / "runtime.py").read_text(encoding="utf-8")
+    assert "from forge.lm_adapter import QwenAdapter" in src,         "l'adaptateur doit venir du paquet, pas d'un fichier de lane"
+    assert "from council import" not in src,         "dépendance SORTANTE ré-introduite : c'est exactement ce qui a fait tomber RUN M à s6"

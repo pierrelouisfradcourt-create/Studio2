@@ -1,0 +1,57 @@
+{
+ "schema_version": 1,
+ "game_id": "runm_breakout",
+ "steps": [
+  {
+   "role": "PLAYER_GOAL",
+   "ref": "R01",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "R02",
+   "affordance": "paddle",
+   "repeat": 1,
+   "observe": {
+    "hud": "paddle",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "R03",
+   "repeat": 1,
+   "observe": {
+    "hud": "balle",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "REWARD",
+   "ref": "R04",
+   "repeat": 1,
+   "observe": {
+    "hud": "score",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "REPEAT",
+   "ref": "R05",
+   "repeat": 1,
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "decreases"
+   },
+   "replay": [
+    "R02",
+    "R03",
+    "R04"
+   ]
+  }
+ ]
+}

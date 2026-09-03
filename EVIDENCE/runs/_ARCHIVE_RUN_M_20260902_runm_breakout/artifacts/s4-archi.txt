@@ -1,0 +1,131 @@
+I now have everything the two oracles actually enforce, read from source — not guessed. The decisive mechanical facts:
+
+- **`featureIds()`** (upstream_schema.mjs:497) returns `feat.id` — so `couvre[]` must cite the **11 `F_*` feature ids**, never the `C*` leaves.
+- **`check_blueprint_contract`** (pre-build) requires `responsabilites[]` non-empty, each with `{module, responsabilite, couvre[]⊆featureIds, dependances[] (present, may be empty), preuve_attendue{kind∈PROOF_KINDS,statement}}`, every module owned, every feature covered, no cycle, and **no declared `dependance` that is also in `deps_interdites`**.
+- **`check_architecture`** (post-build, static_oracles.py:75-78, 130-139, 237-248) names a top-level file by its **stem** (`logic.mjs` → `"logic"`) and matches import path-segment stems. Therefore `modules` **must be stems**, and forbidden edges fire only on real `(src_mod, target)` import pairs. `.html` is not in `SOURCE_EXTS` → the shell is inert to this oracle (safe to declare, never scanned).
+
+This fixes the module vocabulary as stems and confirms a hub-and-spoke DAG is enforceable.
+
+---
+
+## RAPPORT FINAL — s4-archi / runm_breakout
+
+**software** — Architecture confrontée aux DEUX oracles lus intégralement (`forge/check_blueprint_contract.mjs` + `forge/upstream_schema.mjs`; sémantique post-build `forge/static_oracles.py::check_architecture`). Découpe par responsabilité, **hub-and-spoke** : `main` est l'unique racine de composition (le hub) ; `logic`, `render`, `input` sont des rayons qui ne se parlent jamais entre eux ni ne remontent au hub. `logic` est une **feuille pure** (RNG seedé inclus, zéro DOM/canvas/clavier) — c'est ce qui rend « logique métier testable hors navigateur » (charter, socle N1) une conséquence structurelle, pas une promesse.
+
+Hand-trace contre `checkBlueprintDoc` :
+- `modules` : 5 chaînes (stems) non vides, sans doublon → OK.
+- `deps_interdites` : 7 paires, non vide, toutes `[stem, stem]` avec les deux membres dans `moduleSet` → OK. Couvre le minimum imposé (`logic→render`, `logic→input`) **et** l'isolation des pairs (`render↔input`) **et** la non-inversion du cœur (`logic→main`, `render→logic`, `input→logic` : seul `main` peut importer `logic`).
+- `responsabilites` : 5 entrées, une par module ; chaque `couvre` ⊆ 11 `F_*` ; chaque `dependances` présent (vide autorisé pour les 3 feuilles) ; chaque `preuve_attendue.kind` ∈ `{oracle, visual, bot_action}` avec `statement` non vide → OK.
+- Couverture : F_OBJECTIF, F_COMPTEUR, F_PADDLE_INPUT, F_PADDLE_REACTIVITE, F_REBOND_PADDLE, F_REBOND_MURS, F_DESTRUCTION, F_VICTOIRE, F_DEFAITE, F_CHARGEMENT, F_VISIBILITE — **11/11 portées** → 0 `features_non_couvertes`, 0 `couverture_fantome`.
+- Contradiction déclaré↔interdit : arêtes déclarées `{index→main, main→logic, main→render, main→input}` ∩ `deps_interdites` = ∅ → OK.
+- Cycles : graphe `{index→main, main→{logic,render,input}, logic→∅, render→∅, input→∅}` = DAG → 0 cycle.
+
+**software_verdict** : **BLOCKED** côté analyste — `run: aucun`, je n'exécute pas l'oracle ; la matérialisation de `blueprint.json` et l'exécution reviennent à l'exécuteur. Mon hand-trace **prédit OK** mais ne vaut pas reçu.
+
+**evidence_verdict** : MECHANICAL_VALIDATION_ONLY — seules ancres : `check_blueprint_contract.mjs` (avant build) et `check_architecture` (après build). Aucun jugement de goût.
+
+**Reçu à produire par l'exécuteur** (après matérialisation) :
+`node forge/check_blueprint_contract.mjs EVIDENCE/runs/runm_breakout/blueprint.json --featuremap EVIDENCE/runs/runm_breakout/featuremap.json`
+Attendu : `VERDICT BLUEPRINT (avant build): OK` · stats `5 modules / 5 responsabilités / 11 sur 11 features / 7 paires interdites / 4 arêtes`.
+
+**Features non couvertes** : aucune. **Couvertures fantômes** : aucune.
+
+**claim_verdict** : **NO_CLAIM_ALLOWED** (imposé par le contrat s4 ; renforcé par l'absence de reçu oracle exécuté de ma main).
+
+**fog → HumanGate** :
+1. `EVIDENCE/runs/runm_breakout/knowledge_packet.json` **absent** sur disque (lecture obligatoire ADVISORY). Aucun pattern externe n'a donc informé l'archi — décision assumée sur charter + featuremap seuls, à confirmer si un packet devait exister.
+2. Racine de code `GAMES/runm_breakout/` **hors** de la table `forge/standard/repo_map.yaml` (racines numérotées `00_…10_FORGE`). Tension résolue par le charter : la topologie V2 numérotée est explicitement `hors_scope` (« non construite »), et `criteres_succes` impose le socle N1 flat web (`.mjs` testable, `window.__game`, RNG seedé). Je tranche pour la structure flat conforme au charter, mais la légitimité de `GAMES/<jeu>/` comme racine de code relève d'une confirmation standard/Pierre, pas d'un oracle.
+
+**why_task_existed** :
+- `problem:` le pipeline a une featuremap valide (s3, 6 systèmes / 11 features / 12 feuilles) mais aucun graphe de modules ni invariant d'archi ; s5-wiremap et s9-build ne peuvent câbler sans blueprint gelé — étape s4 dispatchée (`FORGE_DISPATCH:s4-archi:runm-breakout-20260902:1`).
+- `oracle:` aucun — activation par ordonnancement du pipeline (dispatch), pas par un oracle rouge.
+- `root_cause:` non établie (progression normale, pas un défaut).
+- `action_reason:` produire un blueprint qui couvre les 11 features, sépare logique/rendu/input, et pose une DAG hub-and-spoke sans god-object — matérialisable tel quel par `check_architecture` (stems) et validable par `check_blueprint_contract` (couverture/preuves).
+- `result:` blueprint 5 modules (`index, main, logic, render, input`) / 7 dépendances interdites / 5 responsabilités couvrant 11/11 features ; DAG acyclique, `logic` feuille pure.
+- `proof:` commande `node forge/check_blueprint_contract.mjs …` (ci-dessus) — à exécuter par l'exécuteur ; hand-trace contre les sources lues prédit `OK`.
+- `learning:` `check_architecture::_module_of` nomme un fichier de premier niveau par son **stem** (`logic.mjs`→`logic`) et matche les stems d'imports — donc `modules` DOIT être en stems, sinon `set(modules)` ne rencontre jamais les imports et toute paire interdite est vacuement verte après build. Le `.html` (hors `SOURCE_EXTS`) n'est jamais scanné : le déclarer est sûr mais ses arêtes ne peuvent pas être prouvées par cet oracle.
+- `next_reason:` la chaîne se ferme proprement pour s4 ; l'exécuteur matérialise `blueprint.json`, exécute l'oracle avant-build, puis passe à s5-wiremap. Aucune cause non résolue ne persiste — les 2 fogs ci-dessus sont des confirmations de gouvernance, pas des défauts bloquants.
+
+**SKIPPED_VALIDATION** :
+- item : exécution réelle de `check_blueprint_contract.mjs` · où : `blueprint.json` matérialisé · statut : non fait · raison : `run: aucun` (contrat s4) + fichier matérialisé par l'exécuteur, pas par moi.
+- item : lecture de `knowledge_packet.json` (ADVISORY obligatoire) · où : run_dir · statut : non fait · raison : fichier absent sur disque (vérifié via Read → « File does not exist »).
+- item : confrontation à un `blueprint.yaml` existant · où : repo · statut : sans objet · raison : projet créé de zéro (`GAMES/runm_breakout` inexistant), aucun blueprint en place à diff.
+- item : exécution post-build `check_architecture` · où : `GAMES/runm_breakout` (src) · statut : hors moment · raison : oracle d'APRÈS build ; sur src vide il serait vacuement vert — ce n'est pas mon oracle (contrat s4).
+
+**Choix d'ordonnancement de sortie assumé** : `RETURN_REASON` clôt le rapport ; le bloc ```json``` le suit comme livrable TERMINAL, car l'exécuteur matérialise `blueprint.json` depuis le dernier bloc json de la réponse (contrat `Termine ta réponse par UN bloc json`). Ce n'est pas un oubli de la règle « dernière ligne », mais sa conciliation avec le contrat de sortie machine.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "knowledge_packet.json (lecture ADVISORY obligatoire) absent du run_dir, et racine de code GAMES/runm_breakout hors de la table figee repo_map.yaml", "root_cause": "socle N1 flat web (charter criteres_succes) non represente dans repo_map dont les racines sont la topologie V2 numerotee explicitement hors_scope du run"}
+
+```json
+{
+  "modules": ["index", "main", "logic", "render", "input"],
+  "deps_interdites": [
+    ["logic", "render"],
+    ["logic", "input"],
+    ["logic", "main"],
+    ["render", "logic"],
+    ["render", "input"],
+    ["input", "logic"],
+    ["input", "render"]
+  ],
+  "ownership": {
+    "index": "shell/entree",
+    "main": "composition/boucle",
+    "logic": "simulation (regles + physique + etat, RNG seede)",
+    "render": "presentation (canvas/HUD)",
+    "input": "adaptateur clavier"
+  },
+  "responsabilites": [
+    {
+      "module": "index",
+      "responsabilite": "Document HTML d'entree : heberge le canvas de jeu et charge le module de composition 'main' via <script type=module>. Aucune logique, aucun dessin.",
+      "couvre": ["F_CHARGEMENT"],
+      "dependances": ["main"],
+      "preuve_attendue": {
+        "kind": "visual",
+        "statement": "Ouverte dans un navigateur recent, la page affiche le canvas sans ecran blanc et sans erreur bloquante de chargement du document."
+      }
+    },
+    {
+      "module": "main",
+      "responsabilite": "Racine de composition : cree l'etat seede via 'logic', lit les intentions via 'input', avance la simulation puis appelle 'render' a chaque frame (requestAnimationFrame). Expose window.__game (etat + seed + hash) pour l'observation deterministe. Ne contient AUCUNE regle de jeu ni dessin.",
+      "couvre": ["F_CHARGEMENT", "F_PADDLE_REACTIVITE"],
+      "dependances": ["logic", "render", "input"],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Un harnais headless importe 'main', verifie que window.__game est expose et que le compteur de frames progresse ; deux executions de meme seed produisent le meme hash d'etat (determinisme reproductible)."
+      }
+    },
+    {
+      "module": "logic",
+      "responsabilite": "Simulation deterministe et pure (aucun acces DOM/canvas/clavier) : etat du jeu, RNG seede, deplacement et rebonds de la balle (paddle + 3 murs, sortie par le bas), deplacement du paddle sous intention, destruction des briques et score, condition de victoire (0 brique) et de defaite (0 vie). Testable hors navigateur.",
+      "couvre": ["F_REBOND_PADDLE", "F_REBOND_MURS", "F_DESTRUCTION", "F_COMPTEUR", "F_VICTOIRE", "F_DEFAITE"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Un test .mjs hors navigateur rejoue une sequence d'entrees seedee : angles de rebond distincts selon le point d'impact sur le paddle, inversion de la composante horizontale aux murs, briques retirees et score incremente, bascule des etats victoire/defaite ; l'etat final est reproductible par hash."
+      }
+    },
+    {
+      "module": "render",
+      "responsabilite": "Rendu pur sur canvas : dessine l'etat recu en argument (balle, paddle, grille de briques), le HUD (objectif + compteur de briques/score/vies) et les messages VICTOIRE / DEFAITE aux etats de fin. N'importe ni 'logic' ni 'input' ; ne mute jamais l'etat.",
+      "couvre": ["F_OBJECTIF", "F_VISIBILITE", "F_VICTOIRE", "F_DEFAITE"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "visual",
+        "statement": "A l'ecran au lancement : objectif et compteur affiches, balle/paddle/briques visibles et distincts ; aux etats de fin, le message VICTOIRE ou DEFAITE apparait et l'aire se fige."
+      }
+    },
+    {
+      "module": "input",
+      "responsabilite": "Adaptateur clavier pur : capte l'appui et le relachement des fleches gauche/droite et expose une intention de deplacement du paddle (-1/0/+1). N'importe ni 'logic' ni 'render' ; n'ecrit jamais l'etat, 'main' applique l'intention.",
+      "couvre": ["F_PADDLE_INPUT"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Depuis la page, un bot maintient la fleche droite ; 'input' expose une intention +1 captee frame apres frame, consommee par 'main' pour deplacer le paddle."
+      }
+    }
+  ]
+}
+```

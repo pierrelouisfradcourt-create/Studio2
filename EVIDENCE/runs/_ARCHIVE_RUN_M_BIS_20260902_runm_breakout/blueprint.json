@@ -1,0 +1,195 @@
+{
+ "modules": [
+  "main",
+  "engine",
+  "progression",
+  "rng",
+  "render",
+  "input",
+  "hud"
+ ],
+ "deps_interdites": [
+  [
+   "engine",
+   "progression"
+  ],
+  [
+   "engine",
+   "render"
+  ],
+  [
+   "engine",
+   "input"
+  ],
+  [
+   "engine",
+   "hud"
+  ],
+  [
+   "engine",
+   "main"
+  ],
+  [
+   "progression",
+   "render"
+  ],
+  [
+   "progression",
+   "input"
+  ],
+  [
+   "progression",
+   "hud"
+  ],
+  [
+   "progression",
+   "main"
+  ],
+  [
+   "rng",
+   "engine"
+  ],
+  [
+   "rng",
+   "progression"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "engine"
+  ],
+  [
+   "input",
+   "progression"
+  ],
+  [
+   "input",
+   "render"
+  ]
+ ],
+ "ownership": {
+  "engine": "Simulation deterministe d'une frame (raquette, balle, briques, score, vies) — coeur logique pur, sans DOM.",
+  "progression": "Machine d'etat inter-ecrans et fin de partie (unlock ecran 2, objectif par ecran, victoire, defaite) — logique pure au-dessus d'engine.",
+  "rng": "RNG seede deterministe (feuille) — substrat du hash de reproductibilite N1.",
+  "input": "Capture clavier -> intents (adaptateur pur ; n'importe aucune logique ni vue).",
+  "render": "Rendu canvas de l'etat de jeu (lecture seule de la logique).",
+  "hud": "Affichage DOM objectif/score/vies (lecture seule de la logique).",
+  "main": "Orchestration : boucle RAF, application input->engine, appel progression, pilotage render+hud, seed rng, exposition window.__game, halt de fin."
+ },
+ "responsabilites": [
+  {
+   "module": "engine",
+   "responsabilite": "Faire avancer l'etat de jeu d'exactement une frame de facon deterministe : deplacer la raquette selon les intents, deplacer la balle et calculer ses rebonds (murs+raquette), detecter la collision balle/brique (brique retiree, briques_restantes--), incrementer le score, decrementer les vies a la chute.",
+   "couvre": [
+    "F_raquette_mouvement",
+    "F_balle_physique",
+    "F_briques_destruction",
+    "F_angle_renvoi",
+    "F_vies",
+    "F_determinisme"
+   ],
+   "dependances": [
+    "rng"
+   ],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Test unitaire hors navigateur de engine.step : a etat+inputs fixes, la brique touchee disparait, briques_restantes et vies decroissent, le score croit strictement, et l'angle de renvoi depend deterministiquement du point d'impact sur la raquette ; deux executions identiques donnent le meme etat (hash egal)."
+   }
+  },
+  {
+   "module": "progression",
+   "responsabilite": "Decider ce qui change ENTRE les frames et les ecrans : quand l'ecran 1 est vide, faire apparaitre l'ecran 2 et basculer le texte objectif ; quand tous les ecrans sont vides, entrer en etat victoire et signaler l'arret ; quand les vies atteignent 0, entrer en etat defaite et signaler l'arret.",
+   "couvre": [
+    "F_ecrans_progression",
+    "F_objectif_hud",
+    "F_fin_partie"
+   ],
+   "dependances": [
+    "engine"
+   ],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Test hors navigateur : briques_restantes(ecran1)=0 => progression expose ecran_2 et l'objectif devient 'Vider l'ecran 2' (distinct de 'Vider l'ecran 1') ; tous ecrans vides => etat victoire+halt ; vies=0 => etat defaite+halt."
+   }
+  },
+  {
+   "module": "rng",
+   "responsabilite": "Fournir une source pseudo-aleatoire seedee et reproductible, unique substrat de non-determinisme, afin que l'etat final du jeu soit hachable et egal a seed+inputs identiques.",
+   "couvre": [
+    "F_determinisme"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Deux instances rng(seed) identiques produisent la meme suite de valeurs ; rejouee sur la logique, la partie produit un etat final de hash identique (egalite exigee, socle N1)."
+   }
+  },
+  {
+   "module": "input",
+   "responsabilite": "Traduire les evenements clavier (gauche/droite) en objets d'intent neutres, sans jamais lire ni muter la logique de jeu (l'application des intents est le role de main).",
+   "couvre": [
+    "F_raquette_mouvement"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Un bot presse raquette_gauche puis raquette_droite pendant N frames ; verifier que l'intent correspondant est emis a chaque frame de pression et absent au relachement."
+   }
+  },
+  {
+   "module": "render",
+   "responsabilite": "Dessiner sur le canvas l'etat courant fourni par la logique : raquette, balle en mouvement, champ de briques, apparition visible de l'ecran 2, overlays victoire/defaite — en lecture seule, sans modifier aucun etat.",
+   "couvre": [
+    "F_balle_physique",
+    "F_ecrans_progression"
+   ],
+   "dependances": [
+    "engine",
+    "progression"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "Capture navigateur sur plusieurs frames : la balle change de position et s'inverse aux contacts, la raquette suit les intents ; quand progression signale l'unlock, le champ ecran_2 devient visible a l'ecran."
+   }
+  },
+  {
+   "module": "hud",
+   "responsabilite": "Afficher dans le DOM l'objectif courant (texte fourni par progression), le score et le compteur de vies fournis par engine — en lecture seule.",
+   "couvre": [
+    "F_objectif_hud",
+    "F_vies"
+   ],
+   "dependances": [
+    "engine",
+    "progression"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "Capture navigateur du HUD : la zone objectif est non vide au demarrage et vaut 'Vider l'ecran 1' ; le score affiche croit apres une brique cassee ; le compteur de vies passe de 3 a 2 apres une chute."
+   }
+  },
+  {
+   "module": "main",
+   "responsabilite": "Cabler et cadencer le jeu : boucle d'animation qui applique les intents d'input a engine, invoque progression, puis pilote render et hud a chaque frame ; seeder rng ; exposer window.__game ; arreter la boucle a la victoire ou la defaite.",
+   "couvre": [
+    "F_balle_physique",
+    "F_fin_partie"
+   ],
+   "dependances": [
+    "engine",
+    "progression",
+    "rng",
+    "render",
+    "input",
+    "hud"
+   ],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Un bot pilote via window.__game : la boucle fait avancer la balle en continu frame apres frame ; a l'entree en etat victoire ou defaite, la simulation s'arrete (halt observable, plus aucune frame avancee)."
+   }
+  }
+ ]
+}

@@ -1,0 +1,73 @@
+objectif: 'Créer un casse-briques web minimal et jouable sous GAMES/runm_breakout,
+  volontairement réduit pour que tout échec soit immédiatement attribuable à la migration
+  V1 -> V2 et non à la complexité du jeu. Le jeu doit se charger dans un navigateur
+  et offrir une partie complète jouable au clavier (raquette mobile, balle, briques),
+  avec logique métier déterministe et testable hors navigateur conformément au socle
+  N1. La qualité ludique du jeu N''EST PAS l''objectif : l''objet mesuré est le bout-en-bout
+  de la migration dans les surfaces V2.'
+plateforme_cible: 'web/HTML — page HTML+JS unique, RNG seedé, logique métier en module
+  .mjs testable hors navigateur, exposition window.__game, actions DOM-only, déterminisme
+  reproductible par hash (socle N1). Aucun binaire Godot ni Blender requis. # Source
+  Pierre 2026-09-02 : « pas besoin de Godot si on reste sur la lignée web » # (project_brief.provenance.cible
+  + contraintes.project_specific.techniques).'
+reference_jeu: 'casse-briques (Breakout) — modèle de jeu de genre arcade skill-loop,
+  choisi pour son petit périmètre et sa boucle évidente. GAMES/breakout et GAMES/breakout_v2
+  sont des BENCHMARKS de régression, PAS des sources de design : leur recopie est
+  interdite. # Source Pierre 2026-09-02 (project_brief.provenance.genre) : « casse-briques
+  (Breakout), # lignée WEB, choisi explicitement pour son petit périmètre, sa boucle
+  évidente et # l''absence de dépendance Godot ». references_autorisees: [] (fog Pierre).'
+hors_scope:
+- 'La qualité ludique du jeu (Pierre : « le critère de réussite n''est pas que le
+  jeu soit bon »).'
+- 'La topologie CIBLE de V2 (Fable directeur, GAME_BLUEPRINT / GAME_FLOW / ARCHITECTURE_CONTRACT)
+  : non construite au moment de RUN M, donc ni testée ni prétendue.'
+- Toute dépendance Godot ou Blender (dépendances de capacité, jamais préconditions
+  du run).
+- La recopie de GAMES/breakout ou GAMES/breakout_v2, en tout ou en partie.
+- 'N5 (séparation concepteur/instrumenteur) et N6 (fidélité charter -> build) : non
+  mécanisés pour RUN M (fog HumanGate Pierre 2026-09-02) — non couverts, non prouvés.'
+- 'Méta-progression, prestige, multi-mondes, économie idle : au-delà du V1 minimal
+  jouable.'
+- 'Écriture de code, décision d''architecture (étape 4), world scan (étape 2) : hors
+  périmètre de s0.'
+criteres_succes:
+- 'Le run s''exécute dans les surfaces V2 : run_dir sous EVIDENCE/runs/, jamais lab/.'
+- Le jeu est écrit sous GAMES/runm_breakout/, jamais games/ ni ailleurs.
+- charter produit par s0 et validé par check_charter.
+- prisme.json, featuremap.json, blueprint et wiremap.json produits et validés par
+  leurs oracles amont.
+- Chaque ligne de wiremap porte un `couvre` NON VIDE citant l'id EXACT d'une capacité
+  de featuremap.json.
+- Reçu de jointure `join_check` présent dans state.json avec un `regime` explicite
+  (JOINED / PARTIAL / VOID / EMPTY_FORM / NOT_APPLICABLE) — advisory.
+- Preuves s10 produites (s10a-oracle-code, s10b-oracle-archi, s10c-oracle-wiremap).
+- Verdict signé HMAC produit ET re-vérifié authentique par verify_run — pas seulement
+  présent.
+- La clé de signature utilisée est celle de V2 (forge/.forge_key), jamais une clé
+  héritée de V1.
+- Le jeu se charge dans un navigateur et une partie complète est jouable au clavier.
+- LM Studio indisponible => HALT/BLOCKED sans repli silencieux vers une autre source.
+- Aucun artefact écrit hors des surfaces V2 déclarées — une écriture dans lab/, scripts/forge/
+  ou games/ est un FAIL de migration.
+actions_interdites:
+- Recopier GAMES/breakout ou GAMES/breakout_v2, en tout ou en partie.
+- Utiliser Godot ou Blender (un recours silencieux à l'un ou l'autre est un écart
+  à signaler).
+- Écrire un artefact hors des surfaces V2 (lab/, scripts/forge/, games/).
+- Produire un vert par contournement ou un faux-vert.
+- Utiliser une clé de signature héritée de V1.
+- Se rabattre silencieusement sur une autre source si LM Studio est indisponible (=>
+  HALT/BLOCKED explicite).
+- Prétendre N5 ou N6 couvertes ou prouvées par ce run.
+- Deviner ou inventer un champ de design-intent sans source Pierre (=> fog HumanGate,
+  jamais invention).
+criteres_demo:
+- Une balle visible se déplace à l'écran et rebondit sur les murs et sur la raquette.
+- La raquette se déplace horizontalement au clavier (gauche/droite) en réponse visible
+  à l'input.
+- Une brique touchée par la balle disparaît visiblement de l'écran.
+- Le score affiché augmente visiblement quand une brique est cassée.
+- 'Condition de VICTOIRE observable : toutes les briques détruites -> écran/message
+  de victoire affiché.'
+- 'Condition de DÉFAITE observable : la balle passe sous la raquette jusqu''à épuisement
+  des vies -> écran/message de game over affiché.'

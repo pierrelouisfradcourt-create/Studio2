@@ -1,0 +1,139 @@
+{
+ "features": [
+  {
+   "feature": "R01 objectif HUD (destruction de toutes les briques + compteur > 0)",
+   "fonction": "drawHud",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "visual: au lancement, le HUD affiche l'objectif et un compteur de briques restantes strictement superieur a zero",
+   "couvre": [
+    "drawHud"
+   ]
+  },
+  {
+   "feature": "R02 pilotage du paddle (affordance clavier gauche/droite)",
+   "fonction": "readPaddleIntent",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "bot_action depuis index.html: appui maintenu fleche droite -> intention +1 captee frame apres frame, x du paddle augmente",
+   "couvre": [
+    "readPaddleIntent"
+   ]
+  },
+  {
+   "feature": "R03 rebond balle->paddle selon le point d'impact",
+   "fonction": "reflectPaddle",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "oracle logic.test.mjs: deux collisions a des points d'impact differents produisent deux angles de sortie mesurablement distincts",
+   "couvre": [
+    "reflectPaddle"
+   ]
+  },
+  {
+   "feature": "R04 destruction de brique au contact + increment du score",
+   "fonction": "breakBricks",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "oracle logic.test.mjs: apres collision balle-brique, la brique est retiree de l'etat et le score a augmente",
+   "couvre": [
+    "breakBricks"
+   ]
+  },
+  {
+   "feature": "R05 boucle de rejeu (REPEAT du cycle R02/R03/R04)",
+   "fonction": "tick",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "oracle logic.test.mjs: N frames rejouees seedees, cycle deplacement/collision/score repete, hash d'etat final reproductible",
+   "couvre": [
+    "requires-capability-id-123"
+   ]
+  },
+  {
+   "feature": "R06 rebond sur les 3 murs (gauche/droite/haut), sortie par le bas",
+   "fonction": "reflectWalls",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "oracle logic.test.mjs: balle lancee vers un bord lateral ressort avec sa composante horizontale inversee et une vitesse egale",
+   "couvre": [
+    "reflectWalls"
+   ]
+  },
+  {
+   "feature": "R07 condition de victoire (0 brique -> ecran VICTOIRE, partie figee)",
+   "fonction": "checkVictory",
+   "fichiers": [
+    "logic.mjs",
+    "render.mjs"
+   ],
+   "preuve": "oracle logic.test.mjs: a 0 brique l'etat bascule en victoire; visual: message VICTOIRE affiche et l'aire se fige",
+   "couvre": [
+    "checkVictory"
+   ]
+  },
+  {
+   "feature": "R08 condition de defaite (0 vie -> ecran DEFAITE game over)",
+   "fonction": "checkDefeat",
+   "fichiers": [
+    "logic.mjs",
+    "render.mjs"
+   ],
+   "preuve": "oracle logic.test.mjs: a 0 vie l'etat bascule en defaite; visual: message game over affiche et l'aire se fige",
+   "couvre": [
+    "checkDefeat"
+   ]
+  },
+  {
+   "feature": "R09 compteur observable qui change en cours de partie",
+   "fonction": "addScore",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "oracle logic.test.mjs (mutation): la valeur du compteur a l'instant t differe de sa valeur au lancement apres quelques briques detruites",
+   "couvre": [
+    "addScore"
+   ]
+  },
+  {
+   "feature": "R10 reactivite du paddle (reaction a la frame suivante au plus)",
+   "fonction": "frame",
+   "fichiers": [
+    "main.mjs"
+   ],
+   "preuve": "oracle harnais headless (bot_action): l'intention lue via input est appliquee au paddle a la frame suivante au plus",
+   "couvre": [
+    "frame"
+   ]
+  },
+  {
+   "feature": "R11 chargement navigateur sans erreur console bloquante + boucle vivante",
+   "fonction": "boot",
+   "fichiers": [
+    "index.html",
+    "main.mjs"
+   ],
+   "preuve": "oracle harnais headless: window.__game expose, le compteur de frames progresse, aucune erreur console de niveau bloquant; deux runs meme seed -> meme hash",
+   "couvre": [
+    "boot"
+   ]
+  },
+  {
+   "feature": "R12 visibilite des entites au lancement (balle, paddle, grille de briques)",
+   "fonction": "render",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "visual: au lancement, une balle, un paddle et au moins une rangee de briques sont visibles et distincts dans l'aire de jeu",
+   "couvre": [
+    "visual"
+   ]
+  }
+ ]
+}

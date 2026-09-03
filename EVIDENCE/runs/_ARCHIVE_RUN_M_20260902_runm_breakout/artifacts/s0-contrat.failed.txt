@@ -1,0 +1,95 @@
+I have everything my contract requires me to read: `SCHEMA.md`, the project brief (the raw spec), the pré-mortem PILOU (in context), and I've confirmed **no Project Bible exists** for this run. Bash and file-writing are off, and my concrete task is explicit: **texte seul, aucun fichier écrit.** So I produce the charter as text.
+
+---
+
+# CHARTER — `runm_breakout` (s0-contrat) — TEXTE, non écrit sur disque
+
+> Point de vue : chef de projet qui refuse tout flou. Chaque champ ci-dessous est **rempli** ou **remonté en fog** — aucun « à définir » ne survit. Source de vérité unique : `EVIDENCE/briefs/runm_breakout/project_brief.yaml` (Brief Pierre 2026-09-02). Rien n'est inventé : ce qui n'a pas de source Pierre est marqué comme dérivé ou remonté.
+
+### Cadrage narratif demandé par la tâche
+
+- **Intention** — Construire, de zéro, un **casse-briques web jouable** sous `GAMES/runm_breakout/`, volontairement minimal, pour servir de **charge utile** au premier run réel du Studio V2. Le jeu n'est pas l'objet du test : c'est la chaîne de la Forge qui l'est. Sa qualité ludique n'est pas un critère (Brief `intention`, `provenance.libertes_deleguees` : « le critère de réussite n'est pas que le jeu soit bon »).
+- **Joueur cible** — Un **joueur occasseul au clavier**. *Provenance : DÉRIVÉ mécaniquement* du critère Brief « une partie complète est jouable au clavier » — ce n'est pas une persona choisie par Pierre. Aucun profil marketing n'est revendiqué ; le raffinement d'un public précis relève des `libertes_deleguees` (« choisir les interactions et les affordances du joueur »).
+- **Condition de victoire** — Genre-standard casse-briques : **détruire toutes les briques = victoire** ; **perdre la balle / toutes les vies = défaite**, avec un écran de fin observable. *Provenance : DÉRIVÉ du `reference_jeu` (casse-briques, Pierre-sourcé).* Le nombre de briques, de vies et de niveaux est explicitement **délégué** (Brief `libertes_deleguees`) — je n'invente pas de chiffres.
+- **Périmètre V1 minimal jouable** — Une page HTML+JS unique ; une balle qui rebondit ; une raquette pilotée au clavier ; des briques destructibles ; un état de fin (victoire/défaite). Logique métier isolée en module `.mjs` testable hors navigateur ; RNG seedé, déterminisme reproductible par hash ; `window.__game` exposé ; actions DOM-only (socle N1, Brief `contraintes.project_specific.techniques`).
+
+---
+
+### charter (7 champs — tous remplis)
+
+**objectif**
+Livrer sous `GAMES/runm_breakout/` un casse-briques web (page HTML+JS unique) dont une partie complète est jouable au clavier de bout en bout, avec logique métier en module `.mjs` testable hors navigateur, RNG seedé et déterminisme reproductible par hash, `window.__game` exposé et interactions DOM-only. Objectif de charge : que la chaîne Forge V2 produise ce jeu et ses preuves dans les surfaces V2 déclarées. *(source : Brief `intention` + `contraintes.techniques`, Pierre 2026-09-02)*
+
+**hors_scope[]**
+1. La topologie CIBLE de V2 (Fable directeur, `GAME_BLUEPRINT`/`GAME_FLOW`/`ARCHITECTURE_CONTRACT`) — non construite, non testée par ce run *(Brief `contraintes.experimentales`)*.
+2. La qualité ludique / l'équilibrage / le « fun » du jeu — hors critère *(Brief `provenance.libertes_deleguees`)*.
+3. Toute dépendance Godot ou Blender (lignée WEB imposée) *(Brief `non_delegue`, `cible`)*.
+4. La recopie, totale ou partielle, du benchmark `GAMES/breakout` ou de `GAMES/breakout_v2` *(Brief `provenance.references_autorisees`, fog HumanGate Pierre)*.
+5. La couverture des règles N5 (séparation concepteur/instrumenteur) et N6 (fidélité charter→build) — hors exigence de RUN M *(Brief `fog_n5`, `fog_n6`)*.
+6. L'écriture de code, le choix d'architecture (étape 4), le world scan (étape 2) — hors périmètre de s0.
+
+**criteres_succes[]**
+1. Le jeu est écrit sous `GAMES/runm_breakout/`, jamais `games/` ni ailleurs.
+2. Le jeu se charge dans un navigateur et une partie complète est jouable au clavier.
+3. Logique métier en module `.mjs` testable hors navigateur ; `window.__game` exposé ; actions DOM-only.
+4. Déterminisme reproductible par hash, RNG seedé.
+5. Charter produit par s0 et validable par l'oracle CHARTER (`check_charter`) — schéma complet, aucun « à définir ».
+6. Le run s'exécute dans les surfaces V2 (`run_dir` sous `EVIDENCE/runs/`, jeu sous `GAMES/`).
+*(sources : Brief `criteres_sortie` + `contraintes.techniques`, Pierre 2026-09-02)*
+
+**actions_interdites[]**
+1. Invoquer un binaire Godot ou Blender, ou en dépendre silencieusement — écart à signaler *(Brief `contraintes.techniques`)*.
+2. Recopier `GAMES/breakout` / `GAMES/breakout_v2`, en tout ou partie *(fog Pierre)*.
+3. Produire un « vert » par contournement plutôt que dire OÙ la chaîne casse *(Brief `contraintes.experimentales`)*.
+4. Écrire un artefact hors des surfaces V2 déclarées (`lab/`, `scripts/forge/`, `games/`) — FAIL de migration.
+5. Modifier les lanes protégées `tests/` et `src/` (rules/ `tests.md` : ZONE PROTÉGÉE, gate Pierre requise).
+6. Prétendre couvertes les règles N5/N6.
+
+**plateforme_cible**
+`web/HTML` — page HTML+JS unique, exécutable sans Godot ni Blender. *(source Pierre traçable : Brief `cible: web/HTML` + `provenance.cible` « pas besoin de Godot si on reste sur la lignée web », Pierre 2026-09-02)*
+
+**reference_jeu**
+**Casse-briques (Breakout), lignée WEB** — modèle de genre, PAS le benchmark migré. *(source Pierre traçable : Brief `provenance.genre` « Pierre 2026-09-02 — casse-briques (Breakout), lignée WEB, choisi explicitement pour son petit périmètre »).* Réserve explicite : ce modèle sert de **genre de référence**, jamais de source de design à copier — `GAMES/breakout` reste un benchmark interdit à la recopie.
+
+**criteres_demo[]** (observables)
+1. Une **balle visible** qui se déplace et rebondit à l'écran.
+2. Une **raquette** qui se déplace gauche/droite en réponse au clavier.
+3. Une **brique qui disparaît visiblement** quand la balle la touche.
+4. Un **écran de fin observable** (victoire quand toutes les briques sont détruites, défaite quand la balle est perdue).
+*(dérivés du `reference_jeu` Pierre-sourcé + critère Brief « une partie complète est jouable au clavier » ; ce sont des observables, pas des mécaniques internes.)*
+
+---
+
+# RAPPORT FINAL
+
+**software** — Aucun logiciel produit ni exécuté (permissions s0 : `run: aucun` ; tâche : texte seul). Aucun `software_verdict` émis.
+
+**evidence** — L'oracle qui fait foi pour cette étape est l'**oracle CHARTER déterministe non-LLM `check_charter`** (validateur de schéma qui parse `charter.yaml` et échoue sur tout champ requis vide/absent/« à définir »). Il **n'a PAS pu s'exécuter** : la tâche concrète impose « aucun fichier écrit », donc aucun `charter.yaml` n'existe à fournir au validateur. Le charter ci-dessus est **conforme au schéma par construction** (7 champs remplis, aucun « à définir »), mais cette conformité **n'est pas mécaniquement prouvée**. `evidence_verdict: pas de validation mécanique disponible`.
+
+**claim** — `claim_verdict: NO_CLAIM_ALLOWED`. Sans exécution de l'oracle, je ne certifie pas la conformité ; je remonte l'écart en fog HumanGate.
+
+**Flous du prompt — résolus vs remontés**
+- RÉSOLU : `plateforme_cible` (web/HTML) — source Pierre traçable.
+- RÉSOLU : `reference_jeu` (casse-briques Breakout, lignée web) — source Pierre traçable (`provenance.genre`), **PAS d'invention** ; leçon AutoBattler respectée (le modèle est un choix Pierre explicite, pas un choix unilatéral d'agent).
+- RÉSOLU par dérivation tracée (non-Pierre, assumé comme tel) : `joueur cible` (occasionnel clavier) et `condition de victoire` (toutes briques détruites) — dérivés du Brief, marqués comme délégués, aucun chiffre inventé.
+- REMONTÉ (fog HumanGate, déjà déclaré par le Brief) : N5 et N6 **non couvertes** — je ne les prétends pas prouvées.
+- REMONTÉ (fog HumanGate) : la **conformité de schéma du charter n'est pas mécaniquement validée** car aucun fichier n'est écrit ; si Pierre veut la preuve oracle, il faut autoriser l'écriture de `charter.yaml` puis exécuter `check_charter`.
+
+**RÈGLE DE RESTITUTION** — Vocabulaire : OK / FAIL / BLOCKED. Verdict d'étape : **BLOCKED** sur la preuve oracle (validateur non exécutable en mode texte-seul), sans que le contenu du charter soit en défaut. Aucune affirmation auto-certifiée.
+
+**SKIPPED_VALIDATION**
+- item : exécution de l'oracle CHARTER `check_charter` — où : le charter ci-dessus — statut : non fait — raison : tâche « aucun fichier écrit », pas de `charter.yaml` à parser.
+- item : provenance Pierre de `reference_jeu` — où : champ reference_jeu — statut : fait par lecture (non mécanisable) — raison : la provenance est un fait de gate, pas de schéma ; tracée à `Brief.provenance.genre`, non vérifiable par validateur.
+
+**RETURN LINEAGE**
+- `why_task_existed:`
+  - `problem:` RUN M doit produire un charter s0 complet et sans flou pour amorcer la boucle Forge V2 sur `runm_breakout`.
+  - `oracle:` aucun — activation par décision humaine (dispatch Pierre `FORGE_DISPATCH:s0-contrat:runm-breakout-20260902:1`).
+  - `root_cause:` premier run réel V2 ; la chaîne part du Brief et exige un contrat produit avant tout code.
+  - `action_reason:` s0 est le rédacteur du contrat ; produire le charter est la seule action qui débloque l'aval sans préjuger de l'architecture.
+- `result:` Charter à 7 champs produit **en texte**, tous remplis, aucun « à définir » ; `plateforme_cible` et `reference_jeu` portent une source Pierre traçable ; N5/N6 et la validation-schéma remontés en fog.
+- `proof:` Lecture `SCHEMA.md` (champs requis), `EVIDENCE/briefs/runm_breakout/project_brief.yaml` (contenu Pierre-sourcé), `forge/oracles.json` (oracle `runm_breakout` enregistré). Oracle `check_charter` NON exécuté (aucun fichier écrit) — aucune sortie de commande à produire.
+- `learning:` La provenance Pierre de `reference_jeu` est ici pleinement traçable (`provenance.genre`), donc pas de fog — contrairement à la leçon AutoBattler ; le seul fog restant est structurel (mode texte-seul empêche la preuve oracle du schéma).
+- `next_reason:` Le niveau supérieur doit agir : autoriser l'écriture de `charter.yaml` puis exécuter `check_charter` pour convertir la conformité-par-construction en preuve mécanique ; N5/N6 restent fog Pierre par décision du Brief. Chaîne causale NON fermée tant que la preuve oracle du charter manque.
+
+`RETURN_REASON: {"status": "DISCOVERED", "problem": "le charter s0 est conforme par construction mais non validable mecaniquement car la tache impose texte-seul (aucun charter.yaml a parser par check_charter)", "root_cause": "mode texte-seul du dispatch s0-contrat: l'oracle CHARTER exige un fichier, aucun n'est ecrit"}`

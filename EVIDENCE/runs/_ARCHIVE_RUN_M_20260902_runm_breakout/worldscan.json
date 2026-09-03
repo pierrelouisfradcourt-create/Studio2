@@ -1,0 +1,79 @@
+{
+ "games": [
+  {
+   "game": "Breakout (Atari, 1976)",
+   "sources": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Breakout_(video_game)",
+     "type": "wiki",
+     "timestamp": null
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=AMUv8KvVt08",
+     "type": "video",
+     "timestamp": "2024-01-15"
+    },
+    {
+     "url": "https://strategywiki.org/wiki/Breakout",
+     "type": "wiki",
+     "timestamp": null
+    }
+   ],
+   "loops": {
+    "minute_1": "Player observes 8 rows of static bricks, controls paddle, bounces ball upward. First brick destroyed triggers immediate visual + audio feedback. Action latency under 100ms perceived.",
+    "minute_10": "Player has cleared ~60% of first brick row, understands paddle third-zones and angle mechanics (yellow 1pt → green 3pt). Second wall accessible. Failure restarts the section. Session cumulative time: 5-8 min typical without errors.",
+    "hour_5": "Three complete brick rows destroyed (yellow, green, orange). Paddle halved after red row cleared. Score exceeds 100 pts. Precision demand escalates per row. No boss structure—identical wall patterns twice.",
+    "endgame": "Second wall destroyed; ball bounces empty space indefinitely. Victory condition met (2 walls cleared), but no progression offered. Soft ending: no new challenge, retention drops to zero unless high-score challenge exists."
+   },
+   "objectives": [
+    {
+     "mode": "solo_arcade",
+     "has_win_state": true,
+     "victory_condition": "Destroy two complete brick walls (48 total bricks)",
+     "has_defeat_state": true,
+     "defeat_condition": "Paddle misses ball three times (lives exhausted)",
+     "player_goal": "Maximize score via brick destruction and angle-perfection, clear both walls before losing three lives"
+    }
+   ],
+   "retention_answer": "Score-attack loop (implicit high-score memory per player); 8-15 min per session encourages repeated plays; escalating ball speed creates time pressure. No live-ops, no metagame—pure skill loop."
+  },
+  {
+   "game": "Arkanoid (Taito, 1986)",
+   "sources": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Arkanoid",
+     "type": "wiki",
+     "timestamp": null
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=XIbz0S-3Gpw",
+     "type": "video",
+     "timestamp": "2012-11-03"
+    },
+    {
+     "url": "https://www.gamedeveloper.com/design/breaking-down-breakout-system-and-level-design-for-breakout-style-games",
+     "type": "article",
+     "timestamp": null
+    }
+   ],
+   "loops": {
+    "minute_1": "Player controls Vaus paddle, dense brick layout on screen (stage-specific geometry). Collision triggers capsule-drops (Expand, Laser, Catch, Slow). Audio + haptic feedback immediate. Recompense: brick destroyed, possible power-up pickup.",
+    "minute_10": "After 5-6 min, first chamber cleared. Expand power-up received → paddle doubled size. Psychological reward: perceived mastery increase. Stage 2-3 begins with indestructible grey bricks forming structural puzzle. Layout decision emerges: route-finding for ball.",
+    "hour_5": "Stages 10-15 reached (~45 min cumulative). Laser paddle + triple-ball active. Floating enemy sprites present (bonus points if destroyed). Stage clarity established: each stage ~3 min, progression visible (13/33 = 40%). Power-up RNG drives session variance.",
+    "endgame": "Stage 33: Boss 'Doh' (solid block entity). No continue allowed at this stage—game-over is terminal. Victory = Doh destroyed. Tension peak: this is the only stage without continue-credit fallback."
+   },
+   "objectives": [
+    {
+     "mode": "solo_arcade_progression",
+     "has_win_state": true,
+     "victory_condition": "Clear all 33 stages, defeat Boss Doh on stage 33",
+     "has_defeat_state": true,
+     "defeat_condition": "Lose three lives at any stage except 33; lose on stage 33 with no continues available",
+     "player_goal": "Progress through all 33 stages, master variable layouts and power-up timing, defeat the final boss"
+    }
+   ],
+   "retention_answer": "Explicit progression counter (stage X/33) drives completion loop; varied level layouts prevent monotony; power-up RNG creates session-to-session variance and surprise. Arcade-era 'continue-coin' mechanic introduces time-bound social engagement (shared cabinet, spectators)."
+  }
+ ],
+ "advisory": true
+}

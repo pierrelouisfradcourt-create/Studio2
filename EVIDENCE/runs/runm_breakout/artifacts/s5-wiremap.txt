@@ -1,0 +1,63 @@
+I now have everything I need. The game code doesn't exist yet — expected, since **s5-wiremap runs before s9-build**. My job is the isomorphic *plan*: map each rule (feature) of the blueprint's 4 modules to the specific function and file that will realize it. The archived RUN_M_BIS attempt confirms the studio's socle N1 convention (`.mjs` modules + `index.html`), and the current `blueprint.json` mandates exactly 4 modules — `engine` / `render` / `input` / `main` — which the WireMap must epouse.
+
+## RAPPORT FINAL — s5-wiremap / runm_breakout
+
+### software
+WireMap produite **en texte seul** (dispatch impose « aucun fichier écrit » ; l'exécuteur matérialise `wiremap.json`). **Isomorphe au blueprint** : les 4 modules (`engine`, `render`, `input`, `main`) → fichiers plats `engine.mjs` / `render.mjs` / `input.mjs` / `main.mjs` + `index.html`, sous la racine de code `GAMES/runm_breakout` (socle N1 flat web, charter). **9 features (R1..R9)**, chacune tracée à UNE fonction non vide et à des fichiers non vides.
+
+Placement des fonctions par module (fidèle aux `responsabilites`/`couvre` du blueprint) :
+
+| Feature | Module blueprint | fonction | fichiers |
+|---|---|---|---|
+| R1 objectif affiché | render | `renderObjective` | render.mjs, index.html |
+| R2 contrôle raquette | input (entrée) + engine (effet) | `movePaddle` | engine.mjs, input.mjs |
+| R3 rebond conservatif | engine | `reflectBall` | engine.mjs |
+| R4 destruction 1 frappe | engine | `destroyBrick` | engine.mjs |
+| R5 progrès mesurable | engine | `decrementRemaining` | engine.mjs |
+| R6 victoire terminale | engine + render | `checkWin` | engine.mjs, render.mjs |
+| R7 défaite terminale | engine + render | `checkLose` | engine.mjs, render.mjs |
+| R8 déterminisme | engine | `hashState` | engine.mjs |
+| R9 état inspectable | main | `exposeGame` | main.mjs |
+
+### evidence
+**Couverture featuremap** (`couvre` — mapping tracé ici puisque le format concret du dispatch, lu par `forge.static_oracles.check_wiremap`, ne porte que `{feature, fonction, fichiers, preuve}`) :
+
+| Feature WireMap | capacité(s) featuremap `couvre` | source_ref |
+|---|---|---|
+| R1 | `R1c1_hud_objectif_nonvide` | E1 |
+| R2 | `R2c1_entree_touches_raquette` + `R2c2_effet_deplacement_raquette` | E2 |
+| R3 | `R3c1_reflexion_conservative` | E3 |
+| R4 | `R4c1_brique_disparait_un_tick` | E4 |
+| R5 | `R5c1_decrement_unitaire` | E5 |
+| R6 | `R6c1_etat_won` | E6 |
+| R7 | `R7c1_etat_lost` | E7 |
+| R8 | `R8c1_hash_stable_par_seed` | E9 |
+| R9 | `R9c1_window_game_expose` | E10 |
+
+**10 feuilles / 10 portées** (E8 = REPEAT, sans feuille propre, satisfait par la couverture de ses cibles de rejeu E2/E3/E5 déjà portées — cf. featuremap). **Capacités non couvertes : aucune.** Aucun `couvre` fantôme : chaque id cité résout dans `featuremap` (via s3-decompo). Isomorphisme vérifié structurellement contre `blueprint.json` (4 modules → 4 fichiers + shell HTML) et contre `repo_map.yaml` (racine `GAMES/runm_breakout` = surface N1 flat, hors table figée V2 — écart déjà consigné `manifest-e2b0f5c8ef6fed0e`, non re-décidé ici).
+
+### claim
+Aucun oracle exécuté : (1) `forge.static_oracles.check_wiremap` (APRÈS build, s10c) ne peut vérifier « fichiers existants / fonctions définies » — **le code n'existe pas encore** (confirmé : `GAMES/runm_breakout/engine.mjs`, `index.html` absents) ; (2) `check_wiremap_contract.mjs` (AVANT build) exige le schéma v2 `{systems[], lines[]}` avec `couvre`/`requires`, que le **format concret imposé par le dispatch ne produit pas** — il n'est donc pas exécutable sur cet artefact. Toute affirmation ci-dessus est structurelle, non adossée à un oracle vert exécuté.
+**claim_verdict: NO_CLAIM_ALLOWED.** Fog → HumanGate : après matérialisation de `wiremap.json` par l'exécuteur, faire tourner `check_wiremap` (post-build, s10c) pour confirmer existence fichiers + définition fonctions ; la couverture `couvre`/`maillon_non_lie` (`check_wiremap_contract`) reste non vérifiable tant que la sortie n'est pas au schéma v2.
+
+### SKIPPED_VALIDATION
+- **`node forge/check_wiremap_contract.mjs … --featuremap …`** — *où* : couverture WireMap↔featuremap + `maillon_non_lie` — *statut* : non fait — *raison* : le format concret du dispatch (`{features:[…]}`, sans `couvre`/schéma v2) n'est pas consommable par cet oracle ; couverture fournie en prose, vérification mécanique déléguée en amont/aval.
+- **`forge.static_oracles.check_wiremap`** — *où* : existence fichiers / définition fonctions — *statut* : non fait — *raison* : oracle post-build (s10c) ; aucun code sous `GAMES/runm_breakout` au moment de s5.
+
+```json
+{"features": [{"feature": "R1 objectif affiché", "fonction": "renderObjective", "fichiers": ["render.mjs", "index.html"], "preuve": "E1 (visual) — à l'ouverture de la page, renderObjective écrit dans le HUD #objective un texte non vide décrivant la destruction du mur."}, {"feature": "R2 contrôle raquette", "fonction": "movePaddle", "fichiers": ["engine.mjs", "input.mjs"], "preuve": "E2 (bot_action) — input.mjs capture Flèche-Gauche/Droite en intention neutre, engine.movePaddle l'applique : window.__game.paddle.x croît sous Droite, décroît sous Gauche, constant sans touche."}, {"feature": "R3 rebond conservatif", "fonction": "reflectBall", "fichiers": ["engine.mjs"], "preuve": "E3 (oracle node) — à seed fixe, un contact balle-mur/raquette inverse le signe de la composante de vitesse concernée et conserve |v|."}, {"feature": "R4 destruction une frappe", "fonction": "destroyBrick", "fichiers": ["engine.mjs"], "preuve": "E4 (mutation) — après un contact balle-brique, la brique est absente de window.__game.bricks au même tick et non recollidable ; exiger 2 contacts fait échouer le test."}, {"feature": "R5 progrès mesurable", "fonction": "decrementRemaining", "fichiers": ["engine.mjs"], "preuve": "E5 (oracle node) — après un contact balle-brique simulé, window.__game.bricksRemaining a diminué d'exactement 1."}, {"feature": "R6 victoire terminale", "fonction": "checkWin", "fichiers": ["engine.mjs", "render.mjs"], "preuve": "E6 (visual) — à bricksRemaining=0, checkWin fixe window.__game.state='won' et render affiche un panneau VICTOIRE, simulation figée."}, {"feature": "R7 défaite terminale", "fonction": "checkLose", "fichiers": ["engine.mjs", "render.mjs"], "preuve": "E7 (visual) — quand la balle franchit le bord bas sans vie, checkLose fixe window.__game.state='lost' et render affiche un panneau DÉFAITE, simulation figée."}, {"feature": "R8 déterminisme", "fonction": "hashState", "fichiers": ["engine.mjs"], "preuve": "E9 (oracle node) — deux exécutions hors navigateur du module à seed+entrées identiques produisent le même hash d'état final via hashState."}, {"feature": "R9 état inspectable", "fonction": "exposeGame", "fichiers": ["main.mjs"], "preuve": "E10 (oracle node) — après chargement, exposeGame publie window.__game exposant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state∈{playing,won,lost}, indépendamment du DOM."}]}
+```
+
+**RETURN LINEAGE**
+- `why_task_existed:`
+  - `problem:` non transmis (activation par dispatch `FORGE_DISPATCH:s5-wiremap:runm-breakout-20260902:1` ; blueprint s4 et featuremap s3 produits, la WireMap isomorphe est l'étape 5 attendue).
+  - `oracle:` aucun — activation par séquencement de pipeline, pas par une mesure d'échec.
+  - `root_cause:` non établie (étape nominale de la chaîne).
+  - `action_reason:` produire la carte isomorphe au blueprint pour que chaque exigence/feuille de la featuremap soit adressée à une fonction+fichier traçable, condition d'entrée du build s9 et de l'oracle s10c.
+- `result:` WireMap texte-seul : 4 modules blueprint → 5 fichiers plats, 9 features (R1..R9), fonction et fichiers non vides pour chacune ; 10/10 capacités couvertes (E8 satisfait par rejeu couvert) ; 0 couvre fantôme. Aucun oracle exécuté (texte-seul + code absent).
+- `proof:` aucune commande exécutée — `run: aucun`. Reçus à produire en aval : `forge.static_oracles.check_wiremap` sur le `wiremap.json` matérialisé (post-build s10c).
+- `learning:` la racine de code N1 `GAMES/runm_breakout` reste hors de la table figée `repo_map.yaml` (topologie V2 numérotée) — l'isomorphisme WireMap se fait au blueprint (4 modules), le placement flat au charter N1, pas à repo_map ; écart connu (`manifest-e2b0f5c8ef6fed0e`), réutilisable pour tout run N1 flat web.
+- `next_reason:` la chaîne ne se ferme pas ici sur un point : la preuve mécanique manque par construction (texte-seul + code non encore bâti). Le format concret du dispatch (`{features:[…]}`) ne porte pas `couvre`/le schéma v2, donc `check_wiremap_contract` (coverage + `maillon_non_lie`) n'est pas exécutable sur cet artefact — à traiter en amont/aval ; `check_wiremap` post-build reste à exécuter après s9. Aucune cause non résolue au-delà de ces matérialisations.
+
+SKIPPED_VALIDATION: voir section dédiée ci-dessus (2 items : `check_wiremap_contract` non consommable sur ce format, `check_wiremap` post-build hors périmètre s5).
+RETURN_REASON: {"status": "DISCOVERED", "problem": "Le format de sortie concret imposé par le dispatch s5 ({features:[{feature,fonction,fichiers,preuve}]}, lu par forge.static_oracles.check_wiremap) ne porte pas le champ couvre ni le schema v2 {systems,lines}, si bien que l'oracle AVANT-build check_wiremap_contract (coverage featuremap + finding maillon_non_lie) ne peut consommer l'artefact materialise.", "root_cause": "Deux oracles WireMap a deux moments (check_wiremap_contract pre-build vs check_wiremap post-build) attendent deux schemas differents, mais le dispatch n'impose que le schema post-build, laissant la verification de couverture pre-build sans artefact conforme a parser."}

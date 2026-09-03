@@ -1,0 +1,344 @@
+{
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "decision": "HUMANGATE_READY",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "execution_proof_attestation": "self",
+ "execution_proof_note": "auto-attesté (chemin B headless) : les événements spawn_authorized/spawn_executed de ce run ont été écrits par le driver qui exécute les spawns, aucun observateur tiers ne les a constatés",
+ "git_head": "2769dc8ae97d8cfff8ebbf6ec4254b239ddbfdbb",
+ "hmac": "fd6aa88af91276a69b07de2299dfa2e25797277f2b80e1633d76f5cc6a346954",
+ "humangate_flags": [
+  "standard non vérifiée (oracle sauté dans ce profil)",
+  "red-team dégradé: reviewer indépendant n'a pas tourné (fallback)"
+ ],
+ "is_game": true,
+ "nonce": "05f52ebe20d7a95f1316797d9b2b1e66",
+ "oracles": {
+  "archi": {
+   "detail": {
+    "debordements_ownership": {
+     "checked": false,
+     "items": []
+    },
+    "deps_interdites_violées": [],
+    "modules_sans_test": [
+     "main"
+    ],
+    "passed": true
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "archi",
+   "run_id": "runm-breakout-20260902",
+   "status": "OK",
+   "ts": 1788418356.7313414
+  },
+  "code": {
+   "detail": {
+    "art_response_dead": false,
+    "asset_consumption": {
+     "checked": false,
+     "reason": "aucun asset_requests.json produit par la chaîne amont",
+     "status": "SKIPPED"
+    },
+    "e2e": {
+     "passed": true,
+     "raisons": []
+    },
+    "economy_bypass_dead": false,
+    "evidence_seal": {
+     "evidence_path": "EVIDENCE/runs/runm_breakout/evidence/oracle_runm_breakout.log",
+     "reason": "FLUX_D_EXPLOITATION_IGNORE_PAR_GIT",
+     "sealed": false
+    },
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "logic_files_source": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\wiremap.json",
+    "loop_dead": false,
+    "measure_tick": {
+     "checked": false,
+     "reason": "Brief sans 'mesure.tick_ms' valide — aucune contribution au gate (non-régression des profils/briefs existants)",
+     "status": "SKIPPED"
+    },
+    "mutation": {
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "categories_exclues": [],
+       "code_sha256": {
+        "e2e.mjs": "e3ad0ea640ba08de4582d17caf03894bed59aa1387b7246872241d029ceac01a",
+        "engine.mjs": "6be9118e835c1ef08ff4c35091858cb16239eb4966a3875cc54644483d6b4972",
+        "input.mjs": "b7840966664f40088251521245acd11ada8432f9d7cba7ac2392a55164bdb35a",
+        "logic.test.mjs": "41e5e9461fcf286afaae19e8d62c348800c43091684ea0ba7a216fe2d287c14c",
+        "main.mjs": "214f89b606236c5e3ebdeb144654a1c20d3f8fa2297f9d881ed502f9d9c1b21e",
+        "properties.test.mjs": "196e1340e11006ff28a5f342ee888da0fee8f483db3ffcc93f024db0f1ba25bc",
+        "render.mjs": "57fea42e4d9a060d2410a77189a119ab6339e49a28c58a7f3bfad31756193878",
+        "run-oracle.mjs": "b09420ee193d429318c0ff46b2f85a27c04c7d127a4f8d6af3f70784b0f7f1c2"
+       },
+       "compteurs_par_categorie": {
+        "sans_categorie": {
+         "fichiers": 4,
+         "jugee": true,
+         "killed": 41,
+         "total": 41
+        }
+       },
+       "game_dir": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\GAMES\\runm_breakout",
+       "gate_checked": true,
+       "killed": 41,
+       "logic_files": [
+        "engine.mjs",
+        "input.mjs",
+        "main.mjs",
+        "render.mjs"
+       ],
+       "mutation_exception": false,
+       "survivants_non_tries": [],
+       "survived": 0,
+       "test_argv": [
+        "node",
+        "--test",
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "test_files_scelles": [
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "total": 41,
+       "triage_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+       "triaged_survivors": []
+      },
+      "evidence_path": "EVIDENCE/runs/runm_breakout/evidence/mutation_runm-breakout-20260902.json",
+      "evidence_sha256": "fc7c0bd23e185285006d109da9bae476cd2e17db2798d66a3e451d4c7a5f602b",
+      "oracle_id": "mutation",
+      "run_id": "runm-breakout-20260902",
+      "status": "OK",
+      "ts": 1788418356.5529876
+     },
+     "signature": "64381b8f543eaca1e9426f1317f34eae932c73b1143a3a33673533251ff9f62c"
+    },
+    "product_oracle_godot_activation": {
+     "active": false,
+     "godot_capacity_present": false,
+     "proof_descriptor_present": false,
+     "reason": "aucun descripteur `proof:` bien formé dans game_contract.yaml ; aucun oracle FORGE_ORACLE trouvé sous C:\\Users\\Studio-Dev\\Desktop\\Studio\\GAMES\\runm_breakout/07_TESTS/oracle/",
+     "runtime_block": {
+      "active": false,
+      "reason": "pas de run/main_scene"
+     }
+    },
+    "regime_preuve": "historique",
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": true,
+     "raisons": []
+    },
+    "runtime_alive": {
+     "checked": false,
+     "passed": false,
+     "reason": "pas de run/main_scene (module bibliothèque)",
+     "status": "SKIPPED"
+    },
+    "search_consulted": {
+     "count": 6,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability": {
+     "checked": true,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability_mesure": {
+     "mesure": "cablage_du_harnais",
+     "ne_mesure_pas": "la solvabilite du jeu (won/trials) — un `passed: true` ne prouve AUCUNE partie gagnee",
+     "resultat_reel": "non remonte au recu : voir evidence/oracle_<jeu>.log, NON versionne (.gitignore:81)"
+    }
+   },
+   "evidence_path": "EVIDENCE/runs/runm_breakout/evidence/oracle_runm_breakout.log",
+   "evidence_sha256": "",
+   "oracle_id": "code",
+   "run_id": "runm-breakout-20260902",
+   "status": "OK",
+   "ts": 1788418356.5594938
+  },
+  "standard": {
+   "detail": {
+    "reason": "non applicable au profil full"
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "standard",
+   "run_id": "runm-breakout-20260902",
+   "status": "SKIPPED",
+   "ts": 1788418939.1142683
+  },
+  "wiremap": {
+   "detail": {
+    "amont_traversal": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "facts": {
+      "boucles_recompense": {
+       "addresses": [
+        "worldscan:games[0].loops.minute_1",
+        "worldscan:games[0].loops.minute_10",
+        "worldscan:games[0].loops.hour_5",
+        "worldscan:games[0].loops.endgame",
+        "worldscan:games[1].loops.minute_1",
+        "worldscan:games[1].loops.minute_10",
+        "worldscan:games[1].loops.hour_5",
+        "worldscan:games[1].loops.endgame"
+       ],
+       "exigences": [
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E8"
+       ],
+       "files_present": true,
+       "leaves": [
+        "R2c1_entree_touches_raquette",
+        "R2c2_effet_deplacement_raquette",
+        "R3c1_reflexion_conservative",
+        "R4c1_brique_disparait_un_tick",
+        "R5c1_decrement_unitaire"
+       ],
+       "lines": [
+        "R2 contrôle raquette",
+        "R3 rebond conservatif",
+        "R4 destruction une frappe",
+        "R5 progrès mesurable"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_defaite": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].defeat_condition",
+        "worldscan:games[1].objectives[0].defeat_condition",
+        "worldscan:games[1].objectives[1].defeat_condition"
+       ],
+       "exigences": [
+        "E7"
+       ],
+       "files_present": true,
+       "leaves": [
+        "R7c1_etat_lost"
+       ],
+       "lines": [
+        "R7 défaite terminale"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_victoire": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].victory_condition",
+        "worldscan:games[1].objectives[0].victory_condition"
+       ],
+       "exigences": [
+        "E1",
+        "E6"
+       ],
+       "files_present": true,
+       "leaves": [
+        "R1c1_hud_objectif_nonvide",
+        "R6c1_etat_won"
+       ],
+       "lines": [
+        "R1 objectif affiché",
+        "R6 victoire terminale"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "contraintes_narratives": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "objectifs_joueur": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].player_goal",
+        "worldscan:games[1].objectives[0].player_goal",
+        "worldscan:games[1].objectives[1].player_goal"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "progression": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      }
+     },
+     "references": {
+      "adressables": 9,
+      "expected": 9,
+      "non_resolues": [],
+      "resolues": 9
+     },
+     "stages": [
+      "NOT_PRODUCED",
+      "PRODUCED",
+      "PRISME",
+      "GREY_BLOCKS",
+      "WIREMAP",
+      "BUILD"
+     ],
+     "verdict": "ADVISORY"
+    },
+    "features_manquantes": [],
+    "fonctions_renommées": [],
+    "obsoletes": [],
+    "passed": true,
+    "preuves_absentes": []
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "wiremap",
+   "run_id": "runm-breakout-20260902",
+   "status": "OK",
+   "ts": 1788418356.868171
+  }
+ },
+ "project": "runm_breakout",
+ "provenance_ok": true,
+ "redteam_advisory": [
+  "[HIGH] preuve factice / oracle e2e (volet c de run-oracle.mjs) — e2e.mjs:41-48 bascule sur simpleTest() si require('playwright') leve ; simpleTest() (e2e.mjs:135-148) demarre le serveur, le tue, imprime RESULT: PASS et process.exit(0) sans navigateur, sans page chargee, sans clic ni touche ni assertion UI. run-oracle.mjs:58 ne lit que le code de sortie (resultFromExit, ligne 35 : ok = code===0) : le PASS du volet (c) est indistinguable entre 'click-through navigateur reussi' et 'playwright absent'. E13 revendique 'click-through simule, contrat de jouabilite respecte' — faux sur le chemin de repli. Aggravant : aucun package.json n'existe dans GAMES/runm_breakout/ ni a la racine Studio/, donc playwright n'est declare nulle part sur la chaine de resolution. (repro: cd GAMES/runm_breakout && node -e \"require('playwright')\" ; echo exit=$? ; node e2e.mjs ; echo e2e_exit=$?  — attendu si playwright absent : sortie contenant '⚠ Playwright non disponible — test simplifié (sans navigateur)' ET 'RESULT: PASS' avec exit=0. Falsification renforcee : renommer index.html en index.html.bak puis relancer node e2e.mjs — sort toujours 0/PASS.)",
+  "[HIGH] ecart contrat/code — critere R8c1 non outille — engine.mjs:52-56 stocke this.seed mais init() (:58-75) et _generateBricks() (:77-92) n'utilisent que des constantes de module ; hashState() (:184-191) ne hache ni seed ni level. Deux moteurs de graines differentes produisent un etat initial et un hash identiques : le critere R8c1_hash_stable_par_seed est vrai par vacuite et resterait vert si la ligne this.seed = seed etait supprimee. Les deux tests de determinisme (logic.test.mjs:238-250, properties.test.mjs:170-182) ne comparent que des paires de MEME graine. this.level = 1 (engine.mjs:54) est mort de la meme facon tout en etant expose via main.mjs:63. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const a=new Engine({seed:1}),b=new Engine({seed:999});console.log('identiques:',a.hashState()===b.hashState());});\" — attendu : identiques: true)",
+  "[MEDIUM] preuve faible — E9 revendique un hash d'etat, le code hache une projection — engine.mjs:184-191 hache {paddle, ball, bricksRemaining, state} ; le tableau bricks — seul porteur de QUELLES briques sont tombees — est absent. Deux parties ayant detruit un nombre egal mais des briques differentes sont indiscernables par le hash, ce qui contredit la revendication E9 'hash reproductible d'un etat'. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const a=new Engine({seed:1});a.destroyBrick(a.bricks[0]);const b=new Engine({seed:1});b.destroyBrick(b.bricks[39]);console.log('etats differents:',JSON.stringify(a.bricks)!==JSON.stringify(b.bricks));console.log('meme hash:',a.hashState()===b.hashState());});\" — attendu : etats differents: true ET meme hash: true)",
+  "[MEDIUM] preuve factice + asymetrie de garde (R7c1) — engine.mjs:170-175 : checkLose() bascule en 'lost' des que state==='playing', sans jamais regarder la balle ; la condition ball.y > GAME_HEIGHT vit uniquement au site d'appel (engine.mjs:140). Asymetrie avec checkWin() (:163-168) qui verifie sa propre precondition. Le test qui la couvre, nomme 'checkLose sets state=lost when ball below boundary' (logic.test.mjs:134-142), ne place jamais la balle sous la limite : il appelle checkLose() sur un moteur neuf dont la balle est a y≈550, en plein terrain. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});e.ball.y=0;e.checkLose();console.log('ball.y=',e.ball.y,'state=',e.state,'over=',e.over);});\" — attendu : ball.y= 0 state= lost over= true (defaite avec la balle au plafond))",
+  "[MEDIUM] invariant manquant + test qui verrouille le bug (R4c1/R5c1/R6c1) — engine.mjs:158-161 : destroyBrick decremente sans garde d'idempotence ; bricksRemaining duplique bricks[] et checkWin() teste l'egalite STRICTE ===0 (engine.mjs:164), donc un seul decompte en trop fait sauter 0 et rend la victoire structurellement inatteignable, toutes briques detruites. logic.test.mjs:98-109 assert explicitement bricksRemaining === initial-2 apres double destruction avec le commentaire 'This test documents the current behavior' : un test de la suite ratifie la rupture d'invariant. L'invariant bricksRemaining === bricks.filter(b=>!b.destroyed).length n'est asserte nulle part dans properties.test.mjs. Atteignabilite : tick() protege sa boucle par !brick.destroyed (:132), la faille est latente et exposee aux appelants externes. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});e.destroyBrick(e.bricks[0]);e.destroyBrick(e.bricks[0]);let s=0;while(s<200000&&e.state==='playing'){const c=e.paddle.x+40;e.tick(e.ball.x<c-30?'left':e.ball.x>c+30?'right':null);s++;}console.log('vivantes=',e.bricks.filter(b=>!b.destroyed).length,'remaining=',e.bricksRemaining,'state=',e.state);});\" — attendu : vivantes= 0 remaining= -1 state= lost)",
+  "[MEDIUM] zone morte + ecart contrat/code sur R3 (rebond conservatif) — engine.mjs:148-156 : la branche mode==='collision' (:153-155) execute exactement le corps de la branche 'y' (:151-152) — chemin de code sans comportement propre. tick() appelle reflectBall('collision') pour TOUT contact balle-brique (:134) quelle que soit la geometrie : un impact sur la face laterale d'une brique inverse vy au lieu de vx, la balle conserve son sens horizontal et traverse la rangee. L'oracle E3 ne peut pas l'attraper — il verifie l'inversion de signe et la conservation de |v| pour l'axe passe en parametre, jamais que le bon axe est choisi (logic.test.mjs:58-84 et :175-187, ce dernier assertant l'equivalence 'collision' = 'y'). (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const p=new Engine();p.ball.vx=7;p.ball.vy=11;p.reflectBall('collision');const q=new Engine();q.ball.vx=7;q.ball.vy=11;q.reflectBall('y');console.log('collision===y:',p.ball.vx===q.ball.vx&&p.ball.vy===q.ball.vy);const e=new Engine({seed:1}),br=e.bricks[0];e.ball.x=br.x-6;e.ball.y=br.y+br.height/2;e.ball.vx=250;e.ball.vy=20;const sg=Math.sign(e.ball.vx);e.tick(null);console.log('detruite:',br.destroyed,'sens vx conserve:',Math.sign(e.ball.vx)===sg);});\" — attendu : collision===y: true ; detruite: true sens vx conserve: true)",
+  "[MEDIUM] ecart contrat/code sur R6c1 et R7c1 (render affiche VICTOIRE/DEFAITE) — render.mjs:29 : 'if (!this.ctx || !this.canvas) return;' precede le bloc overlay (:56-68). Sans contexte 2D, state='won' ou 'lost' n'affiche rien, l'overlay conserve sa classe hidden. E6/E7 enoncent l'affichage comme inconditionnel ; le code le subordonne au canvas. Les deux tests qui touchent ce chemin (logic.test.mjs:392-396 et :398-416) ratifient le couplage en assertant que render() est un no-op sans contexte. (repro: cd GAMES/runm_breakout && node -e \"import('./render.mjs').then(async({Renderer})=>{const {Engine}=await import('./engine.mjs');let hidden=true;const ov={classList:{add:()=>{hidden=true},remove:()=>{hidden=false},contains:()=>hidden},querySelector:()=>({textContent:''})};globalThis.document={getElementById:id=>id==='overlay'?ov:null};const r=new Renderer(),e=new Engine({seed:1});e.bricksRemaining=0;e.checkWin();r.render(e.snapshot());console.log('state=',e.state,'overlay cache:',hidden);});\" — attendu : state= won overlay cache: true)",
+  "[MEDIUM] chemin de crash + preuve factice (R1c1) — render.mjs:22 accede a document.getElementById sans la garde 'typeof document !== undefined' que setup() applique douze lignes plus haut (:13) — seule methode de Renderer capable de lever ; main.mjs:18 l'appelle sans condition depuis initGame(). Le test nomme 'Renderer: renderObjective writes to objective element' (logic.test.mjs:331-336) n'appelle PAS renderObjective() : il assert typeof renderer.render === 'function', avec le commentaire 'Cannot fully test without a real DOM', tout en comptant dans les 65 tests de E11. La couverture reelle existe ailleurs (logic.test.mjs:379-390) ; le defaut est la garde manquante et le test tautologique. (repro: cd GAMES/runm_breakout && node -e \"import('./render.mjs').then(({Renderer})=>{new Renderer().renderObjective();}).catch(e=>console.log('LEVE:',e.constructor.name,'-',e.message));\" — attendu : LEVE: ReferenceError - document is not defined)",
+  "[MEDIUM] zone morte + fuite de ressources + trou de couverture e2e — e2e.mjs:123 (process.exit(0) dans le try) et :126 (process.exit(1) dans le catch) terminent le processus immediatement ; le bloc finally de :128-132 — page.close(), browser.close(), srv.kill() — n'est atteint sur aucun des deux chemins terminaux, laissant un Chromium et un server.mjs orphelins sur le port 4504 a chaque execution en mode navigateur. Corollaire de couverture dans le meme fichier : le scenario force la defaite par la porte de debogage (:97, window.__game_debug.loseGame()) et ne teste jamais la victoire — R6c1 n'a aucune couverture e2e et la couverture e2e de R7c1 ne fait jamais tomber la balle sous le terrain. (repro: Ancre statique : e2e.mjs:123 et :126 precedent le finally de :128 ; process.exit() ne deroule pas les finally. Verification executable : cd GAMES/runm_breakout && node e2e.mjs ; echo exit=$? ; puis node -e \"require('node:http').get({port:4504,path:'/'},r=>console.log('serveur ENCORE vivant',r.statusCode)).on('error',()=>console.log('serveur bien arrete'));\" — attendu sur le chemin navigateur : serveur ENCORE vivant 200)",
+  "[MEDIUM] preuve factice + backdoor livree en production (R6c1/R7c1) — main.mjs:34-48 : exposeGame() est appelee sans condition par initGame() (:19), donc window.__game_debug existe dans la page servie aux joueurs, sans garde dev/prod. winGame() (:42-46) ecrit gameEngine.bricksRemaining = 0 SANS toucher aux briques puis appelle checkWin() : l'etat resultant est auto-contradictoire (state='won', bricksRemaining=0, 40 briques destroyed===false que le renderer continue de dessiner sous l'overlay VICTOIRE). C'est le chemin qu'empruntent le test de main.mjs (logic.test.mjs:665-676) et l'e2e (e2e.mjs:97) : les etats terminaux R6/R7 sont attestes par une transition forcee, jamais par une partie jouee. (repro: Dans le harnais installFakeGameGlobals de logic.test.mjs:594, apres 'await importMainFresh()' : window.__game_debug.winGame(); console.log(window.__game.state, window.__game.bricksRemaining); puis instrumenter ctx.fillRect avec un compteur et declencher env.rafCalls.at(-1).cb(); console.log('fillRect=', rects); — attendu : 'won 0' puis fillRect= 42 (fond + raquette + 40 briques vivantes) : victoire declaree sur un terrain plein.)",
+  "[MEDIUM] preuve factice — assertion tautologique dans le fichier des invariants — properties.test.mjs:185-208 : la boucle sort des que state!=='playing' et l'assertion finale (:204-207) est 'bricksRemaining === 0 || step < maxSteps'. Sur une defaite a l'etape 10 la boucle sort avec step=10 < 50000, la disjonction est vraie, le test passe. Il ne peut echouer que si le bot epuise les 50000 pas en etant encore en jeu — cas ou la boucle ne sort pas par cette porte. Un test nomme 'reaching bricksRemaining=0 is achievable' ne peut donc pas echouer sur une non-solvabilite. La propriete est reellement prouvee ailleurs (logic.test.mjs:473-479, runBot(1) avec assert won===true) : l'impact produit est limite, mais l'assertion gonfle le compte '65 tests' de E11 d'une preuve nulle. (repro: cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});let step=0;while(step<50000&&e.state==='playing'){e.tick(null);step++;}console.log('state=',e.state,'remaining=',e.bricksRemaining,'step=',step);console.log('assertion du test:',(e.bricksRemaining===0||step<50000));});\" — attendu : state= lost, remaining non nul, assertion du test: true)",
+  "[LOW] source de verite dupliquee / drift silencieux — render.mjs:40 dessine la raquette avec les litteraux 'GAME_HEIGHT - 30, 80, 12' (duplicata de PADDLE_Y/PADDLE_WIDTH/PADDLE_HEIGHT, engine.mjs:15-18), :45 dessine la balle avec le rayon 5 (duplicata de BALL_RADIUS, engine.mjs:20), et _getDimensions() (:71-73) retourne {800,600} en dur au lieu d'importer GAME_DIMENSIONS — export public de engine.mjs:205 consomme uniquement par les deux fichiers de test, jamais par le module de rendu qui en est le destinataire naturel. snapshot() ampute volontairement la raquette de y/width/height (engine.mjs:195), donc le renderer ne PEUT pas obtenir la geometrie reelle. Aucun test ne compare la geometrie dessinee aux constantes du moteur. (repro: Repro de style mutation, hors lane protegee (porte sur engine.mjs) : remplacer 'const PADDLE_WIDTH = 80;' par '= 120' a engine.mjs:15, puis 'cd GAMES/runm_breakout && node --test logic.test.mjs properties.test.mjs'. Attendu : suite VERTE (les bornes assertees en logic.test.mjs:40 et :54 utilisent elles aussi le litteral 80) alors que la boite de collision fait 120 px et le rectangle dessine toujours 80. Restaurer la valeur apres mesure.)",
+  "[LOW] zone morte / flux de controle implicite — index.html:79 importe { initGame, resetGame } mais initGame n'est reference nulle part dans le script de la page — le demarrage vient du bloc auto-execute main.mjs:101-108. Corollaire : resetGame() (main.mjs:67-74) ne relance pas la boucle de jeu ; apres un stopGameLoop(), 'Rejouer' recree le moteur et publie state='playing' alors que rien ne tique — le jeu est gele tout en se declarant en cours. resetGame accede aussi a document (:71) derriere la garde 'if (renderer)', qui ne protege pas la bonne chose. Le test de reset (logic.test.mjs:711-727) assert l'etat et l'overlay, jamais qu'une frame a ete replanifiee. (repro: Dans le harnais installFakeGameGlobals de logic.test.mjs:594 : const mod = await importMainFresh(); mod.stopGameLoop(); const before = env.rafCalls.length; mod.resetGame(1); console.log('state=', window.__game.state, 'frames depuis reset=', env.rafCalls.length - before); — attendu : state= playing frames depuis reset= 0)",
+  "[LOW] garde incoherente / fuite d'ecouteurs — input.mjs:12 teste 'typeof window !== undefined' puis appelle document.addEventListener aux lignes 13 et 19 : la garde ne porte pas sur l'objet reellement utilise. Aucun removeEventListener n'existe, donc chaque new InputAdapter() (main.mjs:15, a chaque initGame) ajoute deux ecouteurs permanents sur document. Le test DOM (logic.test.mjs:298-328) installe un faux document fournissant addEventListener, ce qui masque l'incoherence de garde. (repro: cd GAMES/runm_breakout && node -e \"globalThis.window={}; import('./input.mjs').then(({InputAdapter})=>{new InputAdapter();}).catch(e=>console.log('LEVE:',e.constructor.name,'-',e.message));\" — attendu : LEVE: ReferenceError - document is not defined)"
+ ],
+ "redteam_ran": false,
+ "redteam_reviewer": "claude-opus-4-8",
+ "run_id": "runm-breakout-20260902",
+ "scope": "FULL",
+ "software_verdict": "OK",
+ "ts": 1788418939.1345892
+}

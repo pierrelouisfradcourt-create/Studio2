@@ -1,0 +1,196 @@
+{
+ "features": [
+  {
+   "feature": "R01 Objectif affiche",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "progression.mjs",
+    "hud.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : progression.currentObjective() retourne 'Vider l'écran 1' en démarrage (couvre: cap_objectif_nonvide)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_objectif_nonvide"
+   ]
+  },
+  {
+   "feature": "R02 Raquette gauche",
+   "fonction": "movePaddle",
+   "fichiers": [
+    "engine.mjs",
+    "input.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : engine.step avec paddleLeft=true réduit paddle.x (couvre: cap_raquette_gauche_entree, cap_raquette_gauche_effet)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_raquette_gauche_entree",
+    "cap_raquette_gauche_effet"
+   ]
+  },
+  {
+   "feature": "R03 Raquette droite",
+   "fonction": "movePaddle",
+   "fichiers": [
+    "engine.mjs",
+    "input.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : engine.step avec paddleRight=true augmente paddle.x (couvre: cap_raquette_droite_entree, cap_raquette_droite_effet)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_raquette_droite_entree",
+    "cap_raquette_droite_effet"
+   ]
+  },
+  {
+   "feature": "R04 Casse brique",
+   "fonction": "collideBrick",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : collision ball/brick détruit la brique et réduit son count (couvre: cap_brique_disparait)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_brique_disparait"
+   ]
+  },
+  {
+   "feature": "R05 Score",
+   "fonction": "applyScore",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : destruction de brique incrémente score de +10 (couvre: cap_score_augmente)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_score_augmente"
+   ]
+  },
+  {
+   "feature": "R06 Angle tactique",
+   "fonction": "reflectAngle",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — solvabilité : deux politiques différentes produisent des trajectoires et scores différents (couvre: cap_decision_angle_score)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_decision_angle_score"
+   ]
+  },
+  {
+   "feature": "R07 Ecran 2 debloque",
+   "fonction": "unlockScreen2",
+   "fichiers": [
+    "progression.mjs",
+    "engine.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — solvabilité : quand screen1.alive.count=0, currentScreen bascule à 2 et devient jouable (couvre: cap_unlock_ecran2_entree, cap_unlock_ecran2_effet)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_unlock_ecran2_entree",
+    "cap_unlock_ecran2_effet"
+   ]
+  },
+  {
+   "feature": "R08 But ecran 1",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "progression.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : progression.currentObjective() = 'Vider l'écran 1' au démarrage (couvre: cap_objectif_ecran1)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_objectif_ecran1"
+   ]
+  },
+  {
+   "feature": "R09 But ecran 2",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "progression.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — solvabilité : après unlock, progression.currentObjective() = 'Vider l'écran 2' (couvre: cap_objectif_ecran2)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_objectif_ecran2"
+   ]
+  },
+  {
+   "feature": "R11 Balle visible",
+   "fonction": "moveBall",
+   "fichiers": [
+    "engine.mjs",
+    "render.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : ball.x et ball.y changent à chaque step, rebonds inversent vx/vy (couvre: cap_balle_visible_rebonds)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_balle_visible_rebonds"
+   ]
+  },
+  {
+   "feature": "R12 Victoire",
+   "fonction": "checkEndGame",
+   "fichiers": [
+    "progression.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — solvabilité : quand tous les écrans sont vides, gameWon=true et progression.state='won' (couvre: cap_victoire)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_victoire"
+   ]
+  },
+  {
+   "feature": "R13 Defaite",
+   "fonction": "checkEndGame",
+   "fichiers": [
+    "progression.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : quand lives=0, gameOver=true et progression.state='lost' (couvre: cap_defaite)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_defaite"
+   ]
+  },
+  {
+   "feature": "R14 Determinisme",
+   "fonction": "makeRng",
+   "fichiers": [
+    "rng.mjs",
+    "engine.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : deux instances GameState avec mêmes inputs produisent hash() égaux (socle N1) (couvre: cap_determinisme_hash)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_determinisme_hash"
+   ]
+  },
+  {
+   "feature": "R15 Vies",
+   "fonction": "loseLife",
+   "fichiers": [
+    "engine.mjs",
+    "hud.mjs"
+   ],
+   "version": "1.0",
+   "preuve": "oracle — logic tests : ball.y > height décrémente lives et affiche le compteur via HUD (couvre: cap_vies_compteur)",
+   "statut": "IMPLÉMENTÉ",
+   "couvre": [
+    "cap_vies_compteur"
+   ]
+  }
+ ]
+}

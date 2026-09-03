@@ -1,0 +1,78 @@
+objectif: 'Créer de zéro, sous GAMES/runm_breakout/, un casse-briques web minimal
+  mais COMPLET et jouable : une raquette pilotée au clavier renvoie une balle qui
+  détruit un mur de briques. Condition de VICTOIRE : toutes les briques sont détruites.
+  Condition de DÉFAITE : la balle tombe hors de l''aire de jeu (perte de la/des vie·s).
+  Le jeu est tenu volontairement minimal pour qu''un échec soit attribuable à la MIGRATION
+  V1->V2, pas à la complexité du jeu — sa qualité ludique n''est pas l''objet du run.
+  (Source : project_brief.intention + provenance.intention, Pierre 2026-09-02.)'
+joueur_cible: 'Un joueur clavier occasionnel — en pratique le testeur du run — qui
+  ouvre la page dans un navigateur et joue une partie complète, sans tutoriel ni apprentissage
+  préalable. Le jeu est jugé sur sa jouabilité au clavier, pas sur sa richesse. (Dérivé
+  du critère de sortie Pierre « le jeu se charge dans un navigateur et une partie
+  complète est jouable au clavier », project_brief.criteres_sortie #9.)'
+hors_scope:
+- 'Toute lignée NON web : aucun binaire Godot ni Blender requis ni utilisé — un recours
+  silencieux à l''un ou l''autre est un écart à signaler. (Pierre : Godot/Blender
+  = dépendances de capacité, jamais préconditions globales.)'
+- 'Recopier tout ou partie de GAMES/breakout ou GAMES/breakout_v2 : ce sont des BENCHMARKS
+  de régression, jamais des sources de design (interdiction expresse Pierre, provenance.references_autorisees).'
+- 'Construire ou prétendre tester la topologie CIBLE de V2 (Fable directeur, capacités
+  convoquées dynamiquement, GAME_BLUEPRINT / GAME_FLOW / ARCHITECTURE_CONTRACT) :
+  elle n''est pas construite au moment de RUN M et ne peut donc être ni testée ni
+  revendiquée.'
+- 'Prétendre couvrir N5 (séparation concepteur/instrumenteur) ou N6 (fidélité charter->build)
+  : FOG_HUMANGATE Pierre — mécanismes non mécanisés pour ce run.'
+- 'Multi-niveaux, tableau de scores en ligne, persistance de sauvegarde, audio riche,
+  portage mobile/tactile : hors du V1 minimal jouable.'
+- Écrire du code d'architecture (étape 4), faire le world scan (étape 2), toucher
+  aux lanes protégées (tests/, src/).
+criteres_succes:
+- 'Le jeu est écrit SOUS GAMES/runm_breakout/, conforme au socle N1 : page HTML+JS
+  unique, RNG seedé, logique métier en module .mjs testable HORS navigateur, exposition
+  window.__game, actions DOM-only, déterminisme reproductible par hash. (project_brief.contraintes.project_specific.techniques
+  + criteres_sortie #2.)'
+- 'Une partie COMPLÈTE est jouable au clavier dans un navigateur : la balle rebondit
+  sur les murs et la raquette, les briques disparaissent au contact, la victoire (mur
+  vidé) et la défaite (balle perdue) sont toutes deux atteignables. (criteres_sortie
+  #9.)'
+- 'Déterminisme reproductible : à seed égal, déroulé identique (vérifiable par hash).
+  (socle N1.)'
+- La logique .mjs est testable hors navigateur (au moins un test unitaire node passe).
+  (socle N1.)
+- 'Aucun artefact écrit hors des surfaces V2 : run_dir sous EVIDENCE/runs/ (jamais
+  lab/), jeu sous GAMES/runm_breakout/ (jamais games/). (criteres_sortie #1, #2, #12.)'
+- 'NOTE DE RENVOI : la liste AUTORITAIRE et complète des critères de sortie de MIGRATION
+  (charter validé par check_charter, oracles amont prisme/featuremap/blueprint/wiremap,
+  couverture `couvre`, reçu join_check, preuves s10, verdict HMAC re-vérifié par verify_run
+  avec la clé V2, HALT si LM Studio indisponible) vit dans project_brief.criteres_sortie
+  (12 items, Pierre 2026-09-02) et n''est PAS re-décidée ici.'
+actions_interdites:
+- Recopier tout ou partie de GAMES/breakout ou GAMES/breakout_v2 (benchmark, pas source
+  de design).
+- Dépendre de Godot ou Blender, ou y recourir silencieusement.
+- Écrire un artefact hors des surfaces V2 déclarées (lab/, scripts/forge/, games/)
+  — FAIL de migration, pas un détail.
+- 'Produire un vert par contournement : un échec doit dire OÙ la chaîne casse dans
+  les surfaces V2.'
+- 'Signer avec une clé héritée de V1 : la clé de signature est forge/.forge_key (V2).'
+- Modifier les lanes protégées tests/ ou src/ (zone protégée, gate Pierre explicite
+  requise).
+plateforme_cible: 'web/HTML — page HTML+JS unique conforme au socle N1, exécutable
+  dans un navigateur sans aucun binaire externe. (Source Pierre : project_brief.cible
+  « web/HTML » + provenance.cible « pas besoin de Godot si on reste sur la lignée
+  web ».)'
+reference_jeu: 'Casse-briques / Breakout — modèle de GENRE choisi EXPLICITEMENT par
+  Pierre le 2026-09-02 (provenance.genre : « casse-briques (Breakout), lignée WEB,
+  choisi explicitement pour son petit périmètre, sa boucle évidente et l''absence
+  de dépendance Godot »). ATTENTION : référence de GENRE uniquement, PAS une source
+  de design — la recopie du casse-briques migré GAMES/breakout (benchmark de régression)
+  est expressément interdite. Provenance Pierre traçable ; ce champ n''est PAS une
+  invention d''agent.'
+criteres_demo:
+- Une raquette visible se déplace horizontalement à l'écran quand le joueur appuie
+  sur les touches de direction.
+- Une balle visible se déplace et rebondit visiblement sur les murs et sur la raquette.
+- Une brique touchée par la balle disparaît visiblement de l'écran.
+- Un état de VICTOIRE s'affiche à l'écran lorsque toutes les briques ont disparu.
+- Un état de DÉFAITE s'affiche à l'écran lorsque la balle est perdue (tombe hors de
+  l'aire de jeu).

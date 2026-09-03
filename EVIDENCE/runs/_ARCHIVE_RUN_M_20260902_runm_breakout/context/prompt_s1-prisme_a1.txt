@@ -1,0 +1,242 @@
+## RÔLE
+Prisme Produit (étape 1). Point de vue imposé : réalisateur qui décrit le produit FINI tel que le joueur le vit, pas le chemin pour y arriver.
+
+## EXIGENCES COGNITIVES
+Vision produit concrète. Sépare strictement ce que le joueur voit / fait / ressent, et n'énonce que des Règles observables (testables).
+
+## MÉMOIRE DE TRAVAIL
+Consomme le charter (étape 0) + le prompt utilisateur. Connaît les conventions produit du studio.
+
+## OBJECTIF
+Produire product_snapshot.md : le produit fini décomposé en facettes — ce que le joueur voit, ce qu'il fait, ce qu'il ressent, + les Règles observables. 4 sections obligatoires, aucun flou, aucun « à définir ».
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Capture de la vision produit finie : expérience joueur (voit/fait/ressent) + liste des Règles observables. Écrit product_snapshot.md uniquement.
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Ne décompose pas en features (c'est l'étape 3) ; ne décide ni l'architecture ni le code ; ne fait pas le world scan.
+
+## PERMISSIONS
+read: repo + charter. write: product_snapshot.md uniquement. create: product_snapshot.md. run: aucun. delete: aucun.
+
+## GARDE-FOU
+Décrit le produit FINI, jamais le chemin. Toute règle DOIT être observable (donc testable plus tard). Aucun champ « à définir ».
+
+## CRITÈRES DE RÉUSSITE
+product_snapshot.md valide, 4 sections remplies, chaque règle observable et cohérente avec le charter. ET bloc ```json``` terminal valide : chaque exigence porte la chaîne complète observation -> claim -> enonce -> expected_proof -> destination (les trois premiers maillons DIFFÉRENTS), avec sa provenance (source/source_role/reference).
+
+## ORACLES / TESTS
+Oracle déterministe non-LLM : `node forge/check_prisme_manifest.mjs <run_dir>/prisme.json --worldscan <run_dir>/worldscan.json`. Vérifie la chaîne Observation -> Claim -> Exigence -> Preuve attendue -> Destination, la provenance, et l'ancrage des références dans le World Scan. Ne juge JAMAIS la qualité du texte. Une exigence sans preuve attendue exploitable est CLASSÉE non actionnable (fait mesuré), elle ne fait échouer l'étape que si AUCUNE exigence ne l'est. (La conformité markdown du panel reste `forge/prisme/check_prisme.mjs`.)
+
+## CONTRAT DE SORTIE
+DEUX sorties, les deux obligatoires. (1) product_snapshot.md : {ce_que_le_joueur_voit, ce_qu_il_fait, ce_qu_il_ressent, regles_observables[]}. M3'b (GO Pierre 2026-08-14) — COMMENT tu le livres : tu n'écris AUCUN fichier. TOUT LE TEXTE de ta réponse SITUÉ HORS du bloc ```json``` terminal EST product_snapshot.md — l'exécuteur le matérialise tel quel (il retire le bloc JSON et la ligne RETURN_REASON, rien d'autre). Ta réponse doit donc ÊTRE ce document, pas un rapport qui le décrit. FORMAT EXIGÉ par l'oracle check_prisme.mjs, à respecter au caractère près : quatre en-têtes `## <n>. <TITRE>` dont les titres contiennent `CE QUE LE JOUEUR VOIT`, `CE QUE LE JOUEUR FAIT`, `CE QUE LE JOUEUR RESSENT` et `RÈGLES OBSERVABLES` ; chaque section ≥ 40 caractères de contenu réel ; au moins une règle numérotée en début de ligne sous la forme `- **R1` (puis R2, R3…) ; aucun placeholder (`à définir`, `TBD`, `???`, `TODO`, `XXX`). Mesuré le 2026-08-13 (run p2a-return-snapshot) : le fichier a bien été matérialisé (8516 octets, propre) mais check_prisme l'a REFUSÉ — « aucune règle numérotée "- **Rn" » — parce que la réponse était rédigée comme un rapport, l'agent ignorant que sa prose DEVIENDRAIT cet artefact. Le défaut était dans le contrat, pas dans la rédaction. (2) Un bloc ```json``` TERMINAL, matérialisé en prisme.json par l'exécuteur (tu n'écris JAMAIS ce fichier toi-même) : {"game_id": "<id>", "exigences": [{"id", "source": "EXPECTED"|"ADDITIONS", "source_role", "reference", "observation", "claim", "enonce", "expected_proof": {"kind": "bot_action"|"oracle"|"mutation"|"visual"|"file_write", "statement"}, "destination": "s3-decompo"|"s4-archi"|"s5-wiremap"|"s9-build"}]}. CHAÎNE DE FALSIFIABILITÉ, trois maillons qui doivent DIFFÉRER : `observation` (ce que la source montre) -> `claim` (ce que tu en déduis, et qui peut être faux indépendamment de l'observation) -> `enonce` (ce que le jeu doit alors garantir). Recopier l'un dans l'autre satisfait le schéma sans rien déduire, et rend indécidable le lieu d'une panne : donnée fausse, ou déduction fausse ? RÈGLES DURES : `source` vaut EXPECTED (vu dans un artefact amont -> `reference` est une ADRESSE, jamais une prose : `worldscan:<chemin>` (ex. `worldscan:games[0].objectives[0].victory_condition`, `worldscan:games[0].loops.minute_10`), `story_bible:<id de section>` (ex. `story_bible:stakes`), `gm_worldscan:<id de dimension>` (ex. `gm_worldscan:progression`) — la sonde check_amont_traversal.mjs RÉSOUT chaque adresse dans l'artefact ; une adresse qui ne résout rien compte comme référence non résolue, mesurée et reportée) ou ADDITIONS (ta proposition -> `reference` vaut EXPLICITEMENT null, jamais un champ omis). `CORE` t'est INTERDIT : l'origine d'une exigence CORE est `core_list` par construction, elle ne transite jamais par un modèle. Le champ vocabulaire est celui de la ligne de wiremap v2 (standard/SCHEMA.md §3) : tes exigences sont des lignes candidates. V4 GAME LOOP (GO Pierre 2026-08-22, champs ADDITIFS — ajoutés à la ligne d'exigence ci-dessus, rien retiré) : LE SUJET PLAYER ENTRE DANS LE CONTRAT. Chaque exigence porte désormais `acteur: "PLAYER"|"SYSTEM"` (qui agit) et `loop_role` ∈ {PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL, REPEAT, META_LOOP, ADVANTAGE, NONE} (sa position dans la séquence de boucle imposée : PLAYER_GOAL -> PLAYER_ACTION -> GAME_RESPONSE -> REWARD -> DECISION -> UNLOCK -> NEXT_GOAL -> REPEAT -> META_LOOP -> ADVANTAGE ; NONE = exigence produit ordinaire, hors boucle). Une exigence PLAYER porte `affordance` (le nom de la cible cliquable, ex. `acheter_chaton`) OU est un objectif affiché (`observe.hud`). GAMEPLAY CONTRACT (GO Pierre 2026-08-22, 10 maillons A..J, C = AFFORDANCE porté par B) — `observe: {hud, predicate}` est OBLIGATOIRE pour TOUTE exigence de boucle (rôle ≠ NONE), `predicate` ∈ "nonempty" | "increases" | "changes" | "decreases" | "resets" | "new_distinct" | "contains:<txt>" | "appears:<groupe>" | "increases_more_than:<ref>". RÈGLES PAR MAILLON (au-delà d'« au moins une exigence par rôle ») : G (NEXT_GOAL) : AU MOINS DEUX exigences, toutes `observe.predicate: "new_distinct"` sur LE MÊME `observe.hud` (ex. `objectif`) — GOAL_2 doit différer TEXTUELLEMENT de GOAL_1 à l'écran, pas seulement changer de valeur. F (UNLOCK) : au moins une exigence porte, EN PLUS de `affordance`, un champ `observe.appears: "<groupe>"` — la preuve de Progression (nouvelle affordance/HUD/contenu visible après F). H (REPEAT) : au moins une exigence avec `replay: ["<id>", ...]`, la liste des ids d'exigences de rôle B..F (PLAYER_ACTION|GAME_RESPONSE|REWARD|UNLOCK) à rejouer dans le nouvel état — la preuve que la boucle recommence pour de vrai, pas par convention. I (META_LOOP) : au moins une exigence PLAYER avec `affordance` (le geste de prestige) ET `observe` dont le prédicat visible est `decreases` ou `resets` (un reset qui se VOIT, ex. `ronrons` retombe à zéro). J (ADVANTAGE) : au moins une exigence avec `replay_ref: "<id de B>"` (l'id d'une exigence PLAYER_ACTION rejouée après I) et `observe.predicate: "increases_more_than:<le même id>"` — le delta de cette action après le prestige doit être strictement supérieur au delta initial, prouvé par la mesure, jamais par un texte. DECISION (extension 2026-08-23, GO Pierre « contrat exécutable : point de décision + sonde à deux trajectoires », définition ratifiée `studio_brain/gamedesign/kitten_clicker_decision_significative.md`) — entre REWARD et UNLOCK dans la séquence de boucle : AU MOINS une exigence dont `options` porte exactement 2 refs d'exigences de rôle PLAYER_ACTION ou UNLOCK portant chacune `affordance` (les deux affordances DOIVENT être distinctes) ; `policies` porte AU MOINS 2 politiques `{name, click, every_frames}` (noms distincts, `click` = null ou une affordance PLAYER_ACTION existante, `every_frames >= 1` dès que `click` n'est pas null) ; `metric` nomme un `observe.hud` DÉJÀ observé par une autre exigence de boucle ; `horizon_frames` >= 60 ; `observe: {hud: "objectif", predicate}` (le step DECISION s'affiche comme un objectif). Forme figée du plan (exemple concret Kitten Clicker) : `{"loop_role": "DECISION", "options": ["p_buy_kitten", "p_upgrade_click"], "metric": "ronrons", "horizon_frames": 300, "policies": [{"name": "idle", "click": null, "every_frames": 0}, {"name": "actif", "click": "pelote", "every_frames": 3}], "observe": {"hud": "objectif", "predicate": "changes"}}`. RÈGLE : AU MOINS UNE EXIGENCE PAR RÔLE (les 10 rôles de boucle, NONE exclu), PLUS les règles par maillon ci-dessus pour G/F/H/I/J/DECISION — sans quoi la boucle joueur est incomplète et injouable (mesuré, run 7 : boucle atteint G mais s'arrête là — G ne compte qu'un objectif, H et J n'existent pas encore comme maillons). Les rôles PLAYER_ACTION / UNLOCK / META_LOOP sont rédigés à LA VOIX ACTIVE, LE JOUEUR POUR SUJET — jamais la voix passive (« Acheter un chaton fait apparaître… » est REFUSÉ ; « Le joueur peut acheter un chaton en cliquant la cible `acheter_chaton` ; la collection affichée augmente » est attendu). `loop.json` (la boucle dérivée) N'EST JAMAIS ÉCRIT PAR TOI : c'est une PROJECTION DÉTERMINISTE de `prisme.json`, dérivée et matérialisée par l'EXÉCUTEUR après ta réponse. Si tu émets un bloc ```json``` nommé `loop` ou tentes de produire un fichier `loop.json`, il est IGNORÉ. SOURÇAGE GM (Lot B, T3, 2026-08-23, plan `2026-08-23-forge-lot-b-game-master.md`) : toute exigence de boucle (`acteur: "PLAYER"` ou `loop_role` ≠ NONE) doit citer, dans son champ `reference`, une adresse `gm_worldscan:game_master.loops.<loop>.<step_id>` ou `gm_worldscan:game_master.grey_blocks.<id>` — les métriques `progression_metrics` du Game Master sont reprises TELLES QUELLES (jamais réinventées), et les `target` avec leur tolérance. ADDITIF, MESURÉ (jamais gaté avant le run 10, verrou GO Pierre) : `check_prisme_manifest` rapporte `stats.exigences_sourcees_gm` / `stats.exigences_boucle` — baseline mesurée run 9 (avant `game_master`) : 0/13.
+
+## RAPPORT FINAL
+Restitution standard : cite le charter comme ancre ET le reçu de check_prisme_manifest ; liste les exigences classées non actionnables et les références non ancrées ; claim_verdict: NO_CLAIM_ALLOWED. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- forge/contracts/SCHEMA.md
+- charter.yaml produit par l'étape 0
+- story_bible.json (s2.6) et gm_worldscan.json (s2.7) S'ILS SONT PRÉSENTS dans le run_dir : ce sont des SOURCES d'exigences au même titre que le World Scan (profil full_godot_narratif) ; absents => tu le dis, tu ne compenses pas
+- design/progression_contract.md et design/calibration.md (Lot D 2026-08-23, GO Pierre — fuite de mesure fermee : le design n'etait lu par personne) S'ILS SONT PRÉSENTS dans le run_dir : l'ordre des exigences de boucle DANS LE PRISME EST LA PRÉCÉDENCE JOUÉE (loop_spec.mjs les projette dans l'ordre d'apparition, plus jamais par tri alphabétique) — écris-les DANS L'ORDRE OÙ LE JOUEUR LES VIT (P01 -> P12) ; absents => comportement inchangé, tu ne compenses pas
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s1-prisme:runm-breakout-20260902:1
+
+## TÂCHE CONCRÈTE (runm-breakout-20260902 / s1-prisme)
+Analyse le concept du projet 'runm_breakout' sous les angles ressenti joueur, risques de design et originalité. Artefact narratif, aucun fichier écrit.
+
+## ARTEFACTS AMONT (run_dir)
+
+### artifacts/s2-worldscan.txt (chemin réel : C:\Users\Studio-Dev\Desktop\Studio\EVIDENCE\runs\runm_breakout\artifacts\s2-worldscan.txt)
+Maintenant je vais rédiger l'observation de World Scan et le manifeste structuré.
+
+---
+
+## OBSERVATION ARCHITECTE — Brick Breaker / Arkanoid Comparables
+
+Après analyse de sources éprouvées (documentation officielle, playthroughs vidéo, articles de game design), j'observe deux générations du même genre fondamental : la brique résout un problème d'architecture simple (feedback immédiat, progression visible, économie fermée), et deux points nodaux de l'évolution montrent comment ce socle se complique.
+
+### **JEU 1 : Breakout (Atari, 1976)**
+
+La forme réduite du genre. Chaque aspect est minimal et servir des objectifs mesurables :
+
+**Boucle minute 1** : Le joueur voit 8 rangées de briques colorées stationnaires (24 briques), comprend que le paddle renvoie la balle, fait un premier tir, voit un rebond. L'action prend 20 secondes : paddle move (input sensible, pas de lag) + ball trajectory feedback. Récompense immédiate : audio + visuel (brique disparaît).
+
+**Boucle minute 10** : Le joueur a détruit ~60 % des briques de la première rangée, commence à comprendre l'angle de frappe (au tiers du paddle → rebond diagonal). Le second rang (briques vertes) est accessible, la balle y monte, score change de 1pt (jaune) → 3pt (vert). Peur émergente : si je rate, le jeu redémarre cette rangée. La durée d'une session typique sans erreur est 5-8 min.
+
+**Boucle heure 5** : Trois murs franchis (jaune, vert, orange). Paddle réduit de moitié après le rouge. Le score dépasse 100 pts. La fatigue mentale monte : la précision augmente à chaque rang. Pas de "boss" au sens Arkanoid — juste deux murs identiques en structure.
+
+**Endgame** : Après le second mur brisé, la balle rebondit sur des murs vides sans fin. Le joueur a "gagné" (condition = 2 murs détruits), mais le jeu continue, créant un _soft ending_ où la rétention chute : pas de nouveau défi, pas de progression.
+
+**Rétention (pourquoi revenir)** : Score-attack émergent — "can I beat my previous score?" (pas enregistré publiquement, mais le joueur se souvient). Chaque partie dure 8-15 min. La balle s'accélère, créant une urgence.
+
+**Condition de victoire / défaite** :
+- **Victory** : Deux murs détruits (structure des briques disparue)
+- **Defeat** : Balle sous le paddle 3 fois consécutives (implicit lives system)
+- Absent : menu de continuation (pas de reload sans nouveau crédit arcade)
+
+---
+
+### **JEU 2 : Arkanoid (Taito, 1986)**
+
+L'expansion dirigée. Taito a repris le socle de Breakout et a ajouté : progression explicite (33 stages numérotés), variation de layout, boss final, power-ups variés, UI de progression visuelle.
+
+**Boucle minute 1** : Paddle Vaus au centre, billes stationnaires, écran rempli de briques colorées en motif dense. Le joueur comprend le même mécanique : rebond, "Catch" power-up peut être visible dès le stage 1. Audio + vibration (arcade) crée l'immédiateté. Récompense : brique cassée → point + capsule tombe possiblement.
+
+**Boucle minute 10** : Après 5-6 minutes, première chambre de briques disparue. Power-up "Expand" a été attrapé, paddle x2 size. Nouvelle récompense psychologique : "je maîtrise mieux maintenant". Stage 2-3 commence, briques grises (indestructibles) forment des murs structurels. Le layout pose une puzzle : "par où passer la balle ?".
+
+**Boucle heure 5** : Stages 10-15 (~45 min). Power-ups ont créé des explosions (laser paddle, ball split x3). Certains étages ont des sprites animés (ennemis flottants = bonus points si cassés). La structure du jeu s'est clarifiée : chaque stage = ~3 min, dépend du layout + power-up luck. La progression psychologique est claire : "stage 13/33 = je suis à 40 %".
+
+**Endgame** : Stage 33 = Boss "Doh" (gros bloc). Pas de continuation après perte au boss : game over strict. Créer une _tension_ : c'est la seule étape sans continue. La victoire est catégorique.
+
+**Rétention (pourquoi revenir)** : Progression chiffrée ("j'ai passé les 15 premiers stages"), varieté de layout (chaque stage est visiblement différent), et arcade loop (crédits = sessions d'1h = social engagement). Moderne : replay value = atteindre des scores plus hauts à même stage.
+
+**Condition de victoire / défaite** :
+- **Victory** : Boss "Doh" vaincu (stage 33 cleared), ou tous les bricks d'un stage détruits
+- **Defeat** : 3 vies perdues (miss + paddle)
+- **Special** : Boss stage = pas de continue possible → "ce passage est définitif"
+
+---
+
+### **Architecture & Briques Candidates**
+
+Deux systèmes remarquables :
+
+1. **Score accumulation simple** (Breakout-like) vs **Progression stage-based + power-up trees** (Arkanoid-like)
+   - Breakout = stateless economy (points = cosmetic, don't unlock)
+   - Arkanoid = state economy (stage reached = persistent progress)
+
+2. **Power-up acquisition**
+   - Breakout : aucun
+   - Arkanoid : capsule-drop RNG, palette de ~5 types, collision-based pickup
+   - Candidate pattern : _Discrete Power-Up Manager_ (spawn location, type, timeout, collision callback)
+
+3. **Collision & Physics**
+   - Core loop = paddle angle + ball trajectory resolution
+   - Candidate brique : _Ball-Paddle Interaction Calculator_ (3-5 angle zones, speed scaling)
+
+4. **Difficulty knob**
+   - Breakout : speed increase on row + paddle shrink (2 levers)
+   - Arkanoid : speed + indestructible bricks + layout complexity (3+ levers)
+   - Candidate : _Difficulty Curve Configurator_ (stage-indexed, combinatorial)
+
+---
+
+Maintenant, le manifeste structuré terminal :
+
+```json
+{
+  "games": [
+    {
+      "game": "Breakout (Atari, 1976)",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/Breakout_(video_game)",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=AMUv8KvVt08",
+          "type": "video",
+          "timestamp": "2024-01-15"
+        },
+        {
+          "url": "https://strategywiki.org/wiki/Breakout",
+          "type": "wiki",
+          "timestamp": null
+        }
+      ],
+      "loops": {
+        "minute_1": "Player observes 8 rows of static bricks, controls paddle, bounces ball upward. First brick destroyed triggers immediate visual + audio feedback. Action latency under 100ms perceived.",
+        "minute_10": "Player has cleared ~60% of first brick row, understands paddle third-zones and angle mechanics (yellow 1pt → green 3pt). Second wall accessible. Failure restarts the section. Session cumulative time: 5-8 min typical without errors.",
+        "hour_5": "Three complete brick rows destroyed (yellow, green, orange). Paddle halved after red row cleared. Score exceeds 100 pts. Precision demand escalates per row. No boss structure—identical wall patterns twice.",
+        "endgame": "Second wall destroyed; ball bounces empty space indefinitely. Victory condition met (2 walls cleared), but no progression offered. Soft ending: no new challenge, retention drops to zero unless high-score challenge exists."
+      },
+      "objectives": [
+        {
+          "mode": "solo_arcade",
+          "has_win_state": true,
+          "victory_condition": "Destroy two complete brick walls (48 total bricks)",
+          "has_defeat_state": true,
+          "defeat_condition": "Paddle misses ball three times (lives exhausted)",
+          "player_goal": "Maximize score via brick destruction and angle-perfection, clear both walls before losing three lives"
+        }
+      ],
+      "retention_answer": "Score-attack loop (implicit high-score memory per player); 8-15 min per session encourages repeated plays; escalating ball speed creates time pressure. No live-ops, no metagame—pure skill loop."
+    },
+    {
+      "game": "Arkanoid (Taito, 1986)",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/Arkanoid",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=XIbz0S-3Gpw",
+          "type": "video",
+          "timestamp": "2012-11-03"
+        },
+        {
+          "url": "https://www.gamedeveloper.com/design/breaking-down-breakout-system-and-level-design-for-breakout-style-games",
+          "type": "article",
+          "timestamp": null
+        }
+      ],
+      "loops": {
+        "minute_1": "Player controls Vaus paddle, dense brick layout on screen (stage-specific geometry). Collision triggers capsule-drops (Expand, Laser, Catch, Slow). Audio + haptic feedback immediate. Recompense: brick destroyed, possible power-up pickup.",
+        "minute_10": "After 5-6 min, first chamber cleared. Expand power-up received → paddle doubled size. Psychological reward: perceived mastery increase. Stage 2-3 begins with indestructible grey bricks forming structural puzzle. Layout decision emerges: route-finding for ball.",
+        "hour_5": "Stages 10-15 reached (~45 min cumulative). Laser paddle + triple-ball active. Floating enemy sprites present (bonus points if destroyed). Stage clarity established: each stage ~3 min, progression visible (13/33 = 40%). Power-up RNG drives session variance.",
+        "endgame": "Stage 33: Boss 'Doh' (solid block entity). No continue allowed at this stage—game-over is terminal. Victory = Doh destroyed. Tension peak: this is the only stage without continue-credit fallback."
+      },
+      "objectives": [
+        {
+          "mode": "solo_arcade_progression",
+          "has_win_state": true,
+          "victory_condition": "Clear all 33 stages, defeat Boss Doh on stage 33",
+          "has_defeat_state": true,
+          "defeat_condition": "Lose three lives at any stage except 33; lose on stage 33 with no continues available",
+          "player_goal": "Progress through all 33 stages, master variable layouts and power-up timing, defeat the final boss"
+        }
+      ],
+      "retention_answer": "Explicit progression counter (stage X/33) drives completion loop; varied level layouts prevent monotony; power-up RNG creates session-to-session variance and surprise. Arcade-era 'continue-coin' mechanic introduces time-bound social engagement (shared cabinet, spectators)."
+    }
+  ],
+  "advisory": true
+}
+```
+
+---
+
+## Synthèse architecte
+
+Le genre Breakout/Arkanoid repose sur trois briques immuables :
+1. **Paddle-ball collision resolver** (angle → trajectory, speed scaling)
+2. **Brick grid state** (grid, durability per brick, destruction event)
+3. **Score accumulator** (points, lives counter)
+
+L'évolution de 1976 → 1986 ajoute :
+- **Stage progression** (numbered levels, explicit goal = reach 33)
+- **Power-up RNG tree** (discrete types, collision pickup, time window)
+- **Layout variation** (unique brick geometry per stage, indestructibles, enemies)
+- **Boss encounter** (final stage, no-continue penalty, entity-collision)
+
+Arkanoid démontre que le core loop peut tolérer une progression chiffrée sans fragmenter la cohésion. Candidate à l'import : _Stage Progress Manager_ + _Capsule Drop Scheduler_ pour un breakout type runm_breakout.
+
+Sources documentées, advisory-only. Prêt pour Prisme.
+
+---
+
+**RETURN_REASON:** {"status": "NOT_DISCOVERED"}
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- [manifest-2b3083e411db2072] echec de la tentative 5 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-e0e8556c60c9833d] echec de la tentative 4 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-00bd039d9ebc6e08] echec de la tentative 3 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-557266ada5bf44fa] echec de la tentative 2 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-dd36473dfa6cf249] echec de la tentative 1 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s1-prisme:runm-breakout-20260902:1

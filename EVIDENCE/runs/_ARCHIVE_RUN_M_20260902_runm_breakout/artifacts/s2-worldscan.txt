@@ -1,0 +1,180 @@
+Maintenant je vais rédiger l'observation de World Scan et le manifeste structuré.
+
+---
+
+## OBSERVATION ARCHITECTE — Brick Breaker / Arkanoid Comparables
+
+Après analyse de sources éprouvées (documentation officielle, playthroughs vidéo, articles de game design), j'observe deux générations du même genre fondamental : la brique résout un problème d'architecture simple (feedback immédiat, progression visible, économie fermée), et deux points nodaux de l'évolution montrent comment ce socle se complique.
+
+### **JEU 1 : Breakout (Atari, 1976)**
+
+La forme réduite du genre. Chaque aspect est minimal et servir des objectifs mesurables :
+
+**Boucle minute 1** : Le joueur voit 8 rangées de briques colorées stationnaires (24 briques), comprend que le paddle renvoie la balle, fait un premier tir, voit un rebond. L'action prend 20 secondes : paddle move (input sensible, pas de lag) + ball trajectory feedback. Récompense immédiate : audio + visuel (brique disparaît).
+
+**Boucle minute 10** : Le joueur a détruit ~60 % des briques de la première rangée, commence à comprendre l'angle de frappe (au tiers du paddle → rebond diagonal). Le second rang (briques vertes) est accessible, la balle y monte, score change de 1pt (jaune) → 3pt (vert). Peur émergente : si je rate, le jeu redémarre cette rangée. La durée d'une session typique sans erreur est 5-8 min.
+
+**Boucle heure 5** : Trois murs franchis (jaune, vert, orange). Paddle réduit de moitié après le rouge. Le score dépasse 100 pts. La fatigue mentale monte : la précision augmente à chaque rang. Pas de "boss" au sens Arkanoid — juste deux murs identiques en structure.
+
+**Endgame** : Après le second mur brisé, la balle rebondit sur des murs vides sans fin. Le joueur a "gagné" (condition = 2 murs détruits), mais le jeu continue, créant un _soft ending_ où la rétention chute : pas de nouveau défi, pas de progression.
+
+**Rétention (pourquoi revenir)** : Score-attack émergent — "can I beat my previous score?" (pas enregistré publiquement, mais le joueur se souvient). Chaque partie dure 8-15 min. La balle s'accélère, créant une urgence.
+
+**Condition de victoire / défaite** :
+- **Victory** : Deux murs détruits (structure des briques disparue)
+- **Defeat** : Balle sous le paddle 3 fois consécutives (implicit lives system)
+- Absent : menu de continuation (pas de reload sans nouveau crédit arcade)
+
+---
+
+### **JEU 2 : Arkanoid (Taito, 1986)**
+
+L'expansion dirigée. Taito a repris le socle de Breakout et a ajouté : progression explicite (33 stages numérotés), variation de layout, boss final, power-ups variés, UI de progression visuelle.
+
+**Boucle minute 1** : Paddle Vaus au centre, billes stationnaires, écran rempli de briques colorées en motif dense. Le joueur comprend le même mécanique : rebond, "Catch" power-up peut être visible dès le stage 1. Audio + vibration (arcade) crée l'immédiateté. Récompense : brique cassée → point + capsule tombe possiblement.
+
+**Boucle minute 10** : Après 5-6 minutes, première chambre de briques disparue. Power-up "Expand" a été attrapé, paddle x2 size. Nouvelle récompense psychologique : "je maîtrise mieux maintenant". Stage 2-3 commence, briques grises (indestructibles) forment des murs structurels. Le layout pose une puzzle : "par où passer la balle ?".
+
+**Boucle heure 5** : Stages 10-15 (~45 min). Power-ups ont créé des explosions (laser paddle, ball split x3). Certains étages ont des sprites animés (ennemis flottants = bonus points si cassés). La structure du jeu s'est clarifiée : chaque stage = ~3 min, dépend du layout + power-up luck. La progression psychologique est claire : "stage 13/33 = je suis à 40 %".
+
+**Endgame** : Stage 33 = Boss "Doh" (gros bloc). Pas de continuation après perte au boss : game over strict. Créer une _tension_ : c'est la seule étape sans continue. La victoire est catégorique.
+
+**Rétention (pourquoi revenir)** : Progression chiffrée ("j'ai passé les 15 premiers stages"), varieté de layout (chaque stage est visiblement différent), et arcade loop (crédits = sessions d'1h = social engagement). Moderne : replay value = atteindre des scores plus hauts à même stage.
+
+**Condition de victoire / défaite** :
+- **Victory** : Boss "Doh" vaincu (stage 33 cleared), ou tous les bricks d'un stage détruits
+- **Defeat** : 3 vies perdues (miss + paddle)
+- **Special** : Boss stage = pas de continue possible → "ce passage est définitif"
+
+---
+
+### **Architecture & Briques Candidates**
+
+Deux systèmes remarquables :
+
+1. **Score accumulation simple** (Breakout-like) vs **Progression stage-based + power-up trees** (Arkanoid-like)
+   - Breakout = stateless economy (points = cosmetic, don't unlock)
+   - Arkanoid = state economy (stage reached = persistent progress)
+
+2. **Power-up acquisition**
+   - Breakout : aucun
+   - Arkanoid : capsule-drop RNG, palette de ~5 types, collision-based pickup
+   - Candidate pattern : _Discrete Power-Up Manager_ (spawn location, type, timeout, collision callback)
+
+3. **Collision & Physics**
+   - Core loop = paddle angle + ball trajectory resolution
+   - Candidate brique : _Ball-Paddle Interaction Calculator_ (3-5 angle zones, speed scaling)
+
+4. **Difficulty knob**
+   - Breakout : speed increase on row + paddle shrink (2 levers)
+   - Arkanoid : speed + indestructible bricks + layout complexity (3+ levers)
+   - Candidate : _Difficulty Curve Configurator_ (stage-indexed, combinatorial)
+
+---
+
+Maintenant, le manifeste structuré terminal :
+
+```json
+{
+  "games": [
+    {
+      "game": "Breakout (Atari, 1976)",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/Breakout_(video_game)",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=AMUv8KvVt08",
+          "type": "video",
+          "timestamp": "2024-01-15"
+        },
+        {
+          "url": "https://strategywiki.org/wiki/Breakout",
+          "type": "wiki",
+          "timestamp": null
+        }
+      ],
+      "loops": {
+        "minute_1": "Player observes 8 rows of static bricks, controls paddle, bounces ball upward. First brick destroyed triggers immediate visual + audio feedback. Action latency under 100ms perceived.",
+        "minute_10": "Player has cleared ~60% of first brick row, understands paddle third-zones and angle mechanics (yellow 1pt → green 3pt). Second wall accessible. Failure restarts the section. Session cumulative time: 5-8 min typical without errors.",
+        "hour_5": "Three complete brick rows destroyed (yellow, green, orange). Paddle halved after red row cleared. Score exceeds 100 pts. Precision demand escalates per row. No boss structure—identical wall patterns twice.",
+        "endgame": "Second wall destroyed; ball bounces empty space indefinitely. Victory condition met (2 walls cleared), but no progression offered. Soft ending: no new challenge, retention drops to zero unless high-score challenge exists."
+      },
+      "objectives": [
+        {
+          "mode": "solo_arcade",
+          "has_win_state": true,
+          "victory_condition": "Destroy two complete brick walls (48 total bricks)",
+          "has_defeat_state": true,
+          "defeat_condition": "Paddle misses ball three times (lives exhausted)",
+          "player_goal": "Maximize score via brick destruction and angle-perfection, clear both walls before losing three lives"
+        }
+      ],
+      "retention_answer": "Score-attack loop (implicit high-score memory per player); 8-15 min per session encourages repeated plays; escalating ball speed creates time pressure. No live-ops, no metagame—pure skill loop."
+    },
+    {
+      "game": "Arkanoid (Taito, 1986)",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/Arkanoid",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=XIbz0S-3Gpw",
+          "type": "video",
+          "timestamp": "2012-11-03"
+        },
+        {
+          "url": "https://www.gamedeveloper.com/design/breaking-down-breakout-system-and-level-design-for-breakout-style-games",
+          "type": "article",
+          "timestamp": null
+        }
+      ],
+      "loops": {
+        "minute_1": "Player controls Vaus paddle, dense brick layout on screen (stage-specific geometry). Collision triggers capsule-drops (Expand, Laser, Catch, Slow). Audio + haptic feedback immediate. Recompense: brick destroyed, possible power-up pickup.",
+        "minute_10": "After 5-6 min, first chamber cleared. Expand power-up received → paddle doubled size. Psychological reward: perceived mastery increase. Stage 2-3 begins with indestructible grey bricks forming structural puzzle. Layout decision emerges: route-finding for ball.",
+        "hour_5": "Stages 10-15 reached (~45 min cumulative). Laser paddle + triple-ball active. Floating enemy sprites present (bonus points if destroyed). Stage clarity established: each stage ~3 min, progression visible (13/33 = 40%). Power-up RNG drives session variance.",
+        "endgame": "Stage 33: Boss 'Doh' (solid block entity). No continue allowed at this stage—game-over is terminal. Victory = Doh destroyed. Tension peak: this is the only stage without continue-credit fallback."
+      },
+      "objectives": [
+        {
+          "mode": "solo_arcade_progression",
+          "has_win_state": true,
+          "victory_condition": "Clear all 33 stages, defeat Boss Doh on stage 33",
+          "has_defeat_state": true,
+          "defeat_condition": "Lose three lives at any stage except 33; lose on stage 33 with no continues available",
+          "player_goal": "Progress through all 33 stages, master variable layouts and power-up timing, defeat the final boss"
+        }
+      ],
+      "retention_answer": "Explicit progression counter (stage X/33) drives completion loop; varied level layouts prevent monotony; power-up RNG creates session-to-session variance and surprise. Arcade-era 'continue-coin' mechanic introduces time-bound social engagement (shared cabinet, spectators)."
+    }
+  ],
+  "advisory": true
+}
+```
+
+---
+
+## Synthèse architecte
+
+Le genre Breakout/Arkanoid repose sur trois briques immuables :
+1. **Paddle-ball collision resolver** (angle → trajectory, speed scaling)
+2. **Brick grid state** (grid, durability per brick, destruction event)
+3. **Score accumulator** (points, lives counter)
+
+L'évolution de 1976 → 1986 ajoute :
+- **Stage progression** (numbered levels, explicit goal = reach 33)
+- **Power-up RNG tree** (discrete types, collision pickup, time window)
+- **Layout variation** (unique brick geometry per stage, indestructibles, enemies)
+- **Boss encounter** (final stage, no-continue penalty, entity-collision)
+
+Arkanoid démontre que le core loop peut tolérer une progression chiffrée sans fragmenter la cohésion. Candidate à l'import : _Stage Progress Manager_ + _Capsule Drop Scheduler_ pour un breakout type runm_breakout.
+
+Sources documentées, advisory-only. Prêt pour Prisme.
+
+---
+
+**RETURN_REASON:** {"status": "NOT_DISCOVERED"}

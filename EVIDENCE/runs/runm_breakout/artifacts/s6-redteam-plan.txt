@@ -1,0 +1,35 @@
+Pour répondre à cette demande, je vais analyser le blueprint gelé et la WireMap du projet en tant que red-teamer. Mon objectif est de chercher activement les failles potentielles dans l'architecture et le câblage proposés, sans substituer mon jugement aux oracles techniques ou aux décisions prises par les développeurs.
+
+### Étape 1 : Consommation des artefacts
+Je vais d'abord consommer le blueprint gelé (étape 4) et la WireMap (étape 5). Ces documents contiennent l'architecture globale du système, y compris les composants, leurs interactions, et les dépendances entre eux.
+
+### Étape 2 : Analyse critique
+Je vais analyser ces artefacts pour identifier les points faibles potentiels. Cela inclut :
+- Rechercher des angles morts dans l'architecture.
+- Identifier des dépendances fragiles qui pourraient causer des problèmes en cas de changement ou d'échec.
+- Examiner le câblage pour détecter toute incohérence ou redondance.
+
+### Étape 3 : Proposition de corrections
+Pour chaque faille identifiée, je proposerai une correction. Ces propositions seront basées sur des principes d'architecture solide et sécurisée, sans remettre en question les décisions techniques prises par l'équipe.
+
+### Étape 4 : Production du rapport
+Je vais produire un rapport détaillé qui listera chaque faille sous la forme `{angle, faille, correction_proposée}`. Le rapport inclura également un verdict `GO-si-corrigé` pour chaque point critique identifié.
+
+### Étape 5 : Ajustement des artefacts
+Sur la base des corrections proposées, je vais ajuster les artefacts d'architecture et de wiremap (si nécessaire) pour refléter ces améliorations. Ces modifications seront faites uniquement dans le périmètre autorisé et sans toucher aux parties protégées du projet.
+
+### Étape 6 : Finalisation
+Je vais finaliser le rapport en y incluant la section `RETURN_REASON` qui résume si des problèmes ont été découverts ou non. Si aucun problème n'a été trouvé, je noterai cela clairement dans le rapport.
+
+Voici un exemple de ce que pourrait ressembler une entrée du rapport :
+
+```
+{
+  "angle": "Architecture",
+  "faille": "Absence d'isolation entre les composants critiques A et B.",
+  "correction_proposée": "Ajouter des pare-feu virtuels pour isoler les communications entre A et B.",
+  "verdict": "GO-si-corrigé"
+}
+```
+
+Je vais maintenant commencer l'analyse en consommant le blueprint gelé et la WireMap.

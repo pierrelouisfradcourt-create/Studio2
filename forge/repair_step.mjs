@@ -22,7 +22,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  boucleReparation, contexteVoisin, extrairePatch, appliquerReparation, lire,
+  boucleReparation, contexteVoisin, extrairePatch, appliquerReparation, lire, tousLesFindings,
 } from './repair_loop.mjs';
 import {
   mesurerSignalSemantique, ciblesDuSignal, promptReparationSignal,
@@ -234,7 +234,19 @@ export async function reparerEtape({
   const valider = async (art) => {
     await writeFile(cheminArtefact, JSON.stringify(art, null, 1), 'utf-8');
     const r = await spec.valider(runDir);
-    return { ok: r.ok, problems: r.problems || [] };
+    // D-1-tuyau (GO Pierre 2026-09-03) — DEFAUT MESURE sur RUN M et M ter.
+    // Cette enveloppe rendait `{ ok, problems }` et JETAIT les trois autres listes de
+    // `check_wiremap_contract` (`capacites_non_couvertes`, `couverture_fantome`,
+    // `maillon_non_lie`) AVANT que `repair_loop` ne les voie. Consequence : la boucle
+    // remplissait les `couvre` manquants, `problems` tombait de 9 a 0 — recu
+    // « PROBLEMS_BEFORE 9 -> AFTER 0 » — pendant que `couverture_fantome` montait de 0 a 9,
+    // hors de son champ de vision. Le defaut n'etait pas repare, il etait DEPLACE.
+    //
+    // Le correctif D-1 (`tousLesFindings`, 2026-09-02) portait sur le COLLECTEUR et
+    // s'appliquait donc a un objet DEJA AMPUTE : il n'a rien protege, et M ter l'a montre.
+    // On repare ici le TUYAU. Ce qui suit passe le resultat COMPLET ; `problems` reste
+    // garanti present pour les appelants qui ne lisent que lui.
+    return { ...r, ok: r.ok, problems: r.problems || [] };
   };
 
   let artefact;
@@ -288,8 +300,12 @@ export async function reparerEtape({
     WORKER: worker,
     STEP: etape,
     ORACLE: spec.oracle,
-    PROBLEMS_BEFORE: avant.problems.length,
-    PROBLEMS_AFTER: (apres.problems || []).length,
+    // D-1-tuyau : compter la MEME chose que la boucle. Avant, le recu annoncait un
+    // progres (9 -> 0) mesure sur la seule liste `problems`, alors que le total des
+    // findings de l'oracle etait inchange. Un recu qui compte autrement que le mecanisme
+    // qu'il decrit est un recu qui ment sans mentir.
+    PROBLEMS_BEFORE: tousLesFindings(avant).length,
+    PROBLEMS_AFTER: tousLesFindings(apres).length,
     TOKENS: compteur.tokens,
     APPELS_MODELE: compteur.appels,
     TIME_MS: Date.now() - t0,

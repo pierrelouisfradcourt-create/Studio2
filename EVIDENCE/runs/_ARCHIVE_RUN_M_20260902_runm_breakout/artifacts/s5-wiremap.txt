@@ -1,0 +1,57 @@
+Confirmed: `GAMES/runm_breakout` is empty (pre-build s5). The WireMap therefore declares the **target** address of each rule — the file+function the builder (s9) must materialize — kept strictly isomorphic to the blueprint's 5 modules (`index`, `main`, `logic`, `render`, `input`) and their `couvre`.
+
+## WireMap isomorphe — runm_breakout (s5-wiremap)
+
+**Point de vue cartographe : la carte épouse l'arbre du blueprint. Section = module = dossier. Chaque règle du Prisme (R01–R12) tracée à sa feuille de featuremap, à son module d'ownership, et à la fonction/fichier qui la réalisera.**
+
+| Module (blueprint) | Règle | Feuille (featuremap) | fonction | fichiers (rel. code root) | preuve attendue |
+|---|---|---|---|---|---|
+| `render` | R01 objectif HUD | C01 / F_OBJECTIF | `drawHud` | `render.mjs` | visual |
+| `input` | R02 pilotage paddle | C02_IN/C02_EFF / F_PADDLE_INPUT | `readPaddleIntent` | `input.mjs` | bot_action ⟵ index.html |
+| `logic` | R03 rebond paddle/impact | C03 / F_REBOND_PADDLE | `reflectPaddle` | `logic.mjs` | oracle |
+| `logic` | R04 destruction+score | C04 / F_DESTRUCTION | `breakBricks` | `logic.mjs` | oracle (mutation) |
+| `logic`/loop | R05 boucle de rejeu | REPEAT (rejeu R02/R03/R04) | `tick` | `logic.mjs` | oracle (hash déterministe) |
+| `logic` | R06 rebond murs | C06 / F_REBOND_MURS | `reflectWalls` | `logic.mjs` | oracle |
+| `logic`+`render` | R07 victoire | C07 / F_VICTOIRE | `checkVictory` | `logic.mjs`, `render.mjs` | oracle + visual |
+| `logic`+`render` | R08 défaite | C08 / F_DEFAITE | `checkDefeat` | `logic.mjs`, `render.mjs` | oracle + visual |
+| `logic` | R09 compteur observable | C09 / F_COMPTEUR | `addScore` | `logic.mjs` | oracle (mutation) |
+| `main` | R10 réactivité paddle | C10 / F_PADDLE_REACTIVITE | `frame` | `main.mjs` | oracle (bot_action) |
+| `index`+`main` | R11 chargement sans erreur | C11 / F_CHARGEMENT | `boot` | `index.html`, `main.mjs` | oracle |
+| `render` | R12 visibilité entités | C12 / F_VISIBILITE | `render` | `render.mjs` | visual |
+
+**Isomorphisme vérifié** : chaque ligne retombe dans le module que le blueprint déclare `couvre` de sa feuille — R03/R04/R05/R06/R09 → `logic` ; R01/R12 → `render` ; R02 → `input` ; R10 → `main` ; R11 → `index`+`main` ; R07/R08 → `logic` (bascule d'état) **et** `render` (message), exactement les deux modules qui déclarent `F_VICTOIRE`/`F_DEFAITE`. Aucune liste plate : la carte est le même arbre que l'architecture. Le déterminisme N1 (`window.__game`, RNG seedé, hash reproductible) est porté par `boot`/`frame`/`tick` (chaîne `main`→`logic`).
+
+## RAPPORT FINAL
+
+**software_verdict : BLOCKED** — je n'exécute aucun oracle (`run: aucun`). Les deux oracles wiremap sont, par construction, hors de ma main et à deux moments distincts :
+- **Avant build (couverture carte↔plan)** — reçu à produire par l'exécuteur après matérialisation :
+  `node forge/check_wiremap_contract.mjs EVIDENCE/runs/runm_breakout/wiremap.json --featuremap EVIDENCE/runs/runm_breakout/featuremap.json`
+- **Après build s10c (carte↔code, fichiers existants + fonctions définies)** — `forge.static_oracles.check_wiremap`, qui consomme précisément le bloc ci-dessous.
+
+**evidence_verdict : MECHANICAL_VALIDATION_ONLY** — la seule ancre est l'oracle wiremap non-LLM ; aucun jugement de goût. Mon isomorphisme est un hand-trace contre `blueprint.json` (`couvre`) + featuremap (`source_ref`), pas un reçu exécuté.
+
+**claim_verdict : NO_CLAIM_ALLOWED** (imposé par le contrat s5, renforcé par l'absence de reçu oracle de ma main).
+
+**Capacités non couvertes** : aucune. Les 11 exigences à feuille (R01,R02,R03,R04,R06,R07,R08,R09,R10,R11,R12) sont chacune portées par ≥1 ligne ; R05 (REPEAT) est portée par la ligne `tick` qui matérialise le rejeu R02/R03/R04 déclaré dans `loop.json`.
+
+**fog → HumanGate** : le champ `couvre` (id de capacité featuremap) exigé par le contrat de sortie complet n'est PAS présent dans le format concret de cette tâche (`{feature,fonction,fichiers,preuve}`, lu par `check_wiremap`). Confrontation carte↔plan par ids reportée à `check_wiremap_contract`, exécuté par l'exécuteur.
+
+**why_task_existed**
+- `problem:` le pipeline Forge a besoin de la carte adresse-par-règle (WireMap) avant le build s9 — sans elle le builder freestyle « où pose-je ce fichier / quelle fonction réalise R_x ». Étape s5 dispatchée (`FORGE_DISPATCH:s5-wiremap:runm-breakout-20260902:1`).
+- `oracle:` aucun — activation par ordonnancement du pipeline (dispatch), pas par un oracle rouge.
+- `root_cause:` non établie (progression normale du pipeline, pas un défaut).
+- `action_reason:` produire la WireMap isomorphe au blueprint, chaque règle R01–R12 tracée à fonction+fichiers+preuve, pour borner s9.
+- `result:` WireMap à 12 lignes, isomorphe aux 5 modules du blueprint, chaque ligne à `fonction` non vide et `fichiers` non vides ; hand-trace conforme (chaque règle retombe dans son module `couvre`).
+- `proof:` bloc JSON ci-dessous, consommé par `forge.static_oracles.check_wiremap` après build ; pré-build, `check_wiremap_contract.mjs` (commande citée) à exécuter par l'exécuteur. Absence code confirmée : `Read GAMES/runm_breakout/index.html` → « File does not exist ».
+- `learning:` R07/R08 sont les seules règles à double module (bascule d'état en `logic` + message en `render`) — la WireMap doit lister les DEUX fichiers, sinon la moitié effet/visuelle de la même exigence n'a pas d'adresse ; c'est la garde `maillon_non_lie` côté `check_wiremap_contract`.
+- `next_reason:` chaîne fermée pour s5 — l'exécuteur matérialise `wiremap.json` depuis le bloc, exécute `check_wiremap_contract.mjs`, puis passe à s9-build. Aucune cause non résolue ne persiste.
+
+**SKIPPED_VALIDATION**
+- item : exécution réelle de `check_wiremap_contract.mjs` · périmètre : `wiremap.json` matérialisé · statut : non fait · raison : `run: aucun` (contrat s5) + fichier matérialisé par l'exécuteur, pas par moi.
+- item : `forge.static_oracles.check_wiremap` (fichiers existants / fonctions définies) · périmètre : `GAMES/runm_breakout` · statut : non applicable ici · raison : oracle d'APRÈS build (s10c) ; le code est absent à s5 (confirmé sur disque) — ce n'est pas mon oracle.
+
+```json
+{"features": [{"feature": "R01 objectif HUD (destruction de toutes les briques + compteur > 0)", "fonction": "drawHud", "fichiers": ["render.mjs"], "preuve": "visual: au lancement, le HUD affiche l'objectif et un compteur de briques restantes strictement superieur a zero"}, {"feature": "R02 pilotage du paddle (affordance clavier gauche/droite)", "fonction": "readPaddleIntent", "fichiers": ["input.mjs"], "preuve": "bot_action depuis index.html: appui maintenu fleche droite -> intention +1 captee frame apres frame, x du paddle augmente"}, {"feature": "R03 rebond balle->paddle selon le point d'impact", "fonction": "reflectPaddle", "fichiers": ["logic.mjs"], "preuve": "oracle logic.test.mjs: deux collisions a des points d'impact differents produisent deux angles de sortie mesurablement distincts"}, {"feature": "R04 destruction de brique au contact + increment du score", "fonction": "breakBricks", "fichiers": ["logic.mjs"], "preuve": "oracle logic.test.mjs: apres collision balle-brique, la brique est retiree de l'etat et le score a augmente"}, {"feature": "R05 boucle de rejeu (REPEAT du cycle R02/R03/R04)", "fonction": "tick", "fichiers": ["logic.mjs"], "preuve": "oracle logic.test.mjs: N frames rejouees seedees, cycle deplacement/collision/score repete, hash d'etat final reproductible"}, {"feature": "R06 rebond sur les 3 murs (gauche/droite/haut), sortie par le bas", "fonction": "reflectWalls", "fichiers": ["logic.mjs"], "preuve": "oracle logic.test.mjs: balle lancee vers un bord lateral ressort avec sa composante horizontale inversee et une vitesse egale"}, {"feature": "R07 condition de victoire (0 brique -> ecran VICTOIRE, partie figee)", "fonction": "checkVictory", "fichiers": ["logic.mjs", "render.mjs"], "preuve": "oracle logic.test.mjs: a 0 brique l'etat bascule en victoire; visual: message VICTOIRE affiche et l'aire se fige"}, {"feature": "R08 condition de defaite (0 vie -> ecran DEFAITE game over)", "fonction": "checkDefeat", "fichiers": ["logic.mjs", "render.mjs"], "preuve": "oracle logic.test.mjs: a 0 vie l'etat bascule en defaite; visual: message game over affiche et l'aire se fige"}, {"feature": "R09 compteur observable qui change en cours de partie", "fonction": "addScore", "fichiers": ["logic.mjs"], "preuve": "oracle logic.test.mjs (mutation): la valeur du compteur a l'instant t differe de sa valeur au lancement apres quelques briques detruites"}, {"feature": "R10 reactivite du paddle (reaction a la frame suivante au plus)", "fonction": "frame", "fichiers": ["main.mjs"], "preuve": "oracle harnais headless (bot_action): l'intention lue via input est appliquee au paddle a la frame suivante au plus"}, {"feature": "R11 chargement navigateur sans erreur console bloquante + boucle vivante", "fonction": "boot", "fichiers": ["index.html", "main.mjs"], "preuve": "oracle harnais headless: window.__game expose, le compteur de frames progresse, aucune erreur console de niveau bloquant; deux runs meme seed -> meme hash"}, {"feature": "R12 visibilite des entites au lancement (balle, paddle, grille de briques)", "fonction": "render", "fichiers": ["render.mjs"], "preuve": "visual: au lancement, une balle, un paddle et au moins une rangee de briques sont visibles et distincts dans l'aire de jeu"}]}
+```
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

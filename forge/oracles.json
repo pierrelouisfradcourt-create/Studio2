@@ -270,5 +270,12 @@
       "node",
       "run-oracle.mjs"
     ]
+  },
+  "runm_breakout": {
+    "cwd": "GAMES/runm_breakout",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
   }
 }

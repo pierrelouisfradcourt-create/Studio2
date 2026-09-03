@@ -1,0 +1,66 @@
+{
+ "schema_version": 1,
+ "game_id": "runm_breakout",
+ "steps": [
+  {
+   "role": "PLAYER_GOAL",
+   "ref": "E1",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "E2",
+   "affordance": "raquette",
+   "repeat": 1,
+   "observe": {
+    "hud": "raquette_x",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "E3",
+   "repeat": 1,
+   "observe": {
+    "hud": "ball_v",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "E4",
+   "repeat": 1,
+   "observe": {
+    "hud": "mur",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "REWARD",
+   "ref": "E5",
+   "repeat": 1,
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "decreases"
+   }
+  },
+  {
+   "role": "REPEAT",
+   "ref": "E8",
+   "repeat": 1,
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "decreases"
+   },
+   "replay": [
+    "E2",
+    "E3",
+    "E5"
+   ]
+  }
+ ]
+}

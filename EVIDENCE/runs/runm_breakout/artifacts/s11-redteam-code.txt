@@ -1,0 +1,363 @@
+Lecture terminée : 11 fichiers du projet + le schéma de contrat. Voici le rapport.
+
+---
+
+# rapport_redteam_code.md — red-team CODE (aveuglé) · runm-breakout-20260902 / s11-redteam-code
+
+**Périmètre lu** : `GAMES/runm_breakout/{engine,input,render,main,server,solvability,e2e,run-oracle}.mjs`, `index.html`, `logic.test.mjs`, `properties.test.mjs`, `EVIDENCE/runs/runm_breakout/wiremap.json`, `forge/contracts/SCHEMA.md`.
+**Posture** : contexte vierge. Je n'ai pas lu les justifications du builder ; je ne les reconstitue pas. Aucune exécution (permission `run: aucun`) — chaque reproduction ci-dessous est écrite pour être **exécutée par un oracle non-LLM en aval**, et chaque constat structurel est ancré sur un `fichier:ligne` citable.
+
+---
+
+## F1 — L'oracle E2E se dégrade silencieusement en un PASS qui n'assert rien
+
+**Angle** : preuve factice / oracle de jouabilité (volet c de `run-oracle.mjs`).
+
+**Faille** : `e2e.mjs:41-48` — si `require("playwright")` lève, le script bascule sur `simpleTest()` et **retourne**. `simpleTest()` (`e2e.mjs:135-148`) démarre le serveur, vérifie qu'il a imprimé sa bannière, le tue, imprime `RESULT: PASS` et `process.exit(0)`. Aucun navigateur, aucune page chargée, aucun `#objective`, aucun clic, aucune touche, aucun `window.__game`. `run-oracle.mjs:58` ne lit que le code de sortie (`resultFromExit`, ligne 35 : `ok: code === 0`) : **le PASS du volet (c) est bit à bit indistinguable entre « le click-through navigateur a réussi » et « playwright n'est pas installé »**. La WireMap E13 déclare pourtant « click-through simulé (fallback simple test si Playwright absent), contrat de jouabilité respecté — PASS » : sur le chemin de repli, la partie « click-through » et la partie « contrat de jouabilité » sont fausses, seul « le serveur démarre » est vrai.
+
+Aggravant structurel : **aucun `package.json` n'existe** ni dans `GAMES/runm_breakout/` ni à la racine `Studio/` (deux `Read` en échec, cf. SKIPPED_VALIDATION). La chaîne de résolution `node_modules` de `e2e.mjs` ne déclare donc playwright nulle part — le chemin de repli est le chemin probable, pas le chemin exceptionnel.
+
+**Sévérité** : **HIGH**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "require('playwright')" ; echo "playwright resolvable? exit=$?"
+node e2e.mjs ; echo "e2e exit=$?"
+```
+Attendu si playwright est absent : la sortie contient `⚠ Playwright non disponible — test simplifié (sans navigateur)` **et** `RESULT: PASS` avec `exit=0`. Falsification renforcée (à exécuter par l'oracle, hors lane protégée) : rendre l'UI non fonctionnelle (p. ex. renommer `index.html` en `index.html.bak`) puis relancer `node e2e.mjs` — il sort toujours `0` / `PASS`, `simpleTest()` ne chargeant jamais la page. Un oracle dont le vert survit à la suppression de l'artefact qu'il est censé valider ne prouve pas cet artefact.
+
+---
+
+## F2 — `seed` est un état mort : le critère R8c1 « hash_stable_par_seed » est satisfait à vide
+
+**Angle** : écart contrat/code — critère d'acceptation non outillé.
+
+**Faille** : `engine.mjs:52-56` stocke `this.seed = seed`, mais `init()` (`:58-75`) et `_generateBricks()` (`:77-92`) n'utilisent **que des constantes de module** — jamais `this.seed`. `hashState()` (`:184-191`) ne hache ni `seed` ni `level`. Conséquence : deux moteurs de graines différentes produisent un état initial **identique** et un hash **identique**. Le critère `R8c1_hash_stable_par_seed` est donc vrai par vacuité : il resterait vert si la ligne `this.seed = seed` était supprimée. Les deux tests de déterminisme ne comparent que des paires **de même graine** (`logic.test.mjs:238-250`, `properties.test.mjs:170-182`) — ils ne peuvent pas détecter que la graine ne fait rien. `this.level = 1` (`engine.mjs:54`) est mort de la même façon, et pourtant exposé au débogueur via `main.mjs:63`.
+
+**Sévérité** : **HIGH**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "import('./engine.mjs').then(({Engine})=>{
+  const a=new Engine({seed:1}), b=new Engine({seed:999});
+  console.log('hash(1)  =', a.hashState());
+  console.log('hash(999)=', b.hashState());
+  console.log('identiques:', a.hashState()===b.hashState());
+});"
+```
+Attendu : `identiques: true` — la graine n'influence aucun état mesuré.
+
+---
+
+## F3 — `hashState()` ne couvre pas `bricks` : deux états divergents ont le même hash
+
+**Angle** : preuve faible — E9 revendique « un hash reproductible d'un état », le code hache une projection.
+
+**Faille** : `engine.mjs:184-191` hache `{paddle, ball, bricksRemaining, state}`. Le tableau `bricks` — la moitié de l'état de jeu, et le seul porteur de *quelles* briques sont tombées — est absent. Deux parties ayant détruit un nombre égal mais des briques différentes sont indiscernables par le hash. La revendication E9 (« hash reproductible d'un état ») dépasse ce que le code fait : il hache un *résumé* de l'état. (Note secondaire, non listée comme faille faute de reproduction distincte : `simpleHash` applique `Math.abs` en sortie — `h` et `-h` collisionnent, l'espace de hash est divisé par deux.)
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "import('./engine.mjs').then(({Engine})=>{
+  const a=new Engine({seed:1}); a.destroyBrick(a.bricks[0]);
+  const b=new Engine({seed:1}); b.destroyBrick(b.bricks[39]);
+  console.log('etats differents:', JSON.stringify(a.bricks)!==JSON.stringify(b.bricks));
+  console.log('meme hash      :', a.hashState()===b.hashState());
+});"
+```
+Attendu : `etats differents: true` **et** `meme hash: true`.
+
+---
+
+## F4 — `checkLose()` ne vérifie aucune précondition, et le test qui la couvre porte un nom qui ment
+
+**Angle** : preuve factice + asymétrie de garde.
+
+**Faille** : `engine.mjs:170-175` — `checkLose()` bascule en `'lost'` dès que `state === 'playing'`, **sans jamais regarder la balle**. La condition `ball.y > GAME_HEIGHT` du critère R7c1 vit uniquement au site d'appel (`engine.mjs:140`). L'asymétrie est nette : `checkWin()` (`:163-168`) vérifie **sa** précondition (`bricksRemaining === 0`) ; `checkLose()` ne vérifie pas la sienne. Or le test qui la couvre s'appelle `'Game: checkLose sets state=lost when ball below boundary'` (`logic.test.mjs:134-142`) et **ne place jamais la balle sous la limite** : il appelle `checkLose()` sur un moteur neuf dont la balle est à `y ≈ 550`, en plein terrain. Le nom du test affirme une précondition que ni le test ni le code n'établissent.
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "import('./engine.mjs').then(({Engine})=>{
+  const e=new Engine({seed:1});
+  e.ball.y = 0;              // balle en HAUT de l'ecran
+  e.checkLose();
+  console.log('ball.y =', e.ball.y, '| state =', e.state, '| over =', e.over);
+});"
+```
+Attendu : `ball.y = 0 | state = lost | over = true` — défaite déclarée avec la balle au plafond.
+
+---
+
+## F5 — `destroyBrick` n'est pas idempotent : `bricksRemaining` peut passer sous 0 et rendre la victoire inatteignable — et un test ratifie le défaut
+
+**Angle** : invariant manquant + test qui verrouille le bug.
+
+**Faille** : `engine.mjs:158-161` décrémente sans garde `if (brick.destroyed) return`. `bricksRemaining` est une **source de vérité dupliquée** de `bricks[]`, et `checkWin()` teste l'égalité **stricte** `=== 0` (`engine.mjs:164`) : un seul décompte en trop et le compteur *saute* 0 sans jamais s'y arrêter — la victoire devient structurellement inatteignable, toutes briques détruites. L'aggravant est dans les tests : `logic.test.mjs:98-109` assert explicitement `bricksRemaining === initial - 2` après double destruction, avec le commentaire `// This test documents the current behavior`. Un test de la suite **ratifie** la rupture d'invariant au lieu de l'échouer. Et l'invariant qui l'aurait attrapée — `bricksRemaining === bricks.filter(b => !b.destroyed).length` — **n'est asserté nulle part** dans `properties.test.mjs`, pourtant le fichier dédié aux invariants (le seul invariant de comptage y est `bricksRemaining` *ne croît pas*, `:66-77`, satisfait par un compteur qui descend à −1).
+
+*Honnêteté sur l'atteignabilité* : `tick()` protège la boucle briques par `!brick.destroyed` (`:132`), donc le chemin nominal ne double-détruit pas. La faille est une rupture d'invariant latente, exposée à tout appelant externe et verrouillée par un test.
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "import('./engine.mjs').then(({Engine})=>{
+  const e=new Engine({seed:1});
+  e.destroyBrick(e.bricks[0]); e.destroyBrick(e.bricks[0]);   // un decompte en trop
+  let s=0;
+  while(s<200000 && e.state==='playing'){
+    const c=e.paddle.x+40;
+    e.tick(e.ball.x<c-30?'left':e.ball.x>c+30?'right':null); s++;
+  }
+  console.log('briques vivantes =', e.bricks.filter(b=>!b.destroyed).length);
+  console.log('bricksRemaining  =', e.bricksRemaining);
+  console.log('state            =', e.state);
+});"
+```
+Attendu : `briques vivantes = 0`, `bricksRemaining = -1`, `state = lost` (ou boucle épuisée) — le terrain est vide et la partie n'est **pas** gagnée.
+
+---
+
+## F6 — `reflectBall('collision')` : branche redondante, et aucune réflexion sur l'axe X lors d'un impact latéral
+
+**Angle** : zone morte + écart contrat/code sur R3 « rebond conservatif ».
+
+**Faille** : `engine.mjs:148-156` — la branche `mode === 'collision'` (`:153-155`) exécute **exactement** le corps de la branche `'y'` (`:151-152`). C'est un chemin de code sans comportement propre. La conséquence de jeu est réelle : `tick()` appelle `reflectBall('collision')` pour **tout** contact balle-brique (`:134`), quelle que soit la géométrie de l'impact. Une balle qui percute la **face latérale** d'une brique se voit inverser `vy` au lieu de `vx` : elle conserve son sens horizontal et continue de traverser la rangée. L'oracle E3 ne peut pas l'attraper — il vérifie que `reflectBall` inverse le signe et conserve `|v|` **pour l'axe qu'on lui passe en paramètre**, jamais que le bon axe est choisi pour une géométrie d'impact donnée (`logic.test.mjs:58-84` et `:175-187`, ce dernier assertant précisément l'équivalence `'collision' ≡ 'y'`).
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "import('./engine.mjs').then(({Engine})=>{
+  // (a) equivalence des branches
+  const p=new Engine(); p.ball.vx=7; p.ball.vy=11; p.reflectBall('collision');
+  const q=new Engine(); q.ball.vx=7; q.ball.vy=11; q.reflectBall('y');
+  console.log('collision === y :', p.ball.vx===q.ball.vx && p.ball.vy===q.ball.vy);
+  // (b) impact lateral : le sens horizontal n'est pas inverse
+  const e=new Engine({seed:1}), br=e.bricks[0];
+  e.ball.x = br.x - 6; e.ball.y = br.y + br.height/2; e.ball.vx = 250; e.ball.vy = 20;
+  const sgn = Math.sign(e.ball.vx);
+  e.tick(null);
+  console.log('brique detruite :', br.destroyed, '| sens vx conserve :', Math.sign(e.ball.vx)===sgn);
+});"
+```
+Attendu : `collision === y : true` et `brique detruite : true | sens vx conserve : true` — la balle détruit la brique par le côté et poursuit sa route horizontale.
+
+---
+
+## F7 — L'overlay VICTOIRE/DÉFAITE est conditionné à la disponibilité du canvas
+
+**Angle** : écart contrat/code sur R6c1 / R7c1 (« render affiche VICTOIRE / DÉFAITE »).
+
+**Faille** : `render.mjs:29` — `if (!this.ctx || !this.canvas) return;` précède le bloc overlay (`:56-68`). Sans contexte 2D, `state = 'won'` ou `'lost'` n'affiche **rien** : l'overlay conserve sa classe `hidden`. La WireMap E6/E7 énonce l'affichage comme inconditionnel ; le code le subordonne au canvas. Les deux tests qui touchent ce chemin (`logic.test.mjs:392-396` et `:398-416`) assertent que `render()` est un no-op sans contexte — ils **ratifient** le couplage plutôt que de le questionner.
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "import('./render.mjs').then(async ({Renderer})=>{
+  const {Engine} = await import('./engine.mjs');
+  let hidden = true;
+  const overlay = { classList:{ add:()=>{hidden=true}, remove:()=>{hidden=false}, contains:()=>hidden },
+                    querySelector:()=>({textContent:''}) };
+  globalThis.document = { getElementById:(id)=> id==='overlay' ? overlay : null };  // pas de canvas
+  const r=new Renderer(); const e=new Engine({seed:1});
+  e.bricksRemaining=0; e.checkWin();
+  r.render(e.snapshot());
+  console.log('state =', e.state, '| overlay encore cache :', hidden);
+});"
+```
+Attendu : `state = won | overlay encore cache : true`.
+
+---
+
+## F8 — `renderObjective()` accède à `document` sans garde, et le test qui porte le nom de R1 ne l'appelle jamais
+
+**Angle** : chemin de crash + preuve factice.
+
+**Faille** : `render.mjs:22` — `const obj = document.getElementById('objective')`, **sans** le `typeof document !== 'undefined'` que `setup()` applique douze lignes plus haut (`:13`). C'est la seule méthode de `Renderer` capable de lever. `main.mjs:18` l'appelle sans condition depuis `initGame()`. Le test `'Renderer: renderObjective writes to objective element'` (`logic.test.mjs:331-336`) porte le nom du critère R1c1 mais **n'appelle pas** `renderObjective()` : il assert `typeof renderer.render === 'function'`, avec le commentaire `// Cannot fully test without a real DOM`. Un test nommé d'après la propriété, qui ne l'exerce pas, et qui compte pourtant dans les « 65 tests » de E11. (La couverture réelle existe ailleurs, `logic.test.mjs:379-390` sous `withFakeDom` — le défaut est la garde manquante et le test tautologique, pas une absence totale de couverture.)
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "import('./render.mjs').then(({Renderer})=>{ new Renderer().renderObjective(); })
+  .catch(e=>console.log('LEVE:', e.constructor.name, '-', e.message));"
+```
+Attendu : `LEVE: ReferenceError - document is not defined`.
+
+---
+
+## F9 — `e2e.mjs` : le bloc `finally` est mort sur tous les chemins terminaux (serveur + Chromium fuités)
+
+**Angle** : zone morte + fuite de ressources.
+
+**Faille** : `e2e.mjs:123` (`process.exit(0)` dans le `try`) et `:126` (`process.exit(1)` dans le `catch`) terminent le processus **immédiatement** ; le `finally` de `:128-132` — `page.close()`, `browser.close()`, `srv.kill()` — n'est atteint sur **aucun** des deux chemins terminaux. Chaque exécution réussie du volet (c) en mode navigateur laisse un Chromium et un `server.mjs` orphelins sur le port 4504. Corollaire de couverture, dans le même fichier : le scénario navigateur force la **défaite** par la porte de débogage (`:97`, `window.__game_debug.loseGame()`) et **ne teste jamais la victoire** — R6c1 n'a aucune couverture e2e, et la couverture e2e de R7c1 ne fait jamais tomber la balle sous le terrain.
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** : ancre statique déjà citée — `e2e.mjs:123` et `:126` précèdent le `finally` de `:128` ; `process.exit()` ne déroule pas les `finally`. Vérification exécutable :
+```bash
+cd GAMES/runm_breakout
+node e2e.mjs ; echo "exit=$?"
+# puis, sur le meme hote :
+node -e "require('node:http').get({port:4504,path:'/'},r=>console.log('serveur ENCORE vivant, status',r.statusCode))
+  .on('error',()=>console.log('serveur bien arrete'));"
+```
+Attendu sur le chemin navigateur : `serveur ENCORE vivant, status 200` après la sortie du test.
+
+---
+
+## F10 — La porte de débogage `__game_debug` est livrée en production et fabrique un état incohérent
+
+**Angle** : preuve factice + backdoor livrée.
+
+**Faille** : `main.mjs:34-48` — `exposeGame()` est appelée sans condition par `initGame()` (`:19`), donc `window.__game_debug` existe dans la page servie aux joueurs ; aucune garde dev/prod. `winGame()` (`:42-46`) écrit `gameEngine.bricksRemaining = 0` **sans toucher aux briques**, puis `checkWin()`. L'état résultant est auto-contradictoire : `state = 'won'`, `bricksRemaining = 0`, et 40 briques avec `destroyed === false` que le renderer continue de dessiner sous l'overlay VICTOIRE. Ce chemin est celui qu'emprunte le test de main.mjs (`logic.test.mjs:665-676`) et, symétriquement, l'e2e (`e2e.mjs:97`) : les états terminaux R6/R7 sont attestés par une transition **forcée**, jamais par une partie jouée.
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** : dans le harnais DOM factice de `logic.test.mjs` (`installFakeGameGlobals`, `:594`), après `await importMainFresh()` :
+```js
+window.__game_debug.winGame();
+// etat publie : victoire
+console.log(window.__game.state, window.__game.bricksRemaining);  // 'won' 0
+// mais le rendu de la frame suivante dessine encore les 40 briques :
+let rects = 0; /* remplacer ctx.fillRect par un compteur */
+env.rafCalls.at(-1).cb();
+console.log('fillRect =', rects);   // attendu 42 = fond + raquette + 40 briques vivantes
+```
+Attendu : `won 0` puis `fillRect = 42` — victoire déclarée sur un terrain plein.
+
+---
+
+## F11 — Test tautologique : « reaching bricksRemaining=0 is achievable » passe sur une défaite totale
+
+**Angle** : preuve factice (fichier des invariants).
+
+**Faille** : `properties.test.mjs:185-208`. La boucle sort dès que `state !== 'playing'`, l'assertion finale (`:204-207`) est `bricksRemaining === 0 || step < maxSteps`. Sur une **défaite** à l'étape 10, la boucle sort avec `step = 10 < 50000` → la disjonction est vraie → le test passe. Il ne peut échouer que si le bot épuise les 50 000 pas *en étant encore en jeu*, cas où la boucle ne sort pas par cette porte. Autrement dit : un test nommé d'après la solvabilité **ne peut pas échouer sur une non-solvabilité**. *Honnêteté* : la propriété est réellement prouvée ailleurs (`logic.test.mjs:473-479`, `runBot(1)` avec `assert.strictEqual(result.won, true)`) — l'impact produit est donc limité, mais l'assertion gonfle le compte « 65 tests » de E11 d'une preuve nulle.
+
+**Sévérité** : **MEDIUM**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "import('./engine.mjs').then(({Engine})=>{
+  const e=new Engine({seed:1}); let step=0;
+  while(step<50000 && e.state==='playing'){ e.tick(null); step++; }   // bot passif : il PERD
+  console.log('state =', e.state, '| bricksRemaining =', e.bricksRemaining, '| step =', step);
+  console.log('assertion du test :', (e.bricksRemaining===0 || step<50000));
+});"
+```
+Attendu : `state = lost`, `bricksRemaining` non nul, et `assertion du test : true` — l'assertion tient alors que la partie est perdue.
+
+---
+
+## F12 — `render.mjs` recopie la géométrie du moteur en dur ; `GAME_DIMENSIONS`, exporté pour ça, n'est pas consommé par le renderer
+
+**Angle** : source de vérité dupliquée / drift silencieux.
+
+**Faille** : `render.mjs:40` dessine la raquette avec les littéraux `GAME_HEIGHT - 30, 80, 12` (duplicata de `PADDLE_Y`, `PADDLE_WIDTH`, `PADDLE_HEIGHT`, `engine.mjs:15-18`), `:45` dessine la balle avec le rayon `5` (duplicata de `BALL_RADIUS`, `engine.mjs:20`), et `_getDimensions()` (`:71-73`) retourne `{800, 600}` en dur au lieu d'importer `GAME_DIMENSIONS` — export public de `engine.mjs:205`, **consommé seulement par les deux fichiers de test**, jamais par le module de rendu qui en est le destinataire naturel. `snapshot()` aggrave le couplage en amputant volontairement la raquette de `y/width/height` (`engine.mjs:195`) : le renderer *ne peut pas* obtenir la géométrie réelle. Aucun test ne compare la géométrie dessinée aux constantes du moteur.
+
+**Sévérité** : **LOW**
+
+**Reproduction** (style mutation, hors lane protégée `tests/**` — porte sur `engine.mjs`) : remplacer `const PADDLE_WIDTH = 80;` par `= 120` dans `engine.mjs:15`, puis `node --test logic.test.mjs properties.test.mjs`. Attendu : **suite verte** (les bornes assertées en `logic.test.mjs:40` et `:54` utilisent elles aussi le littéral `80` et restent satisfaites) alors que la boîte de collision fait désormais 120 px et le rectangle dessiné toujours 80 — divergence non détectée. Restaurer la valeur après mesure.
+
+---
+
+## F13 — `index.html` importe `initGame` sans jamais l'appeler ; l'initialisation repose sur un effet de bord d'import
+
+**Angle** : zone morte / flux de contrôle implicite.
+
+**Faille** : `index.html:79` importe `{ initGame, resetGame }` ; `initGame` **n'est référencé nulle part** dans le script de la page. Le démarrage vient du bloc auto-exécuté `main.mjs:101-108`. Corollaire : `resetGame()` (`main.mjs:67-74`) ne relance **pas** la boucle de jeu — après un `stopGameLoop()`, « Rejouer » recrée le moteur, publie `state = 'playing'`, et rien ne tique ; le jeu est gelé tout en se déclarant en cours. `resetGame` accède aussi à `document` (`:71`) derrière la garde `if (renderer)`, qui ne protège pas la bonne chose. Le test de reset (`logic.test.mjs:711-727`) assert l'état et l'overlay, jamais qu'une frame a été replanifiée.
+
+**Sévérité** : **LOW**
+
+**Reproduction** : dans le harnais `installFakeGameGlobals` de `logic.test.mjs:594` :
+```js
+const mod = await importMainFresh();
+mod.stopGameLoop();
+const before = env.rafCalls.length;
+mod.resetGame(1);
+console.log('state =', window.__game.state, '| frames planifiees depuis reset =', env.rafCalls.length - before);
+```
+Attendu : `state = playing | frames planifiees depuis reset = 0`.
+
+---
+
+## F14 — `InputAdapter` garde sur `window` mais utilise `document`, et n'enlève jamais ses écouteurs
+
+**Angle** : garde incohérente / fuite d'écouteurs.
+
+**Faille** : `input.mjs:12` teste `typeof window !== 'undefined'` puis appelle `document.addEventListener` aux lignes 13 et 19 — la garde ne porte pas sur l'objet réellement utilisé. Aucun `removeEventListener` n'existe : chaque `new InputAdapter()` (`main.mjs:15`, à chaque `initGame`) ajoute deux écouteurs permanents sur `document`. Le test DOM (`logic.test.mjs:298-328`) installe un faux `document` fournissant `addEventListener`, ce qui masque l'incohérence de garde.
+
+**Sévérité** : **LOW**
+
+**Reproduction** :
+```bash
+cd GAMES/runm_breakout
+node -e "globalThis.window={};                       // window present, document absent
+import('./input.mjs').then(({InputAdapter})=>{ new InputAdapter(); })
+  .catch(e=>console.log('LEVE:', e.constructor.name, '-', e.message));"
+```
+Attendu : `LEVE: ReferenceError - document is not defined`.
+
+---
+
+# RAPPORT FINAL
+
+**software_verdict : FAIL** — 14 écarts constatés, dont 2 HIGH. Appuyé sur des **ancres statiques non-LLM** : chaque faille cite un `fichier:ligne` du diff, relisible et re-vérifiable sans jugement de modèle (`e2e.mjs:41-48,123-132`; `engine.mjs:52-56,148-161,163-175,184-191`; `render.mjs:22,29,40,71-73`; `main.mjs:18,34-48,67-74`; `input.mjs:12`; `index.html:79`; `logic.test.mjs:98-109,134-142,331-336`; `properties.test.mjs:185-208`).
+
+**evidence_verdict : MECHANICAL_VALIDATION_ONLY** — et **strictement borné aux ancres statiques**. Les reproductions fournies sont **écrites mais non exécutées** (permission `run: aucun`, `Bash` désactivé dans cette session). Leur sortie attendue est une prédiction, pas une mesure.
+
+**claim_verdict : NO_CLAIM_ALLOWED** — aucune affirmation comportementale n'est auto-certifiée ici.
+
+**fog → HumanGate (Pierre)** :
+1. **F1 est le point de bascule.** Si `playwright` n'est pas installé sur l'hôte du run, le volet (c) de `run-oracle.mjs` a rendu PASS sans jamais charger la page, et E13 (« click-through simulé, contrat de jouabilité respecté ») n'est pas soutenu par sa preuve. Décision Pierre requise : soit rendre l'absence de playwright **bloquante** (`process.exit(1)`), soit renommer explicitement le volet en « serveur démarre » et retirer la revendication de jouabilité. Un repli qui rend PASS ne se distingue pas d'un test qui n'a pas eu lieu.
+2. **F2** invalide le sourçage du critère `R8c1_hash_stable_par_seed` : jugement requis sur « graine décorative + critère vacuement vert » vs « implémenter une vraie dérivation par graine ».
+3. **F5 / F11 / F8** : trois tests de la suite E11 **ratifient** ou **contournent** la propriété qu'ils nomment. Le compte « 65 tests / 41 mutants tués » ne peut pas être lu comme 65 propriétés prouvées ; arbitrage Pierre sur la valeur probante à accorder à E11/E14.
+4. **Doctrine, hors périmètre de correction** : E14 revendique « 41/41 tués, 0 survivant » après avoir factorisé une garde structurellement intuable dans `main.mjs`. Le même motif subsiste ailleurs (F6 : `reflectBall('collision')` sans comportement propre ; F2 : `seed`/`level` morts ; F9 : `finally` inatteignable). Un score de mutation à 100 % sur un corpus contenant du code intuable mesure le corpus, pas la suite.
+
+**Ce que je n'affirme PAS** : je ne dis pas que le jeu est injouable — F1 empêche précisément de le savoir mécaniquement, et c'est le cœur du signalement.
+
+---
+
+## SKIPPED_VALIDATION
+
+| Item de validation | Périmètre | Statut | Raison |
+|---|---|---|---|
+| Exécution des 14 reproductions | `GAMES/runm_breakout/**` | **non fait** | `permissions.run: aucun` et outil `Bash` désactivé dans cette session. Repros écrites pour l'oracle non-LLM aval, jamais lancées par moi. |
+| Écriture du livrable `rapport_redteam_code.md` | fichier de sortie | **non fait** | Aucun outil d'écriture (`Write`/`Edit`) n'est exposé dans cette session — seul `Read` l'est. Le rapport est livré **intégralement en réponse**, contenu identique à ce qu'aurait porté le fichier. À matérialiser par l'appelant. |
+| Confirmation que `playwright` est absent de l'hôte | F1 | **partiel** | Établi par ancre statique (aucun `package.json` dans `GAMES/runm_breakout/` ni à la racine `Studio/` — deux `Read` en échec), **pas** par résolution `node_modules` réelle. Le `node -e "require('playwright')"` de la repro tranche. |
+| Relecture des artefacts de preuve du run (stdout oracle, `mutation_triage.json`) | `EVIDENCE/runs/runm_breakout/` | **non fait** | Aucun outil de listage (`Glob`/`Grep`/`Bash`) ; quatre `Read` par nom deviné ont échoué. Les revendications E11–E14 n'ont donc été confrontées qu'au **code des oracles**, pas à leurs **sorties archivées**. |
+| Inventaire exhaustif du répertoire du jeu | `GAMES/runm_breakout/` | **partiel** | Sans listage, j'ai lu les 11 fichiers nommés par la WireMap. Un fichier non référencé par la WireMap aurait échappé à l'audit. |
+| Couverture de mutation indépendante | 4 fichiers logiques | **non fait** | `run: aucun` — E14 n'a pas été rejoué ; F6/F2/F9 sont des **candidats mutants équivalents** signalés par lecture, non mesurés. |
+| Audit des lanes protégées | `tests/**` | **non fait** | Interdit par `out_of_scope`. Note : `logic.test.mjs` / `properties.test.mjs` vivent dans `GAMES/runm_breakout/`, hors de la lane protégée — je les ai **lus** (jamais modifiés) au titre de « preuves factices », qui est dans mon périmètre. |
+
+---
+
+## RETURN LINEAGE
+
+- **why_task_existed**
+  - **problem** : le code de `runm_breakout` (étape 9) devait être audité à contexte vierge pour écarts contrat/code, preuves factices et zones mortes, sans être filtré par les justifications du builder.
+  - **oracle** : aucun — activation par décision humaine (dispatch `FORGE_DISPATCH:s11-redteam-code:runm-breakout-20260902:1`). Le pré-mortem signale toutefois deux `s10a-oracle-code returncode=0; mutation=FAIL` et un jeu de règles d'oracle **élargi** en cours de run à s10c (ajout de « E2E jouabilité », « Oracle test baseline », « Solvabilité »).
+  - **root_cause** : établie pour le motif dominant — **les oracles de ce run valident le code d'oracle (code de sortie) plutôt que la propriété visée**. `run-oracle.mjs:35` réduit chaque volet à `ok: code === 0`, et `e2e.mjs:41-48` possède un chemin de repli non instrumenté qui sort `0`. PASS devient indistinguable de « non testé ». Le même motif produit F4, F5, F8, F11 côté tests : le **nom** porte la propriété, l'**assertion** ne la porte pas.
+  - **action_reason** : un audit aveuglé est le seul dispositif capable de voir qu'une preuve verte ne prouve pas sa revendication — le builder et l'oracle partagent l'hypothèse que le vert vaut preuve ; le red-team ne la partage pas.
+- **result** : rapport produit, 14 failles (2 HIGH, 9 MEDIUM, 3 LOW), chacune ancrée `fichier:ligne` et assortie d'une reproduction exécutable en aval. **Le livrable n'a pas pu être écrit sur disque** (aucun outil d'écriture exposé) : il est rendu en réponse.
+- **proof** : aucune commande exécutée — `run: aucun`, `Bash` désactivé. Preuve = 13 appels `Read` (11 fichiers du jeu + `wiremap.json` + `SCHEMA.md`) et 6 `Read` en échec documentés en SKIPPED_VALIDATION. Les ancres statiques citées sont re-vérifiables par relecture aux lignes indiquées.
+- **learning** : **un oracle qui possède un chemin de repli silencieux ne mesure plus la propriété, il mesure sa propre disponibilité.** Test de survie à appliquer à tout oracle de la Forge : *si l'artefact validé disparaissait, l'oracle passerait-il quand même ?* `e2e.mjs` répond oui. Corollaire pour E14 : un score de mutation à 100 % calculé sur un corpus contenant du code intuable (`seed`/`level` morts, branche `'collision'` redondante, `finally` inatteignable) mesure le corpus, pas la suite — la factorisation d'un mutant survivant en `main.mjs` a supprimé le **symptôme visible** d'un motif qui subsiste ailleurs, non mesuré.
+- **next_reason** : **ESCALADE.** Trois causes non résolues persistent et sortent de mon périmètre (je ne corrige pas) : (1) F1 rend le verdict E13 du run non fiable tant que la présence de `playwright` n'est pas tranchée — c'est un doute sur une **preuve déjà comptée**, pas une amélioration ; (2) mes 14 reproductions sont **écrites mais non mesurées**, elles requièrent un passage oracle non-LLM avant d'alimenter quoi que ce soit ; (3) F2/F5/F8/F11 touchent la valeur probante d'E11/E14, ce qui relève d'un arbitrage Pierre, pas d'un correctif de code. La chaîne causale n'est pas fermée.
+
+```json
+{"findings": [{"angle": "preuve factice / oracle e2e (volet c de run-oracle.mjs)", "faille": "e2e.mjs:41-48 bascule sur simpleTest() si require('playwright') leve ; simpleTest() (e2e.mjs:135-148) demarre le serveur, le tue, imprime RESULT: PASS et process.exit(0) sans navigateur, sans page chargee, sans clic ni touche ni assertion UI. run-oracle.mjs:58 ne lit que le code de sortie (resultFromExit, ligne 35 : ok = code===0) : le PASS du volet (c) est indistinguable entre 'click-through navigateur reussi' et 'playwright absent'. E13 revendique 'click-through simule, contrat de jouabilite respecte' — faux sur le chemin de repli. Aggravant : aucun package.json n'existe dans GAMES/runm_breakout/ ni a la racine Studio/, donc playwright n'est declare nulle part sur la chaine de resolution.", "severite": "HIGH", "reproduction": "cd GAMES/runm_breakout && node -e \"require('playwright')\" ; echo exit=$? ; node e2e.mjs ; echo e2e_exit=$?  — attendu si playwright absent : sortie contenant '⚠ Playwright non disponible — test simplifié (sans navigateur)' ET 'RESULT: PASS' avec exit=0. Falsification renforcee : renommer index.html en index.html.bak puis relancer node e2e.mjs — sort toujours 0/PASS."}, {"angle": "ecart contrat/code — critere R8c1 non outille", "faille": "engine.mjs:52-56 stocke this.seed mais init() (:58-75) et _generateBricks() (:77-92) n'utilisent que des constantes de module ; hashState() (:184-191) ne hache ni seed ni level. Deux moteurs de graines differentes produisent un etat initial et un hash identiques : le critere R8c1_hash_stable_par_seed est vrai par vacuite et resterait vert si la ligne this.seed = seed etait supprimee. Les deux tests de determinisme (logic.test.mjs:238-250, properties.test.mjs:170-182) ne comparent que des paires de MEME graine. this.level = 1 (engine.mjs:54) est mort de la meme facon tout en etant expose via main.mjs:63.", "severite": "HIGH", "reproduction": "cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const a=new Engine({seed:1}),b=new Engine({seed:999});console.log('identiques:',a.hashState()===b.hashState());});\" — attendu : identiques: true"}, {"angle": "preuve faible — E9 revendique un hash d'etat, le code hache une projection", "faille": "engine.mjs:184-191 hache {paddle, ball, bricksRemaining, state} ; le tableau bricks — seul porteur de QUELLES briques sont tombees — est absent. Deux parties ayant detruit un nombre egal mais des briques differentes sont indiscernables par le hash, ce qui contredit la revendication E9 'hash reproductible d'un etat'.", "severite": "MEDIUM", "reproduction": "cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const a=new Engine({seed:1});a.destroyBrick(a.bricks[0]);const b=new Engine({seed:1});b.destroyBrick(b.bricks[39]);console.log('etats differents:',JSON.stringify(a.bricks)!==JSON.stringify(b.bricks));console.log('meme hash:',a.hashState()===b.hashState());});\" — attendu : etats differents: true ET meme hash: true"}, {"angle": "preuve factice + asymetrie de garde (R7c1)", "faille": "engine.mjs:170-175 : checkLose() bascule en 'lost' des que state==='playing', sans jamais regarder la balle ; la condition ball.y > GAME_HEIGHT vit uniquement au site d'appel (engine.mjs:140). Asymetrie avec checkWin() (:163-168) qui verifie sa propre precondition. Le test qui la couvre, nomme 'checkLose sets state=lost when ball below boundary' (logic.test.mjs:134-142), ne place jamais la balle sous la limite : il appelle checkLose() sur un moteur neuf dont la balle est a y≈550, en plein terrain.", "severite": "MEDIUM", "reproduction": "cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});e.ball.y=0;e.checkLose();console.log('ball.y=',e.ball.y,'state=',e.state,'over=',e.over);});\" — attendu : ball.y= 0 state= lost over= true (defaite avec la balle au plafond)"}, {"angle": "invariant manquant + test qui verrouille le bug (R4c1/R5c1/R6c1)", "faille": "engine.mjs:158-161 : destroyBrick decremente sans garde d'idempotence ; bricksRemaining duplique bricks[] et checkWin() teste l'egalite STRICTE ===0 (engine.mjs:164), donc un seul decompte en trop fait sauter 0 et rend la victoire structurellement inatteignable, toutes briques detruites. logic.test.mjs:98-109 assert explicitement bricksRemaining === initial-2 apres double destruction avec le commentaire 'This test documents the current behavior' : un test de la suite ratifie la rupture d'invariant. L'invariant bricksRemaining === bricks.filter(b=>!b.destroyed).length n'est asserte nulle part dans properties.test.mjs. Atteignabilite : tick() protege sa boucle par !brick.destroyed (:132), la faille est latente et exposee aux appelants externes.", "severite": "MEDIUM", "reproduction": "cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});e.destroyBrick(e.bricks[0]);e.destroyBrick(e.bricks[0]);let s=0;while(s<200000&&e.state==='playing'){const c=e.paddle.x+40;e.tick(e.ball.x<c-30?'left':e.ball.x>c+30?'right':null);s++;}console.log('vivantes=',e.bricks.filter(b=>!b.destroyed).length,'remaining=',e.bricksRemaining,'state=',e.state);});\" — attendu : vivantes= 0 remaining= -1 state= lost"}, {"angle": "zone morte + ecart contrat/code sur R3 (rebond conservatif)", "faille": "engine.mjs:148-156 : la branche mode==='collision' (:153-155) execute exactement le corps de la branche 'y' (:151-152) — chemin de code sans comportement propre. tick() appelle reflectBall('collision') pour TOUT contact balle-brique (:134) quelle que soit la geometrie : un impact sur la face laterale d'une brique inverse vy au lieu de vx, la balle conserve son sens horizontal et traverse la rangee. L'oracle E3 ne peut pas l'attraper — il verifie l'inversion de signe et la conservation de |v| pour l'axe passe en parametre, jamais que le bon axe est choisi (logic.test.mjs:58-84 et :175-187, ce dernier assertant l'equivalence 'collision' = 'y').", "severite": "MEDIUM", "reproduction": "cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const p=new Engine();p.ball.vx=7;p.ball.vy=11;p.reflectBall('collision');const q=new Engine();q.ball.vx=7;q.ball.vy=11;q.reflectBall('y');console.log('collision===y:',p.ball.vx===q.ball.vx&&p.ball.vy===q.ball.vy);const e=new Engine({seed:1}),br=e.bricks[0];e.ball.x=br.x-6;e.ball.y=br.y+br.height/2;e.ball.vx=250;e.ball.vy=20;const sg=Math.sign(e.ball.vx);e.tick(null);console.log('detruite:',br.destroyed,'sens vx conserve:',Math.sign(e.ball.vx)===sg);});\" — attendu : collision===y: true ; detruite: true sens vx conserve: true"}, {"angle": "ecart contrat/code sur R6c1 et R7c1 (render affiche VICTOIRE/DEFAITE)", "faille": "render.mjs:29 : 'if (!this.ctx || !this.canvas) return;' precede le bloc overlay (:56-68). Sans contexte 2D, state='won' ou 'lost' n'affiche rien, l'overlay conserve sa classe hidden. E6/E7 enoncent l'affichage comme inconditionnel ; le code le subordonne au canvas. Les deux tests qui touchent ce chemin (logic.test.mjs:392-396 et :398-416) ratifient le couplage en assertant que render() est un no-op sans contexte.", "severite": "MEDIUM", "reproduction": "cd GAMES/runm_breakout && node -e \"import('./render.mjs').then(async({Renderer})=>{const {Engine}=await import('./engine.mjs');let hidden=true;const ov={classList:{add:()=>{hidden=true},remove:()=>{hidden=false},contains:()=>hidden},querySelector:()=>({textContent:''})};globalThis.document={getElementById:id=>id==='overlay'?ov:null};const r=new Renderer(),e=new Engine({seed:1});e.bricksRemaining=0;e.checkWin();r.render(e.snapshot());console.log('state=',e.state,'overlay cache:',hidden);});\" — attendu : state= won overlay cache: true"}, {"angle": "chemin de crash + preuve factice (R1c1)", "faille": "render.mjs:22 accede a document.getElementById sans la garde 'typeof document !== undefined' que setup() applique douze lignes plus haut (:13) — seule methode de Renderer capable de lever ; main.mjs:18 l'appelle sans condition depuis initGame(). Le test nomme 'Renderer: renderObjective writes to objective element' (logic.test.mjs:331-336) n'appelle PAS renderObjective() : il assert typeof renderer.render === 'function', avec le commentaire 'Cannot fully test without a real DOM', tout en comptant dans les 65 tests de E11. La couverture reelle existe ailleurs (logic.test.mjs:379-390) ; le defaut est la garde manquante et le test tautologique.", "severite": "MEDIUM", "reproduction": "cd GAMES/runm_breakout && node -e \"import('./render.mjs').then(({Renderer})=>{new Renderer().renderObjective();}).catch(e=>console.log('LEVE:',e.constructor.name,'-',e.message));\" — attendu : LEVE: ReferenceError - document is not defined"}, {"angle": "zone morte + fuite de ressources + trou de couverture e2e", "faille": "e2e.mjs:123 (process.exit(0) dans le try) et :126 (process.exit(1) dans le catch) terminent le processus immediatement ; le bloc finally de :128-132 — page.close(), browser.close(), srv.kill() — n'est atteint sur aucun des deux chemins terminaux, laissant un Chromium et un server.mjs orphelins sur le port 4504 a chaque execution en mode navigateur. Corollaire de couverture dans le meme fichier : le scenario force la defaite par la porte de debogage (:97, window.__game_debug.loseGame()) et ne teste jamais la victoire — R6c1 n'a aucune couverture e2e et la couverture e2e de R7c1 ne fait jamais tomber la balle sous le terrain.", "severite": "MEDIUM", "reproduction": "Ancre statique : e2e.mjs:123 et :126 precedent le finally de :128 ; process.exit() ne deroule pas les finally. Verification executable : cd GAMES/runm_breakout && node e2e.mjs ; echo exit=$? ; puis node -e \"require('node:http').get({port:4504,path:'/'},r=>console.log('serveur ENCORE vivant',r.statusCode)).on('error',()=>console.log('serveur bien arrete'));\" — attendu sur le chemin navigateur : serveur ENCORE vivant 200"}, {"angle": "preuve factice + backdoor livree en production (R6c1/R7c1)", "faille": "main.mjs:34-48 : exposeGame() est appelee sans condition par initGame() (:19), donc window.__game_debug existe dans la page servie aux joueurs, sans garde dev/prod. winGame() (:42-46) ecrit gameEngine.bricksRemaining = 0 SANS toucher aux briques puis appelle checkWin() : l'etat resultant est auto-contradictoire (state='won', bricksRemaining=0, 40 briques destroyed===false que le renderer continue de dessiner sous l'overlay VICTOIRE). C'est le chemin qu'empruntent le test de main.mjs (logic.test.mjs:665-676) et l'e2e (e2e.mjs:97) : les etats terminaux R6/R7 sont attestes par une transition forcee, jamais par une partie jouee.", "severite": "MEDIUM", "reproduction": "Dans le harnais installFakeGameGlobals de logic.test.mjs:594, apres 'await importMainFresh()' : window.__game_debug.winGame(); console.log(window.__game.state, window.__game.bricksRemaining); puis instrumenter ctx.fillRect avec un compteur et declencher env.rafCalls.at(-1).cb(); console.log('fillRect=', rects); — attendu : 'won 0' puis fillRect= 42 (fond + raquette + 40 briques vivantes) : victoire declaree sur un terrain plein."}, {"angle": "preuve factice — assertion tautologique dans le fichier des invariants", "faille": "properties.test.mjs:185-208 : la boucle sort des que state!=='playing' et l'assertion finale (:204-207) est 'bricksRemaining === 0 || step < maxSteps'. Sur une defaite a l'etape 10 la boucle sort avec step=10 < 50000, la disjonction est vraie, le test passe. Il ne peut echouer que si le bot epuise les 50000 pas en etant encore en jeu — cas ou la boucle ne sort pas par cette porte. Un test nomme 'reaching bricksRemaining=0 is achievable' ne peut donc pas echouer sur une non-solvabilite. La propriete est reellement prouvee ailleurs (logic.test.mjs:473-479, runBot(1) avec assert won===true) : l'impact produit est limite, mais l'assertion gonfle le compte '65 tests' de E11 d'une preuve nulle.", "severite": "MEDIUM", "reproduction": "cd GAMES/runm_breakout && node -e \"import('./engine.mjs').then(({Engine})=>{const e=new Engine({seed:1});let step=0;while(step<50000&&e.state==='playing'){e.tick(null);step++;}console.log('state=',e.state,'remaining=',e.bricksRemaining,'step=',step);console.log('assertion du test:',(e.bricksRemaining===0||step<50000));});\" — attendu : state= lost, remaining non nul, assertion du test: true"}, {"angle": "source de verite dupliquee / drift silencieux", "faille": "render.mjs:40 dessine la raquette avec les litteraux 'GAME_HEIGHT - 30, 80, 12' (duplicata de PADDLE_Y/PADDLE_WIDTH/PADDLE_HEIGHT, engine.mjs:15-18), :45 dessine la balle avec le rayon 5 (duplicata de BALL_RADIUS, engine.mjs:20), et _getDimensions() (:71-73) retourne {800,600} en dur au lieu d'importer GAME_DIMENSIONS — export public de engine.mjs:205 consomme uniquement par les deux fichiers de test, jamais par le module de rendu qui en est le destinataire naturel. snapshot() ampute volontairement la raquette de y/width/height (engine.mjs:195), donc le renderer ne PEUT pas obtenir la geometrie reelle. Aucun test ne compare la geometrie dessinee aux constantes du moteur.", "severite": "LOW", "reproduction": "Repro de style mutation, hors lane protegee (porte sur engine.mjs) : remplacer 'const PADDLE_WIDTH = 80;' par '= 120' a engine.mjs:15, puis 'cd GAMES/runm_breakout && node --test logic.test.mjs properties.test.mjs'. Attendu : suite VERTE (les bornes assertees en logic.test.mjs:40 et :54 utilisent elles aussi le litteral 80) alors que la boite de collision fait 120 px et le rectangle dessine toujours 80. Restaurer la valeur apres mesure."}, {"angle": "zone morte / flux de controle implicite", "faille": "index.html:79 importe { initGame, resetGame } mais initGame n'est reference nulle part dans le script de la page — le demarrage vient du bloc auto-execute main.mjs:101-108. Corollaire : resetGame() (main.mjs:67-74) ne relance pas la boucle de jeu ; apres un stopGameLoop(), 'Rejouer' recree le moteur et publie state='playing' alors que rien ne tique — le jeu est gele tout en se declarant en cours. resetGame accede aussi a document (:71) derriere la garde 'if (renderer)', qui ne protege pas la bonne chose. Le test de reset (logic.test.mjs:711-727) assert l'etat et l'overlay, jamais qu'une frame a ete replanifiee.", "severite": "LOW", "reproduction": "Dans le harnais installFakeGameGlobals de logic.test.mjs:594 : const mod = await importMainFresh(); mod.stopGameLoop(); const before = env.rafCalls.length; mod.resetGame(1); console.log('state=', window.__game.state, 'frames depuis reset=', env.rafCalls.length - before); — attendu : state= playing frames depuis reset= 0"}, {"angle": "garde incoherente / fuite d'ecouteurs", "faille": "input.mjs:12 teste 'typeof window !== undefined' puis appelle document.addEventListener aux lignes 13 et 19 : la garde ne porte pas sur l'objet reellement utilise. Aucun removeEventListener n'existe, donc chaque new InputAdapter() (main.mjs:15, a chaque initGame) ajoute deux ecouteurs permanents sur document. Le test DOM (logic.test.mjs:298-328) installe un faux document fournissant addEventListener, ce qui masque l'incoherence de garde.", "severite": "LOW", "reproduction": "cd GAMES/runm_breakout && node -e \"globalThis.window={}; import('./input.mjs').then(({InputAdapter})=>{new InputAdapter();}).catch(e=>console.log('LEVE:',e.constructor.name,'-',e.message));\" — attendu : LEVE: ReferenceError - document is not defined"}]}
+```
+RETURN_REASON: {"status": "DISCOVERED", "problem": "L'oracle e2e du run (e2e.mjs) se degrade silencieusement en un PASS sans navigateur quand playwright est absent, rendant le vert du volet (c) de run-oracle.mjs indistinguable de 'non teste' ; par ailleurs le champ seed du moteur est un etat mort, ce qui rend le critere R8c1 'hash_stable_par_seed' vrai par vacuite, et quatre tests de la suite E11 (logic.test.mjs:98, :134, :331 et properties.test.mjs:185) portent le nom d'une propriete que leur assertion ne peut pas faire echouer.", "root_cause": "Les oracles de ce run valident le code d'oracle (code de sortie) plutot que la propriete visee : run-oracle.mjs:35 reduit chaque volet a 'ok = code===0' et e2e.mjs:41-48 possede un chemin de repli non instrumente qui sort 0, si bien qu'aucun mecanisme ne distingue une preuve obtenue d'une preuve sautee."}

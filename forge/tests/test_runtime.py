@@ -2,7 +2,7 @@
 
 `route_step` décide QUI exécute une étape LLM : Qwen local (contrat honoré) quand
 LM Studio :1234 est UP, sinon fallback Claude en contexte vierge. `run_qwen_step`
-exécute réellement l'appel Qwen (réutilise QwenAdapter de scripts/council.py) et
+exécute réellement l'appel Qwen (QwenAdapter de forge/lm_adapter.py, extrait verbatim) et
 encode l'échec en `ok=False` pour que l'orchestrateur bascule en fallback.
 
 Le `reviewer` réel (qwen2.5-14b vs claude-blind) est toujours restitué — il sera
@@ -36,11 +36,33 @@ def test_route_lmstudio_up_goes_to_qwen(monkeypatch):
 
 
 def test_route_lmstudio_down_falls_back_to_claude_blind(monkeypatch):
+    """C-2 (2026-09-02) : le seuil de decision est passe de `qwen_available` a `qwen_probe`,
+    qui transporte la CAUSE. Ce test patche donc la sonde, et verifie en plus que la cause
+    mesuree arrive telle quelle dans la `reason` — c'est tout l'objet du lot : sur RUN M, un
+    defaut d'IMPORT avait ete annonce comme un « :1234 down » sur un port ouvert."""
     monkeypatch.setattr(runtime, "qwen_available", lambda adapter=None: False)
+    monkeypatch.setattr(runtime, "qwen_probe",
+                        lambda adapter=None: (False, "cause mesuree de test"))
     d = route_step(_payload("qwen2.5-14b-instruct", "lmstudio"))
     assert d.runner == "claude-blind"
     assert "fallback" in d.reviewer
     assert d.reason  # raison explicite (visibilité de la dégradation)
+    assert "cause mesuree de test" in d.reason,         "la cause mesuree doit etre transportee, jamais remplacee par un motif generique"
+
+
+def test_qwen_probe_distingue_import_et_reseau(monkeypatch):
+    """C-2 : un defaut d'IMPORT et un service injoignable ne doivent plus rendre le meme motif."""
+    monkeypatch.setattr(runtime, "_make_qwen_adapter",
+                        lambda: (_ for _ in ()).throw(ModuleNotFoundError("council")))
+    ok, cause = runtime.qwen_probe()
+    assert ok is False and "IMPORT" in cause
+
+    class _Injoignable:
+        def is_available(self):
+            return False
+    ok2, cause2 = runtime.qwen_probe(_Injoignable())
+    assert ok2 is False and "injoignable" in cause2
+    assert cause != cause2, "les deux causes doivent etre distinctes"
 
 
 def test_route_claude_local_goes_to_claude():

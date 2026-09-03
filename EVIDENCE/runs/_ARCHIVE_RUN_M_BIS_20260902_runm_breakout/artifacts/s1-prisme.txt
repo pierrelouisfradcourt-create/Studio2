@@ -1,0 +1,290 @@
+I have what I need. Confirmed run_dir state: `charter.yaml` ✅ and `worldscan.json` ✅ present (worldscan resolves as JSON — references anchorable); `gm_worldscan.json`, `story_bible.json`, `design/progression_contract.md`, `design/calibration.md` all ABSENT. My response below **is** `product_snapshot.md` (prose) + the terminal `prisme.json` block.
+
+# Product Snapshot — runm_breakout
+
+Le produit fini, tel que le joueur le vit : un casse-briques web minimal, chargé dans un onglet de navigateur, jouable immédiatement au clavier, avec une partie qui commence, se gagne ou se perd, et s'arrête. Ce document décrit ce jeu terminé, pas le chemin pour l'obtenir. Ancre : `charter.yaml` (s0) — objectif « casse-briques web minimal et jouable », `criteres_demo` et `criteres_succes` ; source de comparables : `worldscan.json` (s2, Breakout/Arkanoid/Peglin).
+
+## 1. CE QUE LE JOUEUR VOIT
+
+À l'ouverture de la page, le joueur voit une aire de jeu rectangulaire bordée de trois murs (gauche, droite, haut). En bas, une **raquette** horizontale. Au centre-haut, un mur de **briques** rangées en grille. Une **balle** unique, visible, se déplace en continu et rebondit sur les murs latéraux, le mur du haut et la raquette. En surimpression (HUD), trois informations lisibles en permanence : un **objectif** en clair (texte « Vider l'écran 1 »), un **score** numérique, et un **compteur de vies** initialisé à 3. Quand une brique est touchée, elle disparaît de la grille et le score s'incrémente dans la même frame. Quand tout un écran est vidé, un **second écran** de briques apparaît et le texte d'objectif change en « Vider l'écran 2 ». En fin de partie, un **écran de victoire** (toutes briques détruites) ou un **écran de game over** (vies épuisées) s'affiche et le mouvement s'arrête.
+
+## 2. CE QUE LE JOUEUR FAIT
+
+Le joueur déplace la raquette horizontalement au clavier : la cible `raquette_gauche` la pousse à gauche, `raquette_droite` la pousse à droite, en réponse visible et immédiate à chaque pression. Il place la raquette sous la balle pour la renvoyer, et **choisit le point de contact** — bord gauche ou bord droit de la raquette — pour orienter le renvoi et viser la zone de briques qu'il veut atteindre ensuite. Il enchaîne les rebonds pour casser les briques une à une, gère ses 3 vies en évitant que la balle passe sous la raquette, vide le premier écran, puis **rejoue les mêmes gestes** sur le second écran qui vient d'apparaître. La partie est entièrement pilotable via des actions DOM-only (clavier), ce qui la rend rejouable par un bot déterministe hors interaction humaine.
+
+## 3. CE QUE LE JOUEUR RESSENT
+
+Le joueur ressent d'abord le **contrôle direct** : la raquette obéit sans latence, le rebond est attribuable à son geste, la casse d'une brique est une cause-effet propre et satisfaisante (impact → disparition → point). Vient ensuite la **tension** : chaque descente de balle sous la raquette coûte une vie visible, et le compteur qui tombe crée un enjeu croissant. La maîtrise du point de contact procure un sentiment de **compétence** (viser, prédire l'angle). Vider un écran donne une **récompense de progression** franche — un écran neuf apparaît, l'objectif se renomme, la boucle repart identique mais dans un état plus avancé. La partie est courte, lisible, et se clôt nettement : la victoire ou la défaite est sans ambiguïté, ce qui invite au retry.
+
+## 4. RÈGLES OBSERVABLES
+
+- **R1** — Le HUD affiche en permanence un objectif non vide (« Vider l'écran 1 ») lisible à tout instant.
+- **R2** — Presser `raquette_gauche` / `raquette_droite` déplace visiblement la raquette dans la direction correspondante (la position `raquette_x` change).
+- **R3** — Une brique touchée par la balle disparaît de l'écran et le compteur de briques restantes diminue.
+- **R4** — À chaque brique détruite, le score affiché augmente d'une valeur strictement positive dans la même frame.
+- **R5** — Une balle visible se déplace en continu et rebondit sur les murs latéraux, le mur haut et la raquette.
+- **R6** — Le point de contact raquette/balle (gauche vs droite) modifie l'angle de renvoi ; sur un horizon de 300 frames, la politique de jeu choisie fait varier le score.
+- **R7** — Quand la dernière brique de l'écran 1 est détruite, un second écran de briques apparaît.
+- **R8** — Après l'apparition de l'écran 2, le texte d'objectif du HUD devient « Vider l'écran 2 », textuellement distinct de « Vider l'écran 1 ».
+- **R9** — Sur l'écran 2, les mêmes gestes rejouent leurs effets et le nombre de briques restantes repasse d'un état vidé à un état rempli.
+- **R10** — Le HUD affiche un compteur de vies initialisé à 3, décrémenté de 1 chaque fois que la balle passe sous la raquette.
+- **R11** — Toutes les briques détruites → un écran de victoire s'affiche et la partie s'arrête.
+- **R12** — Vies épuisées (3e passage sous la raquette) → un écran de game over s'affiche et la partie s'arrête.
+- **R13** — À seed fixe et suite d'inputs fixe, la logique métier (module `.mjs` hors navigateur) produit un état final identique, reproductible par hash (socle N1).
+
+---
+
+## RAPPORT FINAL
+
+**Ancre charter** : objectif s0 « casse-briques web minimal et jouable », `criteres_demo` (balle visible, raquette clavier, brique qui disparaît, score qui monte, victoire/défaite observables) et `plateforme_cible` (RNG seedé, logique `.mjs` testable hors navigateur, actions DOM-only, reproductible par hash). Toutes les Règles observables R1–R13 sont dérivées de ces critères ou du World Scan Breakout.
+
+**Reçu oracle** : `node forge/check_prisme_manifest.mjs <run_dir>/prisme.json --worldscan <run_dir>/worldscan.json` — **NON EXÉCUTÉ par le producteur** (permission `run: aucun`). Je ne peux donc pas produire de `software_verdict` mesuré ; l'oracle s'exécute après matérialisation. `claim_verdict: NO_CLAIM_ALLOWED`. `software_verdict: BLOCKED` (oracle non lancé, faute de droit d'exécution — pas un échec du manifeste).
+
+**Provenance des références** : `worldscan.json` présent et résoluble → 14 exigences sur 15 portent une adresse `worldscan:games[0].…` qui résout (objectives, loops). 1 exigence (`R14_determinism`) est `ADDITIONS` avec `reference: null` (contrainte socle N1, non présente dans le World Scan).
+
+**Exigences classées non actionnables** : aucune. Les 15 exigences portent un `expected_proof` exploitable (`bot_action`, `visual`, `oracle`).
+
+**Références non ancrées** : aucune adresse `worldscan:` émise ne pointe hors de la structure réelle de `worldscan.json` (indices `games[0]`, `objectives[0]`, `loops.*` tous présents).
+
+**GM sourcing (mesure advisory)** : `gm_worldscan.json` **ABSENT** du run_dir → `exigences_sourcees_gm = 0 / 10` (exigences de boucle). Advisory, non gaté avant run 10 (verrou GO Pierre). Je ne compense pas : les exigences de boucle sont sourcées sur `worldscan:` faute de Game Master.
+
+**why_task_existed** :
+- `problem:` non transmis explicitement — activation par dispatch s1-prisme (`FORGE_DISPATCH:s1-prisme:runm-breakout-20260902:1`) pour produire le snapshot produit + prisme.json du run de migration V1→V2.
+- `oracle:` aucun (activation par le pipeline Forge, décision de séquencement).
+- `root_cause:` non établie (pas de panne amont ; étape normale de la chaîne).
+- `action_reason:` s1 doit capturer la vision produit finie et émettre les exigences falsifiables consommées par s3/s4/s5/s9.
+- `result:` product_snapshot.md (4 sections, 13 règles observables) + prisme.json (15 exigences, chaîne observation→claim→énoncé distincte, 14/15 ancrées worldscan). Boucle couverte sur 8 rôles /10 : PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL (×2 `new_distinct`), REPEAT. META_LOOP et ADVANTAGE **volontairement absents** (voir next_reason).
+- `proof:` commande `check_prisme_manifest` non exécutée (run: aucun) ; preuve mécanique déléguée à l'exécuteur post-matérialisation.
+- `learning:` le gabarit de boucle V4 comporte deux maillons — META_LOOP (prestige avec reset visible) et ADVANTAGE (`increases_more_than` après prestige) — propres au genre idle/clicker ; le genre cible (arcade skill-loop borné WIN/LOSE) ne les possède pas, et le charter les met explicitement `hors_scope` (« Méta-progression, prestige, … : au-delà du V1 minimal ») avec interdiction d'inventer un design-intent sans source Pierre. Les fabriquer serait un faux-vert (action interdite). Confirmé cohérent avec le pré-mortem `manifest-a243e3bfb138847f`.
+- `next_reason:` **escalade fog HumanGate** — deux causes non résolues persistent, non réparables au niveau s1 : (1) le gabarit V4 mono-genre exige META_LOOP+ADVANTAGE inapplicables à un arcade borné ; un gabarit de boucle *par genre* est nécessaire, décision Pierre. (2) `gm_worldscan.json` absent → sourçage GM des exigences de boucle impossible (0/10), à trancher (produire un GM pour ce genre, ou acter que l'arcade minimal s'en passe).
+
+**SKIPPED_VALIDATION** :
+- item: exécution de `check_prisme_manifest.mjs` ; périmètre: prisme.json émis ; statut: non fait ; raison: permission `run: aucun` — le producteur n'exécute pas l'oracle, il est lancé après matérialisation.
+- item: exécution de `forge/prisme/check_prisme.mjs` (conformité markdown) ; périmètre: product_snapshot.md ; statut: non fait ; raison: idem `run: aucun`.
+- item: couverture des rôles de boucle META_LOOP et ADVANTAGE ; périmètre: prisme.json ; statut: non couvert, décision assumée ; raison: charter `hors_scope` (méta/prestige) + interdiction d'inventer un design-intent sans source Pierre → escaladé en fog.
+- item: sourçage GM des exigences de boucle ; périmètre: 10 exigences de boucle ; statut: 0/10 ; raison: `gm_worldscan.json` absent du run_dir.
+
+```json
+{
+  "game_id": "runm_breakout",
+  "exigences": [
+    {
+      "id": "R01_goal_clear",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].objectives[0].player_goal",
+      "observation": "Le World Scan donne comme player_goal de Breakout 'Maximize score ... and clear both screens' : le but affiché est de tout casser.",
+      "claim": "Un but de completion n'est poursuivable par le joueur que s'il est ecrit en clair a l'ecran ; interne mais invisible, il joue sans savoir quand il gagne.",
+      "enonce": "Le HUD affiche en permanence un objectif non vide 'Vider l'ecran 1' lisible a tout instant de la partie.",
+      "acteur": "SYSTEM",
+      "loop_role": "PLAYER_GOAL",
+      "observe": {"hud": "objectif", "predicate": "nonempty"},
+      "expected_proof": {"kind": "visual", "statement": "Au demarrage, capturer le HUD et verifier que la zone objectif contient un texte non vide."},
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "R02_action_left",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "loops.minute_1 : 'Paddle responds to input' et 'Player bounces ball off paddle'.",
+      "claim": "Si la raquette ne repond pas visiblement a chaque pression, le joueur ne peut pas attribuer le rebond a son geste et perd le sentiment de controle.",
+      "enonce": "Le joueur peut deplacer la raquette vers la gauche en pressant la cible clavier `raquette_gauche` ; la position affichee raquette_x diminue a l'ecran.",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_ACTION",
+      "affordance": "raquette_gauche",
+      "observe": {"hud": "raquette_x", "predicate": "changes"},
+      "expected_proof": {"kind": "bot_action", "statement": "Un bot presse raquette_gauche pendant N frames ; verifier que raquette_x a change dans le sens gauche."},
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "R03_action_right",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "loops.minute_1 : la raquette repond a l'input dans les deux sens pour placer la balle.",
+      "claim": "Sans deplacement droite symetrique et visible, le joueur ne peut pas couvrir toute la largeur de l'aire et la moitie droite des briques devient injouable.",
+      "enonce": "Le joueur peut deplacer la raquette vers la droite en pressant la cible clavier `raquette_droite` ; la position affichee raquette_x augmente a l'ecran.",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_ACTION",
+      "affordance": "raquette_droite",
+      "observe": {"hud": "raquette_x", "predicate": "changes"},
+      "expected_proof": {"kind": "bot_action", "statement": "Un bot presse raquette_droite pendant N frames ; verifier que raquette_x a change dans le sens droit."},
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "R04_response_brick",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "loops.minute_1 : 'destroys first brick group' — les briques disparaissent a l'impact.",
+      "claim": "Une brique qui ne disparait pas immediatement au contact rompt la causalite percue balle->destruction et rend l'impact illisible.",
+      "enonce": "Quand la balle touche une brique, cette brique disparait de l'ecran et le compteur briques_restantes diminue de 1.",
+      "acteur": "SYSTEM",
+      "loop_role": "GAME_RESPONSE",
+      "observe": {"hud": "briques_restantes", "predicate": "decreases"},
+      "expected_proof": {"kind": "bot_action", "statement": "Un bot amene la balle sur une brique ; verifier qu'elle disparait et que briques_restantes a decru."},
+      "destination": "s5-wiremap"
+    },
+    {
+      "id": "R05_reward_score",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].objectives[0].player_goal",
+      "observation": "objectives.player_goal : 'Maximize score (tiered: Yellow 1pt, Green 3pt, Orange 5pt, Red 7pt)'.",
+      "claim": "Sans increment de score visible au moment exact de la casse, la recompense n'existe pas pour le joueur meme si le point est compte en interne.",
+      "enonce": "A chaque brique detruite, le score affiche augmente d'une valeur strictement positive dans la meme frame que la disparition de la brique.",
+      "acteur": "SYSTEM",
+      "loop_role": "REWARD",
+      "observe": {"hud": "score", "predicate": "increases"},
+      "expected_proof": {"kind": "bot_action", "statement": "Un bot casse une brique ; comparer le score avant/apres et verifier une hausse strictement positive."},
+      "destination": "s5-wiremap"
+    },
+    {
+      "id": "R06_decision_angle",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "observation": "loops.minute_10 : 'Player manages angle prediction' ; 'trajectory angles depend on paddle contact point'.",
+      "claim": "Le point de contact raquette/balle transforme un simple renvoi en decision tactique : viser a gauche ou a droite change la zone atteinte et donc le rythme de score.",
+      "enonce": "Le joueur choisit d'orienter le renvoi vers la gauche ou vers la droite ; sur un horizon de 300 frames, la politique de jeu choisie fait varier le score affiche.",
+      "acteur": "PLAYER",
+      "loop_role": "DECISION",
+      "options": ["R02_action_left", "R03_action_right"],
+      "metric": "score",
+      "horizon_frames": 300,
+      "policies": [
+        {"name": "passif", "click": null, "every_frames": 0},
+        {"name": "actif_gauche", "click": "raquette_gauche", "every_frames": 3}
+      ],
+      "observe": {"hud": "objectif", "predicate": "changes"},
+      "expected_proof": {"kind": "bot_action", "statement": "Rejouer les deux politiques sur 300 frames a seed fixe ; verifier que la metrique score differe entre elles."},
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "R07_unlock_screen2",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "observation": "loops.hour_5 : 'Complete first screen, transition to second screen'.",
+      "claim": "Vider le premier ecran doit debloquer un contenu neuf visible, sinon la maitrise acquise ne produit aucune progression perceptible.",
+      "enonce": "Quand le joueur detruit la derniere brique de l'ecran 1 via la cible `derniere_brique_ecran1`, un second ecran de briques apparait a l'ecran.",
+      "acteur": "PLAYER",
+      "loop_role": "UNLOCK",
+      "affordance": "derniere_brique_ecran1",
+      "observe": {"hud": "ecran", "predicate": "appears:ecran_2", "appears": "ecran_2"},
+      "expected_proof": {"kind": "bot_action", "statement": "Un bot vide l'ecran 1 ; verifier qu'un nouveau champ de briques (ecran_2) devient visible."},
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "R08_nextgoal_screen1",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "loops.minute_1 : le premier but jouable est de vider le champ de briques initial.",
+      "claim": "Un objectif d'ecran doit s'enoncer textuellement pour que le joueur sache quelle cible il poursuit maintenant, pas seulement via un compteur.",
+      "enonce": "Au demarrage, le HUD objectif affiche le texte 'Vider l'ecran 1'.",
+      "acteur": "SYSTEM",
+      "loop_role": "NEXT_GOAL",
+      "observe": {"hud": "objectif", "predicate": "new_distinct"},
+      "expected_proof": {"kind": "visual", "statement": "Capturer le texte objectif au demarrage et verifier qu'il vaut 'Vider l'ecran 1'."},
+      "destination": "s5-wiremap"
+    },
+    {
+      "id": "R09_nextgoal_screen2",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "observation": "loops.hour_5 : 'transition to second screen' apres avoir vide le premier.",
+      "claim": "Le second but doit differer textuellement du premier a l'ecran, pas seulement changer un compteur, sinon la progression n'est pas lisible.",
+      "enonce": "Apres l'apparition de l'ecran 2, le HUD objectif affiche le texte distinct 'Vider l'ecran 2'.",
+      "acteur": "SYSTEM",
+      "loop_role": "NEXT_GOAL",
+      "observe": {"hud": "objectif", "predicate": "new_distinct"},
+      "expected_proof": {"kind": "visual", "statement": "Apres passage a l'ecran 2, verifier que le texte objectif est 'Vider l'ecran 2' et differe textuellement de 'Vider l'ecran 1'."},
+      "destination": "s5-wiremap"
+    },
+    {
+      "id": "R10_repeat",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "observation": "loops.minute_10 et hour_5 : la boucle rebond/casse reprend a l'identique sur le nouvel ecran.",
+      "claim": "La boucle ne 'recommence' reellement que si les memes gestes reproduisent leurs effets dans le nouvel etat, pas seulement par convention narrative.",
+      "enonce": "Sur l'ecran 2, le joueur rejoue les memes gestes (deplacer la raquette, casser des briques, marquer, declencher l'ecran suivant) et briques_restantes repasse d'un etat vide a un etat rempli.",
+      "acteur": "PLAYER",
+      "loop_role": "REPEAT",
+      "replay": ["R02_action_left", "R04_response_brick", "R05_reward_score", "R07_unlock_screen2"],
+      "observe": {"hud": "briques_restantes", "predicate": "increases"},
+      "expected_proof": {"kind": "bot_action", "statement": "Apres unlock de l'ecran 2, rejouer la sequence B..F et verifier que briques_restantes est repasse a une valeur pleine."},
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "R11_ball_visible",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "loops.minute_1 : 'Player bounces ball off paddle' avec feedback visuel immediat et physique de rebond.",
+      "claim": "Sans balle visible en mouvement continu rebondissant sur murs et raquette, il n'y a pas de casse-briques : l'objet central du jeu manque a l'ecran.",
+      "enonce": "Une balle visible se deplace en continu et rebondit sur les murs lateraux, le mur haut et la raquette.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "visual", "statement": "Sur plusieurs frames, verifier que la position de la balle change et s'inverse au contact des bords et de la raquette."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R12_win_screen",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].objectives[0].victory_condition",
+      "observation": "objectives.victory_condition : 'Destroy all 96 bricks across two screens before losing 3 balls'.",
+      "claim": "Une victoire non affichee laisse le joueur dans le doute sur l'atteinte de son but et prive la partie de cloture.",
+      "enonce": "Quand la derniere brique de tous les ecrans est detruite, un ecran/message de victoire s'affiche et la partie s'arrete.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "bot_action", "statement": "Un bot detruit toutes les briques ; verifier l'apparition de l'ecran de victoire et l'arret de la simulation."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R13_lose_screen",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].objectives[0].defeat_condition",
+      "observation": "objectives.defeat_condition : 'Ball passes below paddle 3 times (3 lives exhausted)'.",
+      "claim": "Une defaite non affichee empeche le joueur de comprendre pourquoi le jeu s'arrete et casse la boucle de retry.",
+      "enonce": "Quand la balle passe sous la raquette une 3e fois (vies epuisees), un ecran/message de game over s'affiche et la partie s'arrete.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "bot_action", "statement": "Un bot laisse la balle tomber 3 fois ; verifier l'apparition du game over et l'arret de la simulation."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R14_determinism",
+      "source": "ADDITIONS",
+      "source_role": "s1-prisme",
+      "reference": null,
+      "observation": "Le charter impose une logique metier deterministe, RNG seede, module .mjs testable hors navigateur, reproductible par hash (socle N1).",
+      "claim": "Une logique non reproductible hors navigateur ne peut pas etre validee par oracle, et tout echec devient inattribuable entre la migration V1->V2 et le hasard.",
+      "enonce": "A seed fixe et suite d'inputs fixe, la logique metier (module .mjs hors navigateur) produit un etat final identique, verifiable par hash.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "oracle", "statement": "Executer la logique deux fois hors navigateur a seed+inputs identiques ; comparer le hash de l'etat final (egalite exigee)."},
+      "destination": "s4-archi"
+    },
+    {
+      "id": "R15_lives",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].objectives[0].defeat_condition",
+      "observation": "objectives.defeat_condition : la defaite survient apres 3 pertes de balle ('3 lives exhausted').",
+      "claim": "Le nombre de vies restantes doit etre visible pour que la tension de la defaite imminente existe et que le joueur mesure son risque.",
+      "enonce": "Le HUD affiche un compteur de vies initialise a 3, decremente de 1 chaque fois que la balle passe sous la raquette.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "visual", "statement": "Faire tomber la balle une fois ; verifier que le compteur de vies affiche passe de 3 a 2."},
+      "destination": "s5-wiremap"
+    }
+  ]
+}
+```
+RETURN_REASON: {"status": "DISCOVERED", "problem": "Le gabarit de boucle V4 exige META_LOOP (prestige avec reset visible) et ADVANTAGE (increases_more_than apres prestige), maillons propres au genre idle/clicker, absents du casse-briques arcade cible et mis hors_scope par le charter (meta-progression/prestige interdits, invention de design-intent interdite sans source Pierre) ; de plus gm_worldscan.json est absent du run_dir, donc sourcage GM des exigences de boucle impossible (0/10).", "root_cause": "Gabarit de boucle V4 mono-genre applique a un run d'un autre genre, sans gabarit de boucle par genre ni Game Master present dans le run_dir."}

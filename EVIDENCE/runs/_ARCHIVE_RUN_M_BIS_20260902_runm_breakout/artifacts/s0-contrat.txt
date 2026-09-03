@@ -1,0 +1,139 @@
+I have everything I need. The mandatory sources are read: `SCHEMA.md` (field states, restitution rule), the Project Brief (embedded, single command source), the PILOU pré-mortem (embedded), and I confirmed no Project Bible exists for this run. The exact charter schema is fixed by the contract's `output_contract`: `{objectif, hors_scope[], criteres_succes[], actions_interdites[], plateforme_cible, reference_jeu, criteres_demo[]}`.
+
+This dispatch is **text-only, no file written** — but the pré-mortem (`manifest-35da004686396698`) shows the materializer refuses any charter delivered as prose without an extractable ```yaml``` fence. So I deliver the charter as a fenced YAML block (which the downstream materializer extracts → `check_charter` validates), and I write no file myself.
+
+Every design-intent field is traced to a Pierre source in `project_brief.yaml`; nothing is invented to fill a box.
+
+---
+
+## CONTRAT PRODUIT — runm_breakout (s0-contrat)
+
+```yaml
+# charter.yaml — runm_breakout
+# Produit par s0-contrat (dispatch runm-breakout-20260902:1). Source de commande unique :
+# EVIDENCE/briefs/runm_breakout/project_brief.yaml (FORGE_PROJECT_INPUT_V0). Chaque champ
+# de design-intent est tracé à une source Pierre 2026-09-02 (voir provenance en commentaire).
+# Aucun champ « à définir », aucun vide.
+
+objectif: >-
+  Créer un casse-briques web minimal et jouable sous GAMES/runm_breakout, volontairement
+  réduit pour que tout échec soit immédiatement attribuable à la migration V1 -> V2 et non à
+  la complexité du jeu. Le jeu doit se charger dans un navigateur et offrir une partie
+  complète jouable au clavier (raquette mobile, balle, briques), avec logique métier
+  déterministe et testable hors navigateur conformément au socle N1. La qualité ludique du
+  jeu N'EST PAS l'objectif : l'objet mesuré est le bout-en-bout de la migration dans les
+  surfaces V2.
+
+plateforme_cible: >-
+  web/HTML — page HTML+JS unique, RNG seedé, logique métier en module .mjs testable hors
+  navigateur, exposition window.__game, actions DOM-only, déterminisme reproductible par
+  hash (socle N1). Aucun binaire Godot ni Blender requis.
+  # Source Pierre 2026-09-02 : « pas besoin de Godot si on reste sur la lignée web »
+  # (project_brief.provenance.cible + contraintes.project_specific.techniques).
+
+reference_jeu: >-
+  casse-briques (Breakout) — modèle de jeu de genre arcade skill-loop, choisi pour son
+  petit périmètre et sa boucle évidente. GAMES/breakout et GAMES/breakout_v2 sont des
+  BENCHMARKS de régression, PAS des sources de design : leur recopie est interdite.
+  # Source Pierre 2026-09-02 (project_brief.provenance.genre) : « casse-briques (Breakout),
+  # lignée WEB, choisi explicitement pour son petit périmètre, sa boucle évidente et
+  # l'absence de dépendance Godot ». references_autorisees: [] (fog Pierre).
+
+hors_scope:
+  - "La qualité ludique du jeu (Pierre : « le critère de réussite n'est pas que le jeu soit bon »)."
+  - >-
+    La topologie CIBLE de V2 (Fable directeur, GAME_BLUEPRINT / GAME_FLOW /
+    ARCHITECTURE_CONTRACT) : non construite au moment de RUN M, donc ni testée ni prétendue.
+  - "Toute dépendance Godot ou Blender (dépendances de capacité, jamais préconditions du run)."
+  - "La recopie de GAMES/breakout ou GAMES/breakout_v2, en tout ou en partie."
+  - >-
+    N5 (séparation concepteur/instrumenteur) et N6 (fidélité charter -> build) : non
+    mécanisés pour RUN M (fog HumanGate Pierre 2026-09-02) — non couverts, non prouvés.
+  - "Méta-progression, prestige, multi-mondes, économie idle : au-delà du V1 minimal jouable."
+  - "Écriture de code, décision d'architecture (étape 4), world scan (étape 2) : hors périmètre de s0."
+
+criteres_succes:
+  - "Le run s'exécute dans les surfaces V2 : run_dir sous EVIDENCE/runs/, jamais lab/."
+  - "Le jeu est écrit sous GAMES/runm_breakout/, jamais games/ ni ailleurs."
+  - "charter produit par s0 et validé par check_charter."
+  - "prisme.json, featuremap.json, blueprint et wiremap.json produits et validés par leurs oracles amont."
+  - "Chaque ligne de wiremap porte un `couvre` NON VIDE citant l'id EXACT d'une capacité de featuremap.json."
+  - >-
+    Reçu de jointure `join_check` présent dans state.json avec un `regime` explicite
+    (JOINED / PARTIAL / VOID / EMPTY_FORM / NOT_APPLICABLE) — advisory.
+  - "Preuves s10 produites (s10a-oracle-code, s10b-oracle-archi, s10c-oracle-wiremap)."
+  - "Verdict signé HMAC produit ET re-vérifié authentique par verify_run — pas seulement présent."
+  - "La clé de signature utilisée est celle de V2 (forge/.forge_key), jamais une clé héritée de V1."
+  - "Le jeu se charge dans un navigateur et une partie complète est jouable au clavier."
+  - "LM Studio indisponible => HALT/BLOCKED sans repli silencieux vers une autre source."
+  - >-
+    Aucun artefact écrit hors des surfaces V2 déclarées — une écriture dans lab/,
+    scripts/forge/ ou games/ est un FAIL de migration.
+
+actions_interdites:
+  - "Recopier GAMES/breakout ou GAMES/breakout_v2, en tout ou en partie."
+  - "Utiliser Godot ou Blender (un recours silencieux à l'un ou l'autre est un écart à signaler)."
+  - "Écrire un artefact hors des surfaces V2 (lab/, scripts/forge/, games/)."
+  - "Produire un vert par contournement ou un faux-vert."
+  - "Utiliser une clé de signature héritée de V1."
+  - "Se rabattre silencieusement sur une autre source si LM Studio est indisponible (=> HALT/BLOCKED explicite)."
+  - "Prétendre N5 ou N6 couvertes ou prouvées par ce run."
+  - "Deviner ou inventer un champ de design-intent sans source Pierre (=> fog HumanGate, jamais invention)."
+
+criteres_demo:
+  - "Une balle visible se déplace à l'écran et rebondit sur les murs et sur la raquette."
+  - "La raquette se déplace horizontalement au clavier (gauche/droite) en réponse visible à l'input."
+  - "Une brique touchée par la balle disparaît visiblement de l'écran."
+  - "Le score affiché augmente visiblement quand une brique est cassée."
+  - >-
+    Condition de VICTOIRE observable : toutes les briques détruites -> écran/message de
+    victoire affiché.
+  - >-
+    Condition de DÉFAITE observable : la balle passe sous la raquette jusqu'à épuisement des
+    vies -> écran/message de game over affiché.
+```
+
+---
+
+### Cadrage demandé par la tâche (intention · joueur cible · victoire · V1 minimal)
+
+- **Intention** : premier run réel du Studio V2 — prouver la migration V1→V2 de bout en bout via un jeu délibérément minimal. Sourcée Pierre 2026-09-02 (brief `intention`).
+- **Condition de victoire** : toutes les briques détruites. Condition de défaite : vies épuisées (balle sous la raquette). *Provenance : liberté déléguée par Pierre (`libertes_deleguees` : « définir la boucle de jeu minimale et ses règles »), fixée ici au modèle canonique du genre Breakout Pierre-sourcé — pas une invention hors délégation.*
+- **Périmètre V1 minimal jouable** : un écran de briques, une raquette, une balle, un petit nombre fini de vies ; boucle jouer→casser→gagner/perdre. **Les compteurs exacts (nombre de briques, de vies, de niveaux, dimensionnement) restent délégués au constructeur** (`libertes_deleguees`) et ne sont volontairement PAS figés ici — les figer déborderait s0.
+- **Joueur cible** : le brief ne spécifie AUCUNE persona de marché (qualité ludique hors scope). Cible opérationnelle minimale : tout joueur capable de déplacer une raquette au clavier — dérivée de la liberté déléguée « choisir les interactions et les affordances du joueur ». **Ce n'est pas un champ requis du schéma charter** et pas un fog bloquant : liberté déléguée, pas design-intent Pierre non résolu.
+
+---
+
+## FINAL_REPORT
+
+**software_verdict** : `BLOCKED` (au sens : non mesuré dans mon périmètre). L'oracle charter (`check_charter`, validateur de schéma déterministe non-LLM) n'a **pas été exécuté par moi** — dispatch texte-seul, `run: aucun`, aucun fichier écrit par l'agent. Le bloc ```yaml``` ci-dessus est conforme-par-construction (7 champs remplis, aucun « à définir », aucun vide) ; sa validation mécanique est **déférée** au matérialiseur (extraction du fence → écriture de `charter.yaml`) puis à `check_charter` en aval.
+
+**evidence_verdict** : `MECHANICAL_VALIDATION_ONLY` — non atteignable ce tour, aucun oracle n'a tourné dans mon périmètre.
+
+**claim_verdict** : `NO_CLAIM_ALLOWED`. Je ne certifie pas la conformité : je produis la forme extractible et je remonte l'exécution de l'oracle à l'étape de matérialisation.
+
+**Oracle cité** : `check_charter` (validateur de schéma déterministe, échoue si un champ requis est vide/absent/« à définir »). Jamais de LLM-as-judge.
+
+**Flous du prompt — résolus vs remontés** :
+- *Résolus (source Pierre traçable)* : `plateforme_cible` (web/HTML, brief `provenance.cible`), `reference_jeu` (Breakout, brief `provenance.genre`), `criteres_succes` (brief `criteres_sortie`), `actions_interdites` (brief `non_delegue` + `actions` interdites), `criteres_demo` (dérivés mécaniquement du genre Breakout Pierre-sourcé + critère de sortie « partie complète jouable au clavier » — pas une invention libre).
+- *Remontés / fogs enregistrés (déclarés PAR Pierre, non résolus par l'agent)* : `references_autorisees: []` (fog Pierre — aucune référence de design), N5 (`fog_n5`) et N6 (`fog_n6`) non mécanisés pour RUN M. Ces fogs sont **portés** dans `hors_scope`, non prétendus couverts.
+- *Aucun design-intent requis (plateforme_cible / reference_jeu / criteres_demo) laissé sans source Pierre* → aucun nouveau fog HumanGate bloquant levé par s0.
+
+**SKIPPED_VALIDATION** :
+- item : exécution de `check_charter` sur `charter.yaml` — périmètre : GAMES/runm_breakout charter — statut : **non fait (par l'agent)** — raison : dispatch texte-seul + `run: aucun` ; l'oracle s'exécute en aval après matérialisation du bloc ```yaml```, ce qui est le mode nominal de cette étape.
+- item : vérification mécanique de la provenance Pierre de `reference_jeu` — périmètre : charter — statut : **non mécanisable** — raison : fait de gate, pas de schéma (le validateur ne lit pas le brief) ; provenance attestée en prose ci-dessus, tracée à `project_brief.provenance.genre`.
+
+**RETURN LINEAGE** :
+- `why_task_existed:`
+  - `problem:` RUN M — premier run réel du Studio V2 — exige un contrat produit sans flou pour cadrer la migration V1→V2 ; sans charter validable, la chaîne ne peut démarrer proprement (leçons AutoBattler : `reference_jeu` inventé sans Pierre).
+  - `oracle:` aucun — activation par décision humaine (mission Pierre 2026-09-02, GO RUN M) via le project_brief.
+  - `root_cause:` non établie (activation nominale d'entrée de boucle, pas une réparation de défaut mesuré).
+  - `action_reason:` s0 est la seule étape habilitée à figer objectif/frontières/critères en traçant chaque design-intent à une source Pierre, sans déborder sur code/archi/world-scan.
+- `result:` charter à 7 champs produit comme bloc ```yaml``` extractible, tous remplis, aucun « à définir », design-intent Pierre-sourcé ; fogs Pierre (references_autorisees, N5, N6) portés en hors_scope sans prétention de couverture.
+- `proof:` aucune commande exécutée (`run: aucun`) ; artefact = le bloc ```yaml``` ci-dessus, à matérialiser puis valider par `check_charter` en aval.
+- `learning:` en dispatch texte-seul s0, la conformité-par-construction ne suffit pas : le matérialiseur exige un fence ```yaml``` extractible (pré-mortem manifest-35da004686396698) — la forme fencée est la précondition, pas un détail de présentation.
+- `next_reason:` la chaîne continue nominalement vers s1 (Prisme Produit) une fois `charter.yaml` matérialisé et validé par `check_charter` ; aucune cause non résolue introduite par s0. Lignée non fermée par défaut (poursuite de boucle prévue), mais aucune escalade requise de s0.
+
+SKIPPED_VALIDATION: voir section ci-dessus (2 items déclarés, aucun silence).
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

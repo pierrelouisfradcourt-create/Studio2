@@ -1,0 +1,108 @@
+Le schéma confirme : `charter.yaml` est le livrable, et le matérialiseur extrait un bloc ` ```yaml ` de ma réponse. Ma sortie précédente portait le fond correct mais aucun bloc de code — je corrige uniquement la forme. Aucun fichier écrit par moi ; c'est le matérialiseur qui produit `charter.yaml` à partir du bloc ci-dessous.
+
+Tous les champs sont sourcés Pierre 2026-09-02 via le `project_brief.yaml` (source de commande unique). En particulier `reference_jeu` = casse-briques/Breakout **choisi explicitement par Pierre** (`provenance.genre`) — donc traçable, jamais inventé : le garde-fou `reference_jeu` est satisfait.
+
+```yaml
+# charter.yaml — runm_breakout
+# Étape s0-contrat. Rédigé par l'agent (Claude Opus 4.8).
+# Source de commande unique : EVIDENCE/briefs/runm_breakout/project_brief.yaml
+# Contenu normatif sourcé Pierre 2026-09-02 (voir provenance du Brief, champ par champ).
+# Aucun champ « à définir », vide ou évasif — cf. gardeFou s0.
+
+objectif: >-
+  Créer de zéro, sous GAMES/runm_breakout, un casse-briques web minimal mais
+  RÉELLEMENT JOUABLE : une balle rebondit, un paddle piloté au clavier la renvoie,
+  des briques sont détruites au contact, et la partie possède une condition de
+  victoire ET une condition de défaite atteignables. Le jeu vise le joueur occasionnel
+  au clavier ; sa qualité ludique n'est pas l'objet du run — le périmètre est
+  volontairement minimal pour qu'un échec soit attribuable à la migration V1->V2,
+  pas à la complexité du jeu.
+  # Source : Brief.intention + Brief.provenance.genre (Pierre 2026-09-02) + tâche s0.
+
+plateforme_cible: web/HTML
+  # Source Pierre 2026-09-02 (Brief.cible « web/HTML » + provenance.cible :
+  # « pas besoin de Godot si on reste sur la lignée web »). Socle N1 :
+  # page HTML+JS unique, RNG seedé, logique métier en module .mjs testable hors
+  # navigateur, window.__game exposé, actions DOM-only, déterminisme par hash.
+
+reference_jeu: >-
+  Casse-briques (Breakout), lignée WEB — modèle de jeu CHOISI PAR PIERRE le 2026-09-02
+  (Brief.provenance.genre : « casse-briques (Breakout), lignée WEB, choisi explicitement
+  pour son petit périmètre, sa boucle évidente et l'absence de dépendance Godot »).
+  Aucune implémentation de référence n'est autorisée comme source de design :
+  GAMES/breakout est un BENCHMARK de régression, pas un patron à recopier
+  (Brief.provenance.references_autorisees).
+  # Provenance Pierre traçable => champ rempli, pas de fog HumanGate.
+
+hors_scope:
+  - "La qualité ludique / le fun du jeu : Pierre — « le critère de réussite n'est pas que le jeu soit bon »."
+  - "La topologie cible V2 (Fable directeur, GAME_BLUEPRINT/GAME_FLOW/ARCHITECTURE_CONTRACT) : non construite, ni testée ni prétendue par ce run."
+  - "Toute dépendance à Godot ou Blender : lignée WEB imposée, ces binaires sont hors périmètre (Brief.contraintes)."
+  - "Le multijoueur, la persistance de scores serveur, le son avancé, les niveaux multiples au-delà du minimum jouable."
+  - "La production d'assets 3D / pipeline Blender."
+  - "L'écriture de code de gameplay par s0 : s0 ne rédige que le contrat produit (out_of_scope du contrat s0)."
+
+criteres_succes:
+  - "Le jeu est écrit sous GAMES/runm_breakout/, jamais games/ ni ailleurs."
+  - "Le jeu se charge dans un navigateur sans erreur console bloquante."
+  - "Une partie complète est jouable au clavier : la balle bouge, le paddle répond, les briques se détruisent."
+  - "Condition de victoire atteignable (toutes les briques détruites) ET condition de défaite atteignable (balle perdue / vies épuisées), toutes deux signalées à l'écran."
+  - "Conforme au socle N1 : logique métier en module .mjs testable hors navigateur, RNG seedé, window.__game exposé, déterminisme reproductible par hash."
+  - "Aucun artefact écrit hors des surfaces V2 déclarées (pas de lab/, scripts/forge/ ni games/)."
+  # Sources : Brief.criteres_sortie (Pierre 2026-09-02) + socle N1.
+
+actions_interdites:
+  - "Recopier tout ou partie de GAMES/breakout (benchmark de régression) ou GAMES/breakout_v2 (lignée Godot) : interdiction expresse Pierre."
+  - "Introduire une dépendance à Godot ou Blender, ou y recourir silencieusement : écart à signaler."
+  - "Écrire un artefact hors des surfaces V2 (lab/, scripts/forge/, games/) : FAIL de migration, pas un détail."
+  - "Produire un vert par contournement : un échec doit dire OÙ la chaîne casse dans les surfaces V2."
+  - "Modifier les lanes protégées tests/ et src/ (rules/tests.md : zone protégée, gate Pierre explicite requise)."
+  - "En cas de LM Studio indisponible : replier silencieusement vers une autre source — HALT/BLOCKED exigé."
+  # Sources : Brief.contraintes + Brief.criteres_sortie + rules/tests.md.
+
+criteres_demo:
+  - "Une balle visible se déplace et rebondit sur les murs et le paddle à l'écran."
+  - "Un paddle visible se déplace horizontalement quand le joueur appuie sur les touches gauche/droite."
+  - "Des briques visibles disparaissent une à une quand la balle les touche."
+  - "Un écran/message de VICTOIRE s'affiche quand la dernière brique est détruite."
+  - "Un écran/message de DÉFAITE (game over) s'affiche quand la balle est perdue et qu'il ne reste plus de vie."
+  - "Un compteur observable (score ou vies) change en cours de partie."
+  # Critères OBSERVABLES de démo (cf. output_contract s0), pas des critères mécaniques internes.
+```
+
+---
+
+## FINAL REPORT — s0-contrat / runm-breakout-20260902 (tentative 2)
+
+**software** — Aucun code produit (out_of_scope s0). Le livrable est `charter.yaml`, présenté ci-dessus en bloc ` ```yaml ` matérialisable (correction de forme : tentative 1 refusée pour absence de bloc yaml ; le fond restait valable et est repris à l'identique).
+
+**evidence** — Oracle cité : **Oracle CHARTER déterministe non-LLM** (validateur de schéma qui parse `charter.yaml` et échoue si un champ requis est vide, absent ou contient « à définir »). Je ne l'ai pas exécuté (permissions s0 : `run: aucun`) ; sa consommation appartient au matérialiseur/à la station de validation aval. Tous les 7 champs requis sont **remplis** dans le bloc : `objectif`, `hors_scope[]`, `criteres_succes[]`, `actions_interdites[]`, `plateforme_cible`, `reference_jeu`, `criteres_demo[]` — aucun « à définir », aucun vide.
+
+**claim** — `claim_verdict: NO_CLAIM_ALLOWED` (doctrine s0 : NO_CLAIM_ALLOWED, jamais d'auto-certification LLM).
+
+**Provenance `reference_jeu`** — Traçable à une source Pierre explicite : `Brief.provenance.genre` (Pierre 2026-09-02, « casse-briques (Breakout), lignée WEB, choisi explicitement »). Le garde-fou `reference_jeu` (leçon AutoBattler) est donc satisfait — pas de fog HumanGate sur ce champ. Idem `plateforme_cible` (Pierre 2026-09-02, `Brief.cible` + `provenance.cible`).
+
+**Flous du prompt — résolus vs remontés**
+- Résolus (source Pierre tracée) : `reference_jeu` (Breakout choisi par Pierre), `plateforme_cible` (web/HTML), périmètre V1, interdiction Godot/Blender, interdiction de recopier les benchmarks.
+- Remontés (fog HumanGate, hérités du Brief, NON prétendus couverts par ce charter) : `fog_n5` (N5 séparation concepteur/instrumenteur non mécanisée pour RUN M), `fog_n6` (N6 fidélité charter->build non mécanisée). Ces deux règles ne sont **pas** prétendues couvertes par ce charter.
+
+**software_verdict:** OK (les 7 champs requis sont remplis dans le livrable ; forme yaml corrigée) — `evidence_verdict: MECHANICAL_VALIDATION_ONLY` sous réserve d'exécution de l'oracle CHARTER par la station aval (hors permissions s0).
+
+**SKIPPED_VALIDATION:**
+- item : exécution de l'oracle CHARTER (validateur de schéma) · où : `charter.yaml` produit · statut : non fait · raison : permissions s0 `run: aucun` — la validation mécanique est déléguée au matérialiseur/station de validation aval.
+- item : vérification de provenance Pierre de `reference_jeu` · où : `charter.yaml` · statut : partiel · raison : la provenance est tracée au `Brief.provenance.genre` (fait de gate, non mécaniquement vérifiable par le validateur de schéma) — remontée en clair ci-dessus, pas de claim auto de conformité.
+
+**RETURN LINEAGE**
+- why_task_existed :
+  - problem : la tentative 1 de s0 a été REFUSÉE par le matérialiseur — `charter.yaml` non matérialisable, 0 bloc ```yaml``` inspecté.
+  - oracle : matérialiseur de charter (contrôle de forme : présence d'un bloc yaml). 
+  - root_cause : la sortie précédente livrait le charter en prose sans bloc de code fencé yaml, forme non extractible par le matérialiseur.
+  - action_reason : re-livrer le même fond dans un bloc ` ```yaml ` unique et complet corrige exactement la cause de refus sans toucher au contenu normatif déjà valable.
+- result : `charter.yaml` présenté en bloc yaml unique, 7 champs requis remplis, aucun « à définir » ni vide ; provenance Pierre tracée pour `reference_jeu` et `plateforme_cible`.
+- proof : commande non exécutée (permissions s0 `run: aucun`) ; preuve de forme = présence du bloc ` ```yaml ` ci-dessus ; preuve de fond = 7 clés requises présentes et non vides, vérifiables à l'œil dans le bloc.
+- learning : le matérialiseur de charter exige un bloc ```yaml``` fencé, pas de la prose YAML — la forme est une précondition dure, indépendante de la validité du fond.
+- next_reason : la chaîne causale du refus de forme est FERMÉE ici (cause = bloc manquant, corrigée). La station aval doit exécuter l'oracle CHARTER pour valider mécaniquement le schéma, et le HumanGate final doit statuer sur les fogs N5/N6 hérités — ces actions relèvent des niveaux supérieurs, pas d'une reprise de s0.
+
+SKIPPED_VALIDATION : voir section ci-dessus (non « aucun » — deux items déclarés).
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "tentative 1 de s0 refusee par le materialiseur: charter livre en prose sans bloc yaml fence, 0 bloc inspecte", "root_cause": "sortie sans bloc ```yaml``` extractible; forme non conforme a la precondition du materialiseur"}

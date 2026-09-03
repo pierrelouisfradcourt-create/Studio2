@@ -1,0 +1,515 @@
+{
+ "catalog_brick_ids_snapshot": [
+  "pat-damage-floor",
+  "pat-forge-architecture_check_before_human_escalation",
+  "pat-forge-broken_loop_repair_not_report",
+  "pat-forge-diagnosis_is_not_workflow_end",
+  "pat-forge-entrypoint_is_undeclared_invariant",
+  "pat-forge-escalation_costs_avoid_default_route",
+  "pat-forge-forge_oracle_convention_undocumented",
+  "pat-forge-hardcoded_expected_state_breaks_on_growth",
+  "pat-forge-instrument_assumes_instead_of_reads",
+  "pat-forge-kb_humangate_to_controlled_autonomy",
+  "pat-forge-mutation_survivor_equivalence_requires_mechanical_proof",
+  "pat-forge-new_proof_needs_declared_executor",
+  "pat-forge-oracle_fail_vs_not_measured_marker",
+  "pat-forge-preflight_oracle_registration",
+  "pat-forge-reuse_tracking_oracle_dead_since_inception",
+  "pat-forge-run_status_not_liveness_proof",
+  "pat-forge-test_green_via_wrong_causal_path",
+  "pat-forge-timeout_greenfield_by_profile",
+  "pat-forge-wiremap_concept_reuse_requalification",
+  "pat-full-reachability",
+  "pat-zone-of-control",
+  "sys-damage-floor",
+  "sys-evader-basic",
+  "sys-grid-nav-m01",
+  "sys-guardian-zoc",
+  "sys-pursuer-continuous",
+  "sys-pursuer-mobile",
+  "sys-reachability"
+ ],
+ "created_ts": 1788363220.9635875,
+ "escalations": 0,
+ "is_game": true,
+ "model_override": null,
+ "profile": "full",
+ "project": "runm_breakout",
+ "reason": "exécuteur LLM en échec à s6-redteam-plan: claude -p returncode=1: Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"C:/Users/Studio-Dev/Desktop/Studio\"].hasTrustDialogAccepted: true in C:\\Users\\Studio-Dev\\.claude.json.\n[claude-code:unrecognized_model] {\"model\":\"qwen2.5-14b-instruct\",\"query_source\":\"sdk\"}\n",
+ "run_id": "runm-breakout-20260902",
+ "run_status": "HALTED",
+ "steps": {
+  "s0-contrat": {
+   "attempts": 2,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s0-contrat.txt",
+    "artifact_sha256": "4db46ff0385aebe7db33c9f59ea4e0a1c529da01b611d5753980a2608adc78d3",
+    "cache_creation_tokens": 24362,
+    "cache_read_tokens": 86252,
+    "cost_usd": 1.590905,
+    "duration_s": 238.3609962463379,
+    "materialize_retries": [
+     "charter.yaml non matérialisable — aucun bloc ```yaml``` dans la réponse (0 bloc inspecté)"
+    ],
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne causale du refus de forme est FERMÉE ici (cause = bloc manquant, corrigée). La station aval doit exécuter l'oracle CHARTER pour valider mécaniquement le schéma, et le HumanGate final doit statuer sur les fogs N5/N6 hérités — ces actions relèvent des niveaux supérieurs, pas d'une reprise de s0.",
+    "output_excerpt": "ovenance est tracée au `Brief.provenance.genre` (fait de gate, non mécaniquement vérifiable par le validateur de schéma) — remontée en clair ci-dessus, pas de claim auto de conformité.\n\n**RETURN LINEAGE**\n- why_task_existed :\n  - problem : la tentative 1 de s0 a été REFUSÉE par le matérialiseur — `charter.yaml` non matérialisable, 0 bloc ```yaml``` inspecté.\n  - oracle : matérialiseur de charter (contrôle de forme : présence d'un bloc yaml). \n  - root_cause : la sortie précédente livrait le charter en prose sans bloc de code fencé yaml, forme non extractible par le matérialiseur.\n  - action_reason : re-livrer le même fond dans un bloc ` ```yaml ` unique et complet corrige exactement la cause de refus sans toucher au contenu normatif déjà valable.\n- result : `charter.yaml` présenté en bloc yaml unique, 7 champs requis remplis, aucun « à définir » ni vide ; provenance Pierre tracée pour `reference_jeu` et `plateforme_cible`.\n- proof : commande non exécutée (permissions s0 `run: aucun`) ; preuve de forme = présence du bloc ` ```yaml ` ci-dessus ; preuve de fond = 7 clés requises présentes et non vides, vérifiables à l'œil dans le bloc.\n- learning : le matérialiseur de charter exige un bloc ```yaml``` fencé, pas de la prose YAML — la forme est une précondition dure, indépendante de la validité du fond.\n- next_reason : la chaîne causale du refus de forme est FERMÉE ici (cause = bloc manquant, corrigée). La station aval doit exécuter l'oracle CHARTER pour valider mécaniquement le schéma, et le HumanGate final doit statuer sur les fogs N5/N6 hérités — ces actions relèvent des niveaux supérieurs, pas d'une reprise de s0.\n\nSKIPPED_VALIDATION : voir section ci-dessus (non « aucun » — deux items déclarés).\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"tentative 1 de s0 refusee par le materialiseur: charter livre en prose sans bloc yaml fence, 0 bloc inspecte\", \"root_cause\": \"sortie sans bloc ```yaml``` extractible; forme non conforme a la precondition du materialiseur\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 16265,
+    "tools_used": {
+     "Read": 1
+    },
+    "yaml_check": {
+     "champs": [
+      "actions_interdites",
+      "criteres_demo",
+      "criteres_succes",
+      "hors_scope",
+      "objectif",
+      "plateforme_cible",
+      "reference_jeu"
+     ],
+     "check": {
+      "oracle": "check_charter",
+      "raisons": [],
+      "verdict": "PASS"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\charter.yaml",
+     "written": true
+    }
+   },
+   "next_reason": "la chaîne causale du refus de forme est FERMÉE ici (cause = bloc manquant, corrigée). La station aval doit exécuter l'oracle CHARTER pour valider mécaniquement le schéma, et le HumanGate final doit statuer sur les fogs N5/N6 hérités — ces actions relèvent des niveaux supérieurs, pas d'une reprise de s0.",
+   "status": "OK",
+   "ts": 1788363459.582706
+  },
+  "s1-prisme": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s1-prisme.txt",
+    "artifact_sha256": "f28ef21684ade30f94107e09ad6492343451d60b3a6e46ffea6eae3c72470e50",
+    "cache_creation_tokens": 59430,
+    "cache_read_tokens": 523294,
+    "cost_usd": 1.704756,
+    "duration_s": 453.3989722728729,
+    "loop_check": {
+     "check": {
+      "problems": [
+       "maillon F (UNLOCK) : au moins 1 exigence attendue (0 trouvee)",
+       "maillon G (NEXT_GOAL) : au moins 2 exigences attendues (0 trouvee(s))",
+       "maillon I (META_LOOP) : au moins 1 exigence attendue (0 trouvee)",
+       "maillon J (ADVANTAGE) : au moins 1 exigence attendue (0 trouvee)",
+       "maillon DECISION : au moins 1 exigence attendue (0 trouvee)"
+      ],
+      "verdict": "FAIL"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\loop.json",
+     "written": true
+    },
+    "markdown_check": {
+     "chars": 10187,
+     "check": {
+      "command": "node forge/prisme/check_prisme.mjs",
+      "returncode": 0,
+      "tail": [
+       "1/1 artefacts conformes structurellement.",
+       "RESULT: PASS"
+      ],
+      "verdict": "PASS"
+     },
+     "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\product_snapshot.md",
+     "written": true
+    },
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "l'exécuteur DOIT lancer les deux oracles nommés sur les artefacts matérialisés (je n'ai pas pu les exécuter) et arbitrer, en HumanGate, la friction gabarit-V4/genre ci-dessus avant que `loop_spec.mjs` ne projette une boucle jugée incomplète. Sans cet arbitrage humain, une cause non résolue persiste — la chaîne causale n'est PAS fermée ici.",
+    "output_excerpt": "rreur console qui interrompt la boucle.\",\n      \"enonce\": \"Le jeu se charge et s'execute dans un navigateur recent sans erreur console de niveau bloquant, et sa boucle de rendu tourne.\",\n      \"acteur\": \"SYSTEM\",\n      \"loop_role\": \"NONE\",\n      \"expected_proof\": {\"kind\": \"oracle\", \"statement\": \"A l'ouverture de la page, la console ne contient aucune erreur de niveau bloquant et la boucle de rendu progresse.\"},\n      \"destination\": \"s9-build\"\n    },\n    {\n      \"id\": \"R12\",\n      \"source\": \"ADDITIONS\",\n      \"source_role\": \"s1-prisme\",\n      \"reference\": null,\n      \"observation\": \"Les criteres de demo du charter exigent une balle, un paddle et des briques VISIBLES a l'ecran, exigence de rendu que le World Scan presuppose sans la specifier.\",\n      \"claim\": \"Le produit fini se juge a l'ecran : si balle, paddle et briques ne sont pas rendus visiblement, aucune des regles de boucle n'est observable ni testable.\",\n      \"enonce\": \"La balle, le paddle et la grille de briques sont rendus visiblement et distinctement dans l'aire de jeu des le lancement.\",\n      \"acteur\": \"SYSTEM\",\n      \"loop_role\": \"NONE\",\n      \"expected_proof\": {\"kind\": \"visual\", \"statement\": \"Au lancement, une balle, un paddle et au moins une rangee de briques sont visibles a l'ecran.\"},\n      \"destination\": \"s9-build\"\n    }\n  ]\n}\n```\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Le contrat s1 V4 impose des maillons de boucle propres au genre idle/clicker (DECISION avec policies, UNLOCK/appears, NEXT_GOAL x2 new_distinct, META_LOOP prestige resets, ADVANTAGE increases_more_than) que le jeu cible (casse-briques arcade minimal, charter) ne possede pas ; la boucle produite est complete pour son genre mais incomplete au sens du gabarit V4, et gm_worldscan.json absent empeche tout sourcage GM des exigences de boucle (0/5).\", \"root_cause\": \"Gabarit de boucle V4 mono-genre (clicker) applique a un run d'un autre genre (arcade skill-loop), sans gabarit de boucle par genre ni GM present dans le run_dir.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_prisme_manifest",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s1-prisme",
+     "TIME_MS": 11,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "7ecb396920317b9b80f6cc5485ba65e524d53bc83794d56c4c5799d8a1fe9f23",
+      "output_hash": "eaf14d0ffcb20f4a50f740e3ab30d682e1bf4e19f87404ad8f853470cd95f41e",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 33575,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 11
+    }
+   },
+   "next_reason": "l'exécuteur DOIT lancer les deux oracles nommés sur les artefacts matérialisés (je n'ai pas pu les exécuter) et arbitrer, en HumanGate, la friction gabarit-V4/genre ci-dessus avant que `loop_spec.mjs` ne projette une boucle jugée incomplète. Sans cet arbitrage humain, une cause non résolue persiste — la chaîne causale n'est PAS fermée ici.",
+   "status": "OK",
+   "ts": 1788364043.617976
+  },
+  "s10a-oracle-code": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s10b-oracle-archi": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s10c-oracle-wiremap": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s11-redteam-code": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s12-verdict": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s2-worldscan": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s2-worldscan.txt",
+    "artifact_sha256": "d2abfd484622f8425d084f017ed63f7913ba5ab5d8cbdf9680a4273a155c9aac",
+    "cache_creation_tokens": 69042,
+    "cache_read_tokens": 522724,
+    "cost_usd": 0.4824314000000001,
+    "duration_s": 130.10620141029358,
+    "model": "claude-haiku-4-5-20251001",
+    "model_override": null,
+    "output_excerpt": "     \"endgame\": \"Stage 33: Boss 'Doh' (solid block entity). No continue allowed at this stage—game-over is terminal. Victory = Doh destroyed. Tension peak: this is the only stage without continue-credit fallback.\"\n      },\n      \"objectives\": [\n        {\n          \"mode\": \"solo_arcade_progression\",\n          \"has_win_state\": true,\n          \"victory_condition\": \"Clear all 33 stages, defeat Boss Doh on stage 33\",\n          \"has_defeat_state\": true,\n          \"defeat_condition\": \"Lose three lives at any stage except 33; lose on stage 33 with no continues available\",\n          \"player_goal\": \"Progress through all 33 stages, master variable layouts and power-up timing, defeat the final boss\"\n        }\n      ],\n      \"retention_answer\": \"Explicit progression counter (stage X/33) drives completion loop; varied level layouts prevent monotony; power-up RNG creates session-to-session variance and surprise. Arcade-era 'continue-coin' mechanic introduces time-bound social engagement (shared cabinet, spectators).\"\n    }\n  ],\n  \"advisory\": true\n}\n```\n\n---\n\n## Synthèse architecte\n\nLe genre Breakout/Arkanoid repose sur trois briques immuables :\n1. **Paddle-ball collision resolver** (angle → trajectory, speed scaling)\n2. **Brick grid state** (grid, durability per brick, destruction event)\n3. **Score accumulator** (points, lives counter)\n\nL'évolution de 1976 → 1986 ajoute :\n- **Stage progression** (numbered levels, explicit goal = reach 33)\n- **Power-up RNG tree** (discrete types, collision pickup, time window)\n- **Layout variation** (unique brick geometry per stage, indestructibles, enemies)\n- **Boss encounter** (final stage, no-continue penalty, entity-collision)\n\nArkanoid démontre que le core loop peut tolérer une progression chiffrée sans fragmenter la cohésion. Candidate à l'import : _Stage Progress Manager_ + _Capsule Drop Scheduler_ pour un breakout type runm_breakout.\n\nSources documentées, advisory-only. Prêt pour Prisme.\n\n---\n\n**RETURN_REASON:** {\"status\": \"NOT_DISCOVERED\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_worldscan",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s2-worldscan",
+     "TIME_MS": 6,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "532e7bb682f4c8810e90bceb0b49a93055fd2df34d1145e35fa5c2ec0fab3453",
+      "output_hash": "95533bb82c35fe22d4ce7e295809fe13d7357c9673b70a8805a3394954f4997f",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-haiku-4-5-20251001",
+    "runner": "claude",
+    "tokens": 6734,
+    "tools_used": {
+     "Read": 7,
+     "WebFetch": 2,
+     "WebSearch": 10
+    }
+   },
+   "status": "OK",
+   "ts": 1788363589.921576
+  },
+  "s3-decompo": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s3-decompo.txt",
+    "artifact_sha256": "3c219642bd4ee8033983a550dd2f7c209a17bdab9586edb29246f3bb3d6c4d42",
+    "cache_creation_tokens": 66061,
+    "cache_read_tokens": 269609,
+    "cost_usd": 1.2254095,
+    "duration_s": 205.6664137840271,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne se ferme proprement ici pour s3 ; l'exécuteur exécute l'oracle puis passe à s4-archi. Aucune cause non résolue ne persiste.",
+    "output_excerpt": "           \"statement\": \"Apres destruction de la derniere brique, un message de victoire est visible a l'ecran et la balle ne bouge plus.\"\n              }\n            }\n          ]\n        },\n        {\n          \"id\": \"F_DEFAITE\",\n          \"capacites\": [\n            {\n              \"id\": \"C08\",\n              \"capacite\": \"Quand la balle passe sous le paddle et qu'il ne reste plus de vie, un ecran/message de DEFAITE (game over) s'affiche et la partie s'arrete.\",\n              \"source_ref\": \"R08\",\n              \"expected_proof\": {\n                \"kind\": \"visual\",\n                \"statement\": \"Apres la perte de la derniere vie, un message game over est visible et aucune brique nouvelle n'est jouable.\"\n              }\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": \"SYS_RENDER\",\n      \"features\": [\n        {\n          \"id\": \"F_CHARGEMENT\",\n          \"capacites\": [\n            {\n              \"id\": \"C11\",\n              \"capacite\": \"Le jeu se charge et s'execute dans un navigateur recent sans erreur console de niveau bloquant, et sa boucle de rendu tourne.\",\n              \"source_ref\": \"R11\",\n              \"expected_proof\": {\n                \"kind\": \"oracle\",\n                \"statement\": \"A l'ouverture de la page, la console ne contient aucune erreur de niveau bloquant et la boucle de rendu progresse.\"\n              }\n            }\n          ]\n        },\n        {\n          \"id\": \"F_VISIBILITE\",\n          \"capacites\": [\n            {\n              \"id\": \"C12\",\n              \"capacite\": \"La balle, le paddle et la grille de briques sont rendus visiblement et distinctement dans l'aire de jeu des le lancement.\",\n              \"source_ref\": \"R12\",\n              \"expected_proof\": {\n                \"kind\": \"visual\",\n                \"statement\": \"Au lancement, une balle, un paddle et au moins une rangee de briques sont visibles a l'ecran.\"\n              }\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}\n```\n\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_decompo",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s3-decompo",
+     "TIME_MS": 7,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "6fc504dca3b88fdc08e2a7657c3bab4448d74bc69090520005435a1ab5c6a6cd",
+      "output_hash": "e29c02b25adcc89590ed5fdc2d81265f1938994f4bd3ff7e2cb8e1d487552cbf",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 16626,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 3
+    }
+   },
+   "next_reason": "la chaîne se ferme proprement ici pour s3 ; l'exécuteur exécute l'oracle puis passe à s4-archi. Aucune cause non résolue ne persiste.",
+   "status": "OK",
+   "ts": 1788364249.5042934
+  },
+  "s4-archi": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s4-archi.txt",
+    "artifact_sha256": "d953f77abcd50d245d89f88994f9213695d6b813a83791394603e05b7ccba520",
+    "cache_creation_tokens": 73500,
+    "cache_read_tokens": 361955,
+    "cost_usd": 1.6217905,
+    "duration_s": 384.17772245407104,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne se ferme proprement pour s4 ; l'exécuteur matérialise `blueprint.json`, exécute l'oracle avant-build, puis passe à s5-wiremap. Aucune cause non résolue ne persiste — les 2 fogs ci-dessus sont des confirmations de gouvernance, pas des défauts bloquants.",
+    "output_excerpt": " 3 murs, sortie par le bas), deplacement du paddle sous intention, destruction des briques et score, condition de victoire (0 brique) et de defaite (0 vie). Testable hors navigateur.\",\n      \"couvre\": [\"F_REBOND_PADDLE\", \"F_REBOND_MURS\", \"F_DESTRUCTION\", \"F_COMPTEUR\", \"F_VICTOIRE\", \"F_DEFAITE\"],\n      \"dependances\": [],\n      \"preuve_attendue\": {\n        \"kind\": \"oracle\",\n        \"statement\": \"Un test .mjs hors navigateur rejoue une sequence d'entrees seedee : angles de rebond distincts selon le point d'impact sur le paddle, inversion de la composante horizontale aux murs, briques retirees et score incremente, bascule des etats victoire/defaite ; l'etat final est reproductible par hash.\"\n      }\n    },\n    {\n      \"module\": \"render\",\n      \"responsabilite\": \"Rendu pur sur canvas : dessine l'etat recu en argument (balle, paddle, grille de briques), le HUD (objectif + compteur de briques/score/vies) et les messages VICTOIRE / DEFAITE aux etats de fin. N'importe ni 'logic' ni 'input' ; ne mute jamais l'etat.\",\n      \"couvre\": [\"F_OBJECTIF\", \"F_VISIBILITE\", \"F_VICTOIRE\", \"F_DEFAITE\"],\n      \"dependances\": [],\n      \"preuve_attendue\": {\n        \"kind\": \"visual\",\n        \"statement\": \"A l'ecran au lancement : objectif et compteur affiches, balle/paddle/briques visibles et distincts ; aux etats de fin, le message VICTOIRE ou DEFAITE apparait et l'aire se fige.\"\n      }\n    },\n    {\n      \"module\": \"input\",\n      \"responsabilite\": \"Adaptateur clavier pur : capte l'appui et le relachement des fleches gauche/droite et expose une intention de deplacement du paddle (-1/0/+1). N'importe ni 'logic' ni 'render' ; n'ecrit jamais l'etat, 'main' applique l'intention.\",\n      \"couvre\": [\"F_PADDLE_INPUT\"],\n      \"dependances\": [],\n      \"preuve_attendue\": {\n        \"kind\": \"bot_action\",\n        \"statement\": \"Depuis la page, un bot maintient la fleche droite ; 'input' expose une intention +1 captee frame apres frame, consommee par 'main' pour deplacer le paddle.\"\n      }\n    }\n  ]\n}\n```",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "CYCLES": 0,
+     "FIELDS_CHANGED": [],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_blueprint_contract",
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 0,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "OK_SANS_REPARATION",
+     "STEP": "s4-archi-contract",
+     "TIME_MS": 5,
+     "TOKENS": 0,
+     "TRACE": {
+      "input_hash": "6e10da857151d2b9bb38e00dcb95789a2395d637333d54bc2855f4815d96ae3a",
+      "output_hash": "a0cc451ba08b692790db0f16477d107abcf7d4ff57b6e9492bf1a3978e01aec3",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 27841,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 7
+    }
+   },
+   "next_reason": "la chaîne se ferme proprement pour s4 ; l'exécuteur matérialise `blueprint.json`, exécute l'oracle avant-build, puis passe à s5-wiremap. Aucune cause non résolue ne persiste — les 2 fogs ci-dessus sont des confirmations de gouvernance, pas des défauts bloquants.",
+   "status": "OK",
+   "ts": 1788364633.92606
+  },
+  "s5-wiremap": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\runm_breakout\\artifacts\\s5-wiremap.txt",
+    "artifact_sha256": "7c7f7b1046c8d27b31a78805234e47c6041dfff05db3c73dd504dad7a79bdf5b",
+    "cache_creation_tokens": 44158,
+    "cache_read_tokens": 234191,
+    "cost_usd": 0.9609785000000001,
+    "duration_s": 219.55398726463318,
+    "join_check": {
+     "advisory": true,
+     "capacites": 12,
+     "capacites_couvertes": 0,
+     "capacites_non_couvertes": 12,
+     "couverture_fantome": 0,
+     "exemples": [
+      "capacite 'C01' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+      "capacite 'C09' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+      "capacite 'C02_IN' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)"
+     ],
+     "exit_code": 1,
+     "forme_satisfaite": false,
+     "lignes": 12,
+     "lignes_sans_couvre": 12,
+     "maillon_non_lie": 0,
+     "problems": 12,
+     "regime": "EMPTY_FORM",
+     "status": "NOT_JOINED"
+    },
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "chaîne fermée pour s5 — l'exécuteur matérialise `wiremap.json` depuis le bloc, exécute `check_wiremap_contract.mjs`, puis passe à s9-build. Aucune cause non résolue ne persiste.",
+    "output_excerpt": "ble\"}, {\"feature\": \"R06 rebond sur les 3 murs (gauche/droite/haut), sortie par le bas\", \"fonction\": \"reflectWalls\", \"fichiers\": [\"logic.mjs\"], \"preuve\": \"oracle logic.test.mjs: balle lancee vers un bord lateral ressort avec sa composante horizontale inversee et une vitesse egale\"}, {\"feature\": \"R07 condition de victoire (0 brique -> ecran VICTOIRE, partie figee)\", \"fonction\": \"checkVictory\", \"fichiers\": [\"logic.mjs\", \"render.mjs\"], \"preuve\": \"oracle logic.test.mjs: a 0 brique l'etat bascule en victoire; visual: message VICTOIRE affiche et l'aire se fige\"}, {\"feature\": \"R08 condition de defaite (0 vie -> ecran DEFAITE game over)\", \"fonction\": \"checkDefeat\", \"fichiers\": [\"logic.mjs\", \"render.mjs\"], \"preuve\": \"oracle logic.test.mjs: a 0 vie l'etat bascule en defaite; visual: message game over affiche et l'aire se fige\"}, {\"feature\": \"R09 compteur observable qui change en cours de partie\", \"fonction\": \"addScore\", \"fichiers\": [\"logic.mjs\"], \"preuve\": \"oracle logic.test.mjs (mutation): la valeur du compteur a l'instant t differe de sa valeur au lancement apres quelques briques detruites\"}, {\"feature\": \"R10 reactivite du paddle (reaction a la frame suivante au plus)\", \"fonction\": \"frame\", \"fichiers\": [\"main.mjs\"], \"preuve\": \"oracle harnais headless (bot_action): l'intention lue via input est appliquee au paddle a la frame suivante au plus\"}, {\"feature\": \"R11 chargement navigateur sans erreur console bloquante + boucle vivante\", \"fonction\": \"boot\", \"fichiers\": [\"index.html\", \"main.mjs\"], \"preuve\": \"oracle harnais headless: window.__game expose, le compteur de frames progresse, aucune erreur console de niveau bloquant; deux runs meme seed -> meme hash\"}, {\"feature\": \"R12 visibilite des entites au lancement (balle, paddle, grille de briques)\", \"fonction\": \"render\", \"fichiers\": [\"render.mjs\"], \"preuve\": \"visual: au lancement, une balle, un paddle et au moins une rangee de briques sont visibles et distincts dans l'aire de jeu\"}]}\n```\n\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "repair": {
+     "ALLOWED_FIELDS": [
+      "features[0].couvre",
+      "features[1].couvre",
+      "features[2].couvre",
+      "features[3].couvre",
+      "features[4].couvre",
+      "features[5].couvre",
+      "features[6].couvre",
+      "features[7].couvre",
+      "features[8].couvre",
+      "features[9].couvre",
+      "features[10].couvre",
+      "features[11].couvre"
+     ],
+     "APPELS_MODELE": 12,
+     "ARRET": "aucun finding reparable localement",
+     "CYCLES": 1,
+     "FIELDS_CHANGED": [
+      "features[0].couvre",
+      "features[1].couvre",
+      "features[2].couvre",
+      "features[3].couvre",
+      "features[4].couvre",
+      "features[5].couvre",
+      "features[6].couvre",
+      "features[7].couvre",
+      "features[8].couvre",
+      "features[9].couvre",
+      "features[10].couvre",
+      "features[11].couvre"
+     ],
+     "FIELDS_PRESERVED": null,
+     "ORACLE": "check_wiremap_contract",
+     "PROBLEMS": [],
+     "PROBLEMS_AFTER": 0,
+     "PROBLEMS_BEFORE": 12,
+     "QUALITE": {
+      "CLASSES": [],
+      "CROSS_FIELD_AFTER": "PASS",
+      "CROSS_FIELD_BEFORE": "PASS",
+      "CROSS_FIELD_SIGNAUX": [],
+      "FIELDS_CHANGED": [],
+      "REPARE": false,
+      "ROLLBACK": false,
+      "ROLLBACK_MOTIF": null,
+      "SEMANTIC_SIGNAL_AFTER": "PASS",
+      "SEMANTIC_SIGNAL_BEFORE": "PASS",
+      "SIGNAUX_APRES": {},
+      "SIGNAUX_AVANT": {}
+     },
+     "REGRESSION": [],
+     "STATUS": "ESCALADE",
+     "STEP": "s5-wiremap-contract",
+     "TIME_MS": 8877,
+     "TOKENS": 379,
+     "TRACE": {
+      "input_hash": "e6c164c5b2e458482bf1fd8794572e17f1991eb38072b42a813e004bb9dd297a",
+      "output_hash": "da89997a724932454fcac9fb7ef3c743b9c9fee1c510bccbd48866d6d7082798",
+      "runtime_id": "repair_runtime"
+     },
+     "WORKER": "qwen2.5-14b-instruct"
+    },
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 15619,
+    "tools_used": {
+     "Bash": 2,
+     "Read": 3
+    }
+   },
+   "next_reason": "chaîne fermée pour s5 — l'exécuteur matérialise `wiremap.json` depuis le bloc, exécute `check_wiremap_contract.mjs`, puis passe à s9-build. Aucune cause non résolue ne persiste.",
+   "status": "OK",
+   "ts": 1788364862.6067324
+  },
+  "s6-redteam-plan": {
+   "attempts": 1,
+   "detail": {
+    "executor_diagnostic": {
+     "duration_s": 0.0,
+     "measured": true,
+     "process_state": "MODEL_REACHED",
+     "returncode": 1,
+     "stderr_tail": "Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"C:/Users/Studio-Dev/Desktop/Studio\"].hasTrustDialogAccepted: true in C:\\Users\\Studio-Dev\\.claude.json.\n[claude-code:unrecognized_model] {\"model\":\"qwen2.5-14b-instruct\",\"query_source\":\"sdk\"}\n",
+     "timeout": false,
+     "transient_retries_count": 0
+    },
+    "reason": "exécuteur LLM en échec à s6-redteam-plan: claude -p returncode=1: Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"C:/Users/Studio-Dev/Desktop/Studio\"].hasTrustDialogAccepted: true in C:\\Users\\Studio-Dev\\.claude.json.\n[claude-code:unrecognized_model] {\"model\":\"qwen2.5-14b-instruct\",\"query_source\":\"sdk\"}\n"
+   },
+   "status": "BLOCKED",
+   "ts": 1788364865.7165632
+  },
+  "s9-build": {
+   "attempts": 0,
+   "status": "PENDING"
+  }
+ },
+ "updated_ts": 1788364865.7165632
+}

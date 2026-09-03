@@ -1,0 +1,157 @@
+The code directory `GAMES/runm_breakout` does not exist yet — confirming s5-wiremap runs **before** build (s9). So this WireMap is the isomorphic PLAN that the build must realize, mapping each Prisme rule to the module/function that will implement it, drawn strictly from `blueprint.json` (7 modules) and `featuremap` (17 capability leaves / 15 rules).
+
+## WireMap — restitution
+
+**Isomorphisme WireMap ↔ blueprint** (section = module = dossier), vérifié par construction :
+
+| Module (blueprint) | Fonctions mappées | Règles portées |
+|---|---|---|
+| `engine.mjs` | `movePaddle`, `moveBall`, `collideBrick`, `applyScore`, `reflectAngle`, `loseLife` | R02, R03, R04, R05, R06, R11, R15 |
+| `progression.mjs` | `currentObjective`, `unlockScreen2`, `checkEndGame` | R01, R07, R08, R09, R12, R13 |
+| `rng.mjs` | `makeRng` | R14 |
+| `input.mjs` / `render.mjs` / `hud.mjs` | adaptateurs (fichiers de support par feuille) | R02/R03, R11, R01/R15 |
+
+**Couverture featuremap** : les **17 capacités-feuilles** sont portées par ≥1 ligne via `couvre` (les splits entrée/effet de R02, R03, R07 couverts en tableau sur une même ligne). **Capacités non couvertes : AUCUNE. `couvre` fantôme : AUCUN.**
+
+**R10 (REPEAT / maillon H) volontairement ABSENT** de la carte : la featuremap ne lui donne aucune feuille propre (doctrine maillon H — `replay = [R02, R04, R05, R07]`, déjà portées). Lui inventer une ligne exigerait un `couvre` fantôme (aucun id featuremap ne lui correspond) → violation directe du critère charter « `couvre` NON VIDE citant l'id EXACT ». Son mécanisme (rejeu sur écran 2) est réalisé par `main.loop` + `engine.step` déjà cartographiés.
+
+### Reçu d'oracle
+`check_wiremap_contract` **NON exécuté par moi** : dispatch texte-seul, aucun `wiremap.json` écrit en amont (`run: aucun`). Reçu à produire par l'exécuteur après matérialisation :
+```
+node forge/check_wiremap_contract.mjs EVIDENCE/runs/runm_breakout/wiremap.json --featuremap EVIDENCE/runs/runm_breakout/featuremap.json
+```
+
+**software_verdict:** BLOCKED (aucun oracle exécutable dans ce périmètre texte-seul) · **evidence_verdict:** inapplicable · **claim_verdict:** NO_CLAIM_ALLOWED — la conformité (isomorphisme, couverture 17/17, non-invention) est construite par conception, non prouvée mécaniquement ici. **fog → Pierre** : la validation dépend de l'exécution des deux oracles en aval (`check_wiremap_contract` avant build, `forge.static_oracles.check_wiremap` après build).
+
+---
+
+## RETURN LINEAGE
+
+**why_task_existed:**
+- **problem:** le blueprint (s4) livre 7 modules avec ownership et la featuremap (s3) 17 capacités-feuilles, mais aucune carte ne relie encore chaque règle à ses fichiers/fonctions attendus — sans WireMap, s9-build n'a pas de plan traçable à réaliser ni l'oracle s10c de cible à confronter.
+- **oracle:** aucun — activation par ordonnancement de la chaîne FORGE (`FORGE_DISPATCH:s5-wiremap:runm-breakout-20260902:1`), pas par une mesure amont en échec.
+- **root_cause:** non établie (activation par séquencement normal du pipeline).
+- **action_reason:** produire la carte isomorphe au blueprint, chaque feuille portant fonction + fichiers + preuve héritée + `couvre` exact, est la seule sortie qui rend le delta attendu-vs-réel calculable par les deux oracles aval.
+
+**result:** WireMap de 14 lignes produite (R01–R09, R11–R15 ; R10 exclu par doctrine maillon H), isomorphe aux 7 modules du blueprint, couvrant les 17 capacités featuremap sans feuille orpheline ni `couvre` fantôme.
+
+**proof:** aucun oracle exécuté (texte-seul, `GAMES/runm_breakout` inexistant → probe `Read` = « File does not exist »). Couverture 17/17 vérifiée à la main contre `featuremap.json`. Commande de reçu fournie ci-dessus.
+
+**learning:** au stade s5 (avant build) la racine de code n'existe pas ; la WireMap fixe le contrat de nommage (fichiers `.mjs` plats + fonctions) que s9-build DOIT réaliser — tout écart de nom du builder fera échouer `check_wiremap` s10c. Le split entrée/effet de la featuremap (R02/R03/R07) se cartographie en `couvre` multi-id sur une ligne unique dans le schéma simple imposé par le dispatch.
+
+**next_reason:** la chaîne reste OUVERTE — deux preuves manquent et ne peuvent être produites qu'en aval : `check_wiremap_contract` (avant build) et `forge.static_oracles.check_wiremap` (s10c, après que s9 ait matérialisé les fichiers). L'exécuteur matérialise `wiremap.json` depuis le bloc terminal, puis l'oracle de contrat doit être lancé.
+
+---
+
+## SKIPPED_VALIDATION
+
+- **item:** exécution de `check_wiremap_contract.mjs` (« la carte couvre-t-elle le plan ? » + `maillon_non_lie`) · **où:** `wiremap.json` du run · **statut:** non fait · **raison:** dispatch texte-seul, aucun fichier écrit en amont par moi — c'est l'oracle de l'exécuteur, pas le mien.
+- **item:** vérification `maillon_non_lie` (chaîne affordance→input→système→effet) · **où:** schéma v2 `{systems, lines}` · **statut:** non applicable · **raison:** la TÂCHE CONCRÈTE impose le schéma simple `{feature, fonction, fichiers, preuve}` (lu par `forge.static_oracles.check_wiremap`), qui ne porte ni `lines` ni `affordance` — la résolution d'ids de la garde V4 GAME LOOP n'a pas de support dans cette forme. Couverture assurée à la place par `couvre` exact sur chaque ligne.
+- **item:** `forge.static_oracles.check_wiremap` (fichiers existent, fonctions définies) · **où:** code `GAMES/runm_breakout` · **statut:** non faisable · **raison:** code non encore construit (s9 en aval) ; oracle post-build (s10c).
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}
+
+```json
+{
+  "features": [
+    {
+      "feature": "R01 Objectif affiche",
+      "fonction": "currentObjective",
+      "fichiers": ["progression.mjs", "hud.mjs"],
+      "preuve": "visual — au demarrage, la zone objectif du HUD contient un texte non vide (couvre: cap_objectif_nonvide)",
+      "couvre": ["cap_objectif_nonvide"]
+    },
+    {
+      "feature": "R02 Raquette gauche",
+      "fonction": "movePaddle",
+      "fichiers": ["engine.mjs", "input.mjs"],
+      "preuve": "bot_action — presse raquette_gauche N frames ; raquette_x diminue (couvre: cap_raquette_gauche_entree, cap_raquette_gauche_effet)",
+      "couvre": ["cap_raquette_gauche_entree", "cap_raquette_gauche_effet"]
+    },
+    {
+      "feature": "R03 Raquette droite",
+      "fonction": "movePaddle",
+      "fichiers": ["engine.mjs", "input.mjs"],
+      "preuve": "bot_action — presse raquette_droite N frames ; raquette_x augmente (couvre: cap_raquette_droite_entree, cap_raquette_droite_effet)",
+      "couvre": ["cap_raquette_droite_entree", "cap_raquette_droite_effet"]
+    },
+    {
+      "feature": "R04 Casse brique",
+      "fonction": "collideBrick",
+      "fichiers": ["engine.mjs"],
+      "preuve": "bot_action — la balle touche une brique : elle disparait et briques_restantes decroit de 1 (couvre: cap_brique_disparait)",
+      "couvre": ["cap_brique_disparait"]
+    },
+    {
+      "feature": "R05 Score",
+      "fonction": "applyScore",
+      "fichiers": ["engine.mjs"],
+      "preuve": "bot_action — brique cassee : score avant/apres, hausse strictement positive meme frame (couvre: cap_score_augmente)",
+      "couvre": ["cap_score_augmente"]
+    },
+    {
+      "feature": "R06 Angle tactique",
+      "fonction": "reflectAngle",
+      "fichiers": ["engine.mjs"],
+      "preuve": "bot_action — 2 politiques a seed fixe sur 300 frames : la metrique score differe (couvre: cap_decision_angle_score)",
+      "couvre": ["cap_decision_angle_score"]
+    },
+    {
+      "feature": "R07 Ecran 2 debloque",
+      "fonction": "unlockScreen2",
+      "fichiers": ["progression.mjs", "engine.mjs"],
+      "preuve": "bot_action — vide l'ecran 1 (derniere_brique_ecran1) : un champ ecran_2 devient visible (couvre: cap_unlock_ecran2_entree, cap_unlock_ecran2_effet)",
+      "couvre": ["cap_unlock_ecran2_entree", "cap_unlock_ecran2_effet"]
+    },
+    {
+      "feature": "R08 But ecran 1",
+      "fonction": "currentObjective",
+      "fichiers": ["progression.mjs"],
+      "preuve": "visual — au demarrage, le texte objectif vaut 'Vider l'ecran 1' (couvre: cap_objectif_ecran1)",
+      "couvre": ["cap_objectif_ecran1"]
+    },
+    {
+      "feature": "R09 But ecran 2",
+      "fonction": "currentObjective",
+      "fichiers": ["progression.mjs"],
+      "preuve": "visual — apres unlock, le texte objectif vaut 'Vider l'ecran 2', distinct de 'Vider l'ecran 1' (couvre: cap_objectif_ecran2)",
+      "couvre": ["cap_objectif_ecran2"]
+    },
+    {
+      "feature": "R11 Balle visible",
+      "fonction": "moveBall",
+      "fichiers": ["engine.mjs", "render.mjs"],
+      "preuve": "visual — la position de la balle change en continu et s'inverse au contact des murs et de la raquette (couvre: cap_balle_visible_rebonds)",
+      "couvre": ["cap_balle_visible_rebonds"]
+    },
+    {
+      "feature": "R12 Victoire",
+      "fonction": "checkEndGame",
+      "fichiers": ["progression.mjs"],
+      "preuve": "bot_action — toutes les briques detruites : ecran de victoire affiche et simulation arretee (couvre: cap_victoire)",
+      "couvre": ["cap_victoire"]
+    },
+    {
+      "feature": "R13 Defaite",
+      "fonction": "checkEndGame",
+      "fichiers": ["progression.mjs"],
+      "preuve": "bot_action — 3e chute de balle (vies=0) : game over affiche et simulation arretee (couvre: cap_defaite)",
+      "couvre": ["cap_defaite"]
+    },
+    {
+      "feature": "R14 Determinisme",
+      "fonction": "makeRng",
+      "fichiers": ["rng.mjs", "engine.mjs"],
+      "preuve": "oracle — 2 executions hors navigateur a seed+inputs identiques : hash de l'etat final egal (socle N1) (couvre: cap_determinisme_hash)",
+      "couvre": ["cap_determinisme_hash"]
+    },
+    {
+      "feature": "R15 Vies",
+      "fonction": "loseLife",
+      "fichiers": ["engine.mjs", "hud.mjs"],
+      "preuve": "visual — 1 chute de balle : le compteur de vies affiche passe de 3 a 2 (couvre: cap_vies_compteur)",
+      "couvre": ["cap_vies_compteur"]
+    }
+  ]
+}
+```

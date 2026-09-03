@@ -27,10 +27,10 @@ from forge.contract import DispatchPayload
 
 logger = logging.getLogger(__name__)
 
-# forge/runtime.py -> parent.parent == scripts/ (pour importer council.py).
-SCRIPTS_DIR = Path(__file__).resolve().parent.parent
-if str(SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_DIR))
+# Lot B (GO Pierre 2026-09-02) : l'adaptateur LM vit DANS le paquet (`forge.lm_adapter`),
+# extrait verbatim de `scripts/council.py`. Le bricolage de `sys.path` qui existait ici pour
+# atteindre `scripts/` est SUPPRIMÉ : la Forge ne dépend plus du fichier d'une lane, et plus
+# aucun chemin V1 n'est inséré dans `sys.path` au chargement de ce module.
 
 # Providers (valeurs telles que déclarées dans contracts/roles.yaml).
 PROVIDER_LMSTUDIO = "lmstudio"
@@ -59,20 +59,43 @@ class RouteDecision:
 
 
 def _make_qwen_adapter():
-    """Construit le QwenAdapter réel (scripts/council.py). Import paresseux : garde
-    runtime.py importable même si council/governor/requests manquent."""
-    from council import QwenAdapter  # scripts/ est sur sys.path (voir ci-dessus)
+    """Construit le QwenAdapter réel (`forge.lm_adapter`, extrait verbatim de council.py).
+
+    Import PARESSEUX conservé tel quel : il garde `runtime.py` importable même si `requests`
+    manque. Mais la dépendance qu'il porte est désormais INTERNE au paquet — c'est tout l'objet
+    du lot B. Un import paresseux vers l'extérieur du paquet est précisément ce qui a fait
+    tomber RUN M à s6 sans que rien ne le dise (cf. en-tête de `forge/lm_adapter.py`).
+    """
+    from forge.lm_adapter import QwenAdapter
 
     return QwenAdapter()
 
 
-def qwen_available(adapter=None) -> bool:
-    """LM Studio :1234 joignable ? Toute erreur (import/réseau) => indisponible."""
+def qwen_probe(adapter=None) -> tuple[bool, str]:
+    """(disponible, raison) — C-2, GO Pierre 2026-09-02, après RUN M.
+
+    DÉFAUT CORRIGÉ : `qwen_available` rendait le MÊME `False` pour un `ModuleNotFoundError`
+    (adaptateur introuvable) et pour un port fermé, et `route_step` annonçait alors
+    « lmstudio :1234 down ». Le 2026-09-02 à 18:01 ce motif a été produit sur un port OUVERT,
+    pendant que Qwen répondait en node 3 secondes plus tôt : un oracle correct rendant un motif
+    faux. La cause est désormais DISTINGUÉE et transportée, jamais réécrite en aval.
+    """
     try:
         ad = adapter if adapter is not None else _make_qwen_adapter()
-        return bool(ad.is_available())
-    except Exception:  # noqa: BLE001 — indisponible = tout échec de sonde
-        return False
+    except Exception as exc:  # noqa: BLE001
+        return False, (f"adaptateur LM indisponible ({type(exc).__name__}: {exc}) — "
+                       "cause d'IMPORT, PAS un service down")
+    try:
+        return (True, "") if ad.is_available() else (
+            False, "LM Studio ne répond pas sur son endpoint de santé — service injoignable")
+    except Exception as exc:  # noqa: BLE001
+        return False, (f"sonde LM en échec ({type(exc).__name__}) — cause RÉSEAU/SONDE, "
+                       "distincte d'un défaut d'import")
+
+
+def qwen_available(adapter=None) -> bool:
+    """LM Studio joignable ? Conservé pour compatibilité — la CAUSE vit dans `qwen_probe`."""
+    return qwen_probe(adapter)[0]
 
 
 def route_step(payload: DispatchPayload) -> RouteDecision:
@@ -92,15 +115,23 @@ def route_step(payload: DispatchPayload) -> RouteDecision:
         return RouteDecision(runner=RUNNER_CLAUDE, reviewer=payload.model)
 
     if provider == PROVIDER_LMSTUDIO:
+        # La DÉCISION reste prise par `qwen_available` : c'est le joint que 42 fichiers de test
+        # substituent (`monkeypatch.setattr("forge.runtime.qwen_available", ...)`). Déplacer le
+        # point de décision aurait rendu ces substitutions silencieusement inopérantes — un joint
+        # de test qu'on croit actif et qui ne l'est plus est exactement le mode de panne que ce
+        # lot corrige ailleurs. Seule la CAUSE vient de la sonde détaillée.
         if qwen_available():
             return RouteDecision(
                 runner=RUNNER_QWEN,
                 reviewer=payload.model or _QWEN_FALLBACK_MODEL,
             )
+        # C-2 : la cause MESURÉE est transportée telle quelle. Ne jamais la remplacer par un
+        # motif générique : c'est ce qui a fait passer un défaut d'import pour un service down.
+        cause = qwen_probe()[1] or "indisponibilité signalée par la sonde, sans cause détaillée"
         return RouteDecision(
             runner=RUNNER_CLAUDE_BLIND,
             reviewer=CLAUDE_BLIND_REVIEWER,
-            reason="lmstudio :1234 down — reviewer indépendant indisponible",
+            reason=f"reviewer indépendant indisponible — {cause}",
         )
 
     # Provider absent/inconnu : ne pas wedge, mais rendre la dégradation visible.

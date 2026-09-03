@@ -1,0 +1,198 @@
+{
+ "game_id": "runm_breakout",
+ "systemes": [
+  {
+   "id": "SYS_HUD",
+   "features": [
+    {
+     "id": "F_OBJECTIF",
+     "capacites": [
+      {
+       "id": "C01",
+       "capacite": "Au lancement, le HUD affiche l'objectif 'detruire toutes les briques' et un compteur de briques restantes strictement superieur a zero.",
+       "source_ref": "R01",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Au lancement, le HUD 'objectif' affiche le but de destruction et un compteur de briques restantes strictement superieur a zero."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_COMPTEUR",
+     "capacites": [
+      {
+       "id": "C09",
+       "capacite": "Un compteur observable (score ou vies) est affiche et change visiblement au cours de la partie.",
+       "source_ref": "R09",
+       "expected_proof": {
+        "kind": "mutation",
+        "statement": "La valeur du compteur affiche a l'instant t differe de sa valeur au lancement apres quelques briques detruites ou une vie perdue."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_PADDLE",
+   "features": [
+    {
+     "id": "F_PADDLE_INPUT",
+     "capacites": [
+      {
+       "id": "C02_IN",
+       "capacite": "ENTREE : le joueur agit sur l'affordance 'paddle' en maintenant les fleches gauche/droite du clavier.",
+       "source_ref": "R02",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis main.tscn, un bot maintient la fleche droite sur l'affordance 'paddle' ; l'entree clavier est captee par la scene."
+       }
+      },
+      {
+       "id": "C02_EFF",
+       "capacite": "EFFET : sous appui maintenu, la position horizontale affichee du paddle change tant que la touche est tenue.",
+       "source_ref": "R02",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis main.tscn, sous appui maintenu sur fleche droite, la coordonnee x du paddle augmente frame apres frame."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_PADDLE_REACTIVITE",
+     "capacites": [
+      {
+       "id": "C10",
+       "capacite": "Le paddle reagit a l'appui clavier au plus a la frame suivante (aucun lag percu a 60 fps).",
+       "source_ref": "R10",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "L'appui sur une fleche produit un deplacement du paddle a la frame suivante au plus."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_BALL",
+   "features": [
+    {
+     "id": "F_REBOND_PADDLE",
+     "capacites": [
+      {
+       "id": "C03",
+       "capacite": "Quand la balle touche le paddle, son angle de rebond depend du point d'impact (bord = angle prononce, centre = renvoi vertical).",
+       "source_ref": "R03",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Deux collisions balle-paddle a des points d'impact differents produisent deux angles de sortie mesurablement distincts."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_REBOND_MURS",
+     "capacites": [
+      {
+       "id": "C06",
+       "capacite": "La balle rebondit sur les trois bords de l'aire (gauche, droite, haut) en conservant sa vitesse ; elle ne sort que par le bas.",
+       "source_ref": "R06",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Une balle lancee vers un bord lateral ressort avec sa composante horizontale inversee et une vitesse egale."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_BRICKS",
+   "features": [
+    {
+     "id": "F_DESTRUCTION",
+     "capacites": [
+      {
+       "id": "C04",
+       "capacite": "Au contact de la balle, la brique touchee disparait de l'ecran et le score affiche augmente immediatement.",
+       "source_ref": "R04",
+       "expected_proof": {
+        "kind": "mutation",
+        "statement": "Apres une collision balle-brique, la brique n'est plus rendue et le compteur de score a augmente."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_ENDGAME",
+   "features": [
+    {
+     "id": "F_VICTOIRE",
+     "capacites": [
+      {
+       "id": "C07",
+       "capacite": "Quand la derniere brique est detruite, un ecran/message de VICTOIRE s'affiche et la partie s'arrete.",
+       "source_ref": "R07",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Apres destruction de la derniere brique, un message de victoire est visible a l'ecran et la balle ne bouge plus."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_DEFAITE",
+     "capacites": [
+      {
+       "id": "C08",
+       "capacite": "Quand la balle passe sous le paddle et qu'il ne reste plus de vie, un ecran/message de DEFAITE (game over) s'affiche et la partie s'arrete.",
+       "source_ref": "R08",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Apres la perte de la derniere vie, un message game over est visible et aucune brique nouvelle n'est jouable."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_RENDER",
+   "features": [
+    {
+     "id": "F_CHARGEMENT",
+     "capacites": [
+      {
+       "id": "C11",
+       "capacite": "Le jeu se charge et s'execute dans un navigateur recent sans erreur console de niveau bloquant, et sa boucle de rendu tourne.",
+       "source_ref": "R11",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "A l'ouverture de la page, la console ne contient aucune erreur de niveau bloquant et la boucle de rendu progresse."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_VISIBILITE",
+     "capacites": [
+      {
+       "id": "C12",
+       "capacite": "La balle, le paddle et la grille de briques sont rendus visiblement et distinctement dans l'aire de jeu des le lancement.",
+       "source_ref": "R12",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Au lancement, une balle, un paddle et au moins une rangee de briques sont visibles a l'ecran."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

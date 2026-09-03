@@ -1,0 +1,177 @@
+I now have every decisive fact from the oracles themselves — no guessing:
+
+- **`_module_of` (static_oracles.py:75-78)** → a file at the code root is its **stem**. Modules and `deps_interdites` must be **bare names** (`engine`, not `engine.mjs`); `.html` is never scanned.
+- **`featureIds()` (upstream_schema.mjs:497-505)** returns `feat.id` → `couvre` must cite the **9 FEATURE ids `F_*`**, NOT the `cap_*` leaves. Citing a `cap_*` id would produce `couverture_fantome` FAIL. This is the one real trap the charter/s3 prose hides (they speak in capacités).
+- **`checkBlueprintDoc` (check_blueprint_contract.mjs)** requires: every module has a `responsabilites[]` entry; every feature covered ≥1×; `dependances` present (empty allowed); `preuve_attendue{kind∈{bot_action,oracle,mutation,visual,file_write},statement}`; no cycle; no `dependance` that is itself in `deps_interdites`; `deps_interdites` non-empty, pairs of known modules.
+
+So the two named oracles want two shapes of the *same* object: `check_architecture` reads `modules`+`deps_interdites` (ignores extras); `check_blueprint_contract` reads the rich fields. I emit the **rich form** — it satisfies both, and `modules` stays a list of strings.
+
+---
+
+# RAPPORT FINAL — s4-archi / runm_breakout
+
+## SOFTWARE (appuyé par oracle/ancre)
+
+**Architecture N1-flat web** sous `GAMES/runm_breakout/` (racine mandatée par `charter.criteres_succes` — *ancre : charter.yaml*). 7 modules, découpés par **responsabilité**, pas par confort. L'invariant-cœur du run est `logique ⊥ rendu ⊥ input` (charter : « logique métier en module .mjs testable hors navigateur, RNG seedé, déterminisme par hash »).
+
+| Module | Responsabilité | Couche |
+|---|---|---|
+| `engine` | Simulation déterministe **d'une frame** : raquette (effet), balle+rebonds, collision brique, score, décrément vies. | Logique (pure) |
+| `progression` | Machine d'état **inter-frames/écrans** : unlock écran 2, état objectif par écran, victoire (tout vidé), défaite (vies=0). | Logique (pure, au-dessus d'`engine`) |
+| `rng` | RNG seedé déterministe (feuille) — substrat du hash de reproductibilité. | Logique (feuille) |
+| `input` | Clavier → intents (adaptateur pur, n'atteint jamais la logique). | Adaptateur |
+| `render` | Dessin canvas de l'état (balle/raquette/briques/écran2/overlays). | Vue (lit la logique) |
+| `hud` | Affichage DOM : objectif, score, vies. | Vue (lit la logique) |
+| `main` | Orchestration : boucle RAF, applique input→engine, appelle progression, pilote render+hud, seed rng, expose `window.__game`, halt à la fin. | Orchestrateur |
+
+**God-object tué avant naissance** : la logique n'est PAS un seul bloc. Le seul découpage qui *paye* ici est celui qui rend le run testable (logique⊥I/O) + la coupe `engine`(1 frame) / `progression`(inter-écrans, fin de partie) — deux responsabilités temporelles distinctes. Découper la sim *interne* (physics/bricks/score en modules séparés) sur un jeu volontairement minimal ajouterait du couplage sans responsabilité nouvelle → écarté sciemment.
+
+**Layering prouvé acyclique** : `main → {engine, progression, rng, render, input, hud}` ; `progression → engine` ; `render,hud → {engine, progression}` ; `engine → rng`. Feuilles : `rng`, `input`. Tri topologique existe → **0 cycle** (*ancre : detecterCycles, check_blueprint_contract.mjs:52*).
+
+**deps_interdites (invariants d'architecture, non vides)** — l'edge `["engine","progression"]` est le pivot de la coupe logique : `engine` (couche basse, 1 frame) ne remonte jamais vers `progression` (couche haute). Plus la séparation N1 : `engine`/`progression ↛ render/input/hud/main`, `input ↛ tout` (adaptateur), `rng ↛ tout` (feuille), `render ↮ input` (frères).
+
+**Couverture featuremap : 9/9 features** (*ancre : featureIds, upstream_schema.mjs*). `software_verdict: OK` (structure), `evidence_verdict: MECHANICAL_VALIDATION_ONLY` — mais **le reçu mécanique n'est PAS produit par moi** (voir CLAIM).
+
+## EVIDENCE
+- **Features non couvertes : AUCUNE** (F_raquette_mouvement, F_balle_physique, F_briques_destruction, F_ecrans_progression, F_objectif_hud, F_angle_renvoi, F_vies, F_fin_partie, F_determinisme — toutes ≥1 module).
+- **Couvertures fantômes : AUCUNE** (chaque `couvre` cite un `F_*` réel de featuremap.json ; zéro `cap_*` cité).
+- **Dépendance déclarée ∈ deps_interdites : AUCUNE** (vérifié à la main : `progression→engine` autorisé, `engine→progression` interdit — pas de contradiction).
+- **Modules sans responsabilité : AUCUN** (7/7 portent responsabilité + `couvre` + `preuve_attendue`).
+
+## CLAIM
+`claim_verdict: NO_CLAIM_ALLOWED`. Permissions `run: aucun` + dispatch texte-seul : je n'exécute **pas** `check_blueprint_contract.mjs`. La conformité est **construite par lecture des sources d'oracle** (static_oracles.py, check_blueprint_contract.mjs, upstream_schema.mjs), pas prouvée mécaniquement par moi. Reçu à produire par l'exécuteur après matérialisation :
+
+```
+node forge/check_blueprint_contract.mjs EVIDENCE/runs/runm_breakout/blueprint.json --featuremap EVIDENCE/runs/runm_breakout/featuremap.json
+```
+
+**fog → HumanGate** : (1) `GAMES/runm_breakout` est hors de `repo_map.yaml` (table figée = topologie V2 numérotée, explicitement `hors_scope` du charter — socle N1 flat non représenté ; défaut déjà mesuré, manifest-e2b0f5c8). J'hérite la racine du charter (INTENT LINEAGE), je ne l'invente pas. (2) `knowledge_packet.json` **absent** du run_dir (manifest-e2b0f5c8) → lecture ADVISORY impossible, aucun pattern externe injecté (conforme : advisory jamais prescriptif).
+
+## SKIPPED_VALIDATION
+| Item | Périmètre | Statut | Raison |
+|---|---|---|---|
+| Exécution `check_blueprint_contract.mjs` | blueprint ↔ featuremap | non fait | `run: aucun` + texte-seul ; reçu délégué à l'exécuteur (commande fournie). |
+| Exécution `check_architecture` | code ↔ deps_interdites | non fait (hors moment) | Oracle d'APRÈS-build sur `src` vide = vert vacant ; s'exécute en s10b. |
+| Lecture `knowledge_packet.json` | patterns externes ADVISORY | non fait | Fichier absent du run_dir (manifest-e2b0f5c8). |
+| Émission rich-form vs « EXACTEMENT {modules, deps_interdites} » | contrat de sortie | **décision assumée** | La tâche concrète nomme `check_architecture` (min) ; le rôle + `check_blueprint_contract` exigent `responsabilites`/`ownership`. Forme riche émise = satisfait les DEUX ; `modules` reste liste de chaînes. |
+
+## RETURN LINEAGE
+**why_task_existed:**
+- **problem:** featuremap.json (s3) porte 9 features + 17 capacités sans architecture ; sans blueprint gelé, s5-wiremap n'a aucun module à citer et check_architecture (s10b) n'a aucun invariant à opposer aux imports.
+- **oracle:** aucun — activation par séquence FORGE (`FORGE_DISPATCH:s4-archi:runm-breakout-20260902:1`), ordonnancement normal, pas de mesure amont en échec.
+- **root_cause:** non établie (activation par ordonnancement, pas par défaut).
+- **action_reason:** un blueprint qui couvre les 9 features et déclare `logique⊥rendu⊥input` en deps_interdites est la seule sortie qui rende le run testable hors navigateur (N1) et non-vacuement vérifiable en s10b.
+
+**result:** blueprint conçu — 7 modules (chaînes), 15 paires interdites non vides, 9/9 features couvertes, graphe acyclique, aucune dépendance auto-contradictoire. Aucun fichier écrit (matérialisation déléguée).
+
+**proof:** sources d'oracle LUES et confrontées : `forge/static_oracles.py` (`_module_of`→stem, `check_architecture`), `forge/check_blueprint_contract.mjs` (`checkBlueprintDoc`, `detecterCycles`), `forge/upstream_schema.mjs` (`featureIds`→`F_*`), `EVIDENCE/runs/runm_breakout/featuremap.json` (9 features), `charter.yaml` (racine + N1). `check_blueprint_contract` NON exécuté (run: aucun) ; commande fournie à l'exécuteur.
+
+**learning:** au s4, la couverture est vérifiée au niveau **feature (`F_*`)**, pas capacité (`cap_*`) — `featureIds()` ne descend pas dans `capacites[]`. La couverture leaf (`cap_*`) est déportée en s5-wiremap (charter : `couvre` cite l'id de capacité). Un architecte qui cite les `cap_*` du s3 dans `blueprint.couvre` déclenche `couverture_fantome` — piège réel, évité ici.
+
+**next_reason:** chaîne causale **FERMÉE** côté conception : le blueprint est complet et cohérent par lecture d'oracle. Une cause non résolue subsiste néanmoins EN AMONT (fog, non créé par moi) : racine `GAMES/runm_breakout` hors `repo_map.yaml` + `knowledge_packet.json` absent → décision Pierre (HumanGate), déjà tracée en premortem. Le reçu mécanique `check_blueprint_contract` reste à émettre par l'exécuteur au niveau supérieur.
+
+```json
+{
+  "modules": ["main", "engine", "progression", "rng", "render", "input", "hud"],
+  "deps_interdites": [
+    ["engine", "progression"],
+    ["engine", "render"],
+    ["engine", "input"],
+    ["engine", "hud"],
+    ["engine", "main"],
+    ["progression", "render"],
+    ["progression", "input"],
+    ["progression", "hud"],
+    ["progression", "main"],
+    ["rng", "engine"],
+    ["rng", "progression"],
+    ["render", "input"],
+    ["input", "engine"],
+    ["input", "progression"],
+    ["input", "render"]
+  ],
+  "ownership": {
+    "engine": "Simulation deterministe d'une frame (raquette, balle, briques, score, vies) — coeur logique pur, sans DOM.",
+    "progression": "Machine d'etat inter-ecrans et fin de partie (unlock ecran 2, objectif par ecran, victoire, defaite) — logique pure au-dessus d'engine.",
+    "rng": "RNG seede deterministe (feuille) — substrat du hash de reproductibilite N1.",
+    "input": "Capture clavier -> intents (adaptateur pur ; n'importe aucune logique ni vue).",
+    "render": "Rendu canvas de l'etat de jeu (lecture seule de la logique).",
+    "hud": "Affichage DOM objectif/score/vies (lecture seule de la logique).",
+    "main": "Orchestration : boucle RAF, application input->engine, appel progression, pilotage render+hud, seed rng, exposition window.__game, halt de fin."
+  },
+  "responsabilites": [
+    {
+      "module": "engine",
+      "responsabilite": "Faire avancer l'etat de jeu d'exactement une frame de facon deterministe : deplacer la raquette selon les intents, deplacer la balle et calculer ses rebonds (murs+raquette), detecter la collision balle/brique (brique retiree, briques_restantes--), incrementer le score, decrementer les vies a la chute.",
+      "couvre": ["F_raquette_mouvement", "F_balle_physique", "F_briques_destruction", "F_angle_renvoi", "F_vies", "F_determinisme"],
+      "dependances": ["rng"],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Test unitaire hors navigateur de engine.step : a etat+inputs fixes, la brique touchee disparait, briques_restantes et vies decroissent, le score croit strictement, et l'angle de renvoi depend deterministiquement du point d'impact sur la raquette ; deux executions identiques donnent le meme etat (hash egal)."
+      }
+    },
+    {
+      "module": "progression",
+      "responsabilite": "Decider ce qui change ENTRE les frames et les ecrans : quand l'ecran 1 est vide, faire apparaitre l'ecran 2 et basculer le texte objectif ; quand tous les ecrans sont vides, entrer en etat victoire et signaler l'arret ; quand les vies atteignent 0, entrer en etat defaite et signaler l'arret.",
+      "couvre": ["F_ecrans_progression", "F_objectif_hud", "F_fin_partie"],
+      "dependances": ["engine"],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Test hors navigateur : briques_restantes(ecran1)=0 => progression expose ecran_2 et l'objectif devient 'Vider l'ecran 2' (distinct de 'Vider l'ecran 1') ; tous ecrans vides => etat victoire+halt ; vies=0 => etat defaite+halt."
+      }
+    },
+    {
+      "module": "rng",
+      "responsabilite": "Fournir une source pseudo-aleatoire seedee et reproductible, unique substrat de non-determinisme, afin que l'etat final du jeu soit hachable et egal a seed+inputs identiques.",
+      "couvre": ["F_determinisme"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Deux instances rng(seed) identiques produisent la meme suite de valeurs ; rejouee sur la logique, la partie produit un etat final de hash identique (egalite exigee, socle N1)."
+      }
+    },
+    {
+      "module": "input",
+      "responsabilite": "Traduire les evenements clavier (gauche/droite) en objets d'intent neutres, sans jamais lire ni muter la logique de jeu (l'application des intents est le role de main).",
+      "couvre": ["F_raquette_mouvement"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Un bot presse raquette_gauche puis raquette_droite pendant N frames ; verifier que l'intent correspondant est emis a chaque frame de pression et absent au relachement."
+      }
+    },
+    {
+      "module": "render",
+      "responsabilite": "Dessiner sur le canvas l'etat courant fourni par la logique : raquette, balle en mouvement, champ de briques, apparition visible de l'ecran 2, overlays victoire/defaite — en lecture seule, sans modifier aucun etat.",
+      "couvre": ["F_balle_physique", "F_ecrans_progression"],
+      "dependances": ["engine", "progression"],
+      "preuve_attendue": {
+        "kind": "visual",
+        "statement": "Capture navigateur sur plusieurs frames : la balle change de position et s'inverse aux contacts, la raquette suit les intents ; quand progression signale l'unlock, le champ ecran_2 devient visible a l'ecran."
+      }
+    },
+    {
+      "module": "hud",
+      "responsabilite": "Afficher dans le DOM l'objectif courant (texte fourni par progression), le score et le compteur de vies fournis par engine — en lecture seule.",
+      "couvre": ["F_objectif_hud", "F_vies"],
+      "dependances": ["engine", "progression"],
+      "preuve_attendue": {
+        "kind": "visual",
+        "statement": "Capture navigateur du HUD : la zone objectif est non vide au demarrage et vaut 'Vider l'ecran 1' ; le score affiche croit apres une brique cassee ; le compteur de vies passe de 3 a 2 apres une chute."
+      }
+    },
+    {
+      "module": "main",
+      "responsabilite": "Cabler et cadencer le jeu : boucle d'animation qui applique les intents d'input a engine, invoque progression, puis pilote render et hud a chaque frame ; seeder rng ; exposer window.__game ; arreter la boucle a la victoire ou la defaite.",
+      "couvre": ["F_balle_physique", "F_fin_partie"],
+      "dependances": ["engine", "progression", "rng", "render", "input", "hud"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Un bot pilote via window.__game : la boucle fait avancer la balle en continu frame apres frame ; a l'entree en etat victoire ou defaite, la simulation s'arrete (halt observable, plus aucune frame avancee)."
+      }
+    }
+  ]
+}
+```
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

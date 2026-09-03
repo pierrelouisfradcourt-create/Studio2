@@ -1,0 +1,240 @@
+I have everything I need. Confirmed state of the run directory:
+- **Present**: `charter.yaml`, `worldscan.json` (games[0]=Breakout, games[1]=Arkanoid), `artifacts/s2-worldscan.txt`
+- **Absent**: `gm_worldscan.json`, `story_bible.json`, `design/progression_contract.md`, `design/calibration.md`
+
+I've read both gating oracles (`check_prisme_manifest.mjs` + `upstream_schema.mjs` for the structured artifact; `check_prisme.mjs` for the markdown panel form). My response below **is** `product_snapshot.md` (the executor materializes everything outside the terminal JSON block), followed by the terminal `prisme.json` block and the RETURN_REASON line.
+
+---
+
+> **Prisme Produit — runm_breakout** · run `runm-breakout-20260902` · vue réalisateur du produit FINI.
+> Ancres amont présentes : `charter.yaml`, `worldscan.json` (Breakout 1976 = `games[0]`, Arkanoid 1986 = `games[1]`).
+> Ancres amont ABSENTES du run_dir, signalées et NON compensées : `gm_worldscan.json` (s2.7), `story_bible.json` (s2.6), `design/progression_contract.md`, `design/calibration.md`. Profil non-narratif, cible web minimale : le World Scan est ici la seule source d'exigences EXPECTED, complétée par mes ADDITIONS charter.
+
+## 1. CE QUE LE JOUEUR VOIT
+
+Dans la fenêtre du navigateur, une **aire de jeu bornée** occupe l'écran. En haut, une **grille de briques** rangées et colorées, serrées les unes contre les autres. En bas, une barre horizontale — le **paddle** — que le joueur reconnaît immédiatement comme « à lui ». Entre les deux, une **balle** unique en mouvement. Un **HUD** léger affiche en permanence trois choses lisibles d'un coup d'œil : l'**objectif** (« détruire toutes les briques »), un **compteur** (score et/ou vies) et le **nombre de briques restantes**. Chaque brique touchée **disparaît** de l'écran. Quand la dernière brique tombe, un **message de VICTOIRE** s'affiche et l'action se fige. Quand la balle est perdue une fois de trop, un **message de DÉFAITE (game over)** s'affiche à la place. Aucun menu de progression, aucun niveau au-delà du tableau en cours : ce que le joueur voit est exactement ce qui est jouable.
+
+## 2. CE QUE LE JOUEUR FAIT
+
+Le joueur a **une seule entrée** : déplacer le paddle horizontalement avec les **flèches gauche/droite** du clavier. Tout le reste découle de ce geste. Il **positionne** le paddle sous la balle qui descend, **choisit le point d'impact** (bord pour un angle prononcé, centre pour un renvoi vertical) et **renvoie** la balle vers les briques. Il **répète** ce cycle viser → renvoyer → casser une brique, aller-retour après aller-retour, en gardant la balle en jeu. Il **poursuit** jusqu'à l'une des deux fins qu'il provoque lui-même : vider entièrement la grille (victoire) ou épuiser ses vies en laissant passer la balle (défaite). Il n'achète rien, ne débloque rien, ne choisit aucune branche : le seul levier d'habileté est la **précision du placement du paddle** dans le temps imparti par la balle.
+
+## 3. CE QUE LE JOUEUR RESSENT
+
+Dès la première brique, une **récompense immédiate** : la brique disparaît et le compteur bouge, sans latence perçue — le geste a une conséquence visible instantanée. S'installe un **sentiment de contrôle et de précision** : le joueur comprend vite que l'angle dépend de lui, pas du hasard. À mesure que la grille se vide, monte une **tension propre** : il reste peu de briques, mais chaque balle perdue coûte cher, et l'attention se resserre sur le rebond. La partie offre une **clôture nette** : gagné ou perdu, l'écran le dit franchement, sans ambiguïté ni fin molle. La satisfaction est celle d'une **boucle d'adresse courte et honnête** ; le produit n'invente ni méta-progression ni prestige, et ne prétend pas en offrir.
+
+## 4. RÈGLES OBSERVABLES
+
+- **R1** — Au lancement, le HUD affiche l'objectif « détruire toutes les briques » et un compteur de briques restantes strictement supérieur à zéro.
+- **R2** — Le joueur déplace le paddle horizontalement en maintenant les flèches gauche/droite ; la position affichée du paddle change tant qu'une touche est maintenue.
+- **R3** — Quand la balle touche le paddle, l'angle de rebond dépend du point d'impact : deux impacts à des endroits différents du paddle produisent deux angles de sortie mesurablement distincts.
+- **R4** — Au contact de la balle, la brique touchée disparaît de l'écran et le score affiché augmente dans la même frame.
+- **R5** — Tant que la balle est en jeu, le cycle déplacer-le-paddle → renvoyer → détruire une brique se rejoue à chaque aller-retour de la balle, et le nombre de briques restantes décroît.
+- **R6** — La balle rebondit sur les trois bords de l'aire (gauche, droite, haut) en conservant sa vitesse ; elle ne sort de l'aire que par le bas, sous le paddle.
+- **R7** — Quand la dernière brique est détruite, un message de VICTOIRE s'affiche et la balle s'immobilise.
+- **R8** — Quand la balle passe sous le paddle et qu'il ne reste plus de vie, un message de DÉFAITE (game over) s'affiche et la partie s'arrête.
+- **R9** — Un compteur observable (score ou vies) est affiché et sa valeur diffère visiblement de sa valeur de départ après quelques briques détruites ou une vie perdue.
+- **R10** — Le paddle réagit à l'appui clavier au plus à la frame suivante (aucun lag perçu à 60 fps).
+- **R11** — Le jeu se charge et s'exécute dans un navigateur récent sans erreur console de niveau bloquant, et sa boucle de rendu tourne.
+- **R12** — La balle, le paddle et au moins une rangée de briques sont rendus visiblement et distinctement dans l'aire de jeu dès le lancement.
+
+## 5. RAPPORT FINAL
+
+**Ancre / charter** : le charter (`objectif`, `criteres_succes`, `criteres_demo`) impose un casse-briques web minimal RÉELLEMENT jouable, avec victoire ET défaite atteignables et affichées, compteur observable, rendu visible — toutes les règles ci-dessus s'y raccordent, complétées par les boucles/objectifs de `worldscan.json:games[0]` (Breakout).
+
+**why_task_existed** :
+- `problem:` non transmis par l'amont ; activation par dispatch humain (marqueur `FORGE_DISPATCH:s1-prisme:runm-breakout-20260902:1`) — construire l'artefact d'exigences produit pour la migration V1→V2 du casse-briques.
+- `oracle:` aucun (activation par décision de dispatch, pas par mesure rouge).
+- `root_cause:` non établie (tâche de production initiale, pas de correction).
+- `action_reason:` produire `product_snapshot.md` + `prisme.json` conformes pour ouvrir la chaîne aval (s3→s9).
+
+**result:** deux sorties produites — le présent `product_snapshot.md` (4 sections + 12 règles observables numérotées) et le bloc `prisme.json` terminal (12 exigences : 10 EXPECTED ancrées `worldscan:games[0]`, 2 ADDITIONS `reference:null` ; 5 exigences de boucle PLAYER_GOAL/PLAYER_ACTION/GAME_RESPONSE/REWARD/REPEAT, 7 exigences produit NONE ; toutes actionnables : `expected_proof` + `destination` valides).
+
+**proof:** oracles déclarés = `node forge/check_prisme_manifest.mjs EVIDENCE/runs/runm_breakout/prisme.json --worldscan EVIDENCE/runs/runm_breakout/worldscan.json` et `node forge/prisme/check_prisme.mjs <product_snapshot.md>`. **NON EXÉCUTÉS** dans cet environnement (shell indisponible pour cet agent). Conformité vérifiée statiquement contre le code des oracles (`upstream_schema.mjs::validateChaine/validateProvenance/validateExpectedProof`, `DESTINATIONS`, `referenceAncree`, et `check_prisme.mjs` REQUIRED_SECTIONS/RULE_PATTERN) — mais un contrôle statique n'est pas un reçu d'exécution.
+
+**learning:** le gabarit de boucle V4 (maillons DECISION, UNLOCK/`appears`, NEXT_GOAL×2 `new_distinct`, META_LOOP/prestige `resets`, ADVANTAGE `increases_more_than`) est calibré sur le genre idle/clicker (Kitten Clicker) ; il ne se projette pas sur une boucle d'adresse arcade (Breakout) sans fabriquer des mécaniques de prestige que le charter exclut. La boucle produite est complète POUR SON GENRE (goal→action→réponse→récompense→répétition), incomplète au sens du gabarit V4. Réutilisable : un run inter-genres doit soit relâcher les maillons clicker-spécifiques, soit router vers un gabarit de boucle par genre.
+
+**next_reason:** l'exécuteur DOIT lancer les deux oracles nommés sur les artefacts matérialisés (je n'ai pas pu les exécuter) et arbitrer, en HumanGate, la friction gabarit-V4/genre ci-dessus avant que `loop_spec.mjs` ne projette une boucle jugée incomplète. Sans cet arbitrage humain, une cause non résolue persiste — la chaîne causale n'est PAS fermée ici.
+
+**Verdicts (règle de restitution)** :
+- `software_verdict:` BLOCKED — les oracles n'ont pas pu être exécutés (shell indisponible), aucun reçu mécanique produit.
+- `claim_verdict:` NO_CLAIM_ALLOWED — je ne certifie pas que l'artefact PASSE ; je l'ai conçu conforme, la preuve d'exécution manque.
+- `fog → Pierre / exécuteur:` (1) exécuter `check_prisme_manifest` + `check_prisme` et confirmer OK ; (2) décider si la boucle V4 doit être complète pour un casse-briques ou si le gabarit clicker est relâché pour ce genre.
+
+**SKIPPED_VALIDATION** :
+- item: exécution des oracles s1 ; périmètre: `prisme.json` + `product_snapshot.md` ; statut: non fait ; raison: shell indisponible dans cet environnement d'agent — délégué à l'exécuteur.
+- item: complétude de boucle V4 (DECISION, UNLOCK avec `appears`, NEXT_GOAL×2, META_LOOP prestige, ADVANTAGE) ; périmètre: `prisme.json` exigences de boucle ; statut: non fait — non applicable ; raison: genre casse-briques arcade minimal (charter : périmètre minimal, pas de prestige/idle/multi-niveaux) — non fabriqué par choix doctrinal anti-invention.
+- item: sourçage GM des exigences de boucle (`gm_worldscan:game_master.loops.*`) ; périmètre: 5 exigences de boucle ; statut: non fait ; raison: `gm_worldscan.json` absent du run_dir — stat attendue `exigences_sourcees_gm` = 0/5, non compensé.
+- item: consommation de `story_bible.json`/`gm_worldscan.json` comme sources ; périmètre: exigences EXPECTED ; statut: non fait ; raison: artefacts absents (profil non-narratif) — signalé, non compensé.
+- item: consommation de `design/progression_contract.md`/`design/calibration.md` (ordre joué des exigences de boucle) ; périmètre: précédence des exigences de boucle ; statut: non fait ; raison: fichiers absents — comportement inchangé, non compensé.
+
+```json
+{
+  "game_id": "runm_breakout",
+  "exigences": [
+    {
+      "id": "R01",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].objectives[0].victory_condition",
+      "observation": "Le World Scan note que Breakout affiche un mur de briques a detruire et declare la victoire quand les deux murs (48 briques) sont detruits.",
+      "claim": "Un casse-briques n'est lisible que si le but (vider l'aire de ses briques) est affiche au joueur des le depart, jamais deduit.",
+      "enonce": "L'ecran affiche en permanence un objectif 'detruire toutes les briques' et un compteur de briques restantes des le lancement.",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_GOAL",
+      "observe": {"hud": "objectif", "predicate": "nonempty"},
+      "expected_proof": {"kind": "visual", "statement": "Au lancement, le HUD 'objectif' affiche le but de destruction et un compteur de briques restantes strictement superieur a zero."},
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "R02",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "Le World Scan decrit qu'en minute 1 le joueur controle le paddle et percoit une latence d'action sous 100 ms.",
+      "claim": "La seule entree du joueur etant le deplacement lateral du paddle, sa reactivite clavier conditionne toute la jouabilite du produit.",
+      "enonce": "Le joueur deplace le paddle horizontalement en maintenant les fleches gauche/droite ; la position du paddle a l'ecran change tant qu'une touche est maintenue.",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_ACTION",
+      "affordance": "paddle",
+      "observe": {"hud": "paddle", "predicate": "changes"},
+      "expected_proof": {"kind": "bot_action", "statement": "Un appui maintenu sur fleche droite deplace le paddle vers la droite ; la coordonnee x du paddle augmente frame apres frame."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R03",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "observation": "Le World Scan releve qu'au bout de ~10 min le joueur comprend les zones (tiers) du paddle qui determinent l'angle de rebond.",
+      "claim": "Le rebond dependant du point d'impact est ce qui transforme un renvoi passif en visee intentionnelle : c'est le coeur d'adresse du genre.",
+      "enonce": "Quand la balle touche le paddle, son angle de rebond depend du point d'impact (bord = angle prononce, centre = renvoi vertical).",
+      "acteur": "SYSTEM",
+      "loop_role": "GAME_RESPONSE",
+      "observe": {"hud": "balle", "predicate": "changes"},
+      "expected_proof": {"kind": "oracle", "statement": "Deux collisions balle-paddle a des points d'impact differents produisent deux angles de sortie mesurablement distincts."},
+      "destination": "s5-wiremap"
+    },
+    {
+      "id": "R04",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "Le World Scan indique que la destruction d'une brique declenche un feedback visuel plus audio immediat et un gain de points.",
+      "claim": "Le retrait visible de la brique touchee est la recompense minimale sans laquelle l'action de viser n'a aucune consequence percue.",
+      "enonce": "Au contact de la balle, la brique touchee disparait de l'ecran et le score affiche augmente immediatement.",
+      "acteur": "SYSTEM",
+      "loop_role": "REWARD",
+      "observe": {"hud": "score", "predicate": "increases"},
+      "expected_proof": {"kind": "mutation", "statement": "Apres une collision balle-brique, la brique n'est plus rendue et le compteur de score a augmente."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R05",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].retention_answer",
+      "observation": "Le World Scan decrit une boucle d'adresse ou la balle renvoyee revient tant que le joueur ne la perd pas, chaque partie durant 8-15 min.",
+      "claim": "La boucle du produit n'est pas un enchainement d'etapes uniques mais la repetition serree viser-renvoyer-casser jusqu'a vider l'aire.",
+      "enonce": "Tant que la balle est en jeu, le cycle deplacer-le-paddle vers renvoyer vers detruire une brique se rejoue a chaque aller-retour de la balle.",
+      "acteur": "PLAYER",
+      "loop_role": "REPEAT",
+      "replay": ["R02", "R03", "R04"],
+      "observe": {"hud": "briques_restantes", "predicate": "decreases"},
+      "expected_proof": {"kind": "bot_action", "statement": "Sur une session, les actions deplacer/renvoyer/detruire s'observent plusieurs fois de suite avant toute fin de partie, et les briques restantes decroissent."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R06",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "Le World Scan pose le rebond de la balle comme mecanique noyau (paddle plus trajectoire), la balle evoluant dans une aire bornee.",
+      "claim": "Sans bords qui renvoient la balle, elle sort de l'aire et la boucle s'interrompt : les murs sont une contrainte de jouabilite, pas un decor.",
+      "enonce": "La balle rebondit sur les trois bords de l'aire (gauche, droite, haut) en conservant sa vitesse ; elle ne sort que par le bas, sous le paddle.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "oracle", "statement": "Une balle lancee vers un bord lateral ressort avec sa composante horizontale inversee et une vitesse egale."},
+      "destination": "s5-wiremap"
+    },
+    {
+      "id": "R07",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].objectives[0].victory_condition",
+      "observation": "Le World Scan declare la victoire de Breakout atteinte quand toutes les briques structurelles sont detruites.",
+      "claim": "Une victoire non signalee a l'ecran est indistinguable d'un jeu qui continue a vide ; le charter exige un etat de victoire atteignable ET affiche.",
+      "enonce": "Quand la derniere brique est detruite, un ecran/message de VICTOIRE s'affiche et la partie s'arrete.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "visual", "statement": "Apres destruction de la derniere brique, un message de victoire est visible a l'ecran et la balle ne bouge plus."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R08",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].objectives[0].defeat_condition",
+      "observation": "Le World Scan fixe la defaite de Breakout a la perte de la balle sous le paddle trois fois (vies epuisees).",
+      "claim": "Sans condition de defaite atteignable et affichee il n'y a aucun enjeu ; le charter la declare obligatoire au meme titre que la victoire.",
+      "enonce": "Quand la balle passe sous le paddle et qu'il ne reste plus de vie, un ecran/message de DEFAITE (game over) s'affiche et la partie s'arrete.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "visual", "statement": "Apres la perte de la derniere vie, un message game over est visible et aucune brique nouvelle n'est jouable."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R09",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "observation": "Le World Scan note qu'en cours de partie le score depasse 100 points et que la precision demandee augmente par rang.",
+      "claim": "Un compteur qui evolue en direct est le seul retour continu qui dit au joueur qu'il progresse entre deux fins de partie.",
+      "enonce": "Un compteur observable (score ou vies) est affiche et change visiblement au cours de la partie.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "mutation", "statement": "La valeur du compteur affiche a l'instant t differe de sa valeur au lancement apres quelques briques detruites ou une vie perdue."},
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "R10",
+      "source": "EXPECTED",
+      "source_role": "s2-worldscan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "Le World Scan mesure une latence d'action percue sous 100 ms en minute 1 de Breakout.",
+      "claim": "Au clavier, tout retard sensible entre l'appui et le mouvement du paddle casse la visee ; la reactivite est une exigence produit, pas un reglage.",
+      "enonce": "Le paddle reagit a l'appui clavier au plus a la frame suivante (aucun lag percu a 60 fps).",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "bot_action", "statement": "L'appui sur une fleche produit un deplacement du paddle a la frame suivante au plus."},
+      "destination": "s4-archi"
+    },
+    {
+      "id": "R11",
+      "source": "ADDITIONS",
+      "source_role": "s1-prisme",
+      "reference": null,
+      "observation": "Le charter fixe la plateforme cible a web/HTML et exige un chargement sans erreur console bloquante ; le World Scan ne documente aucun comportement propre au navigateur.",
+      "claim": "Un casse-briques web n'est 'reellement jouable' que s'il s'affiche et tourne dans un navigateur sans erreur console qui interrompt la boucle.",
+      "enonce": "Le jeu se charge et s'execute dans un navigateur recent sans erreur console de niveau bloquant, et sa boucle de rendu tourne.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "oracle", "statement": "A l'ouverture de la page, la console ne contient aucune erreur de niveau bloquant et la boucle de rendu progresse."},
+      "destination": "s9-build"
+    },
+    {
+      "id": "R12",
+      "source": "ADDITIONS",
+      "source_role": "s1-prisme",
+      "reference": null,
+      "observation": "Les criteres de demo du charter exigent une balle, un paddle et des briques VISIBLES a l'ecran, exigence de rendu que le World Scan presuppose sans la specifier.",
+      "claim": "Le produit fini se juge a l'ecran : si balle, paddle et briques ne sont pas rendus visiblement, aucune des regles de boucle n'est observable ni testable.",
+      "enonce": "La balle, le paddle et la grille de briques sont rendus visiblement et distinctement dans l'aire de jeu des le lancement.",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "expected_proof": {"kind": "visual", "statement": "Au lancement, une balle, un paddle et au moins une rangee de briques sont visibles a l'ecran."},
+      "destination": "s9-build"
+    }
+  ]
+}
+```
+RETURN_REASON: {"status": "DISCOVERED", "problem": "Le contrat s1 V4 impose des maillons de boucle propres au genre idle/clicker (DECISION avec policies, UNLOCK/appears, NEXT_GOAL x2 new_distinct, META_LOOP prestige resets, ADVANTAGE increases_more_than) que le jeu cible (casse-briques arcade minimal, charter) ne possede pas ; la boucle produite est complete pour son genre mais incomplete au sens du gabarit V4, et gm_worldscan.json absent empeche tout sourcage GM des exigences de boucle (0/5).", "root_cause": "Gabarit de boucle V4 mono-genre (clicker) applique a un run d'un autre genre (arcade skill-loop), sans gabarit de boucle par genre ni GM present dans le run_dir."}

@@ -1,0 +1,431 @@
+## RÔLE
+Builder (délégation bornée par l'ownership). Point de vue : développeur discipliné qui reste dans son module.
+
+## EXIGENCES COGNITIVES
+Exécution bornée, micro-commits, tenue à jour de la WireMap. Discipline de périmètre supérieure à la vitesse : ne déborde jamais l'ownership.
+
+## MÉMOIRE DE TRAVAIL
+Consomme le blueprint (étape 7) qui fixe son ownership et la WireMap (étape 5) qu'il doit tenir à jour. Conventions : CLAUDE.md + rules/ (par lane). Le repo a déjà été créé à l'étape 8 (Create Repo).
+
+## OBJECTIF
+Produire le code borné à l'ownership, avec la WireMap tenue à jour. Micro-commits exécutés. Consulter knowledge_base/search.mjs avant d'écrire une pièce de logique réutilisable, importer réellement ce qui matche, n'écrire que le delta (§2bis).
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Implémentation du code UNIQUEMENT dans l'ownership défini par le blueprint ; mise à jour de la WireMap (colonnes fichiers/fonction/version/preuve/statut).
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Ne sort JAMAIS de son ownership (blueprint). Ne touche pas à tests/** (zone protégée). Ne modifie pas l'architecture (blueprint, deps).
+
+## PERMISSIONS
+read: repo entier. write: UNIQUEMENT les fichiers de son ownership + la WireMap. run: l'oracle code (cargo/pytest/vitest via forge/oracles.json). create: fichiers de son ownership uniquement. delete: aucun. INTERDIT: tests/**.
+
+## GARDE-FOU
+Respecte l'ownership : n'écrit que dans les fichiers que le blueprint lui attribue. Micro-commits. Ne franchit pas les deps interdites du blueprint.
+
+## CRITÈRES DE RÉUSSITE
+Code dans l'ownership (aucun fichier hors périmètre modifié) ; oracle code vert ; WireMap à jour. Pour un JEU (objectif/condition de victoire joueur) : oracle de SOLVABILITÉ vert (un bot joue et GAGNE réellement) ET preuve e2e verte (click-through navigateur réel, cf. forge/contracts/PLAYABLE_CONTRACT.md).
+
+## ORACLES / TESTS
+Oracle CODE déterministe non-LLM : cargo / pytest / vitest via forge/oracles.json selon la lane. Jamais de LLM-as-judge. Pour un JEU : l'oracle CODE inclut OBLIGATOIREMENT un volet SOLVABILITÉ (solvability.mjs câblé dans run-oracle.mjs) — les mécaniques testées EN ISOLATION ne suffisent pas : un jeu aux objectifs inatteignables passe tous les tests de mécanique tout en étant injouable. Le volet mesure l'enveloppe d'action réelle du moteur, vérifie que les objectifs requis y sont, et fait JOUER un bot qui doit gagner. Modèle : forge/templates/solvability.template.mjs. L'oracle CODE d'un JEU inclut AUSSI OBLIGATOIREMENT un volet e2e (e2e.mjs, click-through navigateur réel câblé dans run-oracle.mjs) conforme au contrat de jouabilité (forge/contracts/PLAYABLE_CONTRACT.md) : la garde structurelle forge.static_oracles.check_e2e_harness REJETTE un e2e absent, non câblé, ou coquille (qui imprime PASS sans piloter). Enfin, pour un JEU, l'oracle-code inclut un GATE MUTATION (forge.mutation.run_mutation_test sur game.mjs + forge.static_oracles.check_mutation_gate) : « 100% des mutants tués OU chaque survivant trié équivalent avec justification dans GAMES/<projet>/mutation_triage.json ». Un survivant non justifié => oracle rouge (auto-correction).
+
+## CONTRAT DE SORTIE
+diff (micro-commits) + WireMap à jour (colonnes fichiers/fonction/version/preuve/ statut) + reçu reuse_ratio.mjs (forge/reuse_ratio.mjs <dossier du jeu>). Pour un JEU : un volet solvability.mjs (bot-joue-et-gagne) ET un e2e.mjs (click-through navigateur réel, contrat de jouabilité) tous deux câblés dans run-oracle.mjs, en plus des mécaniques.
+
+## RAPPORT FINAL
+software/evidence/claim séparés ; cite l'oracle code utilisé ; liste les fichiers touchés vs ownership ; cite la sortie de reuse_ratio.mjs (evidence_path) et les requêtes SEARCH effectuées avant écriture (§2bis) ; claim_verdict: NO_CLAIM_ALLOWED. Sans oracle disponible => remonte un besoin HumanGate (fog), pas de claim. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- forge/contracts/SCHEMA.md
+- le blueprint.yaml (ownership) qui borne strictement sa zone d'écriture
+- la WireMap produite à l'étape 5 (fichiers/fonction/version/preuve/statut)
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s9-build:runm-breakout-20260902:1
+
+## TÂCHE CONCRÈTE (runm-breakout-20260902 / s9-build)
+Implémente le projet 'runm_breakout' sous GAMES/runm_breakout, borné à ton ownership (blueprint) : code + run-oracle.mjs + solvability + e2e conformément au contrat. Tiens la WireMap à jour. AUCUN commit (git/PowerShell) : le verdict signé et HumanGate s'en chargent — les « micro-commits » du contrat sont suspendus par l'exécuteur.
+
+## ARTEFACTS AMONT (run_dir)
+Rappel ownership : tu n'écris QUE dans les fichiers que le blueprint.json ci-dessous t'attribue (contrat s9-build §5).
+
+### blueprint.json (chemin réel : C:\Users\Studio-Dev\Desktop\Studio\EVIDENCE\runs\runm_breakout\blueprint.json)
+{
+ "modules": [
+  "main",
+  "engine",
+  "progression",
+  "rng",
+  "render",
+  "input",
+  "hud"
+ ],
+ "deps_interdites": [
+  [
+   "engine",
+   "progression"
+  ],
+  [
+   "engine",
+   "render"
+  ],
+  [
+   "engine",
+   "input"
+  ],
+  [
+   "engine",
+   "hud"
+  ],
+  [
+   "engine",
+   "main"
+  ],
+  [
+   "progression",
+   "render"
+  ],
+  [
+   "progression",
+   "input"
+  ],
+  [
+   "progression",
+   "hud"
+  ],
+  [
+   "progression",
+   "main"
+  ],
+  [
+   "rng",
+   "engine"
+  ],
+  [
+   "rng",
+   "progression"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "engine"
+  ],
+  [
+   "input",
+   "progression"
+  ],
+  [
+   "input",
+   "render"
+  ]
+ ],
+ "ownership": {
+  "engine": "Simulation deterministe d'une frame (raquette, balle, briques, score, vies) — coeur logique pur, sans DOM.",
+  "progression": "Machine d'etat inter-ecrans et fin de partie (unlock ecran 2, objectif par ecran, victoire, defaite) — logique pure au-dessus d'engine.",
+  "rng": "RNG seede deterministe (feuille) — substrat du hash de reproductibilite N1.",
+  "input": "Capture clavier -> intents (adaptateur pur ; n'importe aucune logique ni vue).",
+  "render": "Rendu canvas de l'etat de jeu (lecture seule de la logique).",
+  "hud": "Affichage DOM objectif/score/vies (lecture seule de la logique).",
+  "main": "Orchestration : boucle RAF, application input->engine, appel progression, pilotage render+hud, seed rng, exposition window.__game, halt de fin."
+ },
+ "responsabilites": [
+  {
+   "module": "engine",
+   "responsabilite": "Faire avancer l'etat de jeu d'exactement une frame de facon deterministe : deplacer la raquette selon les intents, deplacer la balle et calculer ses rebonds (murs+raquette), detecter la collision balle/brique (brique retiree, briques_restantes--), incrementer le score, decrementer les vies a la chute.",
+   "couvre": [
+    "F_raquette_mouvement",
+    "F_balle_physique",
+    "F_briques_destruction",
+    "F_angle_renvoi",
+    "F_vies",
+    "F_determinisme"
+   ],
+   "dependances": [
+    "rng"
+   ],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Test unitaire hors navigateur de engine.step : a etat+inputs fixes, la brique touchee disparait, briques_restantes et vies decroissent, le score croit strictement, et l'angle de renvoi depend deterministiquement du point d'impact sur la raquette ; deux executions identiques donnent le meme etat (hash egal)."
+   }
+  },
+  {
+   "module": "progression",
+   "responsabilite": "Decider ce qui change ENTRE les frames et les ecrans : quand l'ecran 1 est vide, faire apparaitre l'ecran 2 et basculer le texte objectif ; quand tous les ecrans sont vides, entrer en etat victoire et signaler l'arret ; quand les vies atteignent 0, entrer en etat defaite et signaler l'arret.",
+   "couvre": [
+    "F_ecrans_progression",
+    "F_objectif_hud",
+    "F_fin_partie"
+   ],
+   "dependances": [
+    "engine"
+   ],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Test hors navigateur : briques_restantes(ecran1)=0 => progression expose ecran_2 et l'objectif devient 'Vider l'ecran 2' (distinct de 'Vider l'ecran 1') ; tous ecrans vides => etat victoire+halt ; vies=0 => etat defaite+halt."
+   }
+  },
+  {
+   "module": "rng",
+   "responsabilite": "Fournir une source pseudo-aleatoire seedee et reproductible, unique substrat de non-determinisme, afin que l'etat final du jeu soit hachable et egal a seed+inputs identiques.",
+   "couvre": [
+    "F_determinisme"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Deux instances rng(seed) identiques produisent la meme suite de valeurs ; rejouee sur la logique, la partie produit un etat final de hash identique (egalite exigee, socle N1)."
+   }
+  },
+  {
+   "module": "input",
+   "responsabilite": "Traduire les evenements clavier (gauche/droite) en objets d'intent neutres, sans jamais lire ni muter la logique de jeu (l'application des intents est le role de main).",
+   "couvre": [
+    "F_raquette_mouvement"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Un bot presse raquette_gauche puis raquette_droite pendant N frames ; verifier que l'intent correspondant est emis a chaque frame de pression et absent au relachement."
+   }
+  },
+  {
+   "module": "render",
+   "responsabilite": "Dessiner sur le canvas l'etat courant fourni par la logique : raquette, balle en mouvement, champ de briques, apparition visible de l'ecran 2, overlays victoire/defaite — en lecture seule, sans modifier aucun etat.",
+   "couvre": [
+    "F_balle_physique",
+    "F_ecrans_progression"
+   ],
+   "dependances": [
+    "engine",
+    "progression"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "Capture navigateur sur plusieurs frames : la balle change de position et s'inverse aux contacts, la raquette suit les intents ; quand progression signale l'unlock, le champ ecran_2 devient visible a l'ecran."
+   }
+  },
+  {
+   "module": "hud",
+   "responsabilite": "Afficher dans le DOM l'objectif courant (texte fourni par progression), le score et le compteur de vies fournis par engine — en lecture seule.",
+   "couvre": [
+    "F_objectif_hud",
+    "F_vies"
+   ],
+   "dependances": [
+    "engine",
+    "progression"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "Capture navigateur du HUD : la zone objectif est non vide au demarrage et vaut 'Vider l'ecran 1' ; le score affiche croit apres une brique cassee ; le compteur de vies passe de 3 a 2 apres une chute."
+   }
+  },
+  {
+   "module": "main",
+   "responsabilite": "Cabler et cadencer le jeu : boucle d'animation qui applique les intents d'input a engine, invoque progression, puis pilote render et hud a chaque frame ; seeder rng ; exposer window.__game ; arreter la boucle a la victoire ou la defaite.",
+   "couvre": [
+    "F_balle_physique",
+    "F_fin_partie"
+   ],
+   "dependances": [
+    "engine",
+    "progression",
+    "rng",
+    "render",
+    "input",
+    "hud"
+   ],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Un bot pilote via window.__game : la boucle fait avancer la balle en continu frame apres frame ; a l'entree en etat victoire ou defaite, la simulation s'arrete (halt observable, plus aucune frame avancee)."
+   }
+  }
+ ]
+}
+
+### wiremap.json (chemin réel : C:\Users\Studio-Dev\Desktop\Studio\EVIDENCE\runs\runm_breakout\wiremap.json)
+{
+ "features": [
+  {
+   "feature": "R01 Objectif affiche",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "progression.mjs",
+    "hud.mjs"
+   ],
+   "preuve": "visual — au demarrage, la zone objectif du HUD contient un texte non vide (couvre: cap_objectif_nonvide)",
+   "couvre": [
+    "cap_objectif_nonvide"
+   ]
+  },
+  {
+   "feature": "R02 Raquette gauche",
+   "fonction": "movePaddle",
+   "fichiers": [
+    "engine.mjs",
+    "input.mjs"
+   ],
+   "preuve": "bot_action — presse raquette_gauche N frames ; raquette_x diminue (couvre: cap_raquette_gauche_entree, cap_raquette_gauche_effet)",
+   "couvre": [
+    "cap_raquette_gauche_entree",
+    "cap_raquette_gauche_effet"
+   ]
+  },
+  {
+   "feature": "R03 Raquette droite",
+   "fonction": "movePaddle",
+   "fichiers": [
+    "engine.mjs",
+    "input.mjs"
+   ],
+   "preuve": "bot_action — presse raquette_droite N frames ; raquette_x augmente (couvre: cap_raquette_droite_entree, cap_raquette_droite_effet)",
+   "couvre": [
+    "cap_raquette_droite_entree",
+    "cap_raquette_droite_effet"
+   ]
+  },
+  {
+   "feature": "R04 Casse brique",
+   "fonction": "collideBrick",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "bot_action — la balle touche une brique : elle disparait et briques_restantes decroit de 1 (couvre: cap_brique_disparait)",
+   "couvre": [
+    "cap_brique_disparait"
+   ]
+  },
+  {
+   "feature": "R05 Score",
+   "fonction": "applyScore",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "bot_action — brique cassee : score avant/apres, hausse strictement positive meme frame (couvre: cap_score_augmente)",
+   "couvre": [
+    "cap_score_augmente"
+   ]
+  },
+  {
+   "feature": "R06 Angle tactique",
+   "fonction": "reflectAngle",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "bot_action — 2 politiques a seed fixe sur 300 frames : la metrique score differe (couvre: cap_decision_angle_score)",
+   "couvre": [
+    "cap_decision_angle_score"
+   ]
+  },
+  {
+   "feature": "R07 Ecran 2 debloque",
+   "fonction": "unlockScreen2",
+   "fichiers": [
+    "progression.mjs",
+    "engine.mjs"
+   ],
+   "preuve": "bot_action — vide l'ecran 1 (derniere_brique_ecran1) : un champ ecran_2 devient visible (couvre: cap_unlock_ecran2_entree, cap_unlock_ecran2_effet)",
+   "couvre": [
+    "cap_unlock_ecran2_entree",
+    "cap_unlock_ecran2_effet"
+   ]
+  },
+  {
+   "feature": "R08 But ecran 1",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "progression.mjs"
+   ],
+   "preuve": "visual — au demarrage, le texte objectif vaut 'Vider l'ecran 1' (couvre: cap_objectif_ecran1)",
+   "couvre": [
+    "cap_objectif_ecran1"
+   ]
+  },
+  {
+   "feature": "R09 But ecran 2",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "progression.mjs"
+   ],
+   "preuve": "visual — apres unlock, le texte objectif vaut 'Vider l'ecran 2', distinct de 'Vider l'ecran 1' (couvre: cap_objectif_ecran2)",
+   "couvre": [
+    "cap_objectif_ecran2"
+   ]
+  },
+  {
+   "feature": "R11 Balle visible",
+   "fonction": "moveBall",
+   "fichiers": [
+    "engine.mjs",
+    "render.mjs"
+   ],
+   "preuve": "visual — la position de la balle change en continu et s'inverse au contact des murs et de la raquette (couvre: cap_balle_visible_rebonds)",
+   "couvre": [
+    "cap_balle_visible_rebonds"
+   ]
+  },
+  {
+   "feature": "R12 Victoire",
+   "fonction": "checkEndGame",
+   "fichiers": [
+    "progression.mjs"
+   ],
+   "preuve": "bot_action — toutes les briques detruites : ecran de victoire affiche et simulation arretee (couvre: cap_victoire)",
+   "couvre": [
+    "cap_victoire"
+   ]
+  },
+  {
+   "feature": "R13 Defaite",
+   "fonction": "checkEndGame",
+   "fichiers": [
+    "progression.mjs"
+   ],
+   "preuve": "bot_action — 3e chute de balle (vies=0) : game over affiche et simulation arretee (couvre: cap_defaite)",
+   "couvre": [
+    "cap_defaite"
+   ]
+  },
+  {
+   "feature": "R14 Determinisme",
+   "fonction": "makeRng",
+   "fichiers": [
+    "rng.mjs",
+    "engine.mjs"
+   ],
+   "preuve": "oracle — 2 executions hors navigateur a seed+inputs identiques : hash de l'etat final egal (socle N1) (couvre: cap_determinisme_hash)",
+   "couvre": [
+    "cap_determinisme_hash"
+   ]
+  },
+  {
+   "feature": "R15 Vies",
+   "fonction": "loseLife",
+   "fichiers": [
+    "engine.mjs",
+    "hud.mjs"
+   ],
+   "preuve": "visual — 1 chute de balle : le compteur de vies affiche passe de 3 a 2 (couvre: cap_vies_compteur)",
+   "couvre": [
+    "cap_vies_compteur"
+   ]
+  }
+ ]
+}
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- [s0-contrat] échec d'une tentative précédente à s0-contrat → ✅ RÉPARÉ: réparé à la tentative 2 (tier opus)
+- [s6-redteam-plan] exécuteur LLM en échec à s6-redteam-plan: claude -p returncode=1: Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects["C:/Users/Studio-Dev/Desktop/Studio"].hasTrustDialogAccepted: true in C:\Users\Studio-Dev\.claude.json.
+[claude-code:unrecognized_model] {"model":"qwen2.5-14b-instruct","query_source":"sdk"}
+
+- [manifest-e2b0f5c8ef6fed0e] knowledge_packet.json (lecture ADVISORY obligatoire) absent du run_dir, et racine de code GAMES/runm_breakout hors de la table figee repo_map.yaml — cause: socle N1 flat web (charter criteres_succes) non represente dans repo_map dont les racines sont la topologie V2 numerotee explicitement hors_scope du run -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-a243e3bfb138847f] Le contrat s1 V4 impose des maillons de boucle propres au genre idle/clicker (DECISION avec policies, UNLOCK/appears, NEXT_GOAL x2 new_distinct, META_LOOP prestige resets, ADVANTAGE increases_more_than) que le jeu cible (casse-briques arcade minimal, charter) ne possede pas ; la boucle produite est complete pour son genre mais incomplete au sens du gabarit V4, et gm_worldscan.json absent empeche tout sourcage GM des exigences de boucle (0/5). — cause: Gabarit de boucle V4 mono-genre (clicker) applique a un run d'un autre genre (arcade skill-loop), sans gabarit de boucle par genre ni GM present dans le run_dir. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-35da004686396698] tentative 1 de s0 refusee par le materialiseur: charter livre en prose sans bloc yaml fence, 0 bloc inspecte — cause: sortie sans bloc ```yaml``` extractible; forme non conforme a la precondition du materialiseur -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-715e60a7f04ccd58] le charter s0 est conforme par construction mais non validable mecaniquement car la tache impose texte-seul (aucun charter.yaml a parser par check_charter) — cause: mode texte-seul du dispatch s0-contrat: l'oracle CHARTER exige un fichier, aucun n'est ecrit -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-2b3083e411db2072] echec de la tentative 5 a s9-build — cause: returncode=0 (volets rouges: measure_tick, reuse_ratio_wired, runtime_alive, search_consulted) -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s9-build:runm-breakout-20260902:1

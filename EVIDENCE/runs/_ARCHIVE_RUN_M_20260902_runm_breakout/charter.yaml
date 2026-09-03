@@ -1,0 +1,61 @@
+objectif: 'Créer de zéro, sous GAMES/runm_breakout, un casse-briques web minimal mais
+  RÉELLEMENT JOUABLE : une balle rebondit, un paddle piloté au clavier la renvoie,
+  des briques sont détruites au contact, et la partie possède une condition de victoire
+  ET une condition de défaite atteignables. Le jeu vise le joueur occasionnel au clavier
+  ; sa qualité ludique n''est pas l''objet du run — le périmètre est volontairement
+  minimal pour qu''un échec soit attribuable à la migration V1->V2, pas à la complexité
+  du jeu. # Source : Brief.intention + Brief.provenance.genre (Pierre 2026-09-02)
+  + tâche s0.'
+plateforme_cible: web/HTML
+reference_jeu: 'Casse-briques (Breakout), lignée WEB — modèle de jeu CHOISI PAR PIERRE
+  le 2026-09-02 (Brief.provenance.genre : « casse-briques (Breakout), lignée WEB,
+  choisi explicitement pour son petit périmètre, sa boucle évidente et l''absence
+  de dépendance Godot »). Aucune implémentation de référence n''est autorisée comme
+  source de design : GAMES/breakout est un BENCHMARK de régression, pas un patron
+  à recopier (Brief.provenance.references_autorisees). # Provenance Pierre traçable
+  => champ rempli, pas de fog HumanGate.'
+hors_scope:
+- 'La qualité ludique / le fun du jeu : Pierre — « le critère de réussite n''est pas
+  que le jeu soit bon ».'
+- 'La topologie cible V2 (Fable directeur, GAME_BLUEPRINT/GAME_FLOW/ARCHITECTURE_CONTRACT)
+  : non construite, ni testée ni prétendue par ce run.'
+- 'Toute dépendance à Godot ou Blender : lignée WEB imposée, ces binaires sont hors
+  périmètre (Brief.contraintes).'
+- Le multijoueur, la persistance de scores serveur, le son avancé, les niveaux multiples
+  au-delà du minimum jouable.
+- La production d'assets 3D / pipeline Blender.
+- 'L''écriture de code de gameplay par s0 : s0 ne rédige que le contrat produit (out_of_scope
+  du contrat s0).'
+criteres_succes:
+- Le jeu est écrit sous GAMES/runm_breakout/, jamais games/ ni ailleurs.
+- Le jeu se charge dans un navigateur sans erreur console bloquante.
+- 'Une partie complète est jouable au clavier : la balle bouge, le paddle répond,
+  les briques se détruisent.'
+- Condition de victoire atteignable (toutes les briques détruites) ET condition de
+  défaite atteignable (balle perdue / vies épuisées), toutes deux signalées à l'écran.
+- 'Conforme au socle N1 : logique métier en module .mjs testable hors navigateur,
+  RNG seedé, window.__game exposé, déterminisme reproductible par hash.'
+- Aucun artefact écrit hors des surfaces V2 déclarées (pas de lab/, scripts/forge/
+  ni games/).
+actions_interdites:
+- 'Recopier tout ou partie de GAMES/breakout (benchmark de régression) ou GAMES/breakout_v2
+  (lignée Godot) : interdiction expresse Pierre.'
+- 'Introduire une dépendance à Godot ou Blender, ou y recourir silencieusement : écart
+  à signaler.'
+- 'Écrire un artefact hors des surfaces V2 (lab/, scripts/forge/, games/) : FAIL de
+  migration, pas un détail.'
+- 'Produire un vert par contournement : un échec doit dire OÙ la chaîne casse dans
+  les surfaces V2.'
+- 'Modifier les lanes protégées tests/ et src/ (rules/tests.md : zone protégée, gate
+  Pierre explicite requise).'
+- 'En cas de LM Studio indisponible : replier silencieusement vers une autre source
+  — HALT/BLOCKED exigé.'
+criteres_demo:
+- Une balle visible se déplace et rebondit sur les murs et le paddle à l'écran.
+- Un paddle visible se déplace horizontalement quand le joueur appuie sur les touches
+  gauche/droite.
+- Des briques visibles disparaissent une à une quand la balle les touche.
+- Un écran/message de VICTOIRE s'affiche quand la dernière brique est détruite.
+- Un écran/message de DÉFAITE (game over) s'affiche quand la balle est perdue et qu'il
+  ne reste plus de vie.
+- Un compteur observable (score ou vies) change en cours de partie.

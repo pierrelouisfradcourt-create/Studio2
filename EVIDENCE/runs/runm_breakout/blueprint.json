@@ -1,0 +1,115 @@
+{
+ "modules": [
+  "engine",
+  "render",
+  "input",
+  "main"
+ ],
+ "deps_interdites": [
+  [
+   "engine",
+   "render"
+  ],
+  [
+   "engine",
+   "input"
+  ],
+  [
+   "engine",
+   "main"
+  ],
+  [
+   "render",
+   "engine"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "render",
+   "main"
+  ],
+  [
+   "input",
+   "engine"
+  ],
+  [
+   "input",
+   "render"
+  ],
+  [
+   "input",
+   "main"
+  ]
+ ],
+ "ownership": {
+  "engine": "simulation-deterministe",
+  "render": "presentation-dom",
+  "input": "capture-clavier",
+  "main": "composition-root"
+ },
+ "responsabilites": [
+  {
+   "module": "engine",
+   "responsabilite": "Simulation metier pure et deterministe : etat {paddle, ball, bricks, bricksRemaining, state}, rebond conservatif (|v| conservee), destruction one-shot des briques, decrement unitaire, transitions terminales won/lost, RNG seede et hash d'etat reproductible. Aucune connaissance du DOM ni du clavier.",
+   "couvre": [
+    "R2_controle_raquette",
+    "R3_rebond_conservatif",
+    "R4_destruction_une_frappe",
+    "R5_progres_mesurable",
+    "R6_victoire_terminale",
+    "R7_defaite_terminale",
+    "R8_determinisme",
+    "R9_etat_inspectable"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "engine.mjs importe hors navigateur par un test node produit a seed fixe : inversion de la composante de vitesse avec |v| conservee a un contact mur/raquette (R3), brique absente de l'etat au tick du contact et non recollidable (R4), bricksRemaining decremente d'exactement 1 (R5), state='won' a bricksRemaining=0 (R6) / 'lost' quand la balle franchit le bord bas sans vie (R7), et deux executions a seed+entrees identiques donnent le meme hash d'etat final (R8)."
+   }
+  },
+  {
+   "module": "input",
+   "responsabilite": "Adaptateur entrant : capture des intentions clavier (Fleche-Gauche / Fleche-Droite) et exposition d'un etat d'entree neutre (gauche/droite/aucune). Ne mute jamais la logique ni le rendu ; traduit un evenement DOM en intention, rien de plus.",
+   "couvre": [
+    "R2_controle_raquette"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Un bot presse Fleche-Droite N frames puis Fleche-Gauche : l'intention exposee par input, appliquee par engine via main, fait croitre puis decroitre window.__game.paddle.x ; sans touche, paddle.x reste constant."
+   }
+  },
+  {
+   "module": "render",
+   "responsabilite": "Adaptateur sortant : rendu DOM d'un instantane d'etat RECU (jamais lu directement dans engine) — HUD objectif non vide, raquette, balle, briques restantes, panneaux terminaux VICTOIRE / DEFAITE. Vue en lecture seule : ne mute aucun etat, ne lit aucune entree.",
+   "couvre": [
+    "R1_objectif_affiche",
+    "R6_victoire_terminale",
+    "R7_defaite_terminale"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "A l'ouverture de la page le HUD objectif contient un texte non vide decrivant la destruction du mur (R1) ; quand l'etat passe a 'won' un panneau VICTOIRE est affiche (R6), a 'lost' un panneau DEFAITE (R7)."
+   }
+  },
+  {
+   "module": "main",
+   "responsabilite": "Racine de composition et boucle de jeu : instancie engine (seed), lit l'intention de input, avance la simulation d'un tick, passe l'instantane a render, et expose window.__game (paddle, ball, bricksRemaining, state) independamment du rendu. Unique module autorise a dependre des trois autres.",
+   "couvre": [
+    "R9_etat_inspectable"
+   ],
+   "dependances": [
+    "engine",
+    "input",
+    "render"
+   ],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Apres chargement, window.__game existe et expose paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state dans {playing,won,lost} ; un test node verifie que main cable engine<->input<->render sans que engine importe render ou input."
+   }
+  }
+ ]
+}

@@ -1,0 +1,126 @@
+All mandatory reads done; both bracketing oracles read line-by-line. Confirmed absences: `knowledge_packet.json` (ADVISORY — non-bloquant) and no pre-existing `blueprint.json` (greenfield). I have everything needed to freeze the architecture.
+
+---
+
+## RAPPORT FINAL — s4-archi / runm_breakout
+
+### software
+
+Blueprint gelé pour un casse-briques web **socle N1** créé de zéro sous `GAMES/runm_breakout/`, en layout **plat** (page HTML+JS unique, logique `.mjs` testable hors navigateur). **4 modules**, topologie en **étoile** autour d'une racine de composition, **9 paires interdites**, **0 cycle**, **9/9 features couvertes**.
+
+| Module | Responsabilité (1 seule) | Type | `dependances` |
+|---|---|---|---|
+| `engine` | Simulation métier pure & déterministe (état, rebond conservatif, destruction 1-frappe, décrément, états terminaux, RNG seedé, hash) | cœur / feuille | `[]` |
+| `input` | Capture d'intention clavier → état d'entrée neutre | adaptateur entrant / feuille | `[]` |
+| `render` | Rendu DOM d'un instantané reçu (HUD, panneaux terminaux) | adaptateur sortant / feuille | `[]` |
+| `main` | Racine de composition : boucle, câblage, exposition `window.__game` | composition | `[engine, input, render]` |
+
+**Invariant d'architecture central** : `engine` est un **cœur pur** — il n'importe jamais le DOM (`render`) ni le clavier (`input`). La séparation **logique→rendu** et **logique→input** exigée par le dispatch est matérialisée par `["engine","render"]` et `["engine","input"]`, puis durcie : **seul `main` a le droit de dépendre**. Toute autre arête est interdite, ce qui rend un cycle mécaniquement impossible (une seule source d'arêtes sortantes, vers des feuilles).
+
+`_module_of` (lu dans `static_oracles.py:75`) mappe un fichier de premier niveau sur son *stem* → les noms de modules `engine`/`render`/`input`/`main` correspondent exactement à `engine.mjs`/`render.mjs`/`input.mjs`/`main.mjs` d'un layout plat. `index.html` (shell statique, hors `SOURCE_EXTS`) n'est délibérément pas déclaré module : il ne porte aucune feature et n'est jamais scanné pour imports — le déclarer créerait un module sans responsabilité (trou de couverture `check_blueprint_contract`).
+
+### evidence
+
+Conformité **tracée ligne-à-ligne** contre le source des deux oracles (lus), **non exécutée** (`run: aucun`) :
+
+- **Couverture (`check_blueprint_contract` l.211-216 + `featureIds` l.497-505)** : les cibles de `couvre` sont les **ids de FEATURE** R1..R9. Union des couvertures = {R1:render · R2:engine+input · R3,R4,R5:engine · R6,R7:engine+render · R8:engine · R9:engine+main} → **features non couvertes : aucune** ; **couverture fantôme : aucune** (chaque id résout dans `featuremap.json`).
+- **deps_interdites (l.126-142)** : non vide (9 paires), chaque membre ∈ `modules` — vérifié.
+- **Non-contradiction (l.221-228)** : les seules `dependances` déclarées sont `main→{engine,input,render}` ; aucune n'apparaît dans `deps_interdites` (qui ne porte que les arêtes inverses `*→main` et les arêtes entre feuilles).
+- **Cycles (`detecterCycles` l.52-77)** : graphe `main→engine/input/render`, feuilles sans sortie → **0 cycle**.
+- **preuve_attendue (`validateExpectedProof` l.310-322)** : chaque module porte un `kind ∈ {oracle,bot_action,visual}` + statement non vide, **hérités** des `expected_proof` de la featuremap (oracle physique/déterminisme pour `engine`, `bot_action` clavier pour `input`, `visual` HUD/panneaux pour `render`, oracle `window.__game` pour `main`).
+- **check_architecture après build (`static_oracles.check_architecture` l.198)** : avec ce layout, `engine.mjs`/`render.mjs`/`input.mjs` n'importent aucun module frère ; seul `main.mjs` importe les trois → **aucune arête interdite ne peut apparaître**. (Cet oracle appelé MAINTENANT sur un `src` vide serait vacuement vert — ce n'est pas mon oracle, cf. dispatch.)
+
+### claim
+
+**Reçu `check_blueprint_contract` : NON PRODUIT.** Permission `run: aucun` + aucun `blueprint.json` matérialisé par moi (l'exécuteur le matérialise depuis le bloc terminal). Je ne peux adosser aucune affirmation à un oracle **exécuté** vert.
+**claim_verdict: NO_CLAIM_ALLOWED.** Besoin HumanGate (fog) remonté : exécuter, après matérialisation, `node forge/check_blueprint_contract.mjs EVIDENCE/runs/runm_breakout/blueprint.json --featuremap EVIDENCE/runs/runm_breakout/featuremap.json` pour confirmer mécaniquement COUVERTURE / NON-CONTRADICTION / ACYCLICITÉ avant s5-wiremap.
+
+**fog → Pierre** : la racine de code `GAMES/runm_breakout/` en **layout plat socle N1** n'est PAS représentée dans `forge/standard/repo_map.yaml` (racines = topologie V2 numérotée `00_CHARTER`..`10_FORGE`, explicitement `hors_scope` de RUN M par le charter). Écart déjà mesuré au pré-mortem (`manifest-e2b0f5c8ef6fed0e`). Le charter (`criteres_succes` #1 : « page HTML+JS unique … logique .mjs ») **fait autorité** pour ce run et prime sur `repo_map` ; je ne réconcilie pas contre une table qui exclut le socle N1 par construction — décision remontée, non tranchée seule.
+
+### SKIPPED_VALIDATION
+- **Exécution de `check_blueprint_contract.mjs`** — *où* : blueprint runm_breakout — *statut* : non fait — *raison* : `run: aucun` + fichier non matérialisé par cet agent ; délégué à l'exécuteur/matérialiseur en aval.
+- **Confrontation `repo_map.yaml`** — *où* : racine `GAMES/runm_breakout/` — *statut* : partiel (constat sans réconciliation) — *raison* : racine socle N1 absente de la table figée ; conflit remonté en fog HumanGate plutôt que réconcilié unilatéralement.
+- **Lecture ADVISORY `knowledge_packet.json`** — *où* : run_dir — *statut* : sans objet — *raison* : fichier absent du run_dir (confirmé par lecture) ; advisory, non bloquant.
+
+---
+
+```json
+{
+  "modules": ["engine", "render", "input", "main"],
+  "deps_interdites": [
+    ["engine", "render"],
+    ["engine", "input"],
+    ["engine", "main"],
+    ["render", "engine"],
+    ["render", "input"],
+    ["render", "main"],
+    ["input", "engine"],
+    ["input", "render"],
+    ["input", "main"]
+  ],
+  "ownership": {
+    "engine": "simulation-deterministe",
+    "render": "presentation-dom",
+    "input": "capture-clavier",
+    "main": "composition-root"
+  },
+  "responsabilites": [
+    {
+      "module": "engine",
+      "responsabilite": "Simulation metier pure et deterministe : etat {paddle, ball, bricks, bricksRemaining, state}, rebond conservatif (|v| conservee), destruction one-shot des briques, decrement unitaire, transitions terminales won/lost, RNG seede et hash d'etat reproductible. Aucune connaissance du DOM ni du clavier.",
+      "couvre": ["R2_controle_raquette", "R3_rebond_conservatif", "R4_destruction_une_frappe", "R5_progres_mesurable", "R6_victoire_terminale", "R7_defaite_terminale", "R8_determinisme", "R9_etat_inspectable"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "engine.mjs importe hors navigateur par un test node produit a seed fixe : inversion de la composante de vitesse avec |v| conservee a un contact mur/raquette (R3), brique absente de l'etat au tick du contact et non recollidable (R4), bricksRemaining decremente d'exactement 1 (R5), state='won' a bricksRemaining=0 (R6) / 'lost' quand la balle franchit le bord bas sans vie (R7), et deux executions a seed+entrees identiques donnent le meme hash d'etat final (R8)."
+      }
+    },
+    {
+      "module": "input",
+      "responsabilite": "Adaptateur entrant : capture des intentions clavier (Fleche-Gauche / Fleche-Droite) et exposition d'un etat d'entree neutre (gauche/droite/aucune). Ne mute jamais la logique ni le rendu ; traduit un evenement DOM en intention, rien de plus.",
+      "couvre": ["R2_controle_raquette"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Fleche-Droite N frames puis Fleche-Gauche : l'intention exposee par input, appliquee par engine via main, fait croitre puis decroitre window.__game.paddle.x ; sans touche, paddle.x reste constant."
+      }
+    },
+    {
+      "module": "render",
+      "responsabilite": "Adaptateur sortant : rendu DOM d'un instantane d'etat RECU (jamais lu directement dans engine) — HUD objectif non vide, raquette, balle, briques restantes, panneaux terminaux VICTOIRE / DEFAITE. Vue en lecture seule : ne mute aucun etat, ne lit aucune entree.",
+      "couvre": ["R1_objectif_affiche", "R6_victoire_terminale", "R7_defaite_terminale"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "visual",
+        "statement": "A l'ouverture de la page le HUD objectif contient un texte non vide decrivant la destruction du mur (R1) ; quand l'etat passe a 'won' un panneau VICTOIRE est affiche (R6), a 'lost' un panneau DEFAITE (R7)."
+      }
+    },
+    {
+      "module": "main",
+      "responsabilite": "Racine de composition et boucle de jeu : instancie engine (seed), lit l'intention de input, avance la simulation d'un tick, passe l'instantane a render, et expose window.__game (paddle, ball, bricksRemaining, state) independamment du rendu. Unique module autorise a dependre des trois autres.",
+      "couvre": ["R9_etat_inspectable"],
+      "dependances": ["engine", "input", "render"],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Apres chargement, window.__game existe et expose paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state dans {playing,won,lost} ; un test node verifie que main cable engine<->input<->render sans que engine importe render ou input."
+      }
+    }
+  ]
+}
+```
+
+---
+
+**RETURN LINEAGE**
+- `why_task_existed:`
+  - `problem:` non transmis (activation par dispatch `FORGE_DISPATCH:s4-archi:runm-breakout-20260902:1` ; featuremap s3 produite, l'architecture est l'étape 4 attendue de la chaîne).
+  - `oracle:` aucun — activation par séquencement de pipeline, pas par une mesure d'échec.
+  - `root_cause:` non établie (étape nominale, pas une réparation).
+  - `action_reason:` produire le blueprint gelé pour que chaque feature R1..R9 soit portée par ≥1 module traçable, avec séparation logique/rendu/input explicite — condition d'entrée de s5-wiremap.
+- `result:` blueprint texte-seul produit : 4 modules (engine/render/input/main), topologie en étoile, 9 paires interdites, 0 cycle, 9/9 features couvertes, 0 couverture fantôme, aucune dépendance déclarée présente dans deps_interdites. `check_blueprint_contract` non exécuté (run: aucun, texte-seul).
+- `proof:` aucune commande exécutée. Reçu à produire par l'exécuteur : `node forge/check_blueprint_contract.mjs EVIDENCE/runs/runm_breakout/blueprint.json --featuremap EVIDENCE/runs/runm_breakout/featuremap.json` (attendu : `VERDICT BLUEPRINT (avant build): OK`).
+- `learning:` `check_architecture._module_of` réduit un fichier de premier niveau à son *stem* — donc un socle N1 plat (`engine.mjs`…) donne directement des noms de modules `engine/render/input/main` sans dossiers ; réutilisable pour tout futur jeu web N1. Corollaire : durcir la topologie en étoile (seul `main` dépend) rend l'acyclicité structurelle plutôt que vérifiée après coup.
+- `next_reason:` la chaîne ne se ferme pas ici sur un point unique — la preuve mécanique (`check_blueprint_contract` vert) manque car la sortie est texte-seul : l'exécuteur doit matérialiser `blueprint.json` puis exécuter l'oracle avant s5. Second point ouvert, remonté en fog : la racine `GAMES/runm_breakout/` (socle N1) hors `repo_map.yaml` — décision Pierre requise (le charter prime pour ce run, mais la table figée ne l'enregistre pas).
+
+SKIPPED_VALIDATION: voir section dédiée ci-dessus (3 items : exécution `check_blueprint_contract`, confrontation `repo_map.yaml`, lecture ADVISORY `knowledge_packet.json`).
+RETURN_REASON: {"status": "DISCOVERED", "problem": "La racine de code GAMES/runm_breakout/ en layout plat socle N1 n'est pas representable dans forge/standard/repo_map.yaml, dont les racines figees sont la topologie V2 numerotee 00_CHARTER..10_FORGE explicitement hors_scope du run.", "root_cause": "repo_map.yaml ne modelise que la topologie V2 numerotee ; le socle N1 flat web impose par le charter n'y a aucune racine correspondante."}

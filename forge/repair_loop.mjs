@@ -135,6 +135,32 @@ const _CHEMIN = /^[A-Za-z_][A-Za-z0-9_]*(\[\d+\])*(\.[A-Za-z_][A-Za-z0-9_]*(\[\d
 const _EXTENSION_FICHIER = /\.(json|mjs|cjs|js|ts|py|ya?ml|md|txt|gd|rs|jsonl)$/i;
 
 /**
+ * TOUS les findings rendus par un oracle, pas seulement `problems`.
+ *
+ * D-1 (GO Pierre 2026-09-02, apres RUN M) — DEFAUT MESURE : `check_wiremap_contract` rend QUATRE
+ * listes (`problems`, `capacites_non_couvertes`, `couverture_fantome`, `maillon_non_lie`) et
+ * cette boucle n'en comptait qu'une. Sur RUN M elle a rempli les 12 `couvre` manquants : la
+ * FORME est passee de 12 problemes a 0 — recu « PROBLEMS_BEFORE 12 -> AFTER 0 » — pendant que
+ * `couverture_fantome` passait de 0 a 12, hors de son champ de vision. L'oracle rendait toujours
+ * FAIL. Le defaut n'avait pas ete repare : il avait ete DEPLACE vers une liste non comptee
+ * (loi du deplacement, ratifiee 2026-08-04).
+ *
+ * Generique : concatene toute propriete tableau-de-chaines du resultat — vaut pour les cinq
+ * oracles branches, sans en nommer aucun.
+ * @param {object} resultat sortie de `valider()`
+ * @returns {string[]}
+ */
+export function tousLesFindings(resultat) {
+  if (!resultat || typeof resultat !== 'object') return [];
+  const out = [];
+  for (const [cle, valeur] of Object.entries(resultat)) {
+    if (cle === 'stats' || !Array.isArray(valeur)) continue;
+    for (const x of valeur) if (typeof x === 'string' && x.trim()) out.push(x);
+  }
+  return out;
+}
+
+/**
  * Transforme les findings texte d'un oracle en findings structurés.
  * @param {string[]} problems
  * @returns {Array<{brut:string, chemin:string|null, raison:string, classe:'champ'|'structurel'}>}
@@ -373,7 +399,7 @@ export async function boucleReparation({
   let resultat = await valider(courant);
 
   for (let n = 1; resultat.ok !== true && n <= maxCycles; n += 1) {
-    const findings = analyserFindings(resultat.problems);
+    const findings = analyserFindings(tousLesFindings(resultat));   // D-1 : les 4 listes
     const { reparables, non_reparables } = classer(courant, findings);
 
     if (reparables.length === 0) {
@@ -406,7 +432,7 @@ export async function boucleReparation({
     }
 
     const app = appliquerReparation(courant, patch, reparables.map((f) => f.chemin));
-    const avantOk = resultat.problems.length;
+    const avantOk = tousLesFindings(resultat).length;               // D-1
 
     // REJET SI RÉGRESSION. La liste blanche l'empêche par construction, mais si elle
     // devait un jour laisser passer quelque chose, on ne garde PAS l'artefact : on
@@ -434,7 +460,7 @@ export async function boucleReparation({
       regressions: app.regressions,
       non_reparables: non_reparables.map((f) => f.brut),
       problems_avant: avantOk,
-      problems_apres: resultat.problems.length,
+      problems_apres: tousLesFindings(resultat).length,             // D-1
       prompt_chars: promptCars,
       appels_modele: reparables.length,
     });
@@ -450,10 +476,10 @@ export async function boucleReparation({
     // 81 tokens pour un compte de problèmes rigoureusement identique (2 -> 2 -> 2).
     // Le seul signal honnête de progrès est la DÉCROISSANCE STRICTE du nombre de
     // problèmes remontés par l'oracle.
-    if (resultat.ok !== true && resultat.problems.length >= avantOk) {
+    if (resultat.ok !== true && tousLesFindings(resultat).length >= avantOk) {   // D-1
       cycles.push({
         cycle: n,
-        arret: `aucun progres mesure (${avantOk} -> ${resultat.problems.length} problemes) — `
+        arret: `aucun progres mesure (${avantOk} -> ${tousLesFindings(resultat).length} problemes) — `
           + 'des champs ont ete ecrits mais l\'oracle n\'en accepte pas davantage ; '
           + 'la reparation locale ne converge pas sur ce cas, il faut regenerer ou revoir le contrat',
       });
@@ -469,7 +495,7 @@ export async function boucleReparation({
       cycles_utilises: cycles.filter((c) => c.repaired_fields).length,
       champs_repares: cycles.flatMap((c) => c.repaired_fields || []),
       regressions: cycles.flatMap((c) => c.regressions || []),
-      problems_restants: resultat.problems ? resultat.problems.length : 0,
+      problems_restants: tousLesFindings(resultat).length,          // D-1
     },
   };
 }

@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s5-wiremap", "git_head": "2769dc8ae97d8cfff8ebbf6ec4254b239ddbfdbb", "hmac": "f41130dac7da655d94ac49c2d608c97ca39be300d7746f25365afb69b7129147", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "runm-breakout-20260902", "schema": "forge.context_manifest.v1", "ts": 1788364853.5774064}

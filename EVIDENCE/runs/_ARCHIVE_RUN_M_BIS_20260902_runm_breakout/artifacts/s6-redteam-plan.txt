@@ -1,0 +1,17 @@
+Pour commencer cette tâche, je vais suivre les étapes décrites dans le cadre de la procédure fournie. Voici un résumé des actions que je vais entreprendre :
+
+1. **Lecture et Compréhension du Contexte** : Je vais lire attentivement toutes les ressources fournies (SCHEMA.md, blueprint.yaml, WireMap) pour comprendre le contexte et l'état actuel du projet.
+
+2. **Analyse Critique** : En tant que red-team, je vais analyser le plan d'architecture et de câblage en cherchant activement les failles, angles morts, dépendances fragiles et câblages incohérents.
+
+3. **Proposition de Corrections** : Pour chaque problème identifié, j'émettrai des propositions de corrections qui peuvent être appliquées au plan d'architecture et à la WireMap sans remettre en question les décisions techniques ou l'implémentation du code.
+
+4. **Rapport Final** : Je vais produire un rapport détaillé listant chaque faille sous forme {angle, faille, correction_proposée} avec un verdict GO-si-corrigé pour chaque point critique identifié.
+
+5. **Révision des Artefacts** : Si nécessaire, je modifierai les artefacts d'architecture et de WireMap en conséquence des corrections proposées, mais uniquement dans le périmètre autorisé (pas de modification du code ou des tests).
+
+6. **Validation et Remontée** : Chaque affirmation du rapport final sera appuyée par l'oracle technique approprié selon les conventions établies.
+
+7. **Finalisation du Rapport** : Je terminerai le rapport avec une section finale qui respecte strictement la structure requise, y compris la ligne de retour unique en format JSON.
+
+Je vais maintenant commencer par lire attentivement toutes les ressources fournies pour m'assurer que j'ai une compréhension complète du contexte avant d'entamer l'analyse critique.

@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s3-decompo", "git_head": "2769dc8ae97d8cfff8ebbf6ec4254b239ddbfdbb", "hmac": "ad4a1674ff1e4e1c601ae42e3c1ef9a27d887feac4e888aba50754326272e56d", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "runm-breakout-20260902", "schema": "forge.context_manifest.v1", "ts": 1788364249.385523}

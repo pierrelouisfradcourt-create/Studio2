@@ -1,0 +1,238 @@
+{
+ "game_id": "runm_breakout",
+ "systemes": [
+  {
+   "id": "SYS_CONTROLE",
+   "features": [
+    {
+     "id": "F_raquette_mouvement",
+     "capacites": [
+      {
+       "id": "cap_raquette_gauche_entree",
+       "capacite": "Le joueur agit sur l'affordance clavier raquette_gauche (capacite d'ENTREE).",
+       "source_ref": "R02_action_left",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse raquette_gauche pendant N frames ; verifier que raquette_x a change dans le sens gauche."
+       }
+      },
+      {
+       "id": "cap_raquette_gauche_effet",
+       "capacite": "La position affichee raquette_x diminue a l'ecran (capacite d'EFFET).",
+       "source_ref": "R02_action_left",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse raquette_gauche pendant N frames ; verifier que raquette_x a change dans le sens gauche."
+       }
+      },
+      {
+       "id": "cap_raquette_droite_entree",
+       "capacite": "Le joueur agit sur l'affordance clavier raquette_droite (capacite d'ENTREE).",
+       "source_ref": "R03_action_right",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse raquette_droite pendant N frames ; verifier que raquette_x a change dans le sens droit."
+       }
+      },
+      {
+       "id": "cap_raquette_droite_effet",
+       "capacite": "La position affichee raquette_x augmente a l'ecran (capacite d'EFFET).",
+       "source_ref": "R03_action_right",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse raquette_droite pendant N frames ; verifier que raquette_x a change dans le sens droit."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_BALLE",
+   "features": [
+    {
+     "id": "F_balle_physique",
+     "capacites": [
+      {
+       "id": "cap_balle_visible_rebonds",
+       "capacite": "Une balle visible se deplace en continu et rebondit sur les murs lateraux, le mur haut et la raquette.",
+       "source_ref": "R11_ball_visible",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Sur plusieurs frames, verifier que la position de la balle change et s'inverse au contact des bords et de la raquette."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_BRIQUES",
+   "features": [
+    {
+     "id": "F_briques_destruction",
+     "capacites": [
+      {
+       "id": "cap_brique_disparait",
+       "capacite": "Quand la balle touche une brique, cette brique disparait de l'ecran et briques_restantes diminue de 1.",
+       "source_ref": "R04_response_brick",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot amene la balle sur une brique ; verifier qu'elle disparait et que briques_restantes a decru."
+       }
+      },
+      {
+       "id": "cap_score_augmente",
+       "capacite": "A chaque brique detruite, le score affiche augmente d'une valeur strictement positive dans la meme frame.",
+       "source_ref": "R05_reward_score",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot casse une brique ; comparer le score avant/apres et verifier une hausse strictement positive."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_ecrans_progression",
+     "capacites": [
+      {
+       "id": "cap_unlock_ecran2_entree",
+       "capacite": "Le joueur agit sur l'affordance derniere_brique_ecran1 en detruisant la derniere brique de l'ecran 1 (capacite d'ENTREE, maillon UNLOCK).",
+       "source_ref": "R07_unlock_screen2",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot vide l'ecran 1 ; verifier qu'un nouveau champ de briques (ecran_2) devient visible."
+       }
+      },
+      {
+       "id": "cap_unlock_ecran2_effet",
+       "capacite": "Un second ecran de briques (ecran_2) apparait a l'ecran (capacite d'EFFET, maillon UNLOCK).",
+       "source_ref": "R07_unlock_screen2",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot vide l'ecran 1 ; verifier qu'un nouveau champ de briques (ecran_2) devient visible."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_OBJECTIF",
+   "features": [
+    {
+     "id": "F_objectif_hud",
+     "capacites": [
+      {
+       "id": "cap_objectif_nonvide",
+       "capacite": "Le HUD affiche en permanence un objectif non vide lisible a tout instant de la partie.",
+       "source_ref": "R01_goal_clear",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Au demarrage, capturer le HUD et verifier que la zone objectif contient un texte non vide."
+       }
+      },
+      {
+       "id": "cap_objectif_ecran1",
+       "capacite": "Au demarrage, le HUD objectif affiche le texte 'Vider l'ecran 1' (maillon NEXT_GOAL, effet visible).",
+       "source_ref": "R08_nextgoal_screen1",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Capturer le texte objectif au demarrage et verifier qu'il vaut 'Vider l'ecran 1'."
+       }
+      },
+      {
+       "id": "cap_objectif_ecran2",
+       "capacite": "Apres l'apparition de l'ecran 2, le HUD objectif affiche le texte distinct 'Vider l'ecran 2' (maillon NEXT_GOAL, effet visible).",
+       "source_ref": "R09_nextgoal_screen2",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Apres passage a l'ecran 2, verifier que le texte objectif est 'Vider l'ecran 2' et differe textuellement de 'Vider l'ecran 1'."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_DECISION",
+   "features": [
+    {
+     "id": "F_angle_renvoi",
+     "capacites": [
+      {
+       "id": "cap_decision_angle_score",
+       "capacite": "Le joueur choisit d'orienter le renvoi vers la gauche ou la droite ; sur 300 frames la politique choisie fait varier le score.",
+       "source_ref": "R06_decision_angle",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Rejouer les deux politiques sur 300 frames a seed fixe ; verifier que la metrique score differe entre elles."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_ETAT_PARTIE",
+   "features": [
+    {
+     "id": "F_vies",
+     "capacites": [
+      {
+       "id": "cap_vies_compteur",
+       "capacite": "Le HUD affiche un compteur de vies initialise a 3, decremente de 1 chaque fois que la balle passe sous la raquette.",
+       "source_ref": "R15_lives",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Faire tomber la balle une fois ; verifier que le compteur de vies affiche passe de 3 a 2."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_fin_partie",
+     "capacites": [
+      {
+       "id": "cap_victoire",
+       "capacite": "Quand la derniere brique de tous les ecrans est detruite, un ecran/message de victoire s'affiche et la partie s'arrete.",
+       "source_ref": "R12_win_screen",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot detruit toutes les briques ; verifier l'apparition de l'ecran de victoire et l'arret de la simulation."
+       }
+      },
+      {
+       "id": "cap_defaite",
+       "capacite": "Quand la balle passe sous la raquette une 3e fois (vies epuisees), un ecran/message de game over s'affiche et la partie s'arrete.",
+       "source_ref": "R13_lose_screen",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot laisse la balle tomber 3 fois ; verifier l'apparition du game over et l'arret de la simulation."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_LOGIQUE",
+   "features": [
+    {
+     "id": "F_determinisme",
+     "capacites": [
+      {
+       "id": "cap_determinisme_hash",
+       "capacite": "A seed fixe et suite d'inputs fixe, la logique metier (.mjs hors navigateur) produit un etat final identique, verifiable par hash.",
+       "source_ref": "R14_determinism",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Executer la logique deux fois hors navigateur a seed+inputs identiques ; comparer le hash de l'etat final (egalite exigee)."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

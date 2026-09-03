@@ -3326,7 +3326,14 @@ def claude_executor(add_dir: Path, task_by_step: dict[str, str], *,
         # (c) escalade honorée : le driver écrit model_override dans le context à
         # chaque escalade (forge.driver._maybe_escalate) — l'ignorer rendrait
         # l'escalade no-op (même modèle rejoué à chaque tier).
-        model = context.get("model_override") or payload.model
+        # ESC-1 (Pierre 2026-09-03) : l'override d'escalade ne s'applique QU'A l'étape qu'il
+        # vise. Avant ce lot il était de portée RUN et écrasait aussi le modèle du reviewer
+        # indépendant (s11), détruisant l'indépendance que ADR-002 gate 4 exige — mesuré sur
+        # M ter : `redteam_ran=False`, reviewer = le modèle d'escalade. Le reviewer conserve
+        # désormais son propre routage, quel que soit le tier atteint par le builder.
+        _override = context.get("model_override")
+        _portee = context.get("model_override_scope")
+        model = _override if (_override and (not _portee or _portee == etape)) else payload.model
         timeout_s = _timeout_effectif(profile, etape, step_timeout)
         if timeout_s != step_timeout:
             # Journalisé dans <run_dir>/run.log (handler attaché par le driver) :
@@ -3499,6 +3506,20 @@ def claude_executor(add_dir: Path, task_by_step: dict[str, str], *,
             )
             if mesure is not None:
                 res["repair"] = mesure
+            # D-2 (GO Pierre 2026-09-02) : SECOND reçu de jointure, APRÈS réparation.
+            # Le reçu (b-bis) décrit ce que l'AGENT a produit ; celui-ci décrit ce que le fichier
+            # CONTIENT une fois la boucle passée. Sur RUN M l'écart était total — `EMPTY_FORM` au
+            # reçu, `VOID` sur disque — et un seul des deux était écrit. Les deux constats sont
+            # vrais et disent des choses différentes : on les nomme tous les deux.
+            if etape == "s5-wiremap":
+                apres = check_wiremap_join(Path(context["run_dir"]))
+                if apres is not None:
+                    res["join_check_apres_reparation"] = apres
+                    avant = res.get("join_check") or {}
+                    if avant.get("regime") != apres.get("regime"):
+                        apres["ecart_avec_avant"] = (
+                            f"{avant.get('regime')} (agent) -> {apres.get('regime')} (après réparation)"
+                            " — la boucle a modifié la jointure")
             if etape == "s11-redteam-code":
                 # (n1) findings AUDIBLES : extraction déterministe, jamais un LLM
                 # ne relit le rapport. `res["blocked"]` volontairement NON posé

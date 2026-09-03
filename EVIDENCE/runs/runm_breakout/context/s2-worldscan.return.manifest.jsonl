@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s2-worldscan", "git_head": "2769dc8ae97d8cfff8ebbf6ec4254b239ddbfdbb", "hmac": "e1c38bbc2bb7555cff2f51d34e6793335dc0a57779f2b604c92197d52c643895", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "runm-breakout-20260902", "schema": "forge.context_manifest.v1", "ts": 1788394953.7471929}

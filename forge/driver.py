@@ -1559,6 +1559,9 @@ class ForgeDriver:
             "project": self.project,
             "run_dir": str(self.run_dir),
             "model_override": state.get("model_override"),
+            # ESC-1 : repli sur le builder pour un state.json antérieur au lot — l'escalade
+            # n'a jamais visé autre chose que le builder, donc la reprise reste correcte.
+            "model_override_scope": state.get("model_override_scope") or self._builder_step(),
             "dispatch_marker": f"FORGE_DISPATCH:{etape}:{self.run_id}:1",
             "attempt": 1,
             # Note bornée (C2) : le contrat de base (round>=2, texte déjà
@@ -2358,6 +2361,9 @@ class ForgeDriver:
                     "project": self.project,
                     "run_dir": str(self.run_dir),
                     "model_override": state.get("model_override"),
+            # ESC-1 : repli sur le builder pour un state.json antérieur au lot — l'escalade
+            # n'a jamais visé autre chose que le builder, donc la reprise reste correcte.
+            "model_override_scope": state.get("model_override_scope") or self._builder_step(),
                     "dispatch_marker": f"FORGE_DISPATCH:{etape}:{self.run_id}:{entry['attempts']}",
                     "attempt": entry["attempts"],
                     "premortem": self._premortem(),
@@ -2497,6 +2503,9 @@ class ForgeDriver:
         entry["detail"] = {
             "model": payload.model,
             "model_override": state.get("model_override"),
+            # ESC-1 : repli sur le builder pour un state.json antérieur au lot — l'escalade
+            # n'a jamais visé autre chose que le builder, donc la reprise reste correcte.
+            "model_override_scope": state.get("model_override_scope") or self._builder_step(),
             "runner": runner,
             "reviewer": reviewer,
             "qwen_ok": qwen_ok,
@@ -2590,6 +2599,11 @@ class ForgeDriver:
         join_check = res.get("join_check") if isinstance(res, dict) else None
         if join_check is not None:
             entry["detail"]["join_check"] = join_check
+        # D-2 : le SECOND reçu (après réparation) doit être recopié lui aussi, sinon on
+        # reproduirait exactement le motif que ce lot corrige.
+        join_apres = res.get("join_check_apres_reparation") if isinstance(res, dict) else None
+        if join_apres is not None:
+            entry["detail"]["join_check_apres_reparation"] = join_apres
         # J-2 (GO Pierre 2026-09-02) — 7e occurrence du motif, et la plus lourde :
         # `run_real` pose `res["repair"]` sur CHAQUE étape réparable depuis le
         # branchement de la boucle de réparation, et RIEN dans tout `scripts/forge` (V1) ne
@@ -2603,6 +2617,19 @@ class ForgeDriver:
         repair = res.get("repair") if isinstance(res, dict) else None
         if repair is not None:
             entry["detail"]["repair"] = repair
+        # C-1 (GO Pierre 2026-09-02) — 8e occurrence du motif « produit mais perdu », et la plus
+        # gênante : `route_step` produit une `reason` de DÉGRADATION et sa propre docstring
+        # promet « visibilité de la dégradation, JAMAIS silencieuse » — or personne ne l'écrivait
+        # (0 occurrence de `decision.reason` dans ce fichier avant ce lot). Sur RUN M, la chaîne a
+        # dégradé le reviewer indépendant vers claude-blind en journalisant un motif FAUX, et rien
+        # ne l'a consigné. Un fallback qui ne laisse pas de trace est indistinguable d'un choix.
+        # ADVISORY : recopie seule, aucun statut ni verdict modifié.
+        if getattr(decision, "reason", ""):
+            entry["detail"]["route_degradation"] = {
+                "runner": decision.runner,
+                "reviewer": decision.reviewer,
+                "reason": decision.reason,
+            }
         # P3 (2026-08-15) — même motif, 4e et 5e occurrences fermées ensemble :
         # `tools_used` (Expérience C : usage RÉEL d'outils par le worker, {} = zéro
         # invocation mesuré) et `findings_note` (note d'honnêteté de l'extraction
@@ -5364,6 +5391,15 @@ class ForgeDriver:
                 self._save(state)
             return False
         state["model_override"] = d.next_model
+        # ESC-1 (décision CONTRACTUELLE Pierre 2026-09-03, après M ter) — PORTÉE de l'escalade.
+        # DÉFAUT MESURÉ : `model_override` était de portée RUN et `run_real` l'appliquait à
+        # TOUTES les étapes. Sur M ter, l'escalade du builder (haiku -> sonnet -> opus) a donc
+        # remplacé le reviewer INDÉPENDANT de s11 par le modèle d'escalade :
+        # `redteam_ran=False`, « red-team dégradé ». Plus le build était difficile, MOINS sa
+        # revue était indépendante — exactement à l'envers de ce qu'on veut.
+        # RÈGLE : une escalade du builder ne modifie JAMAIS le modèle du reviewer indépendant.
+        # L'override porte donc le nom de l'étape qu'il vise, et cette étape SEULE l'applique.
+        state["model_override_scope"] = builder
         state["escalations"] = int(state.get("escalations", 0)) + 1
         state["pool_attempts"] = 0  # nouveau tier -> budget de pool reinitialise
         replay = self._steps_to_replay()

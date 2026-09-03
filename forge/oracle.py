@@ -124,6 +124,17 @@ def run_oracle(
             cwd=str(spec.cwd),
             capture_output=True,
             text=True,
+            # RUN M bis (2026-09-02) : SEUL des quatre `subprocess.run` de ce fichier à ne pas
+            # nommer son encodage (les l.183/214/266 le font depuis toujours). Conséquence
+            # MESURÉE et reproduite : le jeu imprime un cadre `╔═══╗` ; sous une locale cp1252 le
+            # thread lecteur lève UnicodeDecodeError, `completed.stdout` devient None, et
+            # `fh.write(None)` fait tomber s10a en TypeError — alors que l'oracle du jeu, lancé
+            # à la main, rendait PASS + SOLVABLE. La chaîne butait sur sa propre LECTURE de la
+            # sortie, jamais sur le produit. Défaut hérité de V1, latent : il ne se manifeste que
+            # depuis un shell non-UTF-8. `errors="replace"` garantit qu'aucun octet ne peut plus
+            # faire disparaître une preuve — un caractère illisible vaut mieux qu'un `None`.
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout,
         )
     except subprocess.TimeoutExpired as exc:

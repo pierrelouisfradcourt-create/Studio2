@@ -1,0 +1,226 @@
+J'ai maintenant les données nécessaires. Voici mon observation du World Scan sur les jeux comparables au projet runm_breakout.
+
+## OBSERVATION — Patterns externes comparables à runm_breakout
+
+### Vue d'ensemble
+
+Le projet runm_breakout est un casse-briques minimaliste pour le web, ciblant une boucle arcade-skill classique : paddler → casser des briques → recommencer. Trois jeux comparables offrent des architectures de référence à des niveaux de complexité croissants, du classique au roguelike moderne.
+
+---
+
+### 1. Breakout (Atari, 1976) — Archétype pur
+
+**Mécanique centrale** ([Breakout - TV Tropes](https://tvtropes.org/pmwiki/pmwiki.php/VideoGame/Breakout1976)) : une raquette et une balle ricochetant sur un mur de briques. Le joueur pivote la raquette horizontalement, la balle rebondit aux angles variables selon le point de contact sur la raquette. Les briques disparaissent à l'impact et génèrent des points.
+
+**Progression & économie** ([Breakout Wikipedia](https://en.wikipedia.org/wiki/Breakout_(video_game))) : tiered scoring (Yellow=1pt, Green=3pt, Orange=5pt, Red=7pt) + deux écrans complets à détruire. La raquette se réduit à 50% après avoir cassé les briques rouges, forçant la précision. La vitesse de la balle augmente à 4 hits, 12 hits, et au contact des rangs supérieurs.
+
+**Boucles d'engagement** :
+- **minute_1** : bounce balle, first brick destroyed, score appears, immediate feedback
+- **minute_10** : clear screen halfway, ball speed increases noticeably, paddle control becomes skill-based
+- **hour_5** : destroy full first screen, transition to second screen, raquette shrink event
+- **endgame** : all 96 bricks destroyed = WIN / 3 lives lost = LOSE, game halts
+
+**Raison du retour** : score fini (896 points max) crée un objectif clair ; simplicité masque une profondeur de trajectoire-prédiction ; chaque run court (5-15 min) encourages retry.
+
+**Architecture supposée** : state machine simple (PLAYING, WIN, LOSE) + event-driven physics (ball collision, paddle position, score update) + render loop — zéro économie, zéro récompense non-observable.
+
+---
+
+### 2. Arkanoid (Taito, 1986) — Évolution avec complexité
+
+**Mécanique centrale** ([Arkanoid Wikipedia](https://en.wikipedia.org/wiki/Arkanoid)) : même raquette-balle que Breakout, mais 33 niveaux avec variété de briques (certaines multi-hit, certaines indestructibles) + capsules power-up libérées aléatoirement (longer paddle, ball slow, extra life, multi-ball, cannon).
+
+**Progression & économie** ([Arkanoid Wikipedia](https://en.wikipedia.org/wiki/Arkanoid)) : 33 niveaux à traverser linéairement, culminant à un boss (DOH). Chaque niveau possède sa topologie de brique. Les capsules introduisent de la volatilité : un joueur peut chuter rapidement sans les power-ups, ou dominer avec eux.
+
+**Boucles d'engagement** :
+- **minute_1** : learn paddle control, break few bricks, encounter first power-up capsule
+- **minute_10** : master power-up juggling, adapt to brick variety (multi-hit vs indestructible), understand level layout
+- **hour_5** : complete 5-8 levels, face escalating enemy patterns, build confidence in paddle reflexes
+- **endgame** : reach DOH boss stage, defeat boss → game complete regardless of outcome (no continue on final stage)
+
+**Raison du retour** : 33 distinct layouts prevent repetition ; power-up randomness encourages multiple attempts per level ; boss finale creates narrative closure.
+
+**Architecture supposée** : level editor abstraction (brick arrays per stage) + pickup system (capsule spawning, collision detection) + enemy AI (DOH pattern) + progression tracker — encore zéro économie persistante, mais scaffolding pour la complexité.
+
+---
+
+### 3. Peglin (Red Nexus Games, 2023) — Roguelike pachinko
+
+**Mécanique centrale** ([Peglin interview - TouchArcade](https://toucharcade.com/2023/09/11/pegilin-future-content-dlc-pricing-features-cross-save-steam-early-access-community-ports-interview/)) : pas de raquette fixe, mais un orbe tiré manuellement vers un plateau de piquets (pachinko-style). Chaque pique touché accumule des dégâts vers un ennemi. Les orbes diffèrent (déblocages progressive) ; les piquets spéciaux varient l'impact (reset, critical hit, débuff ennemi).
+
+**Progression & économie** ([Peglin review - PC Gamer](https://www.pcgamer.com/be-a-little-pachinko-playing-goblin-in-peglin/)) : roguelike avec carte générée aléatoirement, combats alternés avec boutiques et événements narratifs. Deck-building : le joueur choisit quels orbes emporter, quelles reliques équiper (permanent power-up). Synergies émergent. Au niveau 20+, un mode Cruciball ajoute un handicap croissant à chaque re-run.
+
+**Boucles d'engagement** :
+- **minute_1** : aim orb, watch bounce, learn peg physics, first damage dealt
+- **minute_10** : fight first enemy, manage orb choices post-combat, discover power-up synergies
+- **hour_5** : complete 3-4 dungeon floors, adapt relics and orbs to enemy types, face mid-run bosses
+- **endgame** : reach final dungeon boss, victory = complete run + unlock loot / defeat = death + reset to run start, Cruciball mode unlocks harder escalation
+
+**Raison du retour** : procedurally random maps ensure no two runs identical ; deck-building creates replayability (theorycrafting builds) ; roguelike death + loot loops tap into incremental-progress dopamine ; high skill ceiling (aiming precision).
+
+**Architecture supposée** : roguelike framework (dungeon generator, run state, death tracking) + pachinko physics (orb, peg, collision, scoring) + deck/relic system (persistent meta-progression) + enemy encounter AI — véhicule économie de reliques (meta-currency) et déblocages d'orbes par run.
+
+---
+
+### Récapitulatif comparatif
+
+| Jeu | Genre | Paddle/Shooter | Physics | Progression | Économie | Durée moyenne run |
+|---|---|---|---|---|---|---|
+| **Breakout** | Arcade skill-loop | Static paddle | Ball ricochet | 2 screens fixed | Score only | 5-15 min |
+| **Arkanoid** | Arcade progression | Static paddle | Ball + pickups | 33 levels linear | Powerups (transient) | 30-60 min |
+| **Peglin** | Roguelike pachinko | Aiming mechanic | Orb bounce + physics RNG | Procedural dungeon | Relics + orbs (meta) | 15-45 min per run |
+
+**Observations architecturales pour runm_breakout** :
+- Breakout offre le **template minimal** : state machine, physics loop, render, no persistence needed.
+- Arkanoid montre comment **scale par niveaux** sans explosion de système.
+- Peglin démontre que la **mécanique pachinko-style** (vs pure paddler) reste engageante et ouvre un design-space alternatif (si exploration future).
+
+**Briques candidates à l'import** (depuis knowledge_base ou jeux verts) :
+1. Ball physics + paddle collision (Breakout-style).
+2. Brick array rendering + hit detection (Arkanoid idiom pour variété).
+3. Simple state machine (PLAYING → WIN/LOSE).
+4. Score tracking + display (observable, non-persistent).
+
+**Pièges connus** :
+- Breakout se tue par ennui après 896 points (score fini) → runtime minimal mais satisfaction limitée.
+- Arkanoid requiert **33 level designs distincts** → poids de création manuel, sauf si procédural.
+- Peglin montre que roguelike + procedural = rétention accrue, mais complexité architecturale +3x.
+
+Pour runm_breakout (minimal jouable), **Breakout template est le bon choix** : boucle claire, oracles vérifiables, pas de dépendance à l'économie.
+
+---
+
+```json
+{
+  "games": [
+    {
+      "game": "Breakout (Atari, 1976)",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/Breakout_(video_game)",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://tvtropes.org/pmwiki/pmwiki.php/VideoGame/Breakout1976",
+          "type": "article",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.arcade-museum.com/Videogame/breakout",
+          "type": "article",
+          "timestamp": null
+        }
+      ],
+      "loops": {
+        "minute_1": "Player bounces ball off paddle, destroys first brick group, score increments, immediate visual feedback. Ball physics begin with base speed.",
+        "minute_10": "Halfway through first screen cleared. Ball speed increases after 4 hits and 12 hits. Paddle control becomes precise. Player manages angle prediction.",
+        "hour_5": "Complete first screen, transition to second screen. Paddle shrinks to 50% size. Difficulty escalates noticeably. Score accumulation becomes challenging.",
+        "endgame": "Destroy all bricks on both screens = VICTORY. Lose 3 lives (ball passes bottom) = DEFEAT. Game halts immediately. Final score = 896 max (single-player)."
+      },
+      "objectives": [
+        {
+          "mode": "solo",
+          "has_win_state": true,
+          "victory_condition": "Destroy all 96 bricks across two screens before losing 3 balls",
+          "has_defeat_state": true,
+          "defeat_condition": "Ball passes below paddle 3 times (3 lives exhausted)",
+          "player_goal": "Maximize score (tiered: Yellow 1pt, Green 3pt, Orange 5pt, Red 7pt) and clear both screens"
+        }
+      ],
+      "retention_answer": "Score is a clear, finite objective (896 max), creating a challenge-focused appeal rather than endless progression. Simple mechanics mask prediction-depth: trajectory angles depend on paddle contact point, forcing skill development. Short runtime (5-15 min) enables rapid retry loops, encouraging mastery-seeking behavior."
+    },
+    {
+      "game": "Arkanoid (Taito, 1986)",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/Arkanoid",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://brick-breaker.io/arkanoid",
+          "type": "article",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.classicgame.com/Arkanoid",
+          "type": "article",
+          "timestamp": null
+        }
+      ],
+      "loops": {
+        "minute_1": "Paddle responds to input. Break first bricks. Encounter first power-up capsule. Learn visual feedback for capsule type (multi-ball icon, slow-down icon, etc.).",
+        "minute_10": "Complete 1-2 levels. Adapt paddle to new brick layouts (multi-hit bricks appear). Juggle power-ups strategically (choose which to catch). Refine paddle timing.",
+        "hour_5": "Progress through 5-8 levels (of 33). Master enemy patterns (floating enemies for bonus points). Recognize that power-up randomness creates volatility. Difficulty escalates per level.",
+        "endgame": "Reach DOH boss (level 33). Defeat DOH = VICTORY. No continue allowed after running out of lives on final stage = DEFEAT. Game ends regardless."
+      },
+      "objectives": [
+        {
+          "mode": "solo",
+          "has_win_state": true,
+          "victory_condition": "Defeat DOH boss on level 33",
+          "has_defeat_state": true,
+          "defeat_condition": "Lose all lives before reaching or defeating DOH",
+          "player_goal": "Progress through 33 distinct levels, collect power-ups strategically, defeat the final boss"
+        }
+      ],
+      "retention_answer": "33 levels provide sustained progression without repetition; each level has distinct brick topology and enemy patterns. Power-up randomness (paddle extend, ball slow, extra life, multi-ball, cannon) creates volatility and re-run incentives—a player might fail level 5 once, then clear it with lucky power-up drops. Boss finale (DOH) provides narrative closure and a final skill-check. Total playtime (30-60 min per run) suits arcade cabinet economy."
+    },
+    {
+      "game": "Peglin (Red Nexus Games, 2023)",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/Peglin",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://toucharcade.com/2023/09/11/pegilin-future-content-dlc-pricing-features-cross-save-steam-early-access-community-ports-interview/",
+          "type": "article",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.pcgamer.com/be-a-little-pachinko-playing-goblin-in-peglin/",
+          "type": "article",
+          "timestamp": null
+        }
+      ],
+      "loops": {
+        "minute_1": "Aim and fire first orb at peg board. Watch orb bounce and accumulate damage to enemy. Learn peg interaction (green R pegs reset board, yellow ! pegs critical hits). First combat resolved after orb depletes.",
+        "minute_10": "Complete first enemy encounter. Choose reward (new orb type or relic). Understand synergy potential (e.g., fire orb + chill relic = slow burn). Enter second encounter. Deck-building mindset begins.",
+        "hour_5": "Traverse 3-4 dungeon floors. Fight escalating enemies. Visit shops and narrative events (non-combat choices). Collect relics and orbs. Build synergistic loadouts. Face mid-run boss. Meta-progression (unlock new orb types) becomes visible.",
+        "endgame": "Reach final dungeon boss. Defeat final boss = RUN VICTORY + loot unlock. Lose all health before boss = RUN DEFEAT + return to lobby. Cruciball mode (level 20+ difficulty) auto-enables negative effects on re-runs, creating escalating meta-challenge."
+      },
+      "objectives": [
+        {
+          "mode": "roguelike_run",
+          "has_win_state": true,
+          "victory_condition": "Defeat final dungeon boss while maintaining health > 0",
+          "has_defeat_state": true,
+          "defeat_condition": "Health reaches 0 before defeating final boss",
+          "player_goal": "Navigate procedurally-generated dungeon, defeat enemies via orb-peg pachinko, build synergistic orb+relic deck, reach and defeat final boss"
+        }
+      ],
+      "retention_answer": "Roguelike procedural generation ensures no two dungeon maps or enemy sequences repeat, eliminating boredom from static content. Deck-building mechanics tap into theorycrafting (orb synergies, relic interactions, scaling), encouraging min-max behavior and playstyle experimentation. Death → reset to run start creates incremental-progress loops (each attempt unlocks permanent orb types and meta-progression). Cruciball escalation (self-imposed harder modes) extends endgame appeal. Meta-currency (relics, orbs) bridges individual runs into long-term engagement."
+    }
+  ],
+  "advisory": true
+}
+```
+
+---
+
+## SKIPPED_VALIDATION
+
+- **Source timestamp precision on videos** : None of the games above were analyzed from video timestamps; all sources are wiki/article URLs without real-time video analysis. If video-based frame-by-frame loop analysis were required by oracle, this validation remains unfinished.
+- **Per-minute engagement metrics** : Loop descriptions are qualitative (player observation, not quantified by telemetry or academic study). No tick-by-tick engagement curve data was cited.
+- **Exact build sizes / asset costs** : Architecture-guessed (state machine, physics, render loop) but not validated by source code audit—Breakout ROM size and Arkanoid ROM size could be measured, Peglin build size available from Steam, but not fetched here.
+
+---
+
+## RETURN_REASON
+
+```json
+{"status": "NOT_DISCOVERED"}
+```
