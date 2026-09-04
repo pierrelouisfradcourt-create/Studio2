@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s3-decompo", "git_head": "464150ea41c7e32b4bee16852809a728f832bde7", "hmac": "bfdcf0597c19fda5faa09b1139552d269960e544bd40f3815370a3184a08dc39", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "lot6_identity_probe", "schema": "forge.context_manifest.v1", "ts": 1788509644.241865}

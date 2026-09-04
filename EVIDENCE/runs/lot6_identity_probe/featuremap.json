@@ -1,0 +1,173 @@
+{
+ "game_id": "runm_breakout",
+ "identity": {
+  "retired": []
+ },
+ "systemes": [
+  {
+   "id": "S1_HUD_OBJECTIF",
+   "features": [
+    {
+     "id": "R1_objectif_affiche",
+     "capacites": [
+      {
+       "id": "R1c1_hud_objectif_nonvide",
+       "capacite": "Tant que la partie est en cours, le HUD `objectif` affiche un texte non vide décrivant la destruction du mur.",
+       "source_ref": "E1",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "S2_CONTROLE_JOUEUR",
+   "features": [
+    {
+     "id": "R2_controle_raquette",
+     "capacites": [
+      {
+       "id": "R2c1_entree_touches_raquette",
+       "capacite": "ENTRÉE — Le joueur agit sur l'affordance `raquette` en maintenant Flèche-Gauche ou Flèche-Droite au clavier.",
+       "source_ref": "E2",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+       }
+      },
+      {
+       "id": "R2c2_effet_deplacement_raquette",
+       "capacite": "EFFET — La raquette se déplace horizontalement à l'écran : window.__game.paddle.x augmente sous Flèche-Droite, diminue sous Flèche-Gauche, reste constant sans touche.",
+       "source_ref": "E2",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "S3_PHYSIQUE_COLLISIONS",
+   "features": [
+    {
+     "id": "R3_rebond_conservatif",
+     "capacites": [
+      {
+       "id": "R3c1_reflexion_conservative",
+       "capacite": "Au contact d'un mur ou de la raquette, la composante de vitesse concernée s'inverse et la norme |v| est conservée (aucune perte d'énergie non intentionnelle).",
+       "source_ref": "E3",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+       }
+      }
+     ]
+    },
+    {
+     "id": "R4_destruction_une_frappe",
+     "capacites": [
+      {
+       "id": "R4c1_brique_disparait_un_tick",
+       "capacite": "Au contact balle↔brique, la brique disparaît de la grille au même tick et n'est plus collidable ; la balle rebondit. Aucune brique n'exige un second contact.",
+       "source_ref": "E4",
+       "expected_proof": {
+        "kind": "mutation",
+        "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "S4_PROGRESSION_RECOMPENSE",
+   "features": [
+    {
+     "id": "R5_progres_mesurable",
+     "capacites": [
+      {
+       "id": "R5c1_decrement_unitaire",
+       "capacite": "À chaque brique détruite, window.__game.bricksRemaining décroît d'exactement 1 et le compteur de briques restantes affiché suit.",
+       "source_ref": "E5",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "S5_ETATS_TERMINAUX",
+   "features": [
+    {
+     "id": "R6_victoire_terminale",
+     "capacites": [
+      {
+       "id": "R6c1_etat_won",
+       "capacite": "Quand la dernière brique disparaît (bricksRemaining=0), window.__game.state vaut 'won', un panneau « VICTOIRE » s'affiche et la simulation se fige (aucun niveau suivant, aucun reset de prestige).",
+       "source_ref": "E6",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+       }
+      }
+     ]
+    },
+    {
+     "id": "R7_defaite_terminale",
+     "capacites": [
+      {
+       "id": "R7c1_etat_lost",
+       "capacite": "Quand la balle franchit le bord bas de l'aire sans vie restante, window.__game.state vaut 'lost', un panneau « DÉFAITE » s'affiche et la simulation se fige.",
+       "source_ref": "E7",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "S6_SOCLE_N1",
+   "features": [
+    {
+     "id": "R8_determinisme",
+     "capacites": [
+      {
+       "id": "R8c1_hash_stable_par_seed",
+       "capacite": "À seed identique et suite d'entrées identique, deux exécutions du module .mjs produisent le même hash d'état final.",
+       "source_ref": "E9",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+       }
+      }
+     ]
+    },
+    {
+     "id": "R9_etat_inspectable",
+     "capacites": [
+      {
+       "id": "R9c1_window_game_expose",
+       "capacite": "window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}, indépendamment du rendu DOM.",
+       "source_ref": "E10",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

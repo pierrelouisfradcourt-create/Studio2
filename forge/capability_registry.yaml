@@ -27,6 +27,35 @@
 schema: CAPABILITY_REGISTRY/v0
 
 # ------------------------------------------------------------------------------------------
+# Lot 6 (2026-09-04, GO Pierre) — IDENTITÉ : une section = UNE clé d'identité canonique.
+# `key` : chemin de navigation vers l'identifiant stable d'une entrée, OU un résolveur nommé
+# `@<fonction>` quand la production calcule déjà cette identité (ne jamais recopier ses chemins :
+# ce serait une seconde vérité). `referenced_by` : qui cite ces identifiants en aval.
+# Une re-convocation ne renomme jamais un identifiant cité ; un retrait se déclare dans
+# `identity.retired` de l'artefact ET n'est accepté que si plus rien en aval ne le cite (spec §3.4).
+# `key: UNKNOWN` ou section absente = non mesuré : aucune règle ne s'applique.
+# Mesure : EVIDENCE/reports/lot6_reconvocation/identity_measurement.md
+identity:
+  feature_map:
+    key: "systemes[].features[].capacites[].id"
+    referenced_by:
+      - {section: "wiremap.design", path: "features[].couvre[]"}
+      - {section: "wiremap.built",  path: "features[].couvre[]"}
+  architecture_contract:
+    key: "modules[]"
+    referenced_by:
+      # référence INTRA-section : deps_interdites cite des noms de modules par paires
+      - {section: "architecture_contract", path: "deps_interdites[][]"}
+  wiremap.design:
+    # MESURÉ (Lot 6) : l'identité de règle est déjà résolue par static_oracles.frozen_features_from_wiremap
+    # (v2 `lines[].id`, sinon `features[].feature`), et c'est elle que le gel oppose au jeu courant
+    # (check_feature_set_frozen -> STOP dur en s10c). Le registre nomme le résolveur, jamais les chemins.
+    key: "@frozen_features_from_wiremap"
+    referenced_by:
+      # sous-entrée RÉELLE du Blueprint (mesurée) : le gel, wiremap_frozen.json importé
+      - {section: "wiremap.frozen_names", path: "features[]"}
+
+# ------------------------------------------------------------------------------------------
 # Lot 5 (2026-09-04, GO Pierre) — TRANSPORT : ce que la convocation emporte de la chaîne de
 # production (audit 2026-09-03, LOSS_RISKS_FOR_LOT2 : 22 mécanismes + 3 réserves du commit 523bd07).
 # Chaque mécanisme a UN propriétaire : invoke (forge.capability) · director (forge.director) ·

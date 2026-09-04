@@ -1,0 +1,66 @@
+{
+ "capability": "decompose",
+ "ok": true,
+ "section_written": "feature_map",
+ "section_version": 2,
+ "model": "claude-opus-4-8",
+ "cost": {
+  "tokens": 8126,
+  "duration_s": 104.33398056030273,
+  "cost_usd": 0.8620300000000001
+ },
+ "audit": {
+  "prepared": true,
+  "spawn_allowed": true,
+  "authorized": true,
+  "executed": true
+ }
+}
+{
+ "problems": [
+  {
+   "code": "DECOMPO_LOOP_NO_ENTRY",
+   "producer": "check_decompo.mjs",
+   "path": "feature_map.boucle_sans_entree",
+   "message": "systemes[1].features[0].capacites[0]: feuille 'R2c1_entree_touches_raquette' realise l'action joueur 'raquette' (exigence E2) sans preuve bot_action depuis main.tscn",
+   "suggested_action": "reconvoke"
+  },
+  {
+   "code": "DECOMPO_LOOP_NO_ENTRY",
+   "producer": "check_decompo.mjs",
+   "path": "feature_map.boucle_sans_entree",
+   "message": "systemes[1].features[0].capacites[1]: feuille 'R2c2_effet_deplacement_raquette' realise l'action joueur 'raquette' (exigence E2) sans preuve bot_action depuis main.tscn",
+   "suggested_action": "reconvoke"
+  }
+ ],
+ "requests": [],
+ "validator_receipt": {
+  "name": "check_decompo.mjs",
+  "exit_code": 1,
+  "ok": false,
+  "stats": {
+   "systemes": 6,
+   "features": 9,
+   "feuilles": 10,
+   "feuilles_sourcees": 10,
+   "exigences_prisme": 10,
+   "exigences_couvertes": 9,
+   "feuilles_par_feature_min": 1,
+   "feuilles_par_feature_max": 2,
+   "actions_joueur": 2,
+   "actions_joueur_prouvees_depuis_scene": 0,
+   "maillons_couverts": {
+    "F": 0,
+    "G": 0,
+    "H": 1,
+    "I": 0,
+    "J": 0
+   },
+   "grey_blocks": 0,
+   "grey_blocks_couverts": 0
+  },
+  "advisory": true,
+  "problem_count": 2
+ },
+ "blueprint_saved": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\EVIDENCE\\reports\\lot6_reconvocation\\GAME_BLUEPRINT.lot6_probe.json"
+}

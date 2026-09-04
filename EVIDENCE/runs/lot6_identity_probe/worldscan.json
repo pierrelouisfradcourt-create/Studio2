@@ -1,0 +1,106 @@
+{
+ "advisory": true,
+ "games": [
+  {
+   "architecture_guess": "Deterministic physics engine (seed-stable collision, angle-based rebound). Simple brick state (destroyed=true/false). Score accumulator. Finite level progression (2 walls). Input-agnostic control (paddle position as float 0.0-1.0). No power-ups or cosmetics.",
+   "game": "Breakout",
+   "loops": {
+    "endgame": "Complete destruction of both walls = victory terminal state. No prestige reset or infinite mode. Replay motivated by challenge: beating personal high score. Game ends decisively.",
+    "hour_5": "Second wall reached. Paddle reduced to half-size, ball speed increased (after 4 hits, 12 hits, orange/red row contact). Sustained concentration required. Multiple attempts to beat personal high score (replay motivated by score comparison). Arcade progression: by player mastery, not unlocks.",
+    "minute_1": "Player discovers simple horizontal paddle control. First brick destroyed: immediate reward (visible points, brick removal, audio). Loop: control → collision → destruction → score gain.",
+    "minute_10": "2-3 bricks destroyed. Player experiments with paddle impact zones to alter rebound angle. First tension moments: ball approaching bottom, player must adjust position quickly. Feedback loop: each brick = cumulative score. Difficulty begins to increase (ball speed accelerates)."
+   },
+   "objectives": [
+    {
+     "defeat_condition": "Miss the ball three consecutive times (lose all lives)",
+     "has_defeat_state": true,
+     "has_win_state": true,
+     "mode": "solo",
+     "player_goal": "Maximize score while preventing the ball from falling past the paddle",
+     "victory_condition": "Destroy both screens of bricks within 3 allocated lives"
+    }
+   ],
+   "platform": "Arcade",
+   "publisher": "Atari Inc.",
+   "retention_answer": "Player progression driven by **skill mastery**. Each session improves visual prediction (rebound anticipation, paddle timing). Personal high score becomes metric of progress, motivating replay. Physics is simple and deterministic: clear learning curve ('I hit too left, ball rebounded too steeply'). Difficulty increases mechanically. Core retention: arcade essence—dominate by expertise, not cosmetics.",
+   "sources": [
+    {
+     "timestamp": null,
+     "type": "article",
+     "url": "https://en.wikipedia.org/wiki/Breakout_(video_game)"
+    },
+    {
+     "timestamp": null,
+     "type": "article",
+     "url": "https://www.arcade-history.com/?n=breakout&page=detail&id=3397"
+    },
+    {
+     "timestamp": "0:00-3:45",
+     "type": "video",
+     "url": "https://www.youtube.com/watch?v=hW7Sg5pXAok"
+    },
+    {
+     "timestamp": null,
+     "type": "article",
+     "url": "https://www.arcade-museum.com/Videogame/breakout"
+    }
+   ],
+   "year": 1976
+  },
+  {
+   "architecture_guess": "Deterministic physics with cascading power-ups (separate collectible system). Destructible bricks with variable durability (gray=2-3 hits). Level progression (500 stages with unique patterns). Cosmetic unlock system (paddle/ball skins = rarity tier). Leaderboard + seasonal event system. Dual-mode architecture (Stage mode → Survival mode toggle). Session scheduling (daily login bonus).",
+   "game": "Brick Breaker King",
+   "loops": {
+    "endgame": "Level 500 reached. Game pivots to Survival Mode (no end, infinite score accumulation). Leaderboard becomes primary: global competition, sessions shift to short/daily (15-30min/day vs 30-60min arcade session). Limited-time events (monthly seasons): 'Collect 100 bricks in 7 days to unlock Gold Paddle' → FOMO.",
+    "hour_5": "Levels ~40-80 on 500+. Brick patterns become asymmetric (strategic gaps, interspersed solid blocks). Power-ups require judgment: use multiball now or save for next level? Cosmetic unlocks appear (rare paddles/balls = status). Leaderboard visible: 'I am rank 2500 globally, but friends are 1800' → competitive pressure.",
+    "minute_1": "Tutorialized interface (swipe to aim, tap to shoot). First brick destroyed with festive animation + satisfying audio. Power-up cascades and is collected immediately. Loop: aim → shoot → destruction → visual/audio reward → next brick visible. Friction minimal, success within 1-2 minutes.",
+    "minute_10": "5-10 bricks destroyed. XP bar toward next level fills visibly. Diverse power-ups collected (multiball changes tactics: multiple balls = chaos, more satisfying). Gray 'tough bricks' (multi-hit) discovered; player learns strategy exists. Progression sensation: 'I am 25% through level 5 of 500' → sense of length."
+   },
+   "objectives": [
+    {
+     "defeat_condition": "Lose all available lives before clearing bricks",
+     "has_defeat_state": true,
+     "has_win_state": true,
+     "mode": "Stage",
+     "player_goal": "Progress through 500+ levels by destroying brick patterns, collecting power-ups, maximizing score",
+     "victory_condition": "Clear all bricks on level layout without losing all lives"
+    },
+    {
+     "defeat_condition": "Ball falls past paddle or bricks descend to bottom of screen",
+     "has_defeat_state": true,
+     "has_win_state": false,
+     "mode": "Survival",
+     "player_goal": "Survive as long as possible and climb global leaderboard",
+     "victory_condition": null
+    }
+   ],
+   "platform": "Mobile (iOS / Android)",
+   "publisher": "Mobirix / King.com",
+   "retention_answer": "Retention driven by **cosmetic progression + social competition**, not skill mastery. 500+ levels create illusion of infinite content (200+ hours playtime). Power-ups provide rapid dopamine loops (satisfying collection). Leaderboards + seasonal events generate FOMO: 'if I don't play this week, I miss Gold Paddle skin'. Casual-mobile formula: progression by unlocks, competition by status, retention by time-limited events.",
+   "sources": [
+    {
+     "timestamp": null,
+     "type": "article",
+     "url": "https://play.google.com/store/apps/details?id=com.mobirix.brick"
+    },
+    {
+     "timestamp": null,
+     "type": "article",
+     "url": "https://gamefaqs.gamespot.com/mobile/958896-brick-breaker/faqs/60052"
+    },
+    {
+     "timestamp": null,
+     "type": "article",
+     "url": "https://mwm.ai/apps/bricks-breaker-king/943302265"
+    },
+    {
+     "timestamp": null,
+     "type": "article",
+     "url": "https://brick-breaker.io/"
+    }
+   ],
+   "year": 2020
+  }
+ ],
+ "note": "This is an OBSERVATION, not a design prescription. Breakout (1976) establishes core arcade loop (skill progression, deterministic physics). Brick Breaker King demonstrates casual-mobile escalation (cosmetics, social leaderboards, time-limited events). runm_breakout charter explicitly rejects Brick Breaker's progression systems (hors_scope: 'multi-niveaux, tableau scores, persistance'). These observations provide architectural reference points for future expansion decisions, if any. No copy-pasting: understand the assembly, don't replicate the game."
+}

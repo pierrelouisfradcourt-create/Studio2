@@ -3641,9 +3641,10 @@ def default_task_by_step(project: str, src_root_rel: str,
             "worldscan.json depuis ce bloc."
         ),
         "s3-decompo": (
-            f"Décompose le projet '{project}' en features numérotées R1..Rn (une ligne "
-            "par règle de jeu : nom, comportement observable, condition de preuve). "
-            "Texte seul, aucun fichier écrit."
+            f"Décompose le projet '{project}' en features (une ligne par règle de jeu : nom, "
+            "comportement observable, condition de preuve). Donne à chaque capacité un identifiant "
+            "STABLE et lisible : il sera cité en aval par la WireMap, et une re-convocation doit le "
+            "conserver à l'identique. Texte seul, aucun fichier écrit."
         ),
         "s4-archi": (
             f"Conçois l'architecture du projet '{project}' (code à créer sous {src}). "

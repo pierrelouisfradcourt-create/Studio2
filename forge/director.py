@@ -39,7 +39,9 @@ from pathlib import Path
 from forge import blueprint as bp
 from forge import build_orchestrator as bo
 from forge import capability as cap
-from forge.amendment_log import new_message_id, read_messages
+from forge import acknowledgement as ack   # Lot 6 : acquittement structuré, désaccord
+from forge import identity as idt           # Lot 6 : contrat d'identité de section
+from forge.amendment_log import append_message, new_message_id, read_messages
 from forge.consumption import CONSUMED, NOT_CONSUMED, _contains_ref
 from forge.coverage import coverage_of
 from forge.emitter import EmitterError, notify
@@ -68,6 +70,7 @@ NO_EFFECT_REPEATED = "NO_EFFECT_REPEATED"
 NO_PROGRESS_REPEATED = "NO_PROGRESS_REPEATED"
 CAPABILITY_UNAVAILABLE = "CAPABILITY_UNAVAILABLE"
 BLOCKING_QUESTION_OPEN = "BLOCKING_QUESTION_OPEN"
+ID_REFERENCED_DROPPED = idt.ID_REFERENCED_DROPPED   # Lot 6
 BUILD_REQUIRED = "BUILD_REQUIRED"
 ORACLE_RED = "ORACLE_RED"
 ORACLE_RED_PERSISTENT = "ORACLE_RED_PERSISTENT"
@@ -269,6 +272,27 @@ def next_action(blueprint: dict, state: dict, measured: dict, registry: dict | N
                                   options=["provide_section", "skip"], signal=key)
         return {"kind": "convoke", "capability": capability, "code": SECTION_ABSENT, "signal": key,
                 "path": ref, "reason": f"section {ref!r} absente", "message": None}
+    # --- Lot 6 : un refus d'identité vise l'ÉCRIVAIN de la section (le `path` du problème), jamais
+    # `wiremap` par défaut comme le ferait `diagnose_join` — mesuré : sans ce bloc, un renommage par
+    # `decompose` était imputé à `wiremap` sous le code JOIN_LINES_WITHOUT_COUVRE.
+    for p in state.get("last_problems") or []:
+        if p.get("code") != ID_REFERENCED_DROPPED:
+            continue
+        section = str(p.get("path") or "")
+        capability = next((n for n in reg if cap.spec(n, reg)["writes"] == section), None)
+        key = _signal_key(section, capability or "?")
+        if key in state.get("accepted", []):
+            continue
+        sig = _sig(state, key)
+        if sig["no_effect"] >= MAX_NO_EFFECT:
+            return _halt_question(state, ID_REFERENCED_DROPPED, capability or "?",
+                                  f"identité de {section} non rétablie après {sig['no_effect']} convocations",
+                                  options=["accept", "revert", "skip"], signal=key)
+        return {"kind": "reconvoke", "capability": capability, "code": ID_REFERENCED_DROPPED,
+                "signal": key, "path": section, "measure": {"referenced_dropped": p.get("message")},
+                "reason": f"identifiants cités en aval supprimés de {section}",
+                "message": _objection_identity(state, capability or "?", section, p)}
+
     # --- porte de suffisance : jointure de design
     view = measured["coverage"]["design"]
     diag = diagnose_join(view)
@@ -364,6 +388,21 @@ def _objection(state: dict, capability: str, code: str, view: dict, sig: dict) -
                    f"`couvre` doit citer l'id EXACT d'une capacité de la feature_map lue dans le Blueprint ; "
                    f"cite l'identifiant de ce message dans ta restitution."),
         "impact": ["wiremap.design", "porte de suffisance"], "evidence_ref": [f"decisions.jsonl#{state['steps']}"],
+        "blocking": False, "issued_at": issued,
+    }
+
+
+def _objection_identity(state: dict, capability: str, section: str, problem: dict) -> dict:
+    """Objection d'IDENTITÉ (Lot 6) : adressée à l'écrivain de la section, jamais à `wiremap`."""
+    issued = _now()
+    return {
+        "id": new_message_id(f"{ID_REFERENCED_DROPPED} {capability} {state['run_id']}", issued),
+        "type": "objection", "from": "director", "to": [capability], "run_id": state["run_id"],
+        "subject": f"{ID_REFERENCED_DROPPED} : des identifiants de {section} cités en aval ont disparu",
+        "reason": (f"{problem.get('message')}. Reprends ta production précédente et CONSERVE ces "
+                   "identifiants à l'identique. Un retrait ne se déclare que si plus rien en aval ne "
+                   "le cite. Réponds par un bloc ```acquittement```."),
+        "impact": [section, "porte de suffisance"], "evidence_ref": [f"decisions.jsonl#{state['steps']}"],
         "blocking": False, "issued_at": issued,
     }
 
@@ -602,6 +641,29 @@ class Director:
             sig.pop("revert_to", None)
             sig["no_progress"] = sig["no_progress"] + 1 if progress == NONE else 0
         self.state["last_problems"] = list(res.get("problems") or [])
+        # Lot 6 : le Director JUGE l'acquittement (il connaît l'effet) et transporte le désaccord.
+        jugement = None
+        if action.get("message"):
+            blk = (res.get("acknowledgement_block") or {}).get("block")
+            jugement = ack.judge(blk, message=action["message"], capability=capability,
+                                 run_id=self.run_id, effect=effect,
+                                 already_acknowledged=set(self.state.setdefault("acknowledged", [])))
+            if jugement["status"] in (ack.ACKNOWLEDGED, ack.CLAIMED_WITHOUT_EFFECT, ack.REJECTED):
+                self.state["acknowledged"].append(jugement["message_id"])
+            if jugement["status"] == ack.REJECTED:
+                desaccord = ack.disagreement_message(jugement, capability=capability,
+                                                     run_id=self.run_id, message=action["message"])
+                try:
+                    append_message(desaccord, journal_dir=self.journal_dir)
+                except Exception:  # noqa: BLE001 — un désaccord ne casse jamais le run
+                    desaccord = None
+                if desaccord is not None:
+                    q = ack.question_entry(jugement, capability=capability, run_id=self.run_id,
+                                           disagreement_id=desaccord["id"])
+                    courant = list(self.blueprint["sections"]["questions"].get("content") or [])
+                    bp.write_section(self.blueprint, "questions", courant + [q], writer=capability,
+                                     source={"path": None, "sha256": None, "status": "JOURNAL",
+                                             "run_id": self.run_id})
         if action["kind"] == "build" and res.get("ok"):
             self.state["status"] = "BUILT"
         rec = self._decide(
@@ -611,7 +673,9 @@ class Director:
                      "after_section_sha": _entry_sha(after, action["path"]),
                      "effect_reasons": why, "progress_reasons": why_p, "capability_ok": res.get("ok"),
                      "model_executed": res.get("model_executed"), "problems": res.get("problems"),
-                     "requests": res.get("requests"), "consumption": self._consumption(action.get("message"), res),
+                     "requests": res.get("requests"), "identity": res.get("identity"),
+                     "acknowledgement": jugement,
+                     "consumption": self._consumption(action.get("message"), res),
                      "cost": res.get("cost")},
             reason=action["reason"], capability=capability, attempt=attempt,
             message_id=(action.get("message") or {}).get("id"), notified=notified,

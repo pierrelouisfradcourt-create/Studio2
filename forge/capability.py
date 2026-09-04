@@ -32,7 +32,9 @@ from pathlib import Path
 import yaml
 
 from forge import blueprint as bp
+from forge import acknowledgement as ack   # Lot 6 : extraction du bloc d'acquittement
 from forge import context_manifest   # Lot 5 : lignées execution / return
+from forge import identity as idt     # Lot 6 : contrat d'identité de section
 from forge import studio_link        # Lot 5 : pré-mortem, journal d'erreurs du run
 from forge.audit import EVENT_AUTHORIZED, EVENT_EXECUTED, append_spawn_event
 from forge.contract import FORGE_ROLES, load_contract, resolve_runtime, validate_contract
@@ -391,6 +393,9 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
         # Lot 5 : pré-mortem (L1) et retour du matérialiseur (L3) réellement injectés
         "premortem_lines": 0, "feedback_applied": False,
         "timeout_s": None,   # Lot 5 (L6) : timeout effectivement appliqué (registre ou intention)
+        # Lot 6 : rapport d'identité (None = section neuve ou clé non mesurée) et bloc d'acquittement
+        # EXTRAIT (jamais jugé ici : le statut dépend de l'effet, que seul le Director mesure)
+        "identity": None, "acknowledgement_block": None,
         "problems": [], "requests": [], "questions": [], "blueprint_inputs": [],
         "prompt_file": None, "audit": {"prepared": False, "spawn_allowed": None,
                                        "authorized": False, "executed": False},
@@ -450,6 +455,26 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
     parts = [payload.prompt, f"## TÂCHE CONCRÈTE ({run_id} / {sp['etape']})\n{task_text}"]
     if bp_section:
         parts.append(bp_section)
+    # Lot 6 (spec §3.3) : la production précédente de CETTE section, dérivée du Blueprint lui-même —
+    # une seule source de vérité : la version rendue ici est exactement celle que `compare` opposera
+    # plus bas, et exactement celle qui sera écrasée.
+    section_name = sp["writes"].split(".")[0] if sp.get("writes") else None
+    id_decl = idt.identity_of(sp["writes"]) if sp.get("writes") else None
+    prev_meta = (blueprint["sections"].get(section_name) or {}) if section_name else {}
+    prev_content = prev_meta.get("content") if prev_meta.get("version", 0) > 0 else None
+    if prev_content is not None and id_decl is not None:
+        body = json.dumps(prev_content, ensure_ascii=False, indent=1)
+        if len(body) > UPSTREAM_MAX_CHARS:
+            body = _truncate_preserve_terminal_json(body)
+        parts.append(
+            f"## TA PRODUCTION PRÉCÉDENTE — {sp['writes']} v{prev_meta['version']} "
+            f"(content_sha256={prev_meta['content_sha256']})\n"
+            f"```json\n{body}\n```\n"
+            f"RÈGLE D'IDENTITÉ : les identifiants de cette section ({id_decl['key']}) sont cités en "
+            "aval. Conserve chacun À L'IDENTIQUE — ne renomme jamais. Une entrée qui doit disparaître "
+            'se déclare dans `identity.retired: [{"id": "<id>", "reason": "<pourquoi>"}]` à la racine '
+            "de ton artefact, et SEULEMENT si plus rien en aval ne la cite. Ajouter est libre.")
+
     # Lot 5 (L1) : pré-mortem — MÊME titre de section que run_real.claude_executor
     pm = premortem if premortem is not None else default_premortem(project or blueprint.get("project", ""), run_dir)
     premortem_section = None
@@ -517,6 +542,9 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
         res = dict(res, output="")
     output = str(res.get("output") or "")
     result["next_reason"] = ForgeDriver._parse_next_reason(output)   # transport, jamais décision
+    # Lot 6 (spec §4.1) : extraction SEULE — le statut dépend de l'effet, que seul le Director connaît.
+    blk, why = ack.extract_block(output)
+    result["acknowledgement_block"] = {"block": blk, "diagnostic": why}
     if res.get("ok"):
         # Lot 5 (L9) : lignée RETURN — extraction déterministe, manifest jumeau, jamais bloquant
         reason = _extract_return_reason(output)
@@ -581,6 +609,20 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
     receipt, problems = _run_validator(sp, artifact_path, run_dir)
     result["validator_receipt"] = receipt
     result["problems"].extend(problems)
+
+    # Lot 6 (spec §3.4) : le contrat d'identité s'applique au point d'écriture, jamais avant.
+    if prev_content is not None and id_decl is not None:
+        rapport = idt.compare(prev_content, data, key=id_decl["key"],
+                              downstream=idt.downstream_ids(blueprint, id_decl.get("referenced_by") or []),
+                              retired=idt.declared_retired(data))
+        result["identity"] = rapport
+        if not rapport["ok"]:
+            result["problems"].append(_problem(
+                idt.ID_REFERENCED_DROPPED, "identity_check",
+                "identifiants encore cités en aval et absents de la nouvelle version : "
+                + ", ".join(rapport["referenced_dropped"]),
+                path=sp["writes"], action="reconvoke"))
+            return _finish(result, t0)
 
     # 6. écriture de LA section possédée — le seul effet sur le Blueprint
     try:
