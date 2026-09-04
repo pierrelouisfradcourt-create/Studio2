@@ -632,7 +632,8 @@ def main() -> int:
 
     # --- COUCHE 1 : garde de contrat Forge (prioritaire, inchangée) -----------
     try:
-        sys.path.insert(0, str(repo_root / "scripts"))
+        # V2 : le tronc est `<racine>/forge`, plus `<racine>/scripts/forge` (V1).
+        sys.path.insert(0, str(repo_root))
         from forge.hook_guard import hook_decision, record_authorization
 
         code, reason = hook_decision(tool, prompt)

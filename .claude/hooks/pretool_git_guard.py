@@ -46,7 +46,8 @@ def main() -> int:
     try:
         from pathlib import Path
         repo_root = Path(__file__).resolve().parents[2]
-        sys.path.insert(0, str(repo_root / "scripts"))
+        # V2 : le tronc est `<racine>/forge`, plus `<racine>/scripts/forge` (V1).
+        sys.path.insert(0, str(repo_root))
         from forge.git_guard import evaluate_command
 
         blocked, reason = evaluate_command(command)
