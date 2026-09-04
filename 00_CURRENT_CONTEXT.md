@@ -1,10 +1,8 @@
 # ÉTAT COURANT — Studio V2
 
-*2026-09-03. Handoff inter-sessions. **< 100 lignes**, comme la règle l'exige.*
-
-> ✅ **RATIFIÉ Pierre 2026-09-03** — ce fichier **est** le handoff de V2 ; `studio_brain/
-> 00_CURRENT_CONTEXT.md` (V1) n'est plus mis à jour. Une règle documentée ne devient jamais un
-> prétexte pour rompre un invariant plus fort : « V1 en lecture seule » prime sur `CLAUDE.md`.
+*2026-09-04. Handoff inter-sessions, **< 100 lignes**. Ratifié Pierre 2026-09-03 : ce fichier EST le
+handoff de V2, `studio_brain/00_CURRENT_CONTEXT.md` (V1) n'est plus mis à jour — une règle documentée
+ne rompt jamais un invariant plus fort, « V1 en lecture seule » prime sur `CLAUDE.md`.*
 
 ## Où en est le studio
 
@@ -58,9 +56,8 @@ V2  C:\Users\Studio-Dev\Desktop\Studio2   (renommé 2026-09-04 ; remote github.c
 EVIDENCE/runs/runm_breakout/      RUN M ter · 13/13 · verdict signé · verify_run AUTHENTIQUE
 GAMES/runm_breakout/              le jeu produit
 ```
-⛔ **Ni déplacer ni renommer ni écraser** — le reçu d'oracle porte un chemin relatif.
-**Un prochain run doit porter un AUTRE nom de projet.**
-Archives conservées : `_ARCHIVE_RUN_M_*` (preuves du VOID et du HALT d'encodage).
+⛔ **Ni déplacer ni renommer ni écraser** (le reçu d'oracle porte un chemin relatif) ; un prochain run
+porte un AUTRE nom de projet. Archives : `_ARCHIVE_RUN_M_*` (preuves du VOID et du HALT d'encodage).
 
 ## État de la thèse V2 et de T0
 
