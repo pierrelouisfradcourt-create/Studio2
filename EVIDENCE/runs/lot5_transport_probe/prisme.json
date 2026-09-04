@@ -1,0 +1,211 @@
+{
+ "exigences": [
+  {
+   "acteur": "SYSTEM",
+   "claim": "J'en déduis que le but affiché au joueur de runm_breakout est de vider le mur — un objectif unique et terminal, sans niveau suivant à annoncer.",
+   "destination": "s3-decompo",
+   "enonce": "Tant que la partie est en cours, le jeu affiche à l'écran un objectif lisible « Détruire toutes les briques ».",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+   },
+   "id": "E1",
+   "loop_role": "PLAYER_GOAL",
+   "observation": "Le World Scan relève pour le genre une condition de victoire « détruire tout le mur de briques » (games[0].objectives[0].victory_condition).",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   },
+   "reference": "worldscan:games[0].objectives[0].victory_condition",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "PLAYER",
+   "affordance": "raquette",
+   "claim": "J'en déduis que l'unique geste du joueur est le déplacement horizontal de la raquette au clavier, sans visée à la souris ni tir.",
+   "destination": "s3-decompo",
+   "enonce": "Le joueur peut déplacer la raquette vers la gauche ou la droite en maintenant les touches fléchées ; la raquette suit à l'écran.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+   },
+   "id": "E2",
+   "loop_role": "PLAYER_ACTION",
+   "observation": "Le World Scan décrit un joueur qui découvre un contrôle horizontal simple de la raquette (games[0].loops.minute_1).",
+   "observe": {
+    "hud": "raquette_x",
+    "predicate": "changes"
+   },
+   "reference": "worldscan:games[0].loops.minute_1",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "SYSTEM",
+   "claim": "J'en déduis que la balle de runm_breakout rebondit de façon déterministe sur murs et raquette, angle piloté par le point d'impact — trajectoire dirigeable, pas aléatoire.",
+   "destination": "s4-archi",
+   "enonce": "Au contact d'un mur ou de la raquette, la balle repart dans une direction réfléchie, la norme de sa vitesse étant conservée.",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+   },
+   "id": "E3",
+   "loop_role": "GAME_RESPONSE",
+   "observation": "Le World Scan attribue au genre un rebond dépendant de la zone d'impact sur la raquette (games[0].loops.minute_10).",
+   "observe": {
+    "hud": "ball_v",
+    "predicate": "changes"
+   },
+   "reference": "worldscan:games[0].loops.minute_10",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "SYSTEM",
+   "claim": "J'en déduis qu'un contact balle-brique détruit la brique en une seule frappe, sans durabilité variable, conformément au socle minimal du charter.",
+   "destination": "s4-archi",
+   "enonce": "Au contact balle↔brique, cette brique disparaît de la grille au même tick et n'est plus collidable, tandis que la balle rebondit.",
+   "expected_proof": {
+    "kind": "mutation",
+    "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+   },
+   "id": "E4",
+   "loop_role": "GAME_RESPONSE",
+   "observation": "Le World Scan note que la première brique détruite disparaît immédiatement (brick removal) au contact (games[0].loops.minute_1).",
+   "observe": {
+    "hud": "mur",
+    "predicate": "changes"
+   },
+   "reference": "worldscan:games[0].loops.minute_1",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "SYSTEM",
+   "claim": "J'en déduis que la récompense de runm_breakout n'est pas un score cosmétique mais la réduction visible du mur : chaque brique rapproche de la victoire.",
+   "destination": "s4-archi",
+   "enonce": "Le compteur de briques restantes affiché décroît d'exactement une unité à chaque brique détruite.",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+   },
+   "id": "E5",
+   "loop_role": "REWARD",
+   "observation": "Le World Scan associe chaque brique brisée à une progression cumulée visible (games[0].loops.minute_10).",
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "decreases"
+   },
+   "reference": "worldscan:games[0].loops.minute_10",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "SYSTEM",
+   "claim": "J'en déduis que runm_breakout a un état de victoire TERMINAL unique (mur vidé), sans niveau suivant ni prestige : le jeu s'arrête, gagné.",
+   "destination": "s9-build",
+   "enonce": "Quand la dernière brique disparaît, un état de VICTOIRE s'affiche et la partie se fige.",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+   },
+   "id": "E6",
+   "loop_role": "NONE",
+   "observation": "Le World Scan donne pour le genre une victoire par destruction complète du mur (games[0].objectives[0].victory_condition).",
+   "observe": {
+    "hud": "etat",
+    "predicate": "contains:VICTOIRE"
+   },
+   "reference": "worldscan:games[0].objectives[0].victory_condition",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "SYSTEM",
+   "claim": "J'en déduis que la défaite de runm_breakout survient quand la balle tombe sous la raquette hors de l'aire, le charter gardant le nombre de vies minimal mais la défaite atteignable.",
+   "destination": "s9-build",
+   "enonce": "Quand la balle franchit le bord bas de l'aire sans vie restante, un état de DÉFAITE s'affiche et la partie se fige.",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+   },
+   "id": "E7",
+   "loop_role": "NONE",
+   "observation": "Le World Scan donne pour le genre une défaite par balle perdue / vies épuisées (games[0].objectives[0].defeat_condition).",
+   "observe": {
+    "hud": "etat",
+    "predicate": "contains:DEFAITE"
+   },
+   "reference": "worldscan:games[0].objectives[0].defeat_condition",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "PLAYER",
+   "claim": "J'en déduis que cette boucle se REJOUE à chaque rebond tant que la partie dure, sans état à débloquer entre deux tours.",
+   "destination": "s5-wiremap",
+   "enonce": "Après chaque brique détruite, le joueur reprend immédiatement le même geste (déplacer la raquette pour renvoyer la balle) dans le nouvel état du mur, jusqu'à victoire ou défaite.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Un bot enchaîne deux briques : entre les deux, les mêmes contrôles (E2) produisent la même réponse (E3) et briques_restantes décroît deux fois (E5)."
+   },
+   "id": "E8",
+   "loop_role": "REPEAT",
+   "observation": "Le World Scan résume la boucle noyau : contrôle → collision → destruction → gain (games[0].loops.minute_1).",
+   "observe": {
+    "hud": "briques_restantes",
+    "predicate": "decreases"
+   },
+   "reference": "worldscan:games[0].loops.minute_1",
+   "replay": [
+    "E2",
+    "E3",
+    "E5"
+   ],
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "SYSTEM",
+   "claim": "J'en déduis que runm_breakout doit produire, à seed égal, exactement le même déroulé — condition testable hors navigateur, cœur du socle N1 du charter.",
+   "destination": "s4-archi",
+   "enonce": "À seed identique et suite d'entrées identique, deux exécutions du module .mjs produisent le même hash d'état final.",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+   },
+   "id": "E9",
+   "loop_role": "NONE",
+   "observation": "Le World Scan attribue au genre un moteur physique déterministe, stable par seed (games[0].architecture_guess).",
+   "observe": {
+    "hud": "hash_etat",
+    "predicate": "nonempty"
+   },
+   "reference": "worldscan:games[0].architecture_guess",
+   "source": "EXPECTED",
+   "source_role": "s2-worldscan"
+  },
+  {
+   "acteur": "SYSTEM",
+   "claim": "J'en déduis que tout l'état de partie doit être lisible programmatiquement via window.__game, indépendamment du rendu DOM, pour rendre les règles R1..R9 testables hors navigateur.",
+   "destination": "s4-archi",
+   "enonce": "window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}.",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+   },
+   "id": "E10",
+   "loop_role": "NONE",
+   "observation": "Le charter impose (socle N1) une logique métier en module .mjs testable hors navigateur et un état inspectable window.__game.",
+   "observe": {
+    "hud": "window.__game",
+    "predicate": "nonempty"
+   },
+   "reference": null,
+   "source": "ADDITIONS",
+   "source_role": "s1-prisme"
+  }
+ ],
+ "game_id": "runm_breakout"
+}

@@ -32,11 +32,14 @@ from pathlib import Path
 import yaml
 
 from forge import blueprint as bp
+from forge import context_manifest   # Lot 5 : lignées execution / return
+from forge import studio_link        # Lot 5 : pré-mortem, journal d'erreurs du run
 from forge.audit import EVENT_AUTHORIZED, EVENT_EXECUTED, append_spawn_event
 from forge.contract import FORGE_ROLES, load_contract, resolve_runtime, validate_contract
 from dataclasses import replace as dataclass_replace
 
 from forge.dispatch import prepare_dispatch
+from forge.driver import ForgeDriver, SPAWN_LINK_SCHEMA   # Lot 5 : next_reason, schéma spawn_link
 from forge.escalate import LADDER, parse_agent_escalation, tier_of
 from forge.hook_guard import check_spawn
 from forge.run_real import (  # mécanismes de PRODUCTION, réutilisés tels quels
@@ -44,7 +47,10 @@ from forge.run_real import (  # mécanismes de PRODUCTION, réutilisés tels que
     UPSTREAM_MAX_CHARS,
     _ARTIFACT_BY_STEP,
     _ARTIFACT_VALIDATORS,
+    _build_spawn_link_upstream,
     _claude_call_with_transient_retry,
+    _derive_disallowed,
+    _extract_return_reason,
     _effective_step_tools,
     _materialize_artifact,
     _persist_final_prompt,
@@ -55,6 +61,15 @@ from forge.run_real import (  # mécanismes de PRODUCTION, réutilisés tels que
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = Path(__file__).resolve().parent / "capability_registry.yaml"
 REGISTRY_SCHEMA = "CAPABILITY_REGISTRY/v0"
+# Lot 5 (2026-09-04, GO Pierre) : propriétaires du transport et politique de timeout par capacité.
+TRANSPORT_OWNERS = ("invoke", "director", "driver", "pierre")
+TRANSPORT_STATUSES = ("carried", "director", "deferred", "dropped")
+DEFAULT_TIMEOUT_POLICY = {"timeout_s": DEFAULT_STEP_TIMEOUT_S, "launch": "attached"}
+SPAWN_LINK_ATTESTATION_NOTE = ("auto-attesté (chemin B headless) : cette ligne est écrite par forge.capability "
+                               "qui exécute la convocation, aucun observateur tiers ne l'a constatée")
+_SPAWN_LINK_UPSTREAM_KEYS = ("contract_path", "contract_sha256", "prompt_file", "prompt_sha256",
+                             "tools_effective", "tools_disallowed_count",
+                             "model_declared", "model_requested", "model_used")
 
 # Codes K7 produits par CE module (producteur nommé à chaque émission).
 CAPABILITY_UNKNOWN = "CAPABILITY_UNKNOWN"
@@ -76,14 +91,30 @@ class CapabilityError(Exception):
 
 # ----------------------------------------------------------------------------- registre / spec
 
-def load_registry(path: Path | None = None) -> dict:
+def _load_registry_document(path: Path | None = None) -> dict:
     data = yaml.safe_load(Path(path or REGISTRY_PATH).read_text(encoding="utf-8")) or {}
     if data.get("schema") != REGISTRY_SCHEMA:
         raise CapabilityError(f"registre : schema {data.get('schema')!r} != {REGISTRY_SCHEMA!r}")
-    caps = data.get("capabilities")
+    return data
+
+
+def load_registry(path: Path | None = None) -> dict:
+    caps = _load_registry_document(path).get("capabilities")
     if not isinstance(caps, dict) or not caps:
         raise CapabilityError("registre : `capabilities` absent ou vide")
     return caps
+
+
+def load_transport(path: Path | None = None) -> dict:
+    """Lot 5 — propriétaire de chaque mécanisme de production emporté ou non par la convocation."""
+    transport = _load_registry_document(path).get("transport")
+    if not isinstance(transport, dict) or not transport:
+        raise CapabilityError("registre : `transport` absent ou vide (Lot 5)")
+    for name, decl in transport.items():
+        if not isinstance(decl, dict) or decl.get("owner") not in TRANSPORT_OWNERS \
+                or decl.get("status") not in TRANSPORT_STATUSES:
+            raise CapabilityError(f"registre : transport {name!r} mal déclaré (owner/status)")
+    return transport
 
 
 def _reasoning_for(model: str):
@@ -147,6 +178,7 @@ def spec(name: str, registry: dict | None = None) -> dict:
                                (lambda: None)).__name__ if _ARTIFACT_BY_STEP.get(etape) else None,
         "tools": list(_effective_step_tools(etape)),
         # --- déclaré ici seulement
+        "timeout_policy": dict(decl.get("timeout_policy") or DEFAULT_TIMEOUT_POLICY),
         "reads": list(decl.get("reads") or []),
         "writes": decl.get("writes"),
         "validator": decl.get("validator"),
@@ -193,7 +225,9 @@ def _render_blueprint_inputs(blueprint: dict, reads: list[dict]) -> tuple[str, l
         if len(body) > UPSTREAM_MAX_CHARS:
             body = _truncate_preserve_terminal_json(body)
         inputs.append({"section": ref, "version": meta["version"],
-                       "content_sha256": meta["content_sha256"]})
+                       "content_sha256": meta["content_sha256"],
+                       # Lot 5 (L22) : le sha de la sous-entrée LUE, pas celui du composite parent
+                       "entry_sha256": bp.content_sha256(content)})
         blocks.append(f"### {ref} (v{meta['version']} · content_sha256={meta['content_sha256']})\n"
                       f"```{lang}\n{body}\n```")
     if not blocks:
@@ -282,6 +316,49 @@ def _problem(code: str, producer: str, message: str, *, path: str | None = None,
 
 # ----------------------------------------------------------------------------- convocation
 
+def default_premortem(project: str, run_dir: Path, limit: int = 8) -> list[str]:
+    """Le pré-mortem d'une convocation (Lot 5, L1) : journal studio du projet (+ leçons globales)
+    puis journal LOCAL du run (les échecs des convocations précédentes de CE run). Best-effort,
+    jamais bloquant — même discipline que ForgeDriver._premortem."""
+    lines: list[str] = []
+    try:
+        lines += studio_link.premortem(project, domain="html")
+    except Exception:  # noqa: BLE001
+        pass
+    local = Path(run_dir) / "error_journal.jsonl"
+    if local.exists():
+        try:
+            lines += studio_link.premortem(project, journal_path=local)
+        except Exception:  # noqa: BLE001
+            pass
+    return list(dict.fromkeys(lines))[-limit:]
+
+
+def _append_spawn_link(run_dir: Path, run_id: str, etape: str, attempt: int, status: str,
+                       upstream: dict, artifact: Path | None) -> bool:
+    """Le joint spawn_links.jsonl — MÊME schéma et MÊMES clés que ForgeDriver._append_spawn_link
+    (Lot 5, L10). Capteur : ne lève jamais, rend False si la ligne n'a pas pu être écrite."""
+    try:
+        ligne = {
+            "schema": SPAWN_LINK_SCHEMA, "run_id": run_id, "etape": etape, "attempt": attempt,
+            "ts": time.time(), "status": status,
+            "artifact_path": str(artifact) if artifact is not None else None,
+            "artifact_sha256": bp.file_sha256(artifact) if artifact is not None else None,
+            "verdict_ref": None,   # une convocation n'a pas de verdict : la QA du Director le rendra
+            "attestation": "self", "attestation_note": SPAWN_LINK_ATTESTATION_NOTE,
+            "claim_verdict": "NO_CLAIM_ALLOWED",
+        }
+        for cle in _SPAWN_LINK_UPSTREAM_KEYS:
+            ligne[cle] = upstream.get(cle)
+        path = Path(run_dir) / "context" / "spawn_links.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(ligne, ensure_ascii=False, sort_keys=True) + "\n")
+        return True
+    except Exception:  # noqa: BLE001 — capteur, jamais un blocage
+        return False
+
+
 def _default_executor(prompt: str, sp: dict, payload, *, run_dir: Path, timeout_s: float) -> dict:
     return _claude_call_with_transient_retry(
         prompt, payload.model, add_dir=run_dir, tools=tuple(sp["tools"]),
@@ -290,9 +367,10 @@ def _default_executor(prompt: str, sp: dict, payload, *, run_dir: Path, timeout_
 
 def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str, attempt: int = 1,
                       executor=None, audit_path: Path | None = None, task: str | None = None,
-                      timeout_s: float = DEFAULT_STEP_TIMEOUT_S, project: str | None = None,
+                      timeout_s: float | None = None, project: str | None = None,
                       src_root_rel: str = ".", registry: dict | None = None,
-                      add_dir: Path | None = None, model_override: str | None = None) -> dict:
+                      add_dir: Path | None = None, model_override: str | None = None,
+                      premortem: list[str] | None = None, feedback: dict | None = None) -> dict:
     """UNE convocation d'une capacité sur le Blueprint. Ne lève pas pour un refus : rend un résultat
     dont `ok` est faux et `problems` dit pourquoi (producteur nommé). Lève seulement sur un usage
     incorrect du module (capacité inconnue)."""
@@ -303,6 +381,16 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
         "etape": None, "model": None, "section_written": None, "section_version": None,
         "artifact": None, "artifact_sha256": None, "validator_receipt": None, "output_file": None,
         "model_executed": None,
+        # Lot 5 : mesuré ≠ déclaré (L11), diagnostic d'exécuteur (L17), next_reason (L13)
+        "model_used": None, "model_measured": False, "executor_diagnostic": None, "next_reason": "",
+        # Lot 5 : lignées de preuve (L7 execution, L9 return, L10 spawn_link)
+        "return_reason": None,
+        "lineage": {"execution_manifest": False, "return_manifest": False, "spawn_link": False},
+        "_run_dir": str(run_dir),   # retiré par _finish
+        "_project": project or blueprint.get("project", ""),   # retiré par _finish
+        # Lot 5 : pré-mortem (L1) et retour du matérialiseur (L3) réellement injectés
+        "premortem_lines": 0, "feedback_applied": False,
+        "timeout_s": None,   # Lot 5 (L6) : timeout effectivement appliqué (registre ou intention)
         "problems": [], "requests": [], "questions": [], "blueprint_inputs": [],
         "prompt_file": None, "audit": {"prepared": False, "spawn_allowed": None,
                                        "authorized": False, "executed": False},
@@ -310,6 +398,9 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
     }
     sp = spec(name, registry)
     result["etape"] = sp["etape"]
+    # Lot 5 (L6, réserve 2) : le timeout vient du registre par capacité ; l'intention explicite gagne
+    effective_timeout = float(timeout_s if timeout_s is not None else sp["timeout_policy"]["timeout_s"])
+    result["timeout_s"] = effective_timeout
     if sp.get("locked"):
         result["problems"].append(_problem(CAPABILITY_LOCKED, "capability_registry", sp["locked"],
                                            action="ask_pierre"))
@@ -328,11 +419,19 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
     if result["problems"]:
         return _finish(result, t0)
 
-    # 1. la porte — un dispatch signé, puis la même vérification que le hook
+    # 1. le contexte, depuis le Blueprint — AVANT la porte, pour que le manifest le mesure (Lot 5, L8)
+    projections = _materialize_reads(blueprint, sp["reads"], run_dir)
+    bp_section, inputs = _render_blueprint_inputs(blueprint, sp["reads"])
+    result["blueprint_inputs"] = inputs
+    result["projections"] = projections
+    sources_override = [{"path": f"blueprint:{i['section']}", "role": "blueprint_section", "exists": True,
+                         "sha256": i["entry_sha256"], "version": i["version"]} for i in inputs]
+
+    # 2. la porte — un dispatch signé, puis la même vérification que le hook
     payload = prepare_dispatch(
         sp["etape"], run_id, audit_path=audit_path, run_dir=run_dir, profile=None,
         attempt=attempt, reason={"signal": "convocation", "by": "forge.capability", "capability": name},
-        model_executed=model_override,
+        model_executed=model_override, sources_override=sources_override,
     )
     result["audit"]["prepared"] = True
     result["model"] = payload.model
@@ -345,24 +444,53 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
         result["problems"].append(_problem(SPAWN_REFUSED, "hook_guard.check_spawn", why))
         return _finish(result, t0)
 
-    # 2. le prompt, depuis le Blueprint
-    projections = _materialize_reads(blueprint, sp["reads"], run_dir)
-    bp_section, inputs = _render_blueprint_inputs(blueprint, sp["reads"])
-    result["blueprint_inputs"] = inputs
-    result["projections"] = projections
+    # 3. le prompt
     task_text = task if task is not None else default_task_by_step(
         project or blueprint.get("project", ""), src_root_rel, profile="full").get(sp["etape"], "")
     parts = [payload.prompt, f"## TÂCHE CONCRÈTE ({run_id} / {sp['etape']})\n{task_text}"]
     if bp_section:
         parts.append(bp_section)
+    # Lot 5 (L1) : pré-mortem — MÊME titre de section que run_real.claude_executor
+    pm = premortem if premortem is not None else default_premortem(project or blueprint.get("project", ""), run_dir)
+    premortem_section = None
+    if pm:
+        premortem_section = "## PRÉ-MORTEM (erreurs des runs passés)\n" + "\n".join(f"- {p}" for p in pm)
+        parts.append(premortem_section)
+    result["premortem_lines"] = len(pm)
+    # Lot 5 (L3) : retour du matérialiseur à la re-convocation — MÊME texte que run_real (rupture 11)
+    if feedback:
+        parts.append(f"## RETOUR DU MATÉRIALISEUR — tentative {feedback.get('attempt')} "
+                     "(ta sortie précédente a été REFUSÉE)\n"
+                     f"{feedback.get('reason')}\n"
+                     "Corrige la FORME demandée ; le fond de ta sortie précédente reste valable.")
+        result["feedback_applied"] = True
     prompt = "\n\n".join(parts)
     result["prompt_file"] = _persist_final_prompt(run_dir, sp["etape"], attempt, prompt)
+    # Lot 5 (L7) : le manifest d'exécution — le prompt FINAL, ses outils effectifs, son pré-mortem —
+    # écrit AVANT l'appel, comme run_real.claude_executor. Advisory, jamais bloquant.
+    tools = tuple(sp["tools"])
+    try:
+        context_manifest.append_execution_manifest(
+            run_id, sp["etape"], run_dir, prompt, model=payload.model, premortem_section=premortem_section,
+            tools_effective=tools, tools_disallowed_count=len(_derive_disallowed(tools)))
+        result["lineage"]["execution_manifest"] = True
+    except Exception:  # noqa: BLE001 — advisory
+        pass
 
     # 3. l'exécuteur — réel ou injecté ; reçus d'audit chemin B (comme ForgeDriver)
     work_dir = Path(add_dir) if add_dir is not None else run_dir
-    ex = executor or (lambda p, s, pl: _default_executor(p, s, pl, run_dir=work_dir, timeout_s=timeout_s))
+    ex = executor or (lambda p, s, pl: _default_executor(p, s, pl, run_dir=work_dir, timeout_s=effective_timeout))
     started_at = time.time()
     res = ex(prompt, sp, payload) or {}
+    mesure = res.get("model_used")
+    result["model_used"] = list(mesure) if isinstance(mesure, (list, tuple)) else (mesure or None)
+    result["model_measured"] = bool(result["model_used"])
+    result["executor_diagnostic"] = {k: res.get(k) for k in (
+        "returncode", "process_state", "stderr_tail", "timeout", "transient_retries", "session_id", "tools_used")}
+    # Lot 5 (L10) : l'amont du joint spawn_link — ce que SEUL l'exécuteur connaît (run_real, P4)
+    result["_spawn_link_upstream"] = _build_spawn_link_upstream(
+        run_dir, sp["etape"], prompt, result["prompt_file"],
+        model_declared=result["model"], model_requested=payload.model, res=res)
     common = dict(capability_role=sp["capability_role"], model=payload.model, provider=payload.provider,
                   allowed_tools=tuple(payload.allowed_tools), tools_effective_signed=tuple(sp["tools"]),
                   audit_path=audit_path)
@@ -388,6 +516,16 @@ def invoke_capability(name: str, blueprint: dict, run_dir: Path, *, run_id: str,
         result["salvaged"] = True
         res = dict(res, output="")
     output = str(res.get("output") or "")
+    result["next_reason"] = ForgeDriver._parse_next_reason(output)   # transport, jamais décision
+    if res.get("ok"):
+        # Lot 5 (L9) : lignée RETURN — extraction déterministe, manifest jumeau, jamais bloquant
+        reason = _extract_return_reason(output)
+        result["return_reason"] = reason
+        try:
+            context_manifest.append_return_manifest(run_id, sp["etape"], run_dir, reason)
+            result["lineage"]["return_manifest"] = True
+        except Exception:  # noqa: BLE001
+            pass
     art_dir = run_dir / "artifacts"
     art_dir.mkdir(parents=True, exist_ok=True)
     output_file = art_dir / f"{sp['etape']}.txt"          # meme forme que le driver (artifacts/<etape>.txt)
@@ -477,6 +615,26 @@ def _write_owned_section(blueprint: dict, sp: dict, data, artifact_path: Path, r
 
 def _finish(result: dict, t0: float) -> dict:
     result["duration_s"] = round(time.monotonic() - t0, 3)
+    upstream = result.pop("_spawn_link_upstream", None)
+    if upstream is not None:   # un exécuteur a tourné : le joint est écrit, succès comme échec (L10)
+        art = Path(result["artifact"]) if result.get("artifact") else None
+        result["lineage"]["spawn_link"] = _append_spawn_link(
+            Path(result["_run_dir"]), result["run_id"], result["etape"], result["attempt"],
+            "OK" if result["ok"] else "HALTED", upstream, art)
+    # Lot 5 (L14) : un échec de convocation (exécuteur, matérialisation, validateur, section) est
+    # journalisé dans le run — le pré-mortem de la convocation suivante le relit. Les refus du
+    # registre (verrou, non invocable, section absente) ne sont pas des erreurs d'exécution.
+    if not result["ok"] and result.get("_run_dir"):
+        first = next((p for p in result["problems"] if p.get("producer") != "capability_registry"), None)
+        if first is not None:
+            try:
+                studio_link.record_error(result["run_id"], result["etape"] or "?",
+                                         f"{first['code']}: {first['message']}", result.get("_project") or "",
+                                         journal_path=Path(result["_run_dir"]) / "error_journal.jsonl")
+            except Exception:  # noqa: BLE001 — capteur
+                pass
+    result.pop("_project", None)
+    result.pop("_run_dir", None)
     return result
 
 
@@ -489,7 +647,8 @@ def main(argv: list[str] | None = None) -> int:
     i = sub.add_parser("invoke")
     i.add_argument("name"); i.add_argument("--blueprint", required=True); i.add_argument("--run-id", required=True)
     i.add_argument("--attempt", type=int, default=1); i.add_argument("--out", default=None)
-    i.add_argument("--timeout", type=float, default=DEFAULT_STEP_TIMEOUT_S)
+    i.add_argument("--timeout", type=float, default=None,
+                   help="Lot 5 : absent = timeout_policy du registre ; présent = intention de l'opérateur")
     a = p.parse_args(argv)
     if a.cmd == "spec":
         print(json.dumps(spec(a.name), ensure_ascii=False, indent=1, default=str))

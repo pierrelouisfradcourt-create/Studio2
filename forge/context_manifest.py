@@ -341,6 +341,7 @@ def build_dispatch_manifest_record(
     ts: float | None = None, activation: int = 1,
     model_executed: str | None = None,
     reason: 'str | dict' = "",
+    sources_override: list[dict] | None = None,
 ) -> dict:
     """Corps NON SIGNÉ de la ligne 'dispatch' (utile aux tests qui veulent
     inspecter le contenu avant signature).
@@ -360,7 +361,14 @@ def build_dispatch_manifest_record(
     Le driver, seul appelant réel en production, passe toujours une valeur
     explicite (voir ``forge.driver``) ; un appel direct de la porte (tests,
     dry-run) sans ``reason`` produit une ligne "" — jamais une valeur devinée."""
-    sources = resolve_dispatch_sources(etape, contract, run_dir=run_dir, caps_path=caps_path)
+    if sources_override is not None:
+        # Lot 5 (L8, 2026-09-04) : l'appelant SAIT d'où vient le contexte (sections du Blueprint) —
+        # la table amont d'ORDER ne mesure pas cette convocation. Contrat + mandatory_read +
+        # registre restent mesurés ; les sources fournies prennent la place des `upstream`.
+        base = resolve_dispatch_sources(etape, contract, run_dir=None, caps_path=caps_path)
+        sources = base[:-1] + [dict(s) for s in sources_override] + base[-1:]
+    else:
+        sources = resolve_dispatch_sources(etape, contract, run_dir=run_dir, caps_path=caps_path)
     return {
         "schema": SCHEMA,
         "kind": "dispatch",
@@ -388,6 +396,7 @@ def append_dispatch_manifest(
     key_file: Path | None = None, ts: float | None = None,
     model_executed: str | None = None,
     reason: 'str | dict' = "",
+    sources_override: list[dict] | None = None,
 ) -> dict:
     """Construit, signe et APPEND la ligne 'dispatch' du Context Manifest de
     cette étape. ``run_dir`` est requis ici (l'appelant — ``dispatch.py`` —
@@ -398,7 +407,7 @@ def append_dispatch_manifest(
     record = build_dispatch_manifest_record(
         etape, run_id, payload, contract, run_dir=run_dir,
         caps_path=caps_path, ts=ts, activation=activation,
-        model_executed=model_executed, reason=reason,
+        model_executed=model_executed, reason=reason, sources_override=sources_override,
     )
     record["hmac"] = _sign(record, key_file)
     _append_line(path, record)

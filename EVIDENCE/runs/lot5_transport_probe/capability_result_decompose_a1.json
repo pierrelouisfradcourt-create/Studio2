@@ -1,0 +1,134 @@
+{
+ "capability": "decompose",
+ "run_id": "lot5_transport_probe",
+ "attempt": 1,
+ "ok": true,
+ "etape": "s3-decompo",
+ "model": "claude-opus-4-8",
+ "section_written": "feature_map",
+ "section_version": 3,
+ "artifact": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\EVIDENCE\\runs\\lot5_transport_probe\\featuremap.json",
+ "artifact_sha256": "855d8be61298f2ad51b4ee44dc7c6aef745f2b17f8f1825a3508222739babae6",
+ "validator_receipt": {
+  "name": "check_decompo.mjs",
+  "exit_code": 1,
+  "ok": false,
+  "stats": {
+   "systemes": 6,
+   "features": 9,
+   "feuilles": 10,
+   "feuilles_sourcees": 10,
+   "exigences_prisme": 10,
+   "exigences_couvertes": 9,
+   "feuilles_par_feature_min": 1,
+   "feuilles_par_feature_max": 2,
+   "actions_joueur": 2,
+   "actions_joueur_prouvees_depuis_scene": 0,
+   "maillons_couverts": {
+    "F": 0,
+    "G": 0,
+    "H": 1,
+    "I": 0,
+    "J": 0
+   },
+   "grey_blocks": 0,
+   "grey_blocks_couverts": 0
+  },
+  "advisory": true,
+  "problem_count": 2
+ },
+ "output_file": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\EVIDENCE\\runs\\lot5_transport_probe\\artifacts\\s3-decompo.txt",
+ "model_executed": "claude-opus-4-8",
+ "model_used": [
+  "claude-opus-4-8"
+ ],
+ "model_measured": true,
+ "executor_diagnostic": {
+  "returncode": 0,
+  "process_state": "MODEL_REACHED",
+  "stderr_tail": "Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"C:/Users/Studio-Dev/Desktop/Studio2\"].hasTrustDialogAccepted: true in C:\\Users\\Studio-Dev\\.claude.json.\n",
+  "timeout": null,
+  "transient_retries": null,
+  "session_id": "b4915a78-b739-4a20-a0af-815a62922d66",
+  "tools_used": {
+   "Read": 3
+  }
+ },
+ "next_reason": "",
+ "return_reason": {
+  "status": "DISCOVERED",
+  "problem": "check_decompo.mjs impose la sous-chaine 'main.tscn' dans la preuve d'entree de toute action joueur (l.193), FAIL inevitable pour E2 sur runm_breakout qui est web/HTML et interdit Godot par charter",
+  "root_cause": "controle d'entree d'action joueur code en dur sur la lignee Godot (main.tscn), non parametre par la lignee du jeu (web vs godot)"
+ },
+ "lineage": {
+  "execution_manifest": true,
+  "return_manifest": true,
+  "spawn_link": true
+ },
+ "premortem_lines": 4,
+ "feedback_applied": false,
+ "timeout_s": 1800.0,
+ "problems": [
+  {
+   "code": "DECOMPO_LOOP_NO_ENTRY",
+   "producer": "check_decompo.mjs",
+   "path": "feature_map.boucle_sans_entree",
+   "message": "systemes[1].features[0].capacites[0]: feuille 'CAP_entree_raquette' realise l'action joueur 'raquette' (exigence E2) sans preuve bot_action depuis main.tscn",
+   "suggested_action": "reconvoke"
+  },
+  {
+   "code": "DECOMPO_LOOP_NO_ENTRY",
+   "producer": "check_decompo.mjs",
+   "path": "feature_map.boucle_sans_entree",
+   "message": "systemes[1].features[0].capacites[1]: feuille 'CAP_effet_raquette' realise l'action joueur 'raquette' (exigence E2) sans preuve bot_action depuis main.tscn",
+   "suggested_action": "reconvoke"
+  }
+ ],
+ "requests": [],
+ "questions": [],
+ "blueprint_inputs": [
+  {
+   "section": "gameplay",
+   "version": 1,
+   "content_sha256": "4b392460de5540070d79f80eacac28a61cb9b6fbee97495d6ed99b3026845fa1",
+   "entry_sha256": "4b392460de5540070d79f80eacac28a61cb9b6fbee97495d6ed99b3026845fa1"
+  },
+  {
+   "section": "understanding.prisme",
+   "version": 1,
+   "content_sha256": "9d7fedba248407e38627ec772a15205e4d3224f6aac024073bdc65bf3c490159",
+   "entry_sha256": "1b1adc485e768376b6e315dacce83b94ed02225163985b4759dae31613d95596"
+  },
+  {
+   "section": "understanding.worldscan",
+   "version": 1,
+   "content_sha256": "9d7fedba248407e38627ec772a15205e4d3224f6aac024073bdc65bf3c490159",
+   "entry_sha256": "452b1f86a00a205ee1d5209c128cc4b9185aeb1d962a5abe1854e6a215ee2ea0"
+  },
+  {
+   "section": "understanding.product_snapshot",
+   "version": 1,
+   "content_sha256": "9d7fedba248407e38627ec772a15205e4d3224f6aac024073bdc65bf3c490159",
+   "entry_sha256": "fd68b8f373fc2fc1c9219a220299783803cc6069b82f8383f0cb1216a515df58"
+  }
+ ],
+ "prompt_file": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\EVIDENCE\\runs\\lot5_transport_probe\\context\\prompt_s3-decompo_a1.txt",
+ "audit": {
+  "prepared": true,
+  "spawn_allowed": true,
+  "authorized": true,
+  "executed": true
+ },
+ "cost": {
+  "tokens": 20037,
+  "duration_s": 273.5687837600708,
+  "cost_usd": 1.6147985
+ },
+ "duration_s": 273.797,
+ "projections": [
+  "charter.yaml",
+  "prisme.json",
+  "worldscan.json",
+  "product_snapshot.md"
+ ]
+}

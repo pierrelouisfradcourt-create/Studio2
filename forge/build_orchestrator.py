@@ -213,6 +213,11 @@ def humangate_dossier(blueprint: dict, run_dir: Path, director_state: dict, qa: 
     cost = sum(float(((d.get("measure") or {}).get("cost") or {}).get("cost_usd") or 0) for d in decisions)
     counts = decision_step_counts(decisions, sequence)
     verdict = (qa or {}).get("verdict") or {}
+    # Lot 5 (réserve 3) : seules les objections de CE run sont listées ; les autres sont comptées
+    run_id = director_state.get("run_id")
+    mine = [m for m in journal_messages if m.get("run_id") == run_id]
+    autres = len(journal_messages) - len(mine)
+    run_dir.mkdir(parents=True, exist_ok=True)
     dossier = {
         "project": blueprint.get("project"), "run_id": director_state.get("run_id"),
         "software_verdict": verdict.get("software_verdict"), "decision": verdict.get("decision"),
@@ -225,7 +230,8 @@ def humangate_dossier(blueprint: dict, run_dir: Path, director_state: dict, qa: 
         "counts": counts,
         "decisions": [{k: d.get(k) for k in ("id", "kind", "capability", "diagnosis_code", "effect", "progress")}
                       for d in decisions],
-        "objections_conservees": [{k: m.get(k) for k in ("id", "type", "from", "to", "subject")} for m in journal_messages],
+        "objections_conservees": [{k: m.get(k) for k in ("id", "type", "from", "to", "subject", "run_id")} for m in mine],
+        "objections_autres_runs": autres,
         "problems_remaining": (director_state.get("last_problems") or []),
         "cost_usd_llm": round(cost, 4),
         "not_proven": ["valeur du jeu (Pierre joue)", "variance de l'oracle de solvabilité (défaut connu)",
@@ -255,7 +261,8 @@ def humangate_dossier(blueprint: dict, run_dir: Path, director_state: dict, qa: 
           "## Décisions du Director",
           *[f"- {d['id']} · {d['kind']} · {d.get('capability') or ''} · {d.get('diagnosis_code') or ''} · effet {d.get('effect') or ''} · progrès {d.get('progress') or ''}"
             for d in dossier["decisions"]], "",
-          "## Objections conservées", *objections_md, "",
+          "## Objections conservées (run seul)", *objections_md,
+          f"- {autres} objection(s) d'autres runs ou sans run_id, non listées", "",
           f"## Coût LLM : {dossier['cost_usd_llm']} $", "",
           "## Non prouvé", *[f"- {x}" for x in dossier["not_proven"]], "", "no_global_ready_verdict: true"]
     (run_dir / "HUMANGATE_DOSSIER.md").write_text("\n".join(md) + "\n", encoding="utf-8")

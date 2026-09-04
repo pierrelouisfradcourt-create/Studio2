@@ -549,6 +549,7 @@ def prepare_dispatch(
     model_executed: str | None = None,
     reason: 'str | dict' = "",
     contracts_dir: Path | None = None,
+    sources_override: list | None = None,
 ) -> DispatchPayload:
     """Valide le contrat de l'étape, fabrique le payload borné, trace l'audit.
 
@@ -631,6 +632,8 @@ def prepare_dispatch(
         context_manifest.append_dispatch_manifest(
             etape, run_id, payload, contract, run_dir=effective_run_dir,
             caps_path=caps_path, model_executed=model_executed, reason=reason,
+            # Lot 5 (L8) : sources de contexte connues de l'appelant (sections du Blueprint)
+            sources_override=sources_override,
         )
     except Exception:
         logger.warning(

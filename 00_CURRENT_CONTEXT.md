@@ -16,8 +16,8 @@
 ```
 V1  C:\TACTICAL_CHESS_STUDIO        HEAD 58095ba9   SOURCE CANONIQUE, lecture seule
     4 écarts (dispatch.py, oracles.json, 2 tests) = autre session, jamais migrés
-V2  C:\Users\Studio-Dev\Desktop\Studio
-    2769dc8  état migré           cf89ffb  socle sécurisé
+V2  C:\Users\Studio-Dev\Desktop\Studio2   (renommé 2026-09-04 ; remote github.com/pierrelouisfradcourt-create/Studio2)
+    2769dc8 migré · cf89ffb socle · 3481089 Lot 1 · 523bd07 Lots 2-4 · Lot 5 en attente de GO commit
 ```
 
 **Phase close : sécurisation du socle.** V2 est migré, validé et prouvé par un run complet.
@@ -40,9 +40,20 @@ V2  C:\Users\Studio-Dev\Desktop\Studio
      (`director.py:394-403, 564`), aucun champ au registre ;
   3. objections du dossier non filtrées par `run_id` : `journal.jsonl` porte `run_id: null` (4/4), le dossier du
      slice liste une objection venue de `lot3_director_probe`.
-- Audit parallèle capacités / skills / modèles (2026-09-03, HEAD 3481089, hors dépôt) : `invoke_capability` v0
-  emporte 13 mécanismes de production et en perd ou déplace 22 (pré-mortem, manifest d'exécution, spawn_link,
-  modèle mesuré, routage provider, réparation, timeouts…) ; aucun n'a de propriétaire déclaré au registre.
+- Audit capacités / skills / modèles (2026-09-03) : `docs/forge/AUDIT_V2_CAPABILITIES_SKILLS_MODELS_20260903.md`.
+
+## Lot 5 — transport et propriétaires (2026-09-04, GO Pierre ; plan `docs/superpowers/plans/2026-09-04-lot5-*.md`)
+- Registre : bloc `transport` = 28 mécanismes avec propriétaire (18 carried par invoke · 3 director · 6 deferred
+  avec raison · 1 dropped → Pierre : entrée globale `forge/oracles.json`) ; `timeout_policy` par capacité (builder 5400 s, détaché).
+- `invoke_capability` : manifest dispatch sur les SECTIONS lues (plus `_UPSTREAM_BY_STEP`), manifest `execution`,
+  spawn_link, RETURN_REASON, modèle MESURÉ ≠ déclaré, diagnostic, next_reason, sha par sous-entrée, pré-mortem
+  (studio + `error_journal.jsonl` du run), retour du matérialiseur transmis par le Director, journal d'échec du run.
+- Réserves 523bd07 : 1 fermée par déclaration (`pierre`, test R3 sur `prepare_build`) · 2 fermée (registre) · 3 fermée
+  (objections avec `run_id`, dossier filtré + `objections_autres_runs`). Tests : 114 verts (lot + voisins) ; T0 complet
+  2511 verts / 42 échecs = population V1 classée, inchangée.
+- Sonde réelle `EVIDENCE/runs/lot5_transport_probe/` (decompose, opus-4-8 mesuré, 1,61 $) : lignées écrites, 4 sections citées.
+  **Trouvé par la sonde** : `check_decompo.mjs` exige une preuve `main.tscn` (lignée Godot) pour toute action joueur,
+  même sur un jeu web → `DECOMPO_LOOP_NO_ENTRY` structurel sur runm_breakout ; à paramétrer par lignée (Lot 6).
 
 ## La baseline — ne pas y toucher
 
@@ -60,14 +71,8 @@ Archives conservées : `_ARCHIVE_RUN_M_*` (preuves du VOID et du HALT d'encodage
 pas un confort) · lots B, C-1, C-2, D-1, D-1-tuyau, D-2, encodage, ESC-1 · outils
 `TOOLS/scan_imports.py` et `TOOLS/validate_v2.py` · 2459 tests verts, 43 classés.
 
-**Pas fait, et c'est le sujet suivant** — la thèse V2 :
-```
-dispatch.ORDER            13 stations FIXES de V1
-GAME_BLUEPRINT            cité dans 0 fichier
-GAME_FLOW                 cité dans 0 fichier
-ARCHITECTURE_CONTRACT     cité dans 0 fichier
-forge/emitter.py          0 appel dans la chaîne — le geste existe, personne ne le pose
-```
+**Thèse V2 (état 2026-09-04)** : GAME_BLUEPRINT, capacités convocables, Director, emitter branché = Lots 1→5 ;
+`dispatch.ORDER` reste (13 stations, contourné, jamais retiré) ; GAME_FLOW · UX · design_metrics : DOCUMENTED_ONLY.
 
 ## Défauts connus, nommés, non corrigés
 

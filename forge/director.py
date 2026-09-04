@@ -354,6 +354,7 @@ def _objection(state: dict, capability: str, code: str, view: dict, sig: dict) -
     issued = _now()
     return {
         "id": new_message_id(f"{code} {capability} {state['run_id']}", issued), "type": "objection",
+        "run_id": state["run_id"],   # Lot 5 (réserve 3) : le dossier filtre par run_id
         "from": "director", "to": [capability],
         "subject": f"{code} : ta production précédente n'a pas joint la feature_map",
         "reason": (f"jointure de design mesurée par check_wiremap_contract : régime {view.get('regime')}, "
@@ -376,6 +377,7 @@ def _objection_oracles(state: dict, qa: dict) -> dict:
         state["last_problems"] = problems
     return {
         "id": new_message_id(f"ORACLE_RED builder {state['run_id']}", issued), "type": "objection",
+        "run_id": state["run_id"],   # Lot 5 (réserve 3)
         "from": "director", "to": ["builder"],
         "subject": "ORACLE_RED : le jeu construit ne passe pas les oracles déterministes",
         "reason": ("Reçus d'oracle (producteur = l'oracle, jamais un jugement) : " + " | ".join(
@@ -553,6 +555,13 @@ class Director:
         etape = spec["etape"]
         self.state["convocations"][etape] = self.state["convocations"].get(etape, 0) + 1
         attempt = self.state["convocations"][etape]
+        # Lot 5 (L3) : la re-convocation après une sortie non matérialisable reçoit le RETOUR DU
+        # MATÉRIALISEUR — sinon l'agent rejoue le même prompt et reproduit la même sortie (rupture 11)
+        feedback = None
+        for p in self.state.get("last_problems") or []:
+            if p.get("code") in (cap.ARTIFACT_NOT_MATERIALIZABLE, cap.ARTIFACT_INVALID) \
+                    and p.get("path") == action["path"] and attempt > 1:
+                feedback = {"attempt": attempt - 1, "reason": p.get("message")}
         project = self.blueprint.get("project", "")
         src_rel = f"GAMES/{project}"
         task = default_task_by_step(project, src_rel, profile="full").get(etape, "")
@@ -574,7 +583,7 @@ class Director:
         res = cap.invoke_capability(capability, self.blueprint, self.run_dir, run_id=self.run_id,
                                     attempt=attempt, executor=self.executor, audit_path=self.audit_path,
                                     task=task, registry=self.registry, project=project, src_root_rel=src_rel,
-                                    add_dir=add_dir, **kwargs)
+                                    add_dir=add_dir, feedback=feedback, **kwargs)
         self.state["sequence"].append(etape)
         after = measure(self.blueprint)
         effect, why = effect_of(before, after, res.get("section_written"))

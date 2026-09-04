@@ -1,0 +1,1270 @@
+{
+ "imported_at": "2026-09-03T15:27:29+00:00",
+ "project": "runm_breakout",
+ "schema": "GAME_BLUEPRINT/v0",
+ "sections": {
+  "architecture_contract": {
+   "content": {
+    "deps_interdites": [
+     [
+      "engine",
+      "render"
+     ],
+     [
+      "engine",
+      "input"
+     ],
+     [
+      "engine",
+      "main"
+     ],
+     [
+      "render",
+      "engine"
+     ],
+     [
+      "render",
+      "input"
+     ],
+     [
+      "render",
+      "main"
+     ],
+     [
+      "input",
+      "engine"
+     ],
+     [
+      "input",
+      "render"
+     ],
+     [
+      "input",
+      "main"
+     ]
+    ],
+    "modules": [
+     "engine",
+     "render",
+     "input",
+     "main"
+    ],
+    "ownership": {
+     "engine": "simulation-deterministe",
+     "input": "capture-clavier",
+     "main": "composition-root",
+     "render": "presentation-dom"
+    },
+    "responsabilites": [
+     {
+      "couvre": [
+       "R2_controle_raquette",
+       "R3_rebond_conservatif",
+       "R4_destruction_une_frappe",
+       "R5_progres_mesurable",
+       "R6_victoire_terminale",
+       "R7_defaite_terminale",
+       "R8_determinisme",
+       "R9_etat_inspectable"
+      ],
+      "dependances": [],
+      "module": "engine",
+      "preuve_attendue": {
+       "kind": "oracle",
+       "statement": "engine.mjs importe hors navigateur par un test node produit a seed fixe : inversion de la composante de vitesse avec |v| conservee a un contact mur/raquette (R3), brique absente de l'etat au tick du contact et non recollidable (R4), bricksRemaining decremente d'exactement 1 (R5), state='won' a bricksRemaining=0 (R6) / 'lost' quand la balle franchit le bord bas sans vie (R7), et deux executions a seed+entrees identiques donnent le meme hash d'etat final (R8)."
+      },
+      "responsabilite": "Simulation metier pure et deterministe : etat {paddle, ball, bricks, bricksRemaining, state}, rebond conservatif (|v| conservee), destruction one-shot des briques, decrement unitaire, transitions terminales won/lost, RNG seede et hash d'etat reproductible. Aucune connaissance du DOM ni du clavier."
+     },
+     {
+      "couvre": [
+       "R2_controle_raquette"
+      ],
+      "dependances": [],
+      "module": "input",
+      "preuve_attendue": {
+       "kind": "bot_action",
+       "statement": "Un bot presse Fleche-Droite N frames puis Fleche-Gauche : l'intention exposee par input, appliquee par engine via main, fait croitre puis decroitre window.__game.paddle.x ; sans touche, paddle.x reste constant."
+      },
+      "responsabilite": "Adaptateur entrant : capture des intentions clavier (Fleche-Gauche / Fleche-Droite) et exposition d'un etat d'entree neutre (gauche/droite/aucune). Ne mute jamais la logique ni le rendu ; traduit un evenement DOM en intention, rien de plus."
+     },
+     {
+      "couvre": [
+       "R1_objectif_affiche",
+       "R6_victoire_terminale",
+       "R7_defaite_terminale"
+      ],
+      "dependances": [],
+      "module": "render",
+      "preuve_attendue": {
+       "kind": "visual",
+       "statement": "A l'ouverture de la page le HUD objectif contient un texte non vide decrivant la destruction du mur (R1) ; quand l'etat passe a 'won' un panneau VICTOIRE est affiche (R6), a 'lost' un panneau DEFAITE (R7)."
+      },
+      "responsabilite": "Adaptateur sortant : rendu DOM d'un instantane d'etat RECU (jamais lu directement dans engine) — HUD objectif non vide, raquette, balle, briques restantes, panneaux terminaux VICTOIRE / DEFAITE. Vue en lecture seule : ne mute aucun etat, ne lit aucune entree."
+     },
+     {
+      "couvre": [
+       "R9_etat_inspectable"
+      ],
+      "dependances": [
+       "engine",
+       "input",
+       "render"
+      ],
+      "module": "main",
+      "preuve_attendue": {
+       "kind": "oracle",
+       "statement": "Apres chargement, window.__game existe et expose paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state dans {playing,won,lost} ; un test node verifie que main cable engine<->input<->render sans que engine importe render ou input."
+      },
+      "responsabilite": "Racine de composition et boucle de jeu : instancie engine (seed), lit l'intention de input, avance la simulation d'un tick, passe l'instantane a render, et expose window.__game (paddle, ball, bricksRemaining, state) independamment du rendu. Unique module autorise a dependre des trois autres."
+     }
+    ]
+   },
+   "content_sha256": "842ebc44d1d8dac1348de58334afa07533adb6dcaaf816b589a13163c064ac4c",
+   "owner": [
+    "architect"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/runm_breakout/blueprint.json",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "4fe6a48f976b936cbf5ed62790d412a1aa389c84496c0e744af30601c6e03b02",
+    "status": "FILE"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "constraints": {
+   "content": {
+    "contraintes": {
+     "normative_refs": [
+      {
+       "rules": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N7",
+        "N8",
+        "N9"
+       ],
+       "spec": "FORGE_DESIGN_FREEDOM_SPEC_V0"
+      }
+     ],
+     "project_specific": {
+      "experimentales": [
+       "RUN M = preuve de bout en bout de la MIGRATION V1 -> V2 (surfaces, chemins, contrats, oracles, sceau de preuve), pas de la topologie cible V2 : celle-ci n'est pas construite au moment de ce run et ne peut donc être ni testée ni prétendue",
+       "un échec est un résultat expérimental recevable : le run doit dire OÙ la chaîne casse dans les surfaces V2, jamais produire un vert par contournement"
+      ],
+      "techniques": [
+       "cible technique conforme au socle N1 : page HTML+JS unique, RNG seedé, logique métier en module .mjs testable hors navigateur, exposition window.__game, actions DOM-only, déterminisme reproductible par hash",
+       "lignée WEB imposée — aucun binaire Godot ni Blender requis. La matrice de dépendances externes du Studio V2 classe Godot et Blender en dépendances de CAPACITÉ, jamais en préconditions globales : ce run doit rester exécutable sans eux, et un recours silencieux à l'un ou l'autre est un écart à signaler"
+      ]
+     }
+    },
+    "criteres_sortie": [
+     "le run s'exécute dans les surfaces V2 : run_dir sous EVIDENCE/runs/, jamais lab/",
+     "le jeu est écrit sous GAMES/runm_breakout/, jamais games/ ni ailleurs",
+     "charter produit par s0 et validé par check_charter",
+     "prisme.json, featuremap.json, blueprint et wiremap.json produits et validés par leurs oracles amont",
+     "chaque ligne de wiremap porte un `couvre` NON VIDE citant l'id EXACT d'une capacité de featuremap.json",
+     "le reçu de jointure `join_check` est présent dans state.json avec un `regime` explicite (JOINED / PARTIAL / VOID / EMPTY_FORM / NOT_APPLICABLE) — advisory, il ne bloque rien, mais son absence signalerait que la recopie du reçu n'a pas eu lieu",
+     "preuves s10 produites (s10a-oracle-code, s10b-oracle-archi, s10c-oracle-wiremap)",
+     "verdict signé HMAC produit ET re-vérifié authentique par verify_run — pas seulement présent",
+     "la clé de signature utilisée est celle de V2 (forge/.forge_key), jamais une clé héritée de V1",
+     "le jeu se charge dans un navigateur et une partie complète est jouable au clavier",
+     "LM Studio indisponible => HALT/BLOCKED sans repli silencieux vers une autre source",
+     "aucun artefact n'est écrit hors des surfaces V2 déclarées — une écriture dans lab/, scripts/forge/ ou games/ est un FAIL de migration, pas un détail"
+    ],
+    "libertes_deleguees": [
+     "choisir le thème visuel et la direction artistique",
+     "définir la boucle de jeu minimale et ses règles",
+     "décider du nombre de briques, de vies, de niveaux et du dimensionnement",
+     "choisir les interactions et les affordances du joueur",
+     "arbitrer les détails de conception non spécifiés par ce Brief",
+     "choisir la structure interne des modules, dans les limites du socle N1"
+    ],
+    "non_delegue": [
+     "les règles normatives citées (N1-N4, N7-N9)",
+     "les critères de sortie",
+     "l'autorité des preuves",
+     "l'autorité du verdict",
+     "le choix de la lignée web et l'interdiction de dépendre de Godot/Blender",
+     "la définition du Project Input lui-même"
+    ]
+   },
+   "content_sha256": "3720f1dd587d920a7b096d913ae7206de85c82eda3e8e3b7a6c5485b23fb033e",
+   "owner": [
+    "pierre"
+   ],
+   "source": {
+    "path": "EVIDENCE/briefs/runm_breakout/project_brief.yaml",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "4d100063e76fcdefd78c0a3ac43fb7842aec258d6feecd8bb7f1091186692d84",
+    "status": "BRIEF"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "decisions": {
+   "content": [
+    {
+     "by": "importer",
+     "id": "import-runm-breakout-20260902",
+     "kind": "import",
+     "measure": {
+      "run_status": "DONE",
+      "steps": {
+       "s0-contrat": "OK",
+       "s1-prisme": "OK",
+       "s10a-oracle-code": "OK",
+       "s10b-oracle-archi": "OK",
+       "s10c-oracle-wiremap": "OK",
+       "s11-redteam-code": "OK",
+       "s12-verdict": "OK",
+       "s2-worldscan": "OK",
+       "s3-decompo": "OK",
+       "s4-archi": "OK",
+       "s5-wiremap": "OK",
+       "s6-redteam-plan": "OK",
+       "s9-build": "OK"
+      }
+     },
+     "refs": [
+      "EVIDENCE/runs/runm_breakout/state.json"
+     ],
+     "signal": "run terminé"
+    }
+   ],
+   "content_sha256": "19c9fd7a3accd36ecab8f84bfcf350de6846733e9a8c5cc0ef3d89267df22772",
+   "owner": [
+    "director",
+    "pierre"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/runm_breakout/state.json",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "1f0b348f4636a457f5be314d1c9e5f2e60f346c4b59f919fa3525347ba167616",
+    "status": "FILE"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "feature_map": {
+   "content": {
+    "game_id": "runm_breakout",
+    "systemes": [
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "Afficher en continu, tant que la partie est en cours, un objectif lisible « Détruire toutes les briques » dans le HUD `objectif`.",
+          "expected_proof": {
+           "kind": "visual",
+           "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+          },
+          "id": "CAP_objectif_hud",
+          "source_ref": "E1"
+         }
+        ],
+        "id": "F_objectif_affiche"
+       }
+      ],
+      "id": "SYS_OBJECTIF"
+     },
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "ENTRÉE — le joueur agit sur l'affordance `raquette` en maintenant Flèche-Gauche/Droite au clavier (aucune souris, aucun tir).",
+          "expected_proof": {
+           "kind": "bot_action",
+           "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+          },
+          "id": "CAP_entree_raquette",
+          "source_ref": "E2"
+         },
+         {
+          "capacite": "EFFET — la raquette suit à l'écran : window.__game.paddle.x augmente vers la droite, diminue vers la gauche, reste stable sans entrée.",
+          "expected_proof": {
+           "kind": "bot_action",
+           "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+          },
+          "id": "CAP_effet_raquette",
+          "source_ref": "E2"
+         }
+        ],
+        "id": "F_deplacement_raquette"
+       }
+      ],
+      "id": "SYS_CONTROLE"
+     },
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "Au contact d'un mur ou de la raquette, réfléchir la balle : inverser la composante de vitesse concernée en conservant la norme |v|.",
+          "expected_proof": {
+           "kind": "oracle",
+           "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+          },
+          "id": "CAP_rebond_conservatif",
+          "source_ref": "E3"
+         }
+        ],
+        "id": "F_rebond"
+       },
+       {
+        "capacites": [
+         {
+          "capacite": "Au contact balle↔brique, retirer la brique de la grille au même tick, la rendre non collidable ; la balle rebondit. Aucune durabilité variable.",
+          "expected_proof": {
+           "kind": "mutation",
+           "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+          },
+          "id": "CAP_destruction_une_frappe",
+          "source_ref": "E4"
+         }
+        ],
+        "id": "F_destruction_brique"
+       }
+      ],
+      "id": "SYS_PHYSIQUE"
+     },
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "Décrémenter window.__game.bricksRemaining d'exactement 1 à chaque brique détruite, et refléter la valeur dans le compteur affiché.",
+          "expected_proof": {
+           "kind": "oracle",
+           "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+          },
+          "id": "CAP_decrement_unitaire",
+          "source_ref": "E5"
+         }
+        ],
+        "id": "F_compteur_briques"
+       }
+      ],
+      "id": "SYS_PROGRESSION"
+     },
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "Quand la dernière brique disparaît, passer window.__game.state à 'won', afficher un panneau « VICTOIRE » et figer la simulation (aucun niveau suivant).",
+          "expected_proof": {
+           "kind": "visual",
+           "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+          },
+          "id": "CAP_victoire_terminale",
+          "source_ref": "E6"
+         }
+        ],
+        "id": "F_victoire"
+       },
+       {
+        "capacites": [
+         {
+          "capacite": "Quand la balle franchit le bord bas sans vie restante, passer window.__game.state à 'lost', afficher un panneau « DÉFAITE » et figer la simulation.",
+          "expected_proof": {
+           "kind": "visual",
+           "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+          },
+          "id": "CAP_defaite_terminale",
+          "source_ref": "E7"
+         }
+        ],
+        "id": "F_defaite"
+       }
+      ],
+      "id": "SYS_ETATS_TERMINAUX"
+     },
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "À seed identique et suite d'entrées identique, produire le même hash d'état final sur deux exécutions du module .mjs (testable hors navigateur).",
+          "expected_proof": {
+           "kind": "oracle",
+           "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+          },
+          "id": "CAP_determinisme_seed",
+          "source_ref": "E9"
+         }
+        ],
+        "id": "F_determinisme"
+       },
+       {
+        "capacites": [
+         {
+          "capacite": "Exposer à tout instant via window.__game : paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}, indépendamment du rendu DOM.",
+          "expected_proof": {
+           "kind": "oracle",
+           "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+          },
+          "id": "CAP_window_game",
+          "source_ref": "E10"
+         }
+        ],
+        "id": "F_etat_inspectable"
+       }
+      ],
+      "id": "SYS_SOCLE"
+     }
+    ]
+   },
+   "content_sha256": "2d40ce761b5909a8a2ce1b6351fd0a6f5a1e20875f77a50ee65812af93553dd3",
+   "owner": [
+    "decompose"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/lot5_transport_probe/featuremap.json",
+    "run_id": "lot5_transport_probe",
+    "sha256": "855d8be61298f2ad51b4ee44dc7c6aef745f2b17f8f1825a3508222739babae6",
+    "status": "FILE"
+   },
+   "version": 3,
+   "writer": "decompose"
+  },
+  "gameplay": {
+   "content": {
+    "actions_interdites": [
+     "Recopier tout ou partie de GAMES/breakout ou GAMES/breakout_v2 (benchmark, pas source de design).",
+     "Dépendre de Godot ou Blender, ou y recourir silencieusement.",
+     "Écrire un artefact hors des surfaces V2 déclarées (lab/, scripts/forge/, games/) — FAIL de migration, pas un détail.",
+     "Produire un vert par contournement : un échec doit dire OÙ la chaîne casse dans les surfaces V2.",
+     "Signer avec une clé héritée de V1 : la clé de signature est forge/.forge_key (V2).",
+     "Modifier les lanes protégées tests/ ou src/ (zone protégée, gate Pierre explicite requise)."
+    ],
+    "criteres_demo": [
+     "Une raquette visible se déplace horizontalement à l'écran quand le joueur appuie sur les touches de direction.",
+     "Une balle visible se déplace et rebondit visiblement sur les murs et sur la raquette.",
+     "Une brique touchée par la balle disparaît visiblement de l'écran.",
+     "Un état de VICTOIRE s'affiche à l'écran lorsque toutes les briques ont disparu.",
+     "Un état de DÉFAITE s'affiche à l'écran lorsque la balle est perdue (tombe hors de l'aire de jeu)."
+    ],
+    "criteres_succes": [
+     "Le jeu est écrit SOUS GAMES/runm_breakout/, conforme au socle N1 : page HTML+JS unique, RNG seedé, logique métier en module .mjs testable HORS navigateur, exposition window.__game, actions DOM-only, déterminisme reproductible par hash. (project_brief.contraintes.project_specific.techniques + criteres_sortie #2.)",
+     "Une partie COMPLÈTE est jouable au clavier dans un navigateur : la balle rebondit sur les murs et la raquette, les briques disparaissent au contact, la victoire (mur vidé) et la défaite (balle perdue) sont toutes deux atteignables. (criteres_sortie #9.)",
+     "Déterminisme reproductible : à seed égal, déroulé identique (vérifiable par hash). (socle N1.)",
+     "La logique .mjs est testable hors navigateur (au moins un test unitaire node passe). (socle N1.)",
+     "Aucun artefact écrit hors des surfaces V2 : run_dir sous EVIDENCE/runs/ (jamais lab/), jeu sous GAMES/runm_breakout/ (jamais games/). (criteres_sortie #1, #2, #12.)",
+     "NOTE DE RENVOI : la liste AUTORITAIRE et complète des critères de sortie de MIGRATION (charter validé par check_charter, oracles amont prisme/featuremap/blueprint/wiremap, couverture `couvre`, reçu join_check, preuves s10, verdict HMAC re-vérifié par verify_run avec la clé V2, HALT si LM Studio indisponible) vit dans project_brief.criteres_sortie (12 items, Pierre 2026-09-02) et n'est PAS re-décidée ici."
+    ],
+    "hors_scope": [
+     "Toute lignée NON web : aucun binaire Godot ni Blender requis ni utilisé — un recours silencieux à l'un ou l'autre est un écart à signaler. (Pierre : Godot/Blender = dépendances de capacité, jamais préconditions globales.)",
+     "Recopier tout ou partie de GAMES/breakout ou GAMES/breakout_v2 : ce sont des BENCHMARKS de régression, jamais des sources de design (interdiction expresse Pierre, provenance.references_autorisees).",
+     "Construire ou prétendre tester la topologie CIBLE de V2 (Fable directeur, capacités convoquées dynamiquement, GAME_BLUEPRINT / GAME_FLOW / ARCHITECTURE_CONTRACT) : elle n'est pas construite au moment de RUN M et ne peut donc être ni testée ni revendiquée.",
+     "Prétendre couvrir N5 (séparation concepteur/instrumenteur) ou N6 (fidélité charter->build) : FOG_HUMANGATE Pierre — mécanismes non mécanisés pour ce run.",
+     "Multi-niveaux, tableau de scores en ligne, persistance de sauvegarde, audio riche, portage mobile/tactile : hors du V1 minimal jouable.",
+     "Écrire du code d'architecture (étape 4), faire le world scan (étape 2), toucher aux lanes protégées (tests/, src/)."
+    ],
+    "joueur_cible": "Un joueur clavier occasionnel — en pratique le testeur du run — qui ouvre la page dans un navigateur et joue une partie complète, sans tutoriel ni apprentissage préalable. Le jeu est jugé sur sa jouabilité au clavier, pas sur sa richesse. (Dérivé du critère de sortie Pierre « le jeu se charge dans un navigateur et une partie complète est jouable au clavier », project_brief.criteres_sortie #9.)",
+    "objectif": "Créer de zéro, sous GAMES/runm_breakout/, un casse-briques web minimal mais COMPLET et jouable : une raquette pilotée au clavier renvoie une balle qui détruit un mur de briques. Condition de VICTOIRE : toutes les briques sont détruites. Condition de DÉFAITE : la balle tombe hors de l'aire de jeu (perte de la/des vie·s). Le jeu est tenu volontairement minimal pour qu'un échec soit attribuable à la MIGRATION V1->V2, pas à la complexité du jeu — sa qualité ludique n'est pas l'objet du run. (Source : project_brief.intention + provenance.intention, Pierre 2026-09-02.)",
+    "plateforme_cible": "web/HTML — page HTML+JS unique conforme au socle N1, exécutable dans un navigateur sans aucun binaire externe. (Source Pierre : project_brief.cible « web/HTML » + provenance.cible « pas besoin de Godot si on reste sur la lignée web ».)",
+    "reference_jeu": "Casse-briques / Breakout — modèle de GENRE choisi EXPLICITEMENT par Pierre le 2026-09-02 (provenance.genre : « casse-briques (Breakout), lignée WEB, choisi explicitement pour son petit périmètre, sa boucle évidente et l'absence de dépendance Godot »). ATTENTION : référence de GENRE uniquement, PAS une source de design — la recopie du casse-briques migré GAMES/breakout (benchmark de régression) est expressément interdite. Provenance Pierre traçable ; ce champ n'est PAS une invention d'agent."
+   },
+   "content_sha256": "4b392460de5540070d79f80eacac28a61cb9b6fbee97495d6ed99b3026845fa1",
+   "owner": [
+    "contract_author"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/runm_breakout/charter.yaml",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "985f8103ff8e78128d1b3ae7424999a8cf49e83e9d8df0989598d6d94cae94ac",
+    "status": "FILE"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "identity": {
+   "content": {
+    "cible": "web/HTML",
+    "projet": "runm_breakout",
+    "references_autorisees": []
+   },
+   "content_sha256": "74f739d53cef94f093a4147f60fee539d39179ce7ba3a7a52feca2faed177f9a",
+   "owner": [
+    "pierre"
+   ],
+   "source": {
+    "path": "EVIDENCE/briefs/runm_breakout/project_brief.yaml",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "4d100063e76fcdefd78c0a3ac43fb7842aec258d6feecd8bb7f1091186692d84",
+    "status": "BRIEF"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "provenance": {
+   "content": {
+    "git_head": "2769dc8ae97d8cfff8ebbf6ec4254b239ddbfdbb",
+    "join_receipts": {
+     "join_check": {
+      "advisory": true,
+      "capacites": 10,
+      "capacites_couvertes": 0,
+      "capacites_non_couvertes": 10,
+      "couverture_fantome": 0,
+      "exemples": [
+       "capacite 'R1c1_hud_objectif_nonvide' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "capacite 'R2c1_entree_touches_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "capacite 'R2c2_effet_deplacement_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)"
+      ],
+      "exit_code": 1,
+      "forme_satisfaite": false,
+      "lignes": 9,
+      "lignes_sans_couvre": 9,
+      "maillon_non_lie": 0,
+      "problems": 9,
+      "regime": "EMPTY_FORM",
+      "status": "NOT_JOINED"
+     },
+     "join_check_apres_reparation": {
+      "advisory": true,
+      "capacites": 10,
+      "capacites_couvertes": 0,
+      "capacites_non_couvertes": 10,
+      "couverture_fantome": 9,
+      "ecart_avec_avant": "EMPTY_FORM (agent) -> VOID (après réparation) — la boucle a modifié la jointure",
+      "exemples": [
+       "capacite 'R1c1_hud_objectif_nonvide' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "capacite 'R2c1_entree_touches_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "capacite 'R2c2_effet_deplacement_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "features[0].couvre: 'renderObjective' ne resout aucune capacite de la featuremap",
+       "features[1].couvre: 'movePaddle' ne resout aucune capacite de la featuremap",
+       "features[2].couvre: 'reflectBall' ne resout aucune capacite de la featuremap"
+      ],
+      "exit_code": 1,
+      "forme_satisfaite": true,
+      "lignes": 9,
+      "lignes_sans_couvre": 0,
+      "maillon_non_lie": 0,
+      "problems": 0,
+      "regime": "VOID",
+      "status": "NOT_JOINED"
+     },
+     "note": "join_check = artefact agent s5 (recalculable) · apres_reparation = fichier écrasé par s9, reçu signé seul",
+     "recomputable": {
+      "join_check": true,
+      "join_check_apres_reparation": false
+     }
+    },
+    "profile": "full",
+    "run_dir": "EVIDENCE/runs/runm_breakout",
+    "run_id": "runm-breakout-20260902",
+    "verdict": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+     "hmac": "fd6aa88af91276a69b07de2299dfa2e25797277f2b80e1633d76f5cc6a346954",
+     "software_verdict": "OK",
+     "ts": 1788418939.1345892
+    }
+   },
+   "content_sha256": "2a8c39a12700039815ad4369b060eaa6083ab19d81264349735a1ff9c29da75b",
+   "owner": [
+    "importer"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/runm_breakout/state.json",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "1f0b348f4636a457f5be314d1c9e5f2e60f346c4b59f919fa3525347ba167616",
+    "status": "FILE"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "questions": {
+   "content": [],
+   "content_sha256": null,
+   "owner": [
+    "architect",
+    "art_director",
+    "builder",
+    "contract_author",
+    "decompose",
+    "director",
+    "game_master",
+    "pierre",
+    "prisme",
+    "redteam_code",
+    "redteam_plan",
+    "wiremap",
+    "worldscan"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/runm_breakout/design_questions.json",
+    "run_id": "runm-breakout-20260902",
+    "sha256": null,
+    "status": "ABSENT"
+   },
+   "version": 0,
+   "writer": null
+  },
+  "understanding": {
+   "content": {
+    "prisme": {
+     "content": {
+      "exigences": [
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que le but affiché au joueur de runm_breakout est de vider le mur — un objectif unique et terminal, sans niveau suivant à annoncer.",
+        "destination": "s3-decompo",
+        "enonce": "Tant que la partie est en cours, le jeu affiche à l'écran un objectif lisible « Détruire toutes les briques ».",
+        "expected_proof": {
+         "kind": "visual",
+         "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+        },
+        "id": "E1",
+        "loop_role": "PLAYER_GOAL",
+        "observation": "Le World Scan relève pour le genre une condition de victoire « détruire tout le mur de briques » (games[0].objectives[0].victory_condition).",
+        "observe": {
+         "hud": "objectif",
+         "predicate": "nonempty"
+        },
+        "reference": "worldscan:games[0].objectives[0].victory_condition",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "PLAYER",
+        "affordance": "raquette",
+        "claim": "J'en déduis que l'unique geste du joueur est le déplacement horizontal de la raquette au clavier, sans visée à la souris ni tir.",
+        "destination": "s3-decompo",
+        "enonce": "Le joueur peut déplacer la raquette vers la gauche ou la droite en maintenant les touches fléchées ; la raquette suit à l'écran.",
+        "expected_proof": {
+         "kind": "bot_action",
+         "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+        },
+        "id": "E2",
+        "loop_role": "PLAYER_ACTION",
+        "observation": "Le World Scan décrit un joueur qui découvre un contrôle horizontal simple de la raquette (games[0].loops.minute_1).",
+        "observe": {
+         "hud": "raquette_x",
+         "predicate": "changes"
+        },
+        "reference": "worldscan:games[0].loops.minute_1",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que la balle de runm_breakout rebondit de façon déterministe sur murs et raquette, angle piloté par le point d'impact — trajectoire dirigeable, pas aléatoire.",
+        "destination": "s4-archi",
+        "enonce": "Au contact d'un mur ou de la raquette, la balle repart dans une direction réfléchie, la norme de sa vitesse étant conservée.",
+        "expected_proof": {
+         "kind": "oracle",
+         "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+        },
+        "id": "E3",
+        "loop_role": "GAME_RESPONSE",
+        "observation": "Le World Scan attribue au genre un rebond dépendant de la zone d'impact sur la raquette (games[0].loops.minute_10).",
+        "observe": {
+         "hud": "ball_v",
+         "predicate": "changes"
+        },
+        "reference": "worldscan:games[0].loops.minute_10",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis qu'un contact balle-brique détruit la brique en une seule frappe, sans durabilité variable, conformément au socle minimal du charter.",
+        "destination": "s4-archi",
+        "enonce": "Au contact balle↔brique, cette brique disparaît de la grille au même tick et n'est plus collidable, tandis que la balle rebondit.",
+        "expected_proof": {
+         "kind": "mutation",
+         "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+        },
+        "id": "E4",
+        "loop_role": "GAME_RESPONSE",
+        "observation": "Le World Scan note que la première brique détruite disparaît immédiatement (brick removal) au contact (games[0].loops.minute_1).",
+        "observe": {
+         "hud": "mur",
+         "predicate": "changes"
+        },
+        "reference": "worldscan:games[0].loops.minute_1",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que la récompense de runm_breakout n'est pas un score cosmétique mais la réduction visible du mur : chaque brique rapproche de la victoire.",
+        "destination": "s4-archi",
+        "enonce": "Le compteur de briques restantes affiché décroît d'exactement une unité à chaque brique détruite.",
+        "expected_proof": {
+         "kind": "oracle",
+         "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+        },
+        "id": "E5",
+        "loop_role": "REWARD",
+        "observation": "Le World Scan associe chaque brique brisée à une progression cumulée visible (games[0].loops.minute_10).",
+        "observe": {
+         "hud": "briques_restantes",
+         "predicate": "decreases"
+        },
+        "reference": "worldscan:games[0].loops.minute_10",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que runm_breakout a un état de victoire TERMINAL unique (mur vidé), sans niveau suivant ni prestige : le jeu s'arrête, gagné.",
+        "destination": "s9-build",
+        "enonce": "Quand la dernière brique disparaît, un état de VICTOIRE s'affiche et la partie se fige.",
+        "expected_proof": {
+         "kind": "visual",
+         "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+        },
+        "id": "E6",
+        "loop_role": "NONE",
+        "observation": "Le World Scan donne pour le genre une victoire par destruction complète du mur (games[0].objectives[0].victory_condition).",
+        "observe": {
+         "hud": "etat",
+         "predicate": "contains:VICTOIRE"
+        },
+        "reference": "worldscan:games[0].objectives[0].victory_condition",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que la défaite de runm_breakout survient quand la balle tombe sous la raquette hors de l'aire, le charter gardant le nombre de vies minimal mais la défaite atteignable.",
+        "destination": "s9-build",
+        "enonce": "Quand la balle franchit le bord bas de l'aire sans vie restante, un état de DÉFAITE s'affiche et la partie se fige.",
+        "expected_proof": {
+         "kind": "visual",
+         "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+        },
+        "id": "E7",
+        "loop_role": "NONE",
+        "observation": "Le World Scan donne pour le genre une défaite par balle perdue / vies épuisées (games[0].objectives[0].defeat_condition).",
+        "observe": {
+         "hud": "etat",
+         "predicate": "contains:DEFAITE"
+        },
+        "reference": "worldscan:games[0].objectives[0].defeat_condition",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "PLAYER",
+        "claim": "J'en déduis que cette boucle se REJOUE à chaque rebond tant que la partie dure, sans état à débloquer entre deux tours.",
+        "destination": "s5-wiremap",
+        "enonce": "Après chaque brique détruite, le joueur reprend immédiatement le même geste (déplacer la raquette pour renvoyer la balle) dans le nouvel état du mur, jusqu'à victoire ou défaite.",
+        "expected_proof": {
+         "kind": "bot_action",
+         "statement": "Un bot enchaîne deux briques : entre les deux, les mêmes contrôles (E2) produisent la même réponse (E3) et briques_restantes décroît deux fois (E5)."
+        },
+        "id": "E8",
+        "loop_role": "REPEAT",
+        "observation": "Le World Scan résume la boucle noyau : contrôle → collision → destruction → gain (games[0].loops.minute_1).",
+        "observe": {
+         "hud": "briques_restantes",
+         "predicate": "decreases"
+        },
+        "reference": "worldscan:games[0].loops.minute_1",
+        "replay": [
+         "E2",
+         "E3",
+         "E5"
+        ],
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que runm_breakout doit produire, à seed égal, exactement le même déroulé — condition testable hors navigateur, cœur du socle N1 du charter.",
+        "destination": "s4-archi",
+        "enonce": "À seed identique et suite d'entrées identique, deux exécutions du module .mjs produisent le même hash d'état final.",
+        "expected_proof": {
+         "kind": "oracle",
+         "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+        },
+        "id": "E9",
+        "loop_role": "NONE",
+        "observation": "Le World Scan attribue au genre un moteur physique déterministe, stable par seed (games[0].architecture_guess).",
+        "observe": {
+         "hud": "hash_etat",
+         "predicate": "nonempty"
+        },
+        "reference": "worldscan:games[0].architecture_guess",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que tout l'état de partie doit être lisible programmatiquement via window.__game, indépendamment du rendu DOM, pour rendre les règles R1..R9 testables hors navigateur.",
+        "destination": "s4-archi",
+        "enonce": "window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}.",
+        "expected_proof": {
+         "kind": "oracle",
+         "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+        },
+        "id": "E10",
+        "loop_role": "NONE",
+        "observation": "Le charter impose (socle N1) une logique métier en module .mjs testable hors navigateur et un état inspectable window.__game.",
+        "observe": {
+         "hud": "window.__game",
+         "predicate": "nonempty"
+        },
+        "reference": null,
+        "source": "ADDITIONS",
+        "source_role": "s1-prisme"
+       }
+      ],
+      "game_id": "runm_breakout"
+     },
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/prisme.json",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "3983de604d2f27d8bf66272d627e91ac6496156ae6a1b606c8e76be1167b2029",
+      "status": "FILE"
+     }
+    },
+    "product_snapshot": {
+     "content": "# product_snapshot.md — runm_breakout (Prisme Produit, s1)\n\nAncre : `charter.yaml` (Pierre 2026-09-02) — casse-briques web minimal mais COMPLET et jouable, socle N1 (page HTML+JS unique, RNG seedé, logique `.mjs` testable hors navigateur, `window.__game`, déterminisme par hash). Sources d'exigences résolues dans le run_dir : `worldscan.json` (présent, adresses ancrables `games[0].*`). `story_bible.json`, `gm_worldscan.json`, `design/progression_contract.md`, `design/calibration.md` sont **absents du run_dir** — je le signale et ne compense pas (conséquence mesurée plus bas : sourçage GM 0/N, précédence de boucle jouée non fournie).\n\n---\n\n## 1. CE QUE LE JOUEUR VOIT\n\nUne seule page qui tient dans le navigateur, sans défilement. En haut, une ligne d'**objectif** lisible : « Détruis toutes les briques ». Sous elle, l'**aire de jeu** rectangulaire bordée de trois murs (gauche, droite, haut) et ouverte en bas. En haut de l'aire, un **mur de briques** rangé en grille régulière, chaque brique un rectangle plein et distinct. En bas, une **raquette** horizontale posée près du bord ouvert. Une **balle** ronde, seule, se déplace dans l'aire et laisse voir sa trajectoire par son déplacement continu. Un **compteur de briques restantes** est affiché et diminue à vue d'œil. Quand une brique est touchée, elle **disparaît** de la grille au même instant, laissant un trou visible. À la fin, un **panneau d'état** unique s'affiche par-dessus l'aire figée : soit « VICTOIRE », soit « DÉFAITE ». Aucun menu de niveaux, aucun tableau de scores en ligne, aucune boutique cosmétique : l'écran ne montre que ce qui sert la partie en cours.\n\n## 2. CE QUE LE JOUEUR FAIT\n\nIl ouvre la page et joue immédiatement, sans tutoriel. Il **déplace la raquette** vers la gauche ou la droite en maintenant les touches fléchées du clavier — c'est son seul contrôle. Avec ce geste il **place la raquette sous la balle** pour la renvoyer avant qu'elle ne tombe, et il **choisit le point de contact** sur la raquette pour infléchir l'angle du rebond et diriger la balle vers les briques encore debout. Il **répète** ce geste à chaque rebond, tour après tour, en lisant la trajectoire pour anticiper où la balle va revenir. Il **poursuit la partie** jusqu'à ce que le mur soit entièrement vidé (il gagne) ou que la balle échappe au bord bas (il perd). Il n'y a rien d'autre à faire : pas de tir, pas de visée à la souris, pas d'objet à collecter, pas de compétence à débloquer.\n\n## 3. CE QUE LE JOUEUR RESSENT\n\nLa prise en main est **immédiate et sans friction** : une touche, une raquette qui répond, une balle qui part. Chaque brique détruite donne une **satisfaction nette et instantanée** — un contact, une disparition, le compteur qui baisse d'un cran, la victoire qui se rapproche visiblement. À mesure que la balle descend vers le bord ouvert monte une **tension courte et physique** : le joueur doit se replacer vite, et une balle presque perdue puis rattrapée procure un soulagement franc. Le plaisir vient de la **maîtrise qui progresse en une même session** : le joueur comprend que « j'ai frappé trop à gauche, la balle est repartie trop raide » et corrige au coup suivant. La partie est **lisible et honnête** : la difficulté vient de la physique, jamais d'un hasard arbitraire ; un échec est toujours attribuable à un geste, ce qui donne envie de recommencer pour mieux faire.\n\n## 4. RÈGLES OBSERVABLES\n\nChaque règle est formulée pour être vérifiable par un bot, une mutation ou un oracle sur `window.__game` / le module `.mjs`, hors navigateur quand possible.\n\n- **R1 — Objectif affiché** : tant que la partie est en cours, le HUD `objectif` contient un texte non vide décrivant la destruction du mur. (Preuve : lecture du HUD après chargement — `nonempty`.)\n- **R2 — Contrôle raquette** : quand le joueur maintient Flèche-Droite, `window.__game.paddle.x` augmente ; quand il maintient Flèche-Gauche, il diminue ; sans touche, il ne change pas. (Preuve : bot presse chaque touche N frames — `changes`.)\n- **R3 — Rebond conservatif** : au contact d'un mur ou de la raquette, la composante de vitesse concernée de la balle change de signe et la norme de la vitesse est conservée (aucune perte d'énergie non intentionnelle). (Preuve : oracle `.mjs` à seed fixe — inversion de signe de `vx` ou `vy`.)\n- **R4 — Destruction en une frappe** : au contact balle↔brique, la brique disparaît de la grille au même tick et n'est plus jamais collidable ; aucune brique n'exige un second contact. (Preuve : mutation retirant la déduction « 1 frappe » fait échouer le test.)\n- **R5 — Progrès mesurable** : à chaque brique détruite, `window.__game.bricksRemaining` décroît d'exactement 1, et le compteur affiché suit. (Preuve : oracle — décrément unitaire.)\n- **R6 — Victoire terminale unique** : quand `bricksRemaining` atteint 0, `window.__game.state` vaut `won`, un panneau « VICTOIRE » s'affiche et la simulation se fige (aucun niveau suivant, aucun reset de prestige). (Preuve : bot détruit tout — état `won`.)\n- **R7 — Défaite terminale** : quand la balle franchit le bord bas de l'aire sans vie restante, `window.__game.state` vaut `lost`, un panneau « DÉFAITE » s'affiche et la simulation se fige. (Preuve : bot laisse tomber la balle — état `lost`.)\n- **R8 — Boucle rejouée** : entre deux briques successives, les mêmes contrôles (R2) produisent le même type de réponse (R3) et `bricksRemaining` décroît de nouveau — la boucle noyau se rejoue à chaque rebond sans état intermédiaire à débloquer. (Preuve : bot enchaîne deux briques — deux décréments.)\n- **R9 — Déterminisme par seed** : à seed identique et suite d'entrées identique, deux exécutions du module `.mjs` produisent le même hash d'état final. (Preuve : double exécution hors navigateur — hash égaux.)\n- **R10 — État inspectable** : `window.__game` expose à tout instant `paddle.x`, `ball.{x,y,vx,vy}`, `bricksRemaining` et `state ∈ {playing, won, lost}`, indépendamment du rendu DOM. (Preuve : test node importe le `.mjs` et lit ces champs.)\n\n---\n\n## RAPPORT FINAL\n\n**Ancre** : `charter.yaml` (objectif = casse-briques web minimal complet ; socle N1 ; hors_scope = multi-niveaux, scores en ligne, persistance, prestige). **Reçu `check_prisme_manifest`** : NON DISPONIBLE — permission `run: aucun` et exécution shell désactivée dans cette session ; l'oracle déterministe `node forge/check_prisme_manifest.mjs <run_dir>/prisme.json --worldscan <run_dir>/worldscan.json` n'a PAS été exécuté par moi. Aucun claim auto-certifié n'est émis.\n\n**Chaîne Observation → Claim → Exigence** : les 10 exigences portent trois maillons distincts (donnée du World Scan → déduction indépendamment faillible → garantie du jeu). Références EXPECTED ancrées dans `worldscan.json` (adresses `games[0].objectives[0].*`, `games[0].loops.*`, `games[0].architecture_guess`, toutes résolvables) ; deux exigences socle N1 (R9 non couverte par worldscan pour la partie test-hash côté charter, R10 exposition `window.__game`) sont en source `ADDITIONS`, `reference: null` explicite, ancrées en prose dans le charter.\n\n**Exigences classées non actionnables** : aucune. Les 10 portent une `expected_proof` exploitable (bot_action / oracle / mutation / visual). L'étape ne peut donc pas échouer sur le critère « aucune exigence actionnable ».\n\n**Références non ancrées** : aucune vers `worldscan.json` (toutes résolvent). Les références vers `gm_worldscan:` sont **absentes par nécessité** : `gm_worldscan.json` n'est pas dans le run_dir.\n\n**software_verdict** : NON ÉMIS (aucun oracle exécuté). **claim_verdict: NO_CLAIM_ALLOWED**. **evidence_verdict** : non applicable (aucune validation mécanique lancée).\n\n**BESOIN HUMANGATE (fog) — mismatch genre/gabarit, déjà signalé au run précédent (`manifest-a243e3bfb138847f`, GENERATION_DIFFERENTE_A_REEXAMINER)** : le gabarit de boucle V4 est mono-genre (idle/clicker) et exige des maillons que le jeu cible — casse-briques arcade minimal, charter explicite — **ne possède pas** :\n- **DECISION** (au sens V4 : `options` 2 affordances, `policies` idle/actif sur `horizon_frames`, `metric`) : le seul choix de runm_breakout est l'angle de renvoi continu de la raquette — il n'existe aucune décision à deux trajectoires discrètes ni politique idle/active. Encoder de faux `policies` serait une fabrication (garde-fou : règle observable, jamais inventée).\n- **UNLOCK / `observe.appears`** : mur unique, aucune nouvelle affordance ni contenu débloqué (charter hors_scope : multi-niveaux).\n- **NEXT_GOAL ×2 `new_distinct`** : victoire terminale unique, aucun second objectif textuellement distinct (charter hors_scope : multi-niveaux).\n- **META_LOOP (reset de prestige visible)** et **ADVANTAGE (`increases_more_than` après prestige)** : aucun prestige, aucune persistance (charter hors_scope explicite).\n\nFabriquer ces maillons violerait à la fois le charter (`hors_scope`) et le garde-fou (« toute règle DOIT être observable », « n'invente jamais »). Je livre donc une boucle **complète pour son genre** (PLAYER_GOAL → PLAYER_ACTION → GAME_RESPONSE → REWARD → REPEAT, plus victoire/défaite terminales), **incomplète au sens du gabarit V4** — fait mesurable, à trancher par Pierre (gabarit de boucle par genre, ou dérogation actée pour la lignée arcade minimale).\n\n### why_task_existed\n- **problem** : le run runm_breakout (migration V1→V2) a besoin de la vision produit finie du casse-briques minimal décomposée en facettes joueur + règles observables, pour alimenter s3-decompo/s4-archi/s5-wiremap/s9-build.\n- **oracle** : dispatch `FORGE_DISPATCH:s1-prisme:runm-breakout-20260902:1` ; oracles de forme `forge/prisme/check_prisme.mjs` (4 sections + ≥1 règle `- **Rn`) et de chaîne `forge/check_prisme_manifest.mjs` (Observation→Claim→Exigence→Preuve→Destination, provenance, ancrage World Scan).\n- **root_cause** : non transmise comme défaut ; l'activation est une étape normale du pipeline (décision humaine de séquence), pas la réparation d'une panne. Le seul écart structurel connu est le mismatch genre/gabarit V4 hérité du run précédent.\n- **action_reason** : produire `product_snapshot.md` + `prisme.json` fidèles au charter et au World Scan, en marquant explicitement les maillons V4 que le genre ne possède pas plutôt que de les fabriquer.\n\n### result\n- `product_snapshot.md` : 4 sections remplies (VOIT / FAIT / RESSENT / RÈGLES OBSERVABLES), 10 règles numérotées `R1..R10`, aucun placeholder.\n- `prisme.json` : 10 exigences, chaîne à 3 maillons distincts, provenance complète, 8 EXPECTED ancrées `worldscan:` + 2 ADDITIONS `reference: null`, champs V4 (`acteur`, `loop_role`, `observe`, `affordance`, `replay`) renseignés ; rôles couverts PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, REPEAT + NONE ; rôles V4 DECISION/UNLOCK/NEXT_GOAL/META_LOOP/ADVANTAGE déclarés genre-absents (voir HumanGate).\n- Sourçage GM : 0/6 exigences de boucle (`gm_worldscan.json` absent) — fait mesuré, non gaté avant run 10.\n\n### proof\n- Commande d'oracle NON exécutée (permission `run: aucun` ; shell désactivé) : `node forge/check_prisme_manifest.mjs EVIDENCE/runs/runm_breakout/prisme.json --worldscan EVIDENCE/runs/runm_breakout/worldscan.json` — à lancer par l'exécuteur après matérialisation.\n- Vérifié par lecture directe : `worldscan.json` présent et adresses citées résolvables ; `charter.yaml` présent et lu ; `gm_worldscan.json` / `story_bible.json` / `design/*` absents (lectures en erreur « File does not exist »).\n\n### learning\nLe mismatch genre/gabarit V4 est structurel et reproductible : tant qu'aucun gabarit de boucle par genre n'existe (ou qu'aucun `gm_worldscan.json` arcade n'est fourni), tout run d'un genre non-clicker produira une boucle honnêtement incomplète au sens V4. La bonne réponse d'un worker s1 est de refuser la fabrication et de remonter le fait mesuré à HumanGate, pas de bourrer de faux `policies`/prestige.\n\n### next_reason\nChaîne causale NON fermée sur un point : le mismatch gabarit V4 ↔ genre arcade minimal exige une décision Pierre (gabarit par genre, ou dérogation actée). Pour le reste, la lignée s1 est prête à descendre vers s3-decompo. Le sourçage GM (0/6) reste mesuré, non bloquant avant run 10.\n\n## SKIPPED_VALIDATION\n- **Oracle de chaîne** `check_prisme_manifest.mjs` — périmètre : `prisme.json` produit — statut : **non fait** — raison : permission `run: aucun` et exécution shell désactivée ; l'exécuteur doit le lancer après matérialisation.\n- **Oracle de forme** `forge/prisme/check_prisme.mjs` — périmètre : `product_snapshot.md` — statut : **non fait** — raison : même contrainte d'exécution ; conformité visée par construction (4 en-têtes exacts, règles `- **Rn`, aucun placeholder).\n- **Sonde d'ancrage amont** `check_amont_traversal.mjs` — périmètre : références `worldscan:` — statut : **non fait (partiel manuel)** — raison : non exécutable ; résolution vérifiée à la main par lecture de `worldscan.json`.\n- **Sourçage GM** — périmètre : exigences de boucle — statut : **impossible** — raison : `gm_worldscan.json` absent du run_dir (0/6, mesuré, non gaté).\n",
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/product_snapshot.md",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "43f6afcd18718fcf8b79a8c3c4821b46312b3e016bd7442ed1edb446236e9d4f",
+      "status": "FILE"
+     }
+    },
+    "worldscan": {
+     "content": {
+      "advisory": true,
+      "games": [
+       {
+        "architecture_guess": "Deterministic physics engine (seed-stable collision, angle-based rebound). Simple brick state (destroyed=true/false). Score accumulator. Finite level progression (2 walls). Input-agnostic control (paddle position as float 0.0-1.0). No power-ups or cosmetics.",
+        "game": "Breakout",
+        "loops": {
+         "endgame": "Complete destruction of both walls = victory terminal state. No prestige reset or infinite mode. Replay motivated by challenge: beating personal high score. Game ends decisively.",
+         "hour_5": "Second wall reached. Paddle reduced to half-size, ball speed increased (after 4 hits, 12 hits, orange/red row contact). Sustained concentration required. Multiple attempts to beat personal high score (replay motivated by score comparison). Arcade progression: by player mastery, not unlocks.",
+         "minute_1": "Player discovers simple horizontal paddle control. First brick destroyed: immediate reward (visible points, brick removal, audio). Loop: control → collision → destruction → score gain.",
+         "minute_10": "2-3 bricks destroyed. Player experiments with paddle impact zones to alter rebound angle. First tension moments: ball approaching bottom, player must adjust position quickly. Feedback loop: each brick = cumulative score. Difficulty begins to increase (ball speed accelerates)."
+        },
+        "objectives": [
+         {
+          "defeat_condition": "Miss the ball three consecutive times (lose all lives)",
+          "has_defeat_state": true,
+          "has_win_state": true,
+          "mode": "solo",
+          "player_goal": "Maximize score while preventing the ball from falling past the paddle",
+          "victory_condition": "Destroy both screens of bricks within 3 allocated lives"
+         }
+        ],
+        "platform": "Arcade",
+        "publisher": "Atari Inc.",
+        "retention_answer": "Player progression driven by **skill mastery**. Each session improves visual prediction (rebound anticipation, paddle timing). Personal high score becomes metric of progress, motivating replay. Physics is simple and deterministic: clear learning curve ('I hit too left, ball rebounded too steeply'). Difficulty increases mechanically. Core retention: arcade essence—dominate by expertise, not cosmetics.",
+        "sources": [
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://en.wikipedia.org/wiki/Breakout_(video_game)"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://www.arcade-history.com/?n=breakout&page=detail&id=3397"
+         },
+         {
+          "timestamp": "0:00-3:45",
+          "type": "video",
+          "url": "https://www.youtube.com/watch?v=hW7Sg5pXAok"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://www.arcade-museum.com/Videogame/breakout"
+         }
+        ],
+        "year": 1976
+       },
+       {
+        "architecture_guess": "Deterministic physics with cascading power-ups (separate collectible system). Destructible bricks with variable durability (gray=2-3 hits). Level progression (500 stages with unique patterns). Cosmetic unlock system (paddle/ball skins = rarity tier). Leaderboard + seasonal event system. Dual-mode architecture (Stage mode → Survival mode toggle). Session scheduling (daily login bonus).",
+        "game": "Brick Breaker King",
+        "loops": {
+         "endgame": "Level 500 reached. Game pivots to Survival Mode (no end, infinite score accumulation). Leaderboard becomes primary: global competition, sessions shift to short/daily (15-30min/day vs 30-60min arcade session). Limited-time events (monthly seasons): 'Collect 100 bricks in 7 days to unlock Gold Paddle' → FOMO.",
+         "hour_5": "Levels ~40-80 on 500+. Brick patterns become asymmetric (strategic gaps, interspersed solid blocks). Power-ups require judgment: use multiball now or save for next level? Cosmetic unlocks appear (rare paddles/balls = status). Leaderboard visible: 'I am rank 2500 globally, but friends are 1800' → competitive pressure.",
+         "minute_1": "Tutorialized interface (swipe to aim, tap to shoot). First brick destroyed with festive animation + satisfying audio. Power-up cascades and is collected immediately. Loop: aim → shoot → destruction → visual/audio reward → next brick visible. Friction minimal, success within 1-2 minutes.",
+         "minute_10": "5-10 bricks destroyed. XP bar toward next level fills visibly. Diverse power-ups collected (multiball changes tactics: multiple balls = chaos, more satisfying). Gray 'tough bricks' (multi-hit) discovered; player learns strategy exists. Progression sensation: 'I am 25% through level 5 of 500' → sense of length."
+        },
+        "objectives": [
+         {
+          "defeat_condition": "Lose all available lives before clearing bricks",
+          "has_defeat_state": true,
+          "has_win_state": true,
+          "mode": "Stage",
+          "player_goal": "Progress through 500+ levels by destroying brick patterns, collecting power-ups, maximizing score",
+          "victory_condition": "Clear all bricks on level layout without losing all lives"
+         },
+         {
+          "defeat_condition": "Ball falls past paddle or bricks descend to bottom of screen",
+          "has_defeat_state": true,
+          "has_win_state": false,
+          "mode": "Survival",
+          "player_goal": "Survive as long as possible and climb global leaderboard",
+          "victory_condition": null
+         }
+        ],
+        "platform": "Mobile (iOS / Android)",
+        "publisher": "Mobirix / King.com",
+        "retention_answer": "Retention driven by **cosmetic progression + social competition**, not skill mastery. 500+ levels create illusion of infinite content (200+ hours playtime). Power-ups provide rapid dopamine loops (satisfying collection). Leaderboards + seasonal events generate FOMO: 'if I don't play this week, I miss Gold Paddle skin'. Casual-mobile formula: progression by unlocks, competition by status, retention by time-limited events.",
+        "sources": [
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://play.google.com/store/apps/details?id=com.mobirix.brick"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://gamefaqs.gamespot.com/mobile/958896-brick-breaker/faqs/60052"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://mwm.ai/apps/bricks-breaker-king/943302265"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://brick-breaker.io/"
+         }
+        ],
+        "year": 2020
+       }
+      ],
+      "note": "This is an OBSERVATION, not a design prescription. Breakout (1976) establishes core arcade loop (skill progression, deterministic physics). Brick Breaker King demonstrates casual-mobile escalation (cosmetics, social leaderboards, time-limited events). runm_breakout charter explicitly rejects Brick Breaker's progression systems (hors_scope: 'multi-niveaux, tableau scores, persistance'). These observations provide architectural reference points for future expansion decisions, if any. No copy-pasting: understand the assembly, don't replicate the game."
+     },
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/worldscan.json",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "4d8ed73ee1e875ac0b0f5329afa7f7f1e220ffa7f3cc0f5fedee1c9dc453fb5f",
+      "status": "FILE"
+     }
+    }
+   },
+   "content_sha256": "9d7fedba248407e38627ec772a15205e4d3224f6aac024073bdc65bf3c490159",
+   "owner": [
+    "game_master",
+    "prisme",
+    "worldscan"
+   ],
+   "source": {
+    "path": null,
+    "run_id": "runm-breakout-20260902",
+    "sha256": null,
+    "status": "COMPOSITE"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "vision": {
+   "content": {
+    "intention": "Premier run réel du Studio V2 après migration : prouver que la chaîne de la Forge s'exécute de bout en bout dans les surfaces V2 (forge/ · EVIDENCE/ · GAMES/ · knowledge_base/) et produit un jeu jouable accompagné de preuves vérifiables. Le jeu choisi est volontairement minimal — un casse-briques web — pour qu'un échec soit immédiatement attribuable à la migration plutôt qu'à la complexité du jeu. Sa qualité ludique n'est pas l'objet de RUN M.",
+    "principe": "La chaîne est libre de concevoir le jeu, mais elle ne définit pas elle-même les conditions qui permettent de déclarer la migration réussie.",
+    "provenance": {
+     "cible": "Pierre 2026-09-02 — « pas besoin de Godot si on reste sur la lignée web » ; conforme au socle N1 déjà cité",
+     "contraintes": "normative_refs cite N1,N2,N3,N4,N7,N8,N9 de FORGE_DESIGN_FREEDOM_SPEC_V0 (statut PROPOSED, non ratifiée séparément à ce jour, référencée telle quelle par la hiérarchie normative de FORGE_PROJECT_INPUT_V0). N5 et N6 volontairement absentes — voir fog_n5 / fog_n6",
+     "criteres_sortie": "Pierre 2026-09-02 pour les 10 critères de topologie et de jouabilité (verbatim ou dérivés de sa mission RUN M) ; les critères portant sur les surfaces V2, la clé de signature V2 et le reçu `join_check` sont ajoutés par l'agent — ils dérivent MÉCANIQUEMENT de la validation de clôture V2 du 2026-09-02, jamais d'un choix de design",
+     "fog_n5": "FOG_HUMANGATE Pierre 2026-09-02 : N5 (séparation concepteur/instrumenteur) n'est PAS une exigence de RUN M — le mécanisme n'est pas mécanisé pour ce run. Ne pas prétendre cette règle couverte ni prouvée par ce Brief.",
+     "fog_n6": "FOG_HUMANGATE Pierre 2026-09-02 : N6 (fidélité charter -> build) n'est PAS une exigence de RUN M — mécanisme non mécanisé, identique au statut hérité de V1. Ne pas prétendre cette règle couverte.",
+     "genre": "Pierre 2026-09-02 — casse-briques (Breakout), lignée WEB, choisi explicitement pour son petit périmètre, sa boucle évidente et l'absence de dépendance Godot",
+     "intention": "Pierre 2026-09-02 — « donner une vision de jeu à V2 et regarder si V2 sait réellement transformer cette vision en jeu jouable » ; requalifié en bout-en-bout de MIGRATION après mesure préalable (ORDER = 13 stations fixes ; GAME_BLUEPRINT / GAME_FLOW / ARCHITECTURE_CONTRACT cités dans 0 fichier), requalification acceptée par Pierre dans le même échange",
+     "libertes_deleguees": "Pierre 2026-09-02 — « le critère de réussite n'est pas que le jeu soit bon » ; la liberté de conception du jeu est donc entière dans les limites du socle N1",
+     "non_delegue": "Pierre 2026-09-02 (lignée web imposée, autorité des preuves et du verdict)",
+     "principe": "agent (Claude Opus 5) — calqué sur le principe du Brief de RUN 1, même structure",
+     "projet": "Pierre 2026-09-02 — GO RUN M ; slug dérivé mécaniquement de « RUN M » + « breakout »",
+     "redaction_fichier": "Claude Opus 5 (agent) — structure, mise en forme YAML et répartition des champs ; le contenu normatif est sourcé Pierre 2026-09-02 champ par champ ci-dessus. Aucun champ n'est fabriqué : ce qui n'a pas de source Pierre est explicitement attribué à l'agent avec la mécanique dont il dérive",
+     "references_autorisees": "FOG_HUMANGATE Pierre 2026-09-02 : aucune référence de conception autorisée. Le casse-briques migré `GAMES/breakout` est un BENCHMARK de régression, pas une source de design — interdiction expresse de le recopier, en tout ou en partie. Idem pour `GAMES/breakout_v2` (lignée Godot, hors périmètre de ce run)."
+    }
+   },
+   "content_sha256": "095003d9e5f6caedb0cd124e07343bd33744010e854e27b98f4fcd2efe75abd1",
+   "owner": [
+    "pierre"
+   ],
+   "source": {
+    "path": "EVIDENCE/briefs/runm_breakout/project_brief.yaml",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "4d100063e76fcdefd78c0a3ac43fb7842aec258d6feecd8bb7f1091186692d84",
+    "status": "BRIEF"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "wiremap": {
+   "content": {
+    "built": {
+     "content": {
+      "features": [
+       {
+        "couvre": [
+         "R1c1_hud_objectif_nonvide"
+        ],
+        "feature": "R1 objectif affiché",
+        "fichiers": [
+         "render.mjs",
+         "index.html"
+        ],
+        "fonction": "renderObjective",
+        "preuve": "E1 (visual) — renderer.renderObjective() écrire dans #objective un texte non vide",
+        "statut": "implémenté",
+        "version": "v1"
+       },
+       {
+        "couvre": [
+         "R2c1_entree_touches_raquette",
+         "R2c2_effet_deplacement_raquette"
+        ],
+        "feature": "R2 contrôle raquette",
+        "fichiers": [
+         "engine.mjs",
+         "input.mjs"
+        ],
+        "fonction": "movePaddle",
+        "preuve": "E2 (bot_action) — input.InputAdapter capture Flèche-Gauche/Droite, engine.movePaddle applique. v2 : le pas de déplacement dérive du pas logique nommé (PADDLE_SPEED * DT_SECONDS) au lieu d'un littéral 0.016 recopié — valeur bit à bit identique, aucun état mesuré ne change",
+        "statut": "implémenté",
+        "version": "v2"
+       },
+       {
+        "couvre": [
+         "R3c1_reflexion_conservative"
+        ],
+        "feature": "R3 rebond conservatif",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "reflectBall",
+        "preuve": "E3 (oracle node) — engine.reflectBall inverse le signe et conserve |v|",
+        "statut": "implémenté",
+        "version": "v1"
+       },
+       {
+        "couvre": [
+         "R4c1_brique_disparait_un_tick"
+        ],
+        "feature": "R4 destruction une frappe",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "destroyBrick",
+        "preuve": "E4 (oracle) — après contact balle-brique, brick.destroyed=true, bricksRemaining--",
+        "statut": "implémenté",
+        "version": "v1"
+       },
+       {
+        "couvre": [
+         "R5c1_decrement_unitaire"
+        ],
+        "feature": "R5 progrès mesurable",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "destroyBrick",
+        "preuve": "E5 (oracle node) — engine.destroyBrick() décrémente bricksRemaining d'exactement 1 après contact (re-pointé depuis 'decrementRemaining', qui ne correspondait à aucune fonction réelle — le décompte est inline dans destroyBrick)",
+        "statut": "implémenté",
+        "version": "v1"
+       },
+       {
+        "couvre": [
+         "R6c1_etat_won"
+        ],
+        "feature": "R6 victoire terminale",
+        "fichiers": [
+         "engine.mjs",
+         "render.mjs"
+        ],
+        "fonction": "checkWin",
+        "preuve": "E6 (visual) — à bricksRemaining=0, state='won' et render affiche VICTOIRE",
+        "statut": "implémenté",
+        "version": "v1"
+       },
+       {
+        "couvre": [
+         "R7c1_etat_lost"
+        ],
+        "feature": "R7 défaite terminale",
+        "fichiers": [
+         "engine.mjs",
+         "render.mjs"
+        ],
+        "fonction": "checkLose",
+        "preuve": "E7 (visual) — quand ball.y > GAME_HEIGHT, state='lost' et render affiche DÉFAITE",
+        "statut": "implémenté",
+        "version": "v1"
+       },
+       {
+        "couvre": [
+         "R8c1_hash_stable_par_seed"
+        ],
+        "feature": "R8 déterminisme",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "hashState",
+        "preuve": "E9 (oracle node) — engine.hashState() produit un hash reproductible d'un état. Le pas de simulation est désormais DÉCLARÉ (TICK_MS=16, DT_SECONDS=TICK_MS/1000) au lieu d'être recopié en littéral dans deux fonctions : le pas logique du moteur est lisible statiquement, pas seulement inféré",
+        "statut": "implémenté",
+        "version": "v1"
+       },
+       {
+        "couvre": [
+         "R9c1_window_game_expose"
+        ],
+        "feature": "R9 état inspectable",
+        "fichiers": [
+         "main.mjs"
+        ],
+        "fonction": "exposeGame",
+        "preuve": "E10 (oracle node) — main.exposeGame() publie window.__game indépendamment du DOM. v2 : la garde de publication (window présent ET moteur instancié) était dupliquée mot pour mot dans exposeGame et updateGameWindow ; l'exemplaire d'updateGameWindow n'était atteignable qu'à travers celui d'exposeGame, donc jamais exerçable seul. Factorisée en canPublish(), un seul point à couvrir",
+        "preuve_complementaire": [
+         "E11 (oracle node) — logic.test.mjs + properties.test.mjs : 65 tests couvrant initialisation, mouvement, rebond, destruction, transitions d'état, déterminisme, invariants (run-oracle.mjs volet a) — 65 pass / 0 fail",
+         "E12 (oracle node) — solvability.mjs : bot détruit tous les blocs et atteint state=won (run-oracle.mjs volet b) — PASS",
+         "E13 (oracle) — e2e.mjs + server.mjs : serveur démarre, click-through simulé (fallback simple test si Playwright absent), contrat de jouabilité respecté (run-oracle.mjs volet c) — PASS",
+         "E14 (gate mutation) — forge.mutation sur les 4 fichiers logiques de la WireMap (engine/input/main/render, test_argv = node --test logic.test.mjs properties.test.mjs) : 41/41 mutants tués, 0 survivant, mutation_triage.json = [] (aucune exception réclamée). Auparavant 41/42 : le survivant and->or@L42 était la garde dupliquée de main.mjs, structurellement intuable — tué par factorisation du code, jamais par un triage auto-déclaré"
+        ],
+        "statut": "implémenté",
+        "version": "v2"
+       }
+      ]
+     },
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/wiremap.json",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "1ab17326ac13f5f2df6d07ddfe6e39d34056c5d73c2b6376e9c7b670ea24abc3",
+      "status": "FILE"
+     }
+    },
+    "design": {
+     "content": {
+      "features": [
+       {
+        "feature": "R1 objectif affiché",
+        "fichiers": [
+         "render.mjs",
+         "index.html"
+        ],
+        "fonction": "renderObjective",
+        "preuve": "E1 (visual) — à l'ouverture de la page, renderObjective écrit dans le HUD #objective un texte non vide décrivant la destruction du mur."
+       },
+       {
+        "feature": "R2 contrôle raquette",
+        "fichiers": [
+         "engine.mjs",
+         "input.mjs"
+        ],
+        "fonction": "movePaddle",
+        "preuve": "E2 (bot_action) — input.mjs capture Flèche-Gauche/Droite en intention neutre, engine.movePaddle l'applique : window.__game.paddle.x croît sous Droite, décroît sous Gauche, constant sans touche."
+       },
+       {
+        "feature": "R3 rebond conservatif",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "reflectBall",
+        "preuve": "E3 (oracle node) — à seed fixe, un contact balle-mur/raquette inverse le signe de la composante de vitesse concernée et conserve |v|."
+       },
+       {
+        "feature": "R4 destruction une frappe",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "destroyBrick",
+        "preuve": "E4 (mutation) — après un contact balle-brique, la brique est absente de window.__game.bricks au même tick et non recollidable ; exiger 2 contacts fait échouer le test."
+       },
+       {
+        "feature": "R5 progrès mesurable",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "decrementRemaining",
+        "preuve": "E5 (oracle node) — après un contact balle-brique simulé, window.__game.bricksRemaining a diminué d'exactement 1."
+       },
+       {
+        "feature": "R6 victoire terminale",
+        "fichiers": [
+         "engine.mjs",
+         "render.mjs"
+        ],
+        "fonction": "checkWin",
+        "preuve": "E6 (visual) — à bricksRemaining=0, checkWin fixe window.__game.state='won' et render affiche un panneau VICTOIRE, simulation figée."
+       },
+       {
+        "feature": "R7 défaite terminale",
+        "fichiers": [
+         "engine.mjs",
+         "render.mjs"
+        ],
+        "fonction": "checkLose",
+        "preuve": "E7 (visual) — quand la balle franchit le bord bas sans vie, checkLose fixe window.__game.state='lost' et render affiche un panneau DÉFAITE, simulation figée."
+       },
+       {
+        "feature": "R8 déterminisme",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "hashState",
+        "preuve": "E9 (oracle node) — deux exécutions hors navigateur du module à seed+entrées identiques produisent le même hash d'état final via hashState."
+       },
+       {
+        "feature": "R9 état inspectable",
+        "fichiers": [
+         "main.mjs"
+        ],
+        "fonction": "exposeGame",
+        "preuve": "E10 (oracle node) — après chargement, exposeGame publie window.__game exposant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state∈{playing,won,lost}, indépendamment du DOM."
+       }
+      ]
+     },
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/artifacts/s5-wiremap.txt",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "599b96f40faa868a8a2494c24c25446958662e4c9a8fe538e4a17bd1d1cce1ed",
+      "status": "AGENT_ARTIFACT"
+     }
+    },
+    "frozen_names": {
+     "content": {
+      "features": [
+       "R1 objectif affiché",
+       "R2 contrôle raquette",
+       "R3 rebond conservatif",
+       "R4 destruction une frappe",
+       "R5 progrès mesurable",
+       "R6 victoire terminale",
+       "R7 défaite terminale",
+       "R8 déterminisme",
+       "R9 état inspectable"
+      ]
+     },
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/wiremap_frozen.json",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "db78f6956a155a5a712c5950f1aa39764b726c453ff1794b4c35bf1cb753c589",
+      "status": "FILE"
+     }
+    }
+   },
+   "content_sha256": "039470a76d941bc9428486a6ab91747770d2dca5d72478f5b277ea91ff2cd0e0",
+   "owner": [
+    "builder",
+    "wiremap"
+   ],
+   "source": {
+    "path": null,
+    "run_id": "runm-breakout-20260902",
+    "sha256": null,
+    "status": "COMPOSITE"
+   },
+   "version": 1,
+   "writer": "importer"
+  }
+ }
+}
