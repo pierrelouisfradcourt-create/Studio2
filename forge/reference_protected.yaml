@@ -18,7 +18,6 @@ schema: forge.reference_protected.v1
 # seulement le TÉMOIN, mais tout le PÉRIMÈTRE dont dépend la validité d'une calibration.
 # Motif par ligne, chacun établi par mesure :
 #   GAMES/pong/**          témoin de régression gelé (décision 2026-07-27)
-#   tests/**               zone protégée déclarée (.claude/rules/tests.md)
 #   forge/**       LE CODE DU TRONC — n'avait aucun contrôle d'intégrité ; git_head
 #                          identifie l'état, la garde prouve dans les preuves de CHAQUE run
 #                          qu'il n'a pas bougé pendant la campagne (complémentaires)
@@ -29,16 +28,32 @@ schema: forge.reference_protected.v1
 #                          CHAQUE appel (mesuré boucle 5). Un hook qui change entre deux runs
 #                          change ce qui entre dans le modèle — même statut que le corpus de
 #                          leçons, déjà rangé dans les entrées gelées.
-#   CLAUDE.md              injecté par le même chemin, pour la même raison.
+#
+# DEUX MOTIFS RETIRÉS LE 2026-09-04 (GO Pierre) — références V1 que la migration `2769dc8` a
+# recopiées telles quelles, et qui rendaient `compute_fingerprint` IMPOSSIBLE en V2 (refus
+# explicite : « chemin inexistant -> ERREUR rapportée, jamais un vert silencieux ») :
+#   tests/**   protégeait, EN V1, les tests Rust du moteur ROCKY (`action_mask.rs`,
+#              `core_minimal.rs`…), lane jamais migrée en V2. Ce n'est PAS l'équivalent de
+#              `forge/tests/**` : les tests Forge vivaient sous `scripts/forge/tests/`, déjà
+#              couverts par `scripts/forge/**` -> aujourd'hui `forge/**`. Mesuré : ajouter
+#              `forge/tests/**` changerait la couverture de ZÉRO fichier (ses 251 fichiers,
+#              comme les 7 de `forge/asset_geometry/tests/`, sont déjà dans les 491 de
+#              `forge/**`). Le remplacer aurait donc créé une ligne inerte donnant l'illusion
+#              d'une protection — on le RETIRE, on ne le remplace pas.
+#   CLAUDE.md  absent de V2. Sa justification était l'injection par le hook SessionStart ;
+#              V2 n'a PAS de hook session-start (les 5 hooks présents sont pretool/posttool).
+#              La raison d'être du motif a disparu en même temps que le fichier.
+# Vérifié avant retrait : `forge.reference_guard.load_config` est le SEUL consommateur de ce
+# fichier. Les autres mentions de `tests/**` (contrats s9/s11/s2.5, skill forge, rules/tests.md)
+# et de `CLAUDE.md` (notes de context_manifest, prose de contrats) sont des déclarations
+# INDÉPENDANTES — texte de prompt et deny-lists d'outils — qu'aucun retrait ici n'affaiblit.
 # EXCLUSION DÉLIBÉRÉE : .claude/settings.json — c'est la configuration de protection FUTURE,
 # pas une entrée du tronc actuel ; l'inclure ferait signaler le geste de Pierre comme dérive.
 protected:
   - GAMES/pong/**
-  - tests/**
   - forge/**
   - control_plane/registry.py
   - .claude/hooks/**
-  - CLAUDE.md
 
 # Fichier de dérogation humaine — réutilise le sentinel déjà en place pour
 # forge.git_guard (déjà dans la liste `deny` de .claude/settings.json : une session
