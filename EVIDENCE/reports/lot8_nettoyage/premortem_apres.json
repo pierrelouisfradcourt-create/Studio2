@@ -1,0 +1,23 @@
+{
+ "runm_breakout": {
+  "n": 5,
+  "sha256": "15cb8ceb5c126467d304d546b779b00bde770680340dffd9652da01f31aef726",
+  "lignes": [
+   "[s9-build] échec d'une tentative précédente à s9-build → ✅ RÉPARÉ: réparé à la tentative 4 (tier sonnet)",
+   "[s10a-oracle-code] returncode=0; mutation=FAIL",
+   "[s9-build] échec d'une tentative précédente à s9-build → ✅ RÉPARÉ: réparé à la tentative 5 (tier sonnet)",
+   "[s10a-oracle-code] returncode=0; mutation=FAIL",
+   "[s9-build] échec d'une tentative précédente à s9-build → ✅ RÉPARÉ: réparé à la tentative 6 (tier opus)"
+  ]
+ },
+ "v2_breakout_slice": {
+  "n": 0,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "lignes": []
+ },
+ "jeu": {
+  "n": 0,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "lignes": []
+ }
+}

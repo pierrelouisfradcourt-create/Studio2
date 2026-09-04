@@ -1,0 +1,10 @@
+{
+ "total": 326,
+ "reel": 13,
+ "test": 313,
+ "par_projet": {
+  "jeu": 313,
+  "runm_breakout": 13
+ },
+ "critere": "projet sans run NI brief NI dossier GAMES/ = test"
+}

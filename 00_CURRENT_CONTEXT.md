@@ -22,8 +22,7 @@ V2  C:\Users\Studio-Dev\Desktop\Studio2   (renommé 2026-09-04 ; remote github.c
   lignées execution/return/spawn_link ; modèle MESURÉ ≠ déclaré ; pré-mortem et retour du matérialiseur ;
   `timeout_policy`. **Les trois réserves du 523bd07 sont fermées.** Audit :
   `docs/forge/AUDIT_V2_CAPABILITIES_SKILLS_MODELS_20260903.md`.
-- Trouvé par la sonde du Lot 5, **non corrigé** : `check_decompo.mjs` exige `main.tscn` (lignée Godot)
-  pour toute action joueur, même sur un jeu web → `DECOMPO_LOOP_NO_ENTRY` structurel.
+- Sonde du Lot 5, **non corrigé** : `check_decompo.mjs` exige `main.tscn` (lignée Godot) pour toute action joueur, même sur un jeu web → `DECOMPO_LOOP_NO_ENTRY` structurel.
 
 ## Lot 6 — contrat de re-convocation (commité `8892189` ; spec+plan `464150e`)
 
@@ -67,21 +66,24 @@ contourné, jamais retiré) ; GAME_FLOW · UX · design_metrics : DOCUMENTED_ONL
 
 ## Lot 7 — isolation du journal des tests (2026-09-04, GO Pierre ; spec+plan `docs/superpowers/`)
 
-**Cause mesurée par bissection**, et elle a falsifié ma note précédente : les 5 fichiers que j'avais
-désignés d'après leur nom ne fuient pas ; les coupables sont `test_measure_tick` (+2392 octets) et
-`test_mutation_path_repo_relative` (+537), somme = le delta de la suite entière. Ils monkeypatchent
-`driver._REPO_ROOT` sur leur `tmp_path` pour exercer la branche « run_dir sous le dépôt » :
-`_journal_target()` rend alors `None` (route par domaine) et l'écriture part dans le vrai journal.
-Leur passer un `journal_path` supprimerait ce qu'ils mesurent — c'est la **destination** qu'on isole.
+**Cause mesurée par bissection**, qui a falsifié ma note précédente : les 5 fichiers désignés d'après
+leur nom ne fuient pas. Les coupables sont `test_measure_tick` (+2392 octets) et
+`test_mutation_path_repo_relative` (+537) — ils monkeypatchent `driver._REPO_ROOT` sur leur `tmp_path`,
+`_journal_target()` rend alors `None` (route par domaine) et l'écriture part dans le vrai journal. Un
+`journal_path` injecté supprimerait ce qu'ils mesurent : c'est la **destination** qu'on isole.
 
-**Correctif** : la fixture `autouse` `_isolate_evidence_writes` (qui couvrait déjà l'audit et deux
-fichiers de résultats) redirige aussi `DOMAIN_JOURNAL_DIR`, `DEFAULT_ERROR_JOURNAL` et `FORGE_REPORTS`
-— dans `studio_link` **et** `learning_memory`, à la même valeur (import par valeur, même piège que les
-deux `DEFAULT_AUDIT`). 4 tests de périmètre ajoutés. Aucun code de production touché.
-**Mesuré : 2929 → 0 octets**, index compris.
+**Correctif** : la fixture `autouse` `_isolate_evidence_writes` redirige aussi `DOMAIN_JOURNAL_DIR`,
+`DEFAULT_ERROR_JOURNAL` et `FORGE_REPORTS` — dans `studio_link` **et** `learning_memory`, à la même
+valeur (import par valeur, même piège que les deux `DEFAULT_AUDIT`). 4 tests de périmètre ajoutés,
+aucun code de production touché. **Mesuré : 2929 → 0 octets**, index compris.
 
-**Reste : un lot de nettoyage dédié** pour les lignes déjà écrites (78 au HEAD du Lot 6 + celles du
-rouge de ce lot), non commitées. La cause étant supprimée, le nettoyage est désormais possible.
+**Lot 8 — nettoyage, fait.** Le journal contenait **326 lignes dont 13 réelles** ; 117 de la pollution
+étaient arrivées avec la migration V1 (`2769dc8`), donc le tas préexistait à V2. Tri par critère
+mécanique (projet sans run NI brief NI dossier `GAMES/` = test), 313 retirées, 13 conservées à l'octet
+près, index régénéré par son producteur (326 → 13 entrées). **Non-régression prouvée** : le pré-mortem
+de `runm_breakout` et de `v2_breakout_slice` rend des empreintes sha256 identiques avant/après ; seul
+le projet de test `jeu` tombe de 5 à 0. Récupérable à `3f457fa:EVIDENCE/reports/error_journal/html.jsonl`
+(247 lignes) ; 79 lignes n'étaient pas versionnées et ont disparu — dit, pas masqué.
 
 ## Décisions ouvertes
 
