@@ -231,8 +231,10 @@ caps_path=forge/contracts/roles.yaml)`. Un rôle non résolu ⇒ `RoleUnresolved
 - `roles.yaml` est **Forge-scopé** et constitue la **seule** source de résolution de rôle de la Forge
   (`contract.resolve_runtime` passe toujours `caps_path=FORGE_ROLES`). Il ne touche pas
   `openclaw/capabilities.yaml`, qui n'est **plus** le « SSOT studio » : openclaw est **legacy**
-  depuis le 2026-07-23 (Pierre : « on travaille que claude et forge »). Ce chemin n'est que le
-  défaut du module partagé `control_plane/registry.py:15`, consommé par la lane STUDIO gelée.
+  depuis le 2026-07-23 (Pierre : « on travaille que claude et forge »). Ce chemin était le défaut
+  du module partagé `control_plane/registry.py` ; **ce défaut a été retiré le 2026-09-04** (gate
+  Pierre, décision A) — `caps_path` y est obligatoire et le module ne connaît plus aucun
+  emplacement, `openclaw/` étant absent de V2.
 
 ## Gouvernance du dispatch (ADR-002 gate 2)
 

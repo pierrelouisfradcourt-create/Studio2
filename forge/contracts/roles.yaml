@@ -3,8 +3,9 @@
 # Portée : Forge UNIQUEMENT. Ne touche pas openclaw/capabilities.yaml — qui n'est PLUS le « SSOT
 # studio » : openclaw est LEGACY depuis le 2026-07-23 (Pierre : « on travaille que claude et forge »).
 # Ce fichier-ci est la seule source de résolution de rôle de la Forge : `contract.resolve_runtime`
-# passe toujours `caps_path=FORGE_ROLES`. Le chemin openclaw n'est que le DÉFAUT du module partagé
-# `control_plane/registry.py:15`, consommé par la lane STUDIO, elle-même gelée. (Étiquette
+# passe toujours `caps_path=FORGE_ROLES`. Le chemin openclaw était le DÉFAUT du module partagé
+# `control_plane/registry.py` ; ce défaut a été RETIRÉ le 2026-09-04 (gate Pierre, décision A) —
+# `caps_path` y est désormais obligatoire, le module ne connaît plus aucun emplacement. (Étiquette
 # « SSOT studio, IMP-124 » corrigée le 2026-07-23 : elle était devenue fausse.)
 # Décisions : ADR-002 gate 1 (full Claude pour cette phase) + gate 4 (Qwen = red team indépendant).
 # Lu par : forge/contract.py via control_plane.registry.get_model_for_role(role, caps_path=ce fichier).
@@ -31,7 +32,8 @@ source_adr: ADR-002
 #    Pong ». Aucun des deux n'est un tier de build.
 #
 # Pourquoi les séparer : le registry résout un rôle par ORDRE DE DÉCLARATION (premier
-# modèle qui déclare le rôle gagne, control_plane/registry.py:39). Tant que les deux
+# modèle qui déclare le rôle gagne, boucle de `control_plane.registry.get_model_for_role` —
+# citée par nom et non par numéro de ligne, un numéro ayant déjà dérivé ici). Tant que les deux
 # usages partageaient le nom `orchestrator`, écrire « Fable OU Opus » en commentaire ne
 # changeait rien — le code rendait Fable, toujours. Une décision de Pierre vivait à côté
 # d'une donnée qui la contredisait : exactement le défaut que le contrat de système
