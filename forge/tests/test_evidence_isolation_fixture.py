@@ -36,6 +36,7 @@ import json
 
 import forge.audit as A
 import forge.dispatch as D
+import forge.learning_memory as LM
 import forge.repair_dispatch as RD
 import forge.studio_link as SL
 from forge import run_real
@@ -127,3 +128,62 @@ def test_le_module_de_FALSIFICATION_est_EXPLICITEMENT_exempte():
     for nom in conftest.MODULES_OBSERVANT_LA_PREUVE_REELLE:
         assert (Path(__file__).parent / f"{nom}.py").is_file(), \
             f"exemption pour un module inexistant : {nom} (renomme ? supprime ?)"
+
+
+# --- Lot 7 : le JOURNAL D'ERREURS et son index (2026-09-04) ---------------------------------
+# MESURE qui a motivé cet ajout — bissection de la suite complète, delta d'octets sur
+# `EVIDENCE/reports/error_journal/html.jsonl` : test_measure_tick +2392,
+# test_mutation_path_repo_relative +537, somme = le delta de la suite entière (+2929).
+#
+# LE MÉCANISME, contre-intuitif et c'est pourquoi il est resté invisible : ces deux tests
+# monkeypatchent `forge.driver._REPO_ROOT` sur leur tmp_path pour exercer la branche
+# « run_dir sous le dépôt ». `ForgeDriver._journal_target()` réussit alors son `relative_to`,
+# rend None (« route par domaine »), et `record_error` écrit dans le VRAI journal du Studio.
+# Leur passer un `journal_path` supprimerait exactement ce qu'ils mesurent : c'est la
+# DESTINATION qu'il faut isoler, pas l'appel.
+#
+# TROIS substitutions, pas une : `DOMAIN_JOURNAL_DIR` et `DEFAULT_ERROR_JOURNAL` sont des
+# constantes calculées À L'IMPORT (patcher `FORGE_REPORTS` ne les atteint pas), tandis que
+# `write_journal_index` lit `FORGE_REPORTS` À L'APPEL (`root = reports_dir or FORGE_REPORTS`).
+
+JOURNAL_REEL = A._REPO_ROOT / "EVIDENCE" / "reports" / "error_journal" / "html.jsonl"
+INDEX_REEL = JOURNAL_REEL.parent / "INDEX.generated.md"
+
+
+def test_la_destination_du_JOURNAL_n_est_pas_le_fichier_reel():
+    """`record_error` sans `journal_path` route par domaine : c'est CE chemin qui fuyait."""
+    assert SL._domain_journal_path("html") != JOURNAL_REEL, \
+        "la fixture ne redirige pas le journal d'erreurs"
+
+
+def test_les_DEUX_copies_du_chemin_de_journal_sont_patchees_ENSEMBLE():
+    """LE test qui vaut ce lot, jumeau de celui des deux `DEFAULT_AUDIT`.
+    `forge.learning_memory` fait `from forge.studio_link import DOMAIN_JOURNAL_DIR,
+    DEFAULT_ERROR_JOURNAL` — un import PAR VALEUR, qui fige les chemins dans son propre
+    espace de noms. N'en patcher qu'un laisse l'autre pointer sur le fichier réel."""
+    assert LM.DOMAIN_JOURNAL_DIR == SL.DOMAIN_JOURNAL_DIR, \
+        "les deux copies ont divergé : learning_memory lit encore le vrai journal"
+    assert LM.DEFAULT_ERROR_JOURNAL == SL.DEFAULT_ERROR_JOURNAL
+    assert SL.DOMAIN_JOURNAL_DIR != JOURNAL_REEL.parent
+
+
+def test_l_INDEX_du_journal_n_est_pas_regenere_dans_la_production():
+    """`write_journal_index` lit `FORGE_REPORTS` À L'APPEL : une troisième substitution,
+    distincte des deux constantes ci-dessus (que patcher FORGE_REPORTS n'atteindrait pas)."""
+    assert SL.write_journal_index() != INDEX_REEL
+
+
+def test_une_ecriture_de_journal_SANS_injection_n_atteint_PAS_la_production(tmp_path):
+    """Le cas exact du résidu : `record_error` appelé sans `journal_path`, comme le fait
+    `ForgeDriver._journal_error` quand `_journal_target()` rend None."""
+    avant = (_empreinte(JOURNAL_REEL), _empreinte(INDEX_REEL))
+
+    SL.record_error("lot7-1", "s9-build", "fuite de test", "jeu", domain="html")
+    SL.write_journal_index()
+
+    assert (_empreinte(JOURNAL_REEL), _empreinte(INDEX_REEL)) == avant, \
+        "une écriture non injectée a atteint le journal de production"
+    redirige = SL._domain_journal_path("html")
+    assert redirige.exists(), "rediriger n'est pas jeter : la preuve doit exister ailleurs"
+    ligne = json.loads(redirige.read_text(encoding="utf-8").splitlines()[-1])
+    assert ligne["run_id"] == "lot7-1" and ligne["project"] == "jeu"

@@ -19,7 +19,9 @@ from forge.driver import ForgeDriver  # noqa: E402
 # `test_hook_guard_stdlib_only` : ce test mesure `sys.modules` dans un SOUS-PROCESSUS frais.
 import forge.audit as _audit  # noqa: E402
 import forge.dispatch as _dispatch  # noqa: E402
+import forge.learning_memory as _learning_memory  # noqa: E402 — copies PAR VALEUR, cf. fixture
 import forge.repair_dispatch as _repair_dispatch  # noqa: E402
+import forge.studio_link as _studio_link  # noqa: E402
 from forge.asset_producer import asset_dispatch as _asset_dispatch  # noqa: E402
 
 
@@ -68,6 +70,34 @@ def _isolate_evidence_writes(request, tmp_path_factory, monkeypatch):
     monkeypatch.setattr(_dispatch, "DEFAULT_AUDIT", audit)  # MÊME valeur, cf. piège ci-dessus
     monkeypatch.setattr(_repair_dispatch, "RESULTS_PATH", cible / "repair_results.jsonl")
     monkeypatch.setattr(_asset_dispatch, "RESULTS_PATH", cible / "asset_results.jsonl")
+    # Lot 7 (2026-09-04) : le JOURNAL D'ERREURS. Mesure par bissection de la suite complète —
+    # test_measure_tick +2392 octets, test_mutation_path_repo_relative +537, somme = le delta
+    # de la suite entière : ces deux-là, et personne d'autre. Ils monkeypatchent
+    # `driver._REPO_ROOT` sur leur tmp_path pour exercer la branche « run_dir sous le dépôt » ;
+    # `_journal_target()` rend alors None (« route par domaine ») et l'écriture part dans le
+    # VRAI journal du Studio. Leur passer un `journal_path` supprimerait ce qu'ils mesurent :
+    # c'est la DESTINATION qu'on isole, jamais l'appel.
+    #
+    # TROIS substitutions, pour trois raisons distinctes :
+    #  - `DOMAIN_JOURNAL_DIR` : lu À CHAQUE APPEL par `_domain_journal_path` — c'est la cible
+    #    réelle de `record_error` sans `journal_path` ;
+    #  - `DEFAULT_ERROR_JOURNAL` : le monolithe historique, relu en repli par `premortem` ;
+    #  - `FORGE_REPORTS` : lu À L'APPEL par `write_journal_index` (`root = reports_dir or
+    #    FORGE_REPORTS`), donc l'index ne se régénère pas dans la production. Patcher
+    #    `FORGE_REPORTS` seul NE SUFFIRAIT PAS : les deux constantes ci-dessus sont calculées
+    #    à l'import et ne changeraient pas.
+    #
+    # ET DANS LES DEUX MODULES, à la MÊME valeur — `forge.learning_memory` fait
+    # `from forge.studio_link import DOMAIN_JOURNAL_DIR, DEFAULT_ERROR_JOURNAL`, un import PAR
+    # VALEUR qui fige les chemins dans son propre espace de noms. Même piège que les deux
+    # `DEFAULT_AUDIT` ci-dessus, et `test_evidence_isolation_fixture` verrouille les deux.
+    journal_dir = cible / "error_journal"
+    monolithe = cible / "forge_error_journal.jsonl"
+    monkeypatch.setattr(_studio_link, "FORGE_REPORTS", cible)
+    monkeypatch.setattr(_studio_link, "DOMAIN_JOURNAL_DIR", journal_dir)
+    monkeypatch.setattr(_studio_link, "DEFAULT_ERROR_JOURNAL", monolithe)
+    monkeypatch.setattr(_learning_memory, "DOMAIN_JOURNAL_DIR", journal_dir)   # MÊME valeur
+    monkeypatch.setattr(_learning_memory, "DEFAULT_ERROR_JOURNAL", monolithe)  # MÊME valeur
 
 
 
