@@ -1,0 +1,13 @@
+{
+ "features": [
+  "R1 Objectif affiché",
+  "R2 Raquette pilotée au clavier",
+  "R3 Rebond conservatif",
+  "R4 Destruction en une frappe",
+  "R5 Progres mesurable",
+  "R6 Victoire terminale",
+  "R7 Defaite terminale",
+  "R9 Determinisme par seed",
+  "R10 Etat inspectable"
+ ]
+}

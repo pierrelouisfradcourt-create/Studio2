@@ -1,0 +1,41 @@
+{
+ "accepted": [],
+ "convocations": {
+  "s5-wiremap": 2
+ },
+ "decisions": [
+  "D-lot3_director_probe-1",
+  "D-lot3_director_probe-2",
+  "D-lot3_director_probe-3"
+ ],
+ "pending_question": null,
+ "project": "runm_breakout",
+ "run_id": "lot3_director_probe",
+ "schema": "DIRECTOR_STATE/v0",
+ "signals": {
+  "wiremap.design@wiremap": {
+   "convocations": 2,
+   "last_effect": "CHANGED",
+   "no_effect": 0,
+   "regressed": 0
+  }
+ },
+ "snapshots": {
+  "wiremap": [
+   {
+    "content_sha256": "039470a76d941bc9428486a6ab91747770d2dca5d72478f5b277ea91ff2cd0e0",
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\lot3_director_probe\\snapshots\\wiremap.v1.json",
+    "section": "wiremap",
+    "version": 1
+   },
+   {
+    "content_sha256": "556c6d4db0157317846364dbdcac9fa5c4e46d535a55c89a3d5cb57faa3b5c8f",
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\lot3_director_probe\\snapshots\\wiremap.v2.json",
+    "section": "wiremap",
+    "version": 2
+   }
+  ]
+ },
+ "status": "GATE_OPEN",
+ "steps": 3
+}

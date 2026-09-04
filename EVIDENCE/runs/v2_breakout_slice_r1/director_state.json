@@ -1,0 +1,146 @@
+{
+ "accepted": [],
+ "build": {
+  "attempts": 3,
+  "last_model": "opus",
+  "qa": {
+   "built_version": 4,
+   "decision": "HUMANGATE_READY",
+   "software_verdict": "OK",
+   "state_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\state.json",
+   "statuses": {
+    "s10a-oracle-code": "OK",
+    "s10b-oracle-archi": "OK",
+    "s10c-oracle-wiremap": "OK",
+    "s12-verdict": "OK"
+   },
+   "verdict_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\verdict.json",
+   "verify_run": "AUTHENTIQUE"
+  }
+ },
+ "convocations": {
+  "s3-decompo": 1,
+  "s4-archi": 1,
+  "s5-wiremap": 2,
+  "s9-build": 3
+ },
+ "decisions": [
+  "D-v2_breakout_slice_r1-1",
+  "D-v2_breakout_slice_r1-2",
+  "D-v2_breakout_slice_r1-3",
+  "D-v2_breakout_slice_r1-4",
+  "D-v2_breakout_slice_r1-5",
+  "D-v2_breakout_slice_r1-6",
+  "D-v2_breakout_slice_r1-7",
+  "D-v2_breakout_slice_r1-8",
+  "D-v2_breakout_slice_r1-9",
+  "D-v2_breakout_slice_r1-10",
+  "D-v2_breakout_slice_r1-11",
+  "D-v2_breakout_slice_r1-12",
+  "D-v2_breakout_slice_r1-13"
+ ],
+ "last_problems": [],
+ "pending_question": null,
+ "project": "v2_breakout_slice",
+ "run_id": "v2_breakout_slice_r1",
+ "schema": "DIRECTOR_STATE/v0",
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap",
+  "s5-wiremap",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict",
+  "s9-build",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict"
+ ],
+ "signals": {
+  "architecture_contract@architect": {
+   "convocations": 1,
+   "last_effect": "CHANGED",
+   "no_effect": 0,
+   "no_progress": 1,
+   "regressed": 0
+  },
+  "feature_map@decompose": {
+   "convocations": 1,
+   "last_effect": "CHANGED",
+   "no_effect": 0,
+   "no_progress": 1,
+   "regressed": 0
+  },
+  "wiremap.built@builder": {
+   "convocations": 3,
+   "last_effect": "NO_EFFECT",
+   "no_effect": 2,
+   "no_progress": 0,
+   "regressed": 0
+  },
+  "wiremap.design@wiremap": {
+   "convocations": 2,
+   "last_effect": "CHANGED",
+   "no_effect": 0,
+   "no_progress": 0,
+   "regressed": 0
+  }
+ },
+ "snapshots": {
+  "architecture_contract": [
+   {
+    "content_sha256": null,
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\snapshots\\architecture_contract.v0.json",
+    "section": "architecture_contract",
+    "version": 0
+   }
+  ],
+  "feature_map": [
+   {
+    "content_sha256": null,
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\snapshots\\feature_map.v0.json",
+    "section": "feature_map",
+    "version": 0
+   }
+  ],
+  "wiremap": [
+   {
+    "content_sha256": null,
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\snapshots\\wiremap.v0.json",
+    "section": "wiremap",
+    "version": 0
+   },
+   {
+    "content_sha256": "d8ccc12528fc7a2138a7cea53538c206b1f6854184c529e95dbb7bbd510bf580",
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\snapshots\\wiremap.v1.json",
+    "section": "wiremap",
+    "version": 1
+   },
+   {
+    "content_sha256": "54c8f4137bf6cf766aff1b7e2fbe5af370e338ac76bc12fd603c25825aba06f9",
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\snapshots\\wiremap.v2.json",
+    "section": "wiremap",
+    "version": 2
+   },
+   {
+    "content_sha256": "4eb86a9fe381b5f2d0a4c948466c9938749066cd772b828d54db697307abd3c1",
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\snapshots\\wiremap.v3.json",
+    "section": "wiremap",
+    "version": 3
+   },
+   {
+    "content_sha256": "4eb86a9fe381b5f2d0a4c948466c9938749066cd772b828d54db697307abd3c1",
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\snapshots\\wiremap.v3.json",
+    "section": "wiremap",
+    "version": 3
+   }
+  ]
+ },
+ "status": "HUMANGATE_READY",
+ "steps": 13
+}

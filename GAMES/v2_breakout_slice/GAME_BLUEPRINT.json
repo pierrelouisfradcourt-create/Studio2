@@ -1,0 +1,2231 @@
+{
+ "imported_at": "2026-09-03T17:04:34+00:00",
+ "project": "v2_breakout_slice",
+ "schema": "GAME_BLUEPRINT/v0",
+ "sections": {
+  "architecture_contract": {
+   "content": {
+    "deps_interdites": [
+     [
+      "engine",
+      "render"
+     ],
+     [
+      "engine",
+      "input"
+     ],
+     [
+      "engine",
+      "main.mjs"
+     ],
+     [
+      "input",
+      "engine"
+     ],
+     [
+      "input",
+      "render"
+     ],
+     [
+      "render",
+      "input"
+     ],
+     [
+      "input",
+      "main.mjs"
+     ],
+     [
+      "render",
+      "main.mjs"
+     ]
+    ],
+    "modules": [
+     "engine",
+     "input",
+     "render",
+     "main.mjs",
+     "index.html",
+     "tests"
+    ]
+   },
+   "content_sha256": "d47e67a183ed7ad7e119dfa85661f555658e92966c817eea87a8a4ff41195a2d",
+   "owner": [
+    "architect"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/v2_breakout_slice_r1/blueprint.json",
+    "run_id": "v2_breakout_slice_r1",
+    "sha256": "1a8787b5badb4dd137d5c97b0c0246e9b9bf97c81b338ff884777eb269ea75ec",
+    "status": "FILE"
+   },
+   "version": 1,
+   "writer": "architect"
+  },
+  "constraints": {
+   "content": {
+    "contraintes": {
+     "normative_refs": [
+      {
+       "rules": [
+        "N1",
+        "N2",
+        "N3",
+        "N4",
+        "N7",
+        "N8",
+        "N9"
+       ],
+       "spec": "FORGE_DESIGN_FREEDOM_SPEC_V0"
+      }
+     ],
+     "project_specific": {
+      "experimentales": [
+       "RUN M = preuve de bout en bout de la MIGRATION V1 -> V2 (surfaces, chemins, contrats, oracles, sceau de preuve), pas de la topologie cible V2 : celle-ci n'est pas construite au moment de ce run et ne peut donc être ni testée ni prétendue",
+       "un échec est un résultat expérimental recevable : le run doit dire OÙ la chaîne casse dans les surfaces V2, jamais produire un vert par contournement"
+      ],
+      "techniques": [
+       "cible technique conforme au socle N1 : page HTML+JS unique, RNG seedé, logique métier en module .mjs testable hors navigateur, exposition window.__game, actions DOM-only, déterminisme reproductible par hash",
+       "lignée WEB imposée — aucun binaire Godot ni Blender requis. La matrice de dépendances externes du Studio V2 classe Godot et Blender en dépendances de CAPACITÉ, jamais en préconditions globales : ce run doit rester exécutable sans eux, et un recours silencieux à l'un ou l'autre est un écart à signaler"
+      ]
+     }
+    },
+    "criteres_sortie": [
+     "le run s'exécute dans les surfaces V2 : run_dir sous EVIDENCE/runs/, jamais lab/",
+     "le jeu est écrit sous GAMES/runm_breakout/, jamais games/ ni ailleurs",
+     "charter produit par s0 et validé par check_charter",
+     "prisme.json, featuremap.json, blueprint et wiremap.json produits et validés par leurs oracles amont",
+     "chaque ligne de wiremap porte un `couvre` NON VIDE citant l'id EXACT d'une capacité de featuremap.json",
+     "le reçu de jointure `join_check` est présent dans state.json avec un `regime` explicite (JOINED / PARTIAL / VOID / EMPTY_FORM / NOT_APPLICABLE) — advisory, il ne bloque rien, mais son absence signalerait que la recopie du reçu n'a pas eu lieu",
+     "preuves s10 produites (s10a-oracle-code, s10b-oracle-archi, s10c-oracle-wiremap)",
+     "verdict signé HMAC produit ET re-vérifié authentique par verify_run — pas seulement présent",
+     "la clé de signature utilisée est celle de V2 (forge/.forge_key), jamais une clé héritée de V1",
+     "le jeu se charge dans un navigateur et une partie complète est jouable au clavier",
+     "LM Studio indisponible => HALT/BLOCKED sans repli silencieux vers une autre source",
+     "aucun artefact n'est écrit hors des surfaces V2 déclarées — une écriture dans lab/, scripts/forge/ ou games/ est un FAIL de migration, pas un détail"
+    ],
+    "libertes_deleguees": [
+     "choisir le thème visuel et la direction artistique",
+     "définir la boucle de jeu minimale et ses règles",
+     "décider du nombre de briques, de vies, de niveaux et du dimensionnement",
+     "choisir les interactions et les affordances du joueur",
+     "arbitrer les détails de conception non spécifiés par ce Brief",
+     "choisir la structure interne des modules, dans les limites du socle N1"
+    ],
+    "non_delegue": [
+     "les règles normatives citées (N1-N4, N7-N9)",
+     "les critères de sortie",
+     "l'autorité des preuves",
+     "l'autorité du verdict",
+     "le choix de la lignée web et l'interdiction de dépendre de Godot/Blender",
+     "la définition du Project Input lui-même"
+    ]
+   },
+   "content_sha256": "3720f1dd587d920a7b096d913ae7206de85c82eda3e8e3b7a6c5485b23fb033e",
+   "owner": [
+    "pierre"
+   ],
+   "source": {
+    "path": "EVIDENCE/briefs/v2_breakout_slice/project_brief.yaml",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "ddbf6d8085a69b6558b7da37033f0a671ea59a780286d5602be0a21599469ef6",
+    "status": "BRIEF"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "decisions": {
+   "content": [
+    {
+     "by": "importer",
+     "id": "import-runm-breakout-20260902",
+     "kind": "import",
+     "measure": {
+      "note": "sections de conception retirées à l'import : slice D4",
+      "run_status": "DONE",
+      "steps": {
+       "s0-contrat": "OK",
+       "s1-prisme": "OK",
+       "s10a-oracle-code": "OK",
+       "s10b-oracle-archi": "OK",
+       "s10c-oracle-wiremap": "OK",
+       "s11-redteam-code": "OK",
+       "s12-verdict": "OK",
+       "s2-worldscan": "OK",
+       "s3-decompo": "OK",
+       "s4-archi": "OK",
+       "s5-wiremap": "OK",
+       "s6-redteam-plan": "OK",
+       "s9-build": "OK"
+      }
+     },
+     "refs": [
+      "EVIDENCE/runs/runm_breakout/state.json"
+     ],
+     "signal": "run terminé"
+    },
+    {
+     "attempt": 1,
+     "by": "director",
+     "capability": "decompose",
+     "diagnosis_code": "SECTION_ABSENT",
+     "effect": "CHANGED",
+     "id": "D-v2_breakout_slice_r1-1",
+     "kind": "convoke",
+     "measure": {
+      "after": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       }
+      },
+      "after_section_sha": "5feeb1ed014e50a42ff9fb301d53666942a3556f3524dbcd26480e1e79ae05ad",
+      "before": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       }
+      },
+      "before_section_sha": null,
+      "capability_ok": true,
+      "consumption": null,
+      "cost": {
+       "cost_usd": 1.4951825,
+       "duration_s": 307.57202553749084,
+       "tokens": 23086
+      },
+      "effect_reasons": [
+       "feature_map: v0 -> v1"
+      ],
+      "model_executed": "claude-opus-4-8",
+      "problems": [
+       {
+        "code": "DECOMPO_LOOP_NO_ENTRY",
+        "message": "systemes[0].features[1].capacites[0]: feuille 'CAP_R2_entree' realise l'action joueur 'raquette' (exigence E2) sans preuve bot_action depuis main.tscn",
+        "path": "feature_map.boucle_sans_entree",
+        "producer": "check_decompo.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "DECOMPO_LOOP_NO_ENTRY",
+        "message": "systemes[0].features[1].capacites[1]: feuille 'CAP_R2_effet' realise l'action joueur 'raquette' (exigence E2) sans preuve bot_action depuis main.tscn",
+        "path": "feature_map.boucle_sans_entree",
+        "producer": "check_decompo.mjs",
+        "suggested_action": "reconvoke"
+       }
+      ],
+      "progress_reasons": [
+       "aucune couverture n'a progressé"
+      ],
+      "requests": []
+     },
+     "message_id": null,
+     "notified": null,
+     "progress": "NONE",
+     "reason": "section 'feature_map' absente",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\context\\prompt_s3-decompo_a1.txt",
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\featuremap.json"
+     ],
+     "signal": "feature_map@decompose",
+     "ts": "2026-09-03T17:09:42+00:00"
+    },
+    {
+     "attempt": 1,
+     "by": "director",
+     "capability": "architect",
+     "diagnosis_code": "SECTION_ABSENT",
+     "effect": "CHANGED",
+     "id": "D-v2_breakout_slice_r1-2",
+     "kind": "convoke",
+     "measure": {
+      "after": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       }
+      },
+      "after_section_sha": "d47e67a183ed7ad7e119dfa85661f555658e92966c817eea87a8a4ff41195a2d",
+      "before": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       }
+      },
+      "before_section_sha": null,
+      "capability_ok": true,
+      "consumption": null,
+      "cost": {
+       "cost_usd": 0.9123334999999999,
+       "duration_s": 195.49112701416016,
+       "tokens": 13208
+      },
+      "effect_reasons": [
+       "architecture_contract: v0 -> v1"
+      ],
+      "model_executed": "claude-opus-4-8",
+      "problems": [
+       {
+        "code": "ARCHI_PROBLEM",
+        "message": "blueprint.json.responsabilites: tableau NON VIDE requis — {module, responsabilite, couvre[], dependances[], preuve_attendue{kind,statement}}. Sans lui, un blueprint de 2 modules inventes ne se distingue pas d'une architecture reelle",
+        "path": "architecture_contract.problems",
+        "producer": "check_blueprint_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "ARCHI_PROBLEM",
+        "message": "blueprint.json.modules: 'engine' n'a aucune entree dans responsabilites[]",
+        "path": "architecture_contract.problems",
+        "producer": "check_blueprint_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "ARCHI_PROBLEM",
+        "message": "blueprint.json.modules: 'input' n'a aucune entree dans responsabilites[]",
+        "path": "architecture_contract.problems",
+        "producer": "check_blueprint_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "ARCHI_PROBLEM",
+        "message": "blueprint.json.modules: 'render' n'a aucune entree dans responsabilites[]",
+        "path": "architecture_contract.problems",
+        "producer": "check_blueprint_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "ARCHI_PROBLEM",
+        "message": "blueprint.json.modules: 'main.mjs' n'a aucune entree dans responsabilites[]",
+        "path": "architecture_contract.problems",
+        "producer": "check_blueprint_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "ARCHI_PROBLEM",
+        "message": "blueprint.json.modules: 'index.html' n'a aucune entree dans responsabilites[]",
+        "path": "architecture_contract.problems",
+        "producer": "check_blueprint_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "ARCHI_PROBLEM",
+        "message": "blueprint.json.modules: 'tests' n'a aucune entree dans responsabilites[]",
+        "path": "architecture_contract.problems",
+        "producer": "check_blueprint_contract.mjs",
+        "suggested_action": "reconvoke"
+       }
+      ],
+      "progress_reasons": [
+       "aucune couverture n'a progressé"
+      ],
+      "requests": []
+     },
+     "message_id": null,
+     "notified": null,
+     "progress": "NONE",
+     "reason": "section 'architecture_contract' absente",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\context\\prompt_s4-archi_a1.txt",
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\blueprint.json"
+     ],
+     "signal": "architecture_contract@architect",
+     "ts": "2026-09-03T17:14:03+00:00"
+    },
+    {
+     "attempt": 1,
+     "by": "director",
+     "capability": "wiremap",
+     "diagnosis_code": "SECTION_ABSENT",
+     "effect": "CHANGED",
+     "id": "D-v2_breakout_slice_r1-3",
+     "kind": "convoke",
+     "measure": {
+      "after": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 0,
+        "capacites_non_couvertes": 10,
+        "couverture_fantome": 0,
+        "forme_satisfaite": false,
+        "lignes": 9,
+        "lignes_sans_couvre": 9,
+        "regime": "EMPTY_FORM",
+        "status": "NOT_JOINED"
+       }
+      },
+      "after_section_sha": "89569c7fd88a82b94eccadec88c49b161ffe9008c03d74a9ab5d0579f17182d6",
+      "before": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       }
+      },
+      "before_section_sha": null,
+      "capability_ok": true,
+      "consumption": null,
+      "cost": {
+       "cost_usd": 1.7667389999999998,
+       "duration_s": 242.1507396697998,
+       "tokens": 15524
+      },
+      "effect_reasons": [
+       "wiremap.design: v0 -> v1"
+      ],
+      "model_executed": "claude-opus-4-8",
+      "problems": [
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R1_objectif' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R2_entree' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R2_effet' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R3_rebond' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R4_destruction' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R5_progres' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R6_victoire' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R7_defaite' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R9_determinisme' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_CAPACITY_UNCOVERED",
+        "message": "capacite 'CAP_R10_inspectable' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+        "path": "wiremap.design.capacites_non_couvertes",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[0].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[1].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[2].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[3].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[4].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[5].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[6].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[7].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       },
+       {
+        "code": "WIREMAP_PROBLEM",
+        "message": "features[8].couvre: tableau NON VIDE d'ids de capacites requis — une ligne de wiremap qui ne declare pas ce qu'elle realise rend le delta plan/carte incalculable",
+        "path": "wiremap.design.problems",
+        "producer": "check_wiremap_contract.mjs",
+        "suggested_action": "reconvoke"
+       }
+      ],
+      "progress_reasons": [
+       "design: régime NOT_MEASURED -> EMPTY_FORM",
+       "design: capacités couvertes None -> 0"
+      ],
+      "requests": []
+     },
+     "message_id": null,
+     "notified": null,
+     "progress": "IMPROVED",
+     "reason": "section 'wiremap.design' absente",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\context\\prompt_s5-wiremap_a1.txt",
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\wiremap.json"
+     ],
+     "signal": "wiremap.design@wiremap",
+     "ts": "2026-09-03T17:18:38+00:00"
+    },
+    {
+     "attempt": 2,
+     "by": "director",
+     "capability": "wiremap",
+     "diagnosis_code": "JOIN_LINES_WITHOUT_COUVRE",
+     "effect": "CHANGED",
+     "id": "D-v2_breakout_slice_r1-4",
+     "kind": "reconvoke",
+     "measure": {
+      "after": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       }
+      },
+      "after_section_sha": "de96d960cb4e4945574cb25227da2e9e8aed9f058fa597681f4962cf314e973b",
+      "before": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 0,
+        "capacites_non_couvertes": 10,
+        "couverture_fantome": 0,
+        "forme_satisfaite": false,
+        "lignes": 9,
+        "lignes_sans_couvre": 9,
+        "regime": "EMPTY_FORM",
+        "status": "NOT_JOINED"
+       }
+      },
+      "before_section_sha": "89569c7fd88a82b94eccadec88c49b161ffe9008c03d74a9ab5d0579f17182d6",
+      "capability_ok": true,
+      "consumption": {
+       "checked": [
+        "wiremap.json",
+        "s5-wiremap.txt"
+       ],
+       "declared_by": "capability_registry",
+       "found_in": [
+        "s5-wiremap.txt"
+       ],
+       "status": "consumed"
+      },
+      "cost": {
+       "cost_usd": 1.621959,
+       "duration_s": 204.30349349975586,
+       "tokens": 14804
+      },
+      "effect_reasons": [
+       "wiremap.design: v1 -> v2"
+      ],
+      "model_executed": "claude-opus-4-8",
+      "problems": [],
+      "progress_reasons": [
+       "design: régime EMPTY_FORM -> JOINED",
+       "design: capacités couvertes 0 -> 10"
+      ],
+      "requests": []
+     },
+     "message_id": "AMD-20260903T171927Z-join-lines-without-couvre-wiremap-v2-breakout-sl",
+     "notified": {
+      "items_added": 1,
+      "items_preserved": 0,
+      "items_total": 1,
+      "journal_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\amendments\\journal.jsonl",
+      "message_id": "AMD-20260903T171927Z-join-lines-without-couvre-wiremap-v2-breakout-sl",
+      "notified": [
+       "wiremap"
+      ],
+      "trace_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\knowledge_trace.json"
+     },
+     "progress": "IMPROVED",
+     "reason": "jointure de design EMPTY_FORM : JOIN_LINES_WITHOUT_COUVRE",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\context\\prompt_s5-wiremap_a2.txt",
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\wiremap.json"
+     ],
+     "signal": "wiremap.design@wiremap",
+     "ts": "2026-09-03T17:22:51+00:00"
+    },
+    {
+     "by": "director",
+     "diagnosis_code": "SUFFICIENCY_JOINED",
+     "effect": null,
+     "id": "D-v2_breakout_slice_r1-5",
+     "kind": "gate_open",
+     "measure": {
+      "capacites": 10,
+      "capacites_couvertes": 10,
+      "capacites_non_couvertes": 0,
+      "couverture_fantome": 0,
+      "forme_satisfaite": true,
+      "lignes": 9,
+      "lignes_sans_couvre": 0,
+      "regime": "JOINED",
+      "status": "JOINED"
+     },
+     "progress": null,
+     "reason": "toute capacité portée par une ligne de wiremap, aucun fantôme",
+     "refs": [],
+     "signal": "SUFFICIENCY",
+     "ts": "2026-09-03T17:23:38+00:00"
+    },
+    {
+     "attempt": 1,
+     "by": "director",
+     "capability": "builder",
+     "diagnosis_code": "BUILD_REQUIRED",
+     "effect": "CHANGED",
+     "id": "D-v2_breakout_slice_r1-6",
+     "kind": "build",
+     "measure": {
+      "after": {
+       "built": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       }
+      },
+      "after_section_sha": "561ff03ea9e28226df059574778582cd043adfa79f6cb9e88c087e9e66f993fc",
+      "before": {
+       "built": {
+        "capacites": null,
+        "capacites_couvertes": null,
+        "capacites_non_couvertes": null,
+        "couverture_fantome": null,
+        "forme_satisfaite": null,
+        "lignes": null,
+        "lignes_sans_couvre": null,
+        "regime": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       }
+      },
+      "before_section_sha": null,
+      "capability_ok": true,
+      "consumption": null,
+      "cost": {
+       "cost_usd": 0.8746048000000002,
+       "duration_s": 409.9960730075836,
+       "tokens": 33016
+      },
+      "effect_reasons": [
+       "wiremap.built: v2 -> v3"
+      ],
+      "model_executed": "claude-haiku-4-5-20251001",
+      "problems": [],
+      "progress_reasons": [
+       "built: régime NOT_MEASURED -> JOINED",
+       "built: capacités couvertes None -> 10"
+      ],
+      "requests": []
+     },
+     "message_id": null,
+     "notified": null,
+     "progress": "IMPROVED",
+     "reason": "jeu non construit",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\context\\prompt_s9-build_a1.txt",
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\wiremap.json"
+     ],
+     "signal": "wiremap.built@builder",
+     "ts": "2026-09-03T17:30:29+00:00"
+    },
+    {
+     "by": "director",
+     "diagnosis_code": "QA_REQUIRED",
+     "effect": null,
+     "id": "D-v2_breakout_slice_r1-7",
+     "kind": "qa",
+     "measure": {
+      "built_version": 3,
+      "decision": "BLOCKED",
+      "problems": [
+       {
+        "code": "ORACLE_FAIL",
+        "message": "",
+        "path": "GAMES/<project>",
+        "producer": "s10a-oracle-code",
+        "suggested_action": "reconvoke_builder"
+       }
+      ],
+      "software_verdict": "FAIL",
+      "state_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\state.json",
+      "statuses": {
+       "s10a-oracle-code": "FAIL",
+       "s10b-oracle-archi": "OK",
+       "s10c-oracle-wiremap": "OK",
+       "s12-verdict": "OK"
+      },
+      "verdict_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\verdict.json",
+      "verify_run": "AUTHENTIQUE"
+     },
+     "progress": null,
+     "reason": "jeu construit, oracles non rendus sur cette version",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\verdict.json",
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\state.json"
+     ],
+     "signal": "verdict@qa",
+     "ts": "2026-09-03T17:31:25+00:00"
+    },
+    {
+     "attempt": 2,
+     "by": "director",
+     "capability": "builder",
+     "diagnosis_code": "ORACLE_RED",
+     "effect": "NO_EFFECT",
+     "id": "D-v2_breakout_slice_r1-8",
+     "kind": "build",
+     "measure": {
+      "after": {
+       "built": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       }
+      },
+      "after_section_sha": "561ff03ea9e28226df059574778582cd043adfa79f6cb9e88c087e9e66f993fc",
+      "before": {
+       "built": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       }
+      },
+      "before_section_sha": "561ff03ea9e28226df059574778582cd043adfa79f6cb9e88c087e9e66f993fc",
+      "capability_ok": false,
+      "consumption": {
+       "checked": [],
+       "declared_by": "capability_registry",
+       "found_in": [],
+       "status": "not_consumed"
+      },
+      "cost": {
+       "cost_usd": 0.0,
+       "duration_s": 540.0914063453674,
+       "tokens": 0
+      },
+      "effect_reasons": [
+       "aucune section écrite"
+      ],
+      "model_executed": "sonnet",
+      "problems": [
+       {
+        "code": "EXECUTOR_FAILED",
+        "message": "claude -p timeout (540s) — arbre de process tué (FIR-01), coût borné",
+        "path": null,
+        "producer": "executor",
+        "suggested_action": "reconvoke"
+       }
+      ],
+      "progress_reasons": [
+       "aucune couverture n'a progressé"
+      ],
+      "requests": []
+     },
+     "message_id": "AMD-20260903T173125Z-oracle-red-builder-v2-breakout-slice-r1",
+     "notified": {
+      "items_added": 1,
+      "items_preserved": 1,
+      "items_total": 2,
+      "journal_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\amendments\\journal.jsonl",
+      "message_id": "AMD-20260903T173125Z-oracle-red-builder-v2-breakout-slice-r1",
+      "notified": [
+       "builder"
+      ],
+      "trace_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\knowledge_trace.json"
+     },
+     "progress": "NONE",
+     "reason": "oracle(s) rouge(s) ['s10a-oracle-code'] : re-convocation du builder au tier sonnet",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\context\\prompt_s9-build_a2.txt",
+      null
+     ],
+     "signal": "wiremap.built@builder",
+     "ts": "2026-09-03T17:40:25+00:00"
+    },
+    {
+     "attempt": 3,
+     "by": "director",
+     "capability": "builder",
+     "diagnosis_code": "ORACLE_RED",
+     "effect": "NO_EFFECT",
+     "id": "D-v2_breakout_slice_r1-9",
+     "kind": "build",
+     "measure": {
+      "after": {
+       "built": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       }
+      },
+      "after_section_sha": "561ff03ea9e28226df059574778582cd043adfa79f6cb9e88c087e9e66f993fc",
+      "before": {
+       "built": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       },
+       "design": {
+        "capacites": 10,
+        "capacites_couvertes": 10,
+        "capacites_non_couvertes": 0,
+        "couverture_fantome": 0,
+        "forme_satisfaite": true,
+        "lignes": 9,
+        "lignes_sans_couvre": 0,
+        "regime": "JOINED",
+        "status": "JOINED"
+       }
+      },
+      "before_section_sha": "561ff03ea9e28226df059574778582cd043adfa79f6cb9e88c087e9e66f993fc",
+      "capability_ok": false,
+      "consumption": {
+       "checked": [],
+       "declared_by": "capability_registry",
+       "found_in": [],
+       "status": "not_consumed"
+      },
+      "cost": {
+       "cost_usd": 0.0,
+       "duration_s": 1500.0788896083832,
+       "tokens": 0
+      },
+      "effect_reasons": [
+       "aucune section écrite"
+      ],
+      "model_executed": "opus",
+      "problems": [
+       {
+        "code": "EXECUTOR_FAILED",
+        "message": "claude -p timeout (1500s) — arbre de process tué (FIR-01), coût borné",
+        "path": null,
+        "producer": "executor",
+        "suggested_action": "reconvoke"
+       }
+      ],
+      "progress_reasons": [
+       "aucune couverture n'a progressé"
+      ],
+      "requests": []
+     },
+     "message_id": "AMD-20260903T174307Z-oracle-red-builder-v2-breakout-slice-r1",
+     "notified": {
+      "items_added": 1,
+      "items_preserved": 2,
+      "items_total": 3,
+      "journal_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\amendments\\journal.jsonl",
+      "message_id": "AMD-20260903T174307Z-oracle-red-builder-v2-breakout-slice-r1",
+      "notified": [
+       "builder"
+      ],
+      "trace_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\knowledge_trace.json"
+     },
+     "progress": "NONE",
+     "reason": "oracle(s) rouge(s) ['executor'] : re-convocation du builder au tier opus",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\context\\prompt_s9-build_a3.txt",
+      null
+     ],
+     "signal": "wiremap.built@builder",
+     "ts": "2026-09-03T18:08:07+00:00"
+    },
+    {
+     "by": "director",
+     "diagnosis_code": "ORACLE_RED_PERSISTENT",
+     "effect": null,
+     "id": "D-v2_breakout_slice_r1-10",
+     "kind": "halt",
+     "measure": {
+      "s10a-oracle-code": "FAIL",
+      "s10b-oracle-archi": "OK",
+      "s10c-oracle-wiremap": "OK",
+      "s12-verdict": "OK"
+     },
+     "progress": null,
+     "question": {
+      "asked_at": "2026-09-03T18:09:09+00:00",
+      "capability": "builder",
+      "code": "ORACLE_RED_PERSISTENT",
+      "id": "Q-v2_breakout_slice_r1-10-ORACLE_RED_PERSISTENT",
+      "measure": {
+       "s10a-oracle-code": "FAIL",
+       "s10b-oracle-archi": "OK",
+       "s10c-oracle-wiremap": "OK",
+       "s12-verdict": "OK"
+      },
+      "options": [
+       "accept",
+       "skip"
+      ],
+      "signal": "wiremap.built@builder",
+      "text": "oracles rouges après 3 build(s) (dernier tier 'opus') : ['EXECUTOR_FAILED']",
+      "to": "pierre"
+     },
+     "reason": "oracles rouges après 3 build(s) (dernier tier 'opus') : ['EXECUTOR_FAILED']",
+     "refs": [
+      "Q-v2_breakout_slice_r1-10-ORACLE_RED_PERSISTENT"
+     ],
+     "signal": "wiremap.built@builder",
+     "ts": "2026-09-03T18:09:09+00:00"
+    },
+    {
+     "by": "director",
+     "diagnosis_code": "ORACLE_RED_PERSISTENT",
+     "effect": null,
+     "id": "D-v2_breakout_slice_r1-11",
+     "kind": "requalify",
+     "measure": {
+      "answer": "requalify",
+      "by": "pierre",
+      "question": "Q-v2_breakout_slice_r1-10-ORACLE_RED_PERSISTENT"
+     },
+     "progress": null,
+     "reason": "re-jugement demandé par Pierre : wiremap du run reprise comme wiremap.built, QA à rejouer",
+     "refs": [
+      "Q-v2_breakout_slice_r1-10-ORACLE_RED_PERSISTENT"
+     ],
+     "signal": "wiremap.built@builder",
+     "ts": "2026-09-03T18:27:31+00:00"
+    },
+    {
+     "by": "director",
+     "diagnosis_code": "QA_REQUIRED",
+     "effect": null,
+     "id": "D-v2_breakout_slice_r1-12",
+     "kind": "qa",
+     "measure": {
+      "built_version": 4,
+      "decision": "HUMANGATE_READY",
+      "problems": [],
+      "software_verdict": "OK",
+      "state_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\state.json",
+      "statuses": {
+       "s10a-oracle-code": "OK",
+       "s10b-oracle-archi": "OK",
+       "s10c-oracle-wiremap": "OK",
+       "s12-verdict": "OK"
+      },
+      "verdict_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\verdict.json",
+      "verify_run": "AUTHENTIQUE"
+     },
+     "progress": null,
+     "reason": "jeu construit, oracles non rendus sur cette version",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\verdict.json",
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\state.json"
+     ],
+     "signal": "verdict@qa",
+     "ts": "2026-09-03T18:27:40+00:00"
+    },
+    {
+     "by": "director",
+     "diagnosis_code": "VERDICT_OK_AUTHENTIC",
+     "effect": null,
+     "id": "D-v2_breakout_slice_r1-13",
+     "kind": "humangate",
+     "measure": {
+      "cost_usd_llm": 6.6708,
+      "sequence": [
+       "s3-decompo",
+       "s4-archi",
+       "s5-wiremap",
+       "s5-wiremap",
+       "s9-build",
+       "s10a-oracle-code",
+       "s10b-oracle-archi",
+       "s10c-oracle-wiremap",
+       "s12-verdict",
+       "s9-build",
+       "s9-build",
+       "s10a-oracle-code",
+       "s10b-oracle-archi",
+       "s10c-oracle-wiremap",
+       "s12-verdict"
+      ],
+      "sequence_equals_profile": null,
+      "software_verdict": "OK",
+      "verify_run": "AUTHENTIQUE"
+     },
+     "progress": null,
+     "reason": "verdict signé OK et authentifié : dossier pour Pierre",
+     "refs": [
+      "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\HUMANGATE_DOSSIER.json"
+     ],
+     "signal": "verdict@pierre",
+     "ts": "2026-09-03T18:28:23+00:00"
+    }
+   ],
+   "content_sha256": "9cdcd117777a48151a4d7e874a90dd39c83ec34027e31cb95f44125212c2f5e0",
+   "owner": [
+    "director",
+    "pierre"
+   ],
+   "source": {
+    "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\decisions.jsonl",
+    "run_id": "v2_breakout_slice_r1",
+    "sha256": null,
+    "status": "JOURNAL"
+   },
+   "version": 14,
+   "writer": "director"
+  },
+  "feature_map": {
+   "content": {
+    "game_id": "runm_breakout",
+    "systemes": [
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "R1 — Objectif affiché : tant que la partie est en cours, le HUD `objectif` porte un texte non vide décrivant la destruction du mur.",
+          "expected_proof": {
+           "kind": "visual",
+           "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+          },
+          "id": "CAP_R1_objectif",
+          "source_ref": "E1"
+         }
+        ],
+        "id": "FEAT_OBJECTIF"
+       },
+       {
+        "capacites": [
+         {
+          "capacite": "R2 (ENTRÉE) — Le joueur agit sur l'affordance « raquette » en pressant/maintenant une touche fléchée gauche ou droite.",
+          "expected_proof": {
+           "kind": "bot_action",
+           "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+          },
+          "id": "CAP_R2_entree",
+          "source_ref": "E2"
+         },
+         {
+          "capacite": "R2 (EFFET) — La raquette suit horizontalement le geste : window.__game.paddle.x augmente sous Flèche-Droite, diminue sous Flèche-Gauche, reste stable sans entrée.",
+          "expected_proof": {
+           "kind": "bot_action",
+           "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+          },
+          "id": "CAP_R2_effet",
+          "source_ref": "E2"
+         }
+        ],
+        "id": "FEAT_RAQUETTE"
+       },
+       {
+        "capacites": [
+         {
+          "capacite": "R3 — Rebond conservatif : au contact d'un mur ou de la raquette, la composante de vitesse concernée change de signe et la norme de la vitesse est conservée.",
+          "expected_proof": {
+           "kind": "oracle",
+           "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+          },
+          "id": "CAP_R3_rebond",
+          "source_ref": "E3"
+         }
+        ],
+        "id": "FEAT_BALLE"
+       },
+       {
+        "capacites": [
+         {
+          "capacite": "R4 — Destruction en une frappe : au contact balle↔brique, la brique disparaît de la grille au même tick et n'est plus collidable.",
+          "expected_proof": {
+           "kind": "mutation",
+           "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+          },
+          "id": "CAP_R4_destruction",
+          "source_ref": "E4"
+         },
+         {
+          "capacite": "R5 — Progrès mesurable : à chaque brique détruite, window.__game.bricksRemaining décroît d'exactement une unité.",
+          "expected_proof": {
+           "kind": "oracle",
+           "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+          },
+          "id": "CAP_R5_progres",
+          "source_ref": "E5"
+         }
+        ],
+        "id": "FEAT_BRIQUES"
+       }
+      ],
+      "id": "S1_boucle_jeu"
+     },
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "R6 — Victoire terminale unique : quand la dernière brique disparaît, window.__game.state vaut 'won', un panneau VICTOIRE s'affiche et la simulation se fige.",
+          "expected_proof": {
+           "kind": "visual",
+           "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+          },
+          "id": "CAP_R6_victoire",
+          "source_ref": "E6"
+         },
+         {
+          "capacite": "R7 — Défaite terminale : quand la balle franchit le bord bas sans vie restante, window.__game.state vaut 'lost', un panneau DÉFAITE s'affiche et la simulation se fige.",
+          "expected_proof": {
+           "kind": "visual",
+           "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+          },
+          "id": "CAP_R7_defaite",
+          "source_ref": "E7"
+         }
+        ],
+        "id": "FEAT_FIN_PARTIE"
+       }
+      ],
+      "id": "S2_etats_terminaux"
+     },
+     {
+      "features": [
+       {
+        "capacites": [
+         {
+          "capacite": "R9 — Déterminisme par seed : à seed et suite d'entrées identiques, deux exécutions du module .mjs produisent le même hash d'état final.",
+          "expected_proof": {
+           "kind": "oracle",
+           "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+          },
+          "id": "CAP_R9_determinisme",
+          "source_ref": "E9"
+         },
+         {
+          "capacite": "R10 — État inspectable : window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}, indépendamment du rendu DOM.",
+          "expected_proof": {
+           "kind": "oracle",
+           "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+          },
+          "id": "CAP_R10_inspectable",
+          "source_ref": "E10"
+         }
+        ],
+        "id": "FEAT_DETERMINISME"
+       }
+      ],
+      "id": "S3_socle_n1"
+     }
+    ]
+   },
+   "content_sha256": "5feeb1ed014e50a42ff9fb301d53666942a3556f3524dbcd26480e1e79ae05ad",
+   "owner": [
+    "decompose"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/v2_breakout_slice_r1/featuremap.json",
+    "run_id": "v2_breakout_slice_r1",
+    "sha256": "7e9a81acc17dfdf21278764a22eaefca5fddaa315609ec8cc9d0f73d2e5d36de",
+    "status": "FILE"
+   },
+   "version": 1,
+   "writer": "decompose"
+  },
+  "gameplay": {
+   "content": {
+    "actions_interdites": [
+     "Recopier tout ou partie de GAMES/breakout ou GAMES/breakout_v2 (benchmark, pas source de design).",
+     "Dépendre de Godot ou Blender, ou y recourir silencieusement.",
+     "Écrire un artefact hors des surfaces V2 déclarées (lab/, scripts/forge/, games/) — FAIL de migration, pas un détail.",
+     "Produire un vert par contournement : un échec doit dire OÙ la chaîne casse dans les surfaces V2.",
+     "Signer avec une clé héritée de V1 : la clé de signature est forge/.forge_key (V2).",
+     "Modifier les lanes protégées tests/ ou src/ (zone protégée, gate Pierre explicite requise)."
+    ],
+    "criteres_demo": [
+     "Une raquette visible se déplace horizontalement à l'écran quand le joueur appuie sur les touches de direction.",
+     "Une balle visible se déplace et rebondit visiblement sur les murs et sur la raquette.",
+     "Une brique touchée par la balle disparaît visiblement de l'écran.",
+     "Un état de VICTOIRE s'affiche à l'écran lorsque toutes les briques ont disparu.",
+     "Un état de DÉFAITE s'affiche à l'écran lorsque la balle est perdue (tombe hors de l'aire de jeu)."
+    ],
+    "criteres_succes": [
+     "Le jeu est écrit SOUS GAMES/runm_breakout/, conforme au socle N1 : page HTML+JS unique, RNG seedé, logique métier en module .mjs testable HORS navigateur, exposition window.__game, actions DOM-only, déterminisme reproductible par hash. (project_brief.contraintes.project_specific.techniques + criteres_sortie #2.)",
+     "Une partie COMPLÈTE est jouable au clavier dans un navigateur : la balle rebondit sur les murs et la raquette, les briques disparaissent au contact, la victoire (mur vidé) et la défaite (balle perdue) sont toutes deux atteignables. (criteres_sortie #9.)",
+     "Déterminisme reproductible : à seed égal, déroulé identique (vérifiable par hash). (socle N1.)",
+     "La logique .mjs est testable hors navigateur (au moins un test unitaire node passe). (socle N1.)",
+     "Aucun artefact écrit hors des surfaces V2 : run_dir sous EVIDENCE/runs/ (jamais lab/), jeu sous GAMES/runm_breakout/ (jamais games/). (criteres_sortie #1, #2, #12.)",
+     "NOTE DE RENVOI : la liste AUTORITAIRE et complète des critères de sortie de MIGRATION (charter validé par check_charter, oracles amont prisme/featuremap/blueprint/wiremap, couverture `couvre`, reçu join_check, preuves s10, verdict HMAC re-vérifié par verify_run avec la clé V2, HALT si LM Studio indisponible) vit dans project_brief.criteres_sortie (12 items, Pierre 2026-09-02) et n'est PAS re-décidée ici."
+    ],
+    "hors_scope": [
+     "Toute lignée NON web : aucun binaire Godot ni Blender requis ni utilisé — un recours silencieux à l'un ou l'autre est un écart à signaler. (Pierre : Godot/Blender = dépendances de capacité, jamais préconditions globales.)",
+     "Recopier tout ou partie de GAMES/breakout ou GAMES/breakout_v2 : ce sont des BENCHMARKS de régression, jamais des sources de design (interdiction expresse Pierre, provenance.references_autorisees).",
+     "Construire ou prétendre tester la topologie CIBLE de V2 (Fable directeur, capacités convoquées dynamiquement, GAME_BLUEPRINT / GAME_FLOW / ARCHITECTURE_CONTRACT) : elle n'est pas construite au moment de RUN M et ne peut donc être ni testée ni revendiquée.",
+     "Prétendre couvrir N5 (séparation concepteur/instrumenteur) ou N6 (fidélité charter->build) : FOG_HUMANGATE Pierre — mécanismes non mécanisés pour ce run.",
+     "Multi-niveaux, tableau de scores en ligne, persistance de sauvegarde, audio riche, portage mobile/tactile : hors du V1 minimal jouable.",
+     "Écrire du code d'architecture (étape 4), faire le world scan (étape 2), toucher aux lanes protégées (tests/, src/)."
+    ],
+    "joueur_cible": "Un joueur clavier occasionnel — en pratique le testeur du run — qui ouvre la page dans un navigateur et joue une partie complète, sans tutoriel ni apprentissage préalable. Le jeu est jugé sur sa jouabilité au clavier, pas sur sa richesse. (Dérivé du critère de sortie Pierre « le jeu se charge dans un navigateur et une partie complète est jouable au clavier », project_brief.criteres_sortie #9.)",
+    "objectif": "Créer de zéro, sous GAMES/runm_breakout/, un casse-briques web minimal mais COMPLET et jouable : une raquette pilotée au clavier renvoie une balle qui détruit un mur de briques. Condition de VICTOIRE : toutes les briques sont détruites. Condition de DÉFAITE : la balle tombe hors de l'aire de jeu (perte de la/des vie·s). Le jeu est tenu volontairement minimal pour qu'un échec soit attribuable à la MIGRATION V1->V2, pas à la complexité du jeu — sa qualité ludique n'est pas l'objet du run. (Source : project_brief.intention + provenance.intention, Pierre 2026-09-02.)",
+    "plateforme_cible": "web/HTML — page HTML+JS unique conforme au socle N1, exécutable dans un navigateur sans aucun binaire externe. (Source Pierre : project_brief.cible « web/HTML » + provenance.cible « pas besoin de Godot si on reste sur la lignée web ».)",
+    "reference_jeu": "Casse-briques / Breakout — modèle de GENRE choisi EXPLICITEMENT par Pierre le 2026-09-02 (provenance.genre : « casse-briques (Breakout), lignée WEB, choisi explicitement pour son petit périmètre, sa boucle évidente et l'absence de dépendance Godot »). ATTENTION : référence de GENRE uniquement, PAS une source de design — la recopie du casse-briques migré GAMES/breakout (benchmark de régression) est expressément interdite. Provenance Pierre traçable ; ce champ n'est PAS une invention d'agent."
+   },
+   "content_sha256": "4b392460de5540070d79f80eacac28a61cb9b6fbee97495d6ed99b3026845fa1",
+   "owner": [
+    "contract_author"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/runm_breakout/charter.yaml",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "985f8103ff8e78128d1b3ae7424999a8cf49e83e9d8df0989598d6d94cae94ac",
+    "status": "FILE"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "identity": {
+   "content": {
+    "cible": "web/HTML",
+    "projet": "v2_breakout_slice",
+    "references_autorisees": []
+   },
+   "content_sha256": "1d1be2a52e3fb0d6d0937a22d1e7cc5f99b1c4a5ba82a6f8fd55d9f271208b2c",
+   "owner": [
+    "pierre"
+   ],
+   "source": {
+    "path": "EVIDENCE/briefs/v2_breakout_slice/project_brief.yaml",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "ddbf6d8085a69b6558b7da37033f0a671ea59a780286d5602be0a21599469ef6",
+    "status": "BRIEF"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "provenance": {
+   "content": {
+    "git_head": "2769dc8ae97d8cfff8ebbf6ec4254b239ddbfdbb",
+    "join_receipts": {
+     "join_check": {
+      "advisory": true,
+      "capacites": 10,
+      "capacites_couvertes": 0,
+      "capacites_non_couvertes": 10,
+      "couverture_fantome": 0,
+      "exemples": [
+       "capacite 'R1c1_hud_objectif_nonvide' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "capacite 'R2c1_entree_touches_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "capacite 'R2c2_effet_deplacement_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)"
+      ],
+      "exit_code": 1,
+      "forme_satisfaite": false,
+      "lignes": 9,
+      "lignes_sans_couvre": 9,
+      "maillon_non_lie": 0,
+      "problems": 9,
+      "regime": "EMPTY_FORM",
+      "status": "NOT_JOINED"
+     },
+     "join_check_apres_reparation": {
+      "advisory": true,
+      "capacites": 10,
+      "capacites_couvertes": 0,
+      "capacites_non_couvertes": 10,
+      "couverture_fantome": 9,
+      "ecart_avec_avant": "EMPTY_FORM (agent) -> VOID (après réparation) — la boucle a modifié la jointure",
+      "exemples": [
+       "capacite 'R1c1_hud_objectif_nonvide' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "capacite 'R2c1_entree_touches_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "capacite 'R2c2_effet_deplacement_raquette' de la featuremap n'est portee par aucune ligne de wiremap (omission silencieuse)",
+       "features[0].couvre: 'renderObjective' ne resout aucune capacite de la featuremap",
+       "features[1].couvre: 'movePaddle' ne resout aucune capacite de la featuremap",
+       "features[2].couvre: 'reflectBall' ne resout aucune capacite de la featuremap"
+      ],
+      "exit_code": 1,
+      "forme_satisfaite": true,
+      "lignes": 9,
+      "lignes_sans_couvre": 0,
+      "maillon_non_lie": 0,
+      "problems": 0,
+      "regime": "VOID",
+      "status": "NOT_JOINED"
+     },
+     "note": "join_check = artefact agent s5 (recalculable) · apres_reparation = fichier écrasé par s9, reçu signé seul",
+     "recomputable": {
+      "join_check": true,
+      "join_check_apres_reparation": false
+     }
+    },
+    "profile": "full",
+    "run_dir": "EVIDENCE/runs/runm_breakout",
+    "run_id": "runm-breakout-20260902",
+    "verdict": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+     "hmac": "fd6aa88af91276a69b07de2299dfa2e25797277f2b80e1633d76f5cc6a346954",
+     "software_verdict": "OK",
+     "ts": 1788418939.1345892
+    }
+   },
+   "content_sha256": "2a8c39a12700039815ad4369b060eaa6083ab19d81264349735a1ff9c29da75b",
+   "owner": [
+    "importer"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/runm_breakout/state.json",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "1f0b348f4636a457f5be314d1c9e5f2e60f346c4b59f919fa3525347ba167616",
+    "status": "FILE"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "questions": {
+   "content": [],
+   "content_sha256": null,
+   "owner": [
+    "architect",
+    "art_director",
+    "builder",
+    "contract_author",
+    "decompose",
+    "director",
+    "game_master",
+    "pierre",
+    "prisme",
+    "redteam_code",
+    "redteam_plan",
+    "wiremap",
+    "worldscan"
+   ],
+   "source": {
+    "path": "EVIDENCE/runs/runm_breakout/design_questions.json",
+    "run_id": "runm-breakout-20260902",
+    "sha256": null,
+    "status": "ABSENT"
+   },
+   "version": 0,
+   "writer": null
+  },
+  "understanding": {
+   "content": {
+    "prisme": {
+     "content": {
+      "exigences": [
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que le but affiché au joueur de runm_breakout est de vider le mur — un objectif unique et terminal, sans niveau suivant à annoncer.",
+        "destination": "s3-decompo",
+        "enonce": "Tant que la partie est en cours, le jeu affiche à l'écran un objectif lisible « Détruire toutes les briques ».",
+        "expected_proof": {
+         "kind": "visual",
+         "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+        },
+        "id": "E1",
+        "loop_role": "PLAYER_GOAL",
+        "observation": "Le World Scan relève pour le genre une condition de victoire « détruire tout le mur de briques » (games[0].objectives[0].victory_condition).",
+        "observe": {
+         "hud": "objectif",
+         "predicate": "nonempty"
+        },
+        "reference": "worldscan:games[0].objectives[0].victory_condition",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "PLAYER",
+        "affordance": "raquette",
+        "claim": "J'en déduis que l'unique geste du joueur est le déplacement horizontal de la raquette au clavier, sans visée à la souris ni tir.",
+        "destination": "s3-decompo",
+        "enonce": "Le joueur peut déplacer la raquette vers la gauche ou la droite en maintenant les touches fléchées ; la raquette suit à l'écran.",
+        "expected_proof": {
+         "kind": "bot_action",
+         "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+        },
+        "id": "E2",
+        "loop_role": "PLAYER_ACTION",
+        "observation": "Le World Scan décrit un joueur qui découvre un contrôle horizontal simple de la raquette (games[0].loops.minute_1).",
+        "observe": {
+         "hud": "raquette_x",
+         "predicate": "changes"
+        },
+        "reference": "worldscan:games[0].loops.minute_1",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que la balle de runm_breakout rebondit de façon déterministe sur murs et raquette, angle piloté par le point d'impact — trajectoire dirigeable, pas aléatoire.",
+        "destination": "s4-archi",
+        "enonce": "Au contact d'un mur ou de la raquette, la balle repart dans une direction réfléchie, la norme de sa vitesse étant conservée.",
+        "expected_proof": {
+         "kind": "oracle",
+         "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+        },
+        "id": "E3",
+        "loop_role": "GAME_RESPONSE",
+        "observation": "Le World Scan attribue au genre un rebond dépendant de la zone d'impact sur la raquette (games[0].loops.minute_10).",
+        "observe": {
+         "hud": "ball_v",
+         "predicate": "changes"
+        },
+        "reference": "worldscan:games[0].loops.minute_10",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis qu'un contact balle-brique détruit la brique en une seule frappe, sans durabilité variable, conformément au socle minimal du charter.",
+        "destination": "s4-archi",
+        "enonce": "Au contact balle↔brique, cette brique disparaît de la grille au même tick et n'est plus collidable, tandis que la balle rebondit.",
+        "expected_proof": {
+         "kind": "mutation",
+         "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+        },
+        "id": "E4",
+        "loop_role": "GAME_RESPONSE",
+        "observation": "Le World Scan note que la première brique détruite disparaît immédiatement (brick removal) au contact (games[0].loops.minute_1).",
+        "observe": {
+         "hud": "mur",
+         "predicate": "changes"
+        },
+        "reference": "worldscan:games[0].loops.minute_1",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que la récompense de runm_breakout n'est pas un score cosmétique mais la réduction visible du mur : chaque brique rapproche de la victoire.",
+        "destination": "s4-archi",
+        "enonce": "Le compteur de briques restantes affiché décroît d'exactement une unité à chaque brique détruite.",
+        "expected_proof": {
+         "kind": "oracle",
+         "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+        },
+        "id": "E5",
+        "loop_role": "REWARD",
+        "observation": "Le World Scan associe chaque brique brisée à une progression cumulée visible (games[0].loops.minute_10).",
+        "observe": {
+         "hud": "briques_restantes",
+         "predicate": "decreases"
+        },
+        "reference": "worldscan:games[0].loops.minute_10",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que runm_breakout a un état de victoire TERMINAL unique (mur vidé), sans niveau suivant ni prestige : le jeu s'arrête, gagné.",
+        "destination": "s9-build",
+        "enonce": "Quand la dernière brique disparaît, un état de VICTOIRE s'affiche et la partie se fige.",
+        "expected_proof": {
+         "kind": "visual",
+         "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+        },
+        "id": "E6",
+        "loop_role": "NONE",
+        "observation": "Le World Scan donne pour le genre une victoire par destruction complète du mur (games[0].objectives[0].victory_condition).",
+        "observe": {
+         "hud": "etat",
+         "predicate": "contains:VICTOIRE"
+        },
+        "reference": "worldscan:games[0].objectives[0].victory_condition",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que la défaite de runm_breakout survient quand la balle tombe sous la raquette hors de l'aire, le charter gardant le nombre de vies minimal mais la défaite atteignable.",
+        "destination": "s9-build",
+        "enonce": "Quand la balle franchit le bord bas de l'aire sans vie restante, un état de DÉFAITE s'affiche et la partie se fige.",
+        "expected_proof": {
+         "kind": "visual",
+         "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+        },
+        "id": "E7",
+        "loop_role": "NONE",
+        "observation": "Le World Scan donne pour le genre une défaite par balle perdue / vies épuisées (games[0].objectives[0].defeat_condition).",
+        "observe": {
+         "hud": "etat",
+         "predicate": "contains:DEFAITE"
+        },
+        "reference": "worldscan:games[0].objectives[0].defeat_condition",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "PLAYER",
+        "claim": "J'en déduis que cette boucle se REJOUE à chaque rebond tant que la partie dure, sans état à débloquer entre deux tours.",
+        "destination": "s5-wiremap",
+        "enonce": "Après chaque brique détruite, le joueur reprend immédiatement le même geste (déplacer la raquette pour renvoyer la balle) dans le nouvel état du mur, jusqu'à victoire ou défaite.",
+        "expected_proof": {
+         "kind": "bot_action",
+         "statement": "Un bot enchaîne deux briques : entre les deux, les mêmes contrôles (E2) produisent la même réponse (E3) et briques_restantes décroît deux fois (E5)."
+        },
+        "id": "E8",
+        "loop_role": "REPEAT",
+        "observation": "Le World Scan résume la boucle noyau : contrôle → collision → destruction → gain (games[0].loops.minute_1).",
+        "observe": {
+         "hud": "briques_restantes",
+         "predicate": "decreases"
+        },
+        "reference": "worldscan:games[0].loops.minute_1",
+        "replay": [
+         "E2",
+         "E3",
+         "E5"
+        ],
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que runm_breakout doit produire, à seed égal, exactement le même déroulé — condition testable hors navigateur, cœur du socle N1 du charter.",
+        "destination": "s4-archi",
+        "enonce": "À seed identique et suite d'entrées identique, deux exécutions du module .mjs produisent le même hash d'état final.",
+        "expected_proof": {
+         "kind": "oracle",
+         "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+        },
+        "id": "E9",
+        "loop_role": "NONE",
+        "observation": "Le World Scan attribue au genre un moteur physique déterministe, stable par seed (games[0].architecture_guess).",
+        "observe": {
+         "hud": "hash_etat",
+         "predicate": "nonempty"
+        },
+        "reference": "worldscan:games[0].architecture_guess",
+        "source": "EXPECTED",
+        "source_role": "s2-worldscan"
+       },
+       {
+        "acteur": "SYSTEM",
+        "claim": "J'en déduis que tout l'état de partie doit être lisible programmatiquement via window.__game, indépendamment du rendu DOM, pour rendre les règles R1..R9 testables hors navigateur.",
+        "destination": "s4-archi",
+        "enonce": "window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}.",
+        "expected_proof": {
+         "kind": "oracle",
+         "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+        },
+        "id": "E10",
+        "loop_role": "NONE",
+        "observation": "Le charter impose (socle N1) une logique métier en module .mjs testable hors navigateur et un état inspectable window.__game.",
+        "observe": {
+         "hud": "window.__game",
+         "predicate": "nonempty"
+        },
+        "reference": null,
+        "source": "ADDITIONS",
+        "source_role": "s1-prisme"
+       }
+      ],
+      "game_id": "runm_breakout"
+     },
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/prisme.json",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "3983de604d2f27d8bf66272d627e91ac6496156ae6a1b606c8e76be1167b2029",
+      "status": "FILE"
+     }
+    },
+    "product_snapshot": {
+     "content": "# product_snapshot.md — runm_breakout (Prisme Produit, s1)\n\nAncre : `charter.yaml` (Pierre 2026-09-02) — casse-briques web minimal mais COMPLET et jouable, socle N1 (page HTML+JS unique, RNG seedé, logique `.mjs` testable hors navigateur, `window.__game`, déterminisme par hash). Sources d'exigences résolues dans le run_dir : `worldscan.json` (présent, adresses ancrables `games[0].*`). `story_bible.json`, `gm_worldscan.json`, `design/progression_contract.md`, `design/calibration.md` sont **absents du run_dir** — je le signale et ne compense pas (conséquence mesurée plus bas : sourçage GM 0/N, précédence de boucle jouée non fournie).\n\n---\n\n## 1. CE QUE LE JOUEUR VOIT\n\nUne seule page qui tient dans le navigateur, sans défilement. En haut, une ligne d'**objectif** lisible : « Détruis toutes les briques ». Sous elle, l'**aire de jeu** rectangulaire bordée de trois murs (gauche, droite, haut) et ouverte en bas. En haut de l'aire, un **mur de briques** rangé en grille régulière, chaque brique un rectangle plein et distinct. En bas, une **raquette** horizontale posée près du bord ouvert. Une **balle** ronde, seule, se déplace dans l'aire et laisse voir sa trajectoire par son déplacement continu. Un **compteur de briques restantes** est affiché et diminue à vue d'œil. Quand une brique est touchée, elle **disparaît** de la grille au même instant, laissant un trou visible. À la fin, un **panneau d'état** unique s'affiche par-dessus l'aire figée : soit « VICTOIRE », soit « DÉFAITE ». Aucun menu de niveaux, aucun tableau de scores en ligne, aucune boutique cosmétique : l'écran ne montre que ce qui sert la partie en cours.\n\n## 2. CE QUE LE JOUEUR FAIT\n\nIl ouvre la page et joue immédiatement, sans tutoriel. Il **déplace la raquette** vers la gauche ou la droite en maintenant les touches fléchées du clavier — c'est son seul contrôle. Avec ce geste il **place la raquette sous la balle** pour la renvoyer avant qu'elle ne tombe, et il **choisit le point de contact** sur la raquette pour infléchir l'angle du rebond et diriger la balle vers les briques encore debout. Il **répète** ce geste à chaque rebond, tour après tour, en lisant la trajectoire pour anticiper où la balle va revenir. Il **poursuit la partie** jusqu'à ce que le mur soit entièrement vidé (il gagne) ou que la balle échappe au bord bas (il perd). Il n'y a rien d'autre à faire : pas de tir, pas de visée à la souris, pas d'objet à collecter, pas de compétence à débloquer.\n\n## 3. CE QUE LE JOUEUR RESSENT\n\nLa prise en main est **immédiate et sans friction** : une touche, une raquette qui répond, une balle qui part. Chaque brique détruite donne une **satisfaction nette et instantanée** — un contact, une disparition, le compteur qui baisse d'un cran, la victoire qui se rapproche visiblement. À mesure que la balle descend vers le bord ouvert monte une **tension courte et physique** : le joueur doit se replacer vite, et une balle presque perdue puis rattrapée procure un soulagement franc. Le plaisir vient de la **maîtrise qui progresse en une même session** : le joueur comprend que « j'ai frappé trop à gauche, la balle est repartie trop raide » et corrige au coup suivant. La partie est **lisible et honnête** : la difficulté vient de la physique, jamais d'un hasard arbitraire ; un échec est toujours attribuable à un geste, ce qui donne envie de recommencer pour mieux faire.\n\n## 4. RÈGLES OBSERVABLES\n\nChaque règle est formulée pour être vérifiable par un bot, une mutation ou un oracle sur `window.__game` / le module `.mjs`, hors navigateur quand possible.\n\n- **R1 — Objectif affiché** : tant que la partie est en cours, le HUD `objectif` contient un texte non vide décrivant la destruction du mur. (Preuve : lecture du HUD après chargement — `nonempty`.)\n- **R2 — Contrôle raquette** : quand le joueur maintient Flèche-Droite, `window.__game.paddle.x` augmente ; quand il maintient Flèche-Gauche, il diminue ; sans touche, il ne change pas. (Preuve : bot presse chaque touche N frames — `changes`.)\n- **R3 — Rebond conservatif** : au contact d'un mur ou de la raquette, la composante de vitesse concernée de la balle change de signe et la norme de la vitesse est conservée (aucune perte d'énergie non intentionnelle). (Preuve : oracle `.mjs` à seed fixe — inversion de signe de `vx` ou `vy`.)\n- **R4 — Destruction en une frappe** : au contact balle↔brique, la brique disparaît de la grille au même tick et n'est plus jamais collidable ; aucune brique n'exige un second contact. (Preuve : mutation retirant la déduction « 1 frappe » fait échouer le test.)\n- **R5 — Progrès mesurable** : à chaque brique détruite, `window.__game.bricksRemaining` décroît d'exactement 1, et le compteur affiché suit. (Preuve : oracle — décrément unitaire.)\n- **R6 — Victoire terminale unique** : quand `bricksRemaining` atteint 0, `window.__game.state` vaut `won`, un panneau « VICTOIRE » s'affiche et la simulation se fige (aucun niveau suivant, aucun reset de prestige). (Preuve : bot détruit tout — état `won`.)\n- **R7 — Défaite terminale** : quand la balle franchit le bord bas de l'aire sans vie restante, `window.__game.state` vaut `lost`, un panneau « DÉFAITE » s'affiche et la simulation se fige. (Preuve : bot laisse tomber la balle — état `lost`.)\n- **R8 — Boucle rejouée** : entre deux briques successives, les mêmes contrôles (R2) produisent le même type de réponse (R3) et `bricksRemaining` décroît de nouveau — la boucle noyau se rejoue à chaque rebond sans état intermédiaire à débloquer. (Preuve : bot enchaîne deux briques — deux décréments.)\n- **R9 — Déterminisme par seed** : à seed identique et suite d'entrées identique, deux exécutions du module `.mjs` produisent le même hash d'état final. (Preuve : double exécution hors navigateur — hash égaux.)\n- **R10 — État inspectable** : `window.__game` expose à tout instant `paddle.x`, `ball.{x,y,vx,vy}`, `bricksRemaining` et `state ∈ {playing, won, lost}`, indépendamment du rendu DOM. (Preuve : test node importe le `.mjs` et lit ces champs.)\n\n---\n\n## RAPPORT FINAL\n\n**Ancre** : `charter.yaml` (objectif = casse-briques web minimal complet ; socle N1 ; hors_scope = multi-niveaux, scores en ligne, persistance, prestige). **Reçu `check_prisme_manifest`** : NON DISPONIBLE — permission `run: aucun` et exécution shell désactivée dans cette session ; l'oracle déterministe `node forge/check_prisme_manifest.mjs <run_dir>/prisme.json --worldscan <run_dir>/worldscan.json` n'a PAS été exécuté par moi. Aucun claim auto-certifié n'est émis.\n\n**Chaîne Observation → Claim → Exigence** : les 10 exigences portent trois maillons distincts (donnée du World Scan → déduction indépendamment faillible → garantie du jeu). Références EXPECTED ancrées dans `worldscan.json` (adresses `games[0].objectives[0].*`, `games[0].loops.*`, `games[0].architecture_guess`, toutes résolvables) ; deux exigences socle N1 (R9 non couverte par worldscan pour la partie test-hash côté charter, R10 exposition `window.__game`) sont en source `ADDITIONS`, `reference: null` explicite, ancrées en prose dans le charter.\n\n**Exigences classées non actionnables** : aucune. Les 10 portent une `expected_proof` exploitable (bot_action / oracle / mutation / visual). L'étape ne peut donc pas échouer sur le critère « aucune exigence actionnable ».\n\n**Références non ancrées** : aucune vers `worldscan.json` (toutes résolvent). Les références vers `gm_worldscan:` sont **absentes par nécessité** : `gm_worldscan.json` n'est pas dans le run_dir.\n\n**software_verdict** : NON ÉMIS (aucun oracle exécuté). **claim_verdict: NO_CLAIM_ALLOWED**. **evidence_verdict** : non applicable (aucune validation mécanique lancée).\n\n**BESOIN HUMANGATE (fog) — mismatch genre/gabarit, déjà signalé au run précédent (`manifest-a243e3bfb138847f`, GENERATION_DIFFERENTE_A_REEXAMINER)** : le gabarit de boucle V4 est mono-genre (idle/clicker) et exige des maillons que le jeu cible — casse-briques arcade minimal, charter explicite — **ne possède pas** :\n- **DECISION** (au sens V4 : `options` 2 affordances, `policies` idle/actif sur `horizon_frames`, `metric`) : le seul choix de runm_breakout est l'angle de renvoi continu de la raquette — il n'existe aucune décision à deux trajectoires discrètes ni politique idle/active. Encoder de faux `policies` serait une fabrication (garde-fou : règle observable, jamais inventée).\n- **UNLOCK / `observe.appears`** : mur unique, aucune nouvelle affordance ni contenu débloqué (charter hors_scope : multi-niveaux).\n- **NEXT_GOAL ×2 `new_distinct`** : victoire terminale unique, aucun second objectif textuellement distinct (charter hors_scope : multi-niveaux).\n- **META_LOOP (reset de prestige visible)** et **ADVANTAGE (`increases_more_than` après prestige)** : aucun prestige, aucune persistance (charter hors_scope explicite).\n\nFabriquer ces maillons violerait à la fois le charter (`hors_scope`) et le garde-fou (« toute règle DOIT être observable », « n'invente jamais »). Je livre donc une boucle **complète pour son genre** (PLAYER_GOAL → PLAYER_ACTION → GAME_RESPONSE → REWARD → REPEAT, plus victoire/défaite terminales), **incomplète au sens du gabarit V4** — fait mesurable, à trancher par Pierre (gabarit de boucle par genre, ou dérogation actée pour la lignée arcade minimale).\n\n### why_task_existed\n- **problem** : le run runm_breakout (migration V1→V2) a besoin de la vision produit finie du casse-briques minimal décomposée en facettes joueur + règles observables, pour alimenter s3-decompo/s4-archi/s5-wiremap/s9-build.\n- **oracle** : dispatch `FORGE_DISPATCH:s1-prisme:runm-breakout-20260902:1` ; oracles de forme `forge/prisme/check_prisme.mjs` (4 sections + ≥1 règle `- **Rn`) et de chaîne `forge/check_prisme_manifest.mjs` (Observation→Claim→Exigence→Preuve→Destination, provenance, ancrage World Scan).\n- **root_cause** : non transmise comme défaut ; l'activation est une étape normale du pipeline (décision humaine de séquence), pas la réparation d'une panne. Le seul écart structurel connu est le mismatch genre/gabarit V4 hérité du run précédent.\n- **action_reason** : produire `product_snapshot.md` + `prisme.json` fidèles au charter et au World Scan, en marquant explicitement les maillons V4 que le genre ne possède pas plutôt que de les fabriquer.\n\n### result\n- `product_snapshot.md` : 4 sections remplies (VOIT / FAIT / RESSENT / RÈGLES OBSERVABLES), 10 règles numérotées `R1..R10`, aucun placeholder.\n- `prisme.json` : 10 exigences, chaîne à 3 maillons distincts, provenance complète, 8 EXPECTED ancrées `worldscan:` + 2 ADDITIONS `reference: null`, champs V4 (`acteur`, `loop_role`, `observe`, `affordance`, `replay`) renseignés ; rôles couverts PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, REPEAT + NONE ; rôles V4 DECISION/UNLOCK/NEXT_GOAL/META_LOOP/ADVANTAGE déclarés genre-absents (voir HumanGate).\n- Sourçage GM : 0/6 exigences de boucle (`gm_worldscan.json` absent) — fait mesuré, non gaté avant run 10.\n\n### proof\n- Commande d'oracle NON exécutée (permission `run: aucun` ; shell désactivé) : `node forge/check_prisme_manifest.mjs EVIDENCE/runs/runm_breakout/prisme.json --worldscan EVIDENCE/runs/runm_breakout/worldscan.json` — à lancer par l'exécuteur après matérialisation.\n- Vérifié par lecture directe : `worldscan.json` présent et adresses citées résolvables ; `charter.yaml` présent et lu ; `gm_worldscan.json` / `story_bible.json` / `design/*` absents (lectures en erreur « File does not exist »).\n\n### learning\nLe mismatch genre/gabarit V4 est structurel et reproductible : tant qu'aucun gabarit de boucle par genre n'existe (ou qu'aucun `gm_worldscan.json` arcade n'est fourni), tout run d'un genre non-clicker produira une boucle honnêtement incomplète au sens V4. La bonne réponse d'un worker s1 est de refuser la fabrication et de remonter le fait mesuré à HumanGate, pas de bourrer de faux `policies`/prestige.\n\n### next_reason\nChaîne causale NON fermée sur un point : le mismatch gabarit V4 ↔ genre arcade minimal exige une décision Pierre (gabarit par genre, ou dérogation actée). Pour le reste, la lignée s1 est prête à descendre vers s3-decompo. Le sourçage GM (0/6) reste mesuré, non bloquant avant run 10.\n\n## SKIPPED_VALIDATION\n- **Oracle de chaîne** `check_prisme_manifest.mjs` — périmètre : `prisme.json` produit — statut : **non fait** — raison : permission `run: aucun` et exécution shell désactivée ; l'exécuteur doit le lancer après matérialisation.\n- **Oracle de forme** `forge/prisme/check_prisme.mjs` — périmètre : `product_snapshot.md` — statut : **non fait** — raison : même contrainte d'exécution ; conformité visée par construction (4 en-têtes exacts, règles `- **Rn`, aucun placeholder).\n- **Sonde d'ancrage amont** `check_amont_traversal.mjs` — périmètre : références `worldscan:` — statut : **non fait (partiel manuel)** — raison : non exécutable ; résolution vérifiée à la main par lecture de `worldscan.json`.\n- **Sourçage GM** — périmètre : exigences de boucle — statut : **impossible** — raison : `gm_worldscan.json` absent du run_dir (0/6, mesuré, non gaté).\n",
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/product_snapshot.md",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "43f6afcd18718fcf8b79a8c3c4821b46312b3e016bd7442ed1edb446236e9d4f",
+      "status": "FILE"
+     }
+    },
+    "worldscan": {
+     "content": {
+      "advisory": true,
+      "games": [
+       {
+        "architecture_guess": "Deterministic physics engine (seed-stable collision, angle-based rebound). Simple brick state (destroyed=true/false). Score accumulator. Finite level progression (2 walls). Input-agnostic control (paddle position as float 0.0-1.0). No power-ups or cosmetics.",
+        "game": "Breakout",
+        "loops": {
+         "endgame": "Complete destruction of both walls = victory terminal state. No prestige reset or infinite mode. Replay motivated by challenge: beating personal high score. Game ends decisively.",
+         "hour_5": "Second wall reached. Paddle reduced to half-size, ball speed increased (after 4 hits, 12 hits, orange/red row contact). Sustained concentration required. Multiple attempts to beat personal high score (replay motivated by score comparison). Arcade progression: by player mastery, not unlocks.",
+         "minute_1": "Player discovers simple horizontal paddle control. First brick destroyed: immediate reward (visible points, brick removal, audio). Loop: control → collision → destruction → score gain.",
+         "minute_10": "2-3 bricks destroyed. Player experiments with paddle impact zones to alter rebound angle. First tension moments: ball approaching bottom, player must adjust position quickly. Feedback loop: each brick = cumulative score. Difficulty begins to increase (ball speed accelerates)."
+        },
+        "objectives": [
+         {
+          "defeat_condition": "Miss the ball three consecutive times (lose all lives)",
+          "has_defeat_state": true,
+          "has_win_state": true,
+          "mode": "solo",
+          "player_goal": "Maximize score while preventing the ball from falling past the paddle",
+          "victory_condition": "Destroy both screens of bricks within 3 allocated lives"
+         }
+        ],
+        "platform": "Arcade",
+        "publisher": "Atari Inc.",
+        "retention_answer": "Player progression driven by **skill mastery**. Each session improves visual prediction (rebound anticipation, paddle timing). Personal high score becomes metric of progress, motivating replay. Physics is simple and deterministic: clear learning curve ('I hit too left, ball rebounded too steeply'). Difficulty increases mechanically. Core retention: arcade essence—dominate by expertise, not cosmetics.",
+        "sources": [
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://en.wikipedia.org/wiki/Breakout_(video_game)"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://www.arcade-history.com/?n=breakout&page=detail&id=3397"
+         },
+         {
+          "timestamp": "0:00-3:45",
+          "type": "video",
+          "url": "https://www.youtube.com/watch?v=hW7Sg5pXAok"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://www.arcade-museum.com/Videogame/breakout"
+         }
+        ],
+        "year": 1976
+       },
+       {
+        "architecture_guess": "Deterministic physics with cascading power-ups (separate collectible system). Destructible bricks with variable durability (gray=2-3 hits). Level progression (500 stages with unique patterns). Cosmetic unlock system (paddle/ball skins = rarity tier). Leaderboard + seasonal event system. Dual-mode architecture (Stage mode → Survival mode toggle). Session scheduling (daily login bonus).",
+        "game": "Brick Breaker King",
+        "loops": {
+         "endgame": "Level 500 reached. Game pivots to Survival Mode (no end, infinite score accumulation). Leaderboard becomes primary: global competition, sessions shift to short/daily (15-30min/day vs 30-60min arcade session). Limited-time events (monthly seasons): 'Collect 100 bricks in 7 days to unlock Gold Paddle' → FOMO.",
+         "hour_5": "Levels ~40-80 on 500+. Brick patterns become asymmetric (strategic gaps, interspersed solid blocks). Power-ups require judgment: use multiball now or save for next level? Cosmetic unlocks appear (rare paddles/balls = status). Leaderboard visible: 'I am rank 2500 globally, but friends are 1800' → competitive pressure.",
+         "minute_1": "Tutorialized interface (swipe to aim, tap to shoot). First brick destroyed with festive animation + satisfying audio. Power-up cascades and is collected immediately. Loop: aim → shoot → destruction → visual/audio reward → next brick visible. Friction minimal, success within 1-2 minutes.",
+         "minute_10": "5-10 bricks destroyed. XP bar toward next level fills visibly. Diverse power-ups collected (multiball changes tactics: multiple balls = chaos, more satisfying). Gray 'tough bricks' (multi-hit) discovered; player learns strategy exists. Progression sensation: 'I am 25% through level 5 of 500' → sense of length."
+        },
+        "objectives": [
+         {
+          "defeat_condition": "Lose all available lives before clearing bricks",
+          "has_defeat_state": true,
+          "has_win_state": true,
+          "mode": "Stage",
+          "player_goal": "Progress through 500+ levels by destroying brick patterns, collecting power-ups, maximizing score",
+          "victory_condition": "Clear all bricks on level layout without losing all lives"
+         },
+         {
+          "defeat_condition": "Ball falls past paddle or bricks descend to bottom of screen",
+          "has_defeat_state": true,
+          "has_win_state": false,
+          "mode": "Survival",
+          "player_goal": "Survive as long as possible and climb global leaderboard",
+          "victory_condition": null
+         }
+        ],
+        "platform": "Mobile (iOS / Android)",
+        "publisher": "Mobirix / King.com",
+        "retention_answer": "Retention driven by **cosmetic progression + social competition**, not skill mastery. 500+ levels create illusion of infinite content (200+ hours playtime). Power-ups provide rapid dopamine loops (satisfying collection). Leaderboards + seasonal events generate FOMO: 'if I don't play this week, I miss Gold Paddle skin'. Casual-mobile formula: progression by unlocks, competition by status, retention by time-limited events.",
+        "sources": [
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://play.google.com/store/apps/details?id=com.mobirix.brick"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://gamefaqs.gamespot.com/mobile/958896-brick-breaker/faqs/60052"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://mwm.ai/apps/bricks-breaker-king/943302265"
+         },
+         {
+          "timestamp": null,
+          "type": "article",
+          "url": "https://brick-breaker.io/"
+         }
+        ],
+        "year": 2020
+       }
+      ],
+      "note": "This is an OBSERVATION, not a design prescription. Breakout (1976) establishes core arcade loop (skill progression, deterministic physics). Brick Breaker King demonstrates casual-mobile escalation (cosmetics, social leaderboards, time-limited events). runm_breakout charter explicitly rejects Brick Breaker's progression systems (hors_scope: 'multi-niveaux, tableau scores, persistance'). These observations provide architectural reference points for future expansion decisions, if any. No copy-pasting: understand the assembly, don't replicate the game."
+     },
+     "source": {
+      "path": "EVIDENCE/runs/runm_breakout/worldscan.json",
+      "run_id": "runm-breakout-20260902",
+      "sha256": "4d8ed73ee1e875ac0b0f5329afa7f7f1e220ffa7f3cc0f5fedee1c9dc453fb5f",
+      "status": "FILE"
+     }
+    }
+   },
+   "content_sha256": "9d7fedba248407e38627ec772a15205e4d3224f6aac024073bdc65bf3c490159",
+   "owner": [
+    "game_master",
+    "prisme",
+    "worldscan"
+   ],
+   "source": {
+    "path": null,
+    "run_id": "runm-breakout-20260902",
+    "sha256": null,
+    "status": "COMPOSITE"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "vision": {
+   "content": {
+    "intention": "Premier run réel du Studio V2 après migration : prouver que la chaîne de la Forge s'exécute de bout en bout dans les surfaces V2 (forge/ · EVIDENCE/ · GAMES/ · knowledge_base/) et produit un jeu jouable accompagné de preuves vérifiables. Le jeu choisi est volontairement minimal — un casse-briques web — pour qu'un échec soit immédiatement attribuable à la migration plutôt qu'à la complexité du jeu. Sa qualité ludique n'est pas l'objet de RUN M.",
+    "principe": "La chaîne est libre de concevoir le jeu, mais elle ne définit pas elle-même les conditions qui permettent de déclarer la migration réussie.",
+    "provenance": {
+     "cible": "Pierre 2026-09-02 — « pas besoin de Godot si on reste sur la lignée web » ; conforme au socle N1 déjà cité",
+     "contraintes": "normative_refs cite N1,N2,N3,N4,N7,N8,N9 de FORGE_DESIGN_FREEDOM_SPEC_V0 (statut PROPOSED, non ratifiée séparément à ce jour, référencée telle quelle par la hiérarchie normative de FORGE_PROJECT_INPUT_V0). N5 et N6 volontairement absentes — voir fog_n5 / fog_n6",
+     "criteres_sortie": "Pierre 2026-09-02 pour les 10 critères de topologie et de jouabilité (verbatim ou dérivés de sa mission RUN M) ; les critères portant sur les surfaces V2, la clé de signature V2 et le reçu `join_check` sont ajoutés par l'agent — ils dérivent MÉCANIQUEMENT de la validation de clôture V2 du 2026-09-02, jamais d'un choix de design",
+     "derivation": "dérivé de EVIDENCE/briefs/runm_breakout/project_brief.yaml (Pierre 2026-09-02) : même intention casse-briques, NOUVEAU nom de projet — D4 ratifiée Pierre 2026-09-03 (slice V2, comparable à la baseline, jamais présenté comme son replay). Contenu inchangé hors `projet`.",
+     "fog_n5": "FOG_HUMANGATE Pierre 2026-09-02 : N5 (séparation concepteur/instrumenteur) n'est PAS une exigence de RUN M — le mécanisme n'est pas mécanisé pour ce run. Ne pas prétendre cette règle couverte ni prouvée par ce Brief.",
+     "fog_n6": "FOG_HUMANGATE Pierre 2026-09-02 : N6 (fidélité charter -> build) n'est PAS une exigence de RUN M — mécanisme non mécanisé, identique au statut hérité de V1. Ne pas prétendre cette règle couverte.",
+     "genre": "Pierre 2026-09-02 — casse-briques (Breakout), lignée WEB, choisi explicitement pour son petit périmètre, sa boucle évidente et l'absence de dépendance Godot",
+     "intention": "Pierre 2026-09-02 — « donner une vision de jeu à V2 et regarder si V2 sait réellement transformer cette vision en jeu jouable » ; requalifié en bout-en-bout de MIGRATION après mesure préalable (ORDER = 13 stations fixes ; GAME_BLUEPRINT / GAME_FLOW / ARCHITECTURE_CONTRACT cités dans 0 fichier), requalification acceptée par Pierre dans le même échange",
+     "libertes_deleguees": "Pierre 2026-09-02 — « le critère de réussite n'est pas que le jeu soit bon » ; la liberté de conception du jeu est donc entière dans les limites du socle N1",
+     "non_delegue": "Pierre 2026-09-02 (lignée web imposée, autorité des preuves et du verdict)",
+     "principe": "agent (Claude Opus 5) — calqué sur le principe du Brief de RUN 1, même structure",
+     "projet": "Pierre 2026-09-02 — GO RUN M ; slug dérivé mécaniquement de « RUN M » + « breakout »",
+     "redaction_fichier": "Claude Opus 5 (agent) — structure, mise en forme YAML et répartition des champs ; le contenu normatif est sourcé Pierre 2026-09-02 champ par champ ci-dessus. Aucun champ n'est fabriqué : ce qui n'a pas de source Pierre est explicitement attribué à l'agent avec la mécanique dont il dérive",
+     "references_autorisees": "FOG_HUMANGATE Pierre 2026-09-02 : aucune référence de conception autorisée. Le casse-briques migré `GAMES/breakout` est un BENCHMARK de régression, pas une source de design — interdiction expresse de le recopier, en tout ou en partie. Idem pour `GAMES/breakout_v2` (lignée Godot, hors périmètre de ce run)."
+    }
+   },
+   "content_sha256": "3a1fdbca2986a6599cda60fd6d40abb42025f2269f10c862817f6bcb841d1b2b",
+   "owner": [
+    "pierre"
+   ],
+   "source": {
+    "path": "EVIDENCE/briefs/v2_breakout_slice/project_brief.yaml",
+    "run_id": "runm-breakout-20260902",
+    "sha256": "ddbf6d8085a69b6558b7da37033f0a671ea59a780286d5602be0a21599469ef6",
+    "status": "BRIEF"
+   },
+   "version": 1,
+   "writer": "importer"
+  },
+  "wiremap": {
+   "content": {
+    "built": {
+     "content": {
+      "features": [
+       {
+        "couvre": [
+         "CAP_R1_objectif"
+        ],
+        "feature": "R1 Objectif affiché",
+        "fichiers": [
+         "render.mjs",
+         "main.mjs"
+        ],
+        "fonction": "renderObjective",
+        "preuve": "logic.test.mjs — 'Renderer: renderObjective writes a non-empty objective text exactly once' (texte non vide, décrit la destruction du mur) + 'main: the objective is written outside the canvas and follows the wall' (HUD #objectif) + e2e.mjs étape (1) : le navigateur réel lit #objectif non vide",
+        "statut": "VERT",
+        "version": 2
+       },
+       {
+        "couvre": [
+         "CAP_R2_entree",
+         "CAP_R2_effet"
+        ],
+        "feature": "R2 Raquette pilotée au clavier",
+        "fichiers": [
+         "engine.mjs",
+         "input.mjs"
+        ],
+        "fonction": "movePaddle",
+        "preuve": "logic.test.mjs — 'Paddle: movePaddle right increases x, left decreases it, no intent keeps it' + 'Paddle: movePaddle stays inside the play field on both edges' + 'Input: keydown and keyup on the injected target drive the intent' + 'main: a held key reaches the paddle through one step' ; e2e.mjs étape (3) : vraies touches ArrowRight/ArrowLeft dans Chromium, window.__game.paddle.x croît puis décroît",
+        "statut": "VERT",
+        "version": 2
+       },
+       {
+        "couvre": [
+         "CAP_R3_rebond"
+        ],
+        "feature": "R3 Rebond conservatif",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "reflectBall",
+        "preuve": "logic.test.mjs — 'Ball: reflectBall x inverts vx and leaves vy untouched' + 'Ball: reflectBall y inverts vy and leaves vx untouched' + rebonds murs gauche/droite/plafond ; properties.test.mjs — 'reflectBall conserves speed on both axes' et 'a paddle bounce sends the ball back up and conserves its speed' (|v| conservée à 1e-9)",
+        "statut": "VERT",
+        "version": 2
+       },
+       {
+        "couvre": [
+         "CAP_R4_destruction"
+        ],
+        "feature": "R4 Destruction en une frappe",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "destroyBrick",
+        "preuve": "logic.test.mjs — 'Brick: a ball touching a brick destroys exactly that brick in the same tick' (brique absente au même tick, une seule détruite, rebond) + 'Brick: an already destroyed brick is not collidable' + 'Brick: a tick far from the wall destroys nothing'",
+        "statut": "VERT",
+        "version": 2
+       },
+       {
+        "couvre": [
+         "CAP_R5_progres"
+        ],
+        "feature": "R5 Progres mesurable",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "destroyBrick",
+        "preuve": "logic.test.mjs — 'Brick: destroyBrick marks the brick and decrements the counter by exactly one' ; properties.test.mjs — 'bricksRemaining always equals the number of intact bricks and never grows' (invariant vérifié à chaque tick, 8 seeds)",
+        "statut": "VERT",
+        "version": 2
+       },
+       {
+        "couvre": [
+         "CAP_R6_victoire"
+        ],
+        "feature": "R6 Victoire terminale",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "checkWin",
+        "preuve": "logic.test.mjs — 'Game: checkWin sets won and over only once the wall is empty' + 'main: __game_debug.forceWin() empties the wall and shows the victory panel' ; properties.test.mjs — 'a terminal state is absorbing' et 'the game always terminates within the tick budget under a tracking pilot' (état won atteint) ; e2e.mjs étape (7) : panneau VICTOIRE affiché dans Chromium ; solvability.mjs : 10/10 parties gagnées par le bot",
+        "statut": "VERT",
+        "version": 2
+       },
+       {
+        "couvre": [
+         "CAP_R7_defaite"
+        ],
+        "feature": "R7 Defaite terminale",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "checkLose",
+        "preuve": "logic.test.mjs — 'Game: checkLose sets lost and over from a playing game, and never revives a won one' + 'Game: a ball falling below the field loses the game' + 'main: __game_debug.hit() forces the defeat panel and publishes the state' ; properties.test.mjs — 'a terminal state is absorbing' ; e2e.mjs étapes (5)/(6) : #overlay visible, libellé DEFAITE, puis #restart cliqué",
+        "statut": "VERT",
+        "version": 2
+       },
+       {
+        "couvre": [
+         "CAP_R9_determinisme"
+        ],
+        "feature": "R9 Determinisme par seed",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "hashState",
+        "preuve": "logic.test.mjs — 'Engine: same seed and same inputs produce the same final hash' + 'Engine: hashState changes when the state changes and is stable otherwise' + 'RNG: makeRng depends only on its seed' + 'Engine: the seed really drives the served ball' ; properties.test.mjs — 'identical seed and inputs produce an identical hash trajectory' (hash comparé à CHAQUE tick, 8 seeds) et 'a replayed game reaches the same outcome as its first run'",
+        "statut": "VERT",
+        "version": 2
+       },
+       {
+        "couvre": [
+         "CAP_R10_inspectable"
+        ],
+        "feature": "R10 Etat inspectable",
+        "fichiers": [
+         "main.mjs"
+        ],
+        "fonction": "updateGameWindow",
+        "preuve": "logic.test.mjs — 'main: createGame exposes the inspectable state on window.__game' (paddle.x, ball.{x,y,vx,vy}, bricksRemaining, state, over, hooks __game_debug) ; e2e.mjs étapes (1)/(2) : window.__game lu dans un Chromium réel, ticks qui progressent",
+        "statut": "VERT",
+        "version": 2
+       }
+      ]
+     },
+     "source": {
+      "authorized_by": "pierre",
+      "path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\wiremap.json",
+      "run_id": "v2_breakout_slice_r1",
+      "sha256": "fe4951e6706e7ba10ebaddd62991c6504f259f78d12ba58b5d1a5d90b5670ddc",
+      "status": "SALVAGED"
+     }
+    },
+    "design": {
+     "content": {
+      "features": [
+       {
+        "couvre": [
+         "CAP_R1_objectif"
+        ],
+        "feature": "R1 Objectif affiché",
+        "fichiers": [
+         "render.mjs"
+        ],
+        "fonction": "renderObjective",
+        "preuve": "logic.test.mjs — 'Renderer: renderObjective writes a non-empty text exactly once' (HUD objectif porte un texte non vide)"
+       },
+       {
+        "couvre": [
+         "CAP_R2_entree",
+         "CAP_R2_effet"
+        ],
+        "feature": "R2 Raquette pilotée au clavier",
+        "fichiers": [
+         "engine.mjs",
+         "input.mjs"
+        ],
+        "fonction": "movePaddle",
+        "preuve": "logic.test.mjs — 'Paddle: movePaddle right increases x within bounds' et 'movePaddle left decreases x within bounds' ; intention clavier via input.mjs getIntent"
+       },
+       {
+        "couvre": [
+         "CAP_R3_rebond"
+        ],
+        "feature": "R3 Rebond conservatif",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "reflectBall",
+        "preuve": "logic.test.mjs — 'Ball: reflectBall x-axis inverts vx' + properties.test.mjs — 'reflectBall conserves speed within epsilon' (signe inversé, |v| conservée)"
+       },
+       {
+        "couvre": [
+         "CAP_R4_destruction"
+        ],
+        "feature": "R4 Destruction en une frappe",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "destroyBrick",
+        "preuve": "logic.test.mjs — 'Engine: ball touching a brick destroys exactly that brick and reflects' (brique absente au même tick, non collidable)"
+       },
+       {
+        "couvre": [
+         "CAP_R5_progres"
+        ],
+        "feature": "R5 Progres mesurable",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "destroyBrick",
+        "preuve": "logic.test.mjs — 'Brick: destroyBrick marks brick destroyed and decrements counter' (bricksRemaining -1 exactement)"
+       },
+       {
+        "couvre": [
+         "CAP_R6_victoire"
+        ],
+        "feature": "R6 Victoire terminale",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "checkWin",
+        "preuve": "logic.test.mjs — 'Game: checkWin sets state=won when bricksRemaining=0' + properties.test.mjs — 'once won, state never changes back to playing'"
+       },
+       {
+        "couvre": [
+         "CAP_R7_defaite"
+        ],
+        "feature": "R7 Defaite terminale",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "checkLose",
+        "preuve": "logic.test.mjs — 'Game: checkLose sets state=lost when ball below boundary' + properties.test.mjs — 'once lost, state never changes back to playing'"
+       },
+       {
+        "couvre": [
+         "CAP_R9_determinisme"
+        ],
+        "feature": "R9 Determinisme par seed",
+        "fichiers": [
+         "engine.mjs"
+        ],
+        "fonction": "hashState",
+        "preuve": "logic.test.mjs — 'Engine: same seed + same input = same final hash' + properties.test.mjs — 'same game state produces same hash'"
+       },
+       {
+        "couvre": [
+         "CAP_R10_inspectable"
+        ],
+        "feature": "R10 Etat inspectable",
+        "fichiers": [
+         "main.mjs"
+        ],
+        "fonction": "updateGameWindow",
+        "preuve": "logic.test.mjs — 'main.mjs: auto-init exposes window.__game immediately' (paddle.x, ball.{x,y,vx,vy}, bricksRemaining, state exposes hors rendu)"
+       }
+      ]
+     },
+     "source": {
+      "path": "EVIDENCE/runs/v2_breakout_slice_r1/wiremap.json",
+      "run_id": "v2_breakout_slice_r1",
+      "sha256": "3a585d88bbc00dc830153bf8e5f4f31bb244b34ad45ad5b783022a11bc890ee0",
+      "status": "FILE"
+     }
+    }
+   },
+   "content_sha256": "9140d8904f2310df58ece37fc0d1a8781796643948183e35db52a520b4f5fe31",
+   "owner": [
+    "builder",
+    "wiremap"
+   ],
+   "source": {
+    "path": null,
+    "run_id": "v2_breakout_slice_r1",
+    "sha256": null,
+    "status": "COMPOSITE"
+   },
+   "version": 4,
+   "writer": "builder"
+  }
+ }
+}

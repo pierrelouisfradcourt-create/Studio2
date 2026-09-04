@@ -548,6 +548,7 @@ def prepare_dispatch(
     allow_unprofiled: bool = False,
     model_executed: str | None = None,
     reason: 'str | dict' = "",
+    contracts_dir: Path | None = None,
 ) -> DispatchPayload:
     """Valide le contrat de l'étape, fabrique le payload borné, trace l'audit.
 
@@ -582,7 +583,11 @@ def prepare_dispatch(
     => aucun contrôle (comportement historique strictement inchangé, rétro-compat totale).
     `attempt` corrèle la ligne au triplet du marqueur de spawn (unicité D4).
     """
-    contract = load_contract(etape)
+    # `contracts_dir` (Lot 2 V2, 2026-09-03 — Q7 de FORGE_TARGET_MODEL §12) : optionnel, None =
+    # forge/contracts/ (comportement historique inchangé). Un contrat COMPOSÉ hors de ce dossier
+    # passe la MÊME porte : validation C1, payload borné, ligne d'audit signée, marqueur — le
+    # fichier sur disque est un détail d'implémentation, l'invariant est le dispatch enregistré.
+    contract = load_contract(etape, contracts_dir)
     # R2 (audit branchements 2026-07-24) : run_id transite jusqu'à _render_prompt
     # pour que le prompt porte SYSTÉMATIQUEMENT son marqueur FORGE_DISPATCH — la
     # porte n'a plus besoin que l'orchestrateur l'appose à la main. `attempt`

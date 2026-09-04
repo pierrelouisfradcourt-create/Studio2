@@ -1,0 +1,66 @@
+{
+ "capability": "decompose",
+ "ok": true,
+ "section_written": "feature_map",
+ "section_version": 2,
+ "model": "claude-opus-4-8",
+ "cost": {
+  "tokens": 20036,
+  "duration_s": 274.0913724899292,
+  "cost_usd": 1.4181835
+ },
+ "audit": {
+  "prepared": true,
+  "spawn_allowed": true,
+  "authorized": true,
+  "executed": true
+ }
+}
+{
+ "problems": [
+  {
+   "code": "DECOMPO_LOOP_NO_ENTRY",
+   "producer": "check_decompo.mjs",
+   "path": "feature_map.boucle_sans_entree",
+   "message": "systemes[0].features[1].capacites[0]: feuille 'R2' realise l'action joueur 'raquette' (exigence E2) sans preuve bot_action depuis main.tscn",
+   "suggested_action": "reconvoke"
+  },
+  {
+   "code": "DECOMPO_LOOP_NO_ENTRY",
+   "producer": "check_decompo.mjs",
+   "path": "feature_map.boucle_sans_entree",
+   "message": "systemes[0].features[1].capacites[1]: feuille 'R3' realise l'action joueur 'raquette' (exigence E2) sans preuve bot_action depuis main.tscn",
+   "suggested_action": "reconvoke"
+  }
+ ],
+ "requests": [],
+ "validator_receipt": {
+  "name": "check_decompo.mjs",
+  "exit_code": 1,
+  "ok": false,
+  "stats": {
+   "systemes": 3,
+   "features": 6,
+   "feuilles": 10,
+   "feuilles_sourcees": 10,
+   "exigences_prisme": 10,
+   "exigences_couvertes": 9,
+   "feuilles_par_feature_min": 1,
+   "feuilles_par_feature_max": 2,
+   "actions_joueur": 2,
+   "actions_joueur_prouvees_depuis_scene": 0,
+   "maillons_couverts": {
+    "F": 0,
+    "G": 0,
+    "H": 1,
+    "I": 0,
+    "J": 0
+   },
+   "grey_blocks": 0,
+   "grey_blocks_couverts": 0
+  },
+  "advisory": true,
+  "problem_count": 2
+ },
+ "blueprint_saved": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\reports\\lot2_capability\\GAME_BLUEPRINT.lot2_probe.json"
+}

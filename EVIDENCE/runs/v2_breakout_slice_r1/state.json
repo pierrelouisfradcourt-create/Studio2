@@ -1,0 +1,368 @@
+{
+ "created_ts": 1788456682.0768757,
+ "escalations": 0,
+ "humangate_notes": [
+  "verdict rendu sur le chemin Director V2 : s0..s6 non conduits par ORDER"
+ ],
+ "is_game": true,
+ "profile": "full",
+ "project": "v2_breakout_slice",
+ "run_id": "v2_breakout_slice_r1",
+ "run_status": "DONE",
+ "steps": {
+  "s0-contrat": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  },
+  "s1-prisme": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  },
+  "s10a-oracle-code": {
+   "attempts": 2,
+   "detail": {
+    "art_response_dead": false,
+    "asset_consumption": {
+     "checked": false,
+     "reason": "aucun asset_requests.json produit par la chaîne amont",
+     "status": "SKIPPED"
+    },
+    "e2e": {
+     "passed": true,
+     "raisons": []
+    },
+    "economy_bypass_dead": false,
+    "evidence_path": "EVIDENCE/runs/v2_breakout_slice_r1/evidence/oracle_v2_breakout_slice.log",
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "logic_files_source": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\wiremap.json",
+    "loop_dead": false,
+    "measure_tick": {
+     "checked": false,
+     "reason": "Brief sans 'mesure.tick_ms' valide — aucune contribution au gate (non-régression des profils/briefs existants)",
+     "status": "SKIPPED"
+    },
+    "mutation": {
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "categories_exclues": [],
+       "code_sha256": {
+        "e2e.mjs": "1fb392abbd2e364a8269cb8e863d8d8133683ef9c4a1454db64693ae48dbf1e4",
+        "engine.mjs": "41dc7f9948575cd8a47fc2bd672db28bb4e6a519990ea3824c22491c746ed46d",
+        "input.mjs": "6e5c72dc71ff6ab2d8de144929337357ab99171a7f93762a6b483854b848ff4c",
+        "logic.test.mjs": "1008a0658133b5871a1290629a405a26213bbcb6142cf4318730b8064e60fae1",
+        "main.mjs": "8fcbcb02f534214675e1e68c710348b3df6488272325915ac772069be4a847d5",
+        "properties.test.mjs": "47de2664b475efe9051332d28481be3f3cba9e7e110deb0948379cb7b7e07891",
+        "render.mjs": "7cef93248025c586a7e99589b5b41e37eecfed595c473749ff5d272ba71eea5b",
+        "run-oracle.mjs": "cfd79b3da850c2c477076f22947b05528534699936b8b423a2fb64c5c356e5d4"
+       },
+       "compteurs_par_categorie": {
+        "sans_categorie": {
+         "fichiers": 4,
+         "jugee": true,
+         "killed": 33,
+         "total": 33
+        }
+       },
+       "game_dir": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\GAMES\\v2_breakout_slice",
+       "gate_checked": true,
+       "killed": 33,
+       "logic_files": [
+        "engine.mjs",
+        "input.mjs",
+        "main.mjs",
+        "render.mjs"
+       ],
+       "mutation_exception": false,
+       "survivants_non_tries": [],
+       "survived": 0,
+       "test_argv": [
+        "node",
+        "--test",
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "test_files_scelles": [
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "total": 33,
+       "triage_sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+       "triaged_survivors": []
+      },
+      "evidence_path": "EVIDENCE/runs/v2_breakout_slice_r1/evidence/mutation_v2_breakout_slice_r1.json",
+      "evidence_sha256": "07631694f5fb6d18312213195abc845d1848b9cb316cb23f3955ebffdd8d00a0",
+      "oracle_id": "mutation",
+      "run_id": "v2_breakout_slice_r1",
+      "status": "OK",
+      "ts": 1788460059.978626
+     },
+     "signature": "b539f7de73437a33d85bc2c36bcbfa300aa7aa064a727401d9519cdb86d99be4"
+    },
+    "product_oracle_godot_activation": {
+     "active": false,
+     "godot_capacity_present": false,
+     "proof_descriptor_present": false,
+     "reason": "aucun descripteur `proof:` bien formé dans game_contract.yaml ; aucun oracle FORGE_ORACLE trouvé sous C:\\Users\\Studio-Dev\\Desktop\\Studio\\GAMES\\v2_breakout_slice/07_TESTS/oracle/",
+     "runtime_block": {
+      "active": false,
+      "reason": "pas de run/main_scene"
+     }
+    },
+    "regime_preuve": "historique",
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": true,
+     "raisons": []
+    },
+    "runtime_alive": {
+     "checked": false,
+     "passed": false,
+     "reason": "pas de run/main_scene (module bibliothèque)",
+     "status": "SKIPPED"
+    },
+    "search_consulted": {
+     "count": 0,
+     "passed": false,
+     "raisons": [
+      "aucune recherche journalisée depuis 2026-09-03T18:27:31.833Z (contrat s9-build §2bis non respecté, ou aucune brique ne pouvait matcher)"
+     ]
+    },
+    "solvability": {
+     "checked": true,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability_mesure": {
+     "mesure": "cablage_du_harnais",
+     "ne_mesure_pas": "la solvabilite du jeu (won/trials) — un `passed: true` ne prouve AUCUNE partie gagnee",
+     "resultat_reel": "non remonte au recu : voir evidence/oracle_<jeu>.log, NON versionne (.gitignore:81)"
+    }
+   },
+   "status": "OK",
+   "ts": 1788460060.005184
+  },
+  "s10b-oracle-archi": {
+   "attempts": 2,
+   "detail": {
+    "debordements_ownership": {
+     "checked": false,
+     "items": []
+    },
+    "deps_interdites_violées": [],
+    "modules_sans_test": [],
+    "passed": true
+   },
+   "status": "OK",
+   "ts": 1788460060.1808002
+  },
+  "s10c-oracle-wiremap": {
+   "attempts": 2,
+   "detail": {
+    "amont_traversal": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "facts": {
+      "boucles_recompense": {
+       "addresses": [
+        "worldscan:games[0].loops.endgame",
+        "worldscan:games[0].loops.hour_5",
+        "worldscan:games[0].loops.minute_1",
+        "worldscan:games[0].loops.minute_10",
+        "worldscan:games[1].loops.endgame",
+        "worldscan:games[1].loops.hour_5",
+        "worldscan:games[1].loops.minute_1",
+        "worldscan:games[1].loops.minute_10"
+       ],
+       "exigences": [
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E8"
+       ],
+       "files_present": true,
+       "leaves": [
+        "CAP_R2_entree",
+        "CAP_R2_effet",
+        "CAP_R3_rebond",
+        "CAP_R4_destruction",
+        "CAP_R5_progres"
+       ],
+       "lines": [
+        "R2 Raquette pilotée au clavier",
+        "R3 Rebond conservatif",
+        "R4 Destruction en une frappe",
+        "R5 Progres mesurable"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_defaite": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].defeat_condition",
+        "worldscan:games[1].objectives[0].defeat_condition",
+        "worldscan:games[1].objectives[1].defeat_condition"
+       ],
+       "exigences": [
+        "E7"
+       ],
+       "files_present": true,
+       "leaves": [
+        "CAP_R7_defaite"
+       ],
+       "lines": [
+        "R7 Defaite terminale"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_victoire": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].victory_condition",
+        "worldscan:games[1].objectives[0].victory_condition"
+       ],
+       "exigences": [
+        "E1",
+        "E6"
+       ],
+       "files_present": true,
+       "leaves": [
+        "CAP_R1_objectif",
+        "CAP_R6_victoire"
+       ],
+       "lines": [
+        "R1 Objectif affiché",
+        "R6 Victoire terminale"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "contraintes_narratives": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "objectifs_joueur": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].player_goal",
+        "worldscan:games[1].objectives[0].player_goal",
+        "worldscan:games[1].objectives[1].player_goal"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "progression": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      }
+     },
+     "references": {
+      "adressables": 9,
+      "expected": 9,
+      "non_resolues": [],
+      "resolues": 9
+     },
+     "stages": [
+      "NOT_PRODUCED",
+      "PRODUCED",
+      "PRISME",
+      "GREY_BLOCKS",
+      "WIREMAP",
+      "BUILD"
+     ],
+     "verdict": "ADVISORY"
+    },
+    "features_manquantes": [],
+    "fonctions_renommées": [],
+    "obsoletes": [],
+    "passed": true,
+    "preuves_absentes": []
+   },
+   "status": "OK",
+   "ts": 1788460060.315221
+  },
+  "s11-redteam-code": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  },
+  "s12-verdict": {
+   "attempts": 2,
+   "detail": {
+    "decision": "HUMANGATE_READY",
+    "software_verdict": "OK",
+    "verdict_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\verdict.json",
+    "verify_run": "AUTHENTIQUE"
+   },
+   "status": "OK",
+   "ts": 1788460060.5346234
+  },
+  "s2-worldscan": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  },
+  "s3-decompo": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  },
+  "s4-archi": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  },
+  "s5-wiremap": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  },
+  "s6-redteam-plan": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  },
+  "s9-build": {
+   "attempts": 0,
+   "detail": {
+    "reason": "chemin Director (V2) : étape non conduite par ORDER ; convocations réelles : ['s3-decompo', 's4-archi', 's5-wiremap', 's5-wiremap', 's9-build']"
+   },
+   "status": "SKIPPED"
+  }
+ },
+ "updated_ts": 1788460060.5366244
+}

@@ -1,0 +1,14 @@
+{
+  "run_id": "lot3_director_probe",
+  "created": "2026-09-03T16:41:28.881Z",
+  "schema_version": 1,
+  "items": [
+    {
+      "source": "mandatory_read",
+      "ref": "AMD-20260903T164128Z-join-lines-without-couvre-wiremap-lot3-director-",
+      "provenance": "ADVISORY",
+      "valid_as_of": "2026-09-03T16:41:28+00:00",
+      "reason": "notification objection -> wiremap : JOIN_LINES_WITHOUT_COUVRE : ta production précédente n'a pas joint la feature_map"
+    }
+  ]
+}

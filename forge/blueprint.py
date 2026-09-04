@@ -153,6 +153,41 @@ def write_section(blueprint: dict, section: str, content, *, writer: str, source
     return updated
 
 
+def restore_section(blueprint: dict, section: str, snapshot: dict, *, decision_id: str,
+                    authorized_by: str) -> dict:
+    """Restaure une version ANTÉRIEURE d'une section (Lot 3 : réaction à une régression).
+
+    Ce n'est pas une écriture de propriétaire : c'est un acte d'autorité, et seul Pierre
+    la détient (`authorized_by == "pierre"`, réponse structurée K8). Le Director propose,
+    inscrit la décision, et applique — jamais de sa propre initiative. La version
+    s'incrémente (l'historique ne recule jamais), l'écrivain est `director`, la source dit
+    d'où vient le contenu et quelle décision l'a autorisé. Sections append-only exclues :
+    une question ou une décision ne se « restaure » pas."""
+    if authorized_by != "pierre":
+        raise OwnershipViolation(
+            f"restauration de {section!r} refusée : seule une réponse de Pierre l'autorise "
+            f"(reçu {authorized_by!r})")
+    if section in APPEND_ONLY_SECTIONS:
+        raise AppendOnlyViolation(f"{section!r} est append-only : rien ne se restaure")
+    if section not in OWNERS:
+        raise BlueprintError(f"section inconnue {section!r}")
+    if not isinstance(snapshot, dict) or "content" not in snapshot:
+        raise BlueprintError("snapshot invalide : `content` attendu")
+    current = blueprint["sections"][section]
+    updated = {
+        "owner": sorted(OWNERS[section]),
+        "writer": "director",
+        "version": int(current.get("version", 0)) + 1,
+        "content_sha256": content_sha256(snapshot["content"]),
+        "source": {"path": snapshot.get("path"), "sha256": None, "status": "RESTORED",
+                   "from_version": snapshot.get("version"), "decision_id": decision_id,
+                   "authorized_by": authorized_by},
+        "content": snapshot["content"],
+    }
+    blueprint["sections"][section] = updated
+    return updated
+
+
 def validate(blueprint: dict) -> list[str]:
     """Liste de problèmes (vide = valide). Jamais d'exception sur entrée malformée."""
     problems: list[str] = []

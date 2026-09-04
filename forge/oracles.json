@@ -277,5 +277,12 @@
       "node",
       "run-oracle.mjs"
     ]
+  },
+  "v2_breakout_slice": {
+    "cwd": "GAMES/v2_breakout_slice",
+    "command": [
+      "node",
+      "run-oracle.mjs"
+    ]
   }
 }

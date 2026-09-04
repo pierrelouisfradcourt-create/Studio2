@@ -1,0 +1,107 @@
+{
+ "features": [
+  {
+   "feature": "R1 objectif_affiche",
+   "fonction": "renderObjective",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "visual (feature_map R1c1_hud_objectif_nonvide) : a l'ouverture, le HUD #objective contient un texte non vide decrivant la destruction du mur — renderObjective ecrit 'Detruire tous les blocs pour gagner' si vide.",
+   "couvre": [
+    "R1c1_hud_objectif_nonvide"
+   ]
+  },
+  {
+   "feature": "R2 controle_raquette",
+   "fonction": "movePaddle",
+   "fichiers": [
+    "engine.mjs",
+    "input.mjs"
+   ],
+   "preuve": "bot_action (R2c1_entree_touches_raquette / R2c2_effet_deplacement_raquette) : InputAdapter.getIntent traduit Fleche-Gauche/Droite en intention, Engine.movePaddle fait croitre paddle.x sous 'right', decroitre sous 'left', constant sans touche.",
+   "couvre": [
+    "R2c1_entree_touches_raquette",
+    "R2c2_effet_deplacement_raquette"
+   ]
+  },
+  {
+   "feature": "R3 rebond_conservatif",
+   "fonction": "reflectBall",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "oracle (R3c1_reflexion_conservative) : a seed fixe, un contact balle-mur/raquette inverse le signe de la composante concernee (reflectBall) et conserve |v| — aucune attenuation.",
+   "couvre": [
+    "R3c1_reflexion_conservative"
+   ]
+  },
+  {
+   "feature": "R4 destruction_une_frappe",
+   "fonction": "destroyBrick",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "mutation (R4c1_brique_disparait_un_tick) : au contact, destroyBrick met brick.destroyed=true au meme tick et la balle rebondit (break) ; exiger 2 contacts fait echouer le test.",
+   "couvre": [
+    "R4c1_brique_disparait_un_tick"
+   ]
+  },
+  {
+   "feature": "R5 progres_mesurable",
+   "fonction": "destroyBrick",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "oracle (R5c1_decrement_unitaire) : destroyBrick decremente this.bricksRemaining d'exactement 1 par brique detruite.",
+   "couvre": [
+    "R5c1_decrement_unitaire"
+   ]
+  },
+  {
+   "feature": "R6 victoire_terminale",
+   "fonction": "checkWin",
+   "fichiers": [
+    "engine.mjs",
+    "render.mjs"
+   ],
+   "preuve": "visual (R6c1_etat_won) : a bricksRemaining=0, checkWin fixe state='won' et over=true ; render affiche le panneau 'VICTOIRE!' via l'overlay.",
+   "couvre": [
+    "R6c1_etat_won"
+   ]
+  },
+  {
+   "feature": "R7 defaite_terminale",
+   "fonction": "checkLose",
+   "fichiers": [
+    "engine.mjs",
+    "render.mjs"
+   ],
+   "preuve": "visual (R7c1_etat_lost) : quand la balle franchit le bord bas (ball.y > GAME_HEIGHT), checkLose fixe state='lost' et over=true ; render affiche 'DEFAITE'.",
+   "couvre": [
+    "R7c1_etat_lost"
+   ]
+  },
+  {
+   "feature": "R8 determinisme",
+   "fonction": "hashState",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "oracle (R8c1_hash_stable_par_seed) : hashState produit un hash deterministe de {paddle,ball,bricksRemaining,state} ; deux executions a seed+entrees identiques donnent le meme hash final.",
+   "couvre": [
+    "R8c1_hash_stable_par_seed"
+   ]
+  },
+  {
+   "feature": "R9 etat_inspectable",
+   "fonction": "updateGameWindow",
+   "fichiers": [
+    "main.mjs"
+   ],
+   "preuve": "oracle (R9c1_window_game_expose) : updateGameWindow expose window.__game avec paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state dans {playing,won,lost}, independamment du rendu DOM.",
+   "couvre": [
+    "R9c1_window_game_expose"
+   ]
+  }
+ ]
+}

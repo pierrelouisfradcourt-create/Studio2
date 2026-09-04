@@ -1,0 +1,88 @@
+{
+ "detail": {
+  "baseline_ok": true,
+  "categories_exclues": [],
+  "code_sha256": {
+   "e2e.mjs": "1fb392abbd2e364a8269cb8e863d8d8133683ef9c4a1454db64693ae48dbf1e4",
+   "engine.mjs": "41dc7f9948575cd8a47fc2bd672db28bb4e6a519990ea3824c22491c746ed46d",
+   "input.mjs": "6e5c72dc71ff6ab2d8de144929337357ab99171a7f93762a6b483854b848ff4c",
+   "logic.test.mjs": "1008a0658133b5871a1290629a405a26213bbcb6142cf4318730b8064e60fae1",
+   "main.mjs": "8fcbcb02f534214675e1e68c710348b3df6488272325915ac772069be4a847d5",
+   "properties.test.mjs": "47de2664b475efe9051332d28481be3f3cba9e7e110deb0948379cb7b7e07891",
+   "render.mjs": "7cef93248025c586a7e99589b5b41e37eecfed595c473749ff5d272ba71eea5b",
+   "run-oracle.mjs": "cfd79b3da850c2c477076f22947b05528534699936b8b423a2fb64c5c356e5d4"
+  },
+  "compteurs_par_categorie": {
+   "sans_categorie": {
+    "fichiers": 4,
+    "jugee": true,
+    "killed": 33,
+    "total": 33
+   }
+  },
+  "game_dir": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\GAMES\\v2_breakout_slice",
+  "gate_checked": true,
+  "killed": 33,
+  "logic_files": [
+   "engine.mjs",
+   "input.mjs",
+   "main.mjs",
+   "render.mjs"
+  ],
+  "mutation_exception": false,
+  "survivants_non_tries": [],
+  "survived": 0,
+  "test_argv": [
+   "node",
+   "--test",
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "test_files_scelles": [
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "total": 33,
+  "triage_sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+  "triaged_survivors": []
+ },
+ "gate": {
+  "checked": true,
+  "exception": false,
+  "passed": true,
+  "survivants_non_tries": [],
+  "triage_perimes": [],
+  "triaged_survivors": []
+ },
+ "mutation_result": {
+  "baseline_ok": true,
+  "killed": 33,
+  "per_file": {
+   "engine.mjs": {
+    "killed": 23,
+    "total": 23
+   },
+   "input.mjs": {
+    "killed": 1,
+    "total": 1
+   },
+   "main.mjs": {
+    "killed": 5,
+    "total": 5
+   },
+   "render.mjs": {
+    "killed": 4,
+    "total": 4
+   }
+  },
+  "survived": 0,
+  "survivors": [],
+  "test_argv": [
+   "node",
+   "--test",
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "total": 33
+ }
+}

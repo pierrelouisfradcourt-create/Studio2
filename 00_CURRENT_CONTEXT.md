@@ -23,6 +23,27 @@ V2  C:\Users\Studio-Dev\Desktop\Studio
 **Phase close : sécurisation du socle.** V2 est migré, validé et prouvé par un run complet.
 **Phase suivante : construire la vraie V2** — elle n'existe pas encore.
 
+## Session 2026-09-03 → 04 — Lots 2, 3, 4 commités (GO Pierre 2026-09-04, playtest OK)
+
+- **Lot 2** : `forge/capability.py` + `forge/capability_registry.yaml` (15 capacités, 4 invocables v0),
+  `prepare_dispatch(contracts_dir)` ; sonde réelle `EVIDENCE/runs/lot2_decompose_probe/` (opus-4-8, 1,42 $,
+  `check_decompo` → 2 codes K7).
+- **Lot 3** : `forge/director.py` (noyau déterministe, décisions K6, effet mesuré, objections via `emitter`),
+  `blueprint.restore_section` ; sonde `EVIDENCE/runs/lot3_director_probe/`, `EVIDENCE/amendments/journal.jsonl`.
+- **Lot 4** : `forge/build_orchestrator.py`, jeu `GAMES/v2_breakout_slice/`, run `EVIDENCE/runs/v2_breakout_slice_r1/` :
+  verdict OK / HUMANGATE_READY, `verify_run` AUTHENTIQUE (re-vérifié 2026-09-04), couverture JOINED 10/10,
+  15 pas / 13 décisions, 6,67 $, playtest Pierre : 7 critères OK. Tests des 3 lots : 26 verts (46 s, `.venv` V2).
+- ⚠ **Trois réserves conservées, non résolues** :
+  1. ownership de `forge/oracles.json` : l'entrée globale `v2_breakout_slice` a été ajoutée hors mécanisme
+     (`build_orchestrator` n'écrit que l'`oracles.json` du run, R3) ; propriétaire de la surface non défini ;
+  2. `timeout_policy` par capacité : inexistante — un seul `--timeout` du Director pour toutes les convocations
+     (`director.py:394-403, 564`), aucun champ au registre ;
+  3. objections du dossier non filtrées par `run_id` : `journal.jsonl` porte `run_id: null` (4/4), le dossier du
+     slice liste une objection venue de `lot3_director_probe`.
+- Audit parallèle capacités / skills / modèles (2026-09-03, HEAD 3481089, hors dépôt) : `invoke_capability` v0
+  emporte 13 mécanismes de production et en perd ou déplace 22 (pré-mortem, manifest d'exécution, spawn_link,
+  modèle mesuré, routage provider, réparation, timeouts…) ; aucun n'a de propriétaire déclaré au registre.
+
 ## La baseline — ne pas y toucher
 
 ```

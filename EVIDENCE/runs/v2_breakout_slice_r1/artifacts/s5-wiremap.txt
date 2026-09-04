@@ -1,0 +1,56 @@
+I now have everything I need. The existing wiremap (design v1) is structurally sound — 9 lines, each rule mapped to a real function and to files consistent with the architecture modules (`engine`, `input`, `render`, `main.mjs`). The Director's objection `AMD-20260903T171927Z-join-lines-without-couvre-wiremap-v2-breakout-sl` (JOIN_LINES_WITHOUT_COUVRE, régime EMPTY_FORM, 0/10) has one root cause: no line carried `couvre` citing an exact featuremap capacity id. I map each line to the exact ids of `feature_map.json`.
+
+---
+
+## RESTITUTION — s5-wiremap · v2_breakout_slice_r1 · attempt 2
+
+**Acquittement objection** : `AMD-20260903T171927Z-join-lines-without-couvre-wiremap-v2-breakout-sl` (JOIN_LINES_WITHOUT_COUVRE) est traitée. La cause mesurée par `check_wiremap_contract` (régime EMPTY_FORM, 0/10 capacités couvertes, 9 lignes sans `couvre`, 0 fantôme) est la **jointure de design manquante** : les 9 lignes existantes portaient déjà fonction + fichiers + preuve, mais aucune ne déclarait `couvre`. Correction : chaque ligne cite désormais l'`id` EXACT d'une capacité (feuille) de `feature_map.json`.
+
+**Isomorphisme WireMap ↔ blueprint** (garde-fou STRICT). Les 3 systèmes du feature_map et les 6 modules de l'`architecture_contract` sont épousés :
+
+| Ligne (feuille) | Système feature_map | Module archi | fonction | fichiers | `couvre` (id exact) |
+|---|---|---|---|---|---|
+| R1 Objectif affiché | S1_boucle_jeu / FEAT_OBJECTIF | render | `renderObjective` | render.mjs | CAP_R1_objectif |
+| R2 Raquette clavier | S1 / FEAT_RAQUETTE | input+engine | `movePaddle` | engine.mjs, input.mjs | CAP_R2_entree, CAP_R2_effet |
+| R3 Rebond conservatif | S1 / FEAT_BALLE | engine | `reflectBall` | engine.mjs | CAP_R3_rebond |
+| R4 Destruction 1 frappe | S1 / FEAT_BRIQUES | engine | `destroyBrick` | engine.mjs | CAP_R4_destruction |
+| R5 Progrès mesurable | S1 / FEAT_BRIQUES | engine | `destroyBrick` | engine.mjs | CAP_R5_progres |
+| R6 Victoire terminale | S2_etats_terminaux / FEAT_FIN_PARTIE | engine | `checkWin` | engine.mjs | CAP_R6_victoire |
+| R7 Défaite terminale | S2 / FEAT_FIN_PARTIE | engine | `checkLose` | engine.mjs | CAP_R7_defaite |
+| R9 Déterminisme seed | S3_socle_n1 / FEAT_DETERMINISME | engine | `hashState` | engine.mjs | CAP_R9_determinisme |
+| R10 État inspectable | S3 / FEAT_DETERMINISME | main.mjs | `updateGameWindow` | main.mjs | CAP_R10_inspectable |
+
+**Couverture** : 9 lignes ↔ **10/10 capacités** du feature_map (la ligne R2 porte les deux feuilles `CAP_R2_entree` + `CAP_R2_effet` de FEAT_RAQUETTE). **Capacités non couvertes : aucune.** Aucun `couvre` fantôme : chaque id ci-dessus existe dans `feature_map.json`. (Note : `feature_map.json` ne contient pas de feuille `R8` — E8 « boucle rejouée » y est résolu par la chaîne E2→E3→E5 ; rien à couvrir de ce côté.)
+
+**Reçu `check_wiremap_contract`** : NON DISPONIBLE en exécution — permission `run: aucun` et shell désactivé dans cette session ; je n'ai PAS lancé `node forge/check_wiremap_contract.mjs <run_dir>/wiremap.json --featuremap <run_dir>/featuremap.json`. Le dernier reçu réel est celui du director (D-v2_breakout_slice_r1-3) : régime EMPTY_FORM, 0/10. La jointure corrigée ci-dessus **vise** JOINED (10/10, 0 sans-couvre, 0 fantôme) mais ce résultat n'est vérifiable que par l'oracle après matérialisation par l'exécuteur — je ne l'auto-certifie pas.
+
+**software_verdict** : NON ÉMIS (aucun oracle exécuté par moi). **evidence_verdict** : non applicable. **claim_verdict: NO_CLAIM_ALLOWED** — la jointure est vérifiée par appariement d'ids fait à la main contre `feature_map.json` (lecture directe), pas par exécution d'oracle ; l'exécuteur doit lancer `check_wiremap_contract` sur le `wiremap.json` matérialisé.
+
+### why_task_existed
+- **problem** : production s5 précédente non jointe au feature_map — `check_wiremap_contract` mesure EMPTY_FORM, 0/10 capacités couvertes, 9 lignes sans `couvre`.
+- **oracle** : `check_wiremap_contract.mjs` (décision director D-v2_breakout_slice_r1-3, `WIREMAP_CAPACITY_UNCOVERED` ×10 + `WIREMAP_PROBLEM` ×9) ; objection `AMD-20260903T171927Z-join-lines-without-couvre-wiremap-v2-breakout-sl`.
+- **root_cause** : les lignes portaient fonction/fichiers/preuve mais AUCUN champ `couvre` citant un id de capacité — le delta plan↔carte était donc incalculable.
+- **action_reason** : ajouter à chaque ligne `couvre: ["<id exact>"]` de `feature_map.json`, sans toucher fonction/fichiers/preuve (déjà isomorphes au blueprint), pour rendre la jointure calculable.
+
+### result
+WireMap isomorphe reproduite, 7 colonnes remplies par feuille, **chaque ligne porte `couvre` NON VIDE** citant un id exact ; 10/10 capacités du feature_map couvertes, 0 fantôme, 0 ligne sans couvre (par construction/appariement manuel — à confirmer par l'oracle de l'exécuteur).
+
+### proof
+- Commande d'oracle NON exécutée (permission `run: aucun`, shell off) : `node forge/check_wiremap_contract.mjs EVIDENCE/runs/v2_breakout_slice_r1/wiremap.json --featuremap EVIDENCE/runs/v2_breakout_slice_r1/featuremap.json` — à lancer par l'exécuteur après matérialisation du bloc ci-dessous.
+- Vérifié par lecture directe : les 10 ids `CAP_R{1,2entree,2effet,3,4,5,6,7,9,10}` de `feature_map.json` (content_sha256 `5feeb1ed…`) sont chacun cités par exactement une ligne ; aucun `couvre` ne cite un id inexistant.
+
+### learning
+Une ligne de WireMap complète en fonction/fichiers/preuve peut quand même produire EMPTY_FORM : la jointure ne se prouve QUE par `couvre` = id exact de capacité. Le nom de fonction (`renderObjective`, `movePaddle`…) n'est PAS un id de capacité — l'y mettre produit un régime VOID (couverture fantôme), défaut déjà mesuré dans `join_check_apres_reparation` du run baseline.
+
+### next_reason
+Chaîne causale FERMÉE côté design : la jointure `couvre` est fournie, il ne subsiste aucune cause non résolue à mon niveau. Le niveau supérieur (exécuteur) doit seulement matérialiser `wiremap.json` depuis le bloc et faire tourner `check_wiremap_contract` pour transformer le « visé JOINED » en reçu signé — action mécanique, pas une escalade de défaut.
+
+## SKIPPED_VALIDATION
+- **Oracle de jointure** `check_wiremap_contract.mjs` — périmètre : `wiremap.json` (design) vs `featuremap.json` — statut : **non fait** — raison : permission `run: aucun` + shell désactivé ; l'exécuteur le lance après matérialisation.
+- **Oracle statique** `forge.static_oracles.check_wiremap` — périmètre : existence fichiers / définition fonctions — statut : **non applicable ici** — raison : c'est l'oracle d'APRÈS build (s10c) ; aucun fichier de `GAMES/v2_breakout_slice/` n'existe encore (seul `GAME_BLUEPRINT.json` est présent). La carte est un PLAN confronté au code plus tard.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "production s5 precedente non jointe: check_wiremap_contract mesure EMPTY_FORM, 0/10 capacites couvertes, 9 lignes sans couvre", "root_cause": "aucune ligne ne portait le champ couvre citant l'id exact d'une capacite de feature_map.json"}
+
+```json
+{"features": [{"feature": "R1 Objectif affiché", "fonction": "renderObjective", "fichiers": ["render.mjs"], "preuve": "logic.test.mjs — 'Renderer: renderObjective writes a non-empty text exactly once' (HUD objectif porte un texte non vide)", "couvre": ["CAP_R1_objectif"]}, {"feature": "R2 Raquette pilotée au clavier", "fonction": "movePaddle", "fichiers": ["engine.mjs", "input.mjs"], "preuve": "logic.test.mjs — 'Paddle: movePaddle right increases x within bounds' et 'movePaddle left decreases x within bounds' ; intention clavier via input.mjs getIntent", "couvre": ["CAP_R2_entree", "CAP_R2_effet"]}, {"feature": "R3 Rebond conservatif", "fonction": "reflectBall", "fichiers": ["engine.mjs"], "preuve": "logic.test.mjs — 'Ball: reflectBall x-axis inverts vx' + properties.test.mjs — 'reflectBall conserves speed within epsilon' (signe inversé, |v| conservée)", "couvre": ["CAP_R3_rebond"]}, {"feature": "R4 Destruction en une frappe", "fonction": "destroyBrick", "fichiers": ["engine.mjs"], "preuve": "logic.test.mjs — 'Engine: ball touching a brick destroys exactly that brick and reflects' (brique absente au même tick, non collidable)", "couvre": ["CAP_R4_destruction"]}, {"feature": "R5 Progres mesurable", "fonction": "destroyBrick", "fichiers": ["engine.mjs"], "preuve": "logic.test.mjs — 'Brick: destroyBrick marks brick destroyed and decrements counter' (bricksRemaining -1 exactement)", "couvre": ["CAP_R5_progres"]}, {"feature": "R6 Victoire terminale", "fonction": "checkWin", "fichiers": ["engine.mjs"], "preuve": "logic.test.mjs — 'Game: checkWin sets state=won when bricksRemaining=0' + properties.test.mjs — 'once won, state never changes back to playing'", "couvre": ["CAP_R6_victoire"]}, {"feature": "R7 Defaite terminale", "fonction": "checkLose", "fichiers": ["engine.mjs"], "preuve": "logic.test.mjs — 'Game: checkLose sets state=lost when ball below boundary' + properties.test.mjs — 'once lost, state never changes back to playing'", "couvre": ["CAP_R7_defaite"]}, {"feature": "R9 Determinisme par seed", "fonction": "hashState", "fichiers": ["engine.mjs"], "preuve": "logic.test.mjs — 'Engine: same seed + same input = same final hash' + properties.test.mjs — 'same game state produces same hash'", "couvre": ["CAP_R9_determinisme"]}, {"feature": "R10 Etat inspectable", "fonction": "updateGameWindow", "fichiers": ["main.mjs"], "preuve": "logic.test.mjs — 'main.mjs: auto-init exposes window.__game immediately' (paddle.x, ball.{x,y,vx,vy}, bricksRemaining, state exposes hors rendu)", "couvre": ["CAP_R10_inspectable"]}]}
+```

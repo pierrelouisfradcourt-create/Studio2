@@ -1,0 +1,28 @@
+{
+  "run_id": "v2_breakout_slice_r1",
+  "created": "2026-09-03T17:43:07.205Z",
+  "schema_version": 1,
+  "items": [
+    {
+      "source": "mandatory_read",
+      "ref": "AMD-20260903T171927Z-join-lines-without-couvre-wiremap-v2-breakout-sl",
+      "provenance": "ADVISORY",
+      "valid_as_of": "2026-09-03T17:19:27+00:00",
+      "reason": "notification objection -> wiremap : JOIN_LINES_WITHOUT_COUVRE : ta production précédente n'a pas joint la feature_map"
+    },
+    {
+      "source": "mandatory_read",
+      "ref": "AMD-20260903T173125Z-oracle-red-builder-v2-breakout-slice-r1",
+      "provenance": "ADVISORY",
+      "valid_as_of": "2026-09-03T17:31:25+00:00",
+      "reason": "notification objection -> builder : ORACLE_RED : le jeu construit ne passe pas les oracles déterministes"
+    },
+    {
+      "source": "mandatory_read",
+      "ref": "AMD-20260903T174307Z-oracle-red-builder-v2-breakout-slice-r1",
+      "provenance": "ADVISORY",
+      "valid_as_of": "2026-09-03T17:43:07+00:00",
+      "reason": "notification objection -> builder : ORACLE_RED : le jeu construit ne passe pas les oracles déterministes"
+    }
+  ]
+}

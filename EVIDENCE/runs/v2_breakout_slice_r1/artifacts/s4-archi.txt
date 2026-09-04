@@ -1,0 +1,91 @@
+Greenfield project — no existing blueprint to diff against. Design is justified by the featuremap, from scratch. All mandatory reads done (repo_map, SCHEMA, featuremap, charter); `knowledge_packet.json` is absent and is advisory-only.
+
+---
+
+# RAPPORT FINAL — s4-archi / v2_breakout_slice_r1
+
+## Posture
+
+Architecte senior. Découpage **par responsabilité**. La contrainte structurante n'est pas un confort : le **socle N1** exige que la logique métier vive dans un module `.mjs` **testable hors navigateur**. Cela impose mécaniquement que le cœur de simulation ne dépende **ni** du rendu **ni** de l'input **ni** du DOM — sinon il n'est plus importable par un test node. L'architecture n'est donc pas un choix esthétique : elle est la **conséquence** du socle N1 + de la featuremap.
+
+## SOFTWARE (appuyé sur oracle / ancre non-LLM)
+
+- **repo_map.yaml** (ancre `forge/standard/repo_map.yaml`, table figée) : les racines `00_…10_` régissent la structure GAME_PROJECT canonique. Le socle N1 (page HTML+JS unique + `.mjs`) définit ici la forme physique *sous* `GAMES/<jeu>/` ; mes `modules` sont des **entrées de premier niveau sous la racine du code**, forme lue telle quelle par `forge.static_oracles.check_architecture`. `software_verdict(repo_map): OK` — aucune racine inventée, adresses relatives à la racine du jeu.
+- **featuremap.json** (ancre `EVIDENCE/runs/v2_breakout_slice_r1/featuremap.json`, `content_sha256=5feeb1ed…`) : 6 features, 10 capacités. Chaque feature est couverte par ≥1 module (table ci-dessous). `software_verdict(couverture, vérifiée par lecture de la featuremap): OK`.
+
+## Modules & responsabilités (raisonnement — le bloc terminal ne porte que la forme simple exigée par la TÂCHE)
+
+| module (top-level) | responsabilité | couvre (id featuremap) | dépendances autorisées (dérivées) |
+|---|---|---|---|
+| `engine` | Simulation déterministe pure `.mjs` : RNG seedé, état du monde, `step()`/tick, collisions (mur, raquette, brique), rebond conservatif, décompte `bricksRemaining`, résolution `state ∈ {playing,won,lost}`, état inspectable. **Zéro DOM.** | CAP_R2_effet, CAP_R3_rebond, CAP_R4_destruction, CAP_R5_progres, CAP_R6_victoire, CAP_R7_defaite, CAP_R9_determinisme, CAP_R10_inspectable | *(feuille — aucune)* |
+| `input` | Adaptateur clavier DOM-only → état des touches / intentions (gauche/droite). Ne pilote rien. | CAP_R2_entree | *(feuille — aucune)* |
+| `render` | Dessine l'état `engine` (canvas) + met à jour le HUD DOM : texte `objectif`, panneaux VICTOIRE / DÉFAITE. Lecture seule de l'état. | CAP_R1_objectif, CAP_R6_victoire, CAP_R7_defaite | `engine` (lecture) |
+| `main.mjs` | Composition root : instancie `engine` avec seed, boucle de jeu, injecte les intents `input` dans `engine`, appelle `render`, expose `window.__game`. | CAP_R10_inspectable | `engine`, `input`, `render` |
+| `index.html` | Page unique : conteneurs HUD (objectif, panneaux fin), canvas ; charge `main.mjs`. | CAP_R1_objectif | `main.mjs` |
+| `tests` | Tests unitaires node important le `.mjs` `engine` (hash de déterminisme, rebond conservatif, destruction 1-frappe, `bricksRemaining`, champs inspectables). | CAP_R9_determinisme, CAP_R10_inspectable | `engine` |
+
+**Ownership** : `engine` = règles du jeu (invariant : cœur pur, sink du graphe) · `input`/`render` = adaptateurs I/O (feuilles côté sortie) · `main.mjs` = câblage & exposition · `index.html` = coquille · `tests` = preuve N1.
+
+**Note** : `tests` ici désigne `GAMES/v2_breakout_slice/tests/` (livrable N1 du slice), **distinct** de la lane protégée repo-root `tests/` (règle `.claude/rules/tests.md`) — non touchée.
+
+## Graphe & invariants d'architecture
+
+- **DAG confirmé, aucun cycle** : `index.html → main.mjs → {engine, input, render}` ; `render → engine` (lecture) ; `tests → engine`. `engine` et `input` sont des **sinks** (aucune arête sortante). Aucun chemin ne revient sur `main`.
+- **God-object tué à la racine** : aucun module ne « voit tout ». `engine` ne connaît ni rendu, ni input, ni DOM ; les adaptateurs ne se connaissent pas.
+- **deps_interdites (explicites, non vides, disjointes des deps autorisées)** :
+  1. `engine → render` — **logique↛rendu** (obligatoire)
+  2. `engine → input` — **logique↛input** (obligatoire)
+  3. `engine → main` — le cœur ne dépend pas du composition root (anti-cycle)
+  4. `input → engine` — l'input reste un adaptateur DOM pur
+  5. `input → render` / 6. `render → input` — séparation input⊥rendu
+  7. `input → main` / 8. `render → main` — les adaptateurs ne dépendent pas du câblage
+  Aucune de ces arêtes n'apparaît dans l'ensemble autorisé → contrat « ne jamais interdire une dépendance déclarée » respecté.
+
+## EVIDENCE
+
+`evidence_verdict: MECHANICAL_VALIDATION_ONLY` pour la couverture featuremap (lecture directe de l'artefact ancré, sha cité). **Aucun reçu `check_blueprint_contract.mjs` disponible** : mes permissions sont `run: aucun` et l'oracle s'exécute sur `blueprint.json`, matérialisé par l'exécuteur **depuis mon bloc terminal** (je n'écris jamais ce fichier). L'oracle amont est donc produit après ce rapport, pas par moi.
+
+## CLAIM
+
+`claim_verdict: NO_CLAIM_ALLOWED`. Je ne peux pas auto-certifier « cette architecture couvre le besoin » : le reçu de `check_blueprint_contract` n'existe pas encore. L'architecture est **conçue** pour le satisfaire (couverture, responsabilités, acyclicité, deps_interdites non vides) ; la validation revient à l'exécuteur puis HumanGate.
+
+## Features non couvertes / couvertures fantômes
+
+- **Non couvertes** : aucune. Les 10 capacités des 6 features sont rattachées à ≥1 module.
+- **Couvertures fantômes** (module citant un id inexistant) : aucune. Tous les ids cités existent dans `featuremap.json` (`content_sha256=5feeb1ed…`).
+
+## fog → HumanGate (jugement Pierre requis)
+
+1. **Conflit de nom de racine — MESURÉ.** La TÂCHE CONCRÈTE (marqueur `FORGE_DISPATCH:s4-archi:v2_breakout_slice_r1:1`) impose `GAMES/v2_breakout_slice`, tandis que **charter.yaml, GAME_BLUEPRINT et `game_id`** disent tous `GAMES/runm_breakout/`. Mes `modules` sont des chemins **relatifs à la racine du code**, donc valides quelle que soit la racine retenue — mais la racine physique elle-même est un conflit dispatch↔charter que je n'ai pas autorité à trancher (l'architecte ne réécrit pas l'INTENT LINEAGE, il remonte le conflit). Décision Pierre requise avant la WireMap (étape 5).
+
+## SKIPPED_VALIDATION
+
+| item | périmètre | statut | raison |
+|---|---|---|---|
+| Exécution `node forge/check_blueprint_contract.mjs …` | oracle amont couverture/cycles | non fait | `run: aucun` + `blueprint.json` inexistant (matérialisé par l'exécuteur depuis mon bloc). Mon oracle, mais hors de mes permissions à ce stade. |
+| Lecture `knowledge_packet.json` | patterns externes advisory | non fait | Fichier absent dans le run_dir. Advisory-only, non bloquant. |
+| `check_architecture` (post-build) | conformité code↔archi | hors périmètre | Oracle de l'étape s10b sur code réel ; sur `src` vide il serait vacuement vert — ce n'est pas mon oracle. |
+
+---
+
+**why_task_existed:** {problem: « le projet v2_breakout_slice n'a pas d'architecture gelée ; sans blueprint, la WireMap et le build n'ont pas de contrat de dépendances » · oracle: « aucun — activation par dispatch pipeline FORGE, marqueur `s4-archi:v2_breakout_slice_r1:1`, décision humaine amont » · root_cause: « étape 4 du pipeline non encore franchie pour ce run » · action_reason: « produire le blueprint gelé (modules + deps_interdites) qui matérialise la séparation logique/rendu/input imposée par le socle N1, couvrant les 6 features de la featuremap »} · **result:** « blueprint conçu : 6 modules, 8 dépendances interdites, DAG sans cycle, 10/10 capacités couvertes ; bloc terminal fourni pour matérialisation par l'exécuteur » · **proof:** « aucune commande exécutée (run: aucun) ; preuve = lecture des ancres repo_map.yaml + featuremap.json (content_sha256=5feeb1ed…) + charter.yaml ; le reçu check_blueprint_contract sera produit par l'exécuteur sur le blueprint.json matérialisé » · **learning:** « conflit de racine dispatch(v2_breakout_slice)↔charter(runm_breakout) : les modules relatifs à la racine restent valides, mais la racine physique doit être tranchée par Pierre avant l'étape 5 » · **next_reason:** « escalade requise : (1) l'exécuteur doit matérialiser blueprint.json et faire tourner check_blueprint_contract (mon oracle, hors de mes permissions) ; (2) HumanGate doit trancher le conflit de racine v2_breakout_slice vs runm_breakout — cause non résolue, la lignée ne se ferme pas ici »
+
+Bloc terminal — format exact exigé par la TÂCHE (`{"modules", "deps_interdites"}`, lu par `forge.static_oracles.check_architecture`). Je n'écris aucun fichier ; l'exécuteur matérialise `blueprint.json` depuis ce bloc.
+
+```json
+{
+  "modules": ["engine", "input", "render", "main.mjs", "index.html", "tests"],
+  "deps_interdites": [
+    ["engine", "render"],
+    ["engine", "input"],
+    ["engine", "main.mjs"],
+    ["input", "engine"],
+    ["input", "render"],
+    ["render", "input"],
+    ["input", "main.mjs"],
+    ["render", "main.mjs"]
+  ]
+}
+```
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "Conflit de racine physique : le dispatch s4-archi impose GAMES/v2_breakout_slice alors que charter.yaml, GAME_BLUEPRINT et game_id imposent GAMES/runm_breakout", "root_cause": "Divergence non tranchee entre le marqueur de dispatch du run et l'INTENT LINEAGE du charter"}

@@ -16,3 +16,4 @@
 {"subject":{"type":"game","id":"p1_beta_E1"},"reuse_ratio":0,"oracle_iterations":1,"joust_delta":null,"no_comparison":true,"timestamp":"2026-08-31T15:51:48.128Z"}
 {"subject":{"type":"game","id":"p2_alpha"},"reuse_ratio":0,"oracle_iterations":5,"joust_delta":null,"no_comparison":true,"timestamp":"2026-08-31T20:08:35.494Z"}
 {"subject":{"type":"game","id":"runm_breakout"},"reuse_ratio":0,"oracle_iterations":5,"joust_delta":null,"no_comparison":true,"timestamp":"2026-09-03T06:52:36.634Z"}
+{"subject":{"type":"game","id":"v2_breakout_slice"},"reuse_ratio":0,"oracle_iterations":2,"joust_delta":null,"no_comparison":true,"timestamp":"2026-09-03T18:27:40.081Z"}

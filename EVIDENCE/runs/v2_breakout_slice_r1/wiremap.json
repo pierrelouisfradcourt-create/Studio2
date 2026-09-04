@@ -1,0 +1,105 @@
+{
+ "features": [
+  {
+   "couvre": [
+    "CAP_R1_objectif"
+   ],
+   "feature": "R1 Objectif affiché",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "fonction": "renderObjective",
+   "preuve": "logic.test.mjs — 'Renderer: renderObjective writes a non-empty text exactly once' (HUD objectif porte un texte non vide)"
+  },
+  {
+   "couvre": [
+    "CAP_R2_entree",
+    "CAP_R2_effet"
+   ],
+   "feature": "R2 Raquette pilotée au clavier",
+   "fichiers": [
+    "engine.mjs",
+    "input.mjs"
+   ],
+   "fonction": "movePaddle",
+   "preuve": "logic.test.mjs — 'Paddle: movePaddle right increases x within bounds' et 'movePaddle left decreases x within bounds' ; intention clavier via input.mjs getIntent"
+  },
+  {
+   "couvre": [
+    "CAP_R3_rebond"
+   ],
+   "feature": "R3 Rebond conservatif",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "fonction": "reflectBall",
+   "preuve": "logic.test.mjs — 'Ball: reflectBall x-axis inverts vx' + properties.test.mjs — 'reflectBall conserves speed within epsilon' (signe inversé, |v| conservée)"
+  },
+  {
+   "couvre": [
+    "CAP_R4_destruction"
+   ],
+   "feature": "R4 Destruction en une frappe",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "fonction": "destroyBrick",
+   "preuve": "logic.test.mjs — 'Engine: ball touching a brick destroys exactly that brick and reflects' (brique absente au même tick, non collidable)"
+  },
+  {
+   "couvre": [
+    "CAP_R5_progres"
+   ],
+   "feature": "R5 Progres mesurable",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "fonction": "destroyBrick",
+   "preuve": "logic.test.mjs — 'Brick: destroyBrick marks brick destroyed and decrements counter' (bricksRemaining -1 exactement)"
+  },
+  {
+   "couvre": [
+    "CAP_R6_victoire"
+   ],
+   "feature": "R6 Victoire terminale",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "fonction": "checkWin",
+   "preuve": "logic.test.mjs — 'Game: checkWin sets state=won when bricksRemaining=0' + properties.test.mjs — 'once won, state never changes back to playing'"
+  },
+  {
+   "couvre": [
+    "CAP_R7_defaite"
+   ],
+   "feature": "R7 Defaite terminale",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "fonction": "checkLose",
+   "preuve": "logic.test.mjs — 'Game: checkLose sets state=lost when ball below boundary' + properties.test.mjs — 'once lost, state never changes back to playing'"
+  },
+  {
+   "couvre": [
+    "CAP_R9_determinisme"
+   ],
+   "feature": "R9 Determinisme par seed",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "fonction": "hashState",
+   "preuve": "logic.test.mjs — 'Engine: same seed + same input = same final hash' + properties.test.mjs — 'same game state produces same hash'"
+  },
+  {
+   "couvre": [
+    "CAP_R10_inspectable"
+   ],
+   "feature": "R10 Etat inspectable",
+   "fichiers": [
+    "main.mjs"
+   ],
+   "fonction": "updateGameWindow",
+   "preuve": "logic.test.mjs — 'main.mjs: auto-init exposes window.__game immediately' (paddle.x, ball.{x,y,vx,vy}, bricksRemaining, state exposes hors rendu)"
+  }
+ ]
+}

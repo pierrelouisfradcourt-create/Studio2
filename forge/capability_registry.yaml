@@ -1,0 +1,241 @@
+# CAPABILITY_REGISTRY v0 — Lot 2 (plan V2 2026-09-03, GO Pierre). K2.
+#
+# CE FICHIER NE DÉCLARE QUE CE QUI N'EXISTE NULLE PART AILLEURS : le lien entre une capacité et
+# les SECTIONS du GAME_BLUEPRINT (reads / writes), l'oracle de qualité qui la juge, les codes de
+# problème qu'elle peut émettre (K7), sa politique d'escalade et ses verrous.
+# Tout le reste — mission, skill, reasoning_policy, model_policy, artifact, tools — est DÉRIVÉ à
+# la lecture (forge.capability.spec) depuis les sources de vérité existantes, jamais recopié :
+#   mission · skill            forge/contracts/<etape>.yaml   (objectif · role · exigences_cognitives · gardeFou · memoire · in/out_of_scope · skill · plugin)
+#   model_policy · reasoning   forge/contracts/roles.yaml via contract.resolve_runtime / control_plane.registry
+#   artifact                   run_real._ARTIFACT_BY_STEP
+#   tools                      run_real._effective_step_tools (ratification _STEP_TOOLS, sinon permissions du contrat)
+# Règle anti-couches C2 : ce registre CONSOLIDE _ARTIFACT_BY_STEP + _UPSTREAM_BY_STEP +
+# _ARTIFACT_VALIDATORS + _STEP_TOOLS ; tant que les deux coexistent, un test impose l'égalité stricte.
+#
+# reads[]  : {section, required, materialize_as}. `materialize_as` = projection du contenu de la
+#            section en fichier de run_dir, pour que les ORACLES LEGACY (check_*.mjs) et l'agent
+#            (outil Read) y accèdent — le Blueprint reste la source, le fichier une projection.
+# writes   : la seule section (ou sous-entrée `section.entree`) que la capacité a le droit d'écrire.
+# validator: commande d'oracle déterministe (non-LLM) exécutée sur l'artefact matérialisé ; les
+#            listes de son JSON deviennent des codes K7 (`problem_codes`), producteur = le script.
+# escalation : `builder_ladder` (haiku→sonnet→opus, forge/escalate.py) ou `aucun` (ESC-1 :
+#            reviewers et oracles ne s'escaladent jamais).
+# invokable_v0 : false = la capacité existe (contrat, rôle) mais `invoke_capability` v0 ne sait
+#            pas encore la faire travailler sur le Blueprint (artefact non-JSON, écriture de code,
+#            boucle de questions) — dit, jamais tu.
+
+schema: CAPABILITY_REGISTRY/v0
+
+capabilities:
+
+  contract_author:
+    contract: s0-contrat
+    kind: llm
+    reads:
+      - {section: identity, required: true}
+      - {section: vision, required: true}
+      - {section: constraints, required: true}
+    writes: gameplay
+    validator: null            # static_oracles.check_charter (YAML, hors _ARTIFACT_BY_STEP)
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "artefact charter.yaml matérialisé par run_real._materialize_yaml, hors du chemin JSON de v0"
+
+  worldscan:
+    contract: s2-worldscan
+    kind: llm
+    reads:
+      - {section: gameplay, required: true, materialize_as: charter.yaml}
+    writes: understanding.worldscan
+    validator: null            # run_real._validate_worldscan (schéma) ; check_worldscan.mjs non câblé ici
+    problem_codes: {}
+    escalation: aucun
+    locked: "Q2/R8 — World Scan hors périmètre (verrou Pierre 2026-08-29), jamais levé implicitement"
+    invokable_v0: true
+
+  prisme:
+    contract: s1-prisme
+    kind: llm
+    reads:
+      - {section: gameplay, required: true, materialize_as: charter.yaml}
+      - {section: understanding.worldscan, required: false, materialize_as: worldscan.json}
+    writes: understanding.prisme
+    validator: null            # run_real._validate_prisme (+ gm sources) ; product_snapshot.md et loop.json = matérialisations annexes non couvertes en v0
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "s1 produit aussi product_snapshot.md et la projection loop.json (matérialiseurs dédiés) — non couverts par v0"
+
+  decompose:
+    contract: s3-decompo
+    kind: llm
+    reads:
+      - {section: gameplay, required: true, materialize_as: charter.yaml}
+      - {section: understanding.prisme, required: true, materialize_as: prisme.json}
+      - {section: understanding.worldscan, required: false, materialize_as: worldscan.json}
+      - {section: understanding.product_snapshot, required: false, materialize_as: product_snapshot.md}
+    writes: feature_map
+    validator:
+      command: [node, forge/check_decompo.mjs, "{artifact}", --prisme, "{run_dir}/prisme.json", --json]
+      name: check_decompo.mjs
+    problem_codes:
+      exigences_non_couvertes: DECOMPO_REQUIREMENT_UNCOVERED
+      feuilles_non_sourcees: DECOMPO_LEAF_UNSOURCED
+      boucle_sans_entree: DECOMPO_LOOP_NO_ENTRY
+      boucle_sans_effet: DECOMPO_LOOP_NO_EFFECT
+      boucle_replay_non_couvert: DECOMPO_REPLAY_UNCOVERED
+      grey_blocks_non_decomposes: DECOMPO_GREY_BLOCK
+      problems: DECOMPO_PROBLEM
+    escalation: aucun
+    invokable_v0: true
+
+  architect:
+    contract: s4-archi
+    kind: llm
+    reads:
+      - {section: gameplay, required: true, materialize_as: charter.yaml}
+      - {section: feature_map, required: true, materialize_as: featuremap.json}
+    writes: architecture_contract
+    validator:
+      command: [node, forge/check_blueprint_contract.mjs, "{artifact}", --featuremap, "{run_dir}/featuremap.json"]
+      name: check_blueprint_contract.mjs
+    problem_codes:
+      problems: ARCHI_PROBLEM
+    escalation: aucun
+    invokable_v0: true
+
+  wiremap:
+    contract: s5-wiremap
+    kind: llm
+    reads:
+      - {section: gameplay, required: true, materialize_as: charter.yaml}
+      - {section: feature_map, required: true, materialize_as: featuremap.json}
+      - {section: architecture_contract, required: true, materialize_as: blueprint.json}
+    writes: wiremap.design
+    validator:
+      command: [node, forge/check_wiremap_contract.mjs, "{artifact}", --featuremap, "{run_dir}/featuremap.json"]
+      name: check_wiremap_contract.mjs
+    problem_codes:
+      capacites_non_couvertes: WIREMAP_CAPACITY_UNCOVERED
+      couverture_fantome: WIREMAP_GHOST_COVERAGE
+      maillon_non_lie: WIREMAP_LINK_UNBOUND
+      problems: WIREMAP_PROBLEM
+    escalation: aucun
+    invokable_v0: true
+
+  redteam_plan:
+    contract: s6-redteam-plan
+    kind: llm_advisory
+    reads:
+      - {section: gameplay, required: true}
+      - {section: feature_map, required: true}
+      - {section: architecture_contract, required: true}
+      - {section: wiremap.design, required: true}
+    writes: questions
+    validator: null
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "sortie texte (findings), pas d'artefact JSON — canal objection/question (K4) à brancher"
+
+  builder:
+    contract: s9-build
+    kind: builder
+    reads:
+      - {section: gameplay, required: true, materialize_as: charter.yaml}
+      - {section: feature_map, required: true, materialize_as: featuremap.json}
+      - {section: architecture_contract, required: true, materialize_as: blueprint.json}
+      - {section: wiremap.design, required: true, materialize_as: wiremap.json}
+    writes: wiremap.built
+    # Le builder n'a pas d'artefact JSON matérialisé par l'exécuteur : il écrit LE JEU sous GAMES/<projet>
+    # (outils Write/Edit/Bash node) et tient à jour wiremap.json dans le run_dir — c'est ce fichier,
+    # relu après exécution, qui devient la section `wiremap.built`.
+    post_artifact: wiremap.json
+    add_dir: "GAMES/{project}"
+    validator: null            # oracles s10a/s10b/s10c après build (capacité QA, forge.build_orchestrator)
+    problem_codes: {}
+    escalation: builder_ladder
+    invokable_v0: true
+
+  redteam_code:
+    contract: s11-redteam-code
+    kind: llm_advisory
+    reads:
+      - {section: wiremap.built, required: true}
+    writes: questions
+    validator: null
+    problem_codes: {}
+    escalation: aucun          # ESC-1 : le reviewer indépendant ne s'escalade jamais
+    invokable_v0: false
+    invokable_reason: "revue indépendante (Qwen, route_step) — canal objection (K4) à brancher"
+
+  art_director:
+    contract: s2.5-artbible
+    kind: llm
+    reads:
+      - {section: gameplay, required: true}
+      - {section: understanding.worldscan, required: false}
+    writes: questions
+    validator: null            # check_artbible.mjs (markdown écrit par l'agent lui-même)
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "art_bible.md écrit par l'agent (Write), section `art` DOCUMENTED_ONLY"
+
+  game_master:
+    contract: s2.7-gm-worldscan
+    kind: llm
+    reads:
+      - {section: gameplay, required: true}
+      - {section: understanding.worldscan, required: false}
+    writes: understanding.game_master
+    validator: null            # run_real._validate_gm_worldscan + projection economy.json
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "boucle de questions ART<->GM (design_questions.json) et projection economy.json non couvertes par v0"
+
+  qa_code:
+    contract: s10a-oracle-code
+    kind: oracle
+    reads: []
+    writes: null
+    validator: null
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "oracle déterministe exécuté par ForgeDriver._run_code_oracle — capacité QA du Lot 4"
+
+  qa_architecture:
+    contract: s10b-oracle-archi
+    kind: oracle
+    reads: []
+    writes: null
+    validator: null
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "oracle déterministe — capacité QA du Lot 4"
+
+  qa_wiremap:
+    contract: s10c-oracle-wiremap
+    kind: oracle
+    reads: []
+    writes: null
+    validator: null
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "oracle déterministe — capacité QA du Lot 4"
+
+  evidence:
+    contract: s12-verdict
+    kind: oracle
+    reads: []
+    writes: null
+    validator: null
+    problem_codes: {}
+    escalation: aucun
+    invokable_v0: false
+    invokable_reason: "verdict signé HMAC — ForgeDriver._run_verdict, capacité Evidence du Lot 4"

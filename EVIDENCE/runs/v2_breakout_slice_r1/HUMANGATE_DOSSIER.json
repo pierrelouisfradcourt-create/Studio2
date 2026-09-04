@@ -1,0 +1,230 @@
+{
+ "project": "v2_breakout_slice",
+ "run_id": "v2_breakout_slice_r1",
+ "software_verdict": "OK",
+ "decision": "HUMANGATE_READY",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "verify_run": "AUTHENTIQUE",
+ "verdict_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio\\EVIDENCE\\runs\\v2_breakout_slice_r1\\verdict.json",
+ "oracles": {
+  "s10a-oracle-code": "OK",
+  "s10b-oracle-archi": "OK",
+  "s10c-oracle-wiremap": "OK",
+  "s12-verdict": "OK"
+ },
+ "redteam_ran": false,
+ "humangate_flags": [
+  "standard non vérifiée (oracle sauté dans ce profil)",
+  "red-team dégradé: reviewer indépendant n'a pas tourné (fallback)"
+ ],
+ "coverage": {
+  "design": {
+   "regime": "JOINED",
+   "status": "JOINED",
+   "capacites": 10,
+   "capacites_couvertes": 10,
+   "lignes": 9,
+   "lignes_sans_couvre": 0,
+   "capacites_non_couvertes": 0,
+   "couverture_fantome": 0,
+   "forme_satisfaite": true
+  },
+  "built": {
+   "regime": "JOINED",
+   "status": "JOINED",
+   "capacites": 10,
+   "capacites_couvertes": 10,
+   "lignes": 9,
+   "lignes_sans_couvre": 0,
+   "capacites_non_couvertes": 0,
+   "couverture_fantome": 0,
+   "forme_satisfaite": true
+  }
+ },
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap",
+  "s5-wiremap",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict",
+  "s9-build",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict"
+ ],
+ "sequence_equals_profile": null,
+ "counts": {
+  "director_decisions": 13,
+  "executed_steps": 15,
+  "expected_steps": 15,
+  "consistent": true,
+  "decisions_without_step": [
+   "gate_open",
+   "halt",
+   "humangate",
+   "requalify"
+  ],
+  "includes_humangate_decision": true,
+  "steps_per_qa_decision": 4
+ },
+ "decisions": [
+  {
+   "id": "D-v2_breakout_slice_r1-1",
+   "kind": "convoke",
+   "capability": "decompose",
+   "diagnosis_code": "SECTION_ABSENT",
+   "effect": "CHANGED",
+   "progress": "NONE"
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-2",
+   "kind": "convoke",
+   "capability": "architect",
+   "diagnosis_code": "SECTION_ABSENT",
+   "effect": "CHANGED",
+   "progress": "NONE"
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-3",
+   "kind": "convoke",
+   "capability": "wiremap",
+   "diagnosis_code": "SECTION_ABSENT",
+   "effect": "CHANGED",
+   "progress": "IMPROVED"
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-4",
+   "kind": "reconvoke",
+   "capability": "wiremap",
+   "diagnosis_code": "JOIN_LINES_WITHOUT_COUVRE",
+   "effect": "CHANGED",
+   "progress": "IMPROVED"
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-5",
+   "kind": "gate_open",
+   "capability": null,
+   "diagnosis_code": "SUFFICIENCY_JOINED",
+   "effect": null,
+   "progress": null
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-6",
+   "kind": "build",
+   "capability": "builder",
+   "diagnosis_code": "BUILD_REQUIRED",
+   "effect": "CHANGED",
+   "progress": "IMPROVED"
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-7",
+   "kind": "qa",
+   "capability": null,
+   "diagnosis_code": "QA_REQUIRED",
+   "effect": null,
+   "progress": null
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-8",
+   "kind": "build",
+   "capability": "builder",
+   "diagnosis_code": "ORACLE_RED",
+   "effect": "NO_EFFECT",
+   "progress": "NONE"
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-9",
+   "kind": "build",
+   "capability": "builder",
+   "diagnosis_code": "ORACLE_RED",
+   "effect": "NO_EFFECT",
+   "progress": "NONE"
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-10",
+   "kind": "halt",
+   "capability": null,
+   "diagnosis_code": "ORACLE_RED_PERSISTENT",
+   "effect": null,
+   "progress": null
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-11",
+   "kind": "requalify",
+   "capability": null,
+   "diagnosis_code": "ORACLE_RED_PERSISTENT",
+   "effect": null,
+   "progress": null
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-12",
+   "kind": "qa",
+   "capability": null,
+   "diagnosis_code": "QA_REQUIRED",
+   "effect": null,
+   "progress": null
+  },
+  {
+   "id": "D-v2_breakout_slice_r1-13",
+   "kind": "humangate",
+   "capability": null,
+   "diagnosis_code": "VERDICT_OK_AUTHENTIC",
+   "effect": null,
+   "progress": null
+  }
+ ],
+ "objections_conservees": [
+  {
+   "id": "AMD-20260903T164128Z-join-lines-without-couvre-wiremap-lot3-director-",
+   "type": "objection",
+   "from": "director",
+   "to": [
+    "wiremap"
+   ],
+   "subject": "JOIN_LINES_WITHOUT_COUVRE : ta production précédente n'a pas joint la feature_map"
+  },
+  {
+   "id": "AMD-20260903T171927Z-join-lines-without-couvre-wiremap-v2-breakout-sl",
+   "type": "objection",
+   "from": "director",
+   "to": [
+    "wiremap"
+   ],
+   "subject": "JOIN_LINES_WITHOUT_COUVRE : ta production précédente n'a pas joint la feature_map"
+  },
+  {
+   "id": "AMD-20260903T173125Z-oracle-red-builder-v2-breakout-slice-r1",
+   "type": "objection",
+   "from": "director",
+   "to": [
+    "builder"
+   ],
+   "subject": "ORACLE_RED : le jeu construit ne passe pas les oracles déterministes"
+  },
+  {
+   "id": "AMD-20260903T174307Z-oracle-red-builder-v2-breakout-slice-r1",
+   "type": "objection",
+   "from": "director",
+   "to": [
+    "builder"
+   ],
+   "subject": "ORACLE_RED : le jeu construit ne passe pas les oracles déterministes"
+  }
+ ],
+ "problems_remaining": [],
+ "cost_usd_llm": 6.6708,
+ "not_proven": [
+  "valeur du jeu (Pierre joue)",
+  "variance de l'oracle de solvabilité (défaut connu)",
+  "UX · design_metrics · game_flow (sections DOCUMENTED_ONLY)",
+  "revue indépendante (red team non convoquée en v0)"
+ ],
+ "no_global_ready_verdict": true
+}

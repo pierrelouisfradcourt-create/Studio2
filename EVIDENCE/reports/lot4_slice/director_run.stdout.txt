@@ -1,0 +1,158 @@
+{"kind": "convoke", "capability": "decompose", "code": "SECTION_ABSENT", "effect": "CHANGED", "progress": "NONE", "decision": "D-v2_breakout_slice_r1-1", "cost": {"tokens": 23086, "duration_s": 307.57202553749084, "cost_usd": 1.4951825}}
+{
+ "status": "RUNNING",
+ "steps": 1,
+ "sequence": [
+  "s3-decompo"
+ ],
+ "pending_question": null
+}
+{"kind": "convoke", "capability": "architect", "code": "SECTION_ABSENT", "effect": "CHANGED", "progress": "NONE", "decision": "D-v2_breakout_slice_r1-2", "cost": {"tokens": 13208, "duration_s": 195.49112701416016, "cost_usd": 0.9123334999999999}}
+{
+ "status": "RUNNING",
+ "steps": 2,
+ "sequence": [
+  "s3-decompo",
+  "s4-archi"
+ ],
+ "pending_question": null
+}
+{"kind": "convoke", "capability": "wiremap", "code": "SECTION_ABSENT", "effect": "CHANGED", "progress": "IMPROVED", "decision": "D-v2_breakout_slice_r1-3", "cost": {"tokens": 15524, "duration_s": 242.1507396697998, "cost_usd": 1.7667389999999998}}
+{
+ "status": "RUNNING",
+ "steps": 3,
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap"
+ ],
+ "pending_question": null
+}
+{"kind": "reconvoke", "capability": "wiremap", "code": "JOIN_LINES_WITHOUT_COUVRE", "effect": "CHANGED", "progress": "IMPROVED", "decision": "D-v2_breakout_slice_r1-4", "cost": {"tokens": 14804, "duration_s": 204.30349349975586, "cost_usd": 1.621959}}
+{
+ "status": "RUNNING",
+ "steps": 4,
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap",
+  "s5-wiremap"
+ ],
+ "pending_question": null
+}
+{"kind": "gate_open", "capability": null, "code": "SUFFICIENCY_JOINED", "effect": null, "progress": null, "decision": "D-v2_breakout_slice_r1-5", "cost": null}
+{"kind": "build", "capability": "builder", "code": "BUILD_REQUIRED", "effect": "CHANGED", "progress": "IMPROVED", "decision": "D-v2_breakout_slice_r1-6", "cost": {"tokens": 33016, "duration_s": 409.9960730075836, "cost_usd": 0.8746048000000002}}
+{
+ "status": "BUILT",
+ "steps": 6,
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap",
+  "s5-wiremap",
+  "s9-build"
+ ],
+ "pending_question": null
+}
+{"kind": "qa", "capability": null, "code": "QA_REQUIRED", "effect": null, "progress": null, "decision": "D-v2_breakout_slice_r1-7", "cost": null}
+{"kind": "build", "capability": "builder", "code": "ORACLE_RED", "effect": "NO_EFFECT", "progress": "NONE", "decision": "D-v2_breakout_slice_r1-8", "cost": {"tokens": 0, "duration_s": 540.0914063453674, "cost_usd": 0.0}}
+{
+ "status": "QA_DONE",
+ "steps": 8,
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap",
+  "s5-wiremap",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict",
+  "s9-build"
+ ],
+ "pending_question": null
+}
+{"kind": "halt", "capability": null, "code": "ORACLE_RED_PERSISTENT", "effect": null, "progress": null, "decision": "D-v2_breakout_slice_r1-10", "cost": null}
+{
+ "status": "HALTED",
+ "steps": 10,
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap",
+  "s5-wiremap",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict",
+  "s9-build",
+  "s9-build"
+ ],
+ "pending_question": {
+  "id": "Q-v2_breakout_slice_r1-10-ORACLE_RED_PERSISTENT",
+  "code": "ORACLE_RED_PERSISTENT",
+  "capability": "builder",
+  "signal": "wiremap.built@builder",
+  "to": "pierre",
+  "text": "oracles rouges après 3 build(s) (dernier tier 'opus') : ['EXECUTOR_FAILED']",
+  "options": [
+   "accept",
+   "skip"
+  ],
+  "measure": {
+   "s10a-oracle-code": "FAIL",
+   "s10b-oracle-archi": "OK",
+   "s10c-oracle-wiremap": "OK",
+   "s12-verdict": "OK"
+  },
+  "asked_at": "2026-09-03T18:09:09+00:00"
+ }
+}
+{"kind": "qa", "capability": null, "code": "QA_REQUIRED", "effect": null, "progress": null, "decision": "D-v2_breakout_slice_r1-12", "cost": null}
+{
+ "status": "QA_DONE",
+ "steps": 12,
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap",
+  "s5-wiremap",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict",
+  "s9-build",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict"
+ ],
+ "pending_question": null
+}
+{"kind": "humangate", "capability": null, "code": "VERDICT_OK_AUTHENTIC", "effect": null, "progress": null, "decision": "D-v2_breakout_slice_r1-13", "cost": null}
+{
+ "status": "HUMANGATE_READY",
+ "steps": 13,
+ "sequence": [
+  "s3-decompo",
+  "s4-archi",
+  "s5-wiremap",
+  "s5-wiremap",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict",
+  "s9-build",
+  "s9-build",
+  "s10a-oracle-code",
+  "s10b-oracle-archi",
+  "s10c-oracle-wiremap",
+  "s12-verdict"
+ ],
+ "pending_question": null
+}

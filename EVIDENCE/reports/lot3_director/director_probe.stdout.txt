@@ -1,0 +1,8 @@
+{"kind": "convoke", "capability": "wiremap", "code": "JOIN_LINES_WITHOUT_COUVRE", "effect": "CHANGED", "decision": "D-lot3_director_probe-1", "cost": {"tokens": 19116, "duration_s": 305.58205127716064, "cost_usd": 3.2614094999999996}}
+{"kind": "reconvoke", "capability": "wiremap", "code": "JOIN_LINES_WITHOUT_COUVRE", "effect": "CHANGED", "decision": "D-lot3_director_probe-2", "cost": {"tokens": 12413, "duration_s": 178.63690614700317, "cost_usd": 1.2793235}}
+{"kind": "gate_open", "capability": null, "code": "SUFFICIENCY_JOINED", "effect": null, "decision": "D-lot3_director_probe-3", "cost": null}
+{
+ "status": "GATE_OPEN",
+ "steps": 3,
+ "pending_question": null
+}

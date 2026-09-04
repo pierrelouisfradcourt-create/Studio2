@@ -1,0 +1,208 @@
+I've now read all four determinant oracles/schemas. I have what I need. One structural fact is decisive and I'll surface it explicitly rather than paper over it.
+
+---
+
+## DÉCOMPOSITION FONCTIONNELLE — v2_breakout_slice_r1 / s3-decompo
+
+**Séparation software / evidence / claim**
+
+- **software** : l'arbre Système→Feature→capacité ci-dessous couvre les 10 exigences `E1..E10` du Prisme (E8 = REPEAT, rejeu sans feuille propre). Structure conforme à `validateFeaturemap` par construction (ids présents/uniques, `expected_proof{kind,statement}` bien formés, aucune feuille orpheline).
+- **evidence** : oracle `check_decompo.mjs` **NON exécuté par moi** (permission `run: aucun`, shell désactivé). Ancre non-LLM disponible = **lecture directe du code de l'oracle** (`forge/check_decompo.mjs:188-203` et `forge/upstream_schema.mjs`).
+- **claim** : `NO_CLAIM_ALLOWED`. Je remonte un **besoin HumanGate (fog)** — voir le blocage structurel plus bas.
+
+### Règles de jeu R1..R10 (une ligne par règle : nom · comportement observable · condition de preuve)
+
+| Règle | source_ref | Nom | Comportement observable | Preuve attendue (héritée) |
+|---|---|---|---|---|
+| **R1** | E1 | Objectif affiché | HUD `objectif` non vide « détruire le mur » tant que la partie court | `visual` |
+| **R2** | E2 | Contrôle raquette | Flèche-Droite → `paddle.x` monte ; Flèche-Gauche → descend ; rien → stable | `bot_action` |
+| **R3** | E3 | Rebond conservatif | Contact mur/raquette : signe de `vx`/`vy` inversé, `|v|` conservée | `oracle` |
+| **R4** | E4 | Destruction 1 frappe | Contact balle↔brique : brique absente de `bricks` au même tick | `mutation` |
+| **R5** | E5 | Progrès mesurable | `bricksRemaining` décroît d'exactement 1 par brique | `oracle` |
+| **R6** | E6 | Victoire terminale | Dernière brique → `state='won'` + panneau VICTOIRE, simulation figée | `visual` |
+| **R7** | E7 | Défaite terminale | Balle sous le bord bas → `state='lost'` + panneau DÉFAITE, figée | `visual` |
+| **R8** | E8 | Boucle rejouée (REPEAT) | Rejeu de R2/R3/R5 entre deux briques — **aucune feuille propre** | `bot_action` (héritée) |
+| **R9** | E9 | Déterminisme par seed | Deux exécutions `.mjs` même seed → hash final égaux | `oracle` |
+| **R10** | E10 | État inspectable | `window.__game` expose paddle/ball/bricksRemaining/state | `oracle` |
+
+**V4 GAME LOOP** — E2 est la seule exigence `acteur: PLAYER` + `affordance: raquette`. Décomposée en **capacité d'ENTRÉE** (le joueur agit sur l'affordance) **ET capacité d'EFFET** (la raquette suit), jamais l'effet seul — deux feuilles sourcées E2, portant la preuve `bot_action` héritée d'E2. **E8 (REPEAT)** : rejeu, aucune feuille ; son `replay: [E2,E3,E5]` cible trois exigences toutes couvertes → maillon H couvert. Maillons F/G/I/J : **absents par genre** (aucune exigence UNLOCK/NEXT_GOAL/META_LOOP/ADVANTAGE au Prisme — cohérent avec le fog déjà remonté par s1). Grey blocks : **0** (`gm_worldscan.json` absent du run_dir → pas de `--gm`, comportement inchangé).
+
+### ⛔ BLOCAGE STRUCTUREL DÉCOUVERT — oracle couplé Godot vs charter web
+
+`check_decompo.mjs:188-203` exige que **toute** feuille sourcée à une exigence `PLAYER`+`affordance` porte `expected_proof.kind === 'bot_action'` **ET** un `statement` contenant le littéral **`main.tscn`** (fichier de scène **Godot**). Sinon → finding `boucle_sans_entree` → **VERDICT FAIL**.
+
+Or ce projet est **web/HTML pur** : le charter interdit expressément Godot (`hors_scope` : « aucun binaire Godot… un recours silencieux est un écart à signaler ») et interdit « produire un vert par contournement ». La preuve héritée d'E2 est web (`window.__game.paddle.x`, touches fléchées) — **elle ne contient ni ne peut contenir `main.tscn`** sans fabrication.
+
+**Je REFUSE de fabriquer `main.tscn`** dans le `statement` : ce serait violer simultanément (a) le garde-fou « preuve héritée, jamais inventée », (b) le charter `hors_scope` Godot, (c) l'interdit « vert par contournement ». Je livre donc la décomposition **fidèle** — qui fera **échouer** l'oracle sur `boucle_sans_entree ×2` (les deux feuilles E2) — plutôt qu'un faux vert. C'est la même faille genre/gabarit que s1 avait déjà signalée (gabarit V4 mono-genre, couplé Godot), qui se matérialise ici en **incompatibilité oracle↔charter** exigeant une décision Pierre.
+
+**software_verdict** : NON ÉMIS (oracle non exécuté). **Prédiction ancrée sur lecture du code** : `check_decompo` renverra **FAIL** (2× `boucle_sans_entree`), toutes les autres mesures étant vertes (couverture 10/10, non-invention OK, complétude OK, H=1). **claim_verdict: NO_CLAIM_ALLOWED.**
+
+### BESOIN HUMANGATE (fog) → Pierre
+Trancher l'un de :
+1. **Étendre l'oracle** `check_decompo` d'une preuve d'ENTRÉE **web-lignée** (ex. `bot_action` depuis `index.html`/la page DOM au lieu de `main.tscn`) — la règle B/V4 est écrite pour Godot, la lignée web n'a pas de fichier de scène ; **ou**
+2. **Dérogation actée** pour la lignée arcade web (l'entrée joueur E2 prouvée par bot DOM, non par scène Godot).
+
+Tant que ce point n'est pas tranché, **aucun run web ne peut passer s3-decompo** dès qu'une action joueur est couverte — fait mesurable, non un défaut de ce worker.
+
+### RETURN LINEAGE
+- **why_task_existed** :
+  - `problem` : le run `v2_breakout_slice_r1` (migration V1→V2) a besoin de l'arbre fonctionnel Système→Feature→capacité, chaque feuille traçable à une exigence du Prisme, pour alimenter s4-archi/s5-wiremap/s9-build.
+  - `oracle` : dispatch `FORGE_DISPATCH:s3-decompo:v2_breakout_slice_r1:1` ; oracle de sortie `check_decompo.mjs` (couverture / non-invention / complétude).
+  - `root_cause` : non transmise comme défaut — étape normale du pipeline (décision humaine de séquence). Écart structurel hérité : couplage Godot du gabarit V4/règle B, déjà signalé par s1.
+  - `action_reason` : produire une featuremap fidèle au Prisme (10 exigences couvertes, preuves héritées) et **refuser** de fabriquer `main.tscn` pour verdir un oracle Godot sur un jeu web, en remontant le conflit.
+- **result** : featuremap complète (3 systèmes / 6 features / 11 feuilles, E1..E10 portées, E8 rejeu). Structure `validateFeaturemap` verte par construction. Sémantique `check_decompo` prédite **FAIL** sur 2 `boucle_sans_entree` (E2 web sans `main.tscn`) — refus assumé de contournement.
+- **proof** : commande NON exécutée (`run: aucun`) : `node forge/check_decompo.mjs EVIDENCE/runs/v2_breakout_slice_r1/featuremap.json --prisme EVIDENCE/runs/v2_breakout_slice_r1/prisme.json` — à lancer par l'exécuteur après matérialisation. Ancre lue : `forge/check_decompo.mjs:188-203` (exigence `main.tscn`), `forge/upstream_schema.mjs:532-545` (forme feuille). `gm_worldscan.json`/`knowledge_packet.json` absents (lectures en erreur « File does not exist »).
+- **learning** : le couplage Godot (`main.tscn`) de la règle B/V4 dans `check_decompo` transforme le fog genre/gabarit de s1 en **blocage dur d'oracle** dès qu'une lignée web couvre une action joueur. La bonne réponse d'un worker s3 est de livrer la décomposition fidèle + FAIL honnête + HumanGate, jamais un `main.tscn` fabriqué.
+- **next_reason** : chaîne **NON fermée** — le conflit oracle↔charter (couplage Godot vs lignée web) exige une décision Pierre (extension oracle web-lignée, ou dérogation) avant que s3-decompo puisse être vert pour ce run. Le reste de la lignée (arbre, couverture, preuves héritées) est prêt.
+
+### SKIPPED_VALIDATION
+- **Oracle `check_decompo.mjs`** — périmètre : `featuremap.json` produit — statut : **non fait (prédit par lecture de code)** — raison : permission `run: aucun`, shell désactivé ; l'exécuteur doit le lancer après matérialisation.
+- **Validation de forme `validateFeaturemap`** — périmètre : structure de l'arbre — statut : **non exécutée (conformité par construction)** — raison : même contrainte d'exécution ; ids présents/uniques et preuves bien formées vérifiés à la main contre `upstream_schema.mjs`.
+- **Couverture grey blocks GM** — périmètre : `game_master.grey_blocks[]` — statut : **impossible** — raison : `gm_worldscan.json` absent du run_dir (0 grey block, comportement inchangé).
+
+Le bloc `json` ci-dessous est la featuremap à matérialiser par l'exécuteur (je n'écris aucun fichier).
+
+```json
+{
+  "game_id": "runm_breakout",
+  "systemes": [
+    {
+      "id": "S1_boucle_jeu",
+      "features": [
+        {
+          "id": "FEAT_OBJECTIF",
+          "capacites": [
+            {
+              "id": "CAP_R1_objectif",
+              "capacite": "R1 — Objectif affiché : tant que la partie est en cours, le HUD `objectif` porte un texte non vide décrivant la destruction du mur.",
+              "source_ref": "E1",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+              }
+            }
+          ]
+        },
+        {
+          "id": "FEAT_RAQUETTE",
+          "capacites": [
+            {
+              "id": "CAP_R2_entree",
+              "capacite": "R2 (ENTRÉE) — Le joueur agit sur l'affordance « raquette » en pressant/maintenant une touche fléchée gauche ou droite.",
+              "source_ref": "E2",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+              }
+            },
+            {
+              "id": "CAP_R2_effet",
+              "capacite": "R2 (EFFET) — La raquette suit horizontalement le geste : window.__game.paddle.x augmente sous Flèche-Droite, diminue sous Flèche-Gauche, reste stable sans entrée.",
+              "source_ref": "E2",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+              }
+            }
+          ]
+        },
+        {
+          "id": "FEAT_BALLE",
+          "capacites": [
+            {
+              "id": "CAP_R3_rebond",
+              "capacite": "R3 — Rebond conservatif : au contact d'un mur ou de la raquette, la composante de vitesse concernée change de signe et la norme de la vitesse est conservée.",
+              "source_ref": "E3",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+              }
+            }
+          ]
+        },
+        {
+          "id": "FEAT_BRIQUES",
+          "capacites": [
+            {
+              "id": "CAP_R4_destruction",
+              "capacite": "R4 — Destruction en une frappe : au contact balle↔brique, la brique disparaît de la grille au même tick et n'est plus collidable.",
+              "source_ref": "E4",
+              "expected_proof": {
+                "kind": "mutation",
+                "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+              }
+            },
+            {
+              "id": "CAP_R5_progres",
+              "capacite": "R5 — Progrès mesurable : à chaque brique détruite, window.__game.bricksRemaining décroît d'exactement une unité.",
+              "source_ref": "E5",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S2_etats_terminaux",
+      "features": [
+        {
+          "id": "FEAT_FIN_PARTIE",
+          "capacites": [
+            {
+              "id": "CAP_R6_victoire",
+              "capacite": "R6 — Victoire terminale unique : quand la dernière brique disparaît, window.__game.state vaut 'won', un panneau VICTOIRE s'affiche et la simulation se fige.",
+              "source_ref": "E6",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+              }
+            },
+            {
+              "id": "CAP_R7_defaite",
+              "capacite": "R7 — Défaite terminale : quand la balle franchit le bord bas sans vie restante, window.__game.state vaut 'lost', un panneau DÉFAITE s'affiche et la simulation se fige.",
+              "source_ref": "E7",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "S3_socle_n1",
+      "features": [
+        {
+          "id": "FEAT_DETERMINISME",
+          "capacites": [
+            {
+              "id": "CAP_R9_determinisme",
+              "capacite": "R9 — Déterminisme par seed : à seed et suite d'entrées identiques, deux exécutions du module .mjs produisent le même hash d'état final.",
+              "source_ref": "E9",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+              }
+            },
+            {
+              "id": "CAP_R10_inspectable",
+              "capacite": "R10 — État inspectable : window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}, indépendamment du rendu DOM.",
+              "source_ref": "E10",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "check_decompo.mjs exige le littéral 'main.tscn' (scène Godot) dans la preuve d'entrée de toute exigence PLAYER+affordance (E2), ce qui rend s3-decompo mécaniquement FAIL pour la lignée web du charter dès qu'une action joueur est couverte, sauf à fabriquer main.tscn — interdit par le charter (hors_scope Godot) et le garde-fou (preuve héritée, jamais inventée)", "root_cause": "la règle B/V4 GAME LOOP est codée en dur sur le fichier de scène Godot main.tscn ; la lignée web/HTML du projet n'a pas de fichier de scène, incompatibilité oracle↔charter non tranchée"}

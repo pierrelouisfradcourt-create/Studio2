@@ -1,0 +1,117 @@
+projet: v2_breakout_slice
+intention: 'Premier run réel du Studio V2 après migration : prouver que la chaîne
+  de la Forge s''exécute de bout en bout dans les surfaces V2 (forge/ · EVIDENCE/
+  · GAMES/ · knowledge_base/) et produit un jeu jouable accompagné de preuves vérifiables.
+  Le jeu choisi est volontairement minimal — un casse-briques web — pour qu''un échec
+  soit immédiatement attribuable à la migration plutôt qu''à la complexité du jeu.
+  Sa qualité ludique n''est pas l''objet de RUN M.'
+contraintes:
+  normative_refs:
+  - spec: FORGE_DESIGN_FREEDOM_SPEC_V0
+    rules:
+    - N1
+    - N2
+    - N3
+    - N4
+    - N7
+    - N8
+    - N9
+  project_specific:
+    techniques:
+    - 'cible technique conforme au socle N1 : page HTML+JS unique, RNG seedé, logique
+      métier en module .mjs testable hors navigateur, exposition window.__game, actions
+      DOM-only, déterminisme reproductible par hash'
+    - 'lignée WEB imposée — aucun binaire Godot ni Blender requis. La matrice de dépendances
+      externes du Studio V2 classe Godot et Blender en dépendances de CAPACITÉ, jamais
+      en préconditions globales : ce run doit rester exécutable sans eux, et un recours
+      silencieux à l''un ou l''autre est un écart à signaler'
+    experimentales:
+    - 'RUN M = preuve de bout en bout de la MIGRATION V1 -> V2 (surfaces, chemins,
+      contrats, oracles, sceau de preuve), pas de la topologie cible V2 : celle-ci
+      n''est pas construite au moment de ce run et ne peut donc être ni testée ni
+      prétendue'
+    - 'un échec est un résultat expérimental recevable : le run doit dire OÙ la chaîne
+      casse dans les surfaces V2, jamais produire un vert par contournement'
+cible: web/HTML
+references_autorisees: []
+criteres_sortie:
+- 'le run s''exécute dans les surfaces V2 : run_dir sous EVIDENCE/runs/, jamais lab/'
+- le jeu est écrit sous GAMES/runm_breakout/, jamais games/ ni ailleurs
+- charter produit par s0 et validé par check_charter
+- prisme.json, featuremap.json, blueprint et wiremap.json produits et validés par
+  leurs oracles amont
+- chaque ligne de wiremap porte un `couvre` NON VIDE citant l'id EXACT d'une capacité
+  de featuremap.json
+- le reçu de jointure `join_check` est présent dans state.json avec un `regime` explicite
+  (JOINED / PARTIAL / VOID / EMPTY_FORM / NOT_APPLICABLE) — advisory, il ne bloque
+  rien, mais son absence signalerait que la recopie du reçu n'a pas eu lieu
+- preuves s10 produites (s10a-oracle-code, s10b-oracle-archi, s10c-oracle-wiremap)
+- verdict signé HMAC produit ET re-vérifié authentique par verify_run — pas seulement
+  présent
+- la clé de signature utilisée est celle de V2 (forge/.forge_key), jamais une clé
+  héritée de V1
+- le jeu se charge dans un navigateur et une partie complète est jouable au clavier
+- LM Studio indisponible => HALT/BLOCKED sans repli silencieux vers une autre source
+- aucun artefact n'est écrit hors des surfaces V2 déclarées — une écriture dans lab/,
+  scripts/forge/ ou games/ est un FAIL de migration, pas un détail
+libertes_deleguees:
+- choisir le thème visuel et la direction artistique
+- définir la boucle de jeu minimale et ses règles
+- décider du nombre de briques, de vies, de niveaux et du dimensionnement
+- choisir les interactions et les affordances du joueur
+- arbitrer les détails de conception non spécifiés par ce Brief
+- choisir la structure interne des modules, dans les limites du socle N1
+non_delegue:
+- les règles normatives citées (N1-N4, N7-N9)
+- les critères de sortie
+- l'autorité des preuves
+- l'autorité du verdict
+- le choix de la lignée web et l'interdiction de dépendre de Godot/Blender
+- la définition du Project Input lui-même
+principe: La chaîne est libre de concevoir le jeu, mais elle ne définit pas elle-même
+  les conditions qui permettent de déclarer la migration réussie.
+provenance:
+  projet: Pierre 2026-09-02 — GO RUN M ; slug dérivé mécaniquement de « RUN M » +
+    « breakout »
+  intention: Pierre 2026-09-02 — « donner une vision de jeu à V2 et regarder si V2
+    sait réellement transformer cette vision en jeu jouable » ; requalifié en bout-en-bout
+    de MIGRATION après mesure préalable (ORDER = 13 stations fixes ; GAME_BLUEPRINT
+    / GAME_FLOW / ARCHITECTURE_CONTRACT cités dans 0 fichier), requalification acceptée
+    par Pierre dans le même échange
+  genre: Pierre 2026-09-02 — casse-briques (Breakout), lignée WEB, choisi explicitement
+    pour son petit périmètre, sa boucle évidente et l'absence de dépendance Godot
+  cible: Pierre 2026-09-02 — « pas besoin de Godot si on reste sur la lignée web »
+    ; conforme au socle N1 déjà cité
+  contraintes: normative_refs cite N1,N2,N3,N4,N7,N8,N9 de FORGE_DESIGN_FREEDOM_SPEC_V0
+    (statut PROPOSED, non ratifiée séparément à ce jour, référencée telle quelle par
+    la hiérarchie normative de FORGE_PROJECT_INPUT_V0). N5 et N6 volontairement absentes
+    — voir fog_n5 / fog_n6
+  fog_n5: 'FOG_HUMANGATE Pierre 2026-09-02 : N5 (séparation concepteur/instrumenteur)
+    n''est PAS une exigence de RUN M — le mécanisme n''est pas mécanisé pour ce run.
+    Ne pas prétendre cette règle couverte ni prouvée par ce Brief.'
+  fog_n6: 'FOG_HUMANGATE Pierre 2026-09-02 : N6 (fidélité charter -> build) n''est
+    PAS une exigence de RUN M — mécanisme non mécanisé, identique au statut hérité
+    de V1. Ne pas prétendre cette règle couverte.'
+  references_autorisees: 'FOG_HUMANGATE Pierre 2026-09-02 : aucune référence de conception
+    autorisée. Le casse-briques migré `GAMES/breakout` est un BENCHMARK de régression,
+    pas une source de design — interdiction expresse de le recopier, en tout ou en
+    partie. Idem pour `GAMES/breakout_v2` (lignée Godot, hors périmètre de ce run).'
+  criteres_sortie: Pierre 2026-09-02 pour les 10 critères de topologie et de jouabilité
+    (verbatim ou dérivés de sa mission RUN M) ; les critères portant sur les surfaces
+    V2, la clé de signature V2 et le reçu `join_check` sont ajoutés par l'agent —
+    ils dérivent MÉCANIQUEMENT de la validation de clôture V2 du 2026-09-02, jamais
+    d'un choix de design
+  libertes_deleguees: Pierre 2026-09-02 — « le critère de réussite n'est pas que le
+    jeu soit bon » ; la liberté de conception du jeu est donc entière dans les limites
+    du socle N1
+  non_delegue: Pierre 2026-09-02 (lignée web imposée, autorité des preuves et du verdict)
+  principe: agent (Claude Opus 5) — calqué sur le principe du Brief de RUN 1, même
+    structure
+  redaction_fichier: 'Claude Opus 5 (agent) — structure, mise en forme YAML et répartition
+    des champs ; le contenu normatif est sourcé Pierre 2026-09-02 champ par champ
+    ci-dessus. Aucun champ n''est fabriqué : ce qui n''a pas de source Pierre est
+    explicitement attribué à l''agent avec la mécanique dont il dérive'
+  derivation: 'dérivé de EVIDENCE/briefs/runm_breakout/project_brief.yaml (Pierre
+    2026-09-02) : même intention casse-briques, NOUVEAU nom de projet — D4 ratifiée
+    Pierre 2026-09-03 (slice V2, comparable à la baseline, jamais présenté comme son
+    replay). Contenu inchangé hors `projet`.'

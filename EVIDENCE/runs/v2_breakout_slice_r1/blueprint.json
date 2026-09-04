@@ -1,0 +1,44 @@
+{
+ "deps_interdites": [
+  [
+   "engine",
+   "render"
+  ],
+  [
+   "engine",
+   "input"
+  ],
+  [
+   "engine",
+   "main.mjs"
+  ],
+  [
+   "input",
+   "engine"
+  ],
+  [
+   "input",
+   "render"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "main.mjs"
+  ],
+  [
+   "render",
+   "main.mjs"
+  ]
+ ],
+ "modules": [
+  "engine",
+  "input",
+  "render",
+  "main.mjs",
+  "index.html",
+  "tests"
+ ]
+}

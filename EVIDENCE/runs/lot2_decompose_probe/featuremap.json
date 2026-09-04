@@ -1,0 +1,140 @@
+{
+ "game_id": "runm_breakout",
+ "systemes": [
+  {
+   "id": "SYS-LOOP",
+   "features": [
+    {
+     "id": "FEAT-GOAL",
+     "capacites": [
+      {
+       "id": "R1",
+       "capacite": "Afficher en continu l'objectif « Détruire toutes les briques » dans le HUD tant que la partie est en cours",
+       "source_ref": "E1",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+       }
+      }
+     ]
+    },
+    {
+     "id": "FEAT-PADDLE",
+     "capacites": [
+      {
+       "id": "R2",
+       "capacite": "ENTRÉE — le joueur agit sur l'affordance `raquette` en maintenant Flèche-Gauche/Droite (entrée clavier DOM de la page unique)",
+       "source_ref": "E2",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+       }
+      },
+      {
+       "id": "R3",
+       "capacite": "EFFET — la raquette suit à l'écran : paddle.x augmente sous Flèche-Droite, diminue sous Flèche-Gauche, reste stable sans touche",
+       "source_ref": "E2",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+       }
+      }
+     ]
+    },
+    {
+     "id": "FEAT-BALL",
+     "capacites": [
+      {
+       "id": "R4",
+       "capacite": "Réfléchir la balle au contact d'un mur ou de la raquette en conservant la norme de sa vitesse",
+       "source_ref": "E3",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+       }
+      }
+     ]
+    },
+    {
+     "id": "FEAT-BRICKS",
+     "capacites": [
+      {
+       "id": "R5",
+       "capacite": "Détruire la brique en un seul contact : elle quitte la grille au même tick et n'est plus collidable",
+       "source_ref": "E4",
+       "expected_proof": {
+        "kind": "mutation",
+        "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+       }
+      },
+      {
+       "id": "R6",
+       "capacite": "Décrémenter bricksRemaining d'exactement 1 à chaque brique détruite, le compteur affiché suivant",
+       "source_ref": "E5",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS-END",
+   "features": [
+    {
+     "id": "FEAT-END",
+     "capacites": [
+      {
+       "id": "R7",
+       "capacite": "Figer la partie en état VICTOIRE quand la dernière brique disparaît",
+       "source_ref": "E6",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+       }
+      },
+      {
+       "id": "R8",
+       "capacite": "Figer la partie en état DÉFAITE quand la balle franchit le bord bas sans vie restante",
+       "source_ref": "E7",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS-N1",
+   "features": [
+    {
+     "id": "FEAT-DET",
+     "capacites": [
+      {
+       "id": "R9",
+       "capacite": "Produire un déroulé reproductible : même seed + mêmes entrées → même hash d'état final, testable hors navigateur",
+       "source_ref": "E9",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+       }
+      },
+      {
+       "id": "R10",
+       "capacite": "Exposer l'état de partie via window.__game (paddle, ball, bricksRemaining, state) indépendamment du rendu DOM",
+       "source_ref": "E10",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

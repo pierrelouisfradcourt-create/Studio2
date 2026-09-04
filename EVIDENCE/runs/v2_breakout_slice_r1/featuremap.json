@@ -1,0 +1,140 @@
+{
+ "game_id": "runm_breakout",
+ "systemes": [
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "R1 — Objectif affiché : tant que la partie est en cours, le HUD `objectif` porte un texte non vide décrivant la destruction du mur.",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+       },
+       "id": "CAP_R1_objectif",
+       "source_ref": "E1"
+      }
+     ],
+     "id": "FEAT_OBJECTIF"
+    },
+    {
+     "capacites": [
+      {
+       "capacite": "R2 (ENTRÉE) — Le joueur agit sur l'affordance « raquette » en pressant/maintenant une touche fléchée gauche ou droite.",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+       },
+       "id": "CAP_R2_entree",
+       "source_ref": "E2"
+      },
+      {
+       "capacite": "R2 (EFFET) — La raquette suit horizontalement le geste : window.__game.paddle.x augmente sous Flèche-Droite, diminue sous Flèche-Gauche, reste stable sans entrée.",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+       },
+       "id": "CAP_R2_effet",
+       "source_ref": "E2"
+      }
+     ],
+     "id": "FEAT_RAQUETTE"
+    },
+    {
+     "capacites": [
+      {
+       "capacite": "R3 — Rebond conservatif : au contact d'un mur ou de la raquette, la composante de vitesse concernée change de signe et la norme de la vitesse est conservée.",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+       },
+       "id": "CAP_R3_rebond",
+       "source_ref": "E3"
+      }
+     ],
+     "id": "FEAT_BALLE"
+    },
+    {
+     "capacites": [
+      {
+       "capacite": "R4 — Destruction en une frappe : au contact balle↔brique, la brique disparaît de la grille au même tick et n'est plus collidable.",
+       "expected_proof": {
+        "kind": "mutation",
+        "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+       },
+       "id": "CAP_R4_destruction",
+       "source_ref": "E4"
+      },
+      {
+       "capacite": "R5 — Progrès mesurable : à chaque brique détruite, window.__game.bricksRemaining décroît d'exactement une unité.",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+       },
+       "id": "CAP_R5_progres",
+       "source_ref": "E5"
+      }
+     ],
+     "id": "FEAT_BRIQUES"
+    }
+   ],
+   "id": "S1_boucle_jeu"
+  },
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "R6 — Victoire terminale unique : quand la dernière brique disparaît, window.__game.state vaut 'won', un panneau VICTOIRE s'affiche et la simulation se fige.",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+       },
+       "id": "CAP_R6_victoire",
+       "source_ref": "E6"
+      },
+      {
+       "capacite": "R7 — Défaite terminale : quand la balle franchit le bord bas sans vie restante, window.__game.state vaut 'lost', un panneau DÉFAITE s'affiche et la simulation se fige.",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+       },
+       "id": "CAP_R7_defaite",
+       "source_ref": "E7"
+      }
+     ],
+     "id": "FEAT_FIN_PARTIE"
+    }
+   ],
+   "id": "S2_etats_terminaux"
+  },
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "R9 — Déterminisme par seed : à seed et suite d'entrées identiques, deux exécutions du module .mjs produisent le même hash d'état final.",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+       },
+       "id": "CAP_R9_determinisme",
+       "source_ref": "E9"
+      },
+      {
+       "capacite": "R10 — État inspectable : window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}, indépendamment du rendu DOM.",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+       },
+       "id": "CAP_R10_inspectable",
+       "source_ref": "E10"
+      }
+     ],
+     "id": "FEAT_DETERMINISME"
+    }
+   ],
+   "id": "S3_socle_n1"
+  }
+ ]
+}

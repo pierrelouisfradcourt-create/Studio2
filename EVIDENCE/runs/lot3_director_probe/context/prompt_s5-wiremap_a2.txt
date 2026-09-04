@@ -1,0 +1,434 @@
+## RÔLE
+WireMap isomorphe (étape 5). Point de vue imposé : cartographe qui fait épouser à la carte l'arbre du blueprint — section = module = dossier.
+
+## EXIGENCES COGNITIVES
+Pensée structurelle : la WireMap est le MÊME arbre que l'architecture, pas une liste plate ; chaque feuille traçable à ses fichiers/fonctions.
+
+## MÉMOIRE DE TRAVAIL
+Consomme le blueprint (étape 4) + la featuremap (étape 3). Connaît la convention WireMap du studio (colonnes fichiers/fonction/version/preuve/statut).
+
+## OBJECTIF
+Produire la WireMap isomorphe au blueprint : section = module = dossier ; chaque feature mappée à ses fichiers/fonctions avec preuve attendue et statut.
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Construction de la WireMap épousant l'architecture, colonnes complètes par feuille (fichiers, fonction, version, preuve, statut).
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Ne code rien ; ne modifie ni le blueprint ni la featuremap ; ne décide pas l'ownership (c'est l'archi).
+
+## PERMISSIONS
+read: repo + blueprint + featuremap. write: la WireMap uniquement. create: WireMap. run: aucun. delete: aucun.
+
+## GARDE-FOU
+Isomorphisme STRICT WireMap ↔ blueprint (jamais une liste plate). Chaque ligne porte une preuve attendue. Toute divergence sera signalée par l'oracle wiremap. V4 GAME LOOP (2026-08-22, GO Pierre) : une ligne par affordance de `loop.json` : `category: system.adapter`, `provides: ["affordance:<nom>"]`, `fichiers` = l'adaptateur d'entrée qui la relie à sa règle ; `couvre` cite la capacité d'ENTRÉE correspondante. Chaque ligne `affordance:<x>` `requires` la capacité système qu'elle déclenche (jamais un `requires` vide) ; la ligne système résolue par ce `requires` (ou une ligne atteinte transitivement via ses propres `requires`, profondeur ≤ 3) `couvre` la feuille d'EFFET (`file_write`/`visual`) de la MÊME exigence que la feuille d'ENTRÉE couverte par la ligne d'affordance — c'est la chaîne affordance → input → système → effet, vérifiée par résolution d'ids (`check_wiremap_contract`, finding `maillon_non_lie`), sans champ nouveau.
+
+## CRITÈRES DE RÉUSSITE
+WireMap isomorphe au blueprint ; 7 colonnes remplies (section, feature, fichiers, fonction, version, preuve, statut) ; chaque feature de la featuremap présente.
+
+## ORACLES / TESTS
+DEUX ORACLES, DEUX MOMENTS — ne pas les confondre. AVANT build (ici) : `node forge/check_wiremap_contract.mjs <run_dir>/wiremap.json --featuremap <run_dir>/featuremap.json` répond « la carte couvre-t-elle le plan ? » (toute capacité portée par ≥1 ligne, aucun `couvre` fantôme) ET « chaque affordance est-elle LIÉE à un effet réel ? » (finding `maillon_non_lie`, `stats.affordances`/`affordances_liees`). APRÈS build (étape s10c) : `forge.static_oracles.check_wiremap` répond « la carte correspond-elle au code ? » (fichiers existants, fonctions définies). En amont aucun fichier n'est écrit : ce n'est pas ton oracle. Les règles d'ÉTAT de ligne restent à `forge.standard_oracles.check_line_states`, le placement à `check_placement`. Jamais de LLM-as-judge.
+
+## CONTRAT DE SORTIE
+wiremap : {section=module, features[{feature, fichiers[], fonction, version, preuve, statut}]} — ou le schéma v2 {systems[], lines[]} (standard/SCHEMA.md §3). DANS LES DEUX CAS, chaque ligne porte en plus `couvre: ["<id de capacité>"]`, NON VIDE, citant l'`id` EXACT d'une capacité (feuille) de featuremap.json. Sans ce champ, le delta attendu-vs-réel n'est calculable par personne : une carte qui ne dit pas ce qu'elle réalise ne se confronte à aucun plan.
+
+## RAPPORT FINAL
+Restitution standard : cite le reçu de check_wiremap_contract ; liste les capacités non couvertes ; claim_verdict: NO_CLAIM_ALLOWED. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- forge/standard/repo_map.yaml
+- forge/contracts/SCHEMA.md
+- blueprint.yaml produit par l'étape 4
+- la featuremap produite par l'étape 3
+- EVIDENCE/runs/<projet>/charter.yaml — INTENT LINEAGE : intention humaine, invariants, hors_scope, et le bloc `provenance` (source Pierre, fog_humangate). HERITE, jamais reecrit : l'etape verifie que sa decision la respecte, ou remonte le conflit.
+- forge/standard/repo_map.yaml — TABLE FIGEE des racines et des gabarits d'adresse. Realite verifiable, pas une intention : toute adresse decidee ici y est confrontee (defaut mesure 2026-08-05 : racine 04_CONTENT inventee, 232 019 tokens de reprise).
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s5-wiremap:lot3_director_probe:2
+
+## TÂCHE CONCRÈTE (lot3_director_probe / s5-wiremap)
+Produis la WireMap du projet 'runm_breakout' (code sous .). Termine ta réponse par UN bloc ```json ... ``` contenant EXACTEMENT un objet de la forme {"features": [{"feature": "R1 <nom>", "fonction": "<nom de fonction implémentant la règle>", "fichiers": ["<chemin relatif à la racine du code>"], "preuve": "<test ou preuve>"}, ...]} — format lu par forge.static_oracles.check_wiremap. Pour CHAQUE feature : fonction NON VIDE et fichiers NON VIDE (str non vides) — une fonction ou des fichiers vides rendent la feature invérifiable et sont rejetés par l'exécuteur. Tu n'écris AUCUN fichier : l'exécuteur matérialise lui-même wiremap.json depuis ce bloc.
+
+## MESSAGE DU DIRECTOR — objection AMD-20260903T164128Z-join-lines-without-couvre-wiremap-lot3-director-
+JOIN_LINES_WITHOUT_COUVRE : ta production précédente n'a pas joint la feature_map
+jointure de design mesurée par check_wiremap_contract : régime EMPTY_FORM, 0/10 capacités couvertes, 9 ligne(s) sans couvre, 0 fantôme(s). Effet de ta dernière convocation : CHANGED. Chaque ligne `couvre` doit citer l'id EXACT d'une capacité de la feature_map lue dans le Blueprint ; cite l'identifiant de ce message dans ta sortie.
+Cite l'identifiant AMD-20260903T164128Z-join-lines-without-couvre-wiremap-lot3-director- dans ta sortie pour acquitter.
+
+## GAME_BLUEPRINT — sections lues (SOURCE UNIQUE de ton contexte projet ; les fichiers homonymes du run_dir n'en sont que des projections)
+
+### gameplay (v1 · content_sha256=4b392460de5540070d79f80eacac28a61cb9b6fbee97495d6ed99b3026845fa1)
+```yaml
+actions_interdites:
+- Recopier tout ou partie de GAMES/breakout ou GAMES/breakout_v2 (benchmark, pas source
+  de design).
+- Dépendre de Godot ou Blender, ou y recourir silencieusement.
+- Écrire un artefact hors des surfaces V2 déclarées (lab/, scripts/forge/, games/)
+  — FAIL de migration, pas un détail.
+- 'Produire un vert par contournement : un échec doit dire OÙ la chaîne casse dans
+  les surfaces V2.'
+- 'Signer avec une clé héritée de V1 : la clé de signature est forge/.forge_key (V2).'
+- Modifier les lanes protégées tests/ ou src/ (zone protégée, gate Pierre explicite
+  requise).
+criteres_demo:
+- Une raquette visible se déplace horizontalement à l'écran quand le joueur appuie
+  sur les touches de direction.
+- Une balle visible se déplace et rebondit visiblement sur les murs et sur la raquette.
+- Une brique touchée par la balle disparaît visiblement de l'écran.
+- Un état de VICTOIRE s'affiche à l'écran lorsque toutes les briques ont disparu.
+- Un état de DÉFAITE s'affiche à l'écran lorsque la balle est perdue (tombe hors de
+  l'aire de jeu).
+criteres_succes:
+- 'Le jeu est écrit SOUS GAMES/runm_breakout/, conforme au socle N1 : page HTML+JS
+  unique, RNG seedé, logique métier en module .mjs testable HORS navigateur, exposition
+  window.__game, actions DOM-only, déterminisme reproductible par hash. (project_brief.contraintes.project_specific.techniques
+  + criteres_sortie #2.)'
+- 'Une partie COMPLÈTE est jouable au clavier dans un navigateur : la balle rebondit
+  sur les murs et la raquette, les briques disparaissent au contact, la victoire (mur
+  vidé) et la défaite (balle perdue) sont toutes deux atteignables. (criteres_sortie
+  #9.)'
+- 'Déterminisme reproductible : à seed égal, déroulé identique (vérifiable par hash).
+  (socle N1.)'
+- La logique .mjs est testable hors navigateur (au moins un test unitaire node passe).
+  (socle N1.)
+- 'Aucun artefact écrit hors des surfaces V2 : run_dir sous EVIDENCE/runs/ (jamais
+  lab/), jeu sous GAMES/runm_breakout/ (jamais games/). (criteres_sortie #1, #2, #12.)'
+- 'NOTE DE RENVOI : la liste AUTORITAIRE et complète des critères de sortie de MIGRATION
+  (charter validé par check_charter, oracles amont prisme/featuremap/blueprint/wiremap,
+  couverture `couvre`, reçu join_check, preuves s10, verdict HMAC re-vérifié par verify_run
+  avec la clé V2, HALT si LM Studio indisponible) vit dans project_brief.criteres_sortie
+  (12 items, Pierre 2026-09-02) et n''est PAS re-décidée ici.'
+hors_scope:
+- 'Toute lignée NON web : aucun binaire Godot ni Blender requis ni utilisé — un recours
+  silencieux à l''un ou l''autre est un écart à signaler. (Pierre : Godot/Blender
+  = dépendances de capacité, jamais préconditions globales.)'
+- 'Recopier tout ou partie de GAMES/breakout ou GAMES/breakout_v2 : ce sont des BENCHMARKS
+  de régression, jamais des sources de design (interdiction expresse Pierre, provenance.references_autorisees).'
+- 'Construire ou prétendre tester la topologie CIBLE de V2 (Fable directeur, capacités
+  convoquées dynamiquement, GAME_BLUEPRINT / GAME_FLOW / ARCHITECTURE_CONTRACT) :
+  elle n''est pas construite au moment de RUN M et ne peut donc être ni testée ni
+  revendiquée.'
+- 'Prétendre couvrir N5 (séparation concepteur/instrumenteur) ou N6 (fidélité charter->build)
+  : FOG_HUMANGATE Pierre — mécanismes non mécanisés pour ce run.'
+- 'Multi-niveaux, tableau de scores en ligne, persistance de sauvegarde, audio riche,
+  portage mobile/tactile : hors du V1 minimal jouable.'
+- Écrire du code d'architecture (étape 4), faire le world scan (étape 2), toucher
+  aux lanes protégées (tests/, src/).
+joueur_cible: 'Un joueur clavier occasionnel — en pratique le testeur du run — qui
+  ouvre la page dans un navigateur et joue une partie complète, sans tutoriel ni apprentissage
+  préalable. Le jeu est jugé sur sa jouabilité au clavier, pas sur sa richesse. (Dérivé
+  du critère de sortie Pierre « le jeu se charge dans un navigateur et une partie
+  complète est jouable au clavier », project_brief.criteres_sortie #9.)'
+objectif: 'Créer de zéro, sous GAMES/runm_breakout/, un casse-briques web minimal
+  mais COMPLET et jouable : une raquette pilotée au clavier renvoie une balle qui
+  détruit un mur de briques. Condition de VICTOIRE : toutes les briques sont détruites.
+  Condition de DÉFAITE : la balle tombe hors de l''aire de jeu (perte de la/des vie·s).
+  Le jeu est tenu volontairement minimal pour qu''un échec soit attribuable à la MIGRATION
+  V1->V2, pas à la complexité du jeu — sa qualité ludique n''est pas l''objet du run.
+  (Source : project_brief.intention + provenance.intention, Pierre 2026-09-02.)'
+plateforme_cible: 'web/HTML — page HTML+JS unique conforme au socle N1, exécutable
+  dans un navigateur sans aucun binaire externe. (Source Pierre : project_brief.cible
+  « web/HTML » + provenance.cible « pas besoin de Godot si on reste sur la lignée
+  web ».)'
+reference_jeu: 'Casse-briques / Breakout — modèle de GENRE choisi EXPLICITEMENT par
+  Pierre le 2026-09-02 (provenance.genre : « casse-briques (Breakout), lignée WEB,
+  choisi explicitement pour son petit périmètre, sa boucle évidente et l''absence
+  de dépendance Godot »). ATTENTION : référence de GENRE uniquement, PAS une source
+  de design — la recopie du casse-briques migré GAMES/breakout (benchmark de régression)
+  est expressément interdite. Provenance Pierre traçable ; ce champ n''est PAS une
+  invention d''agent.'
+
+```
+
+### feature_map (v1 · content_sha256=b5a0e68f92d9eb043e2ffcbf7c0f8eec65a6ff9d072511206d63d121d7d59fec)
+```json
+{
+ "game_id": "runm_breakout",
+ "systemes": [
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "Tant que la partie est en cours, le HUD `objectif` affiche un texte non vide décrivant la destruction du mur.",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot ouvre la page ; le HUD `objectif` contient un texte non vide décrivant la destruction du mur."
+       },
+       "id": "R1c1_hud_objectif_nonvide",
+       "source_ref": "E1"
+      }
+     ],
+     "id": "R1_objectif_affiche"
+    }
+   ],
+   "id": "S1_HUD_OBJECTIF"
+  },
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "ENTRÉE — Le joueur agit sur l'affordance `raquette` en maintenant Flèche-Gauche ou Flèche-Droite au clavier.",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+       },
+       "id": "R2c1_entree_touches_raquette",
+       "source_ref": "E2"
+      },
+      {
+       "capacite": "EFFET — La raquette se déplace horizontalement à l'écran : window.__game.paddle.x augmente sous Flèche-Droite, diminue sous Flèche-Gauche, reste constant sans touche.",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot presse Flèche-Droite N frames : window.__game.paddle.x augmente ; avec Flèche-Gauche, il diminue ; sans touche, il ne change pas."
+       },
+       "id": "R2c2_effet_deplacement_raquette",
+       "source_ref": "E2"
+      }
+     ],
+     "id": "R2_controle_raquette"
+    }
+   ],
+   "id": "S2_CONTROLE_JOUEUR"
+  },
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "Au contact d'un mur ou de la raquette, la composante de vitesse concernée s'inverse et la norme |v| est conservée (aucune perte d'énergie non intentionnelle).",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "À seed fixe, le module .mjs simule un contact balle-mur : le signe de la composante de vitesse concernée (vx ou vy) s'inverse et |v| est conservée."
+       },
+       "id": "R3c1_reflexion_conservative",
+       "source_ref": "E3"
+      }
+     ],
+     "id": "R3_rebond_conservatif"
+    },
+    {
+     "capacites": [
+      {
+       "capacite": "Au contact balle↔brique, la brique disparaît de la grille au même tick et n'est plus collidable ; la balle rebondit. Aucune brique n'exige un second contact.",
+       "expected_proof": {
+        "kind": "mutation",
+        "statement": "Retirer la déduction « 1 frappe » (exiger 2 contacts) fait échouer le test : après un contact la brique doit être absente de window.__game.bricks."
+       },
+       "id": "R4c1_brique_disparait_un_tick",
+       "source_ref": "E4"
+      }
+     ],
+     "id": "R4_destruction_une_frappe"
+    }
+   ],
+   "id": "S3_PHYSIQUE_COLLISIONS"
+  },
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "À chaque brique détruite, window.__game.bricksRemaining décroît d'exactement 1 et le compteur de briques restantes affiché suit.",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Après un contact balle-brique simulé, window.__game.bricksRemaining a diminué de 1 exactement."
+       },
+       "id": "R5c1_decrement_unitaire",
+       "source_ref": "E5"
+      }
+     ],
+     "id": "R5_progres_mesurable"
+    }
+   ],
+   "id": "S4_PROGRESSION_RECOMPENSE"
+  },
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "Quand la dernière brique disparaît (bricksRemaining=0), window.__game.state vaut 'won', un panneau « VICTOIRE » s'affiche et la simulation se fige (aucun niveau suivant, aucun reset de prestige).",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot détruit toutes les briques : window.__game.state vaut 'won' et un panneau « VICTOIRE » est affiché."
+       },
+       "id": "R6c1_etat_won",
+       "source_ref": "E6"
+      }
+     ],
+     "id": "R6_victoire_terminale"
+    },
+    {
+     "capacites": [
+      {
+       "capacite": "Quand la balle franchit le bord bas de l'aire sans vie restante, window.__game.state vaut 'lost', un panneau « DÉFAITE » s'affiche et la simulation se fige.",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Un bot laisse tomber la balle : window.__game.state vaut 'lost' et un panneau « DÉFAITE » est affiché."
+       },
+       "id": "R7c1_etat_lost",
+       "source_ref": "E7"
+      }
+     ],
+     "id": "R7_defaite_terminale"
+    }
+   ],
+   "id": "S5_ETATS_TERMINAUX"
+  },
+  {
+   "features": [
+    {
+     "capacites": [
+      {
+       "capacite": "À seed identique et suite d'entrées identique, deux exécutions du module .mjs produisent le même hash d'état final.",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Le module .mjs est exécuté deux fois hors navigateur avec le même seed et les mêmes entrées ; les deux hash d'état final sont égaux."
+       },
+       "id": "R8c1_hash_stable_par_seed",
+       "source_ref": "E9"
+      }
+     ],
+     "id": "R8_determinisme"
+    },
+    {
+     "capacites": [
+      {
+       "capacite": "window.__game expose à tout instant paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state ∈ {playing, won, lost}, indépendamment du rendu DOM.",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Après chargement, window.__game existe et expose paddle, ball, bricksRemaining, state ; un test node importe le .mjs et lit ces champs."
+       },
+       "id": "R9c1_window_game_expose",
+       "source_ref": "E10"
+      }
+     ],
+     "id": "R9_etat_inspectable"
+    }
+   ],
+   "id": "S6_SOCLE_N1"
+  }
+ ]
+}
+```
+
+### architecture_contract (v1 · content_sha256=842ebc44d1d8dac1348de58334afa07533adb6dcaaf816b589a13163c064ac4c)
+```json
+{
+ "deps_interdites": [
+  [
+   "engine",
+   "render"
+  ],
+  [
+   "engine",
+   "input"
+  ],
+  [
+   "engine",
+   "main"
+  ],
+  [
+   "render",
+   "engine"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "render",
+   "main"
+  ],
+  [
+   "input",
+   "engine"
+  ],
+  [
+   "input",
+   "render"
+  ],
+  [
+   "input",
+   "main"
+  ]
+ ],
+ "modules": [
+  "engine",
+  "render",
+  "input",
+  "main"
+ ],
+ "ownership": {
+  "engine": "simulation-deterministe",
+  "input": "capture-clavier",
+  "main": "composition-root",
+  "render": "presentation-dom"
+ },
+ "responsabilites": [
+  {
+   "couvre": [
+    "R2_controle_raquette",
+    "R3_rebond_conservatif",
+    "R4_destruction_une_frappe",
+    "R5_progres_mesurable",
+    "R6_victoire_terminale",
+    "R7_defaite_terminale",
+    "R8_determinisme",
+    "R9_etat_inspectable"
+   ],
+   "dependances": [],
+   "module": "engine",
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "engine.mjs importe hors navigateur par un test node produit a seed fixe : inversion de la composante de vitesse avec |v| conservee a un contact mur/raquette (R3), brique absente de l'etat au tick du contact et non recollidable (R4), bricksRemaining decremente d'exactement 1 (R5), state='won' a bricksRemaining=0 (R6) / 'lost' quand la balle franchit le bord bas sans vie (R7), et deux executions a seed+entrees identiques donnent le meme hash d'etat final (R8)."
+   },
+   "responsabilite": "Simulation metier pure et deterministe : etat {paddle, ball, bricks, bricksRemaining, state}, rebond conservatif (|v| conservee), destruction one-shot des briques, decrement unitaire, transitions terminales won/lost, RNG seede et hash d'etat reproductible. Aucune connaissance du DOM ni du clavier."
+  },
+  {
+   "couvre": [
+    "R2_controle_raquette"
+   ],
+   "dependances": [],
+   "module": "input",
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Un bot presse Fleche-Droite N frames puis Fleche-Gauche : l'intention exposee par input, appliquee par engine via main, fait croitre puis decroitre window.__game.paddle.x ; sans touche, paddle.x reste constant."
+   },
+   "responsabilite": "Adaptateur entrant : capture des intentions clavier (Fleche-Gauche / Fleche-Droite) et exposition d'un etat d'entree neutre (gauche/droite/aucune). Ne mute jamais la logique ni le rendu ; traduit un evenement DOM en intention, rien de plus."
+  },
+  {
+   "couvre": [
+    "R1_objectif_affiche",
+    "R6_victoire_terminale",
+    "R7_defaite_terminale"
+   ],
+   "dependances": [],
+   "module": "render",
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "A l'ouverture de la page le HUD objectif contient un texte non vide decrivant la destruction du mur (R1) ; quand l'etat passe a 'won' un panneau VICTOIRE est affiche (R6), a 'lost' un panneau DEFAITE (R7)."
+   },
+   "responsabilite": "Adaptateur sortant : rendu DOM d'un instantane d'etat RECU (jamais lu directement dans engine) — HUD objectif non vide, raquette, balle, briques restantes, panneaux terminaux VICTOIRE / DEFAITE. Vue en lecture seule : ne mute aucun etat, ne lit aucune entree."
+  },
+  {
+   "couvre": [
+    "R9_etat_inspectable"
+   ],
+   "dependances": [
+    "engine",
+    "input",
+    "render"
+   ],
+   "module": "main",
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Apres chargement, window.__game existe et expose paddle.x, ball.{x,y,vx,vy}, bricksRemaining et state dans {playing,won,lost} ; un test node verifie que main cable engine<->input<->render sans que engine importe render ou input."
+   },
+   "responsabilite": "Racine de composition et boucle de jeu : instancie engine (seed), lit l'intention de input, avance la simulation d'un tick, passe l'instantane a render, et expose window.__game (paddle, ball, bricksRemaining, state) independamment du rendu. Unique module autorise a dependre des trois autres."
+  }
+ ]
+}
+```
