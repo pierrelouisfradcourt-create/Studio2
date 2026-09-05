@@ -2,11 +2,11 @@
 variantes) sans override humain explicite. Mission P2 (contrat
 scripts/forge/contracts/p2-garde-git-mecanique.yaml).
 
-**PRÉPARÉ, NON CÂBLÉ** : ce fichier n'est référencé nulle part dans
-`.claude/settings.json` tant que le patch proposé dans
-docs/forge/GARDE_GIT_MECANIQUE_PROPOSITION.md n'est pas appliqué par Pierre.
-`git diff -- .claude/settings.json` doit rester VIDE tant que cette mission
-n'est pas ratifiée.
+**CÂBLÉ ET ACTIF** (corrigé le 2026-09-05, gate 5) : référencé DEUX FOIS dans
+`.claude/settings.json`, sur les matchers `Bash` et `PowerShell` — il s'exécute donc
+à chaque commande. Le docstring affirmait jusqu'ici « PRÉPARÉ, NON CÂBLÉ : ce fichier
+n'est référencé nulle part », ce qui était faux : un fichier qui se décrit comme
+inactif pendant qu'il garde le dépôt est pire qu'un fichier sans docstring.
 
 Contrat Claude Code : lit l'événement PreToolUse en JSON sur stdin. Sort 0 pour
 autoriser, 2 pour BLOQUER (le message stderr est remonté au modèle). Patron
@@ -17,6 +17,7 @@ la justification -- fail-closed total sur TOUT Bash/PowerShell serait un risque
 de disponibilité disproportionné).
 """
 import json
+import re
 import sys
 
 # Noms d'outils couverts par ce garde. LIMITE ASSUMÉE : si un futur outil
@@ -24,6 +25,27 @@ import sys
 # "Execute" propre à un autre environnement), il N'EST PAS couvert tant qu'il
 # n'est pas ajouté ici -- documenté dans la proposition.
 GUARDED_TOOLS = ("Bash", "PowerShell")
+
+# Heuristique du chemin d'exception UNIQUEMENT : « cette commande parle-t-elle de git ? ».
+# Elle ne décide RIEN quand le garde fonctionne — c'est `forge.git_guard.evaluate_command`
+# qui tranche. Elle décide seulement s'il faut refuser fail-closed quand le garde est
+# indisponible.
+#
+# ÉTAIT une sous-chaîne `"git" in command.lower()`, corrigée le 2026-09-05 (gate 5) après
+# mesure : elle refusait `cat .gitignore`, `ls digital/`, `echo legitime` — perte de
+# disponibilité sur des lectures inoffensives, précisément quand le garde est déjà cassé.
+#
+# DÉLIBÉRÉMENT DIFFÉRENTE de `forge.git_guard._GIT_WORD`, et c'est mesuré : celle-ci exclut
+# `\w`, `.` et `-` avant le mot, mais PAS `/`. Aligner à l'identique aurait laissé passer
+# `/usr/bin/git checkout` et `C:/outils/git.exe`, que la sous-chaîne refusait. Un
+# fail-closed doit être PLUS large que la détection, jamais plus étroit.
+# Score mesuré sur 9 cas : sous-chaîne 5/9, `_GIT_WORD` à l'identique 7/9, celle-ci 9/9.
+#
+# DUPLICATION ASSUMÉE : ce module ne peut PAS importer `forge.git_guard` pour obtenir cette
+# regex — tout l'intérêt est de fonctionner quand cet import échoue. `re` est stdlib, donc
+# le test reste pur. `forge/tests/test_git_guard_hook.py` vérifie que les deux motifs
+# restent cohérents.
+_GIT_MENTION = re.compile(r"(?<![\w.-])git(?:\.exe)?(?=\s|$)", re.IGNORECASE)
 
 
 def main() -> int:
@@ -41,7 +63,7 @@ def main() -> int:
     if not command:
         return 0
 
-    looks_like_git = "git" in command.lower()
+    looks_like_git = bool(_GIT_MENTION.search(command))
 
     try:
         from pathlib import Path
