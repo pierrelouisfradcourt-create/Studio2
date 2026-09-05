@@ -73,7 +73,8 @@ FORGE_ROLES = CONTRACTS_DIR / "roles.yaml"
 # Le registry LOCAL résout le modèle depuis un rôle (ADR-002 gate 1 : jamais de modèle en dur).
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-from control_plane.registry import get_model_for_role, get_provider_for_role  # noqa: E402
+from control_plane.registry import (  # noqa: E402
+    get_model_for_role, get_provider_for_role, probleme_catalogue)
 
 # Sentinelle de « déclaré vide » : décision assumée, distincte d'un oubli.
 SENTINEL_EMPTY = "aucun"
@@ -663,9 +664,17 @@ def resolve_runtime(contract: dict, caps_path: Path | None = None) -> str:
     rôle, le registry force le runtime. Rôle non résolu => RoleUnresolved (refus).
     """
     role = contract["capability_role"]
-    model = get_model_for_role(role, caps_path=caps_path or FORGE_ROLES)
+    chemin = caps_path or FORGE_ROLES
+    model = get_model_for_role(role, caps_path=chemin)
     if not model:
-        raise RoleUnresolved(f"capability_role {role!r} non résolu par le registry")
+        # La CAUSE, pas seulement le verdict (gate 2, 2026-09-05) : fichier absent,
+        # YAML illisible, fichier vide et structure invalide rendaient tous le même
+        # message accusant LE RÔLE — on relisait la liste des rôles, saine, au lieu de
+        # soupçonner le fichier. Le diagnostic n'est calculé QUE sur ce chemin d'échec.
+        cause = probleme_catalogue(chemin)
+        detail = f" — catalogue inexploitable : {cause}" if cause else ""
+        raise RoleUnresolved(
+            f"capability_role {role!r} non résolu par le registry{detail}")
     return model
 
 
