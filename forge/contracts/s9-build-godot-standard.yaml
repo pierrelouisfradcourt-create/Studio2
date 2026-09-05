@@ -89,7 +89,7 @@ out_of_scope: >-
   N'ajoute AUCUNE ligne, aucun système, aucun fichier hors carte — un besoin non prévu se
   REMONTE (ligne BLOCKED motivée), il ne s'improvise pas. Ne modifie ni le charter, ni la
   Genre Bible, ni la design review, ni les tables du standard (capabilities.yaml,
-  repo_map.yaml, core_requirements.yaml), ni les oracles, ni tests/** (zone protégée), ni
+  repo_map.yaml, core_requirements.yaml), ni les oracles, ni la MODIFICATION de les surfaces de test déclarées (forge/test_surfaces.yaml), ni
   autopilot.py / scripts/studioV2/ (lane STUDIO gelée). NE TOUCHE PAS GAMES/pong/** : c'est
   le TÉMOIN DE RÉGRESSION GELÉ — aucune écriture, et n'ouvre jamais son projet dans
   l'éditeur Godot. N'extrait rien du tag `archive/godot-adapter-b0`.
@@ -104,7 +104,7 @@ permissions: >-
   Python est exécuté PAR LE DRIVER, jamais par le forgeron ; cette ligne décrit le
   plafond d'intention, pas le plancher d'exécution.
   delete: aucun. INTERDIT : git commit, git push, git checkout, git stash,
-  git restore, `git add -A`, toute écriture dans GAMES/pong/**, tests/**, autopilot.py,
+  git restore, `git add -A`, toute écriture dans GAMES/pong/**, toute MODIFICATION de les surfaces de test déclarées (forge/test_surfaces.yaml), autopilot.py,
   scripts/studioV2/.
 
 # --- 6. Gouvernance (Critique) ---

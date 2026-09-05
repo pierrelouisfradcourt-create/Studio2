@@ -1,0 +1,64 @@
+# forge.test_surfaces — surfaces de test de V2 et régime qui s'y applique.
+# Ratifié Pierre 2026-09-04 (gates 1, 1-bis, 1-ter). Remplace une doctrine héritée de V1
+# qui vivait dans 26 lignes de PROSE réparties sur 20 fichiers, visant un `tests/` racine
+# ABSENT de V2 — mesuré : 0 fichier. Application de la règle ratifiée 2026-07-23 « aucune
+# décision dans un commentaire » : ce qui influence un comportement est une DONNÉE, pas une
+# phrase répétée dans des prompts.
+#
+# DONNÉES consommées par les mécanismes — AUCUN chemin en dur dans le code. Même patron que
+# forge/reference_protected.yaml. Modifier ce fichier change ce qui est gardé.
+schema: forge.test_surfaces.v1
+
+# --- LE RÉGIME ------------------------------------------------------------------------
+# CRÉER est permis. MODIFIER un test préexistant à la passe est INTERDIT.
+# Pourquoi ce découpage, et pas « ne touche pas aux tests » : le builder Forge PRODUIT des
+# tests — `logic.test.mjs` et `properties.test.mjs` sont des livrables VERSIONNÉS du slice
+# v2_breakout_slice. Interdire la création casserait le modèle de production. Ce qu'on
+# interdit est le geste qui rend vert en réécrivant l'oracle, jamais l'écriture d'un test.
+# Conséquence directe sur le bornage : on refuse `Edit(<surface>)`, jamais `Write(<surface>)`.
+regime: create_allowed_modify_denied
+
+# --- LES SURFACES ---------------------------------------------------------------------
+# Trois conventions COEXISTENT réellement en V2 ; aucune ne couvre les deux autres.
+# Comptes résolus le 2026-09-04 par `git ls-files --cached --others --exclude-standard`,
+# le même mécanisme que la garde d'empreinte (respecte .gitignore) :
+#   forge/tests/**         251  suite T0 du tronc — la seule que la validation T0 exécute
+#   GAMES/*/tests/**         8  harnais Godot `run_tests.gd`, un par jeu
+#   GAMES/*/07_TESTS/**    301  oracles de jeu (pacman, breakout_v2, snake, tetris…)
+#   UNION                  560  dont 262 déjà dans l'empreinte, et 298 couvertes par RIEN
+surfaces:
+  - forge/tests/**
+  - GAMES/*/tests/**
+  - GAMES/*/07_TESTS/**
+
+# --- LA DÉROGATION --------------------------------------------------------------------
+# Sentinel DÉJÀ partagé par forge.git_guard et forge.reference_guard — aucune gouvernance
+# neuve n'est créée ici. Schéma lu par `reference_guard._read_derogation` : {reason, paths}.
+# Doctrine reprise telle quelle : absent, illisible ou mal formé -> AUCUNE dérogation,
+# jamais une exception, jamais un octroi implicite. Le fichier est deny-protégé en Write et
+# Edit dans .claude/settings.json : une session ne peut pas se l'auto-écrire. C'est Pierre
+# qui l'écrit — LA DÉROGATION EST LA GATE.
+# `forge/tests/**` reste dans la surface À CE PRIX (décision Pierre 2026-09-04) : le travail
+# sur la Forge modifie légitimement ses tests, et passe donc par une dérogation nommée.
+derogation_path: .claude/HUMAN_GIT_OVERRIDE.json
+
+# --- PORTÉE RÉELLE, ET CE QUI N'EST PAS GARDÉ -----------------------------------------
+# CONSOMMATEUR UNIQUE : `run_real._STEP_DISALLOWED`, via `forge.protected_surfaces`. Il pose
+# `Edit(<surface>)` dans le `--disallowedTools` de CHAQUE appel `claude -p`. La protection
+# couvre donc les ÉTAPES FORGE, et elles seules.
+#
+# CE QUI RESTE SUR L'HONNEUR, décidé par Pierre le 2026-09-04 après spécification : les
+# SESSIONS et les SOUS-AGENTS ne sont bornés par AUCUN mécanisme sur ces surfaces. Un hook
+# PreToolUse avait été spécifié pour les couvrir ; il est ABANDONNÉ. Le geste de dérogation
+# qu'il aurait exigé (écrire le sentinel à chaque modification de test) a échoué deux fois
+# sur deux tentatives le jour même — une garde franchissable seulement par un geste peu
+# fiable serait contournée par Bash, donc pire qu'absente : on se croirait protégé.
+#
+# CONSÉQUENCE À CONNAÎTRE, dite ici plutôt que découverte plus tard : le vecteur réellement
+# emprunté est celui des sessions. Ce sont elles, pas un agent Forge, qui ont écrit dans
+# `forge/tests/` aux Lots 6 et 7. Le bornage protège donc aujourd'hui le vecteur qui n'a
+# jamais servi, et laisse ouvert celui qui sert. Le témoin de ce vecteur reste l'empreinte
+# `forge.reference_guard`, qui DÉTECTE sans bloquer.
+#
+# Une modification de test par une session reste donc légitime sous GO explicite de Pierre,
+# tracée `AUTO_ATTESTED` — jamais maquillée en dérogation mécanique.

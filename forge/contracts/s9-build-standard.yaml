@@ -70,7 +70,7 @@ out_of_scope: >-
   Ne touche PAS au standard lui-même (forge/standard/**) ni aux oracles
   (forge/standard_oracles.py, static_oracles.py) — modifier son propre juge est
   la faute la plus grave possible ici. Ne touche PAS aux contrats d'agent
-  (forge/contracts/**), à knowledge_base/catalog.json, à tests/** (zone protégée),
+  (forge/contracts/**), à knowledge_base/catalog.json, à les surfaces de test déclarées (forge/test_surfaces.yaml) en MODIFICATION,
   à autopilot.py ni scripts/studioV2/ (lane gelée). Ne crée aucun autre jeu. N'AJOUTE ET
   NE RETIRE aucune ligne du squelette, ne modifie aucune `expected_proof`, aucune
   `address`, aucun `provides`/`requires`, aucun budget.
@@ -84,7 +84,7 @@ permissions: >-
   `run_real._STEP_TOOLS` n'accorde PAS Python à cette étape ; le gate mutation est
   exécuté par le DRIVER, cette ligne décrit le plafond d'intention, pas le plancher.
   create: fichiers de son ownership uniquement.
-  delete: aucun. INTERDIT : tests/**, forge/standard/**, forge/*oracles*.py,
+  delete: aucun. INTERDIT : MODIFICATION de les surfaces de test déclarées (forge/test_surfaces.yaml) (création permise), forge/standard/**, forge/*oracles*.py,
   autopilot.py, scripts/studioV2/, git commit, git push.
 
 # --- 6. Gouvernance (Critique) ---

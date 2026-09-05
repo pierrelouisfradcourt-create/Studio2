@@ -157,7 +157,7 @@ out_of_scope: >-
   sens mécanique) ; ne modifie ni ne supprime aucun fichier de GAMES/breakout/ (référence
   intangible d'une expérience externe — JAMAIS le projet cible de ce run) ni de GAMES/pong/**
   ni de GAMES/snake/** (témoins de régression gelés, lecture seule pour CODE_COPIE/CONCEPT) ni
-  de tests/** ni de scripts/**. Aucun git commit/push.
+  de les surfaces de test déclarées (forge/test_surfaces.yaml) ni de scripts/**. Aucun git commit/push.
 
 permissions: >-
   read: dépôt entier. write/create: EVIDENCE/runs/breakout_v2/wiremap.json UNIQUEMENT — ni

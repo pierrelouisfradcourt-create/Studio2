@@ -53,7 +53,7 @@ in_scope: >-
 out_of_scope: >-
   N'attaque JAMAIS les 5 runs réels déjà produits (les receipts sont des faits,
   pas un plan à réviser). Ne rejoue pas cargo/pytest/node --test. Ne touche pas
-  tests/**, src/, autopilot.py, IMPROVEMENT_LEDGER.yaml.
+  les surfaces de test déclarées (forge/test_surfaces.yaml), src/, autopilot.py, IMPROVEMENT_LEDGER.yaml.
 
 # --- 5. Autorisation (Critique) ---
 permissions: >-

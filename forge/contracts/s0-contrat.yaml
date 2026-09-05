@@ -41,7 +41,7 @@ in_scope: >-
   interdites. Écrit uniquement charter.yaml.
 out_of_scope: >-
   N'écrit pas de code. Ne décide pas l'architecture (étape 4). Ne fait pas le
-  world scan (étape 2). Ne touche pas aux lanes protégées (tests/, src/).
+  world scan (étape 2). Ne touche pas à la lane protégée src/ ni à les surfaces de test déclarées (forge/test_surfaces.yaml).
 
 # --- 5. Autorisation (Critique) ---
 permissions: >-

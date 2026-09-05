@@ -48,14 +48,14 @@ in_scope: >-
   Implémentation du code UNIQUEMENT dans l'ownership défini par le blueprint ;
   mise à jour de la WireMap (colonnes fichiers/fonction/version/preuve/statut).
 out_of_scope: >-
-  Ne sort JAMAIS de son ownership (blueprint). Ne touche pas à tests/** (zone
-  protégée). Ne modifie pas l'architecture (blueprint, deps).
+  Ne sort JAMAIS de son ownership (blueprint). Ne modifie pas les surfaces de test déclarées (forge/test_surfaces.yaml).
+  Un test peut être CRÉÉ (c'est un livrable), jamais MODIFIÉ s'il préexiste à ta passe — régime create_allowed_modify_denied, forge/test_surfaces.yaml. Ne modifie pas l'architecture (blueprint, deps).
 
 # --- 5. Autorisation (Critique) ---
 permissions: >-
   read: repo entier. write: UNIQUEMENT les fichiers de son ownership + la WireMap.
   run: l'oracle code (cargo/pytest/vitest via forge/oracles.json). create:
-  fichiers de son ownership uniquement. delete: aucun. INTERDIT: tests/**.
+  fichiers de son ownership uniquement. delete: aucun. INTERDIT: MODIFICATION de les surfaces de test déclarées (forge/test_surfaces.yaml) (création permise).
 
 # --- 6. Gouvernance (Critique) ---
 gardeFou: >-

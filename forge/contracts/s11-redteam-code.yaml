@@ -33,7 +33,7 @@ in_scope: >-
   rapport_redteam_code.md.
 out_of_scope: >-
   Ne voit pas le raisonnement du builder ; ne corrige pas lui-même ; ne touche pas
-  aux lanes protégées (tests/**).
+  à les surfaces de test déclarées (forge/test_surfaces.yaml).
 
 # --- 5. Autorisation (Critique) ---
 permissions: >-

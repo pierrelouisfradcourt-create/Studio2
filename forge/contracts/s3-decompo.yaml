@@ -37,7 +37,7 @@ in_scope: >-
   attendues par feuille. Écrit uniquement la featuremap.
 out_of_scope: >-
   Ne découpe PAS en modules (c'est l'archi, étape 4). Ne code rien. Ne touche pas
-  aux lanes protégées (tests/, src/).
+  à la lane protégée src/ ni à les surfaces de test déclarées (forge/test_surfaces.yaml).
 
 # --- 5. Autorisation (Critique) ---
 permissions: >-

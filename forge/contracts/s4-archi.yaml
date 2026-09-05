@@ -39,7 +39,7 @@ in_scope: >-
   par module, invariants d'architecture. Écrit uniquement blueprint.yaml.
 out_of_scope: >-
   Aucune écriture de code d'implémentation. Ne crée aucun fichier source. Ne
-  décide pas la WireMap (étape 5). Ne touche pas aux lanes protégées (tests/, src/).
+  décide pas la WireMap (étape 5). Ne touche pas à la lane protégée src/ ni à les surfaces de test déclarées (forge/test_surfaces.yaml).
 
 # --- 5. Autorisation (Critique) ---
 permissions: >-

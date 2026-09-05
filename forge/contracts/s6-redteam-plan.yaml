@@ -39,8 +39,8 @@ in_scope: >-
   seuls artefacts.
 out_of_scope: >-
   N'attaque JAMAIS les tests/oracles. Ne réécrit pas le code d'implémentation. Ne
-  juge pas à la place des oracles techniques. Ne touche pas aux lanes protégées
-  (tests/, src/).
+  juge pas à la place des oracles techniques. Ne touche pas à la lane protégée src/
+  ni à les surfaces de test déclarées (forge/test_surfaces.yaml).
 
 # --- 5. Autorisation (Critique) ---
 permissions: >-

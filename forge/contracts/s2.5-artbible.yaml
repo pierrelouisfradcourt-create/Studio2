@@ -231,7 +231,7 @@ permissions: >-
   et node forge/check_artbible.mjs (auto-contrôle de travail SANS autorité
   de preuve — le reçu faisant foi est produit par le DRIVER, fiche 3 2026-08-30).
   create: les deux fichiers de sortie uniquement. delete: aucun. INTERDIT:
-  knowledge_base/** en écriture, tests/**.
+  knowledge_base/** en écriture, MODIFICATION de les surfaces de test déclarées (forge/test_surfaces.yaml).
 
 # --- 6. Gouvernance (Critique) ---
 gardeFou: >-

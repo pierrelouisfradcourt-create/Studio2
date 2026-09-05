@@ -31,6 +31,7 @@ import sys
 import time
 from pathlib import Path
 
+from forge import protected_surfaces as _protected_surfaces
 from forge.contract import FORGE_ROLES, base_step, step_round
 from forge.dispatch import (
     DEDICATED_PROFILE_STEPS, DETERMINISTIC, ORDER, PROFILES, step_timeout_for,
@@ -274,33 +275,46 @@ _STEP_TOOLS: dict[str, tuple[str, ...]] = {
 # l'usine. L'interdiction est posée ici en DENY MÉCANIQUE plutôt qu'en consigne de
 # prompt : une consigne se contourne par inattention, un deny non. Aucune étape n'a de
 # besoin légitime de ce dossier, la borne globale ne coûte donc rien.
-_STEP_DISALLOWED: tuple[str, ...] = (
+_STEP_DISALLOWED_BASE: tuple[str, ...] = (
     "Read(lab/workflow_lab/**/control/**)",
     "Bash(git:*)",
     "PowerShell(git:*)",
     "NotebookEdit",
-    # Zone protégée = le `tests/` DU STUDIO, à la racine du dépôt (règle .claude/rules/
-    # tests.md : « aucun agent ne modifie ces fichiers »). Le motif nu `tests/**` matchait
-    # AUSSI le `tests/` interne d'un projet de jeu : mesuré le 2026-07-28 sur le run
-    # snake-s9r — le forgeron n'a pas pu déposer `GAMES/snake/tests/run_tests.gd`, chemin
-    # pourtant EXIGÉ par godot_oracle.mjs (`res://tests/run_tests.gd`) et déclaré légal par
-    # la catégorie `godot.project_tests` de repo_map. Il a remonté la ligne BLOCKED au lieu
-    # de contourner (comportement voulu). Ancrage à la racine (préfixe `./`) : la protection
-    # du studio est INCHANGÉE, le `tests/` interne d'un jeu redevient déposable.
-    # Correction ratifiée Pierre 2026-07-28 : « le garde-fou visait le tests/ du studio, pas
-    # les tests/ internes d'un projet ».
-    # FORME EXACTE — mesurée, pas devinée (doc officielle permissions.md) : une DENY rule
-    # à segment unique (`tests/**`) matche un dossier de ce nom à N'IMPORTE QUELLE
-    # PROFONDEUR — c'est le comportement documenté des deny rules, pas un bug. Seul le
-    # SLASH INITIAL ancre à la racine. `./tests/**` ne convient PAS : il est relatif au
-    # cwd, pas à la racine du projet (première correction, invalidée par l'exécution du
-    # run snake-s9p — le builder est resté dénié).
-    "Write(/tests/**)", "Edit(/tests/**)",
     # Les jeux sont bornés par leur wiremap (chaque écriture doit être à une `address`
-    # déclarée), pas par ce filtre — d'où l'ancrage plutôt qu'une exception par jeu.
+    # déclarée), pas par ce filtre.
     "Write(forge/contracts/**)", "Edit(forge/contracts/**)",
     "Write(EVIDENCE/chains/**)", "Edit(EVIDENCE/chains/**)",
     "Write(.claude/**)", "Edit(.claude/**)",
+)
+
+# --- SURFACES DE TEST : DÉRIVÉES, plus écrites en dur (GO Pierre 2026-09-04) -----------
+# CE QUI ÉTAIT ICI, et pourquoi ça ne pouvait plus tenir : deux entrées
+# `Write(/tests/**)` / `Edit(/tests/**)` visant le `tests/` DU STUDIO à la racine du dépôt,
+# héritées de V1 — mesuré en V2 : ce dossier n'existe PAS, 0 fichier. La protection était
+# donc inopérante, et la doctrine qui l'accompagnait vivait dans 26 lignes de prose
+# réparties sur 20 fichiers (gates 1 / 1-bis / 1-ter, 2026-09-04).
+#
+# CONNAISSANCE MESURÉE CONSERVÉE, elle reste vraie et sert à lire la dérivation :
+#   - une DENY rule à segment unique (`tests/**`) matche un dossier de ce nom à N'IMPORTE
+#     QUELLE PROFONDEUR (comportement documenté, permissions.md) ; seul le SLASH INITIAL
+#     ancre à la racine ; `./tests/**` ne convient pas (relatif au cwd — première
+#     correction, invalidée par l'exécution du run snake-s9p) ;
+#   - l'ancrage à la racine avait été ratifié Pierre le 2026-07-28 APRÈS incident mesuré
+#     sur le run snake-s9r : le motif nu bloquait le forgeron sur
+#     `GAMES/snake/tests/run_tests.gd`, chemin pourtant EXIGÉ par godot_oracle.mjs
+#     (`res://tests/run_tests.gd`). Il avait remonté BLOCKED au lieu de contourner.
+#
+# POURQUOI L'ANCRAGE N'EST PLUS NÉCESSAIRE : le régime ratifié le 2026-09-04 est
+# `create_allowed_modify_denied` — on refuse `Edit(<surface>)` et JAMAIS `Write(<surface>)`.
+# Le conflit qui avait forcé l'ancrage disparaît : le forgeron peut toujours DÉPOSER
+# `run_tests.gd` (création), il ne peut plus RÉÉCRIRE un test existant. C'est le geste
+# « rendre vert en réécrivant l'oracle » qui est visé, jamais l'écriture d'un test.
+#
+# La liste vient de `forge/test_surfaces.yaml` via `forge.protected_surfaces` : aucun
+# chemin de test n'est plus écrit dans ce fichier. Fail-safe si la déclaration est absente
+# ou mal formée : déni TOTAL de `Edit` (jamais un fail-open), trace explicite.
+_STEP_DISALLOWED: tuple[str, ...] = (
+    _STEP_DISALLOWED_BASE + _protected_surfaces.disallowed_specs_fail_safe()
 )
 
 # --- P1.2 — BORNE POSITIVE DE CAPACITÉ (GO Pierre 2026-08-13) ---------------------

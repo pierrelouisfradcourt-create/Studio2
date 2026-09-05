@@ -3,7 +3,10 @@
 # Source : docs/forge/S10D_CONTRACT_PROPOSAL.md (v2 red-teamée, ratifiée Pierre 2026-07-12)
 #          + annexe docs/forge/S10D_REDTEAM_ADJUDICATION.md.
 # ANNEXE ADVISORY : cette étape est HORS chaîne de promotion (absente de CHAIN/ORDER,
-# non câblée au driver). Aucun test de chaîne ne la couvre (zone protégée) — validation
+# non câblée au driver). Aucun test de chaîne ne la couvre. La raison invoquée jusqu'ici —
+# « zone protégée » — n'en est plus une depuis le 2026-09-04 : le régime
+# create_allowed_modify_denied PERMET de créer un test (forge/test_surfaces.yaml). Ce qui
+# reste vrai est qu'aucun test n'a été écrit, pas qu'il serait interdit. Validation
 # manuelle : python -c "import sys; sys.path.insert(0, 'scripts'); from forge.contract import load_contract, build_dispatch_payload; p = build_dispatch_payload(load_contract('s10d-oracle-visual'), etape='s10d-oracle-visual'); print(p.model)"
 # (attendu : non-llm). Règle : un champ Critique vide/absent => non activable.
 

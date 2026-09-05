@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 import pytest
 
+from forge import protected_surfaces
 import forge.run_real as run_real
 import forge.verify_run as verify_run
 from forge.static_oracles import check_architecture
@@ -110,17 +111,31 @@ def test_disallowed_contient_git_powershell_et_zones_protegees(tmp_path, capture
                     "Write(.claude/**)", "Edit(.claude/**)"):
         assert pattern in denied, f"pattern manquant dans la deny-list: {pattern}"
 
-    # Zone `tests/` DU STUDIO : on vérifie la PROPRIÉTÉ (elle est protégée en écriture
-    # ET en édition), pas la forme littérale du motif — figer la chaîne exacte a fait
-    # échouer ce test lors de son ancrage à la racine le 2026-07-28 alors que la
-    # protection était intacte (règle d'usine n°3 : un test vérifie une propriété
-    # durable, pas une valeur historique). Formes acceptées : `tests/**` (historique)
-    # ou `./tests/**` (ancrée racine, ratifiée Pierre 2026-07-28 — le motif nu bloquait
-    # aussi `GAMES/<jeu>/tests/`, chemin exigé par godot_oracle.mjs).
-    for verbe in ("Write", "Edit"):
-        assert any(
-            d.startswith(f"{verbe}(") and d.rstrip(")").endswith("tests/**") for d in denied
-        ), f"la zone protegee tests/ n'est plus deniee en {verbe} : {denied}"
+    # Surfaces de test : on vérifie la PROPRIÉTÉ, jamais la forme littérale du motif —
+    # figer la chaîne exacte a déjà fait échouer ce test lors de l'ancrage à la racine du
+    # 2026-07-28 alors que la protection était intacte (règle d'usine n°3 : un test vérifie
+    # une propriété durable, pas une valeur historique).
+    #
+    # LA PROPRIÉTÉ A CHANGÉ, par ratification Pierre du 2026-09-04 (gates 1 / 1-bis /
+    # 1-ter) : le régime est `create_allowed_modify_denied`. On refuse `Edit` sur les
+    # surfaces déclarées, et JAMAIS `Write` — le builder Forge PRODUIT des tests
+    # (`logic.test.mjs`, `properties.test.mjs` : livrables versionnés du slice
+    # v2_breakout_slice) et l'oracle Godot EXIGE `GAMES/<jeu>/tests/run_tests.gd`.
+    # Ce que ce test asserte désormais est DOUBLE, et le second sens compte autant que le
+    # premier : la modification est fermée, la création reste ouverte.
+    #
+    # Ce test assertait auparavant le déni en Write ET en Edit. Cette assertion encodait la
+    # doctrine héritée de V1, dont le motif visait un `tests/` racine ABSENT de V2
+    # (mesuré : 0 fichier) — elle protégeait donc un dossier vide.
+    surfaces = protected_surfaces.load_surfaces()["surfaces"]
+    assert surfaces, "déclaration de surfaces vide : le bornage serait muet"
+    for surface in surfaces:
+        assert f"Edit({surface})" in denied, (
+            f"surface declaree non deniee en Edit : {surface} — {denied}")
+        assert not any(
+            d.startswith("Write(") and d.rstrip(")").endswith(surface) for d in denied
+        ), (f"regime create_allowed_modify_denied viole : Write denie sur {surface}, "
+            f"le builder ne pourrait plus deposer un test")
 
 
 def test_deny_git_par_classe_aucune_regle_par_commande_orpheline():

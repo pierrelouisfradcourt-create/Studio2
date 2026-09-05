@@ -116,7 +116,7 @@ permissions: >-
   par l'appelant), limité aux 2 fichiers .glb/.generation_report.json par asset.
   run: le binaire Blender résolu via WSL (wsl.exe -d <distro> -- <blender_bin>).
   create: les 2 fichiers de sortie par asset uniquement. delete: aucun.
-  INTERDIT: knowledge_base/catalog.json en écriture, tests/**, <asset>.glb.
+  INTERDIT: knowledge_base/catalog.json en écriture, MODIFICATION de les surfaces de test déclarées (forge/test_surfaces.yaml), <asset>.glb.
   geometry.json.
 
 # --- 6. Gouvernance (Critique) ---

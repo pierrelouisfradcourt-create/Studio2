@@ -66,7 +66,7 @@ out_of_scope: >-
   Ne touche PAS à l'infrastructure de preuve déjà livrée : knowledge_base/role_sim.mjs,
   knowledge_base/kb-validate.mjs, forge/mutation.py, forge/godot_bin.mjs,
   knowledge_base/systems/adapters/. Ne modifie PAS knowledge_base/catalog.json au-delà
-  de l'ajout de sa propre entrée. Ne touche PAS tests/** (zone protégée), ni autopilot.py,
+  de l'ajout de sa propre entrée. Ne MODIFIE PAS les surfaces de test déclarées (forge/test_surfaces.yaml) — la création reste permise, ni autopilot.py,
   ni scripts/studioV2/ (lane STUDIO gelée). Ne crée aucun autre jeu.
 
 # --- 5. Autorisation (Critique) ---
@@ -75,7 +75,7 @@ permissions: >-
   GAMES/grid_nav_probe/**, et l'ajout de sa propre entrée dans
   knowledge_base/catalog.json. run: le binaire Godot en headless (résolu via
   forge/godot_bin.mjs), node, et le gate mutation Python. create: fichiers de
-  son ownership uniquement. delete: aucun. INTERDIT : tests/**, autopilot.py,
+  son ownership uniquement. delete: aucun. INTERDIT : MODIFICATION de les surfaces de test déclarées (forge/test_surfaces.yaml) (création permise), autopilot.py,
   scripts/studioV2/, git push.
 
 # --- 6. Gouvernance (Critique) ---

@@ -7,7 +7,7 @@ description: Boucle d'ingénierie Forge — enchaîne les étapes-agents, chacun
 
 Enchaîne la chaîne d'ingénierie Forge. **Invariant central : aucun sous-agent n'est lancé sans passer par son contrat validé.** Le contrat est la porte de contrôle ; il borne le rôle, force le runtime, limite les permissions et impose la règle de restitution.
 
-> Règles absolues (CLAUDE.md + ADR-002) : `claim_verdict: NO_CLAIM_ALLOWED` ; séparer `software_verdict`/`evidence_verdict`/`claim_verdict` ; **HumanGate (Pierre) décide** merge/reject ; zones protégées `tests/**` jamais modifiées. Modèles = full Claude (producteurs) + **Qwen = red-team indépendant** ; oracles = déterministes non-LLM.
+> Règles absolues (CLAUDE.md + ADR-002) : `claim_verdict: NO_CLAIM_ALLOWED` ; séparer `software_verdict`/`evidence_verdict`/`claim_verdict` ; **HumanGate (Pierre) décide** merge/reject ; surfaces de test : `forge/test_surfaces.yaml` fait foi (régime `create_allowed_modify_denied` — créer un test est permis, MODIFIER un test préexistant demande une gate Pierre). Modèles = full Claude (producteurs) + **Qwen = red-team indépendant** ; oracles = déterministes non-LLM.
 
 > **Résolution rôle → runtime : source unique `forge/contracts/roles.yaml`** (lue par `forge.contract`). Ne déduis jamais un modèle d'ici — ce fichier fait foi, y compris pour le rôle `orchestrator` et pour l'échelle d'escalade des builders. Le contrat de système (`forge/FORGE_SYSTEM_CONTRACT.yaml`) interdit de réécrire cette règle ailleurs ; le capteur `forge.contract_sync` vérifie que ce fichier la CITE au lieu de la redire.
 
