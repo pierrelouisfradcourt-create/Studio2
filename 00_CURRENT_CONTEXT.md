@@ -1,99 +1,99 @@
 # ÉTAT COURANT — Studio V2
 
-*2026-09-04. Handoff inter-sessions, **< 100 lignes**. Ratifié Pierre 2026-09-03 : ce fichier EST le
-handoff de V2, `studio_brain/00_CURRENT_CONTEXT.md` (V1) n'est plus mis à jour — une règle documentée
-ne rompt jamais un invariant plus fort, « V1 en lecture seule » prime sur `CLAUDE.md`.*
+*2026-09-05. Handoff inter-sessions, **< 100 lignes**, écrit depuis l'état git mesuré. Aucun
+verdict global « ready » n'est émis ici — `claim_verdict: NO_CLAIM_ALLOWED`.*
 
 ## Où en est le studio
 
 ```
-V1  C:\TACTICAL_CHESS_STUDIO        HEAD 58095ba9   SOURCE CANONIQUE, lecture seule
-    4 écarts (dispatch.py, oracles.json, 2 tests) = autre session, jamais migrés
-V2  C:\Users\Studio-Dev\Desktop\Studio2   (renommé 2026-09-04 ; remote github.com/pierrelouisfradcourt-create/Studio2)
-    3481089 Lot 1 · 523bd07 Lots 2-4 · bc23133 Lot 5 · 8892189 Lot 6 · ba2d046 poussé
-    Lot 7 en attente de GO commit
+V1  C:\TACTICAL_CHESS_STUDIO          HEAD 58095ba9   SOURCE CANONIQUE, lecture seule
+V2  C:\Users\Studio-Dev\Desktop\Studio2   HEAD cda4cac   propre, synchronisé origin/master
+```
 
-## Lots 2 → 5 — commités, détail dans les messages de commit et `docs/superpowers/plans/`
+⚠️ **V2 n'a PAS de `CLAUDE.md`** — fait mesuré, motif retiré de `reference_protected.yaml` le
+2026-09-04. Une session ouverte ici n'a donc aucun fichier de doctrine projet chargé ; seules les
+règles de `.claude/rules/` sont injectées. **Ouvrir les sessions DANS Studio2** : jusqu'au
+2026-09-05 elles tournaient depuis V1, donc gardées par les hooks et permissions de V1 (mesuré :
+`pretool_git_guard` de V1 a bloqué une commande en lisant le sentinel V1 vieux de 14 jours).
 
-- **523bd07 (Lots 2-4)** : capacités convocables · Director v0 · slice vertical `v2_breakout_slice`
-  (verdict OK / HUMANGATE_READY, `verify_run` AUTHENTIQUE, JOINED 10/10, 6,67 $, playtest Pierre 7/7).
-- **bc23133 (Lot 5, transport)** : 28 mécanismes de production avec propriétaire au registre (18 invoke ·
-  3 director · 6 deferred motivés · 1 dropped → Pierre) ; manifest de dispatch sur les SECTIONS lues ;
-  lignées execution/return/spawn_link ; modèle MESURÉ ≠ déclaré ; pré-mortem et retour du matérialiseur ;
-  `timeout_policy`. **Les trois réserves du 523bd07 sont fermées.** Audit :
-  `docs/forge/AUDIT_V2_CAPABILITIES_SKILLS_MODELS_20260903.md`.
-- Sonde du Lot 5, **non corrigé** : `check_decompo.mjs` exige `main.tscn` (lignée Godot) pour toute action joueur, même sur un jeu web → `DECOMPO_LOOP_NO_ENTRY` structurel.
-
-## Lot 6 — contrat de re-convocation (commité `8892189` ; spec+plan `464150e`)
-
-*Détail complet : message du commit et `docs/superpowers/specs|plans/2026-09-04-lot6-*`.*
-
-- **Identité de section** (`forge/identity.py`) : clé canonique par section au registre
-  (`wiremap.design` = résolveur nommé `@frozen_features_from_wiremap`, mesuré). Une re-convocation
-  reçoit sa **production précédente** ; un id encore cité en aval qui disparaît refuse l'écriture
-  (`ID_REFERENCED_DROPPED`, section intacte) ; un retrait déclaré n'est accepté que si plus rien ne
-  le cite. **Preuve réelle** : 10/10 ids conservés, là où le Lot 5 en avait renommé 10/10.
-- **Acquittement** (`forge/acknowledgement.py`) : fence dédiée, 5 statuts, un message ne s'acquitte
-  qu'une fois ; `rejected` produit un **désaccord** puis une question — trois objets distincts.
-- **Director** : le refus d'identité vise l'écrivain de la section d'après le registre.
-- **Frontière** : `wiremap.built` sans règle d'identité en v0 (le gel la couvre). Consigné non traité :
-  un doublon d'identité rend l'ancre du gel malformée — dédoublonner changerait un BLOCKED en PASS.
-
-## La baseline — ne pas y toucher
+## ReferenceGuard — actif, advisory, jamais exécuté en run réel
 
 ```
-EVIDENCE/runs/runm_breakout/      RUN M ter · 13/13 · verdict signé · verify_run AUTHENTIQUE
-GAMES/runm_breakout/              le jeu produit
+status CLEAN · 541 fichiers · baseline ancrée sur 80b2e08 · c5fd9495b64397e6…
+surfaces protégées : GAMES/pong/** · forge/** · control_plane/registry.py · .claude/hooks/**
 ```
-⛔ **Ni déplacer ni renommer ni écraser** (le reçu d'oracle porte un chemin relatif) ; un prochain run
-porte un AUTRE nom de projet. Archives : `_ARCHIVE_RUN_M_*` (preuves du VOID et du HALT d'encodage).
+Détection **prouvée deux fois** (falsification → `DRIFT`, restauration → `CLEAN`). Advisory : elle
+rapporte, ne bloque rien, et n'a **jamais tourné dans un run Forge de bout en bout** — dette de
+preuve principale. Ré-ancrée avant campagne : un `DRIFT` en run sera un mouvement DU RUN.
 
-## État de la thèse V2 et de T0
+## Surfaces de test — doctrine ratifiée 2026-09-04
 
-**T0 au 2026-09-04** : 2544 verts / 42 échecs — population V1 classée au Lot 0, **strictement inchangée**
-(liste des `FAILED` comparée à chaque lot). **Thèse V2** : GAME_BLUEPRINT, capacités convocables,
-Director, emitter branché, contrat de re-convocation = Lots 1→6 ; `dispatch.ORDER` reste (13 stations,
-contourné, jamais retiré) ; GAME_FLOW · UX · design_metrics : DOCUMENTED_ONLY.
+`forge/test_surfaces.yaml` → `forge.protected_surfaces` (lecteur unique) →
+`run_real._STEP_DISALLOWED`. Régime **`create_allowed_modify_denied`** : créer un test est permis
+(livrable du builder), MODIFIER un test préexistant demande une gate. Surfaces : `forge/tests/**` ·
+`GAMES/*/tests/**` · `GAMES/*/07_TESTS/**`. **Portée : étapes Forge SEULES** — sessions et
+sous-agents bornés par AUCUN mécanisme (hook spécifié puis **abandonné**), empreinte pour témoin.
 
-## Défauts connus, nommés, non corrigés
+⚠️ **8 tests de `forge/tests/**` ont été modifiés sous GO CONVERSATIONNEL, donc `AUTO_ATTESTED`**,
+sans dérogation mécanique : le sentinel `.claude/HUMAN_GIT_OVERRIDE.json` **n'existe pas dans V2**
+(un seul exemplaire sur le poste, dans V1, daté du 21 août, sans champ `paths`). La garde rapporte
+donc légitimement `authorized: false` sur ces écarts. Voir commits `d591dd6` et `445dd5d`.
 
-| | |
-|---|---|
-| le jeu produit **se gagne sans joueur** (456 frames = partie sans entrée) et son oracle de solvabilité le valide | variance nulle, règle 2026-07-21 |
-| `s6-redteam-plan` rend **0 finding par construction** | hérité V1, profil identique sur 3 runs V1 |
-| convention `logic.test.mjs` / `properties.test.mjs` **écrite dans aucun contrat** | coût mesuré : une tentative de builder |
-| `premortem_lessons` **sans filtre projet** · ESC-1 **non vérifié en run réel** · `U-2` · `U-3` · `P-1` | fuite inter-projets ; prouvé au point de décision seulement ; hors migration, au registre |
+## Architecture Director — pipeline fixe + boucles de reprise
 
-## Lot 7 — isolation du journal des tests (2026-09-04, GO Pierre ; spec+plan `docs/superpowers/`)
+Ni linéaire pur, ni plan libre. `dispatch.ORDER` = **13 stations** en ordre immuable ; le profil
+`full_content` en active **18** (étapes de contenu insérées avant le prisme).
+Le Director décide ENTRE les stations, sur mesure : `convoke` · `reconvoke` (avec objection
+nommée) · escalade de modèle · `halt`. Mesuré sur `v2_breakout_slice_r1` : 13 décisions, wiremap
+re-convoqué ×2, builder ×3, `halt` après 3 oracles rouges, puis `requalify` (Pierre) et `humangate`.
+**4 capacités pilotées** par le Director v0 : `decompose` · `architect` · `wiremap` · `builder`.
+Les autres étapes passent par le dispatch classique. Coût de référence : 6,67 $ / 57 min.
 
-**Cause mesurée par bissection**, qui a falsifié ma note précédente : les 5 fichiers désignés d'après
-leur nom ne fuient pas. Les coupables sont `test_measure_tick` (+2392 octets) et
-`test_mutation_path_repo_relative` (+537) — ils monkeypatchent `driver._REPO_ROOT` sur leur `tmp_path`,
-`_journal_target()` rend alors `None` (route par domaine) et l'écriture part dans le vrai journal. Un
-`journal_path` injecté supprimerait ce qu'ils mesurent : c'est la **destination** qu'on isole.
+## T0 — 20 rouges / 2626 verts
 
-**Correctif** : la fixture `autouse` `_isolate_evidence_writes` redirige aussi `DOMAIN_JOURNAL_DIR`,
-`DEFAULT_ERROR_JOURNAL` et `FORGE_REPORTS` — dans `studio_link` **et** `learning_memory`, à la même
-valeur (import par valeur, même piège que les deux `DEFAULT_AUDIT`). 4 tests de périmètre ajoutés,
-aucun code de production touché. **Mesuré : 2929 → 0 octets**, index compris.
+Population passée de **41 à 20** le 2026-09-05 : 21 tests de la chaîne étaient **inertes faute de
+fixtures V1**, jamais cassés (tous en `FileNotFoundError`, aucun sur une assertion).
+Répartition restante, **non triée** — plusieurs portent encore des noms de fixtures V1, même cause
+probable, NON MESURÉE :
+`10 micro_redeclaration · 2 runtime_inventory_oracle (scripts/council.py, claude_proxy.py) ·
+2 mutation_scope_categories · 2 learning_memory · 1 chacun : reuse_ratio_wired, reference_guard
+(cli), manifest_lesson_promotion, commit_scope_guard`
 
-**Lot 8 — nettoyage, fait.** Le journal contenait **326 lignes dont 13 réelles** ; 117 de la pollution
-étaient arrivées avec la migration V1 (`2769dc8`), donc le tas préexistait à V2. Tri par critère
-mécanique (projet sans run NI brief NI dossier `GAMES/` = test), 313 retirées, 13 conservées à l'octet
-près, index régénéré par son producteur (326 → 13 entrées). **Non-régression prouvée** : le pré-mortem
-de `runm_breakout` et de `v2_breakout_slice` rend des empreintes sha256 identiques avant/après ; seul
-le projet de test `jeu` tombe de 5 à 0. Récupérable à `3f457fa:EVIDENCE/reports/error_journal/html.jsonl`
-(247 lignes) ; 79 lignes n'étaient pas versionnées et ont disparu — dit, pas masqué.
+## Fixtures V1 — migrées, isolées, provenance marquée
 
-## Décisions ouvertes
+`EVIDENCE/_V1_FIXTURES/` : 417 fichiers versionnés (565 copiés, le reste = caches `.godot` et
+`.log`), avec un `README.md` portant provenance et règles. **Ce ne sont PAS des preuves V2.**
+**Limite** : l'isolement ne vaut que là où le TEST résout le chemin. Deux briefs
+(`EVIDENCE/briefs/p1_alpha/`, `p1_beta/`) ont dû rester à l'emplacement CANONIQUE car lus par du
+code de PRODUCTION ; chacun porte un `PROVENANCE_V1.md`. À exclure de tout inventaire de projets.
 
-- **Q2 / R8** — verrou World Scan, **jamais levé implicitement** ; intact depuis le début.
-- `GAMES/pacman/00_CHARTER` et `09_WIREMAP` : absents du HEAD canonique, **non copiés, non reconstitués**.
-- `docs/ARCHI.md` · `docs/forge/RUN2_PROTOCOLE_V1_PROPOSED.md` : cités, absents du HEAD, non inventés.
+## Ce qui bloquait, et qui est levé
 
-## Registres
+`check_decompo.mjs` exigeait le littéral `main.tscn` pour toute action joueur → tout jeu **web**
+refusé structurellement. `POINTS_ENTREE` (mesuré : 6 jeux Godot en `main.tscn`, 4 web en
+`index.html`/`main.mjs`) + `--entree` ; contrat `s3-decompo` aligné ; cas réel rejoué 2 → 0.
+**Sur 12 dossiers de `GAMES/`, V2 n'en a produit que 3 — tous WEB** (les 9 autres viennent de
+`2769dc8`). La lignée Godot existe (contrats, oracles, 4 profils) mais **jamais exercée par V2**.
 
-`DECISIONS_TO_EXECUTE.md` · `BASELINE_M_TER.md` · `RUN_M_*_RESULTAT.md` · `LOT_*.md` ·
-`V2_VALIDATION_CLOTURE.md` · `TOPOLOGY.md` (règles R1–R11).
+## Défauts de qualité connus, non corrigés
 
-**`claim_verdict: NO_CLAIM_ALLOWED`.**
+- le jeu produit **se gagne sans joueur** et l'oracle de solvabilité le valide (variance nulle, 2026-07-21)
+- `s6-redteam-plan` rend **0 finding par construction** (hérité V1)
+- convention `logic.test.mjs` / `properties.test.mjs` **écrite dans aucun contrat** — le builder l'a devinée
+
+## Chantiers différés, décidés non ouverts
+
+- **providers** — 33 lignes, **0 consommateur** mesuré par import, `providers.yaml` absent, 0 test.
+  `TOPOLOGY.md` a déjà tranché « elles restent dehors » ; l'exécution manque. NB : la gate 2 a
+  orphelin `load_capabilities`.
+- **`TOOLS/`** — emplacement de `control_plane/` non tranché. ⚠️ `scan_reasoning_readers` lit
+  `control_plane/registry.py` **comme un fichier** : le déplacer la casse. · **synthèse V2** non écrite.
+- Résidus V1 hors périmètre : `src/` dans 4 contrats · `scripts/**` dans `wm1` ·
+  `pretool_agent_classify` journalise dans `lab/` (fantôme) avec `mkdir(parents=True)`.
+
+## La baseline à ne pas toucher
+
+`EVIDENCE/runs/runm_breakout/` + `GAMES/runm_breakout/` — ⛔ ni déplacer, renommer ni écraser (le reçu
+d'oracle porte un chemin relatif). Q2/R8 (verrou World Scan) intact, jamais levé.
+
+**`software_verdict: OK` · `evidence_verdict: MECHANICAL_VALIDATION_ONLY` · `claim_verdict: NO_CLAIM_ALLOWED`**
