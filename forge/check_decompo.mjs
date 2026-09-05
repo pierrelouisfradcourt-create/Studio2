@@ -139,7 +139,31 @@ export function checkGreyBlockCoverage(doc, gm) {
  * @returns {{ok:boolean, verdict:'OK'|'FAIL', problems:string[],
  *            exigences_non_couvertes:string[], feuilles_non_sourcees:string[], stats:object}}
  */
-export function checkDecompoDoc(doc, prisme, gm = null) {
+// POINTS D'ENTREE RECONNUS (2026-09-05, GO Pierre — gate check_decompo).
+//
+// CE QUI ETAIT LA : le littéral `main.tscn` en dur (l.193), point d'entrée d'un jeu GODOT.
+// Tout jeu WEB dont une exigence est PLAYER+affordance produisait un `boucle_sans_entree`
+// INEVITABLE — un refus structurel, pas une mesure. Incident réel documenté :
+// EVIDENCE/runs/v2_breakout_slice_r1/artifacts/s3-decompo.txt — l'agent a REFUSÉ de
+// fabriquer `main.tscn` (« violer le garde-fou preuve héritée, le hors-scope Godot du
+// charter, et l'interdit vert par contournement ») et livré fidèlement, en prédisant le
+// FAIL. Son comportement était juste ; l'oracle avait tort.
+//
+// L'INTENTION DE LA REGLE NE CHANGE PAS : une action joueur doit se décomposer en une
+// capacité d'ENTREE — un bot qui agit DEPUIS LE POINT D'ENTREE du jeu — jamais l'effet
+// seul. Seul le nom du point d'entrée cesse d'être mono-lignée.
+//
+// LISTE ETABLIE PAR MESURE des jeux de V2, jamais devinée :
+//   main.tscn    6 jeux Godot (bomberman_3d, breakout_v2, pacman, snake, tetris, +)
+//   index.html   4 jeux web (breakout, runm_breakout, v2_breakout_slice, +)
+//   main.mjs     idem web — câblage du jeu web
+// Surchargeable par `options.pointsEntree` / `--entree <nom>` : un genre futur déclare son
+// entrée au lieu d'attendre une modification de cet oracle.
+export const POINTS_ENTREE = ['main.tscn', 'index.html', 'main.mjs'];
+
+export function checkDecompoDoc(doc, prisme, gm = null, options = {}) {
+  const pointsEntree = Array.isArray(options.pointsEntree) && options.pointsEntree.length
+    ? options.pointsEntree : POINTS_ENTREE;
   const problems = [...validateFeaturemap(doc)];
   const exigences_non_couvertes = [];
   const feuilles_non_sourcees = [];
@@ -181,7 +205,8 @@ export function checkDecompoDoc(doc, prisme, gm = null) {
 
       // V4 GAME LOOP (2026-08-22, GO Pierre) : une action joueur (exigence
       // acteur=PLAYER avec affordance) doit se decomposer en une capacite
-      // d'ENTREE — preuve bot_action depuis main.tscn — jamais l'effet seul.
+      // d'ENTREE — preuve bot_action depuis le POINT D'ENTREE du jeu (POINTS_ENTREE,
+      // surchargeable) — jamais l'effet seul.
       // Regle etendue aux maillons F (UNLOCK) et I (META_LOOP) : memes exigences
       // que B (PLAYER_ACTION), portees par la meme condition acteur+affordance.
       const exigence = exigenceById.get(ref);
@@ -190,7 +215,7 @@ export function checkDecompoDoc(doc, prisme, gm = null) {
         const proof = entry.leaf?.expected_proof;
         const kindOk = proof?.kind === 'bot_action';
         const statementOk = isNonEmptyString(proof?.statement)
-          && proof.statement.toLowerCase().includes('main.tscn');
+          && pointsEntree.some((e) => proof.statement.toLowerCase().includes(e.toLowerCase()));
         if (kindOk && statementOk) {
           actionsJoueurProuvees += 1;
           const letter = LOOP_ROLE_LETTER[exigence?.loop_role];
@@ -198,7 +223,8 @@ export function checkDecompoDoc(doc, prisme, gm = null) {
         } else {
           boucle_sans_entree.push(
             `${entry.loc}: feuille '${entry.leaf?.id}' realise l'action joueur '${exigence.affordance}' `
-            + `(exigence ${ref}) sans preuve bot_action depuis main.tscn`,
+            + `(exigence ${ref}) sans preuve bot_action depuis le point d'entree du jeu `
+            + `(attendu l'un de : ${pointsEntree.join(', ')})`,
           );
         }
       }
@@ -312,7 +338,7 @@ export function checkDecompoDoc(doc, prisme, gm = null) {
  *   — absent -> comportement inchangé (0 grey block mesuré).
  * @returns {Promise<object>}
  */
-export async function checkDecompoFiles(featuremapPath, prismePath, gmPath = null) {
+export async function checkDecompoFiles(featuremapPath, prismePath, gmPath = null, options = {}) {
   const fail = (msg) => ({
     ok: false, verdict: 'FAIL', problems: [msg],
     exigences_non_couvertes: [], feuilles_non_sourcees: [], boucle_sans_entree: [],
@@ -343,7 +369,7 @@ export async function checkDecompoFiles(featuremapPath, prismePath, gmPath = nul
     if (gm.err) return fail(gm.err);
     gmDoc = gm.doc;
   }
-  return checkDecompoDoc(fm.doc, pr.doc, gmDoc);
+  return checkDecompoDoc(fm.doc, pr.doc, gmDoc, options);
 }
 
 // ---- CLI ----
@@ -354,15 +380,19 @@ if (isMain) {
   const prismePath = prIdx >= 0 ? argv[prIdx + 1] : null;
   const gmIdx = argv.indexOf('--gm');
   const gmPath = gmIdx >= 0 ? argv[gmIdx + 1] : null;
-  const target = argv.filter((a) => !a.startsWith('--') && a !== prismePath && a !== gmPath)[0];
+  // --entree <nom> (repetable) : surcharge les POINTS_ENTREE pour un genre dont
+  // l'entree n'est pas dans la liste mesuree. Absent => defaut.
+  const entrees = argv.reduce((acc, a, i) => (a === '--entree' && argv[i + 1] ? [...acc, argv[i + 1]] : acc), []);
+  const target = argv.filter((a) => !a.startsWith('--') && a !== prismePath && a !== gmPath
+    && !entrees.includes(a))[0];
 
   if (!target || !prismePath) {
-    console.error('usage: node check_decompo.mjs <featuremap.json> --prisme <prisme.json> [--gm <gm_worldscan.json>] [--json]');
+    console.error('usage: node check_decompo.mjs <featuremap.json> --prisme <prisme.json> [--gm <gm_worldscan.json>] [--entree <nom>]... [--json]');
     process.exit(2);
   }
 
   (async () => {
-    const r = await checkDecompoFiles(target, prismePath, gmPath);
+    const r = await checkDecompoFiles(target, prismePath, gmPath, { pointsEntree: entrees });
     console.log(`VERDICT DECOMPO: ${r.verdict}`);
     r.problems.forEach((p) => console.error(`  FAIL: ${p}`));
     r.exigences_non_couvertes.forEach((p) => console.error(`  FAIL couverture: ${p}`));
@@ -374,7 +404,7 @@ if (isMain) {
     const mc = r.stats.maillons_couverts || {
       F: 0, G: 0, H: 0, I: 0, J: 0,
     };
-    console.error(`  stats: ${r.stats.systemes} systeme(s) / ${r.stats.features} feature(s) / ${r.stats.feuilles} feuille(s) / ${r.stats.exigences_couvertes} sur ${r.stats.exigences_prisme} exigence(s) couverte(s) / granularite ${r.stats.feuilles_par_feature_min}-${r.stats.feuilles_par_feature_max} feuille(s) par feature (REPORTEE, non gatee) / ${r.stats.actions_joueur_prouvees_depuis_scene} sur ${r.stats.actions_joueur} action(s) joueur prouvee(s) depuis main.tscn / maillons F=${mc.F} G=${mc.G} H=${mc.H} I=${mc.I} J=${mc.J} / ${r.stats.grey_blocks_couverts} sur ${r.stats.grey_blocks} grey block(s) decompose(s)`);
+    console.error(`  stats: ${r.stats.systemes} systeme(s) / ${r.stats.features} feature(s) / ${r.stats.feuilles} feuille(s) / ${r.stats.exigences_couvertes} sur ${r.stats.exigences_prisme} exigence(s) couverte(s) / granularite ${r.stats.feuilles_par_feature_min}-${r.stats.feuilles_par_feature_max} feuille(s) par feature (REPORTEE, non gatee) / ${r.stats.actions_joueur_prouvees_depuis_scene} sur ${r.stats.actions_joueur} action(s) joueur prouvee(s) depuis le point d'entree / maillons F=${mc.F} G=${mc.G} H=${mc.H} I=${mc.I} J=${mc.J} / ${r.stats.grey_blocks_couverts} sur ${r.stats.grey_blocks} grey block(s) decompose(s)`);
     console.log(JSON.stringify({
       ok: r.ok,
       problems: r.problems,

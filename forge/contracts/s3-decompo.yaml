@@ -50,12 +50,17 @@ gardeFou: >-
   preuve attendue est héritée des Règles observables du Prisme, jamais inventée.
   V4 GAME LOOP (2026-08-22, GO Pierre) : une action joueur (exigence `acteur:
   PLAYER` avec `affordance`) se décompose en une capacité d'ENTRÉE (le joueur agit
-  sur l'affordance nommée, preuve `bot_action` depuis `main.tscn`) ET une capacité
-  d'EFFET — jamais l'effet seul. `loop.json` (projection déterministe du Prisme)
+  sur l'affordance nommée, preuve `bot_action` depuis le POINT D'ENTRÉE DU JEU) ET une
+  capacité d'EFFET — jamais l'effet seul. Le point d'entrée dépend de la lignée et n'est
+  PAS `main.tscn` par défaut : `check_decompo.POINTS_ENTREE` fait foi (`main.tscn` en
+  Godot, `index.html` / `main.mjs` en web). Correction du 2026-09-05 : `main.tscn` était
+  écrit en dur ici ET dans l'oracle, ce qui rendait tout jeu WEB structurellement
+  refusé — incident mesuré sur `v2_breakout_slice_r1`, où l'agent a eu RAISON de refuser
+  de fabriquer une scène Godot et de livrer fidèle. `loop.json` (projection déterministe du Prisme)
   est une ENTRÉE à lire, jamais à réécrire.
   Maillons F..J (additif, règle B étendue) : F (UNLOCK) et I (META_LOOP) suivent
-  EXACTEMENT la règle de B — capacité d'ENTRÉE `bot_action` depuis `main.tscn`
-  obligatoire. G (NEXT_GOAL) se décompose en une capacité d'EFFET VISIBLE (le
+  EXACTEMENT la règle de B — capacité d'ENTRÉE `bot_action` depuis le point d'entrée du
+  jeu obligatoire. G (NEXT_GOAL) se décompose en une capacité d'EFFET VISIBLE (le
   label `objectif` change pour un texte nouveau, preuve `file_write` ou `visual`)
   — jamais une entrée seule. H (REPEAT) et J (ADVANTAGE) sont des REJEUX : ils
   n'exigent AUCUNE feuille propre, mais leurs `replay`/`replay_ref` doivent

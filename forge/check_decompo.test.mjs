@@ -141,7 +141,7 @@ test('BOUCLE: action joueur realisee par une feuille visual (pas bot_action) -> 
   assert.equal(r.stats.actions_joueur_prouvees_depuis_scene, 0);
 });
 
-test('BOUCLE: feuille bot_action dont le statement ne mentionne pas main.tscn -> finding', () => {
+test('BOUCLE: feuille bot_action dont le statement ne mentionne AUCUN point d entree -> finding', () => {
   const prisme = prismeAvecActionJoueur();
   const fm = featuremapReference();
   const leaf = fm.systemes[0].features[0].capacites[0];
@@ -152,8 +152,59 @@ test('BOUCLE: feuille bot_action dont le statement ne mentionne pas main.tscn ->
   const r = checkDecompoDoc(fm, prisme);
   assert.equal(r.verdict, 'FAIL');
   assert.equal(r.boucle_sans_entree.length, 1);
-  assert.match(r.boucle_sans_entree[0], /sans preuve bot_action depuis main\.tscn/);
+  // Le message NOMME les points acceptes : un refus qui n'apprend pas a le lever
+  // fabrique du contournement (l'agent s3 du slice V2 avait, lui, refuse de bourrer
+  // `main.tscn` et livre fidele -- comportement juste face a un oracle qui avait tort).
+  assert.match(r.boucle_sans_entree[0], /sans preuve bot_action depuis le point d'entree/);
+  assert.match(r.boucle_sans_entree[0], /main\.tscn, index\.html, main\.mjs/);
   assert.equal(r.stats.actions_joueur_prouvees_depuis_scene, 0);
+});
+
+// --- POINTS D'ENTREE MULTI-LIGNEE (2026-09-05, gate check_decompo) --------------
+// Le littéral `main.tscn` en dur refusait STRUCTURELLEMENT tout jeu web : incident réel
+// mesuré sur `v2_breakout_slice_r1` (2 x DECOMPO_LOOP_NO_ENTRY). L'intention de la règle
+// est inchangée -- une action joueur se décompose en capacité d'ENTREE -- seul le nom du
+// point d'entrée cesse d'être mono-lignée.
+
+const _statementAvec = (entree) => ({
+  kind: 'bot_action',
+  statement: `Un bot clique la cible pelote depuis ${entree} : compteur += gain_par_clic.`,
+});
+
+for (const entree of ['main.tscn', 'index.html', 'main.mjs']) {
+  test(`BOUCLE: le point d entree ${entree} est accepte (lignee godot ET web)`, () => {
+    const fm = featuremapReference();
+    fm.systemes[0].features[0].capacites[0].expected_proof = _statementAvec(entree);
+    const r = checkDecompoDoc(fm, prismeAvecActionJoueur());
+    assert.deepEqual(r.boucle_sans_entree, []);
+    assert.equal(r.stats.actions_joueur_prouvees_depuis_scene, 1);
+  });
+}
+
+test('BOUCLE: la regle garde son mordant -- un statement sans aucun point d entree reste refuse', () => {
+  const fm = featuremapReference();
+  fm.systemes[0].features[0].capacites[0].expected_proof = {
+    kind: 'bot_action',
+    statement: 'La raquette se deplace de 10 pixels.',  // l'EFFET seul, jamais l'entree
+  };
+  const r = checkDecompoDoc(fm, prismeAvecActionJoueur());
+  assert.equal(r.boucle_sans_entree.length, 1);
+});
+
+test('BOUCLE: options.pointsEntree surcharge la liste -- un genre futur declare son entree', () => {
+  const fm = featuremapReference();
+  fm.systemes[0].features[0].capacites[0].expected_proof = _statementAvec('cartridge.rom');
+  assert.equal(checkDecompoDoc(fm, prismeAvecActionJoueur()).boucle_sans_entree.length, 1);
+  const r = checkDecompoDoc(fm, prismeAvecActionJoueur(), null,
+    { pointsEntree: ['cartridge.rom'] });
+  assert.deepEqual(r.boucle_sans_entree, []);
+});
+
+test('BOUCLE: une surcharge vide retombe sur la liste mesuree, jamais sur aucune contrainte', () => {
+  const fm = featuremapReference();
+  fm.systemes[0].features[0].capacites[0].expected_proof = _statementAvec('index.html');
+  const r = checkDecompoDoc(fm, prismeAvecActionJoueur(), null, { pointsEntree: [] });
+  assert.deepEqual(r.boucle_sans_entree, []);
 });
 
 test('BOUCLE: exigence acteur SYSTEM n impose aucune contrainte de boucle', () => {
@@ -285,7 +336,7 @@ test('F/I MAILLON: UNLOCK et META_LOOP suivent la regle existante boucle_sans_en
   assert.equal(r.stats.maillons_couverts.I, 1);
 });
 
-test('F MAILLON: UNLOCK sans preuve bot_action depuis main.tscn -> boucle_sans_entree, F non compte', () => {
+test('F MAILLON: UNLOCK sans preuve bot_action depuis un point d entree -> boucle_sans_entree, F non compte', () => {
   const prisme = {
     game_id: 'g',
     exigences: [exigence({
