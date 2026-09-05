@@ -154,6 +154,20 @@ def test_emit_drift_ecrit_des_lignes_relisibles(tmp_path, monkeypatch):
 
 # --- réalité du dépôt (non fixturé) ------------------------------------------------
 
+# GO Pierre 2026-09-05 (U3) : le marqueur est CONDITIONNÉ par le mécanisme, pas affirmé.
+# Tant que `scripts/` est absent et que CODE_GLOBS ne scanne que scripts/, ce test ne peut
+# pas voir d'appelant ; le jour où CODE_GLOBS change, le marqueur tombe de lui-même.
+_CAUSE_U3 = (not (rio.REPO_ROOT / "scripts").exists()
+             and all(g.startswith("scripts/") for g in rio.CODE_GLOBS))
+
+
+@pytest.mark.xfail(condition=_CAUSE_U3, strict=True, raises=AssertionError, reason=(
+    "attendus = forme du dépôt V1 (LOT_B_EXTRACTION.md:94, hors périmètre V2). "
+    "Garde anti-ré-import (R2) : XPASS = retour de scripts/*.py appelant un modèle. "
+    "Le ré-ancrage de CODE_GLOBS sur forge/** ne rendra JAMAIS ce test vert "
+    "(mesuré 2026-09-05 : il exposerait qwen_spec.py, repair_step.mjs, run_real.py ; "
+    "seul run_real.py est non déclaré dans roles.yaml) : quand CODE_GLOBS change, ce "
+    "marqueur tombe et le parametrize doit être ré-ancré sous gate."))
 @pytest.mark.parametrize("attendu", ["scripts/council.py", "scripts/claude_proxy.py"])
 def test_le_depot_reel_expose_ses_appelants_de_modele_non_declares(attendu):
     code = {x["entrypoint"] for x in rio.observed_in_code()}

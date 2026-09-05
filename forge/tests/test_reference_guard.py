@@ -464,18 +464,22 @@ def test_compute_fingerprint_on_real_repo_is_nonempty_and_readable():
 
 # --- CLI ----------------------------------------------------------------------------------
 
-def test_cli_compute_prints_fingerprint(tmp_path, capsys):
+def test_cli_compute_prints_fingerprint(tmp_path, capsys, monkeypatch):
     repo = _make_repo(tmp_path)
-    cfg_path = _config_path(tmp_path)
+    cfg_path = _config_path(tmp_path)  # défaut inchangé : GAMES/pong/** + tests/** existent dans le jetable
+    # compute() n'expose pas --repo-root : on pointe REPO_ROOT du module sur le dépôt
+    # jetable, même isolement que test_cli_record_then_verify_roundtrip — le dépôt RÉEL
+    # n'entre pas dans ce test (son intégration est couverte par
+    # test_compute_fingerprint_on_real_repo_is_nonempty_and_readable). GO Pierre 2026-09-05 (U6).
+    monkeypatch.setattr(rg, "REPO_ROOT", repo)
     rc = rg.main(["compute", "--config", str(cfg_path)])
     assert rc == 0
-    # compute() utilise REPO_ROOT par défaut (pas d'option --repo-root exposée) ;
-    # ici on vérifie seulement que la commande s'exécute et imprime un JSON valide
-    # sur le dépôt RÉEL (repo n'est pas utilisé par cette invocation CLI directe).
     out = capsys.readouterr().out
     payload = json.loads(out)
     assert payload["schema"] == rg.FINGERPRINT_SCHEMA
     assert "combined_sha256" in payload
+    assert payload["file_count"] == 3  # main.gd, sub/ball.gd, tests/test_x.py : la fixture est réellement lue
+    assert payload["complete"] is True
 
 
 def test_cli_compute_bad_config_exits_nonzero(tmp_path, capsys):

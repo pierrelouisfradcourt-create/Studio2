@@ -5,9 +5,10 @@ questions (topologie art-r2 -> gm-r2, aucun créneau de re-déclaration) obtient
 UNE VRAIE micro-exécution (spawn réel via `prepare_dispatch`/`self.executor`,
 JAMAIS une mutation de state.json qui ferait croire qu'une étape a tourné).
 
-Fixture obligatoire : `EVIDENCE/runs/p1_beta/` (artefact RÉEL commité — ART
-s'est déclarée round 2 AVANT que GM ne réponde, au round 2, à ses propres
-questions — cf. CLOSURE_PILOTE_20260830.md, finding 2)."""
+Fixture obligatoire : `EVIDENCE/_V1_FIXTURES/runs/p1_beta/` (artefact d'un run V1,
+migré 2026-09-05, DONNÉE D'ENTRÉE et non preuve V2 — ART s'est déclarée round 2
+AVANT que GM ne réponde, au round 2, à ses propres questions — cf.
+CLOSURE_PILOTE_20260830.md dans ce dossier, finding 2)."""
 from __future__ import annotations
 
 import json
@@ -19,7 +20,10 @@ import pytest
 from forge.driver import ForgeDriver
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-P1_BETA = REPO_ROOT / "EVIDENCE" / "runs" / "p1_beta"
+# Fixture V1 migrée le 2026-09-05 sous `EVIDENCE/_V1_FIXTURES/` (GO Pierre) : ces
+# artefacts viennent de runs V1 jamais rejoués, ils ne sont PAS des preuves V2 et
+# vivent donc à l'écart de `EVIDENCE/runs/`. Voir le README de ce dossier.
+P1_BETA = REPO_ROOT / "EVIDENCE" / "_V1_FIXTURES" / "runs" / "p1_beta"
 
 
 def _copy_p1_beta(tmp_path: Path) -> Path:

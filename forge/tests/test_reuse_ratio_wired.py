@@ -1,6 +1,8 @@
 """Garde structurelle reuse_ratio (Tier 1 #2) — advisory, jamais gating."""
 from pathlib import Path
 
+import pytest
+
 from forge.static_oracles import check_reuse_ratio_wired
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -49,6 +51,10 @@ def test_reuse_ratio_cable_via_import_passe(tmp_path):
     assert res["passed"] is True, res["raisons"]
 
 
+@pytest.mark.xfail(strict=True, reason=(
+    "kb_tactics non retenu en V2 (V2_VALIDATION_CLOTURE.md:71) ; forge/oracles.json:95 "
+    "pointe encore GAMES/kb_tactics absent — divergence à rendre visible (R1), pas à verdir. "
+    "GO Pierre 2026-09-05 (U4) : témoin conservé, cible non substituée."))
 def test_kb_tactics_reel_cable_passe():
     # Câblage réel opéré en Tier 1 #2 — reference vivante mise à jour.
     res = check_reuse_ratio_wired(REPO_ROOT / "GAMES" / "kb_tactics")

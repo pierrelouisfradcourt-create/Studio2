@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from forge import commit_scope_guard as G
+from forge.asset_producer import analyze_batch as AB
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -62,11 +63,27 @@ def test_prefixe_avec_slash_final_equivaut(tmp_path):
 # ------------------------------------------------------- le perimetre declare
 
 def test_le_perimetre_asset_library_existe_et_pointe_du_reel():
-    """Un perimetre qui cite des chemins inexistants ne protege rien."""
+    """Un perimetre qui cite des chemins inexistants ne protege rien.
+
+    Seule tolerance : le repertoire de lecons que la chaine cree ELLE-MEME au premier lot
+    (analyze_batch.write_lessons / refresh_constraints : mkdir). Il n'est jamais cree
+    artificiellement (meme constat NOT_YET_PRODUCED que TOOLS/validate_v2.py, v1_surfaces)
+    et son chemin est lu chez le producteur, pas recopie ici : si le producteur est reancre
+    sans que commit_scopes.json suive, ce test redevient rouge. Absent -> XFAIL visible.
+    GO Pierre 2026-09-05 (U5).
+    """
     scopes = G.load_scopes()
     assert "asset_library" in scopes, "perimetre asset_library absent de commit_scopes.json"
+    produit_au_premier_lot = AB.LESSONS_DIR_REEL.relative_to(REPO).as_posix()
+    assert produit_au_premier_lot in scopes["asset_library"], \
+        "le repertoire de lecons du producteur n'est plus dans le perimetre"
     manquants = [p for p in scopes["asset_library"] if not (REPO / p).exists()]
-    assert not manquants, f"perimetre citant des chemins absents : {manquants}"
+    inattendus = [p for p in manquants if p != produit_au_premier_lot]
+    assert not inattendus, f"perimetre citant des chemins absents : {inattendus}"
+    if produit_au_premier_lot in manquants:
+        pytest.xfail(f"NOT_YET_PRODUCED (TOOLS/validate_v2.py, v1_surfaces) : "
+                     f"{produit_au_premier_lot} — cree par analyze_batch au premier lot, "
+                     "jamais artificiellement")
 
 
 def test_le_perimetre_couvre_le_chantier_reel():

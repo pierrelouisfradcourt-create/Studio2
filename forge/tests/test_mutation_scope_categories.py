@@ -40,8 +40,12 @@ PONG_WIREMAP = REPO_ROOT / "GAMES" / "pong" / "09_WIREMAP" / "wiremap.json"
 # de ce run de référence : le chemin suit l'archive. Leçon consignée : un test qui lit un
 # dossier de run VIVANT casse dès qu'un run est archivé — la cible doit être une référence
 # figée, jamais le run courant.
-PONG_EVIDENCE = (REPO_ROOT / "EVIDENCE" / "runs" / "pong_r2_ref" / "evidence"
-                 / "mutation_pong_r2.json")
+# Fixture V1 migrée le 2026-09-05 sous `EVIDENCE/_V1_FIXTURES/` (GO Pierre) : instantané
+# produit par V1 (`detail.game_dir` = C:\TACTICAL_CHESS_STUDIO\games\pong), lu comme DONNÉE
+# d'entrée figée — ce n'est PAS une preuve V2 (EVIDENCE/_V1_FIXTURES/README.md). Le sceau
+# (evidence_sha256 du verdict.json V1) n'est pas re-vérifié ici : seul `per_file` est lu.
+PONG_EVIDENCE = (REPO_ROOT / "EVIDENCE" / "_V1_FIXTURES" / "runs" / "pong_r2_ref"
+                 / "evidence" / "mutation_pong_r2.json")
 
 # RÈGLE RATIFIÉE PIERRE 2026-07-27 — « le test doit protéger un invariant, pas figer l'état
 # actuel ». Ces constantes ÉTAIENT des listes codées en dur (3 `system`, 7 `system.adapter`) :
