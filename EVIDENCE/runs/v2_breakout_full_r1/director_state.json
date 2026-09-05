@@ -1,0 +1,35 @@
+{
+ "accepted": [],
+ "build": {
+  "attempts": 0,
+  "last_model": null,
+  "qa": null
+ },
+ "convocations": {},
+ "decisions": [
+  "D-v2_breakout_full_r1-1"
+ ],
+ "last_problems": [],
+ "pending_question": {
+  "asked_at": "2026-09-05T13:38:07+00:00",
+  "capability": "contract_author",
+  "code": "CAPABILITY_UNAVAILABLE",
+  "id": "Q-v2_breakout_full_r1-1-CAPABILITY_UNAVAILABLE",
+  "measure": null,
+  "options": [
+   "provide_section",
+   "skip"
+  ],
+  "signal": "gameplay@contract_author",
+  "text": "section 'gameplay' absente et capacité 'contract_author' indisponible : artefact charter.yaml matérialisé par run_real._materialize_yaml, hors du chemin JSON de v0",
+  "to": "pierre"
+ },
+ "project": "v2_breakout_full",
+ "run_id": "v2_breakout_full_r1",
+ "schema": "DIRECTOR_STATE/v0",
+ "sequence": [],
+ "signals": {},
+ "snapshots": {},
+ "status": "HALTED",
+ "steps": 1
+}

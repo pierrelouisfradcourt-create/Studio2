@@ -7,12 +7,11 @@ verdict global « ready » n'est émis ici — `claim_verdict: NO_CLAIM_ALLOWED`
 
 ```
 V1  C:\TACTICAL_CHESS_STUDIO          HEAD 58095ba9   SOURCE CANONIQUE, lecture seule
-V2  C:\Users\Studio-Dev\Desktop\Studio2   HEAD 731d52b   propre, synchronisé origin/master
+V2  C:\Users\Studio-Dev\Desktop\Studio2   HEAD d954acb+  (voir git log — ce fichier ne peut porter son propre commit)
 ```
 
-⚠️ **V2 n'a PAS de `CLAUDE.md`** (motif retiré de `reference_protected.yaml` le 2026-09-04) : seules
-les règles de `.claude/rules/` sont injectées. **Ouvrir les sessions DANS Studio2** — depuis V1
-elles sont gardées par les hooks V1 (mesuré : `pretool_git_guard` V1 a bloqué sur un sentinel de 14 j).
+⚠️ **V2 n'a PAS de `CLAUDE.md`** (retiré de `reference_protected.yaml` le 2026-09-04) : seules les règles
+de `.claude/rules/` sont injectées. **Ouvrir les sessions DANS Studio2** (hooks V1 sinon ; `pretool_git_guard` V2 refuse `git checkout --` sans sentinel).
 
 ## ReferenceGuard — actif, advisory, jamais exécuté en run réel
 
@@ -57,9 +56,8 @@ NOT_YET_PRODUCED, dérivé du producteur, jamais créé).
 
 ## Fixtures V1 — migrées, isolées, provenance marquée
 
-`EVIDENCE/_V1_FIXTURES/` (417 fichiers, README = source des règles) : **PAS des preuves V2**, lues
-par 33 tests / 10 fichiers. Deux briefs (`EVIDENCE/briefs/p1_alpha/`, `p1_beta/`) restent à
-l'emplacement canonique (lus par la PRODUCTION), avec `PROVENANCE_V1.md` — à exclure des inventaires.
+`EVIDENCE/_V1_FIXTURES/` (README = source des règles) : **PAS des preuves V2**, lues par 33 tests / 10 fichiers
+(+ `pacman-v3`, HG2). Briefs `p1_alpha/`, `p1_beta/` restent canoniques (lus par la PRODUCTION), avec `PROVENANCE_V1.md`.
 
 ## Ce qui bloquait, et qui est levé
 
@@ -77,19 +75,21 @@ l'emplacement canonique (lus par la PRODUCTION), avec `PROVENANCE_V1.md` — à 
   V2** — `observed_in_code()` rend `[]`, `runtime_drift.jsonl` ne portera jamais d'`ALERTE_CODE` ;
   mesuré : 3 appelants de modèle dans `forge/` invisibles (`qwen_spec.py`, `repair_step.mjs`,
   `run_real.py` — seul ce dernier non déclaré dans `roles.yaml`). Ré-ancrage = chantier production.
-- `forge/oracles.json` : **17/32** entrées `cwd` pointent vers des dossiers absents (`kb_tactics`,
-  `p1_beta`, `leviathan`…) ; 3 tests node hors T0 rouges sur `GAMES/kb_tactics`.
-- ⚠️ une **autre session écrit dans Studio2** (`EVIDENCE/bundles/dispatch_dryrun.jsonl` 09:12, passage
-  de `test_slice_lot4` qui écrit dans le VRAI `EVIDENCE/runs/` + `GAMES/`) — TOPOLOGY §8.3.
+- `forge/oracles.json` : **17/32** entrées `cwd` vers des dossiers absents ; 3 tests node hors T0 rouges (`kb_tactics`).
+- ⚠️ une **autre session écrit dans Studio2** (`dispatch_dryrun.jsonl`, `briefs/chaton_clicker/`, `test_slice_lot4`
+  écrit dans le VRAI `EVIDENCE/runs/` + `GAMES/`) — TOPOLOGY §8.3.
+- **DIRECTOR-V0-BOOTSTRAP-001** — Director v0 **ne démarre pas d'un blueprint issu du seul brief** : il exige
+  `gameplay` (← `contract_author`) puis `understanding.prisme` (← `prisme`), capacités `locked`/non `invokable_v0`,
+  matérialisées par `run_real` hors chemin JSON. Mesuré `v2_breakout_full_r1` : halt à D-1, 0 $, aucun `decompose`
+  atteint. Pas un défaut du blueprint (`validate()==[]`), pas un échec de la boucle aval (`_slice_r1` l'a exercée
+  depuis un amont importé). **Chantier v1 : amorçage depuis brief.**
 
 ## Chantiers différés, décidés non ouverts
 
-- **providers** — 33 lignes, **0 consommateur**, `providers.yaml` absent, 0 test. `TOPOLOGY.md` a
-  tranché « dehors » ; l'exécution manque (gate 2 : `load_capabilities` orphelin).
-- **`TOOLS/`** — emplacement de `control_plane/` non tranché. ⚠️ `scan_reasoning_readers` lit
-  `control_plane/registry.py` **comme un fichier** : le déplacer la casse. · **synthèse V2** non écrite.
-- **HumanGate suivante** : statut des 3 rouges (leçons de méthode V1 → I7 ; `pacman-v3` → import
-  V1 explicite, invariant V2 sur `runm_breakout`, ou retrait). Puis témoin `reuse_ratio` (facultatif), puis campagne.
+- **providers** — 33 lignes, 0 consommateur, `providers.yaml` absent, 0 test ; `TOPOLOGY.md` a tranché « dehors », l'exécution manque.
+- **`TOOLS/`** — `control_plane/` non tranché ; ⚠️ `scan_reasoning_readers` lit `registry.py` comme un fichier. **Synthèse V2** non écrite.
+- **Prochaine décision** (HG1–HG3 closes `9be78d2`/`420d5a7`/`7a0e6df`) : suite de `v2_breakout_full` — A1 amorcer l'amont
+  depuis `_slice` (2ᵉ échantillon Director) · A2 amont neuf par `run_real` (2 runs) · A3 chantier v1 seulement.
 - Résidus V1 hors périmètre : `src/` dans 4 contrats · `scripts/**` dans `wm1` ·
   `pretool_agent_classify` journalise dans `lab/` (fantôme) avec `mkdir(parents=True)`.
 
