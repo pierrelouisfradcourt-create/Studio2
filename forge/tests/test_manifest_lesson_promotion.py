@@ -174,7 +174,11 @@ def test_promoted_lesson_is_surfaced_by_premortem_lessons(tmp_path):
 def test_real_pacman_v3_manifest_promotes_at_least_one_lesson(tmp_path):
     """Lecture seule du corpus RÉEL (EVIDENCE/runs/pacman-v3/context/) — la fixture
     exacte citée par le post-mortem. Écrit UNIQUEMENT sous tmp_path."""
-    run_dir = _REPO_ROOT / "EVIDENCE" / "runs" / "pacman-v3"
+    # HumanGate HG2/HG3 (Pierre, 2026-09-05, A+A) : corpus HISTORIQUE V1 (lab/forge_runs/pacman-v3,
+    # HEAD V1 3a9ef2d3, commit b22a9804), ré-ancré sous EVIDENCE/_V1_FIXTURES/ avec PROVENANCE_V1.md.
+    # Ce n'est PAS une preuve V2 : témoin de traçabilité de la leçon « keycode brut », pas de capacité
+    # V2 (celle-ci est démontrée par runm_breakout / v2_breakout_slice_r1). Jamais sous EVIDENCE/runs/.
+    run_dir = _REPO_ROOT / "EVIDENCE" / "_V1_FIXTURES" / "runs" / "pacman-v3"
     context_dir = run_dir / "context"
     before = sorted(context_dir.glob("*.jsonl"))
     before_sizes = {p: p.stat().st_size for p in before}
