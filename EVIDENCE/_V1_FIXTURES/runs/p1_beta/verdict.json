@@ -1,0 +1,365 @@
+{
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "decision": "HUMANGATE_READY_WITH_OBJECTION",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "execution_proof_attestation": "self",
+ "execution_proof_note": "auto-attesté (chemin B headless) : les événements spawn_authorized/spawn_executed de ce run ont été écrits par le driver qui exécute les spawns, aucun observateur tiers ne les a constatés",
+ "git_head": "f8c50a05150cf88383c66accf942fdfc43b2c716",
+ "hmac": "d5d14060b32f07190e21e3f49fc118dc2023c446fa93ac35a20238dcf04079bb",
+ "humangate_flags": [
+  "standard non vérifiée (oracle sauté dans ce profil)",
+  "mutation: 1 survivant(s) trié(s) par le producteur (and->or@L149) — équivalence NON vérifiée mécaniquement, ratification HumanGate obligatoire avant tout claim positif"
+ ],
+ "is_game": true,
+ "nonce": "46ad82ced4b615bc8cbab10ceff19502",
+ "oracles": {
+  "archi": {
+   "detail": {
+    "debordements_ownership": {
+     "checked": false,
+     "items": []
+    },
+    "deps_interdites_violées": [],
+    "modules_sans_test": [
+     "e2e",
+     "run-oracle",
+     "solvability"
+    ],
+    "passed": true
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "archi",
+   "run_id": "p1_beta-20260830-run1",
+   "status": "OK",
+   "ts": 1788105804.1037374
+  },
+  "code": {
+   "detail": {
+    "art_response_dead": false,
+    "asset_consumption": {
+     "blocked": 0,
+     "checked": true,
+     "missing": [],
+     "passed": true,
+     "raisons": [],
+     "resolved": 11
+    },
+    "e2e": {
+     "passed": true,
+     "raisons": []
+    },
+    "economy_bypass_dead": false,
+    "evidence_seal": {
+     "evidence_path": "lab/forge_runs/p1_beta/evidence/oracle_p1_beta.log",
+     "reason": "FLUX_D_EXPLOITATION_IGNORE_PAR_GIT",
+     "sealed": false
+    },
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "logic_files_source": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\p1_beta\\wiremap.json",
+    "loop_dead": false,
+    "mutation": {
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "categories_exclues": [],
+       "code_sha256": {
+        "e2e.mjs": "a929c8578fadf6ed61acb1272554b923fddf6e10368b5746f02b68f78df00cb7",
+        "engine.mjs": "cb110bb9060dc5bfe57caaadd7f1b19a1c27e920237e09de2434f6428703d08e",
+        "input.mjs": "a9d1df0f7b9ea4590ae3eb4048c58e579d554b193606fecb3d991b156792b601",
+        "logic.test.mjs": "247c49fd1fd52c016c2e1babe89ae71d42bed009d53575972b2a98ce84bf935b",
+        "properties.test.mjs": "84c7d3f9d1d4cee37925b25b739618e974e2199bb9348b14d26baf1cd3de5c5d",
+        "render.mjs": "591b33f6da7986ef6b71d06407add287e8f84c302687de3153404465111fa88a",
+        "run-oracle.mjs": "11362a472b09582f3ccc8f81cba9ada593ed863fbd081b7e14a0085a0ac43399"
+       },
+       "compteurs_par_categorie": {
+        "sans_categorie": {
+         "fichiers": 3,
+         "jugee": true,
+         "killed": 39,
+         "total": 40
+        }
+       },
+       "game_dir": "C:\\TACTICAL_CHESS_STUDIO\\games\\p1_beta",
+       "gate_checked": true,
+       "killed": 39,
+       "logic_files": [
+        "engine.mjs",
+        "input.mjs",
+        "render.mjs"
+       ],
+       "mutation_exception": true,
+       "survivants_non_tries": [],
+       "survived": 1,
+       "test_argv": [
+        "node",
+        "--test",
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "test_files_scelles": [
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "total": 40,
+       "triage_sha256": "daed42fc5c5567dfb50d5174ed16efead132911d484eba2459aff8d04e6d4e7e",
+       "triaged_survivors": [
+        "and->or@L149"
+       ]
+      },
+      "evidence_path": "lab/forge_runs/p1_beta/evidence/mutation_p1_beta-20260830-run1.json",
+      "evidence_sha256": "8c2f76ccb2ff3ee69986f25098bc9811c462275548c7be6dcda6b4f12d040746",
+      "oracle_id": "mutation",
+      "run_id": "p1_beta-20260830-run1",
+      "status": "OK",
+      "ts": 1788105803.9474916
+     },
+     "signature": "eb7df561e5dcb2e5bb154b991ca7e6c3f05939cd2f2b2d76d4070e5ed710b574"
+    },
+    "product_oracle_godot_activation": {
+     "active": false,
+     "godot_capacity_present": false,
+     "proof_descriptor_present": false,
+     "reason": "aucun descripteur `proof:` bien formé dans game_contract.yaml ; aucun oracle FORGE_ORACLE trouvé sous C:\\TACTICAL_CHESS_STUDIO\\games\\p1_beta/07_TESTS/oracle/",
+     "runtime_block": {
+      "active": false,
+      "reason": "pas de run/main_scene"
+     }
+    },
+    "regime_preuve": "historique",
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": true,
+     "raisons": []
+    },
+    "runtime_alive": {
+     "checked": false,
+     "passed": false,
+     "reason": "pas de run/main_scene (module bibliothèque)",
+     "status": "SKIPPED"
+    },
+    "search_consulted": {
+     "count": 5,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability": {
+     "checked": true,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability_mesure": {
+     "mesure": "cablage_du_harnais",
+     "ne_mesure_pas": "la solvabilite du jeu (won/trials) — un `passed: true` ne prouve AUCUNE partie gagnee",
+     "resultat_reel": "non remonte au recu : voir evidence/oracle_<jeu>.log, NON versionne (.gitignore:81)"
+    }
+   },
+   "evidence_path": "lab/forge_runs/p1_beta/evidence/oracle_p1_beta.log",
+   "evidence_sha256": "",
+   "oracle_id": "code",
+   "run_id": "p1_beta-20260830-run1",
+   "status": "OK",
+   "ts": 1788105803.9489956
+  },
+  "standard": {
+   "detail": {
+    "reason": "non applicable au profil full_content"
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "standard",
+   "run_id": "p1_beta-20260830-run1",
+   "status": "SKIPPED",
+   "ts": 1788105808.9380772
+  },
+  "wiremap": {
+   "detail": {
+    "amont_traversal": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "facts": {
+      "boucles_recompense": {
+       "addresses": [
+        "worldscan:games[0].loops.minute_1",
+        "worldscan:games[0].loops.minute_10",
+        "worldscan:games[0].loops.hour_5",
+        "worldscan:games[0].loops.endgame",
+        "worldscan:games[1].loops.minute_1",
+        "worldscan:games[1].loops.minute_10",
+        "worldscan:games[1].loops.hour_5",
+        "worldscan:games[1].loops.endgame",
+        "worldscan:games[2].loops.minute_1",
+        "worldscan:games[2].loops.minute_10",
+        "worldscan:games[2].loops.hour_5",
+        "worldscan:games[2].loops.endgame",
+        "gm_worldscan:dimensions[2]",
+        "gm_worldscan:dimensions[5]"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "conditions_defaite": {
+       "addresses": [
+        "worldscan:games[2].objectives[0].defeat_condition"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "conditions_victoire": {
+       "addresses": [
+        "worldscan:games[2].objectives[0].victory_condition"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "contraintes_narratives": {
+       "addresses": [
+        "story_bible:sections[7]"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "objectifs_joueur": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].player_goal",
+        "worldscan:games[1].objectives[0].player_goal",
+        "worldscan:games[2].objectives[0].player_goal"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "progression": {
+       "addresses": [
+        "gm_worldscan:dimensions[1]"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      }
+     },
+     "references": {
+      "adressables": 15,
+      "expected": 15,
+      "non_resolues": [
+       {
+        "id": "R1",
+        "reference": "gm_worldscan:game_master.grey_blocks.gb_constellation"
+       },
+       {
+        "id": "R2",
+        "reference": "gm_worldscan:game_master.loops.core_loop.core_action"
+       },
+       {
+        "id": "R3",
+        "reference": "gm_worldscan:game_master.loops.core_loop.core_feedback"
+       },
+       {
+        "id": "R4",
+        "reference": "gm_worldscan:game_master.loops.core_loop.core_reward"
+       },
+       {
+        "id": "R5",
+        "reference": "gm_worldscan:game_master.loops.core_loop.core_decision"
+       },
+       {
+        "id": "R6",
+        "reference": "gm_worldscan:game_master.grey_blocks.gb_emitter"
+       },
+       {
+        "id": "R7a",
+        "reference": "gm_worldscan:game_master.grey_blocks.gb_emitter"
+       },
+       {
+        "id": "R7b",
+        "reference": "gm_worldscan:game_master.grey_blocks.gb_constellation"
+       },
+       {
+        "id": "R8",
+        "reference": "gm_worldscan:game_master.loops.economy_loop.economy_action"
+       },
+       {
+        "id": "R9",
+        "reference": "gm_worldscan:game_master.grey_blocks.gb_ascension_altar"
+       },
+       {
+        "id": "R10",
+        "reference": "gm_worldscan:game_master.loops.meta_loop.meta_reward"
+       },
+       {
+        "id": "R11",
+        "reference": "gm_worldscan:game_master.grey_blocks.gb_end_screen"
+       },
+       {
+        "id": "R12",
+        "reference": "gm_worldscan:game_master.grey_blocks.gb_locked_glyph"
+       },
+       {
+        "id": "R13",
+        "reference": "gm_worldscan:game_master.grey_blocks.gb_light_counter"
+       },
+       {
+        "id": "R14",
+        "reference": "gm_worldscan:game_master.loops.world_loop.world_feedback"
+       }
+      ],
+      "resolues": 0
+     },
+     "stages": [
+      "NOT_PRODUCED",
+      "PRODUCED",
+      "PRISME",
+      "GREY_BLOCKS",
+      "WIREMAP",
+      "BUILD"
+     ],
+     "verdict": "ADVISORY"
+    },
+    "features_manquantes": [],
+    "fonctions_renommées": [],
+    "obsoletes": [],
+    "passed": true,
+    "preuves_absentes": []
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "wiremap",
+   "run_id": "p1_beta-20260830-run1",
+   "status": "OK",
+   "ts": 1788105804.2310572
+  }
+ },
+ "project": "p1_beta",
+ "provenance_ok": true,
+ "redteam_advisory": [],
+ "redteam_ran": true,
+ "redteam_reviewer": "qwen2.5-14b-instruct",
+ "run_id": "p1_beta-20260830-run1",
+ "scope": "FULL",
+ "software_verdict": "OK",
+ "ts": 1788105808.9542944
+}

@@ -1,0 +1,54 @@
+Oracle confirms `verdict: OK` — deliverables valid and unchanged on disk. The only defect was the fence's `about` address. Re-emitting the report with the corrected fence: `q_art_001.about` moves from the unresolvable `art_bible:BESOINS VISUELS` (heading is `## 3. BESOINS VISUELS`, the `3. ` prefix blocks the exact match) to `art_bible:visual_language` — an exact-named anchor that documents the progression→embrasement mapping the question is about.
+
+---
+
+## RAPPORT FINAL — s2.5-artbible / p1_beta-20260830-run1 (Round 1, ré-émission attempt 2)
+
+**Correction de forme uniquement.** Le matérialiseur a refusé l'attempt 1 sur un seul point : `q_art_001.about = "art_bible:BESOINS VISUELS"` ne résolvait pas — le résolveur (`run_real.py:_resolve_art_bible_address`) exige un titre `## <section>` **exact**, or ma section est `## 3. BESOINS VISUELS` (le préfixe `3. ` casse le match). Repointé sur `art_bible:visual_language` (ancre exacte, résolvable, qui porte la cartographie progression→embrasement). **Le fond des deux livrables est inchangé et re-vérifié `OK` ci-dessous.**
+
+**Livrables (déjà sur disque, périmètre autorisé) :**
+- `lab/forge_runs/p1_beta/art_bible.md` — frontmatter `styles`/`mood_keywords` non vides + 3 sections v0.1 (IDENTITÉ VISUELLE / RATIONALE / BESOINS VISUELS) + les 8 sections héritage/décision nommées exactement.
+- `lab/forge_runs/p1_beta/asset_requests.json` — 9 requêtes (Asset Contract V0.1), `no_assets_needed:false`.
+
+**Identité décidée (bras LIBRE) :** « Le Foyer » — une forge de lumière cosmique. Aucun avatar, aucun monde nommé (cohérent `story_bible:context`/`characters` = NOT_GROUNDED). Action cœur = attiser un foyer chaud unique → compteur de lumière ; achats = émetteurs froids qui **apparaissent** à l'écran ; fin = embrasement observable quand la constellation sature.
+
+**Oracle cité :** `scripts/forge/check_artbible.mjs` (déterministe, non-LLM).
+- `software_verdict: OK` — reçu ré-exécuté à l'instant : `verdict:"OK"`, `coverage.checked:true`, `coverage.missing:[]`, 8/8 besoins `required:true` couverts par une requête de même `entity_role`. Auto-contrôle SANS autorité de preuve (fiche 3, 2026-08-30) — le reçu faisant foi est celui que le DRIVER ré-exécutera (`executed_by: driver`).
+- `evidence_verdict: MECHANICAL_VALIDATION_ONLY`
+- `claim_verdict: NO_CLAIM_ALLOWED` — l'adéquation esthétique réelle n'est PAS évaluée : `style_tag_match` compare des tags, pas des pixels → **fog → Pierre**.
+
+**Statut de résolution des 9 `asset_request` (advisory, jamais pass/fail) :** 9/9 `resolution_stats.blocked` — **légitime** (catalogue `candy-pop`/`flat-top-down`, genres shooter/tactical : aucun style lumineux-cosmique-incremental). C'est un `resolution_stats.blocked` (catalogue incomplet), **distinct** de `coverage.missing` (vide) → à sourcer en HumanGate, jamais assoupli. Chaque `req.*.id` est **blocked-justifié** (satisfait `charter:criteres_succes`).
+
+| id | entity_role | style | résolution catalogue |
+|---|---|---|---|
+| req_core_hearth | other | ember-glow | BLOCKED (advisory) |
+| req_emitter_unit | item | luminous-vector | BLOCKED (advisory) |
+| req_spark_burst | effect | ember-glow | BLOCKED (advisory) |
+| req_light_counter | ui | hud-neon | BLOCKED (advisory) |
+| req_buy_button | ui | hud-neon | BLOCKED (advisory) |
+| req_progress_constellation | ui | luminous-vector | BLOCKED (advisory) |
+| req_end_screen | ui | luminous-vector | BLOCKED (advisory) |
+| req_locked_glyph | icon | hud-neon | BLOCKED (advisory) |
+| req_field_background | environment | deep-space-flat | BLOCKED (advisory) |
+
+**SKIPPED_VALIDATION**
+- item: lecture de `design/content_requirements.md` (C.5, Gameplay Map) · périmètre: run `p1_beta` · statut: **non fait — artefact ABSENT du run_dir** (`design/` inexistant, aucun `*content_req*`) · raison: contrat le déclare mandatory-read « injecté en amont », mais non injecté à cette étape. J'ai travaillé sur les 3 ancres réellement présentes (charter, worldscan, story_bible). Remonté en question protocole au GM (fence, `loop_id: art_gm`).
+- item: exécution FAISANT FOI de `check_artbible.mjs` · périmètre: les 2 livrables · statut: **non fait (par conception)** · raison: `permissions.run` = auto-contrôle sans autorité de preuve ; le reçu gatant est produit par le driver (`executed_by: driver`).
+- item: jugement d'adéquation esthétique / viewpoint des `style` déclarés · périmètre: 9 requêtes · statut: **hors capacité oracle** · raison: aucun oracle ne juge les pixels (limite assumée ASSET_CONTRACT_V0) → fog HumanGate.
+
+**RETURN LINEAGE**
+- `why_task_existed:`
+  - `problem:` la chaîne `full_content` de p1_beta (bras LIBRE) a besoin d'une identité visuelle décidée + de requêtes d'asset structurées couvrant chaque entité de la boucle clicker, avant l'architecture/le build.
+  - `oracle:` `check_artbible.mjs` (couverture besoin↔requête + forme) ; activation aussi par décision humaine (protocole RUN 2, paire pilote L/D).
+  - `root_cause:` non applicable (étape de production planifiée) ; la Story Bible quasi-vide est un fait de genre, pas un défaut. Le refus attempt 1 avait une cause PRÉCISE : adresse `about` non résolvable (section numérotée).
+  - `action_reason:` corriger la FORME du fence (adresse résolvable) sans toucher au fond validé ; re-vérifier l'oracle.
+- `result:` fence corrigé (`about` → `art_bible:visual_language`, ancre exacte) ; deux livrables inchangés, auto-contrôle ré-exécuté `verdict:OK`, coverage 8/8, resolution 0/9 (advisory BLOCKED légitime).
+- `proof:` `node scripts/forge/check_artbible.mjs lab/forge_runs/p1_beta/art_bible.md lab/forge_runs/p1_beta/asset_requests.json --json` → `{"pass":true,"verdict":"OK","coverage":{"checked":true,"missing":[],"satisfied":[8 ids]},"resolution_stats":{"ok":0,"blocked":9,"total":9}}`. Cause du refus attempt 1 lue dans `run_real.py:1462-1471` (`_resolve_art_bible_address` : match exact `^##\s+<section>\s*$`, incompatible avec `## 3. BESOINS VISUELS`).
+- `learning:` une adresse `about` pour ART DOIT viser une section au titre exactement égal au `bare` (les 8 sections héritage/décision `## <nom>` sont les seules ancres sûres ; les sections numérotées `## N. TITRE` ne résolvent JAMAIS car le `N. ` reste dans le titre). À réutiliser pour toute question ART round 1/2.
+- `next_reason:` chaîne NON fermée — l'aval doit agir : (1) le GM répond aux questions du fence (round 2) ou motive `ready_for_freeze:false` ; (2) le driver ré-exécute `check_artbible.mjs` (reçu faisant foi) ; (3) HumanGate tranche le sourcing des 9 assets BLOCKED et l'adéquation esthétique (fog). Cause protocole non résolue (map C.5 manquante) → escalade légitime.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "L'artefact design/content_requirements.md (C.5 Gameplay Map), declare mandatory-read et 'injecte en amont' par le contrat s2.5-artbible, est absent du run_dir p1_beta (aucun dossier design/, aucun fichier *content_req*).", "root_cause": "L'executeur/driver n'a pas materialise ni injecte content_requirements.md a l'etape s2.5 de ce run full_content."}
+
+```design_questions
+{"schema_version": 1, "round": 1, "questions": [{"id": "q_art_001", "from": "ART", "to": "GM", "round": 1, "about": "art_bible:visual_language", "loop_id": "core_loop", "missing": ["forme du declencheur d'etat terminal: seuil sur une ressource unique accumulee OU jalon/milestone distinct"], "why": "Ma section visual_language mappe la progression vers la fin sur une montee de glow continue du fond puis un embrasement final (vr_progress_constellation -> vr_end_screen), en supposant que l'etat terminal se declenche quand la ressource-lumiere franchit un seuil. Si la boucle canonique route sa fin par un JALON distinct de la ressource (entite separee), il faudrait un asset de jalon dedie, non prevu ici. La reponse determine si vr_progress_constellation reste une entite unique ou doit etre dedoublee.", "blocking": true, "answer": null}, {"id": "q_art_002", "from": "ART", "to": "GM", "round": 1, "about": "art_bible:world_constraints", "loop_id": "art_gm", "missing": ["existence et injection de design/content_requirements.md (C.5 Gameplay Map) a l'etape s2.5"], "why": "Mon contrat declare content_requirements.md mandatory-read et injecte en amont, mais il est absent du run_dir (aucun design/, aucun *content_req*). J'ai produit l'art bible depuis charter+worldscan+story_bible seuls. Je dois savoir si la Gameplay Map existe deja a ce stade de full_content et si l'ART est cense la completer, ou si elle est produite plus en aval.", "blocking": false, "answer": null}], "declarations": {"ART": {"round": 1, "ready_for_freeze": false, "open_to_gm": 2}, "GM": {"round": 1, "ready_for_freeze": false, "open_to_art": 0}}}
+```

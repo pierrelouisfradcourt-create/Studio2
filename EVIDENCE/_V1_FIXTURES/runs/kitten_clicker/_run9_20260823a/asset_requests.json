@@ -1,0 +1,166 @@
+{
+  "requests": [
+    {
+      "id": "pelote",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "kitten_common",
+      "entity_role": "collectible",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "kitten_uncommon",
+      "entity_role": "collectible",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "kitten_rare",
+      "entity_role": "collectible",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "kitten_epic",
+      "entity_role": "collectible",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "kitten_legendary",
+      "entity_role": "collectible",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "refuge",
+      "entity_role": "environment",
+      "purpose": "decoration",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "lieu_2",
+      "entity_role": "environment",
+      "purpose": "decoration",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "obj_food_bowl",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "obj_scratching_post",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "obj_cushion_bed",
+      "entity_role": "item",
+      "purpose": "decoration",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "fx_click_feedback",
+      "entity_role": "effect",
+      "purpose": "feedback",
+      "type": "vfx",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "icon_ronrons",
+      "entity_role": "icon",
+      "purpose": "ui",
+      "type": "icon",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "ui_stats_hud",
+      "entity_role": "ui",
+      "purpose": "ui",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "ui_action_buttons",
+      "entity_role": "ui",
+      "purpose": "ui",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    },
+    {
+      "id": "ui_objectif_banner",
+      "entity_role": "ui",
+      "purpose": "ui",
+      "type": "sprite",
+      "style": "flat-cute-2d",
+      "references": [],
+      "constraints": { "format": "2D", "runtime": "godot", "license_allowed": ["CC0-1.0"], "genre": [], "max_size_kb": null },
+      "acceptance_tests": [ { "check": "resolved" }, { "check": "format_runtime_match" }, { "check": "style_tag_match" } ]
+    }
+  ],
+  "no_assets_needed": false,
+  "reason": null
+}

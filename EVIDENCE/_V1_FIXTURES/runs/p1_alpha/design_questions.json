@@ -1,0 +1,80 @@
+{
+ "schema_version": 1,
+ "round": 3,
+ "questions": [
+  {
+   "id": "q_art_001",
+   "from": "ART",
+   "to": "GM",
+   "round": 1,
+   "about": "art_bible:visual_language",
+   "loop_id": "core_loop",
+   "missing": [
+    "theme_owner",
+    "concrete_subject_of_R",
+    "concrete_identity_of_G1_G4",
+    "per_upgrade_iconography"
+   ],
+   "why": "Le theme concret etait delegue a la chaine et non fixe en amont ; le SUJET des assets (R, G1-G4, ameliorations) depassait l'autorite de l'etape Art. Question posee au Round 1, REPONDUE par le GM.",
+   "blocking": true,
+   "answer": {
+    "round": 1,
+    "by": "GM",
+    "ref": "gm_worldscan:game_master.grey_blocks.gb_click_target",
+    "text": "Theme fixe par le GM : CROISSANCE LUMINEUSE (l'Eclat). R=orbes de lumiere ; cible=Source lumineuse centrale ; G1..G4=quatre emetteurs de lumiere en escalade ; 6 ameliorations=badges (2 main plus vive clic x2/x4, 4 halo x2 prod). Regles de style/affordance/lisibilite INCHANGEES. Integre en art_bible.md v0.2. Re-declaration round 3 (GM) : la modification induite par cette reponse a eu lieu dans l'art_bible (thème/habillage) et, dans mon artefact, uniquement en game_master.grey_blocks.gb_click_target.builder_contract ; AUCUN champ mecanique de core_loop n'a change car un theme est une peau, pas une mecanique. Le loop_id=core_loop porte donc un finding de provenance (loop_id honnete = art_gm) ; le HALT du pilote reste dans les preuves, non requalifie."
+   }
+  },
+  {
+   "id": "q_gm_001",
+   "from": "GM",
+   "to": "ART",
+   "round": 1,
+   "about": "gm_worldscan:game_master.loops.economy_loop.eco_decision",
+   "loop_id": "economy_loop",
+   "missing": [
+    "visuel_de_l_arbitrage_acheter_vs_epargner",
+    "apercu_cout_et_gain_du_prochain_palier"
+   ],
+   "why": "L'arbitrage acheter-maintenant vs epargner est la boucle de fond imposee, mais la transformation perceptible se reduisait au grisage : la moitie epargne restait invisible.",
+   "blocking": true,
+   "answer": {
+    "round": 2,
+    "by": "ART",
+    "ref": "art_bible:saving_arbitrage_perception",
+    "text": "Deux dispositifs sans lecture chiffree : (1) vr_affordability_meter — chaque bouton non finançable se CHARGE proportionnellement a R/cout, l'epargne devient un remplissage qui monte ; (2) vr_yield_preview — repere comparatif du gain (R/s) du prochain palier a cote de son cout. Recu et integre en economy_loop.transformation_perceptible (Round 2)."
+   }
+  },
+  {
+   "id": "q_gm_002",
+   "from": "GM",
+   "to": "ART",
+   "round": 1,
+   "about": "gm_worldscan:game_master.loops.skill_loop.skill_decision",
+   "loop_id": "skill_loop",
+   "missing": [
+    "retour_visuel_distinguant_clic_lourd_vs_generateurs_d_abord",
+    "indicateur_de_rythme_R_par_s"
+   ],
+   "why": "La seule competence du jeu est la strategie d'allocation ; sa divergence est ce que S10 mesure, mais rien ne la rendait perceptible au joueur.",
+   "blocking": true,
+   "answer": {
+    "round": 2,
+    "by": "ART",
+    "ref": "art_bible:strategy_divergence_perception",
+    "text": "Deux dispositifs sans lecture chiffree : (1) vr_rate_indicator — repere de cadence du debit R/s, distinct du solde/cumul (generateurs-d'abord=montee durable ; clic-lourd=oscillation) ; (2) BURST vs PULSE — clic=BURST sur la Source, chaque emetteur=PULSE a son tick. Recu et integre en skill_loop.transformation_perceptible (Round 2)."
+   }
+  }
+ ],
+ "declarations": {
+  "ART": {
+   "round": 2,
+   "ready_for_freeze": true,
+   "open_to_gm": 0
+  },
+  "GM": {
+   "round": 3,
+   "ready_for_freeze": true,
+   "open_to_art": 0
+  }
+ }
+}

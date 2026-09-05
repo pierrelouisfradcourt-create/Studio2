@@ -1,0 +1,258 @@
+{
+  "no_assets_needed": false,
+  "reason": null,
+  "requests": [
+    {
+      "id": "req_click_target",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "flat-vector-2d",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_resource_icon",
+      "entity_role": "icon",
+      "purpose": "ui",
+      "type": "icon",
+      "style": "clean-web-ui",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_generator_g1",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "icon",
+      "style": "flat-vector-2d",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_generator_g2",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "icon",
+      "style": "flat-vector-2d",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_generator_g3",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "icon",
+      "style": "flat-vector-2d",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_generator_g4",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "icon",
+      "style": "flat-vector-2d",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_upgrade_badges",
+      "entity_role": "icon",
+      "purpose": "ui",
+      "type": "icon",
+      "style": "clean-web-ui",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_victory_screen",
+      "entity_role": "ui",
+      "purpose": "feedback",
+      "type": "sprite",
+      "style": "clean-web-ui",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_buy_panel",
+      "entity_role": "ui",
+      "purpose": "ui",
+      "type": "sprite",
+      "style": "clean-web-ui",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_click_feedback",
+      "entity_role": "effect",
+      "purpose": "feedback",
+      "type": "vfx",
+      "style": "flat-vector-2d",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_threshold_unlock_fx",
+      "entity_role": "effect",
+      "purpose": "feedback",
+      "type": "vfx",
+      "style": "flat-vector-2d",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_background",
+      "entity_role": "environment",
+      "purpose": "decoration",
+      "type": "sprite",
+      "style": "flat-vector-2d",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": null,
+        "genre": ["incremental", "clicker"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    }
+  ]
+}

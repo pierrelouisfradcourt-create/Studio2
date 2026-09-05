@@ -7,7 +7,10 @@ import pytest
 from forge.static_oracles import check_e2e_harness
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-GAMES = REPO_ROOT / "GAMES"
+# Fixture V1 migrée le 2026-09-05 sous `EVIDENCE/_V1_FIXTURES/` (GO Pierre) : ces
+# artefacts viennent de runs V1 jamais rejoués, ils ne sont PAS des preuves V2 et
+# vivent donc à l'écart de `EVIDENCE/runs/`. Voir le README de ce dossier.
+GAMES = REPO_ROOT / "EVIDENCE" / "_V1_FIXTURES" / "GAMES"
 
 
 def test_sentinelle_jeux_reels_presents():

@@ -1,0 +1,278 @@
+{
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "decision": "BLOCKED",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "git_head": "52842df3282139645f37d1e9e6ace6b88c948dbd",
+ "hmac": "69f720621e335b79bd57c9cc1ab2de3cdfada8ae0f5009bb5de568e339657898",
+ "humangate_flags": [
+  "archi non vérifiée (oracle sauté dans ce profil)",
+  "wiremap non vérifiée (oracle sauté dans ce profil)",
+  "standard rouge: ['budget']",
+  "red-team dégradé: reviewer indépendant n'a pas tourné (fallback)"
+ ],
+ "nonce": "36b80b01e6131f0e393efcda238bb175",
+ "oracles": {
+  "archi": {
+   "detail": {
+    "reason": "non applicable au profil standard"
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "archi",
+   "run_id": "pong_r2",
+   "status": "SKIPPED",
+   "ts": 1785095495.3740263
+  },
+  "code": {
+   "detail": {
+    "e2e": {
+     "checked": false,
+     "reason": "profil standard : preuve par bot_action/pixel (core_requirements.yaml ne déclare aucune preuve e2e), décision Pierre 2026-07-23",
+     "status": "SKIPPED"
+    },
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "logic_files_source": "C:\\TACTICAL_CHESS_STUDIO\\games\\pong\\09_WIREMAP\\wiremap.json",
+    "mutation": {
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "code_sha256": {
+        "05_SYSTEMS/game_loop/loop.mjs": "0002f1d43676d0ad15f0d1f7e3b9b04c6276715392f50bb88c0b3a4e86f39fde",
+        "05_SYSTEMS/game_state/state.mjs": "c3feb6fb9a3a55ccb026219fc1f582d327629253034272e4eda020a14de082be",
+        "05_SYSTEMS/input/input.mjs": "e7ea5dac70bb1647878490fa88a395a202d34e5f5887e398f4b3ae633fd84b7a",
+        "06_RUNTIME/adapters/presentation/audio.mjs": "1b988ed818e6cc3588539777d45bbe446d2b8d56b500e99afb168cde86bf8ab4",
+        "06_RUNTIME/adapters/presentation/browser/main.mjs": "e9172f63dfc973a626f10ce1a008cf92ac421c859ad56802c8e91f97cf90610e",
+        "06_RUNTIME/adapters/presentation/capture_browser.mjs": "3d5e81241bf3d441c1a9ab160ecd57a24f10455132de26114f1806a49539679f",
+        "06_RUNTIME/adapters/presentation/capture_godot.mjs": "b57547a468e0ce02d8dcd6ac2ff1bd41bd6c66f0f83f1daa1606e31f040b630a",
+        "06_RUNTIME/adapters/presentation/draw.mjs": "59dbd4372f88e78423039d608e61e70bca63566d72c17cb5eec43e84767941a4",
+        "06_RUNTIME/adapters/presentation/exit.mjs": "20c7befd7e77362d56857b77ae0953763c87330fe8386edf07e4126803d42a93",
+        "06_RUNTIME/adapters/presentation/raster.mjs": "f73106899de2575182ba63a9b80df13ef467f925dff18fe0927c17df2a3f7e20",
+        "07_TESTS/oracle/solvability.mjs": "dc31467c62216f2e4e2fcfe5566cd61b393399a8fcfbbc1e9d5dcef84382fe9c",
+        "07_TESTS/unit/input.test.mjs": "17e94f9135b3a20e63b04f913d1617b0061b58c8f4f2b0b06d0b4402761123da",
+        "07_TESTS/unit/loop.test.mjs": "80c46096e849a599abe1b66c9cad5d41fc31cbba124d6ed07c6b256dd0ee14da",
+        "07_TESTS/unit/state.test.mjs": "c8b069918185ad82bc50771b1310d1ae749d6b810088f89296c1a5f23bbccf3e"
+       },
+       "game_dir": "C:\\TACTICAL_CHESS_STUDIO\\games\\pong",
+       "gate_checked": true,
+       "killed": 58,
+       "logic_files": [
+        "05_SYSTEMS/game_loop/loop.mjs",
+        "05_SYSTEMS/game_state/state.mjs",
+        "05_SYSTEMS/input/input.mjs",
+        "06_RUNTIME/adapters/presentation/audio.mjs",
+        "06_RUNTIME/adapters/presentation/browser/main.mjs",
+        "06_RUNTIME/adapters/presentation/capture_browser.mjs",
+        "06_RUNTIME/adapters/presentation/capture_godot.mjs",
+        "06_RUNTIME/adapters/presentation/draw.mjs",
+        "06_RUNTIME/adapters/presentation/exit.mjs",
+        "06_RUNTIME/adapters/presentation/raster.mjs"
+       ],
+       "mutation_exception": false,
+       "survivants_non_tries": [
+        "and->or@L14",
+        "and->or@L21",
+        "and->or@L46",
+        "and->or@L48 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+        "and->or@L50",
+        "and->or@L60 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+        "and->or@L72",
+        "and->or@L77",
+        "and->or@L78",
+        "and->or@L79 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+        "and->or@L8",
+        "eq->neq@L14",
+        "eq->neq@L19",
+        "eq->neq@L20",
+        "eq->neq@L35",
+        "eq->neq@L37",
+        "eq->neq@L41",
+        "eq->neq@L46",
+        "eq->neq@L50",
+        "eq->neq@L51",
+        "eq->neq@L7",
+        "eq->neq@L78 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+        "eq->neq@L8",
+        "false->true@L53",
+        "false->true@L59",
+        "false->true@L73",
+        "ge->gt@L77 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+        "neq->eq@L14",
+        "neq->eq@L21 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+        "neq->eq@L43",
+        "neq->eq@L59",
+        "neq->eq@L75",
+        "neq->eq@L8",
+        "neq->eqeq@L37",
+        "or->and@L33",
+        "or->and@L34 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+        "or->and@L37",
+        "or->and@L62",
+        "pluseq->minuseq@L16",
+        "pluseq->minuseq@L19",
+        "pluseq->minuseq@L20",
+        "pluseq->minuseq@L23",
+        "pluseq->minuseq@L26",
+        "pluseq->minuseq@L27",
+        "pluseq->minuseq@L36",
+        "pluseq->minuseq@L37",
+        "pluseq->minuseq@L39",
+        "pluseq->minuseq@L50",
+        "pluseq->minuseq@L55",
+        "pluseq->minuseq@L57",
+        "pluseq->minuseq@L67",
+        "pluseq->minuseq@L92",
+        "pluseq->minuseq@L94",
+        "true->false@L34",
+        "true->false@L48",
+        "true->false@L53",
+        "true->false@L59"
+       ],
+       "survived": 68,
+       "test_argv": [
+        "node",
+        "--test",
+        "07_TESTS/unit/input.test.mjs",
+        "07_TESTS/unit/loop.test.mjs",
+        "07_TESTS/unit/state.test.mjs",
+        "07_TESTS/oracle/solvability.mjs"
+       ],
+       "test_files_scelles": [
+        "07_TESTS/oracle/solvability.mjs",
+        "07_TESTS/unit/input.test.mjs",
+        "07_TESTS/unit/loop.test.mjs",
+        "07_TESTS/unit/state.test.mjs"
+       ],
+       "total": 126,
+       "triage_sha256": "39266deb23adfe4b03bc6347bde7e14d8b7b0ae1afab2755d0b3c3581d957224",
+       "triaged_survivors": []
+      },
+      "evidence_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\pong\\evidence\\mutation_pong_r2.json",
+      "evidence_sha256": "1e82b167b9c78f6055a41f76f8b141c0ca478524224e227708561d85d70f1164",
+      "oracle_id": "mutation",
+      "run_id": "pong_r2",
+      "status": "FAIL",
+      "ts": 1785095058.2363334
+     },
+     "signature": "54eb7237f36e24f608ac11fed1b02791a56993cfa850aa193e7e0710c3750f7f"
+    },
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": false,
+     "raisons": [
+      "run-oracle.mjs absent"
+     ]
+    },
+    "search_consulted": {
+     "count": 0,
+     "passed": false,
+     "raisons": [
+      "aucune recherche journalisée depuis 2026-07-26T19:12:46.304Z (contrat s9-build §2bis non respecté, ou aucune brique ne pouvait matcher)"
+     ]
+    },
+    "solvability": {
+     "checked": true,
+     "passed": true,
+     "raisons": [],
+     "topology": "standard"
+    }
+   },
+   "evidence_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\pong\\evidence\\oracle_pong.log",
+   "evidence_sha256": "864564accbd712f0b2a8437f6c4d8a234ed1e592a7f7c046f26c07c288e9902c",
+   "oracle_id": "code",
+   "run_id": "pong_r2",
+   "status": "FAIL",
+   "ts": 1785095058.2418373
+  },
+  "standard": {
+   "detail": {
+    "budget": {
+     "chevauchement": [],
+     "empilement_violee": false,
+     "hors_budget": [],
+     "measured": true,
+     "passed": false,
+     "promis_non_depose": [
+      "game_loop"
+     ],
+     "reuses_invalides": []
+    },
+    "collisions": {
+     "collisions": [],
+     "doubles_proprietaires": [],
+     "identifiants_inconnus": [],
+     "ordre_implicite": [],
+     "passed": true,
+     "trous": []
+    },
+    "contract_completeness": {
+     "passed": true,
+     "violations": []
+    },
+    "index": {
+     "dossiers_hors_structure": [],
+     "dossiers_manquants": [],
+     "dossiers_orphelins": [],
+     "fichiers_manquants": [],
+     "orphelins": [],
+     "passed": true
+    },
+    "line_states": {
+     "core_omis": [],
+     "deferred_incomplet": [],
+     "etats_invalides": [],
+     "expected_sans_reference": [],
+     "implemented_au_gel": [],
+     "not_applicable_sans_raison": [],
+     "not_applicable_sur_core": [],
+     "passed": true,
+     "required_apres_build": [],
+     "source_manquante": [],
+     "system_parent_manquant": [],
+     "unknown_au_gel": []
+    },
+    "placement": {
+     "adresse_incoherente": [],
+     "adresse_manquante": [],
+     "categorie_fichier_non_declaree": [],
+     "categorie_fichier_non_mappee": [],
+     "categorie_manquante": [],
+     "categorie_non_mappee": [],
+     "fichier_adresse_incoherente": [],
+     "identite_ambigue": [],
+     "passed": true,
+     "revendications_multiples": [],
+     "system_parent_inconnu": [],
+     "systeme_categorie_non_mappee": []
+    }
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "standard",
+   "run_id": "pong_r2",
+   "status": "FAIL",
+   "ts": 1785095058.2868607
+  },
+  "wiremap": {
+   "detail": {
+    "reason": "non applicable au profil standard"
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "wiremap",
+   "run_id": "pong_r2",
+   "status": "SKIPPED",
+   "ts": 1785095495.3740263
+  }
+ },
+ "project": "pong",
+ "provenance_ok": true,
+ "redteam_advisory": [],
+ "redteam_ran": false,
+ "redteam_reviewer": "claude-opus-4-8",
+ "run_id": "pong_r2",
+ "software_verdict": "FAIL",
+ "ts": 1785095495.3920264
+}

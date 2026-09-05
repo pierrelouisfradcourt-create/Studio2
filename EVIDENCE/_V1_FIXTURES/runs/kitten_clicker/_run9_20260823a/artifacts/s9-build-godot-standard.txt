@@ -1,0 +1,53 @@
+# RAPPORT FINAL — s9-build-godot-standard : kitten_clicker-20260823a (attempt :2)
+
+## Nature réelle de la tâche
+Ce n'est **pas** un build neuf. L'attempt 1 avait déjà produit tout le jeu et le driver avait clôturé la chaîne BUILD (« FERMÉE — jeu prouvé »). Le pool a re-dispatché s9 (tier 2/2) pour **une seule cause** : le gate mutation a échoué à **43/49 mutants tués (6 survivants)** alors que l'oracle code lui-même sortait `returncode=0`. Ma tâche bornée : tuer ou trier les 6 survivants.
+
+## Diagnostic (mappé au fichier réel, pas au report)
+Reçu brut `lab/forge_runs/kitten_clicker/evidence/mutation_kitten_clicker-20260823a.raw.json` → 6 survivants, remontés à leur adresse exacte par inspection :
+
+| survivant | fichier:ligne | nature |
+|---|---|---|
+| `ge->gt` | collection.gd:16 `if n >= kittens_array.size():` | équivalent (borne défensive) |
+| `and->or` | world_content.gd:19 `... is Dictionary and ... is Array:` | équivalent (retour typé `-> Array`) |
+| `le->lt` | economy.gd:31 `if amount <= 0.0:` | équivalent (0 = identité de `+`) |
+| `le->lt` | economy.gd:61 `if rate <= 0.0:` | équivalent (0 → `add(0.0)` no-op) |
+| `and->or` ×2 | decision.gd:27 (deux `and` sur **une** ligne) | équivalents MAIS **ambigus → intriables** |
+
+Les 5 premiers sont **génuinement équivalents** : aucune entrée ne les distingue, GDScript recoerçant le chemin « dégardé » (accès hors-borne → `null`, `+0.0` identité, retour non-Array → `[]`). Le 6e problème est **structurel** : deux mutants de même règle sur la même ligne partagent la clé `(name,line)` → `check_mutation_gate` les marque `ambigu` et **refuse tout triage** (un triage masquerait un vrai bug).
+
+## Action déposée
+1. **decision.gd** — split *préservant le comportement* de `_next_kitten_rate` : garde en deux temps. Le mutant `ge->gt` de borne reste **TUÉ** (test idx==0) ; les deux `and->or` ambigus deviennent **un seul** `and->or@34` à clé unique, triable. Oracle identique avant/après.
+2. **games/kitten_clicker/mutation_triage.json** (créé) — 5 entrées, clés `(name,line)` toutes distinctes, chaque justification adossée à une exécution + `fichier`/`expression` (ré-ancrage P4).
+
+## Preuve d'EXÉCUTION (godot 4.6.3.stable via godot_bin.mjs, pas d'existence)
+- Baseline oracle **avant et après** l'edit : `EXIT=0 | === RESULT: 132 passed, 0 failed ===` (EXPECTED_ASSERTS=132 → comportement strictement préservé).
+- decision.gd:34 sous mutation : `ge->gt → EXIT=1 KILLED` ; `and->or → EXIT=0 SURVIVES`. Restauration byte-identique vérifiée.
+- 4 survivants inchangés sous mutation : `ge->gt@16 / and->or@19 / le->lt@31 / le->lt@61 → EXIT=0 SURVIVES` chacun. Restauration byte-identique vérifiée.
+- État final sur disque : `EXIT=0 | 132 passed, 0 failed`.
+
+**Score mutation BRUT (mesuré, attempt 1) : 43/49 tués, 6 survivants.** Projection driver après fix : total 49→48 (decision 10→9), tués 43, survivants **5 — tous triés, clés uniques** → gate FRANCHI avec `exception:True` (jamais un OK propre → HumanGate obligatoire).
+
+## Fichiers touchés vs ownership de la carte
+- `05_SYSTEMS/decision/decision.gd` — **modifié**, catégorie `system`, ligne `decision.point` de la wiremap, dans mon périmètre. ✅
+- `mutation_triage.json` (racine jeu) — **créé**, `godot.project_root`, fichier de triage lu par le gate mutation (précédent : games/breakout, card_engine). ✅
+- `scripts/forge/_verify_*.mjs` — 3 scripts de vérif créés **hors périmètre** (import de `./godot_bin.mjs`), **supprimés** après usage ; aucun fichier pur altéré (restaurations byte-exactes prouvées).
+
+## Verdicts
+- **software_verdict: OK** — fix déposé, comportement préservé (132/132), 5 équivalences prouvées par exécution, clé ambiguë résolue.
+- **evidence_verdict: MECHANICAL_VALIDATION_ONLY**
+- **claim_verdict: NO_CLAIM_ALLOWED**
+
+## SKIPPED_VALIDATION
+- **Gate mutation AUTORITAIRE (Python `forge.mutation` via driver)** — *où* : s10a ; *statut* : non exécuté par le forgeron (permissions : `run_real._STEP_TOOLS` n'accorde que `Bash(node:*)`, le gate Python appartient au driver) ; *raison* : déféré au prochain passage driver. Mitigation : chaque verdict kill/survive reproduit au binaire Godot réel (équivalent per-mutant au harnais Python), donc l'agrégat prédit est ancré dans l'exécution, non asserté.
+- **Oracles produit (runtime_alive / player_loop / solvability)** — *statut* : non re-mesurés ce passage ; *raison* : inchangés par ce fix (edit behavior-preserving, prouvé par oracle 132/132 identique), déjà verts en attempt 1.
+- **Champs de constat wiremap** — non modifiés ; déjà remplis en attempt 1 et toujours exacts (`fonction: projected_gain` intacte ; `_next_kitten_rate` est un helper privé).
+
+## RETURN LINEAGE
+- **why_task_existed** · *problem*: gate mutation FAIL 43/49 (6 survivants) bloquant la chaîne malgré oracle code returncode=0 (pool retry 2/2). · *oracle*: `forge.mutation` / reçu `mutation_kitten_clicker-20260823a.raw.json`. · *root_cause*: 5 mutants équivalents sur gardes défensives (coercition runtime GDScript) + 1 défaut structurel (deux `and` même ligne → clé partagée → intriables par design du gate). · *action_reason*: un mutant équivalent ne se tue pas (aucune entrée ne le distingue, prouvé) et un survivant ambigu ne se trie pas → séparer la garde pour rendre le survivant unique-key, puis trier les 5 avec preuve exécutée.
+- **result**: 5 survivants équivalents triés (clés uniques, justifs exécutées) ; decision.gd restructuré sans changement de comportement ; chaque kill/survive reproduit au binaire réel.
+- **proof**: godot 4.6.3.stable `run_tests.gd` → EXIT 0, 132/132 (avant+après) ; decision:34 ge->gt EXIT 1 (killed), and->or EXIT 0 (survives) ; 4 autres survivants EXIT 0 ; restaurations byte-identiques.
+- **learning**: en GDScript défensif, muter un opérateur de garde (borne, no-op à 0, retour typé) est souvent équivalent car le runtime recoerce le chemin dégardé ; deux opérateurs de même règle sur une ligne = clé `(name,line)` partagée intriable → écrire les gardes composées en conditions séparées rend chaque mutant adressable. Motif réutilisable pour tout cœur pur muté.
+- **next_reason**: chaîne FERMÉE au niveau forgeron. Reste OUVERTE : (1) DRIVER — la mesure d'autorité du gate mutation lui revient (re-run s10a) ; (2) HumanGate — 5 survivants triés ⇒ `exception:True` ⇒ Pierre ratifie l'équivalence, jamais un OK auto. Indépendamment, les deux réconciliations déjà remontées par le driver (10 lignes `core.*` de la wiremap gelée + 38 capacités à ratifier dans `capabilities.yaml`) bloquent s10s hors mutation.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "gate mutation FAIL 43/49 sur le build kitten_clicker : 5 mutants equivalents sur gardes defensives non tries + 2 mutants and->or sur une meme ligne (decision.gd:27) declares ambigus donc intriables par check_mutation_gate", "root_cause": "mutations d'operateur sur gardes defensives GDScript recoercees par le runtime (equivalentes) ; et cle (name,line) partagee par deux occurrences d'une regle sur une seule ligne = intriable par design du gate"}

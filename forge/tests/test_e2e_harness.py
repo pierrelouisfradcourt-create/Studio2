@@ -5,6 +5,11 @@ from forge.static_oracles import check_e2e_harness
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+# Fixture V1 migrée le 2026-09-05 sous `EVIDENCE/_V1_FIXTURES/` (GO Pierre) : ces
+# artefacts viennent de runs V1 jamais rejoués, ils ne sont PAS des preuves V2 et
+# vivent donc à l'écart de `EVIDENCE/runs/`. Voir le README de ce dossier.
+JEUX_V1 = REPO_ROOT / "EVIDENCE" / "_V1_FIXTURES" / "GAMES"
+
 
 def _write(d: Path, name: str, txt: str) -> None:
     (d / name).write_text(txt, encoding="utf-8")
@@ -12,13 +17,13 @@ def _write(d: Path, name: str, txt: str) -> None:
 
 def test_legacy_harness_reel_passe():
     # Le jeu legacy a un vrai e2e Playwright câblé dans run-oracle -> PASS.
-    res = check_e2e_harness(REPO_ROOT / "GAMES" / "collect_runner_legacy")
+    res = check_e2e_harness(JEUX_V1 / "collect_runner_legacy")
     assert res["passed"] is True, res["raisons"]
 
 
 def test_reforge_sans_e2e_rejetee():
     # Les re-forges fraîches n'ont pas d'e2e.mjs -> REJET (la régression mesurée).
-    res = check_e2e_harness(REPO_ROOT / "GAMES" / "collect_runner_r1")
+    res = check_e2e_harness(JEUX_V1 / "collect_runner_r1")
     assert res["passed"] is False
     assert any("e2e.mjs absent" in r for r in res["raisons"])
 

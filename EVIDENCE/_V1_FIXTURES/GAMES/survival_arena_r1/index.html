@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Survival Arena</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #05060a;
+    color: #e8e8e8;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  h1 { margin: 12px 0; font-size: 20px; }
+  canvas { border: 1px solid #3a3f52; image-rendering: pixelated; }
+  #controls { margin: 12px 0; }
+  button {
+    background: #5ce1ff;
+    color: #10121a;
+    border: none;
+    padding: 8px 16px;
+    font-family: monospace;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  button:hover { background: #8ceeff; }
+  #hint { opacity: 0.6; font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+  <h1>Survival Arena</h1>
+  <canvas id="canvas" width="800" height="600"></canvas>
+  <div id="controls">
+    <button id="restart">Rejouer</button>
+  </div>
+  <div id="hint">Flèches / WASD pour bouger — tir automatique sur l'ennemi le plus proche.</div>
+
+  <script type="module">
+    import { SurvivalGame } from './game.mjs';
+    import { render } from './render.mjs';
+    import { createInputTracker } from './input.mjs';
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const restartBtn = document.getElementById('restart');
+
+    function freshSeed() {
+      return (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0;
+    }
+
+    const game = new SurvivalGame(freshSeed());
+    // Exposed for manual/e2e inspection and debugging, per project contract.
+    window.__game = game;
+
+    const { state: input } = createInputTracker(window, (code) => {
+      if (code === 'KeyR' && game.over) {
+        game.reset(freshSeed());
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      game.reset(freshSeed());
+    });
+
+    let lastTs = performance.now();
+    function loop(ts) {
+      const dtMs = Math.min(100, ts - lastTs); // clamp huge tab-switch gaps
+      lastTs = ts;
+      game.step(dtMs, input);
+      render(ctx, game.view());
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

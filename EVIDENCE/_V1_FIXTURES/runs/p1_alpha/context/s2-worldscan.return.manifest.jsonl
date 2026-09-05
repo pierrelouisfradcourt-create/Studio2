@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s2-worldscan", "git_head": "f8c50a05150cf88383c66accf942fdfc43b2c716", "hmac": "e4d708d76c3814733362403eccc135d24181deab63d8ac250a1f7fcfad9d4e75", "kind": "return", "reason": {"status": "NOT_TRANSMITTED"}, "run_id": "p1_alpha-20260830-run1", "schema": "forge.context_manifest.v1", "ts": 1788095876.5999184}

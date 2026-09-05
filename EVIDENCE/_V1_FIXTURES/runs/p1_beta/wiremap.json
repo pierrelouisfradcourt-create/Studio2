@@ -1,0 +1,199 @@
+{
+ "features": [
+  {
+   "feature": "R1 objectif terminal affiché dès le tick 0",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "e2e.mjs: getElementById('objective').innerText au tick 0 est non vide et contient le seuil terminal '5000' ; couvert aussi par logic.test.mjs (currentObjective() phase 0)",
+   "couvre": [
+    "currentObjective"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R2 entrée attisage du foyer (affordance hearth)",
+   "fonction": "handleHearthClick",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "e2e.mjs: depuis index.html, 10 vrais clics Playwright sur #hearth -> window.__game.light strictement croissant, delta EXACT +10 (+1 par clic)",
+   "couvre": [
+    "handleHearthClick"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R3 réponse visuelle du foyer à l'attisage",
+   "fonction": "renderHearth",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "e2e.mjs: boxShadow de #hearth observé non-'none' dans la fenêtre du flash déclenché par un clic réel (main.mjs consomme lastStoke -> renderStokeFlash, retiré après 150ms)",
+   "couvre": [
+    "renderHearth"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R4 récompense stricte +1 lumiere par attisage",
+   "fonction": "stoke",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs: apres N appels stoke() sans achat, state.light === N exactement (egalite stricte, jamais >=)",
+   "couvre": [
+    "stoke"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R5 divergence de décision idle vs actif",
+   "fonction": "step",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs: deux trajectoires seedees (step(0)=idle vs step(3)=actif, horizon 300 frames) -> light=0 vs light>0, valeurs distinctes et non triviales (variance non nulle)",
+   "couvre": [
+    "step"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R6 entrée achat d'un émetteur (affordance buy_button)",
+   "fonction": "handleBuyClick",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "e2e.mjs: depuis index.html, clic Playwright sur #buy-button au premier moment ou light>=15 -> window.__game.emitterCount 0->1 (delta STRICT=1) et production passive devient >0",
+   "couvre": [
+    "handleBuyClick"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R7a objectif change vers second émetteur après le 1er achat",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "e2e.mjs + logic.test.mjs: currentObjective() apres le 1er achat (emitterCount=1) differe textuellement de l'objectif du tick 0 et enonce l'acquisition d'un second emetteur",
+   "couvre": [
+    "currentObjective"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R7b objectif change vers l'embrasement (seuil 5000)",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs: au stade production passive active (emitterCount>=2), currentObjective() differe textuellement des deux objectifs precedents et nomme le seuil 5000",
+   "couvre": [
+    "currentObjective"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R8 boucle répétée par production passive des émetteurs",
+   "fonction": "applyEmitters",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs seede: avec >=1 emitter et sans clic, applyEmitters() incremente light de exactement emitterCount*EMITTER_RATE a chaque appel (croissance stricte, deterministe au rejeu)",
+   "couvre": [
+    "applyEmitters"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R9 entrée ascension après embrasement (affordance ascension_altar)",
+   "fonction": "handleAscensionClick",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "e2e.mjs: depuis index.html, apres embrasement (via __game_debug.reachThreshold()), clic Playwright reel sur #ascension-altar -> window.__game.light repasse a exactement 0 et ascensionGlow passe de 0 a >0",
+   "couvre": [
+    "handleAscensionClick"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R10 avantage méta de l'ascension (light_per_stoke rehaussé)",
+   "fonction": "ascend",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs + e2e.mjs: apres ascend(), lightPerStoke est strictement superieur au gain initial (comparaison stricte >, jamais >=)",
+   "couvre": [
+    "ascend"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R11 état terminal déterministe signalé à l'écran (light>=5000)",
+   "fonction": "isTerminal",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "solvability.mjs: sonde seedee ATTEINT reellement light>=5000 dans un budget de 8000 ticks (gagne en 2454) -> isTerminal(state)===true ; e2e.mjs: ecran 'Embrasement complet' (#overlay) affiche et interaction (#hearth/#buy-button) neutralisee ; meme seed => meme tick terminal au rejeu (verifie dans solvability.mjs)",
+   "couvre": [
+    "isTerminal"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R12 glyphe d'état verrouillé sur un émetteur non accessible",
+   "fonction": "renderLockedGlyph",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "properties.test.mjs: sous le coût, #locked-glyph visible avec le texte 'X lumiere requise' ; masqué une fois abordable ; e2e.mjs confirme la cohérence en navigateur réel",
+   "couvre": [
+    "renderLockedGlyph"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R13 compteur de lumiere HUD lisible en continu",
+   "fonction": "renderLightCounter",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "properties.test.mjs: #light-counter (police tabulaire, plus gros element textuel du HUD) reflete exactement floor(light), mis a jour a chaque appel de renderHud()",
+   "couvre": [
+    "renderLightCounter"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R14 ambiance du champ se réchauffant avec la progression",
+   "fonction": "renderField",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "properties.test.mjs: capture a light=0/25%/50%/75%/100% de 5000 -> canal rouge de #field croit de facon monotone (jamais decroissant) ; capé au-delà du seuil (ratio borne a 1)",
+   "couvre": [
+    "renderField"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  }
+ ]
+}

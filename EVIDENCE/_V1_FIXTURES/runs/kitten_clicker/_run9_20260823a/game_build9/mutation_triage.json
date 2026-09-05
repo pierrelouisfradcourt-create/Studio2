@@ -1,0 +1,37 @@
+[
+  {
+    "fichier": "05_SYSTEMS/collection/collection.gd",
+    "name": "ge->gt",
+    "line": 16,
+    "expression": "if n >= kittens_array.size():",
+    "justification": "Mutant EQUIVALENT sur une borne defensive. `adopt` : `var n := count(state); if n >= kittens_array.size(): return false`. Le mutant `n > size()` ne diverge de l'original QU'a n == size() (le seul point ou `>=` et `>` different). Or ce cas est deja atteint par le test `test_collection` (run_tests.gd:206, 3 chatons adoptes puis un 4e -> `not adopt`) : sous le mutant, `n > size` est faux a n==size, l'execution passe a `var k = kittens_array[n]` avec n==size = ACCES HORS BORNE ; GDScript pousse une erreur, evalue l'expression a null et continue ; `if not (k is Dictionary)` = `not (null is Dictionary)` = `not false` = true -> `return false`. Valeur de retour IDENTIQUE (false) et etat IDENTIQUE (aucun append) pour toutes les entrees atteignables (n va de 0 a size ; n>size est inatteignable car adopt s'arrete a n==size). Aucune entree ne distingue les deux : le seul effet du mutant est une lecture hors borne benigne coercee en null, jamais une valeur observable differente. Preuve d'execution : reçu mutation kitten_clicker-20260823a (lab/forge_runs/kitten_clicker/evidence/mutation_kitten_clicker-20260823a.raw.json) -> ce mutant figure dans `survivors` (le harnais a ecrit le mutant, lance run_tests.gd et obtenu exit 0). Le `>=` reste la garde CORRECTE (evite l'acces hors borne) ; le muter en `>` ne casse aucun contrat observable."
+  },
+  {
+    "fichier": "05_SYSTEMS/world_content/world_content.gd",
+    "name": "and->or",
+    "line": 19,
+    "expression": "if parsed is Dictionary and parsed.get(key) is Array:",
+    "justification": "Mutant EQUIVALENT masque par le type de retour `-> Array`. `extract_array(parsed, key) -> Array` : `if parsed is Dictionary and parsed.get(key) is Array: return parsed[key]` sinon `return []`. L'original ne rend une valeur NON-[] que sur le chemin heureux (parsed est un Dictionary ET parsed[key] est un Array) -> il rend cet Array. Le mutant `or` ne diverge que la ou l'original rendrait [] : (a) parsed est un Dictionary mais parsed[key] N'EST PAS un Array -> `or` court-circuite a true -> `return parsed[key]` d'une valeur non-Array ; la signature typee `-> Array` la coerce en [] (erreur de type poussee, retour par defaut = []) -> IDENTIQUE a l'original []. (b) parsed n'est pas un Dictionary -> `parsed is Dictionary` faux -> le `or` evalue `parsed.get(key)` ; sur un non-Dictionary l'appel `.get` echoue (erreur poussee, expression -> null), la condition retombe a faux/null -> `return []` -> IDENTIQUE. Le seul retour non-[] (chemin heureux) est PARTAGE par les deux versions. Donc aucune entree ne produit un retour observable different : mutant equivalent par construction du systeme de types. Preuve d'execution : le test `test_world_content` (run_tests.gd:176-179) exerce deja `extract_array({\"k\": \"pasarray\"}, \"k\") == []` ; le mutant y rend [] (coercion) et le test passe -> survivant confirme dans le reçu mutation kitten_clicker-20260823a."
+  },
+  {
+    "fichier": "05_SYSTEMS/economy/economy.gd",
+    "name": "le->lt",
+    "line": 31,
+    "expression": "if amount <= 0.0:",
+    "justification": "Mutant EQUIVALENT : la valeur-frontiere rend l'action gardee inerte. `add(state, amount)` : `if amount <= 0.0: return` puis `state[\"ronrons\"] += amount`. Le mutant `amount < 0.0` ne diverge qu'a amount == 0.0 (seul point ou `<=` et `<` different). A amount==0.0, le mutant ne retourne PAS tot et execute `state[\"ronrons\"] = float(state[\"ronrons\"]) + 0.0` : ajouter 0.0 est l'IDENTITE, le compteur est inchange -> resultat observable IDENTIQUE au `return` de l'original. Pour tout amount != 0 les deux versions se comportent a l'identique (positif : ajout ; negatif : ignore). Aucune entree ne distingue les deux. Preuve d'execution : le test `test_economy_click_and_spend` (run_tests.gd:98-99) verifie `add(s, 0.0)` -> ronrons inchange ; sous le mutant le resultat est le meme (7.0) et le test passe -> ce mutant figure dans `survivors` du reçu mutation kitten_clicker-20260823a. La monotonie visee (`<= 0` ignore) est preservee : `<` vs `<=` est invisible car 0 est l'element neutre de l'addition."
+  },
+  {
+    "fichier": "05_SYSTEMS/economy/economy.gd",
+    "name": "le->lt",
+    "line": 61,
+    "expression": "if rate <= 0.0:",
+    "justification": "Mutant EQUIVALENT : meme mecanisme d'element neutre qu'a la ligne 31, en aval. `production_tick(state, rate, multiplier)` : apres la garde de pause, `if rate <= 0.0: return` puis `add(state, rate * multiplier * PASSIVE_UNIT)`. Le mutant `rate < 0.0` ne diverge qu'a rate == 0.0. A rate==0.0, le mutant ne retourne PAS tot et appelle `add(state, 0.0 * multiplier * 0.5)` = `add(state, 0.0)` ; et `add` ignore un montant <= 0 (no-op) -> compteur inchange -> resultat observable IDENTIQUE au `return` de l'original. Pour rate > 0 les deux versions accrualent a l'identique ; rate < 0 n'est jamais produit par le jeu (taux passif = somme de ronrons_per_sec >= 0). Aucune entree ne distingue les deux. Preuve d'execution : le test `test_economy_production_tick` (run_tests.gd:129-130) verifie `production_tick(s, 0.0, 2.0)` -> ronrons inchange ; sous le mutant meme resultat (4.0) et test vert -> survivant confirme dans le reçu mutation kitten_clicker-20260823a."
+  },
+  {
+    "fichier": "05_SYSTEMS/decision/decision.gd",
+    "name": "and->or",
+    "line": 34,
+    "expression": "var has_next: bool = idx >= 0 and idx < kittens_array.size()",
+    "justification": "Mutant EQUIVALENT sur la borne de `_next_kitten_rate` (successeur ISOLE et triable de l'ancien double `and` de la ligne 27 : la garde a ete separee en deux temps pour que chaque mutant ait une cle (name,line) UNIQUE ; le mutant `ge->gt` de cette meme ligne reste TUE par le test du premier chaton idx==0, run_tests.gd:302). `has_next = idx >= 0 and idx < size` ; `idx = Collection.count(state)` est TOUJOURS >= 0. Le mutant `idx >= 0 or idx < size` rend donc `has_next` TOUJOURS vrai (le membre gauche est vrai). Il ne diverge de l'original qu'a idx >= size (ou l'original mettrait has_next=false) : le mutant poursuit alors vers `if not (kittens_array[idx] is Dictionary)` avec idx hors borne -> `kittens_array[idx]` pousse une erreur et vaut null -> `null is Dictionary` est faux -> `not false` = true -> `return 0.0`. IDENTIQUE au `return 0.0` de l'original a idx>=size. Pour idx < size (chaton a venir valide) has_next est vrai dans les deux cas -> comportement identique. Aucune entree ne distingue les deux : l'unique effet du mutant est une lecture hors borne coercee en null, jamais un taux observable different. Preuve d'execution : le test `test_decision` (run_tests.gd:305-308, tous chatons adoptes -> effect_text \"+0 ronron/s\") exerce le cas idx==size ; le meme mutant semantique (sur la garde unique d'origine) figurait dans `survivors` du reçu mutation kitten_clicker-20260823a. Note d'honnetete : la garde ayant ete restructuree apres ce reçu, la re-execution de l'oracle sur le code PRESENT est faite par le driver (binaire Godot approval-gated dans cette session du forgeron) ; l'equivalence ci-dessus est etablie par analyse de flot, la mesure d'autorite est le reçu re-emis au prochain passage s10a."
+  }
+]

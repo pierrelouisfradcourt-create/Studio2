@@ -1,0 +1,71 @@
+All oracles executed. Here is the final report.
+
+---
+
+# RAPPORT FINAL — `s9-build-standard:pong_r2:2`
+
+**software_verdict: FAIL** · **evidence_verdict: MECHANICAL_VALIDATION_ONLY** · **claim_verdict: NO_CLAIM_ALLOWED**
+
+`FAIL` porté par **un seul** volet mesuré : `s10s` → `budget`. Les 5 autres oracles standard, les 13 lignes du squelette, la solvabilité et le gate mutation sur la **logique pure** sont verts, prouvés par exécution réelle. Le `budget` échoue sur un **dépôt de bibliothèque hors de mon périmètre d'écriture** → remonté en `fog`, non comblé.
+
+## État du build
+Le run `pong-01` s'était arrêté sur un timeout d'horloge, pas sur un échec qualité. Le code sous `games/pong/` était **complet sur disque**. Je n'ai **écrit aucun nouveau fichier de jeu** : j'ai re-exécuté chaque oracle et **vérifié le constat ligne par ligne** contre les reçus réels. Le squelette sur disque est un constat exact et désormais confirmé (les chiffres de mutation qu'il annonçait n'avaient jamais été exécutés par `pong-01` — ils le sont maintenant et concordent). **Aucune promesse touchée** (`expected_proof`/`address`/`provides`/`requires`/budget intacts).
+
+## Les SIX oracles du standard — mode « après build »
+Reproduits à l'identique de `driver._run_standard_oracle` (snapshot catalogue = catalogue courant d'un run frais ; dépôt différentiel = ∅).
+
+| Oracle | Résultat | Preuve |
+|---|---|---|
+| contract_completeness | **OK** | `passed:true, violations:[]` |
+| **budget** | **FAIL** | `promis_non_depose:["game_loop"]`, `measured:true` |
+| line_states (`built`) | **OK** | aucun `REQUIRED` restant, aucun `system_parent_manquant` |
+| placement | **OK** | `fichier_adresse_incoherente:[]` — **le FAIL de `pong-01` (core.boot→state.mjs) est résolu** : le constat pointe `05_SYSTEMS/game_loop/loop.mjs` |
+| index | **OK** | `orphelins:[], dossiers_hors_structure:[]` |
+| collisions | **OK** | `trous:[], collisions:[], doubles_proprietaires:[]` |
+
+Commande : `.venv312 python` important `forge.standard_oracles` sur `games/pong` — `SIX_ORACLES_ALL_PASS = False`, `FAILING = ['budget']`.
+
+## Une ligne par ligne de squelette (13/13)
+Toutes `state: IMPLEMENTED`. Preuve d'**exécution** (pas d'existence) :
+
+| id | kind | Commande & sortie réelle |
+|---|---|---|
+| core.boot | bot_action | `node solvability.mjs` → `boot_reaches_initial:true` (status PLAYING, 0-0, ==initialState). exit 0 |
+| core.main_loop | test | `node --test loop.test.mjs` → `core.main_loop : meme etat+entree+seed → meme suite sur N ticks` PASS (`deepEqual(runN(300),runN(300))`). Mutation loop.mjs 14/15 |
+| core.input | bot_action | `node solvability.mjs` → `input_moves_paddle:true` (p1.y 48→96) |
+| core.game_state | test | `node --test state.test.mjs` PASS. Mutation state.mjs **29/29** |
+| core.end_condition | bot_action | `node solvability.mjs` → `game_finishes:true, winner:p1, status:P1_WIN` (99 ticks, 3-0) |
+| core.restart | bot_action | `node solvability.mjs` → `restart.restartEqualsFirstBoot:true` |
+| core.exit | bot_action | `node exit.mjs` → stdout « exit: sortie propre, code 0 », exit 0 |
+| core.render | pixel | **NAVIGATEUR re-prouvé** : `node capture_browser.mjs` → `passed:true, differ:true, colorsA:3, colorsB:4`, non monochromes, exit 0. **GODOT = fog** (cf. ci-dessous) |
+| core.audio | artifact | `node audio.mjs` → `passed:true, assetBytes:3130, bounceCuesTraced:1, firstTrace{cue:bounce,asset:bounce.wav}`. index OK (04_ASSETS/audio non orphelin) |
+| core.error_handling | test | `node --test input.test.mjs` → `error.guard : rafale d'entrees hostiles → etat TOUJOURS valide` PASS |
+| play.paddle | bot_action | `node solvability.mjs` → `paddle_bounded_when_held:true, endedAtMax:true` |
+| play.ball | test | `node --test loop.test.mjs` → `NO-TUNNEL a toute vitesse` PASS (vitesses 10..900) |
+| play.score | bot_action | `node solvability.mjs` → `score_exactly_one_per_point:true` (3 events, +1 un seul camp) |
+
+Tests unitaires agrégés : **`node --test` = 50/50 pass, fail 0**. Solvabilité : **bot GAGNE** (P1_WIN 3-0, 99 ticks) — le jeu est SOLVABLE, pas seulement mécaniquement vert.
+
+## Score de mutation brut (survivants compris)
+- **Logique pure** (`05_SYSTEMS/{loop,state,input}.mjs`, commande d'oracle réelle du projet) : **58/61 tués = 95,1 %**. 3 survivants : `ge->gt@L114` (loop), `or->and@L19`, `or->and@L20` (input) — **les 3 exactement documentés équivalents** dans `mutation_triage.json` → `check_mutation_gate` **passed:true** (exception de triage, jamais un OK propre).
+- **Fidèle au driver** (tous les `.mjs` de la wiremap, catégorie `test.*` exclue — donc **+6 adaptateurs** `06_RUNTIME/adapters/presentation/`) : **58/126 = 46 %**, 68 survivants. `per_file` : audio 0/11, browser/main 0/4, capture_browser 0/5, **capture_godot 0/23**, draw 0/3, exit 0/10, raster 0/9 — **0 tué** car la commande d'oracle (unit + solvabilité) n'importe **aucun** adaptateur → `check_mutation_gate` **passed:false**. C'est le `s10a mutation=FAIL` du pré-mortem. **Fog** (voir ci-dessous).
+
+## Requêtes SEARCH
+**Aucune** requête `search.mjs`/KB effectuée : je n'ai **écrit aucun nouveau code de jeu** (build repris depuis le disque, aucune brique nouvelle). La recherche-avant-écriture du contrat s9 est déclenchée par l'écriture de code neuf ; il n'y en a pas eu ici. Résultat rapporté honnêtement : périmètre de recherche vide car périmètre d'écriture vide.
+
+## FOG — ce qui a manqué au plan (HumanGate, jamais comblé hors plan)
+
+1. **`budget` / dépôt `game_loop` en bibliothèque.** Le budget promet `adds:[game_loop]`. `check_budget` mesure le dépôt par différentiel de `knowledge_base/catalog.json`. Faire passer ce volet exige de **déposer `game_loop` dans le catalogue pendant le run** — fichier **explicitement hors de mon périmètre d'écriture** (out_of_scope) et **écriture durable inter-projets = propose-only / ADR-002**. Le budget est un champ de **promesse**, intouchable. → **Décision HumanGate** : ratifier le dépôt de la brique `game_loop`, puis re-mesurer `s10s`.
+
+2. **Volet Godot du critère `pixel` (core.render).** `node capture_godot.mjs` → `blocked:true, reason:"Binaire Godot non configure"` (ni `GODOT_BIN`, ni `scripts/forge/godot.config.json`, absent sur ce poste). La capture Godot exige une **vraie fenêtre GPU vulkan** (`--headless` rend une texture nulle). Les PNG `godot_a/b.png` de `pong-01` existent et diffèrent (preuve d'existence), mais **non re-exécutables cette session**. Le volet navigateur satisfait le critère. → **HumanGate** : configurer un binaire Godot sur le poste pour re-prouver le volet Godot, ou trancher que le volet navigateur suffit.
+
+3. **Le gate mutation `s10a` inclut les adaptateurs d'E/S comme « logique ».** `driver._logic_files_from_wiremap_any` classe tout `.mjs` non-`test.*` en logique mutable, y compris les 6 adaptateurs `system.adapter`. Or le standard prouve les adaptateurs par `pixel`/`artifact`/`bot_action` (garde-fou (d) : la logique est pure, les adaptateurs sont séparés) — **jamais** par des tests-tués. Résultat : le gate mutation est **structurellement rouge** sur tout jeu STANDARD ayant des adaptateurs de présentation. Le correctif naturel (exclure la catégorie `system.adapter`, comme `test.*` l'est déjà) vit dans `scripts/forge/` → **hors de mon périmètre**. → **Décision HumanGate** : exclure `system.adapter` de la dérivation des fichiers logiques, OU exiger des tests unitaires d'adaptateurs (ce que le squelette n'a pas déclarés — je ne les invente pas).
+
+## SKIPPED_VALIDATION
+- **Item** : re-capture pixel sous l'adaptateur **Godot** (core.render). **Où** : `06_RUNTIME/adapters/presentation/godot/`. **Statut** : non fait (bloqué). **Raison** : aucun binaire Godot configuré sur ce poste ; `capture_godot.mjs` renvoie `blocked:true`. → fog #2.
+- **Item** : volet **budget** de `s10s` (dépôt `game_loop`). **Où** : `knowledge_base/catalog.json`. **Statut** : non fait (hors périmètre). **Raison** : écriture interdite (out_of_scope) + durable/HumanGate. → fog #1.
+- **Item** : gate mutation **`s10a` fidèle-driver au vert**. **Où** : 6 adaptateurs `06_RUNTIME/adapters/presentation/*.mjs`. **Statut** : mesuré rouge (46 %), non corrigé. **Raison** : correctif dans `scripts/forge/` (hors périmètre) ; combler par des tests d'adaptateurs non déclarés violerait garde-fou (c). → fog #3.
+- **Item** : verdict signé HMAC (s12) et red-team (s11). **Où** : chaîne Forge aval. **Statut** : non fait (hors tâche). **Raison** : la tâche `s9-build-standard` s'arrête au build + preuves ; le verdict signé et HumanGate sont des étapes distinctes. Aucun commit effectué (conforme).
+
+## Contrat de sortie
+(a) Aucun code écrit hors adresses déclarées (aucun code neuf du tout). (b) Squelette : constat **vérifié exact**, `state` inchangés (tous IMPLEMENTED, légitimes), **promesses intactes** — aucune édition falsificatrice. (c) Reçus bruts ci-dessus (tests, solvabilité, mutation, captures PNG sur disque). (d) 3 `fog` listés. (e) **Aucun commit / push / `git add`.**

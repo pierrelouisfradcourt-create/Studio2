@@ -1,0 +1,331 @@
+{
+ "game_id": "kitten_clicker",
+ "systemes": [
+  {
+   "id": "SYS_BOUCLE_CLIC",
+   "features": [
+    {
+     "id": "F_OBJECTIF_INITIAL",
+     "capacites": [
+      {
+       "id": "cap_objectif_demarrage",
+       "capacite": "Au demarrage, le HUD `objectif` affiche un texte non vide nommant une premiere cible d'adoption a atteindre.",
+       "source_ref": "a_goal",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot lit le HUD `objectif` au demarrage et y trouve un texte non vide nommant une cible d'adoption."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_CARESSE_PELOTE",
+     "capacites": [
+      {
+       "id": "cap_click_pelote_entree",
+       "capacite": "ENTREE joueur : le joueur caresse la pelote en cliquant la cible `pelote`.",
+       "source_ref": "b_click",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot declenche depuis main.tscn l'affordance `pelote` (clic sur la pelote centrale), l'action d'entree du joueur."
+       }
+      },
+      {
+       "id": "cap_click_pelote_effet",
+       "capacite": "EFFET : chaque clic sur `pelote` augmente le compteur `ronrons` d'au moins 1 (croissance monotone).",
+       "source_ref": "b_click",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis main.tscn, un bot clique 5 fois la cible `pelote` et observe le HUD `ronrons` croitre de facon monotone d'au moins +5 au total (effet du clic)."
+       }
+      },
+      {
+       "id": "cap_feedback_reponse_systeme",
+       "capacite": "A chaque clic sur `pelote`, le systeme emet un feedback visible (rebond du sprite et texte flottant +N) dans la meme frame.",
+       "source_ref": "c_response",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Volet 07_TESTS/oracle/core_feedback.gd en fenetre GPU : capture avant/apres clic montre un changement de pixels sur la zone pelote et l'apparition d'un texte +N."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_ACCUMULATION_RONRONS",
+     "capacites": [
+      {
+       "id": "cap_accumulation_seuil_achat",
+       "capacite": "Les `ronrons` accumules persistent et le total affiche croit jusqu'a franchir le cout du premier chaton, rendant l'affordance `acheter_chaton` active.",
+       "source_ref": "d_reward",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot clique jusqu'a ce que le HUD `ronrons` atteigne le cout du premier chaton et verifie que l'affordance `acheter_chaton` devient active."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_ECONOMIE_ACHAT",
+   "features": [
+    {
+     "id": "F_DECISION_DEPENSE",
+     "capacites": [
+      {
+       "id": "cap_decision_premier_achat",
+       "capacite": "Au premier moment finançable, le jeu presente un choix entre adopter un chaton (ronrons/seconde passif) et ameliorer la pelote (ronrons/clic), la meilleure option differant selon une politique idle ou active.",
+       "source_ref": "d_first_spend",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Sonde a deux trajectoires : politique `idle` (aucun clic) vs `actif` (clic pelote tous les 3 frames) sur 300 frames ; la metrique `ronrons` finale differe selon l'option, prouvant que la decision porte une information."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_ADOPTION_CHATON",
+     "capacites": [
+      {
+       "id": "cap_buy_kitten_entree",
+       "capacite": "ENTREE joueur : le joueur adopte un chaton en cliquant la cible `acheter_chaton`.",
+       "source_ref": "p_buy_kitten",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot declenche depuis main.tscn l'affordance `acheter_chaton` (le joueur adopte un chaton), l'action d'entree du joueur."
+       }
+      },
+      {
+       "id": "cap_buy_kitten_effet",
+       "capacite": "EFFET : l'adoption decremente les `ronrons` du cout et ajoute un chaton nomme distinct au HUD `collection`.",
+       "source_ref": "p_buy_kitten",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis main.tscn, un bot disposant de ronrons suffisants clique `acheter_chaton` et observe collection +1 ainsi que ronrons decremente du cout (effet de l'adoption)."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_AMELIORATION_PELOTE",
+     "capacites": [
+      {
+       "id": "cap_upgrade_click_entree",
+       "capacite": "ENTREE joueur : le joueur ameliore la pelote en cliquant la cible `acheter_amelioration`.",
+       "source_ref": "p_upgrade_click",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot declenche depuis main.tscn l'affordance `acheter_amelioration` (le joueur ameliore la pelote), l'action d'entree du joueur."
+       }
+      },
+      {
+       "id": "cap_upgrade_click_effet",
+       "capacite": "EFFET : l'amelioration decremente les `ronrons` du cout et chaque clic `pelote` suivant rapporte strictement plus qu'avant.",
+       "source_ref": "p_upgrade_click",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis main.tscn, un bot mesure le delta ronrons par clic pelote avant et apres `acheter_amelioration` ; le delta apres est strictement superieur (effet de l'amelioration)."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_COURBE_PALIERS",
+     "capacites": [
+      {
+       "id": "cap_courbe_paliers_variance",
+       "capacite": "La courbe de cout des chatons/ameliorations expose au moins 3 couts de palier distincts et strictement croissants, et un bot peut atteindre le 3e palier.",
+       "source_ref": "longueur_curve",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot joue et atteint le 3e palier en un nombre de ticks fini ; l'oracle verifie au moins 3 couts de palier distincts et strictement croissants (variance non nulle)."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_PROGRESSION_META",
+   "features": [
+    {
+     "id": "F_DEBLOCAGE_LIEU",
+     "capacites": [
+      {
+       "id": "cap_unlock_entree",
+       "capacite": "ENTREE joueur : le joueur adopte via `acheter_chaton` le chaton qui atteint le palier de deblocage requis.",
+       "source_ref": "f_unlock",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot declenche depuis main.tscn l'affordance `acheter_chaton` au palier de deblocage (le joueur adopte le chaton qui atteint le palier requis), l'action d'entree du joueur."
+       }
+      },
+      {
+       "id": "cap_unlock_effet",
+       "capacite": "EFFET : au palier atteint, un nouveau lieu `lieu_2` apparait dans la vue du refuge.",
+       "source_ref": "f_unlock",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis main.tscn, apres l'adoption au palier via `acheter_chaton`, un bot observe l'apparition du nouveau lieu `lieu_2` dans la vue du refuge (effet du deblocage ; capture GPU pixel-precise par core_unlock.gd en aval s9)."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_OBJECTIFS_SUCCESSIFS",
+     "capacites": [
+      {
+       "id": "cap_next_goal_1_effet",
+       "capacite": "EFFET VISIBLE : apres la premiere adoption, le label `objectif` change pour un texte nouveau et distinct nommant un second chaton/palier a atteindre.",
+       "source_ref": "g_next_1",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "En fenetre GPU, capture du HUD `objectif` avant et apres la premiere adoption : le label `objectif` porte un texte nouveau et distinct nommant un second chaton/palier a atteindre (effet visible du changement d'objectif)."
+       }
+      },
+      {
+       "id": "cap_next_goal_2_effet",
+       "capacite": "EFFET VISIBLE : une fois plusieurs chatons adoptes, le label `objectif` change pour un texte nouveau nommant le jalon de prestige a atteindre.",
+       "source_ref": "g_next_2",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "En fenetre GPU, capture du HUD `objectif` en milieu de partie : le label `objectif` porte un texte nouveau et distinct des deux objectifs precedents, nommant le jalon de prestige (effet visible)."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_PRESTIGE",
+     "capacites": [
+      {
+       "id": "cap_prestige_entree",
+       "capacite": "ENTREE joueur : le joueur accomplit un prestige en cliquant la cible `prestige`.",
+       "source_ref": "i_prestige",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot declenche depuis main.tscn l'affordance `prestige` (le joueur accomplit un prestige), l'action d'entree du joueur."
+       }
+      },
+      {
+       "id": "cap_prestige_effet",
+       "capacite": "EFFET : le prestige remet le compteur `ronrons` a zero et augmente un indicateur de bonus permanent.",
+       "source_ref": "i_prestige",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis main.tscn, un bot accumule des ronrons, clique `prestige`, et observe le HUD `ronrons` retomber a 0 tandis qu'un indicateur de bonus permanent augmente (effet du prestige)."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_CONTENU_MONDE",
+   "features": [
+    {
+     "id": "F_REGISTRE_CHATONS",
+     "capacites": [
+      {
+       "id": "cap_registre_kittens",
+       "capacite": "Un registre 03_WORLD/kittens.json declare au moins 6 chatons nommes, chacun avec un nom, une rarete et une production passive de ronrons par seconde.",
+       "source_ref": "content_kittens",
+       "expected_proof": {
+        "kind": "file_write",
+        "statement": "Le fichier 03_WORLD/kittens.json existe et contient au moins 6 entrees, chacune avec {name, rarity, ronrons_per_sec} et des noms distincts."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_REGISTRE_LIEUX",
+     "capacites": [
+      {
+       "id": "cap_registre_places",
+       "capacite": "Un registre 03_WORLD/places.json declare le refuge de depart et au moins un lieu supplementaire avec son seuil de deblocage.",
+       "source_ref": "content_places",
+       "expected_proof": {
+        "kind": "file_write",
+        "statement": "Le fichier 03_WORLD/places.json contient au moins 2 lieux, chacun avec {id, name, unlock_tier}, le refuge au tier 0."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_REGISTRE_OBJETS",
+     "capacites": [
+      {
+       "id": "cap_registre_objects",
+       "capacite": "Un registre 03_WORLD/objects.json declare au moins 3 objets placables, chacun avec un identifiant, un nom et un effet sur la production de ronrons.",
+       "source_ref": "content_objects",
+       "expected_proof": {
+        "kind": "file_write",
+        "statement": "Le fichier 03_WORLD/objects.json contient au moins 3 objets, chacun avec {id, name, effect}."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_REGISTRE_QUETES",
+     "capacites": [
+      {
+       "id": "cap_registre_quests",
+       "capacite": "Un registre 03_WORLD/quests.json declare au moins 3 quetes, chacune avec un identifiant, un nom et une condition d'accomplissement, alimentant le HUD `objectif`.",
+       "source_ref": "content_quests",
+       "expected_proof": {
+        "kind": "file_write",
+        "statement": "Le fichier 03_WORLD/quests.json contient au moins 3 quetes, chacune avec {id, name, condition}."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_PRESENTATION",
+   "features": [
+    {
+     "id": "F_RARETE_VISUELLE",
+     "capacites": [
+      {
+       "id": "cap_rarete_visuelle_distincte",
+       "capacite": "Chaque rarete de chaton rend une identite visuelle distincte (couleur dominante ou badge different), verifiable par difference de pixels entre paliers de rarete.",
+       "source_ref": "visual_rarity",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Volet 07_TESTS/oracle/core_rarity.gd en fenetre GPU : rend un chaton de chaque rarete et verifie que les captures different en pixels au-dela d'un seuil entre deux raretes."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_FEEDBACK_CLIC_VISUEL",
+     "capacites": [
+      {
+       "id": "cap_feedback_clic_pixel",
+       "capacite": "Cliquer la pelote produit un changement visuel visible (rebond du sprite ou particules) sur la zone pelote dans la meme frame.",
+       "source_ref": "visual_click_feedback",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Volet 07_TESTS/oracle/core_click_visual.gd en fenetre GPU : capture pre/post clic differe en pixels sur la zone pelote (rebond et particule)."
+       }
+      }
+     ]
+    },
+    {
+     "id": "F_AUDIO_EVENEMENTS",
+     "capacites": [
+      {
+       "id": "cap_audio_quatre_evenements",
+       "capacite": "Chacun des quatre evenements (clic pelote, achat, deblocage, prestige) emet exactement un declenchement sonore journalise avec un identifiant de son distinct.",
+       "source_ref": "audio_events",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Volet 07_TESTS/oracle/core_audio.gd : le journal de declenchements contient une entree sonore distincte pour chacun des 4 evenements clic/achat/deblocage/prestige (4 identifiants distincts)."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

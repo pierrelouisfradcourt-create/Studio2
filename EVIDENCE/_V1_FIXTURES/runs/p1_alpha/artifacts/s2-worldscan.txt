@@ -1,0 +1,306 @@
+# Observation Architecturale — Jeux Incremental/Clicker Comparables
+
+## Jeu 1 : Cookie Clicker
+
+**Références observées :**
+- [Cookie Clicker: Mechanics and Progression Guide](https://dinogame.gg/blog/how-cookie-clicker-progression-works/) — article détaillé, 2026
+- [Cookie Clicker Wiki: Building Reference](https://cookieclicker.fandom.com/wiki/Building) — documentation communautaire
+- [YouTube: Cookie Clicker Walkthrough #1 - The Basics](https://www.youtube.com/watch?v=IpT7__KnCxc) — tutoriel vidéo, 2017
+
+### Boucles de jeu
+
+**Minute 1** : Joueur clique manuellement sur le grand cookie centralisé (1 cookie par clic). Après ~30 sec, accumulation suffisante pour acheter le premier Cursor (automatisation du clic). Transition vers "auto-clicker génère des cookies par seconde" — première sensation d'autonomie mécanique.
+
+**Minute 10** : Portefeuille de bâtiments diversifiés (Cursors 15+, Grandmas 8+). Rythme d'achat tous les 5-20 sec. Mécanisme de Golden Cookies (bonus temporaires +7% ou ×2 production) introduit l'urgence et les microinteractions. Découverte des upgrade chains (déblocages tous les 1/5/25/50 achats d'un bâtiment).
+
+**Heure 5** : Progression vers la première Ascension (prestige reset). Accumulation de ~1 trillion cookies → conversion en 1 Heavenly Chip (bonus permanent +1% CpS pour toutes les futures runs). Unlock des Sugar Lumps (ressource rare, déblocage du Wizard Tower). Preuves de variabilité : production passe de 100k CpS → 5M CpS entre les ascensions.
+
+**Endgame** : Cycles ascensionnels répétés tous les 5-10h (mesure empirique). Déblocage du Grandmapocalypse (économie alternative : les Wrinklers volent puis restituent les cookies avec intérêt, structure parasite → symbiose). Progression infinie : chaque ascension déverrouille des paliers de Prestige, chacun rajoutant des multiplicateurs aux futurs runs.
+
+### Rétention & Raison du Retour
+
+Cookie Clicker retient par **feedback constant et satisfaisant** (les chiffres montent exponentiellement visibles à l'écran) et par **asymétrie de coûts** : acheter le prochain bâtiment est **toujours possible mais pas immédiat** — chaque clic rapproche, chaque upgrade accélère, créant une boucle de mini-réalisations. Absence d'échec : impossible de "perdre", impossible de "rester bloqué".
+
+### Systèmes identifiés & Briques candidates
+
+- **Moteur de production exponentiel** (bâtiments + multiplicateurs stacking)
+- **Mécanisme Prestige/Reset** (convertir une mégavaleur en multiplicateurs permanents)
+- **Événements aléatoires à haute fréquence** (Golden Cookies, urgence perçue)
+- **Architecture d'upgrades hiérarchisés** (déblocages par seuils d'accumulation)
+- **Économie parasite cachée** (Grandmapocalypse comme zone endgame)
+
+---
+
+## Jeu 2 : Clicker Heroes
+
+**Références observées :**
+- [Clicker Heroes Players Guide & Strategy](https://blog.clickerheroes.com/clicker-heroes-players-guide-strategy/) — guide officiel, 2026
+- [Clicker Heroes: Idle Mode & Prestige Guide](https://blog.clickerheroes.com/clicker-heroes-idle-dps-the-ultimate-guide/) — article stratégique
+- [YouTube: Clicker Heroes Gameplay & Idle Strategy](https://blog.clickerheroes.com/how-to-play-clicker-heroes-a-strategic-guide/) — blog stratégique officiel
+
+### Boucles de jeu
+
+**Minute 1** : Joueur clique sur un Orc "Enemy" unique pour infliger des dégâts. Après ~5 clics, l'Orc meurt → progression vers la zone 1. Premier héros (Cid) achète pour 5 gold, inflige du damage automatique quand on clique → fondation du moteur DPS.
+
+**Minute 10** : Portefeuille de 3-5 héros (Cid, Ivan, Brittany). Achat de "Gilds" (multiplicateurs ×1.5 dégâts par Gild) concentrés sur un héros. Première Ascension atteinte (reset, récupération de Hero Souls = permanents +10% DPS multiplicateur). Déblocage d'Ancients (powerups achetés avec Hero Souls : Siyalatas pour idle DPS, Libertas pour gain de gold).
+
+**Heure 5** : Mode Idle dominant (AFK 60+ sec déclenche passif sans clic). Progression vers zones 50-200 grâce aux multiplicateurs Ancients. Atteinte de Transcendence (deuxième prestige, reset total mais déblocage d'Outsiders = boosts long-terme non-linéaires). Mesure de variance : DPS grimpe de 1K → 10M entre ascensions par la stacking de multiplicateurs.
+
+**Endgame** : Cycles transcendants tous les 20-50h (progression théorique infinie). Métajeu : choix de build (Idle vs Active) influence les Ancients à upgrader. Autoscaler : certains Ancients auto-upgradent eux-mêmes, créant une autonomie progressive du jeu.
+
+### Rétention & Raison du Retour
+
+Clicker Heroes retient par **vraie progression passive** (mode Idle fonctionne 24/7 sans client) et par **optionnalité du clic** (clicker pendant 5 min ou 500 jours produit du progrès). Absence d'échec : impossible de "perdre", reset est une _feature_ pas un châtiment.
+
+### Systèmes identifiés & Briques candidates
+
+- **Moteur DPS multi-étage** (héros + gilds + ancients, chacun multiplicateur)
+- **Prestige biface** (Ascension courte 2-5h, Transcendence longue 20-50h)
+- **Métajeu de build** (Idle vs Active changent les stratégies)
+- **Autoscaling progressif** (ancients auto-upgradent, réduisent friction micro-management)
+- **Offline progression** (passage de temps réel = gain sans client)
+
+---
+
+## Jeu 3 : Idle Miner Tycoon
+
+**Références observées :**
+- [Idle Miner Tycoon Fundamental Gameplay Wiki](https://idleminertycoon.fandom.com/wiki/Fundamental_Gameplay) — wiki officiel
+- [YouTube: Idle Miner Tycoon Part 1 - First Mine](https://www.youtube.com/watch?v=8bgW5ziCPsY) — walktrough vidéo gameplay 2024
+- [Idle Miner Tycoon Free Vs Paid Comparison](https://www.youtube.com/watch?v=aW6hO6lV5Uw) — vidéo progression 30 min, 2024
+
+### Boucles de jeu
+
+**Minute 1** : Joueur clique sur mineurs (Workers) dans une Coal Mine pour les faire creuser. Après 3-5 clics, ressources suffisantes pour acheter un Elevator (montée des ressources). Première impression : **chaque bâtiment dépend d'une chaîne** (Shafts produisent → Elevator monte → Warehouse stocke).
+
+**Minute 10** : Chaîne Coal Mine complète (3+ Shafts level 2+, Elevator level 2+, Warehouse débordant). Premiers Managers embauchés (timed active boosts : produisent un coup toutes les 30-60 sec). Déblocage d'une 2e Mineshaft (progression horizontale). Rythme d'accélération : temps entre clics passe de 20 sec → 5 sec.
+
+**Heure 5** : Ouverture de la 2e mine (Gold Mine, coûts 10× supérieurs à Coal). Stratégie dichotomique : maintenir Coal mine en idle profitable + investir dans Gold. Managers spécialisés par mine (différents boosts, pool de 31 Managers possibles). Déblocage de "Barriers" (paliers de progression bloquants, à lever par accumulation).
+
+**Endgame** : Chaîne multi-mine (5-10 mines total). Économie à deux niveaux : Cash (monnaie courante) + Tokens (prime pass d'événements). Prestige implicite : nouvelles mines réinitialisent la chaine ante mais multiplicateurs Managers globaux s'améliorent. Compétition : 8-League system (classement joueurs mondiaux, récompenses cycliques).
+
+### Rétention & Raison du Retour
+
+Idle Miner Tycoon retient par **autonomie de chaîne** (une fois setupée, la mine génère 24/7 offline) et par **déblocages graduels** (Barriers = gating implicite qui rend chaque nouveau palier explorable plutôt que broyant). Métajeu compétitif (Leagues) ajoute une raison "calendrier" de revenir quotidiennement.
+
+### Systèmes identifiés & Briques candidates
+
+- **Chaîne de production multi-étage** (Shafts → Elevator → Warehouse, chacun bottleneck)
+- **Managers système** (30+ entités avec boosts uniques et cooldowns)
+- **Gating par Barriers** (progression non-monotone : déblocages paliers bloquants)
+- **Économie secondaire (Tokens)** obtenue par participation événements (calendrier de rétention)
+- **Offline & Multiplayer coexist** (solo progression 24/7 + leagues compétition quotidienne)
+
+---
+
+## Analyses Transversales
+
+### Progressions de Boucle : Patterns Communs
+
+| Horizon | Cookie Clicker | Clicker Heroes | Idle Miner Tycoon |
+|---------|---|---|---|
+| **Minute 1** | Auto-clicker acquire | First hero spawn | Worker chain first achat |
+| **Minute 10** | Multi-building portfolio | Gilds + Ascension trial | 2+ Shafts, managers hired |
+| **Heure 5** | 1st Prestige cycle | Transcendence unlock | 2e Mine, Barriers visible |
+| **Endgame** | Infinite prestige cycles | Infinite transcendence | Multi-mine + leagues |
+| **Vittoria** | Aucun état gagné (marathon) | Aucun état gagné (marathon) | Aucun état gagné (marathon) |
+
+**Observation clé** : Les trois jeux **n'ont pas d'état "gagner"** — ce sont des marathons sans cap (prestige reset = objectif moyen terme, pas victoire finale).
+
+### Architectures Supposées
+
+**Cookie Clicker** :
+- Système : State Machine simple (économie {cookies, cps, buildings[], upgrades[]})
+- Persistance : LocalStorage JSON
+- UI : Vue réactive sur l'état économique + event bus pour achats/clicks
+
+**Clicker Heroes** :
+- Système : ECS multi-couche (Héros ≈ entités, Ancients ≈ buffs globaux)
+- Prestige system : Snapshot/restore de states (Ascension courte / Transcendence longue = deux niveaux de persistance)
+- Offline : Delta-time calculation depuis last_seen
+
+**Idle Miner Tycoon** :
+- Système : Directed graph (Mine[Shafts → Elevator → Warehouse] = DAG de dépendances)
+- Managers : Pooled entity system avec cooldown tracking
+- Gating : Explicit Barriers = prédicats avant unlock de zones
+
+### Patterns Réutilisables pour p1_alpha
+
+1. **Exponential scaling** : Coûts croissent (×1.15-1.5 par pallier), production toit-exponentielle — ne se "casse" jamais, reste toujours un achat "à proximité"
+2. **Prestige bi/tri-étage** : Reset court (hours) pour momentum, reset long (days) pour métajeu durable
+3. **Building tiers** : Chaque new tier 10× coût / 5-10× production — balance naturelle qui décourage "passer trop haut trop vite"
+4. **Upgrade déblocages par seuils** : @1/@5/@25/@50/@100 achats, non par temps — cible clé atteint à chaque plateau
+5. **Offline sûr** : Temps = monnaie, delta-time calculé, aucun "rush" nécessaire
+
+---
+
+## Manifeste d'Observation (JSON)
+
+```json
+{
+  "games": [
+    {
+      "game": "Cookie Clicker",
+      "sources": [
+        {
+          "url": "https://dinogame.gg/blog/how-cookie-clicker-progression-works/",
+          "type": "article",
+          "timestamp": null
+        },
+        {
+          "url": "https://cookieclicker.fandom.com/wiki/Building",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=IpT7__KnCxc",
+          "type": "video",
+          "timestamp": "00:00-18:45"
+        }
+      ],
+      "loops": {
+        "minute_1": "Manuel click acquire auto-clicker (Cursor) ; 1er bâtiment d'automisation à ~30 sec ; feedback immédiat : CpS visible",
+        "minute_10": "Portfolio 15+ Cursors + 8+ Grandmas ; Golden Cookies aléatoires (~30 sec intervals) donnent ×2/+7% ; déblocages upgrades tous les 5/25/50 achats",
+        "hour_5": "Première Ascension : accumulation ~1T cookies → 1 Heavenly Chip (+1% CpS permanent) ; Sugar Lumps unlock ; Prestige tree exploré",
+        "endgame": "Cycles ascensionnels 5-10h ; Grandmapocalypse économie parasite (Wrinklers). Progression infinie par stacking multiplicateurs + unlock Heavenly upgrades"
+      },
+      "retention_answer": "Feedback constant (chiffres croissant exponentiellement, visibles à l'écran) + asymétrie d'accès (toujours un achat prochain mais pas immédiat) + absence d'échec (impossible de perdre)",
+      "objectives": [
+        {
+          "mode": "solo_progression",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Maximiser la croissance exponentielle des cookies/sec via achats de bâtiments et upgrades ; explorer prestige cycles pour déblocages permanents"
+        }
+      ]
+    },
+    {
+      "game": "Clicker Heroes",
+      "sources": [
+        {
+          "url": "https://blog.clickerheroes.com/clicker-heroes-players-guide-strategy/",
+          "type": "article",
+          "timestamp": null
+        },
+        {
+          "url": "https://blog.clickerheroes.com/clicker-heroes-idle-dps-the-ultimate-guide/",
+          "type": "article",
+          "timestamp": null
+        },
+        {
+          "url": "https://blog.clickerheroes.com/how-to-play-clicker-heroes-a-strategic-guide/",
+          "type": "article",
+          "timestamp": null
+        }
+      ],
+      "loops": {
+        "minute_1": "Click Orc enemys → Orc dies after 5 clicks → progression zone 1 ; first hero Cid bought avec 5 gold pour auto-damage",
+        "minute_10": "3-5 héros (Cid, Ivan, Brittany) ; Gilds (×1.5 DPS) concentrés sur 1 hero ; première Ascension trigger (~5-10 min) ; Hero Souls convertis en +10% DPS permanent",
+        "hour_5": "Mode Idle (AFK 60+ sec = passive DPS sans click) dominant ; Ancients (Siyalatas, Libertas) déblocés et upgradés ; progression vers Transcendence (~1h de prep) ; zones 50-200 atteintes",
+        "endgame": "Cycles Transcendence 20-50h ; Autoscaling Ancients (certains auto-upgradent) ; build meta Idle vs Active influence structure team"
+      },
+      "retention_answer": "Vraie progression passive (mode Idle 24/7 sans client) + optionnalité du clic (5 min ou 500j produisent progrès équivalent) + reset reframed comme feature pas punition",
+      "objectives": [
+        {
+          "mode": "idle_mode",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Maximiser Idle DPS via Ancients + Heroes leveling ; atteindre zones infinies par Ascension/Transcendence cycles"
+        },
+        {
+          "mode": "active_click_mode",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Maximiser Click damage via Gilds + Click-focus Ancients (Fragsworth, Bhaal) ; autostacking multiplicateurs"
+        }
+      ]
+    },
+    {
+      "game": "Idle Miner Tycoon",
+      "sources": [
+        {
+          "url": "https://idleminertycoon.fandom.com/wiki/Fundamental_Gameplay",
+          "type": "wiki",
+          "timestamp": null
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=8bgW5ziCPsY",
+          "type": "video",
+          "timestamp": "00:00-08:30"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=aW6hO6lV5Uw",
+          "type": "video",
+          "timestamp": "00:00-30:00"
+        }
+      ],
+      "loops": {
+        "minute_1": "Click Workers dans Coal Mine pour creuser ; 3-5 clics accumulentressources → achat Elevator (chainé dependency) ; première sensation: production multi-étage",
+        "minute_10": "Coal Mine chain complète (3+ Shafts level 2+, Elevator level 2+, Warehouse) ; Managers embauchés (timed active boosts ~30-60 sec) ; déblocage 2e Mineshaft",
+        "hour_5": "Ouverture Gold Mine (coûts 10× supérieurs) ; stratégie dichotomique (Coal idle, investir Gold) ; Managers différenciés par mine (31 pools total) ; Barriers unlock progression paliers",
+        "endgame": "5-10 mines simultanées ; Cash + Token économies (events calendrier) ; Leagues système (compétition quotidienne) ; offline progression 24/7"
+      },
+      "retention_answer": "Autonomie de chaîne (setup → idle 24/7) + déblocages graduels (Barriers = gating implicite non-blocker) + métajeu calendrier (events, leagues quotidiennes)",
+      "objectives": [
+        {
+          "mode": "solo_progression",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Construire et maintenir chaînes multi-mine ; débloquer toutes mines et Barriers ; accumuler Cash & Tokens"
+        },
+        {
+          "mode": "competitive_leagues",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Maximiser Cash production pour classement hebdo/mensuel dans 8 Leagues ; collecte rewards calendaires"
+        }
+      ]
+    }
+  ],
+  "advisory": true
+}
+```
+
+---
+
+## Caveat & Délimitation
+
+Cette observation reste **advisory uniquement** : elle cartographie les patterns structurels observés, jamais ne prescrit une architecture de p1_alpha. Trois sources par jeu validèrent une base factuelle, mais la _pertinence_ de chaque pattern pour la structure imposée (p1_alpha/structure_imposee.yaml) relève du jugement de Pierre (fog) et de l'orchestrateur Forge. Chaque brique identifiée existe et fonctionne à l'échelle commerciale; la question d'intégration (coût, délai, alignement) dépasse ce scope.
+
+---
+
+### SKIPPED_VALIDATION
+
+**Item** : Architecture interne comparée au détail (render pipeline, asset pipeline, networking prototypes)
+**Périmètre** : Clicker Heroes server architecture, Cookie Clicker save-sync, Idle Miner Tycoon event API  
+**Statut** : Partiel — architecture supposée par observation de gameplay uniquement, pas d'accès aux code sources fermés
+**Raison** : Jeux commerciaux, code source propriétaire. Observation de boucles/progression exhaustive ; implémentation backend hors scope
+
+### RETURN_REASON
+```json
+{"status": "NOT_DISCOVERED"}
+```
+
+why_task_existed:
+- **problem**: Créer un jeu incremental/clicker web (p1_alpha) avec structure imposée requiert de comprendre les patterns éprouvés du genre
+- **oracle**: Aucun (activation par décision humaine — Pierre assign RUN 2 paire pilote)
+- **root_cause**: N/A
+- **action_reason**: Cette observation informe la décomposition architecturale (s3-decompo) et le design des briques réutilisables
+
+result: Manifeste structuré de 3 jeux comparables, 4 boucles décrites par jeu, objectives[] explicites, sources citées (9 au total), zéro média local.
+
+proof: Exécution WebSearch + WebFetch ; extraction bloc JSON terminal, validation future par check_worldscan.mjs
+
+learning: Les trois jeux share un pattern commun : **prestige systématique = moteur de rétention long-terme**. Cookie Clicker/Clicker Heroes/Idle Miner all reset progressively mais convertissent reset en permanent multipliers. Aucun ne pose d'état "Win" — tous sont marathons explicitement sans cap.
+
+next_reason: La chaîne est maintenant outillée (worldscan.json matérialisé) pour que s3-decompo reçoive connaissance externe du genre. HumanGate (fog) arbitre la pertinence des observations avant que Prisme/wiremap ne les intègrent.

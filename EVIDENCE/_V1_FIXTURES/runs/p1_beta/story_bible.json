@@ -1,0 +1,74 @@
+{
+ "game_id": "p1_beta",
+ "inputs_recus": {
+  "worldscan": true,
+  "charter": true
+ },
+ "sections": [
+  {
+   "id": "context",
+   "status": "NOT_GROUNDED",
+   "reason": "Ni le charter ni le worldscan ne fixent de monde diegetique (lieu, epoque, cadre fictionnel). Le charter est purement structurel et experimental (objectif: fermer la chaine full_content d'un jeu-sonde incremental/clicker) et interdit tout remplissage narratif ; le worldscan decrit les MECANIQUES de trois jeux comparables dont les cadres divergent (patisserie pour Cookie Clicker, donjon fantasy pour Clicker Heroes, village pour Kittens Game) — cette divergence prouve que le genre incremental/clicker n'impose aucun monde commun. Le seul cadre disponible (accumulation de ressource) releve des SYSTEMES de jeu, explicitement hors perimetre (la Story Bible dit le MONDE, pas le jeu). Ancrer un cadre diegetique ici serait une invention."
+  },
+  {
+   "id": "chronology",
+   "status": "NOT_GROUNDED",
+   "reason": "Aucune histoire ni chronologie diegetique dans les deux entrees. Les marqueurs temporels du worldscan (loops: minute_1, minute_10, hour_5, endgame) decrivent la progression d'une SESSION de jeu, pas une frise d'evenements racontes du monde. Le charter ne fixe qu'un etat terminal STRUCTUREL (condition_de_victoire: une fin observable et atteignable), pas une chronologie narrative. Reconstituer une chronologie serait fabrique."
+  },
+  {
+   "id": "stakes",
+   "status": "NOT_GROUNDED",
+   "reason": "Aucun enjeu diegetique (conflit, ce qui se gagne ou se perd dans la fiction) n'est fixe. Les enjeux du charter sont experimentaux (criteres_succes: fermeture mesurable de la chaine, verdict AUTHENTIQUE) et structurels (existence d'une fin), non narratifs. Les enjeux releves par le worldscan (survie hivernale de Kittens Game, risque du Grandmapocalypse de Cookie Clicker) appartiennent aux jeux comparables, pas a p1_beta."
+  },
+  {
+   "id": "factions",
+   "status": "NOT_GROUNDED",
+   "reason": "Aucune faction n'est nommee ni impliquee pour p1_beta, ni dans le charter (silencieux sur toute fiction), ni dans le worldscan (les comparables incremental/clicker n'ont pas de veritables factions). En inventer une serait un remplissage pur."
+  },
+  {
+   "id": "characters",
+   "status": "NOT_GROUNDED",
+   "reason": "Aucun personnage n'est fixe pour p1_beta. Le joueur cible du charter designe des bots de mesure deterministes et un evaluateur humain en aveugle (consommateurs reels du jeu-sonde), pas un personnage diegetique. Les entites citees par le worldscan (Grandma, Cursor, Treebeast, kittens) appartiennent a d'autres jeux, et le charter INTERDIT explicitement de reprendre tout asset, nom ou contenu de Cookie Clicker (actions_interdites) — les ancrer violerait a la fois l'isolement de la paire pilote et l'interdit de fabrication."
+  },
+  {
+   "id": "relations",
+   "status": "NOT_GROUNDED",
+   "reason": "Une relation presuppose des personnages ou des factions ancres ; aucun n'existe (voir sections characters et factions, toutes deux NOT_GROUNDED). Il n'y a donc rien a relier sans inventer d'abord les termes de la relation."
+  },
+  {
+   "id": "events",
+   "status": "NOT_GROUNDED",
+   "reason": "Aucun evenement diegetique n'est fixe pour p1_beta. Les evenements releves par le worldscan (Golden Cookies, saisons, Grandmapocalypse) sont des MECANIQUES de jeux comparables, pas de la matiere narrative pour ce projet ; le charter ne raconte aucun evenement du monde."
+  },
+  {
+   "id": "coherence_rules",
+   "status": "GROUNDED",
+   "elements": [
+    {
+     "statement": "Toute matiere narrative etablie en aval doit s'interdire de reprendre un asset, un nom, un contenu ou une valeur numerique de Cookie Clicker (isolement de la paire pilote L/D).",
+     "source": "charter",
+     "ref": "actions_interdites : « NE JAMAIS reprendre de Cookie Clicker un asset, nom, contenu ou valeur numerique »",
+     "inferred": false
+    },
+    {
+     "statement": "Tout monde ou recit defini en aval doit rester dans la grammaire du genre incremental/clicker, seule reference de genre autorisee par le run.",
+     "source": "charter",
+     "ref": "reference_jeu : « grammaire de genre incremental/clicker UNIQUEMENT, jamais une copie »",
+     "inferred": true
+    },
+    {
+     "statement": "Le monde doit pouvoir accueillir un etat terminal OBSERVABLE et ATTEIGNABLE ; un cadre d'idle infini est proscrit, donc toute trame narrative doit etre finie et cloturable.",
+     "source": "charter",
+     "ref": "condition_de_victoire : « etat terminal OBSERVABLE et ATTEIGNABLE » ; « Idle infini INTERDIT (non prouvable) »",
+     "inferred": true
+    },
+    {
+     "statement": "Cette exigence de fin est une deviation deliberee par rapport a la norme du genre observee : les comparables incremental/clicker sont perpetuels et sans fin objective ; la coherence narrative de p1_beta doit donc maintenir une fin la ou le genre gravite vers l'absence de fin.",
+     "source": "worldscan",
+     "ref": "objectives : Cookie Clicker « has_win_state: false » et « Le jeu est perpetuel » ; Clicker Heroes « has_win_state: false — aucune fin, jeu d'ascension infinie »",
+     "inferred": true
+    }
+   ]
+  }
+ ]
+}

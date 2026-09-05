@@ -1,0 +1,291 @@
+I've completed the analysis. Here is my report.
+
+---
+
+## RAPPORT FINAL — s5-wiremap / kitten_clicker-20260823a
+
+**Ancres réelles lues** (toutes présentes sur disque, pas seulement dans le prompt) : `check_wiremap_contract.mjs` (l.38-225, l'oracle qui me juge), `upstream_schema.mjs` (`collectLeaves`, l.403-421), `featuremap.json` (24 feuilles), `blueprint.json` (12 modules), `standard/SCHEMA.md §3` (schéma v2), `standard/repo_map.yaml`, `loop.json`, `games/pacman/06_RUNTIME/adapters/audio/audio.gd`. Bash/`node` sont **désactivés** dans cette session — je ne peux pas exécuter l'oracle ; je le résous par **lecture du code confrontée aux données**, et l'exécuteur produira le reçu faisant autorité.
+
+### 1. Ce que la carte réalise (dimension COUVERTURE — mécaniquement satisfaite)
+
+J'ai construit une WireMap v2 isomorphe au blueprint (12 modules = 12 systèmes passe-1) qui **couvre les 24 feuilles** de `featuremap.json`, sans `couvre` fantôme. Chaque ligne porte `fichiers` non vide. La ligne audio **réutilise** l'adaptateur pacman (`reused_from` explicite). Sur cette dimension, `check_wiremap_contract` renverrait `capacites_non_couvertes: []` et `couverture_fantome: []`.
+
+### 2. Ce qui BLOQUE (dimension LIAISON — structurellement impossible ici)
+
+L'oracle `maillon_non_lie` (check_wiremap_contract.mjs:191-225) exige, pour **chaque** ligne `affordance:<x>` : suivre `requires` (profondeur ≤ 3) jusqu'à une ligne dont `couvre` porte une **feuille d'EFFET** (`expected_proof.kind` ∈ `{file_write, visual}`) de **même `source_ref`** que la feuille d'ENTRÉE couverte par la ligne d'affordance (l.182-186, l.214-215).
+
+**J'ai dérivé mécaniquement les deux ensembles depuis `featuremap.json` :**
+
+| affordance (loop.json) | feuille d'ENTRÉE couverte | `source_ref` | feuille d'EFFET `file_write\|visual` de CE `source_ref` ? |
+|---|---|---|---|
+| `pelote` | cap_click_pelote_entree | `b_click` | **aucune** (b_click → 2 feuilles, toutes `bot_action`) |
+| `acheter_chaton` | cap_buy_kitten_entree | `p_buy_kitten` | **aucune** (toutes `bot_action`) |
+| `acheter_amelioration` | cap_upgrade_click_entree | `p_upgrade_click` | **aucune** (toutes `bot_action`) |
+| `prestige` | cap_prestige_entree | `i_prestige` | **aucune** (toutes `bot_action`) |
+
+Les **seuls** `source_ref` portant une feuille d'effet `file_write|visual` (le domaine de `effectSourceRefById`, l.182-186) sont : `c_response`, `g_next_1`, `g_next_2`, `content_kittens/places/objects/quests`, `visual_rarity`, `visual_click_feedback` — **aucun** n'est le `source_ref` d'entrée d'une affordance. Donc `atteintEffetMemeExigence` (l.70-87) renvoie `false` pour les 4, à toute profondeur. Reçu prédit : **`affordances: 4, affordances_liees: 0`**, 4 findings `maillon_non_lie` → oracle **FAIL**.
+
+La seule façon de forcer le vert serait de faire `couvre`r à une ligne d'affordance une feuille d'effet (ex. cap_feedback_reponse_systeme, `c_response`, visual) — mais un **adaptateur d'entrée ne réalise pas** le feedback visuel (c'est `presentation`). Ce serait mentir sur ce que la ligne réalise, exactement l'anti-pattern que la doctrine studio interdit (`une carte qui ne dit pas ce qu'elle réalise ne se confronte à aucun plan`). **Je ne le fais pas.**
+
+### 3. Cause racine (héritée, pas inventée)
+
+Conflit entre **deux contrats figés adjacents**, tous deux ratifiés Pierre :
+- **Gameplay Contract / `loop.json`** modélise `PLAYER_ACTION` (`b_click`) et `GAME_RESPONSE` (`c_response`) comme **étapes distinctes à `ref` distinctes** ; s3 a fidèlement tracé chaque feuille à sa `ref`, et — pour honorer la solvabilité *bot-prouvable* du charter — a mis **toutes** les feuilles ENTRÉE **et** EFFET des exigences PLAYER en `bot_action`.
+- **s5 V4 (2026-08-22)** exige que l'effet lié soit `file_write|visual` de **même `source_ref`** que l'entrée.
+
+Une même feuille ne peut être `bot_action` ET `file_write|visual`, et pour un clicker l'effet du clic est un compteur (`bot_action`) tandis que son seul visuel est modélisé sous une autre `source_ref`. **C'est exactement le pré-mortem `manifest-bd8c3e0fa32dce75` : « Reconciliation = gate Pierre ».** Ce re-dispatch n'a pas modifié les artefacts amont (featuremap identique à s3) → le mur est intact. Hors de mon périmètre (`out_of_scope` : ne modifie ni featuremap ni blueprint ; loop.json non plus).
+
+### 4. Deux défauts secondaires découverts (n'atteignent pas le gate mais réels)
+
+- **Placement des registres de contenu** : `repo_map.yaml` n'a **aucune** catégorie pour `03_WORLD/*.json` racine (`world.rules`→`03_WORLD/rules/{id}/`, `level`→`03_WORLD/levels/{id}/`). Les chemins que la featuremap impose (`03_WORLD/kittens.json`…) ne correspondent à aucun gabarit → futur `fichier_adresse_incoherente` (check_placement, aval).
+- **Clôture transitive de preload audio** (pré-mortem `manifest-5ed75af…`/`07ab2cd…`) : `pacman/…/audio.gd:15-16` fait `preload` de `sound_bank.gd` et `settings.gd` — la réutilisation `CODE_COPIE` n'est pas compilable si ces dépendances ne sont pas cartographiées. À adresser à la réouverture.
+- **Noms de volets** : la TÂCHE CONCRÈTE cite `main_screen_render, gallery_render, core_audio` ; la featuremap impose `core_feedback, core_rarity, core_click_visual, core_audio, core_unlock`. J'ai suivi la featuremap (source de la preuve attendue). Divergence → fog.
+
+### Verdicts
+
+- **software_verdict: BLOCKED** — appuyé sur la dérivation mécanique de `check_wiremap_contract.mjs:178-225` confrontée à `featuremap.json` : la couverture est atteignable (et atteinte dans l'artefact ci-dessous), mais `maillon_non_lie` est **structurellement insatisfiable** pour les 4 affordances tant que l'amont (loop.json/s3) reste figé. Ce n'est pas un défaut de ma carte : `preuve impossible ≠ FAIL` — c'est du process (doctrine `oracle_context_must_have_producers`).
+- **evidence_verdict: MECHANICAL_VALIDATION_ONLY** — analyse statique code+données ; l'exécution de l'oracle est impossible ici (Bash off), l'exécuteur produira le reçu autoritaire.
+- **claim_verdict: NO_CLAIM_ALLOWED** sur le pass/fail final — le reçu faisant foi est celui de `run_real.py`. **fog → HumanGate** : réconciliation loop/s3 ↔ V4 requise (options ci-dessous).
+
+**fog (décision Pierre requise)** : (a) amender s3 pour qu'une exigence PLAYER porte l'entrée `bot_action` ET un effet `visual` sous le **même** `source_ref` (ex. fusionner `b_click`+`c_response`) ; OU (b) assouplir `maillon_non_lie` V4 pour accepter que l'effet lié vive sous un `source_ref` **couplé par la feature** (même `feature`, pas même `source_ref`) ; OU (c) accepter que les affordances d'un clicker à effet-compteur ne portent pas d'effet `file_write|visual` et exempter ce genre. Chacune est une modification de contrat ratifié = gate.
+
+**SKIPPED_VALIDATION :**
+- item : *exécution* de `check_wiremap_contract.mjs` · périmètre : wiremap.json émis · statut : non fait · raison : `run: aucun` + Bash désactivé ; conformité dérivée par lecture du code, pas par exécution.
+- item : `check_line_states` / `check_placement` (états de ligne, placement) · périmètre : toutes les lignes · statut : non fait · raison : oracles d'ÉTAT/placement hors de mon oracle amont ; de plus la chaîne s'arrête au gate `maillon_non_lie` avant eux. Défaut de placement `03_WORLD/*.json` signalé §4.
+- item : `check_wiremap` (s10c, fichiers existent / fonctions définies) · périmètre : wiremap.json · statut : hors périmètre · raison : oracle d'APRÈS-build ; aucun fichier n'existe en amont.
+
+### Artefact produit (wiremap v2 — l'exécuteur matérialise `wiremap.json`)
+
+Couverture 24/24, 4 lignes affordance **honnêtes** (elles exposent le maillon rompu au lieu de le masquer), ligne audio en `reused_from`.
+
+```json
+{
+  "schema_version": 2,
+  "game_id": "kitten_clicker",
+  "systems": [
+    {"id": "world_content", "category": "system", "allowed_deps": []},
+    {"id": "economy", "category": "system", "allowed_deps": []},
+    {"id": "collection", "category": "system", "allowed_deps": ["world_content"]},
+    {"id": "upgrades", "category": "system", "allowed_deps": ["world_content"]},
+    {"id": "pricing", "category": "system", "allowed_deps": []},
+    {"id": "decision", "category": "system", "allowed_deps": ["economy", "collection", "upgrades", "pricing"]},
+    {"id": "progression", "category": "system", "allowed_deps": ["collection", "world_content"]},
+    {"id": "goals", "category": "system", "allowed_deps": ["world_content", "collection", "progression"]},
+    {"id": "prestige", "category": "system", "allowed_deps": ["economy", "collection"]},
+    {"id": "input_adapter", "category": "system.adapter", "allowed_deps": ["economy", "collection", "upgrades", "prestige", "pricing"]},
+    {"id": "presentation", "category": "system.adapter", "allowed_deps": ["economy", "collection", "upgrades", "progression", "goals", "prestige", "world_content"]},
+    {"id": "audio", "category": "system.adapter", "allowed_deps": []}
+  ],
+  "lines": [
+    {
+      "id": "world.registries",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["world.content"], "requires": [], "owner": true,
+      "system_parent": "world_content", "address": "03_WORLD/",
+      "couvre": ["cap_registre_kittens", "cap_registre_places", "cap_registre_objects", "cap_registre_quests"],
+      "expected_proof": {"kind": "file_write", "statement": "Les 4 registres 03_WORLD/{kittens,places,objects,quests}.json existent et satisfont leur cardinalite/schema minimal."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [
+        {"path": "05_SYSTEMS/world_content/world_content.gd", "category": "system"},
+        {"path": "03_WORLD/rules/kittens.json", "category": "world.rules"},
+        {"path": "03_WORLD/rules/places.json", "category": "world.rules"},
+        {"path": "03_WORLD/rules/objects.json", "category": "world.rules"},
+        {"path": "03_WORLD/rules/quests.json", "category": "world.rules"}
+      ],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "economy.ronrons",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["economy.ronrons"], "requires": [], "owner": true,
+      "system_parent": "economy", "address": "05_SYSTEMS/economy/",
+      "couvre": ["cap_accumulation_seuil_achat", "cap_click_pelote_effet"],
+      "expected_proof": {"kind": "bot_action", "statement": "ronrons croit de facon monotone (+1 min par clic), persiste, et acheter_chaton devient active au franchissement du cout."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "05_SYSTEMS/economy/economy.gd", "category": "system"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "collection.adopt",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["collection.adopt"], "requires": ["world.content"], "owner": true,
+      "system_parent": "collection", "address": "05_SYSTEMS/collection/",
+      "couvre": ["cap_buy_kitten_effet"],
+      "expected_proof": {"kind": "bot_action", "statement": "L'adoption ajoute un chaton nomme distinct (collection +1) et augmente la production passive totale ; le cout est decremente par economy."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "05_SYSTEMS/collection/collection.gd", "category": "system"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "upgrades.click_power",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["upgrades.click_power"], "requires": ["world.content"], "owner": true,
+      "system_parent": "upgrades", "address": "05_SYSTEMS/upgrades/",
+      "couvre": ["cap_upgrade_click_effet"],
+      "expected_proof": {"kind": "bot_action", "statement": "Delta ronrons/clic pelote STRICTEMENT superieur apres acheter_amelioration (jamais un >= tautologique)."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "05_SYSTEMS/upgrades/upgrades.gd", "category": "system"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "pricing.curve",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["pricing.curve"], "requires": [], "owner": true,
+      "system_parent": "pricing", "address": "05_SYSTEMS/pricing/",
+      "couvre": ["cap_courbe_paliers_variance"],
+      "expected_proof": {"kind": "bot_action", "statement": ">=3 couts de palier distincts et strictement croissants ; un bot atteint le 3e palier en un nombre de ticks fini."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "05_SYSTEMS/pricing/pricing.gd", "category": "system"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "decision.point",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["decision.point"], "requires": ["economy.ronrons", "collection.adopt", "upgrades.click_power", "pricing.curve"], "owner": true,
+      "system_parent": "decision", "address": "05_SYSTEMS/decision/",
+      "couvre": ["cap_decision_premier_achat"],
+      "expected_proof": {"kind": "bot_action", "statement": "Sonde 2 trajectoires >=300 frames (idle vs actif) : la metrique ronrons finale DIFFERE selon l'option."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "05_SYSTEMS/decision/decision.gd", "category": "system"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "progression.unlock",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["progression.unlock"], "requires": ["collection.adopt", "world.content"], "owner": true,
+      "system_parent": "progression", "address": "05_SYSTEMS/progression/",
+      "couvre": ["cap_unlock_entree", "cap_unlock_effet"],
+      "expected_proof": {"kind": "bot_action", "statement": "Au seuil unlock_tier atteint par les adoptions, lieu_2 apparait dans la vue du refuge."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "05_SYSTEMS/progression/progression.gd", "category": "system"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "goals.objective",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["goals.objective"], "requires": ["world.content", "collection.adopt", "progression.unlock"], "owner": true,
+      "system_parent": "goals", "address": "05_SYSTEMS/goals/",
+      "couvre": ["cap_objectif_demarrage", "cap_next_goal_1_effet", "cap_next_goal_2_effet"],
+      "expected_proof": {"kind": "bot_action", "statement": "objectif non vide au demarrage, puis texte NOUVEAU distinct apres 1re adoption, puis texte distinct nommant le jalon de prestige."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "05_SYSTEMS/goals/goals.gd", "category": "system"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "prestige.reset",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["prestige.reset"], "requires": ["economy.ronrons", "collection.adopt"], "owner": true,
+      "system_parent": "prestige", "address": "05_SYSTEMS/prestige/",
+      "couvre": ["cap_prestige_effet"],
+      "expected_proof": {"kind": "bot_action", "statement": "prestige : ronrons retombe a 0 et un indicateur de bonus permanent AUGMENTE strictement."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "05_SYSTEMS/prestige/prestige.gd", "category": "system"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "presentation.render",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["presentation.render"], "requires": ["economy.ronrons", "collection.adopt", "upgrades.click_power", "progression.unlock", "goals.objective", "prestige.reset", "world.content"], "owner": true,
+      "system_parent": "presentation", "address": "06_RUNTIME/adapters/presentation/",
+      "couvre": ["cap_rarete_visuelle_distincte", "cap_feedback_clic_pixel", "cap_feedback_reponse_systeme"],
+      "expected_proof": {"kind": "visual", "statement": "Captures GPU : deux raretes different en pixels au-dela d'un seuil ; capture pre/post clic differe sur la zone pelote (rebond + particule + texte +N)."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [
+        {"path": "06_RUNTIME/adapters/presentation/presentation.gd", "category": "system.adapter"},
+        {"path": "04_ASSETS/sprites/pelote.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/kitten_common.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/kitten_uncommon.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/kitten_rare.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/kitten_epic.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/kitten_legendary.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/refuge.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/lieu_2.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/obj_food_bowl.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/obj_scratching_post.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/obj_cushion_bed.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/fx_click_feedback.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/icon_ronrons.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/ui_stats_hud.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/ui_action_buttons.svg", "category": "asset.sprite"},
+        {"path": "04_ASSETS/sprites/ui_objectif_banner.svg", "category": "asset.sprite"}
+      ],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "audio.cues",
+      "source": "EXPECTED", "source_role": "s5-wiremap", "reference": "games/pacman/06_RUNTIME/adapters/audio/audio.gd",
+      "provides": ["audio.cue"], "requires": [], "owner": true,
+      "system_parent": "audio", "address": "06_RUNTIME/adapters/audio/",
+      "reused_from": "games/pacman/06_RUNTIME/adapters/audio/audio.gd",
+      "couvre": ["cap_audio_quatre_evenements"],
+      "expected_proof": {"kind": "oracle", "statement": "core_audio.gd : journal = 1 entree sonore distincte pour chacun des 4 evenements (clic/achat/deblocage/prestige)."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "06_RUNTIME/adapters/audio/audio.gd", "category": "system.adapter"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "input.pelote",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["affordance:pelote"], "requires": ["economy.ronrons"], "owner": false,
+      "system_parent": "input_adapter", "address": "06_RUNTIME/adapters/input_adapter/",
+      "couvre": ["cap_click_pelote_entree"],
+      "expected_proof": {"kind": "bot_action", "statement": "Depuis main.tscn un bot declenche l'affordance pelote ; ronrons croit via economy (canal d'entree unique)."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd", "category": "system.adapter"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "input.acheter_chaton",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["affordance:acheter_chaton"], "requires": ["collection.adopt"], "owner": false,
+      "system_parent": "input_adapter", "address": "06_RUNTIME/adapters/input_adapter/",
+      "couvre": ["cap_buy_kitten_entree"],
+      "expected_proof": {"kind": "bot_action", "statement": "Depuis main.tscn un bot declenche l'affordance acheter_chaton (adoption) via le canal d'entree unique."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd", "category": "system.adapter"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "input.acheter_amelioration",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["affordance:acheter_amelioration"], "requires": ["upgrades.click_power"], "owner": false,
+      "system_parent": "input_adapter", "address": "06_RUNTIME/adapters/input_adapter/",
+      "couvre": ["cap_upgrade_click_entree"],
+      "expected_proof": {"kind": "bot_action", "statement": "Depuis main.tscn un bot declenche l'affordance acheter_amelioration via le canal d'entree unique."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd", "category": "system.adapter"}],
+      "fonction": "", "preuve": "", "statut": ""
+    },
+    {
+      "id": "input.prestige",
+      "source": "CORE", "source_role": null, "reference": null,
+      "provides": ["affordance:prestige"], "requires": ["prestige.reset"], "owner": false,
+      "system_parent": "input_adapter", "address": "06_RUNTIME/adapters/input_adapter/",
+      "couvre": ["cap_prestige_entree"],
+      "expected_proof": {"kind": "bot_action", "statement": "Depuis main.tscn un bot declenche l'affordance prestige via le canal d'entree unique."},
+      "state": "REQUIRED", "reason": null, "until": null, "decider": null, "write_order": null,
+      "fichiers": [{"path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd", "category": "system.adapter"}],
+      "fonction": "", "preuve": "", "statut": ""
+    }
+  ],
+  "discarded": [
+    {"id": "gamed_maillon_link", "source_role": "s5-wiremap", "proposal": "Faire couvrir a une ligne affordance une feuille d'effet visual (ex. cap_feedback_reponse_systeme) pour satisfaire maillon_non_lie.", "discard_reason": "Un adaptateur d'entree ne realise pas le feedback visuel (presentation le fait) ; ce couvre serait un mensonge sur ce que la ligne realise. Le blocage doit rester visible pour la reconciliation Pierre, pas etre masque.", "ended_up_in_game": null}
+  ]
+}
+```
+
+---
+
+why_task_existed:
+- problem: le plan (blueprint 12 modules + featuremap 24 capacités + loop.json 4 affordances) n'était pas encore cartographié en une WireMap indexée confrontable au plan avant build.
+- oracle: `check_wiremap_contract.mjs` (finding `maillon_non_lie`) — activation par la séquence Forge s5, décision humaine (dispatch Pierre).
+- root_cause: établie — conflit de contrats figés adjacents : `loop.json`/s3 modélisent entrée+effet PLAYER en `bot_action` sous des `source_ref` séparés (action vs réponse), tandis que s5 V4 exige un effet `file_write|visual` de MÊME `source_ref`. Incompatibilité structurelle pour un clicker à effet-compteur.
+- action_reason: j'ai produit la carte isomorphe couvrant 24/24 avec 4 lignes affordance honnêtes (qui exposent le maillon rompu) plutôt qu'un vert fabriqué, et j'escalade la réconciliation.
+- result: WireMap v2 complète en couverture (0 non-couverte, 0 fantôme prédits) ; `maillon_non_lie` prédit FAIL 0/4 affordances liées → gate non franchissable ; software_verdict BLOCKED.
+- proof: dérivation statique — `check_wiremap_contract.mjs:178-225` (`effectSourceRefById` limité à `expected_proof.kind ∈ {file_write,visual}`, l.182-186 ; `atteintEffetMemeExigence`, l.70-87) confrontée à `featuremap.json` (source_ref d'entrée des affordances : b_click/p_buy_kitten/p_upgrade_click/i_prestige, tous `bot_action` ; aucun présent dans le domaine de `effectSourceRefById`). Oracle non exécuté (Bash désactivé) → reçu autoritaire = exécuteur.
+- learning: le modèle de boucle Gameplay Contract (action-ref ≠ réponse-ref) et la règle de liaison V4 (effet visuel de même source_ref que l'entrée) sont mutuellement exclusifs pour tout genre dont l'effet d'action est un compteur `bot_action` et le visuel une étape de réponse distincte. Ce n'est pas propre à ce run — tout clicker/idle le heurtera. À porter comme leçon de contrat, pas comme bug de carte.
+- next_reason: escalade — une cause non résolue persiste (deux contrats ratifiés en conflit) et la correction est hors de mon périmètre (`out_of_scope` : featuremap/blueprint/loop non modifiables). HumanGate doit trancher l'une des 3 options de réconciliation (fog §Verdicts). La chaîne ne se ferme PAS ici.
+
+SKIPPED_VALIDATION : voir la section dédiée ci-dessus (3 items déclarés, aucun silence).
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "maillon_non_lie de check_wiremap_contract est structurellement insatisfiable pour les 4 affordances joueur de kitten_clicker : aucune feuille d'effet file_write|visual ne partage le source_ref de la feuille d'entree (b_click/p_buy_kitten/p_upgrade_click/i_prestige, toutes bot_action).", "root_cause": "Conflit entre deux contrats figes : loop.json/s3 modelisent entree+effet PLAYER en bot_action sous des source_ref separes (action vs reponse), tandis que s5 V4 exige un effet file_write|visual de MEME source_ref que l'entree ; incompatible pour un clicker a effet-compteur. Reconciliation = gate Pierre."}

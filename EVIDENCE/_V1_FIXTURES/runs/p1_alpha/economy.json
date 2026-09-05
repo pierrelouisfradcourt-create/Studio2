@@ -1,0 +1,146 @@
+{
+ "schema_version": 1,
+ "resources": [
+  {
+   "id": "R",
+   "unit": "R (unite entiere, visible en permanence)",
+   "sources": [
+    "clic_manuel",
+    "production_automatique_generateurs"
+   ],
+   "sinks": [
+    "achat_generateur",
+    "achat_amelioration"
+   ],
+   "initial_stock": 0
+  }
+ ],
+ "formulas": [
+  {
+   "id": "f_click_gain",
+   "text": "gain par clic = gain_clic_initial x produit(ameliorations de clic achetees) ; x2 puis x4",
+   "params": {
+    "gain_clic_initial": 1,
+    "click_mults": [
+     2,
+     4
+    ],
+    "source": "structure_imposee.yaml:economy + progression"
+   }
+  },
+  {
+   "id": "f_gen_cost",
+   "text": "cout_generateur[i] = cout_base[i] x 1.12^(n_possedes_du_tier) — croissance geometrique",
+   "params": {
+    "cout_base": [
+     15,
+     100,
+     1100,
+     12000
+    ],
+    "growth": 1.12,
+    "source": "structure_imposee.yaml:economy"
+   }
+  },
+  {
+   "id": "f_invariant_comptable",
+   "text": "R_solde == somme(gains clic) + somme(production) - somme(depenses), egalite EXACTE",
+   "params": {
+    "representation_proposee": "point-fixe / entiers d'echelle (FOG-B, remonte HumanGate)",
+    "affichage": "plancher entier",
+    "source": "structure_imposee.yaml:dimensioning.invariant_comptable"
+   }
+  },
+  {
+   "id": "f_prod",
+   "text": "production_auto par tick = somme_i (n_possedes[i] x prod[i]) ; prod exprimee en R/s",
+   "params": {
+    "prod": [
+     0.1,
+     1,
+     8,
+     47
+    ],
+    "source": "structure_imposee.yaml:economy.prod",
+    "fog_a": "duree du tick NON FIXEE (FOG-A) — conversion R/s -> R/tick indeterminee, a declarer par le build"
+   }
+  },
+  {
+   "id": "f_thresholds",
+   "text": "seuil S_k franchi quand total_cumule >= seuils_cumules[k] ; S1->G2, S2->G3, S3->G4, S4->ameliorations x2 prod, S5->VICTORY",
+   "params": {
+    "seuils_cumules": [
+     100,
+     1000,
+     12000,
+     150000,
+     1000000
+    ],
+    "base": "TOTAL CUMULE, jamais le solde",
+    "source": "structure_imposee.yaml:dimensioning"
+   }
+  },
+  {
+   "id": "f_upgrade_cost",
+   "text": "cout des 6 ameliorations (2 clic puis 4 production)",
+   "params": {
+    "cout_ameliorations": [
+     100,
+     500,
+     1000,
+     5000,
+     30000,
+     200000
+    ],
+    "source": "structure_imposee.yaml:economy.cout_ameliorations"
+   }
+  },
+  {
+   "id": "f_upgrade_prod",
+   "text": "amelioration 'x2 prod' : prod[i] x= 2 pour le generateur cible (une par generateur)",
+   "params": {
+    "gen_mult": 2,
+    "count": 4,
+    "source": "structure_imposee.yaml:progression.ameliorations"
+   }
+  }
+ ],
+ "invariants": [
+  {
+   "id": "inv_gain_clic_initial",
+   "value": 1,
+   "unit": "R/clic",
+   "why": "Gain de clic initial impose (structure_imposee.yaml:economy.gain_clic_initial=1) ; porte l'onboarding avant toute production automatique."
+  },
+  {
+   "id": "inv_threshold_s1",
+   "value": 100,
+   "unit": "R cumule",
+   "why": "Seuil cumule S1 impose (structure_imposee.yaml:dimensioning.seuils_cumules[0]=100) ; revele G2."
+  },
+  {
+   "id": "inv_threshold_s2",
+   "value": 1000,
+   "unit": "R cumule",
+   "why": "Seuil S2 (seuils_cumules[1]=1000) ; revele G3."
+  },
+  {
+   "id": "inv_threshold_s3",
+   "value": 12000,
+   "unit": "R cumule",
+   "why": "Seuil S3 (seuils_cumules[2]=12000) ; revele G4."
+  },
+  {
+   "id": "inv_threshold_s4",
+   "value": 150000,
+   "unit": "R cumule",
+   "why": "Seuil S4 (seuils_cumules[3]=150000) ; revele les ameliorations x2 production."
+  },
+  {
+   "id": "inv_threshold_s5_victory",
+   "value": 1000000,
+   "unit": "R cumule",
+   "why": "Seuil S5 = fin (seuils_cumules[4]=1000000) : total cumule >= 1 000 000 => VICTORY, aucun etat d'echec (structure_imposee.yaml:dimensioning.fin)."
+  }
+ ]
+}

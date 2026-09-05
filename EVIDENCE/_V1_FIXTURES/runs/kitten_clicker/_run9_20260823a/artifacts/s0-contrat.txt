@@ -1,0 +1,114 @@
+The Write and Bash tools are disabled for this session — I cannot persist the file to disk myself. For an s0-contrat agent this means the charter must be **emitted inline as the unique terminal `yaml` block** for the driver/orchestrator to capture and persist. I'll report honestly and emit the artifact.
+
+---
+
+## final_report — s0-contrat / kitten_clicker-20260823a
+
+**software_verdict: BLOCKED**
+Le charter R7 est rédigé et complet (7 champs remplis, 0 « à définir », règle de forme respectée : toute valeur de liste est quotée, tout scalaire long est en `>-`, aucun scalaire nu contenant « : »). Mais je **ne peux pas le prouver par oracle** : mon périmètre est `run: aucun`, et les outils `Write`/`Bash`/`Grep` sont désactivés dans cette session. Je n'ai donc ni persisté `charter.yaml` sur disque, ni exécuté un validateur CHARTER. L'artefact est émis inline ci-dessous ; sa persistance et sa validation appartiennent au driver.
+
+**evidence_verdict:** aucun — `MECHANICAL_VALIDATION_ONLY` ne s'applique pas (aucun oracle exécuté). Ce que j'affirme sur la complétude du charter est un self-check de rédacteur, **pas** une preuve non-LLM.
+
+**claim_verdict: NO_CLAIM_ALLOWED**
+
+**Oracle cité (à exécuter par le driver) :** validateur de schéma CHARTER déterministe non-LLM (parse `charter.yaml`, échoue si un champ requis — incl. `plateforme_cible`, `reference_jeu`, `criteres_demo[]` — est vide, absent ou contient « à définir »). ⚠ **Je n'ai pas localisé ce validateur câblé** dans mon périmètre de recherche (fichiers lus : `scripts/forge/static_oracles.py`, `standard_oracles.py`, `oracle.py`, `dispatch.py`, `driver.py`, `contracts/SCHEMA.md`, `standard/SCHEMA.md`). Recherche **limitée** (pas de Grep/Bash) → statut réel de l'oracle = **non confirmé**, remonté en fog.
+
+### Flous du prompt — résolus vs remontés
+
+**Résolus (source Pierre tracée) :**
+- `reference_jeu` = « Cookie Clicker + Neko Atsume » → source : `lab/forge_runs/kitten_clicker/design_intent.md` l.3 (Pierre, 2026-08-21) + TÂCHE CONCRÈTE du dispatch. **Non inventé.**
+- `plateforme_cible` = Godot 4.6.3 desktop, fenêtre GPU → source : `design_intent.md` l.4 + dispatch. **Non inventé.**
+- `criteres_demo[]` = 5 mécaniques (M1–M5) + (a)–(h) → énumérés depuis la TÂCHE CONCRÈTE, verbatim.
+
+**Remontés (fog HumanGate / driver) :**
+- **Persistance impossible** : `Write` désactivé → charter émis inline uniquement. Le driver doit le capturer et l'écrire.
+- **Emplacement de persistance** : j'ai supposé la topologie standard `games/kitten_clicker/00_CHARTER/charter.yaml` (miroir de `games/pacman/00_CHARTER/`, cohérent avec `driver.game_dir = games/<project>`), mais `design_intent.md` vit sous `lab/forge_runs/kitten_clicker/`. Le driver doit trancher l'emplacement canonique.
+- **Oracle CHARTER non localisé** : son existence/câblage doit être confirmé par le driver/HumanGate ; s'il est absent, la conformité du charter n'est pas prouvable mécaniquement à cette étape (défaut de chaîne, pas du charter).
+
+### SKIPPED_VALIDATION
+- **item :** exécution du validateur CHARTER · **où :** l'artefact charter émis · **statut :** non fait · **raison :** `run: aucun` (permission contrat) + Bash désactivé ; l'exécution appartient au driver.
+- **item :** persistance de `charter.yaml` sur disque · **où :** topologie du run · **statut :** non fait · **raison :** outil `Write` désactivé dans la session.
+- **item :** localisation exhaustive d'un oracle CHARTER câblé · **où :** `scripts/forge/**` · **statut :** partiel · **raison :** Grep/Bash indisponibles ; recherche fichier-par-fichier limitée.
+
+### RETURN LINEAGE
+- **why_task_existed :**
+  - **problem :** la boucle Forge kitten_clicker (run COMPLET par composition, décision Pierre 2026-08-22) démarre à s0 et exige un charter R7 complet avant tout amont ; le pré-mortem note que 2 charters sur 3 ont été illisibles (scalaires nus contenant « : »).
+  - **oracle :** aucun exécuté dans mon périmètre ; activation = décision humaine (dispatch Pierre) + pré-mortem PILOU.
+  - **root_cause :** non établie côté activation (décision de production, pas un défaut) ; côté forme = scalaires nus non quotés contenant « : ».
+  - **action_reason :** produire un charter R7 complet, tous champs remplis, sans « à définir », listes quotées / scalaires en `>-`.
+- **result :** charter R7 complet rédigé et émis en bloc yaml terminal (7 champs, 0 « à définir », 0 scalaire nu avec « : »). **NON persisté** (Write désactivé), **NON validé par oracle** (run: aucun).
+- **proof :** self-check champ par champ contre le contrat s0 + TÂCHE CONCRÈTE ; **aucune commande exécutée** (Bash/run indisponibles) ; aucun validateur CHARTER câblé trouvé dans les 7 fichiers lus.
+- **learning :** dans cette session un sous-agent s0 ne peut ni écrire de fichier ni exécuter d'oracle → le charter doit être émis inline et persisté/validé par le driver ; la règle de forme est tenue par quoting systématique.
+- **next_reason :** chaîne **NON fermée** — le driver doit (a) persister le charter à l'emplacement de topologie correct, (b) exécuter ou confirmer le validateur CHARTER, (c) enchaîner s2-worldscan.
+
+Charter (bloc unique et terminal, à capturer par le driver) :
+
+```yaml
+# charter.yaml — kitten_clicker (run kitten_clicker-20260823a, étape s0-contrat)
+# Schéma R7 : objectif · hors_scope[] · criteres_succes[] · actions_interdites[]
+#             plateforme_cible · reference_jeu · criteres_demo[]
+# Source design-intent (Pierre) : lab/forge_runs/kitten_clicker/design_intent.md (2026-08-21)
+# claim_verdict: NO_CLAIM_ALLOWED
+
+objectif: >-
+  Produire un petit clicker de chatons mignons sur Godot 4.6.3 desktop, jouable
+  plusieurs heures, dont la boucle de progression (clic -> ronrons -> chatons ->
+  production automatique -> améliorations -> nouveaux chatons/lieux) et la
+  méta-progression (prestige) sont cohérentes, observables à l'écran, et prouvées
+  solvables par un bot déterministe.
+
+hors_scope:
+  - "Aucun multijoueur, réseau, classement en ligne ou sauvegarde cloud"
+  - "Aucune monétisation, microtransaction, publicité ou achat intégré"
+  - "Aucune cible autre que Godot 4.6.3 desktop (pas de build web, mobile ni console)"
+  - "Aucun rendu 3D : le jeu reste en 2D"
+  - "Aucun système de combat, PNJ hostile, ou game-over par échec du joueur"
+  - "Aucune photo ni asset de chat réel : identités visuelles originales ou procédurales uniquement"
+  - "Aucune génération de contenu narratif ou d'assets par LLM au runtime du jeu"
+
+criteres_succes:
+  - "La boucle A->J est prouvée : chaque maillon (clic, ronrons, achat chaton, production auto, amélioration, déblocage lieu, quête, prestige) produit un changement de possibilité mesurable, jamais un simple texte ni une sortie de LLM"
+  - "Un bot déterministe atteint le 3e palier de progression en un nombre de ticks fini : solvabilité prouvée par exécution, pas par un test unitaire en isolation"
+  - "La courbe de paliers porte au moins 3 valeurs distinctes non triviales (règle de variance ratifiée Pierre 2026-07-21)"
+  - "Chaque compétence déclarée (production automatique, amélioration, déblocage de lieu, prestige) est réellement reconnaissable à l'exécution, pas seulement déclarée dans un document"
+  - "Les sorties du world scan (conditions_victoire, conditions_defaite, objectifs_joueur, progression, boucles_recompense) sont consommées en aval (Grey Blocks, WireMap, Builder), pas seulement présentes dans le document (sonde check_amont_traversal.mjs, advisory)"
+  - "Les oracles non-LLM du profil (code, archi, wiremap, standard, mutation, solvabilité) sont verts et le verdict agrégé est signé HMAC et re-vérifié"
+
+actions_interdites:
+  - "Aucun git commit ni push sans go explicite de Pierre (HumanGate décide merge/reject/freeze)"
+  - "Ne toucher à aucune lane protégée : src/, autopilot.py, scripts/studioV2/, tests/"
+  - "Aucun oracle LLM-as-judge : les oracles de preuve restent déterministes non-LLM"
+  - "Aucune assertion tautologique (avec >=) dans les tests : asserter le comportement strict (coins == n+1, un kill tue vraiment)"
+  - "Aucun appel à une API Anthropic externe"
+  - "Ne jamais inventer ni supposer reference_jeu ou plateforme_cible sans source Pierre traçable"
+  - "Aucun champ à définir, vide ou évasif dans les artefacts : un flou non résolu remonte en fog HumanGate, il ne passe pas"
+  - "Ne jamais passer un reçu de code sans evidence_path : exécution non prouvable => BLOCKED"
+  - "Aucun rendu Godot en --headless pour la capture : la fenêtre GPU est obligatoire (le driver dummy rend une texture nulle)"
+
+plateforme_cible: >-
+  Godot 4.6.3, desktop, fenêtre GPU réelle (rendu on-screen, jamais --headless qui
+  produit une texture nulle et aucun PNG). Source : design_intent.md (Pierre, 2026-08-21).
+
+reference_jeu: >-
+  Cookie Clicker (boucle incrémentale, progression, paliers) + Neko Atsume
+  (collection de chatons, attractivité, identité mignonne). Choix de Pierre, jamais
+  de l'agent — source tracée : lab/forge_runs/kitten_clicker/design_intent.md
+  (2026-08-21) et la TÂCHE CONCRÈTE du dispatch kitten_clicker-20260823a.
+
+criteres_demo:
+  - "M1 — Le compteur de ronrons augmente visiblement à chaque clic sur la pelote centrale"
+  - "M2 — Un chaton apparaît à l'écran après son achat (sprite visible, pas seulement un compteur qui change)"
+  - "M3 — La production continue sans clic : le compteur monte seul dès qu'au moins un chaton est présent"
+  - "M4 — Acheter une amélioration fait monter le taux de production affiché à l'écran"
+  - "M5 — Un bot atteint un palier de progression sans intervention humaine (boucle jouée jusqu'à ADVANTAGE)"
+  - "(a) Au moins 6 chatons NOMMÉS, chacun avec une identité visuelle distincte par rareté, visibles à l'écran"
+  - "(b) Au moins 2 lieux : le refuge de départ + au moins 1 lieu débloqué par la méta-progression"
+  - "(c) Au moins 3 objets distincts présents et utilisables dans le jeu"
+  - "(d) Au moins 3 petites quêtes dont les objectifs sont visibles à l'écran"
+  - "(e) Un son distinct pour clic, achat, déblocage et prestige, déclenché par l'événement correspondant (audio procédural accepté ; preuve = volet 07_TESTS/oracle/core_audio.gd avec journal des déclenchements)"
+  - "(f) Un feedback visuel au clic (animation, particules, ou rebond de la pelote)"
+  - "(g) Une courbe de paliers portant au moins 3 valeurs distinctes (règle de variance)"
+  - "(h) Un bot atteint le 3e palier en un nombre de ticks fini"
+```
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "Le sous-agent s0-contrat ne peut ni persister charter.yaml (outil Write desactive) ni executer/localiser un oracle CHARTER cable (run: aucun + Bash/Grep desactives) : le charter R7 est complet mais emis inline uniquement, sa persistance et sa validation restent a la charge du driver", "root_cause": "Outils d'ecriture et d'execution desactives pour cette session de sous-agent, et aucun validateur CHARTER cable trouve dans le perimetre de recherche lu"}

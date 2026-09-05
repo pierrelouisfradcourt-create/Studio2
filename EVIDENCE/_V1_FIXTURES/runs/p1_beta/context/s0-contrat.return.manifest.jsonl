@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s0-contrat", "git_head": "f8c50a05150cf88383c66accf942fdfc43b2c716", "hmac": "6c5ca8e3e45616b363db27d4e7e4370657a85e0505b9f81371589bd89453a9a0", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "p1_beta-20260830-run1", "schema": "forge.context_manifest.v1", "ts": 1788095664.1117778}

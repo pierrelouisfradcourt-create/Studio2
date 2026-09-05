@@ -18,7 +18,10 @@ import pytest
 from forge import run_real
 
 REPO = Path(__file__).resolve().parents[2]
-RUN9 = REPO / "EVIDENCE/runs/kitten_clicker/_run9_20260823a"
+# Fixture V1 migrée le 2026-09-05 sous `EVIDENCE/_V1_FIXTURES/` (GO Pierre) : ces
+# artefacts viennent de runs V1 jamais rejoués, ils ne sont PAS des preuves V2 et
+# vivent donc à l'écart de `EVIDENCE/runs/`. Voir le README de ce dossier.
+RUN9 = REPO / "EVIDENCE/_V1_FIXTURES/runs/kitten_clicker/_run9_20260823a"
 GM_FIXTURE = REPO / "forge/tests/fixtures/gm_game_master_valid.json"
 
 

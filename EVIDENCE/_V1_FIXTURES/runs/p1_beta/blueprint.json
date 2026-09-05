@@ -1,0 +1,54 @@
+{
+ "modules": [
+  "index.html",
+  "main",
+  "engine",
+  "render",
+  "input",
+  "run-oracle",
+  "e2e",
+  "solvability"
+ ],
+ "deps_interdites": [
+  [
+   "engine",
+   "render"
+  ],
+  [
+   "engine",
+   "input"
+  ],
+  [
+   "engine",
+   "main"
+  ],
+  [
+   "engine",
+   "solvability"
+  ],
+  [
+   "engine",
+   "e2e"
+  ],
+  [
+   "engine",
+   "run-oracle"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "render"
+  ],
+  [
+   "render",
+   "main"
+  ],
+  [
+   "input",
+   "main"
+  ]
+ ]
+}

@@ -1,0 +1,24 @@
+Rapport red-team CODE écrit → `lab/forge_runs/pong/rapport_redteam_code.md` (mon unique cible d'écriture). Audit **aveuglé, lecture seule** (`run: aucun` respecté : aucun test/oracle exécuté).
+
+## Synthèse (6 failles, la plus grave d'abord)
+
+**F1 — HIGH — fake-proof + mis-scoring.** Dans `stepBall` (loop.mjs L67-83), un renvoi de la raquette DROITE à `vx > 192` réfléchit la balle à `x = 194 − speed` (hors terrain), puis le bloc scoring déclenche `scored = 'p2'` : **un arrêt réussi devient un point fantôme pour l'adversaire**. Le test « NO-TUNNEL a toute vitesse » (loop.test.mjs, vitesses 300 et 900) **passe quand même** car ses 3 assertions sont satisfaites par le recentrage post-score, pas par la physique. Le wiremap affirme verbatim « vitesses 10..900 : jamais traversant, **aucun point marqué** » → **falsifiable et faux**. Repro déterministe fournie : `step(...,{vx:300}).state.score.p2 === 1`.
+
+**F2 — MEDIUM — assertion incomplète.** L'oracle no-tunnel n'assère que `ns.score.p1===0` (message = « aucun point ») et lit `ns.ball.x` recentré. C'est le mécanisme exact qui laisse F1 passer en CI.
+
+**F3 — MEDIUM — rebond vertical non robuste.** Réflexion mono-latérale : à `|vy|` élevé la balle sort du terrain (`ball.y=844`) → `step` renvoie un état que `isValidState` rejette, sans le signaler. Le « à toute vitesse » n'a jamais couvert l'axe vertical.
+
+**F4 — LOW — interpolation faussée** quand rebond mural + franchissement raquette partagent un tick (`yHit` utilise `ny` déjà réfléchi). Pas de contre-exemple propre à vitesse de jeu → remonté sans claim.
+
+**F5 — LOW — calcul mort.** `Math.abs(serveVx(...))` à L114 = constante 3 : la direction de re-service ne dépend jamais du seed/parité, contredisant la doc state.mjs. La triage `ge->gt` est correcte, mais l'équivalence existe *parce que* le code autour est mort.
+
+**F6 — LOW — preuve tautologique.** `requestExit` appelle `process.exit(0)` inconditionnellement ; « aucune ressource laissée active » n'est jamais vérifié.
+
+**Équité (non-failles vérifiées) :** triage `or->and` L19/L20 correcte (`raw[UP]===raw.up`) ; fog Godot déclaré honnêtement ; oracle pixel navigateur faible mais non factice.
+
+## Verdicts
+- **software_verdict: BLOCKED** — `run: aucun`, aucun oracle exécuté par moi. F2/F4/F6 = ancres statiques (factuelles sans exécution) ; F1/F3/F5 = traces à confirmer en aval.
+- **evidence_verdict: MECHANICAL_VALIDATION_ONLY** — limité aux ancres statiques.
+- **claim_verdict: NO_CLAIM_ALLOWED.**
+
+**fog → HumanGate :** exécuter la repro F1 — si `score.p2===1`, c'est un FAIL moteur réel **et** une preuve wiremap fausse à trancher. `SKIPPED_VALIDATION` : 7 items listés explicitement (tests/oracle/mutation non ré-exécutés faute de `run`, F4 partiel, Godot hors poste, WAV non validé).

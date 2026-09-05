@@ -1,0 +1,132 @@
+{
+ "games": [
+  {
+   "game": "Cookie Clicker",
+   "sources": [
+    {
+     "url": "https://dinogame.gg/blog/how-cookie-clicker-progression-works/",
+     "type": "article",
+     "timestamp": null
+    },
+    {
+     "url": "https://cookieclicker.fandom.com/wiki/Building",
+     "type": "wiki",
+     "timestamp": null
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=IpT7__KnCxc",
+     "type": "video",
+     "timestamp": "00:00-18:45"
+    }
+   ],
+   "loops": {
+    "minute_1": "Manuel click acquire auto-clicker (Cursor) ; 1er bâtiment d'automisation à ~30 sec ; feedback immédiat : CpS visible",
+    "minute_10": "Portfolio 15+ Cursors + 8+ Grandmas ; Golden Cookies aléatoires (~30 sec intervals) donnent ×2/+7% ; déblocages upgrades tous les 5/25/50 achats",
+    "hour_5": "Première Ascension : accumulation ~1T cookies → 1 Heavenly Chip (+1% CpS permanent) ; Sugar Lumps unlock ; Prestige tree exploré",
+    "endgame": "Cycles ascensionnels 5-10h ; Grandmapocalypse économie parasite (Wrinklers). Progression infinie par stacking multiplicateurs + unlock Heavenly upgrades"
+   },
+   "retention_answer": "Feedback constant (chiffres croissant exponentiellement, visibles à l'écran) + asymétrie d'accès (toujours un achat prochain mais pas immédiat) + absence d'échec (impossible de perdre)",
+   "objectives": [
+    {
+     "mode": "solo_progression",
+     "has_win_state": false,
+     "victory_condition": null,
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Maximiser la croissance exponentielle des cookies/sec via achats de bâtiments et upgrades ; explorer prestige cycles pour déblocages permanents"
+    }
+   ]
+  },
+  {
+   "game": "Clicker Heroes",
+   "sources": [
+    {
+     "url": "https://blog.clickerheroes.com/clicker-heroes-players-guide-strategy/",
+     "type": "article",
+     "timestamp": null
+    },
+    {
+     "url": "https://blog.clickerheroes.com/clicker-heroes-idle-dps-the-ultimate-guide/",
+     "type": "article",
+     "timestamp": null
+    },
+    {
+     "url": "https://blog.clickerheroes.com/how-to-play-clicker-heroes-a-strategic-guide/",
+     "type": "article",
+     "timestamp": null
+    }
+   ],
+   "loops": {
+    "minute_1": "Click Orc enemys → Orc dies after 5 clicks → progression zone 1 ; first hero Cid bought avec 5 gold pour auto-damage",
+    "minute_10": "3-5 héros (Cid, Ivan, Brittany) ; Gilds (×1.5 DPS) concentrés sur 1 hero ; première Ascension trigger (~5-10 min) ; Hero Souls convertis en +10% DPS permanent",
+    "hour_5": "Mode Idle (AFK 60+ sec = passive DPS sans click) dominant ; Ancients (Siyalatas, Libertas) déblocés et upgradés ; progression vers Transcendence (~1h de prep) ; zones 50-200 atteintes",
+    "endgame": "Cycles Transcendence 20-50h ; Autoscaling Ancients (certains auto-upgradent) ; build meta Idle vs Active influence structure team"
+   },
+   "retention_answer": "Vraie progression passive (mode Idle 24/7 sans client) + optionnalité du clic (5 min ou 500j produisent progrès équivalent) + reset reframed comme feature pas punition",
+   "objectives": [
+    {
+     "mode": "idle_mode",
+     "has_win_state": false,
+     "victory_condition": null,
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Maximiser Idle DPS via Ancients + Heroes leveling ; atteindre zones infinies par Ascension/Transcendence cycles"
+    },
+    {
+     "mode": "active_click_mode",
+     "has_win_state": false,
+     "victory_condition": null,
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Maximiser Click damage via Gilds + Click-focus Ancients (Fragsworth, Bhaal) ; autostacking multiplicateurs"
+    }
+   ]
+  },
+  {
+   "game": "Idle Miner Tycoon",
+   "sources": [
+    {
+     "url": "https://idleminertycoon.fandom.com/wiki/Fundamental_Gameplay",
+     "type": "wiki",
+     "timestamp": null
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=8bgW5ziCPsY",
+     "type": "video",
+     "timestamp": "00:00-08:30"
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=aW6hO6lV5Uw",
+     "type": "video",
+     "timestamp": "00:00-30:00"
+    }
+   ],
+   "loops": {
+    "minute_1": "Click Workers dans Coal Mine pour creuser ; 3-5 clics accumulentressources → achat Elevator (chainé dependency) ; première sensation: production multi-étage",
+    "minute_10": "Coal Mine chain complète (3+ Shafts level 2+, Elevator level 2+, Warehouse) ; Managers embauchés (timed active boosts ~30-60 sec) ; déblocage 2e Mineshaft",
+    "hour_5": "Ouverture Gold Mine (coûts 10× supérieurs) ; stratégie dichotomique (Coal idle, investir Gold) ; Managers différenciés par mine (31 pools total) ; Barriers unlock progression paliers",
+    "endgame": "5-10 mines simultanées ; Cash + Token économies (events calendrier) ; Leagues système (compétition quotidienne) ; offline progression 24/7"
+   },
+   "retention_answer": "Autonomie de chaîne (setup → idle 24/7) + déblocages graduels (Barriers = gating implicite non-blocker) + métajeu calendrier (events, leagues quotidiennes)",
+   "objectives": [
+    {
+     "mode": "solo_progression",
+     "has_win_state": false,
+     "victory_condition": null,
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Construire et maintenir chaînes multi-mine ; débloquer toutes mines et Barriers ; accumuler Cash & Tokens"
+    },
+    {
+     "mode": "competitive_leagues",
+     "has_win_state": false,
+     "victory_condition": null,
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Maximiser Cash production pour classement hebdo/mensuel dans 8 Leagues ; collecte rewards calendaires"
+    }
+   ]
+  }
+ ],
+ "advisory": true
+}

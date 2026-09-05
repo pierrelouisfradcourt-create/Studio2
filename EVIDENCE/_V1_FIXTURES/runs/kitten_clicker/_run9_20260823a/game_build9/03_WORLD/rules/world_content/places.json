@@ -1,0 +1,6 @@
+{
+  "places": [
+    { "id": "refuge", "name": "Refuge douillet", "unlock_tier": 0 },
+    { "id": "lieu_2", "name": "Jardin ensoleille", "unlock_tier": 3 }
+  ]
+}

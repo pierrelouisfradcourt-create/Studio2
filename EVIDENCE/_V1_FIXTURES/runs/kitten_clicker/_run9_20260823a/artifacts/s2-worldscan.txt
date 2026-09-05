@@ -1,0 +1,182 @@
+Maintenant je vais compiler mes observations en analyse structurée pour kitten_clicker. Voici mon analyse du genre clicker/idle basée sur les jeux de référence :
+
+## OBSERVATION ARCHITECTURALE — Genre Clicker/Idle
+
+### 1. **Cookie Clicker** (Orteil, 2013+)
+
+**Boucles de temps**
+
+- **Minute 1 (Tutorial Loop)**: Joueur clique sur Grand Biscuit, gagne 1 biscuit/clic. Aucun choix, pure sensation de clic. Feedback: son de clic, nombre s'affiche (+1), animation biscuit.
+
+- **Minute 10 (First Automation Loop)**: ~100-200 biscuits accumulés. Joueur achète première Cursor (+0.1/sec) ou Grandma (+1/sec). La richesse commence à croître sans action manuelle. Chaque bâtiment cliqué visible en bas, rangée additionnelle par type. Upgrades émerge (2× production Grandma). Décision tactique: Cursor ou Grandma en premier?
+
+- **Heure 5 (Meta-Progression Loop)**: 1 milliard+ biscuits atteints. Ascension déverrouillée — reset total du progression mais gain Heavenly Chips (prestige permanent +1% production/level). Wrinklers (créatures qui réduisent production, pop = intérêt composé). Sugar Lumps (lent accumulating, 1-2/jour) permettent lever buildings (+50%/level) ou débloquer upgrades rares. Golden Cookies (aléatoires, boost 77× temporaire). Concept clé: "faire disparaître les gains avant pour en refaire plus". Choix stratégique: ascend maintenant ou grind plus?
+
+- **Endgame (Perpetual Loop)**: 637 achievements. Progression trevigintillions (10^72+). Grandmapocalypse lore (Horror storyline durant ascension). Joueur reconnaît pattern: chaque ascension plus rapide que la précédente. Boucle émergente: prestige → boost permanent → grind plus vite → ascension earlier (cycle 2-4h). Aucune victoire absolue, jeu continue indéfiniment.
+
+**Objectives**
+
+```
+{
+  "mode": "solo_standard",
+  "has_win_state": false,
+  "victory_condition": null,
+  "has_defeat_state": false,
+  "defeat_condition": null,
+  "player_goal": "Achieve maximum cookie production through building acquisition, strategic ascensions, and prestige accumulation. No terminal win condition; progression is infinite."
+}
+```
+
+**Retention Answer (Conventions & Risques)**
+
+Conventions visuelles: Big Cookie shadow/scale feedback, cursors animés autour du biscuit (max fancy graphics), particles falling cookies, rotating light glow. Building displays rangées empilées (visual stack = wealth progression). Achievements popup avec badges visuels. Prestige level numéro très grand affiché.
+
+Conventions sonores: click feedback (son) sur chaque clic, building purchase chime (triumphant), achievement unlock jingle, golden cookie spawn notification, wrinkler pop sound (satisfying squish).
+
+**Risque de monotonie nommé:** Grind pur après prestige N si les upgrades révèlent trop lentement. Saturation si offline income accumule illimité (solution: limit 10h offline). Manque de décision stratégique si joueur ne connaît pas prestige timing.
+
+---
+
+### 2. **Neko Atsume** (Hit-Point, 2014+)
+
+**Boucles de temps**
+
+- **Minute 1 (Setup Loop)**: Joueur accède yard vide. Place toy/nourriture sur emplacements. Aucune action de clic. App fermeture immédiate.
+
+- **Minute 10 (Check-In Loop)**: Joueur rouvre app après quelques minutes. 2-3 chats rares (ou communs) visitent yard. Joueur photographe (0 coût), reçoit silver niboshi (10-50 fish) ou gold niboshi (5-15, premium rares). Chats quittent. Feed toys/nourriture consommés ou restent. Observations: chats aiment items spécifiques (item preference). Rare cats demandent items rares (coûteux).
+
+- **Heure 5 (Collection Expansion Loop)**: ~20+ visites accumulées. ~1000+ silver fish. Joueur déverrouille yard expansions (payer fish pour agrandir espace). Remodeling aesthetic (7 styles: mansion, shrine, factory, etc.). Cible chats rares specifiques: acheter toys/foods qu'ils préfèrent. Collection: 20/66 cats photographiés, 5/26 rares. Discovery: each cat unique personality (sleeps on bed, plays with ball, etc.). Prestige system absent; progression purement accumulatrice.
+
+- **Endgame (Infinite Collection)**: 86 cats collected (goal psychologique, pas vrai win). Tous mementos gathered (small gifts chats laissent). Yard styling final. Continuer: chats visitent indéfiniment si nourriture placée. Aucune progression mécanique nouveau — juste continuité. Notion: "j'ai complet la Pokédex, mais le jeu continue".
+
+**Objectives**
+
+```
+{
+  "mode": "solo_collection",
+  "has_win_state": false,
+  "victory_condition": null,
+  "has_defeat_state": false,
+  "defeat_condition": null,
+  "player_goal": "Collect all 86 cats (including 26 rare variants) through strategic item placement and accumulation of currency (niboshi). Customize yard aesthetic. No terminal condition; cat visits continue indefinitely."
+}
+```
+
+**Retention Answer (Conventions & Risques)**
+
+Conventions visuelles: Cat sprite animations (playing, sleeping, eating), item physics (toy rolls), yard grid visual feedback (expand = more space visible). Rarity indicator: rare cats shine/glow or have special UI badge. Memento gifts displayed as collection in separate tab.
+
+Conventions sonores: Cat meow on visit (notification), purchase chime (fish spent), yard remodel success tone, memento gift sound (gentle chime).
+
+**Risque de monotonie nommé:** Grinding pure si rares exigent items trop rares. Frustration si cats ne visitent jamais (bad RNG). Lack of agency: joueur ne clique pas (passif complet). Offline limit problem: sans limite, joueur perd incentive à revenir ("j'ai 10h offline income, attendre c'est tout").
+
+---
+
+### 3. **Pattern Cross-Game: Clicker/Idle Genre**
+
+**Progression Velocity:**
+- Minute 1: Manual action only (baseline engagement)
+- Minute 10: First automation (dopamine spike: "it works without me")
+- Hour 5: Meta-loop (prestige/rare collection)
+- Endgame: Infinite loop (no win, just "how far can I go?")
+
+**Core Mechanic Variants**
+- **Active Clicker** (Cookie Clicker): Hybrid manual + auto. Player can click for boost.
+- **Passive Collector** (Neko Atsume): Pure offline. Player only places items, no clicking.
+
+**Universal Retention Drivers**
+1. Offline income + offline income cap (→ "check back in 1h to claim")
+2. Prestige/Rare tier (→ "reset to go faster next time")
+3. Visual wealth progression (→ numbers grow, buildings spawn, cats collect)
+4. Achievement/Collection goals (→ psychological completion)
+5. Narrative drip (→ Lore unlock, cat personalities, Grandmapocalypse)
+
+**Universal Monotony Risks**
+1. **Flat progression**: Upgrades plateau, income growth stalls
+2. **Repetition fatigue**: Same action loop 1000× (unmitigated by UI/audio variation)
+3. **Decision vacuum**: No strategy, only "buy cheapest available"
+4. **Offline trap**: Player returns to find "offline income cap hit 8h ago"—frustration
+5. **No narrative flavor**: Numbers only, no story hook
+
+**Conventions Visuelles & Sonores du Genre**
+- **Click feedback**: Sprite jolt + particle + click sound (0.1s RTF = visceral)
+- **Purchase chime**: Triumphant 2-3 note tune, frequency rise = dopamine
+- **Milestone sound**: Rare, distinctive jingle (achievement unlock)
+- **Wealth visual**: Numbers growing (exponential notation 1e12), building stacks, sprite scale up
+- **Rarity cues**: Glow, shine, halo, color shift, badge overlay
+- **Offline notification**: Gentle chime or toast (return incentive signal)
+
+---
+
+## Manifeste d'Observation
+
+Based on my research of Cookie Clicker, Neko Atsume, and documented idle game design patterns, here's the world intelligence packet for kitten_clicker:
+
+Sources consultées:
+- [Cookie Clicker Wikipedia](https://en.wikipedia.org/wiki/Cookie_Clicker)
+- [Cookie Clicker: Mechanics and Progression](https://cookieclickeronline.net/cookie-clicker-mechanics-and-progression.html)
+- [Neko Atsume Wikipedia](https://en.wikipedia.org/wiki/Neko_Atsume)
+- [Game Design Skills: How to Make a Clicker Game](https://gamedesignskills.com/game-design/clicker/)
+- [Mind Studios: Idle Clicker Games Design](https://games.themindstudios.com/post/idle-clicker-game-design-and-monetization/)
+- [How to Keep Players Engaged in Idle Games - GameAnalytics](https://www.gameanalytics.com/blog/how-to-keep-players-engaged-and-coming-back-to-your-idle-game/)
+- [Clicker Heroes Blog: Best Idle Games](https://blog.clickerheroes.com/idle-games-list-best-idle-clicker-games/)
+
+```json
+{
+  "games": [
+    {
+      "game": "Cookie Clicker",
+      "sources": [
+        {"url": "https://en.wikipedia.org/wiki/Cookie_Clicker", "type": "wiki"},
+        {"url": "https://cookieclickeronline.net/cookie-clicker-mechanics-and-progression.html", "type": "article"},
+        {"url": "https://gamerant.com/cookie-clicker-best-upgrades/", "type": "article"}
+      ],
+      "loops": {
+        "minute_1": "Manual clicking: Player clicks Big Cookie, earns 1 cookie/click. Pure tactile feedback (click sound, sprite animation, number appears).",
+        "minute_10": "First automation: ~100-200 cookies. Purchase Cursor (+0.1/sec) or Grandma (+1/sec). Passive income begins. First upgrade layer (2× Grandma). Decision: which building yields best ROI?",
+        "hour_5": "Meta prestige loop: 1B+ cookies. Ascension system unlocks: reset progress → gain Heavenly Chips (permanent +1% production per level). Wrinklers reduce output, pop for interest. Sugar Lumps (slow, 1-2/day) for building levels/rare upgrades. Golden Cookies (random, 77× boost). Strategic choice: ascend now or grind longer?",
+        "endgame": "Perpetual prestige cycles (2-4h each). 637 achievements. Progress toward trevigintillions (10^72+). Grandmapocalypse lore unfolds. Each ascension faster (permanent prestige boost). No terminal win; infinite progression."
+      },
+      "objectives": [
+        {
+          "mode": "solo_standard",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Maximize cookie production through building acquisition, strategic prestige timing, and upgrade optimization. Pursue 637 achievements. Progress is infinite with no terminal condition."
+        }
+      ],
+      "retention_answer": "Visual conventions: Big Cookie with shadow/scale feedback, animated cursors orbiting, falling cookie particles, rotating light glow, achievement badge popups, stacked building displays (visual wealth). Audio conventions: click sound (instantaneous), building purchase chime (triumphant 2-note rise), achievement jingle (distinctive, rare), golden cookie spawn alert, wrinkler pop squish (satisfying). Monotony risks: pure grind if upgrades reveal too slowly; offline income saturation if uncapped (solved by 10h limit); lack of strategic choice if prestige timing unclear. Narrative drip (Grandmapocalypse) provides engagement hooks beyond numbers."
+    },
+    {
+      "game": "Neko Atsume",
+      "sources": [
+        {"url": "https://en.wikipedia.org/wiki/Neko_Atsume", "type": "wiki"},
+        {"url": "https://play.google.com/store/apps/details?id=jp.co.hit_point.nekoatsume", "type": "app_store"},
+        {"url": "https://learningworksforkids.com/playbooks/neko-atsume-kitty-collector/", "type": "article"}
+      ],
+      "loops": {
+        "minute_1": "Setup: Empty yard. Place toys and food on grid. No clicking. Close app immediately.",
+        "minute_10": "Check-in: Reopen app. 2-3 cats visit (common or rare). Photograph each (no cost, reward UI). Cats leave silver niboshi (10-50 fish) or gold niboshi (rare, premium currency). Consume toys or remain. Observation: cat has item preferences.",
+        "hour_5": "Collection expansion: ~20+ visits, 1000+ silver fish. Unlock yard expansions (pay fish to add space). Remodel aesthetic (7 themes: mansion, shrine, factory, etc.). Target rare cats (26/86 total): buy specific toys/foods they prefer. Discovery: each cat unique personality (sleeps, plays, eats). Progression purely accumulative, no prestige/reset.",
+        "endgame": "86 cats collected (psychological goal, not terminal win). All mementos gathered (small gifts cats leave). Yard fully styled. Cats visit indefinitely if food placed. No new mechanics unlock; continuation of collection loop."
+      },
+      "objectives": [
+        {
+          "mode": "solo_collection",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Collect all 86 cats (26 rare variants by strategic item placement). Accumulate niboshi currency. Unlock yard expansions and aesthetic themes. Gather all mementos. No terminal condition; indefinite cat visits."
+        }
+      ],
+      "retention_answer": "Visual conventions: Cat sprite animations (playing, sleeping, eating), item physics (toys roll/float), yard grid expansion (visual scale-up), rarity indicator (glow/shine on rare cats), memento collection tab. Audio conventions: cat meow on arrival (notification alert), purchase chime (fish spent), yard remodel success tone (satisfying), gentle memento gift sound. Monotony risks: grinding if rares require prohibitively rare items; frustration if cat RNG prevents visits; complete passivity (no clicks) may feel like non-game to action-preference players; offline income saturation if uncapped (player loses check-in incentive). Narrative hook: cat personalities and collection completion drive engagement beyond pure accumulation."
+    }
+  ],
+  "advisory": true
+}
+```
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

@@ -1,0 +1,138 @@
+No Project Bible exists (so not a mandatory read this run), and my own contract confirms the output schema. All sources are now in hand: the project brief is the single source of command, and every design-intent field has a Pierre-traceable source in it. 
+
+Critical framing decision for this **Libre (L2) arm**: s0 must NOT invent the game's structural values — doing so is exactly the M2a "inventé-silencieux" defect and risks arm contamination. My job is the **contract/frame** (objective, boundaries, constraints), with the **structure explicitly delegated downstream** (N2, traced provenance). Here is the materialized charter.
+
+```yaml
+# charter.yaml — projet p2_beta (bras LIBRE / L2, PAIRE 2)
+# Matérialisé par s0-contrat (A1, protocole V1). Source de commande : lab/forge_briefs/p2_beta/project_brief.yaml
+# RÈGLE DE BRAS : s0 pose le CADRE et les CONTRAINTES ; la STRUCTURE du jeu est DÉLÉGUÉE à l'aval (N2), jamais inventée ici.
+projet: p2_beta
+
+objectif: >-
+  Produire un jeu incremental/clicker web JOUABLE dont la STRUCTURE (boucles, ressources,
+  actions, progression, déblocages, économie, dimensionnement, condition de fin) est
+  ENTIÈREMENT INVENTÉE par la chaîne Forge (bras Libre = variable expérimentale : l'auteur
+  de la structure), en fermant toute la chaîne de preuve full_content (verdict signé +
+  verify_run AUTHENTIQUE). Joueur cible : joueur web occasional d'incremental/clicker
+  (feedback immédiat au clic, progression et déblocages, session courte prouvable). Condition
+  de victoire/fin : une FIN DE PARTIE OBSERVABLE (état de fin distinct de l'état de jeu),
+  atteignable par un bot compétent dans la fenêtre de mesure — sa forme exacte est DÉLÉGUÉE
+  à l'aval (non fixée ici). Périmètre V1 minimal jouable : au moins une action de clic
+  récompensée, une ressource, une progression avec ≥1 déblocage, et une fin observable ;
+  la qualité ludique N'EST PAS jugée (donnée M7).
+
+hors_scope:
+  - "Juger la qualité ludique / le fun du jeu (donnée M7, hors de ce bras) — le charter borne la PREUVE et la STRUCTURE, pas le goût."
+  - "Copier Cookie Clicker : aucun asset, nom, contenu, ni valeur numérique repris ; seule la grammaire de genre est autorisée."
+  - "Consulter ou réutiliser quoi que ce soit du bras dirigé ou du pilote : lab/forge_briefs/p2_alpha/**, p1_alpha/**, aucune valeur de leur structure (isolement de bras, protocole V1)."
+  - "Inventer/figer au niveau s0 les valeurs structurelles concrètes (ressources, nombres, forme exacte de la fin) : c'est DÉLÉGUÉ à l'aval avec provenance tracée (N2)."
+  - "Écrire du code, décider l'architecture (étape 4), faire le world scan (étape 2) : hors périmètre de s0."
+  - "Toucher aux lanes protégées (tests/, src/) ou aux lanes gelées (autopilot.py, scripts/studioV2/)."
+
+criteres_succes:
+  - "Chaîne full_content complète : verdict signé + verify_run AUTHENTIQUE."
+  - "charter.yaml MATÉRIALISÉ par s0 (A1 — condition de validité de bras)."
+  - "Structure entièrement documentée en aval avec provenance agent (N2) — mesures M2a (inventé-silencieux = défaut) / M2b (délégué-explicite tracé)."
+  - "design_questions / r2 / design_freeze exercés normalement — modification_locus utilisé pour toute réponse."
+  - "Chaque asset_request.id resolved-avec-fichier ou blocked-justifié (check_asset_consumption)."
+  - "check_artbible exécuté par le driver (executed_by: driver)."
+  - "product_snapshot.md matérialisé (exigible pour M7(a), protocole V1 A3)."
+  - "s11 red-team Qwen réel, independent: true ; LM Studio down → HALT sans fallback."
+  - "SOLVABILITÉ RUNTIME : un bot scripté atteint la fin inventée en ≤ 72000 ticks (100 ms) ; bots de mesure à variance non triviale (temps-jusqu'à-la-fin, jalons)."
+  - "Socle sonde web (N1) présent : HTML+JS, déterminisme seedé, window.__game exposé, harnais complet à la racine du dossier jeu."
+
+actions_interdites:
+  - "JAMAIS consulter lab/forge_briefs/p2_alpha/**, p1_alpha/**, ni aucune grandeur structurelle du bras dirigé/pilote (contamination = paire invalidée)."
+  - "JAMAIS reprendre d'asset, de nom, de contenu ou de valeur numérique de Cookie Clicker (grammaire de genre uniquement)."
+  - "JAMAIS choisir reference_jeu ou plateforme_cible sans source Pierre explicite (leçon AutoBattler)."
+  - "JAMAIS traiter budget_ticks_mesure (72000 ticks) comme une valeur de DESIGN du jeu : c'est une constante de MESURE du protocole V1, symétrique aux deux bras."
+  - "JAMAIS livrer un jeu à fin non observable (idle infini) ni à objectif inatteignable dans la fenêtre de mesure."
+  - "JAMAIS de red-team avec fallback si LM Studio est down : HALT (s11 doit être réel et indépendant)."
+  - "JAMAIS d'assertion tautologique dans un oracle de jeu (pas de >= masquant, pas de littéral solvable=true sous garde) : comportement STRICT asserté."
+  - "JAMAIS toucher tests/, src/, ni les lanes gelées."
+
+plateforme_cible: >-
+  web (HTML + JS, rendu canvas). Cible technique fixée au brief (provenance : Pierre 2026-08-30).
+  Socle N1 : HTML+JS mono-dossier games/p2_beta, déterminisme seedé, window.__game exposé pour
+  le harnais, harnais complet à la racine du dossier jeu.
+
+reference_jeu: >-
+  Cookie Clicker — grammaire de genre incremental/clicker UNIQUEMENT, jamais une copie (aucun
+  asset, nom, contenu, ni valeur numérique repris). AUCUN modèle STRUCTUREL de référence n'est
+  imposé : la structure est INVENTÉE par la chaîne (définition du bras Libre). Source : Pierre
+  2026-08-30 (genre de la paire, reconduit paire 2).
+
+criteres_demo:
+  - "Un clic est visiblement récompensé : un compteur de ressource affiché à l'écran augmente immédiatement au clic."
+  - "Une progression est visible à l'écran : une valeur qui monte franchit un seuil et l'écran le reflète (déblocage, nouvel élément visible, ou changement d'état visible)."
+  - "Au moins une action au-delà du clic de base est visible à l'écran (ex. un achat/amélioration qui modifie visiblement l'affichage ou le rythme)."
+  - "La fin de partie est OBSERVABLE à l'écran : un état de fin distinct (écran/bannière/message de complétion) apparaît, différent de l'état de jeu en cours — ni écran figé, ni idle infini."
+
+provenance:
+  genre: "Pierre 2026-08-30 (paire pilote, reconduit paire 2)"
+  plateforme_cible: "Pierre 2026-08-30 (brief cible : web HTML+JS canvas)"
+  reference_jeu: "Pierre 2026-08-30 (references_autorisees : Cookie Clicker, grammaire de genre uniquement)"
+  structure: "DÉLÉGUÉE à la chaîne aval — définition du bras Libre (variable expérimentale, N2)"
+  budget_mesure: "constante de protocole V1 (72000 ticks), Pierre 2026-08-30 — symétrique aux deux bras, PAS une valeur de design"
+  isolement: "protocole V1 (tirage scellé PAIRE2_SEALED_assignment.json)"
+  criteres_demo: "s0-contrat — dérivés des contraintes fixées (genre clicker + fin observable + solvabilité), genre-génériques, sans invention de structure"
+  redaction: "s0-contrat (chaîne Forge), run p2_beta-20260830-run1"
+```
+
+---
+
+## RAPPORT FINAL — s0-contrat (p2_beta-20260830-run1)
+
+**software_verdict: OK** — charter matérialisé (bloc `yaml` ci-dessus), **7/7 champs requis remplis** (objectif · hors_scope[] · criteres_succes[] · actions_interdites[] · plateforme_cible · reference_jeu · criteres_demo[]), **0 occurrence de « à définir »**, aucun champ vide. Constat attestable par inspection du bloc.
+
+**evidence_verdict: MECHANICAL_VALIDATION_ONLY** — mais **la validation mécanique n'a PAS été exécutée par cet agent** : l'oracle CHARTER déterministe (validateur de schéma qui parse charter.yaml et échoue sur champ vide/absent/« à définir ») est `executed_by: driver` au gate s0. Permissions `run: aucun` + Bash indisponible dans cette session → je ne peux pas l'exécuter. La complétude ci-dessus est un constat d'inspection, la confirmation mécanique reste au driver.
+
+**claim_verdict: NO_CLAIM_ALLOWED**
+
+**Oracle cité** : validateur de schéma charter (non-LLM, déterministe), `executed_by: driver`. Aucun LLM-as-judge.
+
+### Flous du prompt — résolus vs remontés
+- **plateforme_cible** — RÉSOLU. Source Pierre tracée (brief `cible: web (HTML+JS canvas)`, provenance 2026-08-30). Pas de fog.
+- **reference_jeu** — RÉSOLU. Source Pierre tracée (brief `references_autorisees` : Cookie Clicker en grammaire de genre uniquement, provenance.genre Pierre 2026-08-30). Le piège AutoBattler (modèle choisi sans Pierre) est évité : Pierre a nommé le genre et la référence-grammaire ; **aucun modèle structurel n'est imposé** (c'est le sens du bras Libre). Pas de fog.
+- **condition de victoire / structure du jeu** — DÉLÉGUÉ (pas un fog). Par conception du bras Libre, la forme exacte de la fin et toute la structure sont déléguées à l'aval avec provenance (N2). s0 pose la **contrainte** (fin observable, solvable ≤ 72000 ticks) sans l'inventer — pour ne pas produire un défaut M2a « inventé-silencieux » ni contaminer le bras.
+- **criteres_demo** — RÉSOLU (genre-génériques). Dérivés des contraintes fixées (clicker + fin observable + solvabilité), observables à l'écran, sans invention de structure.
+
+**Aucun fog HumanGate remonté** : tous les champs design-intent portent une source Pierre explicite et citée.
+
+### RETURN LINEAGE
+```yaml
+why_task_existed:
+  problem: >-
+    Le bras Libre (L2) de la PAIRE 2 doit démarrer par un charter matérialisé (A1) ; sans lui le
+    bras est INVALIDE (condition de validité de bras, protocole V1). Le pilote (p1_*) n'a donné
+    qu'une paire dégradée ; la paire 2 vise la première paire VALIDE.
+  oracle: >-
+    aucun — activation par décision humaine (GO paire 2, Pierre 2026-08-30, RUN2_PROTOCOLE_V1.md).
+    La validité de bras sera ensuite mesurée par le validateur de schéma charter (driver).
+  root_cause: "non établie — activation par protocole/décision humaine, pas par un défaut mesuré."
+  action_reason: >-
+    s0-contrat est le point d'entrée de la chaîne : produire le contrat-cadre (charter) qui borne
+    la production aval SANS préempter la STRUCTURE déléguée (variable expérimentale du bras Libre).
+result: >-
+  charter.yaml matérialisé (bloc yaml), 7/7 champs remplis, 0 « à définir » ; design-intent
+  (plateforme_cible, reference_jeu, criteres_demo) tracé à des sources Pierre ; STRUCTURE
+  explicitement DÉLÉGUÉE à l'aval (N2), non inventée ici.
+proof: >-
+  Inspection du bloc yaml produit : 7 champs requis présents et non vides, aucune occurrence de
+  « à définir ». Validation mécanique = validateur de schéma charter, executed_by: driver au gate
+  s0 — NON exécutée par cet agent (permissions run: aucun ; Bash indisponible).
+learning: >-
+  Dans un bras Libre, s0 ne doit PAS inventer de valeurs structurelles (M2a inventé-silencieux =
+  défaut) : il pose le CADRE et les CONTRAINTES (fin observable, solvabilité ≤ 72000 ticks,
+  isolement de bras) et DÉLÈGUE explicitement la structure à l'aval avec provenance (M2b). Le
+  charter porte la frontière, pas le design.
+next_reason: >-
+  La chaîne continue (s1 Prisme produit, s2 world scan, puis conception de la STRUCTURE déléguée) :
+  le charter est une PRÉCONDITION, pas une fin. Lignée NON fermée — l'étape suivante doit agir.
+```
+
+### SKIPPED_VALIDATION
+- **item** : Exécution de l'oracle CHARTER (validateur de schéma déterministe). **où** : le charter.yaml produit. **statut** : non fait (par cet agent). **raison** : permissions `run: aucun` + Bash indisponible ; oracle `executed_by: driver` au gate s0. Complétude attestée par inspection ; validation mécanique laissée au driver.
+- **item** : Vérification de provenance Pierre de `reference_jeu`. **où** : champ reference_jeu. **statut** : fait par inspection de source (brief `references_autorisees` + `provenance.genre`), non mécanisable. **raison** : fait de gate, pas de schéma — source Pierre présente et citée (2026-08-30), donc aucun fog remonté.
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

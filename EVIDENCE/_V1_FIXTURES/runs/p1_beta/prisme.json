@@ -1,0 +1,318 @@
+{
+ "game_id": "p1_beta",
+ "exigences": [
+  {
+   "id": "R1",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.grey_blocks.gb_constellation",
+   "observation": "gb_constellation est une jauge qui se remplit proportionnellement a light/seuil et declenche l'ecran de fin a 100%.",
+   "claim": "Le joueur a besoin d'un objectif terminal LISIBLE en permanence, sans quoi il ne sait ni vers quoi il attise ni quand la partie s'arrete.",
+   "enonce": "Tant que le seuil n'est pas franchi, le HUD affiche en continu un objectif de fin explicite nommant l'embrasement a 5000 lumiere.",
+   "acteur": "PLAYER",
+   "loop_role": "PLAYER_GOAL",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "une sonde lit le HUD objectif au tick 0 et trouve une chaine non vide nommant le seuil terminal 5000"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R2",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.loops.core_loop.core_action",
+   "observation": "core_loop.core_action decrit l'action-coeur : le joueur attise le foyer central d'un clic (affordance hearth).",
+   "claim": "Sans retour numerique immediat sur ce clic, l'action-coeur ne se distingue pas d'un decor inerte et la boucle ne demarre jamais.",
+   "enonce": "Le joueur attise le foyer en cliquant la cible hearth ; a chaque clic le compteur de lumiere augmente strictement.",
+   "acteur": "PLAYER",
+   "loop_role": "PLAYER_ACTION",
+   "affordance": "hearth",
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "increases"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "une sonde clique hearth 10 fois et mesure que le compteur lumiere est strictement croissant, +1 par clic"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R3",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.loops.core_loop.core_feedback",
+   "observation": "core_loop.core_feedback : le foyer flashe et une gerbe d'eclats chauds jaillit a chaque attisage.",
+   "claim": "Le flash doit etre perceptible a l'echelle d'une frame, faute de quoi le joueur doute que son clic a ete pris en compte.",
+   "enonce": "A chaque attisage, l'etat visuel du foyer change (flash chaud bref < 200 ms) de facon detectable image a image.",
+   "acteur": "SYSTEM",
+   "loop_role": "GAME_RESPONSE",
+   "observe": {
+    "hud": "foyer",
+    "predicate": "changes"
+   },
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "capture image-a-image : le pixel central du foyer change de luminance entre la frame du clic et la suivante"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R4",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.loops.core_loop.core_reward",
+   "observation": "core_loop.core_reward et progression_metrics.core_light_per_stoke=1 : le compteur bondit d'exactement 1 unite par attisage.",
+   "claim": "Un increment lisible et strictement egal a 1 est ce qui transforme le clic en recompense comptable ; un pas variable ou masque casserait la sensation de gain.",
+   "enonce": "Chaque attisage credite exactement +1 lumiere au compteur, valeur affichee et verifiable par egalite stricte.",
+   "acteur": "SYSTEM",
+   "loop_role": "REWARD",
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "increases"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "sonde seedee : apres N clics sans achat, lumiere == N exactement (jamais un >=)"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R5",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.loops.core_loop.core_decision",
+   "observation": "core_loop.core_decision : le joueur choisit entre attiser encore ou basculer vers l'achat d'un emetteur.",
+   "claim": "Ce choix n'est significatif que si deux politiques (tout-clic vs reinvestir) produisent des trajectoires de lumiere mesurablement differentes ; sinon la decision est cosmetique.",
+   "enonce": "Un point de decision affiche oppose deux affordances distinctes (attiser hearth / acheter buy_button) dont les politiques divergent sur la lumiere accumulee a horizon fixe.",
+   "acteur": "PLAYER",
+   "loop_role": "DECISION",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "changes"
+   },
+   "options": [
+    "R2",
+    "R6"
+   ],
+   "policies": [
+    {
+     "name": "idle",
+     "click": null,
+     "every_frames": 0
+    },
+    {
+     "name": "actif",
+     "click": "hearth",
+     "every_frames": 3
+    }
+   ],
+   "metric": "lumiere",
+   "horizon_frames": 300,
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "sonde a deux trajectoires : politiques idle vs actif produisent 2 valeurs de lumiere distinctes non triviales a 300 frames"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R6",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.grey_blocks.gb_emitter",
+   "observation": "gb_emitter : a l'achat (light>=cost), une silhouette froide apparait autour du foyer et demarre un filet de lumiere passif.",
+   "claim": "La progression n'est ressentie comme un deblocage que si un OBJET nouveau apparait a l'ecran, pas seulement un chiffre qui accelere.",
+   "enonce": "Le joueur achete un emetteur en cliquant buy_button quand la lumiere suffit ; un nouvel emetteur apparait autour du foyer et un producteur passif demarre.",
+   "acteur": "PLAYER",
+   "loop_role": "UNLOCK",
+   "affordance": "buy_button",
+   "observe": {
+    "hud": "emetteurs",
+    "predicate": "changes",
+    "appears": "emetteurs"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "sonde achete au premier moment ou lumiere>=15 ; le groupe visuel emetteurs passe de 0 a 1 element distinct et la production passive devient >0"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R7a",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.grey_blocks.gb_emitter",
+   "observation": "gb_emitter.next_goal = 'Acheter d'autres emetteurs pour accelerer la lumiere passive.'",
+   "claim": "Apres le premier achat, le joueur a besoin d'un nouvel objectif affiche distinct du precedent, sinon la boucle n'a pas de traction au-dela du premier emetteur.",
+   "enonce": "Apres le premier emetteur, le HUD objectif affiche un enonce textuellement nouveau : acheter un second emetteur pour densifier la production passive.",
+   "acteur": "PLAYER",
+   "loop_role": "NEXT_GOAL",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "le texte du HUD objectif apres le 1er achat differe textuellement de l'objectif initial"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R7b",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.grey_blocks.gb_constellation",
+   "observation": "gb_constellation.next_goal = 'Atteindre l'embrasement final.'",
+   "claim": "Une fois la production passive lancee, l'objectif doit se deplacer vers le seuil terminal, sinon rien ne tire le joueur vers la fin cloturable exigee par le charter.",
+   "enonce": "Quand la production passive est active, le HUD objectif affiche un enonce encore different des deux precedents : atteindre le seuil d'embrasement (5000 lumiere).",
+   "acteur": "PLAYER",
+   "loop_role": "NEXT_GOAL",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "le texte du HUD objectif a ce stade differe textuellement des deux objectifs precedents et nomme le seuil 5000"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R8",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.loops.economy_loop.economy_action",
+   "observation": "economy_loop.economy_action (consumes content_loop, unlocks skill_loop) : acheter un emetteur renvoie vers un etat ou l'on re-attise et re-achete.",
+   "claim": "La boucle ne recommence reellement que si les memes gestes (attiser, reponse, recompense, acheter) sont rejouables dans le nouvel etat a cout plus eleve ; sinon c'est une sequence lineaire.",
+   "enonce": "Apres un achat, le joueur peut rejouer la sequence attiser->reponse->recompense->acheter dans l'etat courant, le cout du prochain emetteur ayant cru (x1.18).",
+   "acteur": "PLAYER",
+   "loop_role": "REPEAT",
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "increases"
+   },
+   "replay": [
+    "R2",
+    "R3",
+    "R4",
+    "R6"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "sonde : apres un 1er achat, un 2e cycle attiser+acheter reussit et le cout du 2e emetteur > cout du 1er"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R9",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.grey_blocks.gb_ascension_altar",
+   "observation": "gb_ascension_altar : apres l'embrasement, un autel convertit la progression en glow d'ascension et rehausse durablement light_per_stoke.",
+   "claim": "Un prestige n'est un vrai meta-cycle que si le reset se VOIT a l'ecran ; un bonus invisible ne serait pas distinguable d'un simple continue.",
+   "enonce": "Le joueur ascensionne en cliquant l'autel ascension_altar ; la lumiere accumulee retombe visiblement a zero et un glow d'ascension permanent est credite.",
+   "acteur": "PLAYER",
+   "loop_role": "META_LOOP",
+   "affordance": "ascension_altar",
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "resets"
+   },
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "sonde : apres embrasement puis clic ascension_altar, lumiere repasse a 0 et un compteur de glow d'ascension passe de 0 a >0"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R10",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.loops.meta_loop.meta_reward",
+   "observation": "meta_loop.meta_reward et progression_metrics.meta_ascension_bonus=5% : apres ascension, light_per_stoke effectif augmente de 5% de facon permanente.",
+   "claim": "L'avantage n'est prouve que si le MEME geste d'attisage rapporte STRICTEMENT plus apres le prestige qu'avant ; un texte ou un affichage ne suffit pas.",
+   "enonce": "Apres une ascension, un attisage de hearth credite strictement plus de lumiere que le meme attisage avant l'ascension.",
+   "acteur": "PLAYER",
+   "loop_role": "ADVANTAGE",
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "increases_more_than:R2"
+   },
+   "replay_ref": "R2",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "sonde : delta lumiere d'un clic hearth post-ascension > delta d'un clic hearth pre-ascension (mesure comparee, seed identique)"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R11",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.grey_blocks.gb_end_screen",
+   "observation": "gb_end_screen : quand light>=5000, un panneau d'embrasement blanc-chaud + libelle 'Embrasement complet' s'affiche et neutralise l'interaction.",
+   "claim": "Le genre incremental gravite vers l'absence de fin ; l'etat terminal exige par le charter doit donc etre signale sans ambiguite, texte compris, pour qu'un bot comme un humain le detecte.",
+   "enonce": "Au franchissement de 5000 lumiere, un ecran d'embrasement plein ecran portant le libelle texte 'Embrasement complet' s'affiche et l'interaction de jeu est neutralisee.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "sonde : en poussant la lumiere >=5000, l'ecran de fin apparait (libelle contient 'Embrasement') et les clics sur hearth n'incrementent plus lumiere"
+   },
+   "destination": "s9-build"
+  },
+  {
+   "id": "R12",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.grey_blocks.gb_locked_glyph",
+   "observation": "gb_locked_glyph : un emetteur verrouille affiche un glyphe desature sans glow + la raison visible 'X lumiere requise', sans emprunter le chaud ni un halo.",
+   "claim": "Un etat verrouille qui ressemble a une affordance disponible produit une fausse promesse ; l'absence de chaud/halo est ce qui empeche le clic inutile.",
+   "enonce": "Tout emetteur non encore accessible est rendu desature, sans halo, avec un libelle lisible de sa condition ('X lumiere requise') et n'est pas cliquable.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "capture : un emetteur verrouille n'a aucune teinte chaude ni halo et porte un texte de condition ; un clic dessus ne declenche pas d'achat"
+   },
+   "destination": "s5-wiremap"
+  },
+  {
+   "id": "R13",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.grey_blocks.gb_light_counter",
+   "observation": "gb_light_counter : compteur HUD a chasse tabulaire, plus gros element textuel, mis a jour chaque tick, jamais recouvert par les effets.",
+   "claim": "Si les effets de flash peuvent recouvrir le compteur, la metrique centrale devient illisible aux pics d'action, precisement quand le joueur veut la lire.",
+   "enonce": "Le compteur de lumiere est en permanence le plus gros element textuel, a chasse tabulaire, dessine au-dessus de tous les effets et mis a jour chaque tick.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "capture pendant un flash d'attisage : le compteur reste entierement visible (non recouvert) et sa valeur est lisible"
+   },
+   "destination": "s5-wiremap"
+  },
+  {
+   "id": "R14",
+   "source": "EXPECTED",
+   "source_role": "game_master",
+   "reference": "gm_worldscan:game_master.loops.world_loop.world_feedback",
+   "observation": "world_loop.world_feedback : le fond indigo vire vers le violet chaud selon le ratio de chaleur atteint (light/threshold borne a 1).",
+   "claim": "Une ambiance qui progresse avec la ressource donne une lecture peripherique de l'avancee sans quitter le compteur des yeux ; sans elle, seule la lecture chiffree porte la progression.",
+   "enonce": "La couleur de fond se rechauffe continument de l'indigo vers le violet chaud en fonction de light/5000 (borne a 1), en parallele du compteur.",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "capture a light=0, 2500, 5000 : la teinte de fond se rechauffe de facon monotone avec le ratio"
+   },
+   "destination": "s5-wiremap"
+  }
+ ]
+}

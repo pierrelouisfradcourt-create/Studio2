@@ -1,0 +1,200 @@
+# [MASQUÉ]
+
+Here is the product contract.
+
+---
+
+# [MASQUÉ]
+
+# [MASQUÉ]
+# [MASQUÉ]
+
+## A. Les quatre éléments demandés (cadrage produit)
+
+# [MASQUÉ]
+
+# [MASQUÉ]
+
+# [MASQUÉ]
+
+**4 — Périmètre V1 minimal jouable.** Une page web unique jouable où : le joueur **clique** pour gagner R ; **achète 4 tiers de générateurs** (G1..G4) à production automatique ; **achète 6 améliorations** ; **franchit 5 seuils cumulés** qui débloquent la suite (S1→G2, S2→G3, S3→G4, S4→améliorations ×2 prod, S5→fin) ; **atteint la victoire observable** à S5. Socle sonde (N1) : HTML+JS, déterminisme par hash, `window.__game` en lecture seule, harnais complet à la racine, actions déclenchables par le DOM. Rien de plus n'est requis pour « minimal jouable ».
+
+---
+
+## B. Charter complet (contenu, format schéma Forge + N1-N9)
+
+# [MASQUÉ]
+```
+# [MASQUÉ]
+etape: s0-contrat
+# [MASQUÉ]
+date_redaction: 2026-08-30
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+  observabilite:      "SOURCE: brief project_specific + N1 (window.__game, DOM-only, fin observable)"
+# [MASQUÉ]
+    - thème et univers · personnages/entités et nommage · direction artistique
+    - assets de production · présentation/HUD et micro-interactions non couvertes par la structure
+# [MASQUÉ]
+```
+
+### `objectif`
+# [MASQUÉ]
+
+### `reference_jeu`
+# [MASQUÉ]
+
+### `plateforme_cible` (+ détail)
+# [MASQUÉ]
+- 1 point d'entrée HTML (DOM + canvas + boot), **zéro dépendance externe / CDN / réseau** pour la logique ; les **assets délégués** (autorisés par le brief) sont **locaux**, jamais distants.
+- Logique de jeu en modules ES `.mjs` **purs**, importables/exécutables sous `node --test` **sans DOM ni canvas**.
+- Simulation à **pas fixe** (durée du tick = **détail délégué à déclarer**, cf. FOG-A) ; avancée par `step(state)`, jamais par le temps réel.
+- Déterminisme **par hash** (mêmes actions horodatées en ticks → état strictement identique). RNG seedé prévu par N1 mais possiblement **inutilisé** (structure sans aléa) — à déclarer si non utilisé.
+- **Actions déclenchables par le DOM seul** (clic, achat générateur, achat amélioration). `window.__game` = **lecture seule**, aucun setter/triche.
+
+# [MASQUÉ]
+```
+R_solde: 0                      # ressource primaire, entière, visible en permanence
+total_cumule_R: 0               # base des 5 seuils (le CUMUL, jamais le solde)
+# [MASQUÉ]
+generateurs_possedes: [0,0,0,0] # G1..G4
+ameliorations_achetees: [false ×6]
+unlocks_atteints: [false ×5]    # S1..S5
+tick: 0
+result: null | "VICTORY"
+tick_rate: <à déclarer>         # existence obligatoire (N3) ; valeur = détail délégué (FOG-A)
+```
+
+# [MASQUÉ]
+```
+core_loop: clic manuel → +gain_clic R → dépenser R en générateurs → production auto/tick
+           → dépenser en générateurs/améliorations → franchir les seuils cumulés.
+           Boucle de fond : « acheter maintenant vs épargner pour le palier supérieur ».
+ressource: R (unique, entière, visible en permanence)
+actions:
+  - clic_manuel: +gain_clic R (gain_clic modifiable par améliorations)
+  - acheter_generateur_i: visible dès déblocage, GRISÉ si R insuffisant — refus OBSERVABLE, état inchangé
+  - acheter_amelioration_j: même règle de refus observable
+generateurs: 4 tiers G1..G4 ; prod = [0.1, 1, 8, 47] R/s par unité
+ameliorations: 6 — 2 sur le clic (×2 puis ×4 du gain_clic) + 4 « ×2 production » (une par générateur)
+economie:
+  cout_generateur[i] = cout_base[i] × 1.12^(n_possedes_du_tier)   # croissance géométrique
+  cout_base = [15, 100, 1100, 12000]
+  cout_ameliorations = [100, 500, 1000, 5000, 30000, 200000]
+  regles: aucun revenu hors clic+générateurs ; aucune dépense hors achats (PAS de vente)
+unlocks: 5 seuils sur le TOTAL CUMULÉ (jamais le solde) :
+  seuils_cumules = [100, 1000, 12000, 150000, 1000000]
+  S1→révèle G2 · S2→révèle G3 · S3→révèle G4 · S4→révèle améliorations ×2 prod · S5→FIN (victoire)
+fin: total cumulé ≥ 1_000_000 R ⇒ VICTORY ; PAS d'état d'échec
+invariant_comptable: R_solde == Σ(gains clic) + Σ(production) − Σ(dépenses)   # égalité EXACTE
+```
+
+### `hors_scope`
+- Sauvegarde/persistance (localStorage, fichier, serveur) — hors V1.
+- Audio, musique, effets sonores.
+- **Vente / remboursement / déplacement** d'un achat (la structure interdit toute dépense hors achats et tout revenu hors clic+générateurs — « pas de vente »).
+- **État d'échec / défaite** — interdit par la structure (fidèle au genre).
+- Toute ressource secondaire, tout revenu passif hors clic+générateurs, toute source d'aléa affectant l'économie.
+- Prestige / méta-progression / new-game+ / offline-earnings — hors V1.
+- Multijoueur, réseau, télémétrie, analytics ; dépendances externes, CDN, fonts distantes, requêtes réseau.
+- Toute décision d'architecture logicielle (découpage des modules, structures de données) — **étape 4**.
+- **Tout code** : ce charter n'en contient et n'en autorise aucun à l'étape 0.
+# [MASQUÉ]
+
+### `criteres_succes` (objectifs, avec ancres non-LLM ; assertions STRICTES, jamais `>=` tautologique)
+- **S1 — Lecture d'état** : `window.__game` expose, à tout tick et sans appel de fonction : `tick`, `R` (solde entier), `total_cumule`, `gain_clic`, `generateurs[]` (par tier : possédés, coût courant, débloqué), `ameliorations[]` (achetée oui/non, coût), `unlocks[]` (S1..S5), `result` (null|`"VICTORY"`). Vérifié par lecture DOM-externe (Playwright `evaluate`).
+- **S2 — Déterminisme** : deux exécutions de la même seed avec la même liste d'actions horodatées en **ticks** produisent des états finaux de **hash strictement égal** (comparaison de deux exécutions réelles).
+- **S3 — Pureté logique** : zéro `Math.random`/`Date.now`/`performance.now`/`requestAnimationFrame` dans les `.mjs` — oracle statique (grep AST/textuel) qui **échoue** si un seul appel est présent.
+- **S4 — Testabilité hors navigateur** : les `.mjs` s'importent et s'exécutent sous `node --test` sans DOM.
+# [MASQUÉ]
+# [MASQUÉ]
+- **S7 — Refus observable** : un achat quand `R` est insuffisant est **grisé/refusé** de façon observable, **état strictement inchangé** avant/après, **aucune exception console**.
+- **S8 — Invariant comptable STRICT** : à chaque tick, `R_solde == Σ(gains clic) + Σ(production) − Σ(dépenses)`, **égalité exacte** (cf. FOG-B sur la représentation numérique de 0.1).
+- **S9 — SOLVABILITÉ POSITIVE (obligatoire, pré-mortem)** : un **bot compétent scripté** (séquence d'actions figée, aucun LLM, accès borné à `window.__game`) atteint **`result == "VICTORY"`** (total cumulé ≥ 1 000 000) dans un **budget de ticks fixe**, avec un **temps-jusqu'à-S5 exact figé en test doré**. Le statut de victoire est **DÉRIVÉ de l'état du jeu**, jamais écrit en littéral (`won=true` interdit — leçon `solvability.mjs`).
+# [MASQUÉ]
+- **S11 — Fin observable** : à `total_cumule ≥ 1 000 000`, un panneau de fin **visible** affiche la victoire ; l'état `result` passe à `"VICTORY"` (lu dans `window.__game`).
+- **S12 — Assertions strictes** : aucune assertion satisfaite par l'état initial/défaut ; interdits `assert(x>=0)`, `assert(len>=0)`. Toute assertion numérique = **égalité exacte** (ou epsilon nommé pour flottants).
+- **S13 — Mutation couverte** : la **commande de test scellée** importe **tous** les `.mjs` cités par la WireMap soumis à mutation (garde contre les mutants intuables par topologie — leçon manifest-1e8436…). Un mutant qui inverse un coût, une production, un franchissement de seuil ou la condition de fin **DOIT** être tué ; score rapporté avec dénominateur exact.
+- **S14 — e2e réel** : harnais e2e pilotant un **vrai navigateur** (Playwright), pas une coquille ; attente de la **présence du nœud DOM** avant tout clic de précision (leçon manifest-40b47db…).
+- **S15 — `evidence_path` obligatoire** : tout reçu d'oracle porte un `evidence_path` pointant vers un artefact **réellement écrit** (sortie brute `node --test`, JSON de run des bots, captures PNG) ; reçu sans `evidence_path` ⇒ `software_verdict: BLOCKED` (pré-mortem s12).
+- **S16 — Évidence exportée** : les preuves quittent le run dir vers `lab/forge_evidence/<RUN>/` (P5).
+- **S17 — s11 red-team indépendant réel** : passe adversariale `qwen` (`independent: true`) ; **LM Studio down ⇒ HALT sans fallback** (critère de sortie brief).
+- **S18 — Console propre** : zéro erreur/exception non capturée sur une partie complète menée jusqu'à `VICTORY`.
+
+### `criteres_demo` (OBSERVABLES — pas des critères mécaniques internes)
+# [MASQUÉ]
+- **D2** — **Cliquer** fait **augmenter le compteur R à l'écran** (de `gain_clic`).
+- **D3** — Acheter G1 fait **apparaître G1 possédé** et **R diminue à l'écran** ; ensuite R **monte tout seul** au fil du temps (production automatique visible).
+- **D4** — Tenter un achat sans assez de R : le bouton est **visiblement grisé/refusé** et **R ne bouge pas**.
+- **D5** — Quand le **total cumulé** franchit un seuil, un **nouveau tier (G2/G3/G4) ou les améliorations apparaissent** à l'écran (déblocage observable).
+- **D6** — Acheter l'amélioration de clic fait **visiblement doubler puis quadrupler** le gain par clic ; acheter une amélioration « ×2 prod » fait **visiblement accélérer** la montée de R.
+- **D7** — Quand le total cumulé atteint 1 000 000, un **panneau de fin VICTORY apparaît** par-dessus le jeu et le jeu s'arrête visiblement.
+- **D8** — Deux parties lancées avec la même seed et la même séquence de clics **se ressemblent image par image**.
+
+### `actions_interdites`
+- Décider l'architecture, écrire du code, créer un fichier à l'étape 0 — le livrable s'arrête à ce charter.
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+- Toucher `autopilot.py`, `scripts/studioV2/`, `src/`, ou tout périmètre gelé ; modifier `tests/` (zone protégée).
+- Écrire un test satisfait par l'état initial/défaut ou un `>=`/`<=` tautologique ; émettre un reçu sans `evidence_path` (⇒ BLOCKED).
+- **Écrire un statut de solvabilité en littéral** (`won=true`, `solvable:true`) au lieu de le **dériver de l'état du jeu** (leçon `solvability.mjs`, s9-build).
+- Prouver la solvabilité par inspection de mécaniques isolées sans faire **GAGNER un bot de bout en bout** (atteindre S5).
+- Muter des `.mjs` **non importés** par la commande de test scellée et présenter le score agrégé comme une couverture (leçon manifest-1e8436…).
+- Simuler l'e2e sans navigateur réel ; cliquer avant présence du nœud DOM (leçon manifest-40b47db…).
+- Introduire aléa dans l'économie, revenu passif, vente, ou état d'échec (contredit la structure).
+- Affirmer que le jeu est **bon/fun/équilibré** — qualité ressentie = jugement humain (FOG-D). Présenter une métrique à variance nulle comme un signal.
+- Combler un flou par une invention silencieuse : un flou se remplit explicitement ou remonte en **fog HumanGate**.
+
+# [MASQUÉ]
+# [MASQUÉ]
+
+### `ecarts_declares` (N6)
+# [MASQUÉ]
+
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+
+---
+
+## C. RAPPORT FINAL
+
+# [MASQUÉ]
+
+**Flous du prompt — résolus vs remontés.**
+# [MASQUÉ]
+# [MASQUÉ]
+
+**Verdicts.**
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+
+**SKIPPED_VALIDATION**
+# [MASQUÉ]
+- item: variance des bots de mesure (S10) · périmètre: temps-jusqu'à-S5 / seuils · statut: **non fait (hors périmètre s0)** · raison: mesure de build (s9+), pas de l'étape contrat.
+- item: solvabilité positive exécutée (S9) · périmètre: bot compétent → VICTORY · statut: **non fait (hors périmètre s0)** · raison: exécution de build, spécifiée ici comme critère, prouvée en aval.
+
+**RETURN LINEAGE** (`why_task_existed`)
+# [MASQUÉ]
+# [MASQUÉ]
+- `root_cause:` non applicable (tâche de cadrage, pas de correction d'un défaut).
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+# [MASQUÉ]
+
+SKIPPED_VALIDATION: voir liste ci-dessus (non vide, assumée).
+
+# [MASQUÉ]

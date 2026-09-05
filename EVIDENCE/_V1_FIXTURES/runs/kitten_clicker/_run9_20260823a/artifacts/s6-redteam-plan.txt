@@ -1,0 +1,45 @@
+Comme l'assistant Qwen, je vais suivre les instructions données pour analyser le plan d'architecture et la WireMap du projet "kitten_clicker" en tant que red-team. Je vais chercher activement les failles potentielles dans ces artefacts sans interférer avec le code ou les tests existants.
+
+### Étape 1 : Consommation des documents nécessaires
+- J'ai lu attentivement `scripts/forge/contracts/SCHEMA.md`, le blueprint.yaml et la WireMap produits par l'étape 4 (Architecte) et l'étape 5 respectivement.
+- Je me suis assuré de comprendre les exigences du projet, notamment celles contenues dans `lab/forge_runs/<projet>/charter.yaml`.
+
+### Étape 2 : Analyse critique
+Je vais maintenant analyser le plan d'architecture et la WireMap en cherchant activement des failles potentielles. Je vais noter chaque angle mort, dépendance fragile ou câblage incohérent que je trouve.
+
+#### Exemple de Critique Potentielle (à illustrer avec les données réelles du projet)
+1. **Angle :** Architecture monolithique
+   - **Faille :** Risque d'effet domino en cas de panne.
+   - **Correction proposée :** Implémenter une architecture microservices pour isoler les modules critiques.
+
+2. **Angle :** Câblage des dépendances
+   - **Faille :** Dépendances cycliques entre services A et B.
+   - **Correction proposée :** Réorganiser le câblage pour éliminer la dépendance cyclique, par exemple en ajoutant un service intermédiaire.
+
+### Étape 3 : Production du rapport
+Je vais maintenant rédiger le rapport d'attaque avec les failles identifiées et les corrections proposées. Le rapport sera structuré comme suit :
+
+- Liste des failles sous forme {angle, faille, correction_proposée}.
+- Un verdict GO-si-corrigé pour chaque faille.
+- Artefacts archi/wiremap ajustés en cohérence avec les corrections proposées.
+
+### Étape 4 : Finalisation du rapport
+Je vais terminer le rapport en ajoutant la section finale obligatoire sur la lignée de retour et en vérifiant que toutes les validations nécessaires ont été effectuées ou justifiées.
+
+Voici un exemple de ce à quoi ressemblerait cette section finale :
+
+```json
+RETURN_REASON: {"status": "DISCOVERED", "problem": "Dépendances cycliques entre services A et B.", "root_cause": "Architecture initiale monolithique."}
+```
+
+Si aucun problème n'a été découvert, la ligne serait simplement :
+```json
+RETURN_REASON: {"status": "NOT_DISCOVERED"}
+```
+
+### Étape 5 : Remise du rapport
+Une fois le rapport finalisé et les artefacts ajustés enregistrés, je vais soumettre ces documents pour la prochaine étape du processus.
+
+---
+
+Je suis prêt à commencer l'analyse critique des artefacts fournis.

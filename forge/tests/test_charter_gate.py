@@ -33,7 +33,9 @@ import forge.run_real as run_real
 # --- fixture réelle p2_beta (finding n°7) -------------------------------------------
 
 def _fixture_p2_beta_path():
-    return (run_real.REPO_ROOT / "EVIDENCE" / "runs" / "p2_beta"
+    # Fixture V1 migrée le 2026-09-05 sous `EVIDENCE/_V1_FIXTURES/` (GO Pierre) —
+    # artefact d'un run V1, jamais une preuve V2.
+    return (run_real.REPO_ROOT / "EVIDENCE" / "_V1_FIXTURES" / "runs" / "p2_beta"
             / "artifacts" / "s0-contrat.txt")
 
 

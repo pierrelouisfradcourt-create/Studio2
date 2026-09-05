@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s2.5-artbible", "git_head": "0a9f4d4da5375459d5caef9360b9d46fa69165af", "hmac": "0a7f6e5628ad671770fed935a36f70e759dbfd256f8f8cc4e92225cfdfa45228", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "kitten_clicker-20260823a", "schema": "forge.context_manifest.v1", "ts": 1787463207.9998531}

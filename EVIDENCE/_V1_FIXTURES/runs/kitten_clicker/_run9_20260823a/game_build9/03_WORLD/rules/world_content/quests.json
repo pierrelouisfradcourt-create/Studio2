@@ -1,0 +1,8 @@
+{
+  "quests": [
+    { "id": "q_first_purr",  "name": "Premiers ronrons",   "condition": "atteindre 5 ronrons" },
+    { "id": "q_first_kitten","name": "Premiere adoption",   "condition": "adopter 1 chaton" },
+    { "id": "q_open_garden", "name": "Ouvrir le jardin",    "condition": "adopter 3 chatons" },
+    { "id": "q_first_rebirth","name": "Premier prestige",   "condition": "faire 1 prestige" }
+  ]
+}

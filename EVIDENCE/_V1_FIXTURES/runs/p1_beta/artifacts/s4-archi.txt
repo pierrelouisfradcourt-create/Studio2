@@ -1,0 +1,93 @@
+I now have exact knowledge of the consumer. Two decisive facts from `static_oracles.py`:
+
+1. **`_module_of` (l.75–78)**: a file's module = its **first directory segment** under `src_root`, or the **filename stem** if it sits at the root. So `engine/state.mjs`→`engine`, `main.mjs`→`main`, `solvability.mjs`→`solvability`.
+2. **`check_architecture` (l.198–260)**: `modules` is a **list of strings**, `deps_interdites` a list of `[source, target]` pairs; a malformed pair = honest FAIL. It flags a real import edge only when `target ∈ modules`. Both ends of every forbidden edge must therefore be listed.
+3. **Topology (l.502–548, 592–642)**: this is the **web-probe LEGACY topology** — the harness lives **at the game root** (`run-oracle.mjs` invokes `e2e.mjs` + `solvability.mjs`, `window.__game` exposed). The charter confirms it verbatim ("harnais complet à la racine de games/p1_beta"). This is **not** the STANDARD `00_CHARTER..10_FORGE` curriculum root-set, so I am **not** inventing a forbidden root (the 2026-08-05 trap does not apply here).
+
+Everything needed is settled. Here is the blueprint.
+
+---
+
+## RAPPORT FINAL — s4-archi / p1_beta-20260830-run1
+
+**Rôle tenu** : architecte senior, découpe par responsabilité. Diff d'archi sur `src` vide (aucun blueprint préexistant sous `games/p1_beta` — projet à créer).
+
+### software / evidence / claim (séparés)
+- **`software_verdict: BLOCKED`** — je **n'ai pas exécuté** l'oracle de mon étape. `permissions.run: aucun` m'interdit de lancer `node scripts/forge/check_blueprint_contract.mjs`. La conformité (couverture, cycles, contradictions) est établie **par construction et inspection**, jamais par un reçu signé. Le passage à `OK` appartient à l'exécuteur qui matérialise `blueprint.json` puis relance l'oracle.
+- **`evidence_verdict: MECHANICAL_VALIDATION_ONLY`** — les invariants que j'affirme sont adossés au code non-LLM de `static_oracles.check_architecture` (lu ligne à ligne : `_module_of`, `_imports`, la boucle de violations l.237-248) et de `check_e2e_harness`/`check_solvability_wired` (topologie web-racine confirmée).
+- **`claim_verdict: NO_CLAIM_ALLOWED`** — aucune affirmation auto-certifiée. « Cette architecture couvre le besoin » est un jugement à la charge de l'exécuteur (reçu d'oracle) + HumanGate.
+
+### Reçu d'oracle cité (attendu, non exécuté par moi — `run: aucun`)
+L'exécuteur DOIT lancer, avant build :
+`node scripts/forge/check_blueprint_contract.mjs C:\TACTICAL_CHESS_STUDIO\lab\forge_runs\p1_beta\blueprint.json --featuremap C:\TACTICAL_CHESS_STUDIO\lab\forge_runs\p1_beta\featuremap.json`
+(couverture / responsabilités / cycles / contradictions). L'oracle post-build `forge.static_oracles.check_architecture` n'est **pas** mon oracle : sur `src` vide il ne trouve aucun import → vert par vacuité.
+
+### Topologie physique décidée (conséquence du charter, pas « au feeling »)
+Web-probe plat à la racine `games/p1_beta` (topologie LEGACY reconnue par les gardes web) :
+
+```
+games/p1_beta/
+  index.html          # entrypoint : monte le <canvas>, charge main.mjs (type=module)
+  main.mjs            # composition root : seed → wire input→engine, boucle rAF (engine.tick + render.draw), expose window.__game
+  engine/             # LOGIQUE PURE, feuille : state, rng seedé, tick, economy, terminal, ascension, goals. AUCUN DOM/canvas.
+  render/             # DESSIN canvas : scene(foyer/émetteurs/ambiance/constellation), hud(compteur/objectif/glyphes), endscreen. Lit l'état, ne le mute jamais.
+  input/              # ENTRÉE : bind clics (hearth/buy_button/ascension_altar) → actions engine. Ne dessine jamais.
+  run-oracle.mjs      # runner de gate : invoque e2e.mjs + solvability.mjs (câblage web-racine)
+  e2e.mjs             # click-through Playwright réel (window.__game / fin observable)
+  solvability.mjs     # sonde déterministe seedée : atteint le terminal STRICT dans un budget de ticks
+```
+
+### Modules · responsabilité · couverture featuremap · preuve attendue
+
+| Module | Responsabilité unique | Couvre (ids featuremap) | Dépendances autorisées | Preuve attendue |
+|---|---|---|---|---|
+| `engine` | Seule source de vérité de l'état et des grandeurs (light +1 **strict**/attisage, coûts/production émetteurs, seuils 5000 + jalons, règle terminale `light>=seuil`, méta-ascension, machine d'objectifs, RNG seedé, tick). Déterminisme seedé. | `cap_light_reward`, `cap_decision_divergence`, `gb_terminal_rule`, `gb_emitter`(prod passive), `cap_ascension_input`(état), `gb_ascension_altar`(méta), machine d'objectifs derrière `cap_goal_terminal_hud`/`cap_next_goal_second_emitter`/`cap_next_goal_embrasement`, état franchissement `gb_quest_milestone` | **∅ (feuille)** | `oracle` : `check_architecture` prouve 0 import sortant vers render/input/main/harness ; `solvability.mjs` atteint le terminal (même seed⇒même tick) et idle≠actif (≥2 valeurs distinctes — règle de variance) |
+| `render` | Projeter l'état engine sur le canvas — et rien d'autre. Foyer+flash, émetteurs, constellation/jauge, ambiance, HUD (compteur tabulaire, label objectif, glyphes verrouillés), écran de fin, autel. Lecture seule de l'état. | `gb_hearth`, `cap_hearth_response`, `gb_constellation`, `gb_buy_button`(visuel), `cap_next_goal_*`(label), `gb_end_screen`(panneau), `cap_field_warmth`, `gb_quest_milestone`(marqueur), `gb_light_counter`, `gb_locked_glyph`, `gb_ascension_altar`(visuel) | `engine` | `visual` : `e2e.mjs` observe compteur↑, achat change l'écran, panneau de fin ; `check_architecture` prouve render→engine seulement |
+| `input` | Traduire les entrées DOM en actions engine ; neutraliser l'interaction en état terminal (via lecture `engine.canAct()`). Ne dessine jamais. | `cap_stoke_input`, `cap_buy_input`, `cap_ascension_input`(entrée) | `engine` | `bot_action` : `e2e.mjs` clique hearth/buy/altar et mesure les transitions ; `check_architecture` prouve input→engine seulement |
+| `main` | Composition root : instancie engine(seed), câble input→engine, pilote la boucle rAF (engine.tick puis render.draw), expose `window.__game`. | (wiring — porte `cap_goal_terminal_hud` au tick 0) | `engine`, `render`, `input` | `oracle` : `check_e2e_harness` (window.__game exposé) + `check_architecture` (non importé par engine/render/input ⇒ pas de cycle) |
+| `run-oracle` | Runner de gate : exécute e2e + solvability. | (harnais) | `e2e`, `solvability` | `oracle` : `check_e2e_harness` + `check_solvability_wired` (LEGACY : run-oracle.mjs invoque e2e.mjs/solvability.mjs) |
+| `e2e` | Click-through Playwright réel sur la page. | (preuve visuelle/bot) | `engine`(optionnel) | `bot_action` : ≥3 réf. window.__game/#overlay, entrées clavier/clic réelles |
+| `solvability` | Sonde déterministe seedée qui **atteint** le terminal STRICT dans un budget fixe + rejeu même-seed. | (preuve de solvabilité + variance) | `engine` | `oracle` : atteint `light>=5000` strict ; idle vs actif ⇒ ≥2 valeurs distinctes à horizon fixe |
+
+**Ownership** : `engine`→toutes les grandeurs/règles (aucun magic number dupliqué en render/input) ; `render`→tout pixel ; `input`→toute liaison d'entrée ; `main`→le câblage et `window.__game` ; `run-oracle/e2e/solvability`→la mesure.
+
+### Invariants d'architecture (garde-fous, tués avant d'exister)
+1. `engine` est une **feuille pure** : 0 import de render/input/main/harness/DOM/canvas ⇒ pas de god-object, déterminisme préservé.
+2. `render` **lit** l'état, ne le **mute** jamais (mutation uniquement via actions `engine`).
+3. Séparation stricte `input`⊥`render` (l'un ne dessine pas, l'autre ne capte pas).
+4. Aucun retour vers le composition root (`engine/render/input` ne dépendent pas de `main`) ⇒ **DAG sans cycle** (`engine` = puits).
+5. La neutralisation terminale passe par une lecture `engine.canAct()` côté `input` — jamais `engine`→`input`.
+
+### Graphe (DAG vérifié) et deps interdites
+Autorisé : `main→{engine,render,input}` · `render→engine` · `input→engine` · `solvability→engine` · `run-oracle→{e2e,solvability}`. Ordre topologique : `engine` ≺ `{render,input,solvability}` ≺ `{main,run-oracle}`. **Aucun cycle.** **Aucune dépendance déclarée n'est elle-même dans `deps_interdites`** (vérifié paire par paire). Les deux séparations mandatées (logique→rendu, logique→input) sont explicites et non vides.
+
+### Features non couvertes / couvertures fantômes
+- **Features non couvertes : aucune.** Les 5 systèmes et 18 capacités de la featuremap sont chacun couverts par ≥1 module (table ci-dessus).
+- **Couvertures fantômes : aucune.** Aucun module ne cite un id absent de la featuremap.
+
+### SKIPPED_VALIDATION
+| Item | Périmètre | Statut | Raison |
+|---|---|---|---|
+| `check_blueprint_contract.mjs` (oracle amont s4) | blueprint.json ↔ featuremap.json | non fait | `permissions.run: aucun` — l'exécuteur doit le lancer et signer ; d'où `software_verdict: BLOCKED` + `NO_CLAIM_ALLOWED` |
+| Lecture `knowledge_packet.json` (mandatory_read, ADVISORY) | `lab/forge_runs/p1_beta/` | non fait | fichier **absent** du run_dir — advisory jamais prescriptif ⇒ non bloquant pour l'architecture, mais gap de provisioning consigné |
+| `blueprint.yaml` préexistant | `games/p1_beta/` | sans objet | projet à créer, aucun blueprint en place (diff d'archi = greenfield) |
+
+**fog → HumanGate** : le verdict logiciel de cette étape ne peut pas être auto-certifié ici (run interdit). Pierre / l'exécuteur tranchent après le reçu `check_blueprint_contract`.
+
+### RETURN LINEAGE (FORGE_CAUSAL_LINEAGE_V2 §3)
+- **why_task_existed** :
+  - `problem` : la chaîne full_content de RUN 2 (bras LIBRE) doit produire une architecture jouable pour `p1_beta` avant build ; sans blueprint gelé, `check_architecture` post-build n'a aucune référence de dépendances à opposer au code.
+  - `oracle` : activation par décision humaine (protocole pré-enregistré paire pilote L/D) — pas par un oracle rouge. `aucun` oracle déclencheur.
+  - `root_cause` : non établie (activation de séquence, pas de défaut).
+  - `action_reason` : produire le blueprint (modules + deps interdites + couverture + invariants) est exactement l'étape 4 qui alimente check_blueprint_contract (amont) et check_architecture (aval).
+- **result** : blueprint conçu — 8 modules, DAG sans cycle, 18/18 capacités couvertes, 0 couverture fantôme, 10 dépendances interdites incluant les 2 séparations mandatées. Non matérialisé par moi (l'exécuteur écrit blueprint.json).
+- **proof** : lecture non-LLM de `scripts/forge/static_oracles.py` (`_module_of` l.75-78, `check_architecture` l.198-260, `check_e2e_harness` l.502-548, `check_solvability_wired` l.592-642) + `repo_map.yaml` (topologie STANDARD ≠ topologie web-probe du charter). Oracle de l'étape NON exécuté (`run: aucun`).
+- **learning** : pour un jeu-sonde web, la racine du code est `games/<jeu>/` en topologie plate (harnais à la racine), confirmée à la fois par le charter et par les gardes web de `static_oracles` — distincte de la table STANDARD `00_CHARTER..10_FORGE` ; ne pas y appliquer le veto de racine du curriculum.
+- **next_reason** : la chaîne continue — l'exécuteur doit (1) matérialiser blueprint.json depuis le bloc terminal, (2) exécuter `check_blueprint_contract.mjs` et signer, (3) passer à s5-wiremap. Lignée NON fermée : un verdict logiciel manque (BLOCKED par permission), il appartient à l'aval.
+
+```json
+{"modules": ["index.html", "main", "engine", "render", "input", "run-oracle", "e2e", "solvability"], "deps_interdites": [["engine", "render"], ["engine", "input"], ["engine", "main"], ["engine", "solvability"], ["engine", "e2e"], ["engine", "run-oracle"], ["render", "input"], ["input", "render"], ["render", "main"], ["input", "main"]]}
+```
+
+SKIPPED_VALIDATION: voir tableau ci-dessus (3 items déclarés, non silencieux).
+RETURN_REASON: {"status": "DISCOVERED", "problem": "knowledge_packet.json (mandatory_read advisory) absent du run_dir lab/forge_runs/p1_beta/", "root_cause": "run_dir non provisionne avec le knowledge packet advisory — meme lacune de provisioning que design/ deja signalee par les manifests s3"}

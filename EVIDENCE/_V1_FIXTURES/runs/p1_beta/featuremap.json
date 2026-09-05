@@ -1,0 +1,260 @@
+{
+ "game_id": "p1_beta",
+ "systemes": [
+  {
+   "id": "SYS_CORE_LOOP",
+   "features": [
+    {
+     "id": "FEAT_GOAL",
+     "capacites": [
+      {
+       "id": "cap_goal_terminal_hud",
+       "capacite": "Le HUD affiche en continu, dès le tick 0, un objectif de fin non vide nommant le seuil terminal (embrasement à 5000 lumiere), tant que le seuil n'est pas franchi.",
+       "source_ref": "R1",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "une sonde lit le HUD objectif au tick 0 et trouve une chaine non vide nommant le seuil terminal 5000"
+       }
+      },
+      {
+       "id": "gb_constellation",
+       "capacite": "La constellation/jauge de progression rend visible, en permanence, l'avancée de la lumiere vers le seuil terminal (lecture unique de light/seuil), et déclenche l'écran de fin à saturation.",
+       "source_ref": "R1",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "constellation/jauge qui se remplit proportionnellement a light/threshold ; a 100% elle declenche l'ecran de fin — porte de progression perceptible, pas un simple pourcentage."
+       }
+      }
+     ]
+    },
+    {
+     "id": "FEAT_STOKE",
+     "capacites": [
+      {
+       "id": "cap_stoke_input",
+       "capacite": "ENTRÉE joueur : le joueur agit sur l'affordance nommée hearth (attiser le foyer) depuis la scène/entrypoint racine ; l'entrée est réellement câblée, pas décorative.",
+       "source_ref": "R2",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "une sonde, depuis main.tscn (scene/entrypoint racine ; pour la cible web = index.html), clique l'affordance hearth 10 fois et mesure que le compteur lumiere est strictement croissant, +1 par clic"
+       }
+      },
+      {
+       "id": "cap_hearth_response",
+       "capacite": "EFFET : à chaque attisage, l'état visuel du foyer change (flash chaud bref < 200 ms) de façon détectable image à image.",
+       "source_ref": "R3",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "capture image-a-image : le pixel central du foyer change de luminance entre la frame du clic et la suivante"
+       }
+      },
+      {
+       "id": "gb_hearth",
+       "capacite": "Objet foyer : source chaude émissive centrale, cliquable, qui réagit à l'attisage par une gerbe d'éclats et incrémente le compteur (grey block gb_hearth ; porté sur R3, exigence non-joueur la plus proche, car R2 est réservée à la preuve d'entrée main.tscn).",
+       "source_ref": "R3",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "rendre un foyer chaud emissif au centre de l'ecran ; au clic, emettre une gerbe d'eclats chauds et incrementer le compteur de lumiere — nouvelle interaction, pas cosmetique."
+       }
+      },
+      {
+       "id": "cap_light_reward",
+       "capacite": "EFFET/récompense : chaque attisage crédite exactement +1 lumiere au compteur, vérifiable par égalité stricte (jamais un >=).",
+       "source_ref": "R4",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "sonde seedee : apres N clics sans achat, lumiere == N exactement (jamais un >=)"
+       }
+      }
+     ]
+    },
+    {
+     "id": "FEAT_DECISION",
+     "capacites": [
+      {
+       "id": "cap_decision_divergence",
+       "capacite": "Point de décision significatif : deux politiques (idle vs actif) produisent des trajectoires de lumiere mesurablement distinctes à horizon fixe — le choix n'est pas cosmétique.",
+       "source_ref": "R5",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "sonde a deux trajectoires : politiques idle vs actif produisent 2 valeurs de lumiere distinctes non triviales a 300 frames"
+       }
+      },
+      {
+       "id": "gb_buy_button",
+       "capacite": "Bouton d'achat : affordance UI présentée par le point de décision, affichant le coût, or si abordable / désaturé sinon (grey block gb_buy_button ; porté sur R5, qui oppose hearth et buy_button, car R6 est réservée à la preuve d'entrée main.tscn).",
+       "source_ref": "R5",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "bouton affichant le cout courant ; etat or si abordable, desature sinon ; au clic quand abordable, declenche l'achat (changement d'etat de scene)."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_ECONOMY",
+   "features": [
+    {
+     "id": "FEAT_BUY",
+     "capacites": [
+      {
+       "id": "cap_buy_input",
+       "capacite": "ENTRÉE joueur (maillon F/UNLOCK) : le joueur agit sur l'affordance nommée buy_button pour acheter un émetteur quand la lumiere suffit, depuis la scène/entrypoint racine.",
+       "source_ref": "R6",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "une sonde, depuis main.tscn (scene/entrypoint racine ; pour la cible web = index.html), clique l'affordance buy_button au premier moment ou lumiere>=15 ; le groupe visuel emetteurs passe de 0 a 1 element distinct et la production passive devient >0"
+       }
+      }
+     ]
+    },
+    {
+     "id": "FEAT_EMITTER_PROGRESS",
+     "capacites": [
+      {
+       "id": "cap_next_goal_second_emitter",
+       "capacite": "EFFET VISIBLE (maillon G/NEXT_GOAL) : après le premier émetteur, le label HUD objectif change pour un texte nouveau (acheter un second émetteur pour densifier la production passive).",
+       "source_ref": "R7a",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "capture du HUD objectif : apres le 1er achat, le texte objectif differe textuellement de l'objectif initial (nouvel enonce : acheter un second emetteur)"
+       }
+      },
+      {
+       "id": "gb_emitter",
+       "capacite": "Objet émetteur : à l'achat, une silhouette froide apparaît autour du foyer et démarre un producteur passif visible — l'automatisation devient un objet à l'écran, pas seulement un coefficient (grey block gb_emitter ; porté sur R7a, l'exigence des émetteurs à acquérir, car R6 est réservée à la preuve d'entrée main.tscn).",
+       "source_ref": "R7a",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "a l'achat (light >= cost), faire APPARAITRE une silhouette froide luminescente autour du foyer et demarrer un filet de lumiere passif visible — nouvelle possibilite a voir et a faire."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_PROGRESSION_END",
+   "features": [
+    {
+     "id": "FEAT_NEXT_GOAL_END",
+     "capacites": [
+      {
+       "id": "cap_next_goal_embrasement",
+       "capacite": "EFFET VISIBLE (maillon G/NEXT_GOAL) : quand la production passive est active, le label HUD objectif change encore pour un texte distinct des deux précédents, nommant le seuil d'embrasement (5000 lumiere).",
+       "source_ref": "R7b",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "capture du HUD objectif : le texte a ce stade differe textuellement des deux objectifs precedents et nomme le seuil 5000"
+       }
+      }
+     ]
+    },
+    {
+     "id": "FEAT_TERMINAL",
+     "capacites": [
+      {
+       "id": "gb_end_screen",
+       "capacite": "État terminal signalé à l'écran : au franchissement de 5000 lumiere, un panneau d'embrasement plein écran avec le libellé texte 'Embrasement complet' s'affiche et neutralise l'interaction (réalise l'exigence R11).",
+       "source_ref": "R11",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "quand light >= threshold, afficher un panneau d'embrasement blanc-chaud + un libelle texte explicite ('Embrasement complet') et neutraliser l'interaction de jeu — etat terminal signale a l'ecran."
+       }
+      },
+      {
+       "id": "gb_terminal_rule",
+       "capacite": "Règle terminale déterministe seedée derrière l'écran de fin : light>=seuil déclenche l'état terminal, même seed => même tick d'embrasement (grey block gb_terminal_rule, sans exigence Prisme dédiée ; porté sur R11, l'écran de fin observable qu'elle déclenche).",
+       "source_ref": "R11",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "regle deterministe seedee : si light >= threshold alors etat terminal ; meme seed => meme tick d'embrasement, verifiable par rejeu de sonde."
+       }
+      }
+     ]
+    },
+    {
+     "id": "FEAT_AMBIENCE",
+     "capacites": [
+      {
+       "id": "cap_field_warmth",
+       "capacite": "Le fond se réchauffe continûment de l'indigo vers le violet chaud en fonction de light/5000 (borné à 1), en parallèle du compteur — lecture périphérique de la progression.",
+       "source_ref": "R14",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "capture a light=0, 2500, 5000 : la teinte de fond se rechauffe de facon monotone avec le ratio"
+       }
+      },
+      {
+       "id": "gb_quest_milestone",
+       "capacite": "Marqueur de jalon discret : au franchissement d'un seuil intermédiaire de lumiere, un repère ponctuel apparaît brièvement, distinct de la jauge continue (grey block gb_quest_milestone, sans exigence Prisme dédiée — ajouté au GM round 2 ; porté sur R14, l'autre exigence de progression-feedback SYSTEM).",
+       "source_ref": "R14",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "quand quest_milestones_reached s'incremente (franchissement d'un seuil intermediaire de light), afficher un marqueur de jalon DISCRET et ponctuel, distinct de la constellation continue (jauge light/seuil) : apparition breve puis fondu, non modal, n'occulte jamais le compteur ni le foyer — un repere de progression, pas la jauge terminale. Repond au round-2 vr_quest_milestone de l'Artiste (le marqueur avait un proof/metric mais aucune cible Builder avant ce grey_block)."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_META_ASCENSION",
+   "features": [
+    {
+     "id": "FEAT_ASCENSION",
+     "capacites": [
+      {
+       "id": "cap_ascension_input",
+       "capacite": "ENTRÉE joueur (maillon I/META_LOOP) : après l'embrasement, le joueur agit sur l'affordance nommée ascension_altar ; la lumiere retombe visiblement à zéro et un glow d'ascension permanent est crédité.",
+       "source_ref": "R9",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "une sonde, depuis main.tscn (scene/entrypoint racine ; pour la cible web = index.html), clique l'affordance ascension_altar apres l'embrasement ; la lumiere repasse a 0 et un compteur de glow d'ascension passe de 0 a >0"
+       }
+      },
+      {
+       "id": "gb_ascension_altar",
+       "capacite": "Objet autel d'ascension : nouvelle zone visible et interactive apparaissant après l'embrasement, qui convertit la progression en glow d'ascension et rehausse durablement light_per_stoke (grey block gb_ascension_altar ; porté sur R10, l'effet méta de l'ascension, car R9 est réservée à la preuve d'entrée main.tscn).",
+       "source_ref": "R10",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "apres l'embrasement, proposer un autel d'ascension qui convertit la progression en glow d'ascension et rehausse durablement light_per_stoke ; nouvelle zone/ecran visible et interactive."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SYS_HUD_READABILITY",
+   "features": [
+    {
+     "id": "FEAT_HUD",
+     "capacites": [
+      {
+       "id": "gb_light_counter",
+       "capacite": "Compteur de lumiere HUD : à chasse tabulaire, plus gros élément textuel de l'écran, mis à jour chaque tick, jamais recouvert par les effets (réalise l'exigence R13).",
+       "source_ref": "R13",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "afficher un compteur HUD a chasse tabulaire, plus gros element textuel de l'ecran, mis a jour chaque tick, jamais recouvert par les effets."
+       }
+      },
+      {
+       "id": "gb_locked_glyph",
+       "capacite": "Glyphe d'état verrouillé : sur un émetteur non accessible, glyphe désaturé sans glow + condition visible ('X lumiere requise'), sans emprunter le chaud ni un halo (réalise l'exigence R12).",
+       "source_ref": "R12",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "sur un emetteur verrouille, afficher un glyphe desature sans glow + la raison visible ('X lumiere requise') ; ne jamais emprunter le chaud ni un halo."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,780 @@
+{
+ "schema_version": 2,
+ "game_id": "kitten_clicker",
+ "systems": [
+  {
+   "id": "world_content",
+   "category": "system",
+   "allowed_deps": []
+  },
+  {
+   "id": "economy",
+   "category": "system",
+   "allowed_deps": []
+  },
+  {
+   "id": "collection",
+   "category": "system",
+   "allowed_deps": [
+    "world_content"
+   ]
+  },
+  {
+   "id": "upgrades",
+   "category": "system",
+   "allowed_deps": [
+    "world_content"
+   ]
+  },
+  {
+   "id": "pricing",
+   "category": "system",
+   "allowed_deps": []
+  },
+  {
+   "id": "decision",
+   "category": "system",
+   "allowed_deps": [
+    "economy",
+    "collection",
+    "upgrades",
+    "pricing"
+   ]
+  },
+  {
+   "id": "progression",
+   "category": "system",
+   "allowed_deps": [
+    "collection",
+    "world_content"
+   ]
+  },
+  {
+   "id": "goals",
+   "category": "system",
+   "allowed_deps": [
+    "world_content",
+    "collection",
+    "progression"
+   ]
+  },
+  {
+   "id": "prestige",
+   "category": "system",
+   "allowed_deps": [
+    "economy",
+    "collection"
+   ]
+  },
+  {
+   "id": "input_adapter",
+   "category": "system.adapter",
+   "allowed_deps": [
+    "economy",
+    "collection",
+    "upgrades",
+    "prestige",
+    "pricing"
+   ]
+  },
+  {
+   "id": "presentation",
+   "category": "system.adapter",
+   "allowed_deps": [
+    "economy",
+    "collection",
+    "upgrades",
+    "progression",
+    "goals",
+    "prestige",
+    "world_content"
+   ]
+  },
+  {
+   "id": "audio",
+   "category": "system.adapter",
+   "allowed_deps": []
+  }
+ ],
+ "lines": [
+  {
+   "id": "world.registries",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "world.content"
+   ],
+   "requires": [],
+   "owner": true,
+   "system_parent": "world_content",
+   "address": "05_SYSTEMS/world_content/",
+   "couvre": [
+    "cap_registre_kittens",
+    "cap_registre_places",
+    "cap_registre_objects",
+    "cap_registre_quests"
+   ],
+   "expected_proof": {
+    "kind": "file_write",
+    "statement": "Les 4 registres 03_WORLD/{kittens,places,objects,quests}.json existent et satisfont leur cardinalite/schema minimal."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/world_content/world_content.gd",
+     "category": "system"
+    },
+    {
+     "path": "03_WORLD/rules/world_content/kittens.json",
+     "category": "world.rules"
+    },
+    {
+     "path": "03_WORLD/rules/world_content/places.json",
+     "category": "world.rules"
+    },
+    {
+     "path": "03_WORLD/rules/world_content/objects.json",
+     "category": "world.rules"
+    },
+    {
+     "path": "03_WORLD/rules/world_content/quests.json",
+     "category": "world.rules"
+    }
+   ],
+   "fonction": "valid",
+   "preuve": "run_tests test_world_content OK (6 chatons distincts, refuge tier0, valid()) ; 05_SYSTEMS/world_content/world_content.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "economy.ronrons",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "economy.ronrons"
+   ],
+   "requires": [],
+   "owner": true,
+   "system_parent": "economy",
+   "address": "05_SYSTEMS/economy/",
+   "couvre": [
+    "cap_accumulation_seuil_achat",
+    "cap_click_pelote_effet"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "ronrons croit de facon monotone (+1 min par clic), persiste, et acheter_chaton devient active au franchissement du cout."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/economy/economy.gd",
+     "category": "system"
+    },
+    {
+     "path": "solvability.gd",
+     "category": "godot.project_root"
+    },
+    {
+     "path": "07_TESTS/oracle/core_loop.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "production_tick",
+   "preuve": "player_loop b_click PASS delta 50 ; core_loop OK (ronrons monte au clic) ; solvability succeeded ; 05_SYSTEMS/economy/economy.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "collection.adopt",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "collection.adopt"
+   ],
+   "requires": [
+    "world.content"
+   ],
+   "owner": true,
+   "system_parent": "collection",
+   "address": "05_SYSTEMS/collection/",
+   "couvre": [
+    "cap_buy_kitten_effet"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "L'adoption ajoute un chaton nomme distinct (collection +1) et augmente la production passive totale ; le cout est decremente par economy."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/collection/collection.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "adopt",
+   "preuve": "player_loop p_buy_kitten PASS collection 0->1 ; 05_SYSTEMS/collection/collection.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "upgrades.click_power",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "upgrades.click_power"
+   ],
+   "requires": [
+    "world.content"
+   ],
+   "owner": true,
+   "system_parent": "upgrades",
+   "address": "05_SYSTEMS/upgrades/",
+   "couvre": [
+    "cap_upgrade_click_effet"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Delta ronrons/clic pelote STRICTEMENT superieur apres acheter_amelioration (jamais un >= tautologique)."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/upgrades/upgrades.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "click_multiplier",
+   "preuve": "run_tests test_upgrades OK (mult 2^level strict) ; 05_SYSTEMS/upgrades/upgrades.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "pricing.curve",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "pricing.curve"
+   ],
+   "requires": [],
+   "owner": true,
+   "system_parent": "pricing",
+   "address": "05_SYSTEMS/pricing/",
+   "couvre": [
+    "cap_courbe_paliers_variance"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": ">=3 couts de palier distincts et strictement croissants ; un bot atteint le 3e palier en un nombre de ticks fini."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/pricing/pricing.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "paliers",
+   "preuve": "run_tests test_pricing OK (paliers 5<10<15, 3 distincts) ; solvability atteint 3e palier ; 05_SYSTEMS/pricing/pricing.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "decision.point",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "decision.point"
+   ],
+   "requires": [
+    "economy.ronrons",
+    "collection.adopt",
+    "upgrades.click_power",
+    "pricing.curve"
+   ],
+   "owner": true,
+   "system_parent": "decision",
+   "address": "05_SYSTEMS/decision/",
+   "couvre": [
+    "cap_decision_premier_achat"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Sonde 2 trajectoires >=300 frames (idle vs actif) : la metrique ronrons finale DIFFERE selon l'option."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/decision/decision.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "projected_gain",
+   "preuve": "player_loop DECISION nondominance PASS (idle A>B, actif B>A) ; 05_SYSTEMS/decision/decision.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "progression.unlock",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "progression.unlock"
+   ],
+   "requires": [
+    "collection.adopt",
+    "world.content"
+   ],
+   "owner": true,
+   "system_parent": "progression",
+   "address": "05_SYSTEMS/progression/",
+   "couvre": [
+    "cap_unlock_entree",
+    "cap_unlock_effet"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Au seuil unlock_tier atteint par les adoptions, lieu_2 apparait dans la vue du refuge."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/progression/progression.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "lieu2_unlocked",
+   "preuve": "player_loop f_unlock appears lieu_2 0->1 (collection 2->3) ; 05_SYSTEMS/progression/progression.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "goals.objective",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "goals.objective"
+   ],
+   "requires": [
+    "world.content",
+    "collection.adopt",
+    "progression.unlock"
+   ],
+   "owner": true,
+   "system_parent": "goals",
+   "address": "05_SYSTEMS/goals/",
+   "couvre": [
+    "cap_objectif_demarrage",
+    "cap_next_goal_1_effet",
+    "cap_next_goal_2_effet"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "objectif non vide au demarrage, puis texte NOUVEAU distinct apres 1re adoption, puis texte distinct nommant le jalon de prestige."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/goals/goals.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "objective",
+   "preuve": "player_loop g_next_1/g_next_2 new_distinct PASS ; DECISION player_goal PASS ; 05_SYSTEMS/goals/goals.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "prestige.reset",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "prestige.reset"
+   ],
+   "requires": [
+    "economy.ronrons",
+    "collection.adopt"
+   ],
+   "owner": true,
+   "system_parent": "prestige",
+   "address": "05_SYSTEMS/prestige/",
+   "couvre": [
+    "cap_prestige_effet"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "prestige : ronrons retombe a 0 et un indicateur de bonus permanent AUGMENTE strictement."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "05_SYSTEMS/prestige/prestige.gd",
+     "category": "system"
+    }
+   ],
+   "fonction": "prestige",
+   "preuve": "player_loop i_prestige resets 680->0 puis j_advantage delta 96>50 ; 05_SYSTEMS/prestige/prestige.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system"
+  },
+  {
+   "id": "presentation.render",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "presentation.render"
+   ],
+   "requires": [
+    "economy.ronrons",
+    "collection.adopt",
+    "upgrades.click_power",
+    "progression.unlock",
+    "goals.objective",
+    "prestige.reset",
+    "world.content"
+   ],
+   "owner": true,
+   "system_parent": "presentation",
+   "address": "06_RUNTIME/adapters/presentation/",
+   "couvre": [
+    "cap_rarete_visuelle_distincte",
+    "cap_feedback_clic_pixel",
+    "cap_feedback_reponse_systeme"
+   ],
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "Captures GPU : deux raretes different en pixels au-dela d'un seuil ; capture pre/post clic differe sur la zone pelote (rebond + particule + texte +N)."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/presentation/presentation.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "04_ASSETS/sprites/pelote.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/kitten_common.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/kitten_uncommon.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/kitten_rare.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/kitten_epic.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/kitten_legendary.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/refuge.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/lieu_2.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/obj_food_bowl.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/obj_scratching_post.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/obj_cushion_bed.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/fx_click_feedback.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/icon_ronrons.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/ui_stats_hud.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/ui_action_buttons.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "04_ASSETS/sprites/ui_objectif_banner.svg",
+     "category": "asset.sprite"
+    },
+    {
+     "path": "game_controller.gd",
+     "category": "godot.project_root"
+    },
+    {
+     "path": "07_TESTS/oracle/core_render.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "make_kitten_sprite",
+   "preuve": "core_render OK rarity_diff 0.31, feedback pixel diff ; runtime_alive changed_after_click, nonmonochrome ; 06_RUNTIME/adapters/presentation/presentation.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system.adapter"
+  },
+  {
+   "id": "audio.cues",
+   "source": "EXPECTED",
+   "source_role": "s5-wiremap",
+   "reference": "games/pacman/06_RUNTIME/adapters/audio/audio.gd",
+   "provides": [
+    "audio.cue"
+   ],
+   "requires": [],
+   "owner": true,
+   "system_parent": "audio",
+   "address": "06_RUNTIME/adapters/audio/",
+   "reused_from": "games/pacman/06_RUNTIME/adapters/audio/audio.gd",
+   "couvre": [
+    "cap_audio_quatre_evenements"
+   ],
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "core_audio.gd : journal = 1 entree sonore distincte pour chacun des 4 evenements (clic/achat/deblocage/prestige)."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/audio/audio.gd",
+     "category": "system.adapter"
+    },
+    {
+     "path": "07_TESTS/oracle/core_audio.gd",
+     "category": "test.oracle"
+    }
+   ],
+   "fonction": "play_cue",
+   "preuve": "core_audio OK : journal = 4 cues distincts (click/purchase/unlock/prestige) ; 06_RUNTIME/adapters/audio/audio.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system.adapter"
+  },
+  {
+   "id": "input.pelote",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "affordance:pelote"
+   ],
+   "requires": [
+    "economy.ronrons"
+   ],
+   "owner": false,
+   "system_parent": "input_adapter",
+   "address": "06_RUNTIME/adapters/input_adapter/",
+   "couvre": [
+    "cap_click_pelote_entree"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Depuis main.tscn un bot declenche l'affordance pelote ; ronrons croit via economy (canal d'entree unique)."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "act",
+   "preuve": "player_loop b_click via input_adapter (_input hit-test) PASS ; 06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system.adapter"
+  },
+  {
+   "id": "input.acheter_chaton",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "affordance:acheter_chaton"
+   ],
+   "requires": [
+    "collection.adopt"
+   ],
+   "owner": false,
+   "system_parent": "input_adapter",
+   "address": "06_RUNTIME/adapters/input_adapter/",
+   "couvre": [
+    "cap_buy_kitten_entree"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Depuis main.tscn un bot declenche l'affordance acheter_chaton (adoption) via le canal d'entree unique."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "act",
+   "preuve": "player_loop p_buy_kitten via input_adapter PASS ; 06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system.adapter"
+  },
+  {
+   "id": "input.acheter_amelioration",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "affordance:acheter_amelioration"
+   ],
+   "requires": [
+    "upgrades.click_power"
+   ],
+   "owner": false,
+   "system_parent": "input_adapter",
+   "address": "06_RUNTIME/adapters/input_adapter/",
+   "couvre": [
+    "cap_upgrade_click_entree"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Depuis main.tscn un bot declenche l'affordance acheter_amelioration via le canal d'entree unique."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "act",
+   "preuve": "player_loop p_upgrade_click via input_adapter PASS ; 06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system.adapter"
+  },
+  {
+   "id": "input.prestige",
+   "source": "CORE",
+   "source_role": null,
+   "reference": null,
+   "provides": [
+    "affordance:prestige"
+   ],
+   "requires": [
+    "prestige.reset"
+   ],
+   "owner": false,
+   "system_parent": "input_adapter",
+   "address": "06_RUNTIME/adapters/input_adapter/",
+   "couvre": [
+    "cap_prestige_entree"
+   ],
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Depuis main.tscn un bot declenche l'affordance prestige via le canal d'entree unique."
+   },
+   "state": "IMPLEMENTED",
+   "reason": null,
+   "until": null,
+   "decider": null,
+   "write_order": null,
+   "fichiers": [
+    {
+     "path": "06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+     "category": "system.adapter"
+    }
+   ],
+   "fonction": "act",
+   "preuve": "player_loop i_prestige via input_adapter PASS ; 06_RUNTIME/adapters/input_adapter/input_adapter.gd",
+   "statut": "IMPLEMENTED",
+   "category": "system.adapter"
+  }
+ ],
+ "discarded": [
+  {
+   "id": "gamed_maillon_link",
+   "source_role": "s5-wiremap",
+   "proposal": "Faire couvrir a une ligne affordance une feuille d'effet visual (ex. cap_feedback_reponse_systeme) pour satisfaire maillon_non_lie.",
+   "discard_reason": "Un adaptateur d'entree ne realise pas le feedback visuel (presentation le fait) ; ce couvre serait un mensonge sur ce que la ligne realise. Le blocage doit rester visible pour la reconciliation Pierre, pas etre masque.",
+   "ended_up_in_game": null
+  }
+ ]
+}

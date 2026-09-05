@@ -1,0 +1,200 @@
+I have all normative sources. Key finding: **p1_alpha is the DIRECTED arm (D1)** — unlike the free-arm reference charter I just read (`tower_defense_sonde`, where s0 *proposed* the whole `conception`), here the structure is **imposed normatively** by `structure_imposee.yaml`. My job is to reproduce those values **exactly** (règle N6), trace every design-intent to a Pierre source (N2), and escalate genuine flous rather than invent (garde-fou s0). The task is **text-only, no file written**.
+
+Here is the product contract.
+
+---
+
+# CONTRAT PRODUIT — `p1_alpha` (s0-contrat, texte seul)
+
+> **Cadre** : bras **DIRIGÉ (D1)** de la paire pilote RUN 2. La STRUCTURE du jeu est **imposée** par `lab/forge_briefs/p1_alpha/structure_imposee.yaml` (grammaire proposée Fable / **ratifiée Pierre 2026-08-30**). La variable expérimentale est *l'auteur de la structure*, **pas** l'auteur de l'univers : thème, personnages, DA, assets, HUD sont **délégués à la chaîne** — s0 ne les invente pas et ne les fixe pas ici.
+> **Livrable** : contrat produit en texte, **aucun fichier écrit** (per tâche concrète). Statut : **PROPOSITION** — attend HumanGate Pierre.
+
+## A. Les quatre éléments demandés (cadrage produit)
+
+**1 — Intention.** Produire un jeu **incremental / clicker web jouable** dont chaque quantité structurelle (croissance des coûts, productions, coûts d'améliorations, seuils cumulés, condition de fin, invariant comptable) est **reprise telle quelle** de la structure imposée. Le rôle de ce jeu n'est pas d'être « bon » — sa qualité ludique n'est **pas** jugée par ce run (donnée M7, jugement humain en aveugle) — mais de **fermer la chaîne de preuve `full_content`** avec une structure donnée de l'extérieur, pour mesurer, par comparaison au bras libre `p1_beta`, ce que la chaîne produit quand la structure lui est imposée vs quand elle l'invente.
+
+**2 — Joueur cible.** Joueur d'incremental/clicker : cherche la **satisfaction de la croissance de nombres** et l'**arbitrage d'optimisation à faible pression** (« acheter maintenant vs épargner pour le palier supérieur »), sans état d'échec ni contrainte de dextérité. *(Provenance : **convention de genre**, dérivée de la grammaire incremental/clicker — **PAS imposé par Pierre**. Déclaré comme tel, non inventé comme un choix Pierre.)*
+
+**3 — Condition de victoire.** **VICTOIRE** = total **cumulé** de R produit **≥ 1 000 000 R** (seuil S5). **Aucun état d'échec** — fidèle au genre. La victoire est **observable** (panneau/écran de fin visible). La divergence des bots se mesure au **temps-jusqu'à-S5** et aux **seuils atteints dans un budget de ticks fixe**, jamais par une défaite artificielle. *(Source : `structure_imposee.yaml § dimensioning.fin` — normatif ratifié Pierre.)*
+
+**4 — Périmètre V1 minimal jouable.** Une page web unique jouable où : le joueur **clique** pour gagner R ; **achète 4 tiers de générateurs** (G1..G4) à production automatique ; **achète 6 améliorations** ; **franchit 5 seuils cumulés** qui débloquent la suite (S1→G2, S2→G3, S3→G4, S4→améliorations ×2 prod, S5→fin) ; **atteint la victoire observable** à S5. Socle sonde (N1) : HTML+JS, déterminisme par hash, `window.__game` en lecture seule, harnais complet à la racine, actions déclenchables par le DOM. Rien de plus n'est requis pour « minimal jouable ».
+
+---
+
+## B. Charter complet (contenu, format schéma Forge + N1-N9)
+
+### `meta.provenance_commande` (N2 — provenance par champ)
+```
+nom_projet: p1_alpha
+etape: s0-contrat
+run_id: p1_alpha-20260830-run1
+date_redaction: 2026-08-30
+statut: PROPOSITION (non ratifiée) — attend HumanGate Pierre
+provenance_commande:
+  genre:              "incremental/clicker — SOURCE: Pierre, 2026-08-30 (paire pilote)"
+  structure:          "SOURCE: structure_imposee.yaml — grammaire proposée Fable, RATIFIÉE Pierre 2026-08-30 (NORMATIVE, reprise telle quelle)"
+  plateforme_cible:   "web (HTML+JS, rendu canvas) — SOURCE: brief.cible, Pierre 2026-08-30 + socle N1 (pratique standard sondes)"
+  reference_jeu:      "genre incremental/clicker (Pierre 2026-08-30) ; Cookie Clicker = grammaire de genre UNIQUEMENT (Pierre 2026-08-30) — jamais une copie"
+  joueur_cible:       "SOURCE: convention de genre (dérivée) — NON imposé par Pierre"
+  condition_victoire: "SOURCE: structure_imposee.yaml § dimensioning.fin (S5 = 1_000_000 R cumulé) — Pierre 2026-08-30"
+  observabilite:      "SOURCE: brief project_specific + N1 (window.__game, DOM-only, fin observable)"
+  non_impose_par_pierre / delegue_a_la_chaine:
+    - thème et univers · personnages/entités et nommage · direction artistique
+    - assets de production · présentation/HUD et micro-interactions non couvertes par la structure
+    - tout détail d'implémentation non fixé par structure_imposee.yaml
+```
+
+### `objectif`
+Produire un jeu incremental/clicker web **jouable et déterministe**, page unique, dont **toute la structure** (boucle, ressource, actions, 4 générateurs, 6 améliorations, 5 seuils cumulés, économie, fin) est **strictement conforme** à `structure_imposee.yaml`, en **fermant la chaîne de preuve `full_content`** (verdict signé + `verify_run` AUTHENTIQUE). Toute déviation par rapport à la structure imposée est un **écart déclaré en champ structuré** (jamais silencieux — N6). L'objectif n'inclut **pas** le jugement de la qualité ludique (M7, humain, aveugle).
+
+### `reference_jeu`
+Genre : **incremental/clicker** (SOURCE Pierre 2026-08-30). Grammaire de genre citée : **Cookie Clicker** — **UNIQUEMENT** comme grammaire de genre (clic → ressource → générateurs → production automatique → seuils → déblocages), **jamais une copie** : aucun asset, aucun nom, aucune courbe, aucun contenu de ce jeu n'est repris. *(Source Pierre traçable : brief `references_autorisees` + `provenance.genre`.)* L'univers concret (thème, personnages, DA) n'appartient **pas** à `reference_jeu` — il est **délégué** à la chaîne.
+
+### `plateforme_cible` (+ détail)
+Web — **page HTML unique + JavaScript**, rendu **canvas** (cible brief). *(SOURCE : brief.cible Pierre + socle N1.)* Détail :
+- 1 point d'entrée HTML (DOM + canvas + boot), **zéro dépendance externe / CDN / réseau** pour la logique ; les **assets délégués** (autorisés par le brief) sont **locaux**, jamais distants.
+- Logique de jeu en modules ES `.mjs` **purs**, importables/exécutables sous `node --test` **sans DOM ni canvas**.
+- Simulation à **pas fixe** (durée du tick = **détail délégué à déclarer**, cf. FOG-A) ; avancée par `step(state)`, jamais par le temps réel.
+- Déterminisme **par hash** (mêmes actions horodatées en ticks → état strictement identique). RNG seedé prévu par N1 mais possiblement **inutilisé** (structure sans aléa) — à déclarer si non utilisé.
+- **Actions déclenchables par le DOM seul** (clic, achat générateur, achat amélioration). `window.__game` = **lecture seule**, aucun setter/triche.
+
+### `vecteur_etat_initial` (N3 — existence vérifiable, valeurs = structure imposée)
+```
+R_solde: 0                      # ressource primaire, entière, visible en permanence
+total_cumule_R: 0               # base des 5 seuils (le CUMUL, jamais le solde)
+gain_clic: 1                    # gain_clic_initial (structure imposée)
+generateurs_possedes: [0,0,0,0] # G1..G4
+ameliorations_achetees: [false ×6]
+unlocks_atteints: [false ×5]    # S1..S5
+tick: 0
+result: null | "VICTORY"
+tick_rate: <à déclarer>         # existence obligatoire (N3) ; valeur = détail délégué (FOG-A)
+```
+
+### `structure_imposee` (NORMATIVE — reproduite telle quelle, N6 ; s0 n'a rien inventé ici)
+```
+core_loop: clic manuel → +gain_clic R → dépenser R en générateurs → production auto/tick
+           → dépenser en générateurs/améliorations → franchir les seuils cumulés.
+           Boucle de fond : « acheter maintenant vs épargner pour le palier supérieur ».
+ressource: R (unique, entière, visible en permanence)
+actions:
+  - clic_manuel: +gain_clic R (gain_clic modifiable par améliorations)
+  - acheter_generateur_i: visible dès déblocage, GRISÉ si R insuffisant — refus OBSERVABLE, état inchangé
+  - acheter_amelioration_j: même règle de refus observable
+generateurs: 4 tiers G1..G4 ; prod = [0.1, 1, 8, 47] R/s par unité
+ameliorations: 6 — 2 sur le clic (×2 puis ×4 du gain_clic) + 4 « ×2 production » (une par générateur)
+economie:
+  cout_generateur[i] = cout_base[i] × 1.12^(n_possedes_du_tier)   # croissance géométrique
+  cout_base = [15, 100, 1100, 12000]
+  cout_ameliorations = [100, 500, 1000, 5000, 30000, 200000]
+  regles: aucun revenu hors clic+générateurs ; aucune dépense hors achats (PAS de vente)
+unlocks: 5 seuils sur le TOTAL CUMULÉ (jamais le solde) :
+  seuils_cumules = [100, 1000, 12000, 150000, 1000000]
+  S1→révèle G2 · S2→révèle G3 · S3→révèle G4 · S4→révèle améliorations ×2 prod · S5→FIN (victoire)
+fin: total cumulé ≥ 1_000_000 R ⇒ VICTORY ; PAS d'état d'échec
+invariant_comptable: R_solde == Σ(gains clic) + Σ(production) − Σ(dépenses)   # égalité EXACTE
+```
+
+### `hors_scope`
+- Sauvegarde/persistance (localStorage, fichier, serveur) — hors V1.
+- Audio, musique, effets sonores.
+- **Vente / remboursement / déplacement** d'un achat (la structure interdit toute dépense hors achats et tout revenu hors clic+générateurs — « pas de vente »).
+- **État d'échec / défaite** — interdit par la structure (fidèle au genre).
+- Toute ressource secondaire, tout revenu passif hors clic+générateurs, toute source d'aléa affectant l'économie.
+- Prestige / méta-progression / new-game+ / offline-earnings — hors V1.
+- Multijoueur, réseau, télémétrie, analytics ; dépendances externes, CDN, fonts distantes, requêtes réseau.
+- Toute décision d'architecture logicielle (découpage des modules, structures de données) — **étape 4**.
+- **Tout code** : ce charter n'en contient et n'en autorise aucun à l'étape 0.
+- *(NB : contrairement au socle TD, les **assets et la DA ne sont PAS hors-scope** — ils sont **délégués** à la chaîne, cf. `libertes_deleguees`.)*
+
+### `criteres_succes` (objectifs, avec ancres non-LLM ; assertions STRICTES, jamais `>=` tautologique)
+- **S1 — Lecture d'état** : `window.__game` expose, à tout tick et sans appel de fonction : `tick`, `R` (solde entier), `total_cumule`, `gain_clic`, `generateurs[]` (par tier : possédés, coût courant, débloqué), `ameliorations[]` (achetée oui/non, coût), `unlocks[]` (S1..S5), `result` (null|`"VICTORY"`). Vérifié par lecture DOM-externe (Playwright `evaluate`).
+- **S2 — Déterminisme** : deux exécutions de la même seed avec la même liste d'actions horodatées en **ticks** produisent des états finaux de **hash strictement égal** (comparaison de deux exécutions réelles).
+- **S3 — Pureté logique** : zéro `Math.random`/`Date.now`/`performance.now`/`requestAnimationFrame` dans les `.mjs` — oracle statique (grep AST/textuel) qui **échoue** si un seul appel est présent.
+- **S4 — Testabilité hors navigateur** : les `.mjs` s'importent et s'exécutent sous `node --test` sans DOM.
+- **S5 — Coûts exacts (structure imposée)** : `cout_generateur[i]` = `cout_base[i]·1.12^n` reproduit à l'égalité exacte (à epsilon nommé pour la puissance flottante) ; `cout_ameliorations` = `[100,500,1000,5000,30000,200000]` vérifiés par égalité stricte ; effets d'améliorations = ×2 puis ×4 du clic et ×2 prod par générateur, vérifiés strictement.
+- **S6 — Seuils de déblocage (structure imposée)** : franchir `total_cumule` = 100/1000/12000/150000 **révèle exactement** G2/G3/G4/améliorations-×2-prod (assertion sur le CUMUL, jamais le solde) ; le déblocage précis est testé au tick de franchissement.
+- **S7 — Refus observable** : un achat quand `R` est insuffisant est **grisé/refusé** de façon observable, **état strictement inchangé** avant/après, **aucune exception console**.
+- **S8 — Invariant comptable STRICT** : à chaque tick, `R_solde == Σ(gains clic) + Σ(production) − Σ(dépenses)`, **égalité exacte** (cf. FOG-B sur la représentation numérique de 0.1).
+- **S9 — SOLVABILITÉ POSITIVE (obligatoire, pré-mortem)** : un **bot compétent scripté** (séquence d'actions figée, aucun LLM, accès borné à `window.__game`) atteint **`result == "VICTORY"`** (total cumulé ≥ 1 000 000) dans un **budget de ticks fixe**, avec un **temps-jusqu'à-S5 exact figé en test doré**. Le statut de victoire est **DÉRIVÉ de l'état du jeu**, jamais écrit en littéral (`won=true` interdit — leçon `solvability.mjs`).
+- **S10 — Variance non triviale** : ≥2 bots divergents (ex. « clic-lourd » vs « générateurs-d'abord ») produisent des **temps-jusqu'à-S5** et/ou **seuils atteints à budget de ticks fixe** prenant **≥2 valeurs distinctes non triviales** (règle de variance, ratifiée 2026-07-21). Une métrique à variance nulle est **requalifiée honnêtement**, jamais présentée comme signal.
+- **S11 — Fin observable** : à `total_cumule ≥ 1 000 000`, un panneau de fin **visible** affiche la victoire ; l'état `result` passe à `"VICTORY"` (lu dans `window.__game`).
+- **S12 — Assertions strictes** : aucune assertion satisfaite par l'état initial/défaut ; interdits `assert(x>=0)`, `assert(len>=0)`. Toute assertion numérique = **égalité exacte** (ou epsilon nommé pour flottants).
+- **S13 — Mutation couverte** : la **commande de test scellée** importe **tous** les `.mjs` cités par la WireMap soumis à mutation (garde contre les mutants intuables par topologie — leçon manifest-1e8436…). Un mutant qui inverse un coût, une production, un franchissement de seuil ou la condition de fin **DOIT** être tué ; score rapporté avec dénominateur exact.
+- **S14 — e2e réel** : harnais e2e pilotant un **vrai navigateur** (Playwright), pas une coquille ; attente de la **présence du nœud DOM** avant tout clic de précision (leçon manifest-40b47db…).
+- **S15 — `evidence_path` obligatoire** : tout reçu d'oracle porte un `evidence_path` pointant vers un artefact **réellement écrit** (sortie brute `node --test`, JSON de run des bots, captures PNG) ; reçu sans `evidence_path` ⇒ `software_verdict: BLOCKED` (pré-mortem s12).
+- **S16 — Évidence exportée** : les preuves quittent le run dir vers `lab/forge_evidence/<RUN>/` (P5).
+- **S17 — s11 red-team indépendant réel** : passe adversariale `qwen` (`independent: true`) ; **LM Studio down ⇒ HALT sans fallback** (critère de sortie brief).
+- **S18 — Console propre** : zéro erreur/exception non capturée sur une partie complète menée jusqu'à `VICTORY`.
+
+### `criteres_demo` (OBSERVABLES — pas des critères mécaniques internes)
+- **D1** — Au chargement : un compteur de **R visible**, un indicateur de **total cumulé**, et **G1 achetable** ; les tiers/améliorations non débloqués sont **cachés ou grisés** de façon lisible.
+- **D2** — **Cliquer** fait **augmenter le compteur R à l'écran** (de `gain_clic`).
+- **D3** — Acheter G1 fait **apparaître G1 possédé** et **R diminue à l'écran** ; ensuite R **monte tout seul** au fil du temps (production automatique visible).
+- **D4** — Tenter un achat sans assez de R : le bouton est **visiblement grisé/refusé** et **R ne bouge pas**.
+- **D5** — Quand le **total cumulé** franchit un seuil, un **nouveau tier (G2/G3/G4) ou les améliorations apparaissent** à l'écran (déblocage observable).
+- **D6** — Acheter l'amélioration de clic fait **visiblement doubler puis quadrupler** le gain par clic ; acheter une amélioration « ×2 prod » fait **visiblement accélérer** la montée de R.
+- **D7** — Quand le total cumulé atteint 1 000 000, un **panneau de fin VICTORY apparaît** par-dessus le jeu et le jeu s'arrête visiblement.
+- **D8** — Deux parties lancées avec la même seed et la même séquence de clics **se ressemblent image par image**.
+
+### `actions_interdites`
+- Décider l'architecture, écrire du code, créer un fichier à l'étape 0 — le livrable s'arrête à ce charter.
+- **Dévier de `structure_imposee.yaml` sans déclarer l'écart** en champ structuré (N6) : toute valeur (1.12, coûts de base, prod, coûts d'améliorations, seuils, 1 000 000, invariant) est reprise telle quelle ou l'écart remonte au verdict — jamais silencieux.
+- **Inventer thème/personnages/DA/nommage comme s'ils étaient imposés par Pierre** : ils sont **délégués**, produits par la chaîne, jamais présentés comme une commande Pierre.
+- Fabriquer une ratification ; émettre un `claim_verdict` autre que `NO_CLAIM_ALLOWED` ; commiter/pousser (HumanGate Pierre exclusivement).
+- Toucher `autopilot.py`, `scripts/studioV2/`, `src/`, ou tout périmètre gelé ; modifier `tests/` (zone protégée).
+- Écrire un test satisfait par l'état initial/défaut ou un `>=`/`<=` tautologique ; émettre un reçu sans `evidence_path` (⇒ BLOCKED).
+- **Écrire un statut de solvabilité en littéral** (`won=true`, `solvable:true`) au lieu de le **dériver de l'état du jeu** (leçon `solvability.mjs`, s9-build).
+- Prouver la solvabilité par inspection de mécaniques isolées sans faire **GAGNER un bot de bout en bout** (atteindre S5).
+- Muter des `.mjs` **non importés** par la commande de test scellée et présenter le score agrégé comme une couverture (leçon manifest-1e8436…).
+- Simuler l'e2e sans navigateur réel ; cliquer avant présence du nœud DOM (leçon manifest-40b47db…).
+- Introduire aléa dans l'économie, revenu passif, vente, ou état d'échec (contredit la structure).
+- Affirmer que le jeu est **bon/fun/équilibré** — qualité ressentie = jugement humain (FOG-D). Présenter une métrique à variance nulle comme un signal.
+- Combler un flou par une invention silencieuse : un flou se remplit explicitement ou remonte en **fog HumanGate**.
+
+### `libertes_deleguees` (ce que s0 NE décide PAS — délégué à la chaîne, brief Pierre 2026-08-30)
+thème et univers · personnages/entités et leur nommage · direction artistique · assets de production · présentation/HUD et micro-interactions non couvertes par la structure · tout détail d'implémentation non fixé par `structure_imposee.yaml` (dont la **durée du tick**, cf. FOG-A).
+
+### `ecarts_declares` (N6)
+**Aucun écart à l'étape charter** : le charter reproduit `structure_imposee.yaml` à l'identique. Le **mécanisme** de déclaration d'écart (champ structuré remontant au verdict) est **exigé du build en aval** si une valeur devait diverger — jamais silencieux.
+
+### `fog_humangate` (N8 — flous remontés à Pierre)
+- **FOG-A — Durée du tick.** `structure_imposee` donne `prod[i]` en **R/s** et exige un « budget de ticks fixe » pour les bots, mais **ne fixe pas la durée d'un tick**. Son existence est obligatoire (N3) ; sa **valeur** est un détail délégué. Elle conditionne le temps-jusqu'à-S5. → **délégué + à déclarer** ; escaladé si Pierre veut la fixer.
+- **FOG-B — `prod = 0.1 R/s` vs « R entière » vs « égalité EXACTE ».** Ces trois exigences imposées sont **jointement satisfaisables uniquement** si l'invariant comptable est vérifié sur un **accumulateur interne à précision exacte** (représentation en **point fixe / entiers d'échelle**, ex. milli-R) tandis que **R affiché est plancher-entier**. Le flottant binaire `0.1` **n'est pas exact** et **violerait silencieusement** « égalité exacte ». → **lecture proposée** (point fixe + affichage plancher) **remontée à Pierre** ; ce n'est pas une déviation de la structure mais la seule voie pour honorer *littéralement* « égalité exacte ». Ne pas résoudre en silence.
+- **FOG-C — Sonde jetable vs graine de jeu (FOG-2 spec).** Ce jeu est-il un instrument de mesure jetable ou la graine d'un jeu à développer ? Change la valeur de la dette assumée (pas de sauvegarde, pas de prestige). → **Pierre**.
+- **FOG-D — Qualité ressentie / fun (FOG-4 permanent).** Hors de portée de tout oracle de ce run ; donnée M7, **jugement Pierre en aveugle** uniquement.
+- **FOG-E — `joueur_cible` non sourcé Pierre.** Le joueur cible est **dérivé de la convention de genre**, pas une commande Pierre. Déclaré tel quel ; si Pierre veut un profil de joueur précis, il le fixe.
+
+---
+
+## C. RAPPORT FINAL
+
+**Oracle cité.** Ancre non-LLM utilisée pour la fidélité structurelle : **`lab/forge_briefs/p1_alpha/structure_imposee.yaml`** (fichier normatif ratifié) — chaque valeur du bloc `structure_imposee` ci-dessus en est la reprise vérifiable ligne à ligne (`cout_base`, `prod`, `cout_ameliorations`, `seuils_cumules`, `1.12`, `1_000_000`, invariant comptable). Ancre de provenance des design-intent : **brief `project_brief.yaml`** + **`RUN2_PILOTE_PROTOCOLE_V0.md`** (sources Pierre 2026-08-30). L'**oracle de schéma `check_charter`/`check_project_brief` n'a PAS été exécuté** (tâche texte-seul, aucun charter.yaml matérialisé) — voir SKIPPED_VALIDATION.
+
+**Flous du prompt — résolus vs remontés.**
+- *Résolus dans le charter* : intention, condition de victoire, périmètre V1, hors-scope, critères de succès/démo, actions interdites — tous ancrés sur la structure imposée et le brief. `reference_jeu` et `plateforme_cible` portent une **source Pierre traçable** (brief). Distinction imposé/délégué explicitée.
+- *Remontés en fog HumanGate* : FOG-A (durée du tick), FOG-B (représentation numérique pour honorer « égalité exacte » avec 0.1), FOG-C (jetable vs graine), FOG-D (fun, permanent), FOG-E (joueur cible non sourcé Pierre).
+
+**Verdicts.**
+- `software_verdict: OK` — le contrat produit est **complet** (objectif, hors_scope[], criteres_succes[], actions_interdites[], plateforme_cible, reference_jeu, criteres_demo[] tous remplis) ; **aucun champ « à définir »**, aucun vide ; structure reproduite à l'identique (vérifiable contre `structure_imposee.yaml`).
+- `evidence_verdict: MECHANICAL_VALIDATION_ONLY` — fidélité vérifiée **à la main contre les fichiers normatifs déterministes** (structure + brief) ; le validateur de schéma automatique n'a pas tourné (texte-seul).
+- `claim_verdict: NO_CLAIM_ALLOWED` — la provenance Pierre de `reference_jeu` est **traçable** (brief) mais la conformité de schéma n'est **pas** mécaniquement re-vérifiée ici ; les fogs restent des décisions Pierre. Statut du charter : **PROPOSITION** jusqu'à HumanGate.
+
+**SKIPPED_VALIDATION**
+- item: `check_charter` / `check_project_brief` (validateur de schéma déterministe) · périmètre: le charter p1_alpha · statut: **non fait** · raison: tâche **texte-seul, aucun charter.yaml écrit** → rien à parser ; à exécuter par le driver sur le charter matérialisé en aval.
+- item: variance des bots de mesure (S10) · périmètre: temps-jusqu'à-S5 / seuils · statut: **non fait (hors périmètre s0)** · raison: mesure de build (s9+), pas de l'étape contrat.
+- item: solvabilité positive exécutée (S9) · périmètre: bot compétent → VICTORY · statut: **non fait (hors périmètre s0)** · raison: exécution de build, spécifiée ici comme critère, prouvée en aval.
+
+**RETURN LINEAGE** (`why_task_existed`)
+- `problem:` la paire pilote RUN 2 a besoin, pour son bras DIRIGÉ, d'un contrat produit qui **impose** la structure et **ne laisse à s0 aucune invention structurelle**, sinon la variable manipulée (auteur de la structure) n'est pas isolée.
+- `oracle:` activation par **décision humaine** (protocole ratifié Pierre 2026-08-30) — pas déclenché par un oracle rouge.
+- `root_cause:` non applicable (tâche de cadrage, pas de correction d'un défaut).
+- `action_reason:` un charter D1 qui reprend la structure telle quelle + trace la provenance par champ (N2) + isole les libertés déléguées est la seule forme qui rend le bras « dirigé » mesurable face à `p1_beta`.
+- `result:` contrat produit complet en texte, aucun champ « à définir », structure conforme à l'imposé, 5 fogs explicites, aucun fichier écrit.
+- `proof:` lecture et reprise ligne à ligne de `structure_imposee.yaml` (`cout_base=[15,100,1100,12000]`, `prod=[0.1,1,8,47]`, `cout_ameliorations=[100,500,1000,5000,30000,200000]`, `seuils_cumules=[100,1000,12000,150000,1000000]`, `1.12`, invariant comptable) ; provenance croisée avec `project_brief.yaml` + `RUN2_PILOTE_PROTOCOLE_V0.md`. Validateur de schéma non exécuté (texte-seul).
+- `learning:` deux exigences imposées peuvent être **jointement contradictoires en forme** (`prod=0.1` + « R entière » + « égalité EXACTE ») ; ce n'est pas une déviation de contenu mais une **impossibilité de représentation** qui doit remonter en fog (FOG-B), sous peine de violation silencieuse de l'invariant en flottant binaire.
+- `next_reason:` le niveau supérieur (driver/HumanGate) doit agir pour **matérialiser le charter et exécuter `check_charter`**, **trancher FOG-A/FOG-B** avant s9-build (la représentation numérique conditionne S8), et **ratifier** avant tout build. La chaîne causale n'est pas fermée : le contrat est une PROPOSITION en attente de gate.
+
+SKIPPED_VALIDATION: voir liste ci-dessus (non vide, assumée).
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "structure_imposee.yaml exige conjointement prod=0.1 R/s, R entiere visible, et invariant comptable en egalite EXACTE — jointement satisfaisables seulement via representation en point fixe avec affichage plancher, jamais en flottant binaire (0.1 non exact)", "root_cause": "tension de forme entre une production fractionnaire et un invariant d'egalite stricte sur une ressource affichee entiere, non tranchee par la structure imposee"}

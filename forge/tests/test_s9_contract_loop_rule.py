@@ -12,7 +12,10 @@ from forge.run_real import load_tasks_file
 
 REPO = Path(__file__).resolve().parents[2]
 CONTRACT = REPO / "forge" / "contracts" / "s9-build-godot-standard.yaml"
-TASKS = REPO / "EVIDENCE" / "runs" / "kitten_clicker" / "tasks.json"
+# Fixture V1 migrée le 2026-09-05 sous `EVIDENCE/_V1_FIXTURES/` (GO Pierre) : ces
+# artefacts viennent de runs V1 jamais rejoués, ils ne sont PAS des preuves V2 et
+# vivent donc à l'écart de `EVIDENCE/runs/`. Voir le README de ce dossier.
+TASKS = REPO / "EVIDENCE" / "_V1_FIXTURES" / "runs" / "kitten_clicker" / "tasks.json"
 
 
 def _load_contract() -> dict:

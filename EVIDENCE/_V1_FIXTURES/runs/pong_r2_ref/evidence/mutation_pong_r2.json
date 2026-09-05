@@ -1,0 +1,510 @@
+{
+ "detail": {
+  "baseline_ok": true,
+  "code_sha256": {
+   "05_SYSTEMS/game_loop/loop.mjs": "0002f1d43676d0ad15f0d1f7e3b9b04c6276715392f50bb88c0b3a4e86f39fde",
+   "05_SYSTEMS/game_state/state.mjs": "c3feb6fb9a3a55ccb026219fc1f582d327629253034272e4eda020a14de082be",
+   "05_SYSTEMS/input/input.mjs": "e7ea5dac70bb1647878490fa88a395a202d34e5f5887e398f4b3ae633fd84b7a",
+   "06_RUNTIME/adapters/presentation/audio.mjs": "1b988ed818e6cc3588539777d45bbe446d2b8d56b500e99afb168cde86bf8ab4",
+   "06_RUNTIME/adapters/presentation/browser/main.mjs": "e9172f63dfc973a626f10ce1a008cf92ac421c859ad56802c8e91f97cf90610e",
+   "06_RUNTIME/adapters/presentation/capture_browser.mjs": "3d5e81241bf3d441c1a9ab160ecd57a24f10455132de26114f1806a49539679f",
+   "06_RUNTIME/adapters/presentation/capture_godot.mjs": "b57547a468e0ce02d8dcd6ac2ff1bd41bd6c66f0f83f1daa1606e31f040b630a",
+   "06_RUNTIME/adapters/presentation/draw.mjs": "59dbd4372f88e78423039d608e61e70bca63566d72c17cb5eec43e84767941a4",
+   "06_RUNTIME/adapters/presentation/exit.mjs": "20c7befd7e77362d56857b77ae0953763c87330fe8386edf07e4126803d42a93",
+   "06_RUNTIME/adapters/presentation/raster.mjs": "f73106899de2575182ba63a9b80df13ef467f925dff18fe0927c17df2a3f7e20",
+   "07_TESTS/oracle/solvability.mjs": "dc31467c62216f2e4e2fcfe5566cd61b393399a8fcfbbc1e9d5dcef84382fe9c",
+   "07_TESTS/unit/input.test.mjs": "17e94f9135b3a20e63b04f913d1617b0061b58c8f4f2b0b06d0b4402761123da",
+   "07_TESTS/unit/loop.test.mjs": "80c46096e849a599abe1b66c9cad5d41fc31cbba124d6ed07c6b256dd0ee14da",
+   "07_TESTS/unit/state.test.mjs": "c8b069918185ad82bc50771b1310d1ae749d6b810088f89296c1a5f23bbccf3e"
+  },
+  "game_dir": "C:\\TACTICAL_CHESS_STUDIO\\games\\pong",
+  "gate_checked": true,
+  "killed": 58,
+  "logic_files": [
+   "05_SYSTEMS/game_loop/loop.mjs",
+   "05_SYSTEMS/game_state/state.mjs",
+   "05_SYSTEMS/input/input.mjs",
+   "06_RUNTIME/adapters/presentation/audio.mjs",
+   "06_RUNTIME/adapters/presentation/browser/main.mjs",
+   "06_RUNTIME/adapters/presentation/capture_browser.mjs",
+   "06_RUNTIME/adapters/presentation/capture_godot.mjs",
+   "06_RUNTIME/adapters/presentation/draw.mjs",
+   "06_RUNTIME/adapters/presentation/exit.mjs",
+   "06_RUNTIME/adapters/presentation/raster.mjs"
+  ],
+  "mutation_exception": false,
+  "survivants_non_tries": [
+   "and->or@L14",
+   "and->or@L21",
+   "and->or@L46",
+   "and->or@L48 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "and->or@L50",
+   "and->or@L60 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "and->or@L72",
+   "and->or@L77",
+   "and->or@L78",
+   "and->or@L79 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "and->or@L8",
+   "eq->neq@L14",
+   "eq->neq@L19",
+   "eq->neq@L20",
+   "eq->neq@L35",
+   "eq->neq@L37",
+   "eq->neq@L41",
+   "eq->neq@L46",
+   "eq->neq@L50",
+   "eq->neq@L51",
+   "eq->neq@L7",
+   "eq->neq@L78 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "eq->neq@L8",
+   "false->true@L53",
+   "false->true@L59",
+   "false->true@L73",
+   "ge->gt@L77 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "neq->eq@L14",
+   "neq->eq@L21 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "neq->eq@L43",
+   "neq->eq@L59",
+   "neq->eq@L75",
+   "neq->eq@L8",
+   "neq->eqeq@L37",
+   "or->and@L33",
+   "or->and@L34 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "or->and@L37",
+   "or->and@L62",
+   "pluseq->minuseq@L16",
+   "pluseq->minuseq@L19",
+   "pluseq->minuseq@L20",
+   "pluseq->minuseq@L23",
+   "pluseq->minuseq@L26",
+   "pluseq->minuseq@L27",
+   "pluseq->minuseq@L36",
+   "pluseq->minuseq@L37",
+   "pluseq->minuseq@L39",
+   "pluseq->minuseq@L50",
+   "pluseq->minuseq@L55",
+   "pluseq->minuseq@L57",
+   "pluseq->minuseq@L67",
+   "pluseq->minuseq@L92",
+   "pluseq->minuseq@L94",
+   "true->false@L34",
+   "true->false@L48",
+   "true->false@L53",
+   "true->false@L59"
+  ],
+  "survived": 68,
+  "test_argv": [
+   "node",
+   "--test",
+   "07_TESTS/unit/input.test.mjs",
+   "07_TESTS/unit/loop.test.mjs",
+   "07_TESTS/unit/state.test.mjs",
+   "07_TESTS/oracle/solvability.mjs"
+  ],
+  "test_files_scelles": [
+   "07_TESTS/oracle/solvability.mjs",
+   "07_TESTS/unit/input.test.mjs",
+   "07_TESTS/unit/loop.test.mjs",
+   "07_TESTS/unit/state.test.mjs"
+  ],
+  "total": 126,
+  "triage_sha256": "39266deb23adfe4b03bc6347bde7e14d8b7b0ae1afab2755d0b3c3581d957224",
+  "triaged_survivors": []
+ },
+ "gate": {
+  "checked": true,
+  "exception": false,
+  "passed": false,
+  "survivants_non_tries": [
+   "and->or@L14",
+   "and->or@L21",
+   "and->or@L46",
+   "and->or@L48 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "and->or@L50",
+   "and->or@L60 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "and->or@L72",
+   "and->or@L77",
+   "and->or@L78",
+   "and->or@L79 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "and->or@L8",
+   "eq->neq@L14",
+   "eq->neq@L19",
+   "eq->neq@L20",
+   "eq->neq@L35",
+   "eq->neq@L37",
+   "eq->neq@L41",
+   "eq->neq@L46",
+   "eq->neq@L50",
+   "eq->neq@L51",
+   "eq->neq@L7",
+   "eq->neq@L78 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "eq->neq@L8",
+   "false->true@L53",
+   "false->true@L59",
+   "false->true@L73",
+   "ge->gt@L77 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "neq->eq@L14",
+   "neq->eq@L21 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "neq->eq@L43",
+   "neq->eq@L59",
+   "neq->eq@L75",
+   "neq->eq@L8",
+   "neq->eqeq@L37",
+   "or->and@L33",
+   "or->and@L34 (ambigu: plusieurs mutants même (name,line) — triage impossible)",
+   "or->and@L37",
+   "or->and@L62",
+   "pluseq->minuseq@L16",
+   "pluseq->minuseq@L19",
+   "pluseq->minuseq@L20",
+   "pluseq->minuseq@L23",
+   "pluseq->minuseq@L26",
+   "pluseq->minuseq@L27",
+   "pluseq->minuseq@L36",
+   "pluseq->minuseq@L37",
+   "pluseq->minuseq@L39",
+   "pluseq->minuseq@L50",
+   "pluseq->minuseq@L55",
+   "pluseq->minuseq@L57",
+   "pluseq->minuseq@L67",
+   "pluseq->minuseq@L92",
+   "pluseq->minuseq@L94",
+   "true->false@L34",
+   "true->false@L48",
+   "true->false@L53",
+   "true->false@L59"
+  ],
+  "triage_perimes": [],
+  "triaged_survivors": []
+ },
+ "mutation_result": {
+  "baseline_ok": true,
+  "killed": 58,
+  "per_file": {
+   "05_SYSTEMS/game_loop/loop.mjs": {
+    "killed": 14,
+    "total": 15
+   },
+   "05_SYSTEMS/game_state/state.mjs": {
+    "killed": 29,
+    "total": 29
+   },
+   "05_SYSTEMS/input/input.mjs": {
+    "killed": 15,
+    "total": 17
+   },
+   "06_RUNTIME/adapters/presentation/audio.mjs": {
+    "killed": 0,
+    "total": 11
+   },
+   "06_RUNTIME/adapters/presentation/browser/main.mjs": {
+    "killed": 0,
+    "total": 4
+   },
+   "06_RUNTIME/adapters/presentation/capture_browser.mjs": {
+    "killed": 0,
+    "total": 5
+   },
+   "06_RUNTIME/adapters/presentation/capture_godot.mjs": {
+    "killed": 0,
+    "total": 23
+   },
+   "06_RUNTIME/adapters/presentation/draw.mjs": {
+    "killed": 0,
+    "total": 3
+   },
+   "06_RUNTIME/adapters/presentation/exit.mjs": {
+    "killed": 0,
+    "total": 10
+   },
+   "06_RUNTIME/adapters/presentation/raster.mjs": {
+    "killed": 0,
+    "total": 9
+   }
+  },
+  "survived": 68,
+  "survivors": [
+   {
+    "line": 114,
+    "name": "ge->gt"
+   },
+   {
+    "line": 19,
+    "name": "or->and"
+   },
+   {
+    "line": 20,
+    "name": "or->and"
+   },
+   {
+    "line": 19,
+    "name": "eq->neq"
+   },
+   {
+    "line": 20,
+    "name": "eq->neq"
+   },
+   {
+    "line": 35,
+    "name": "eq->neq"
+   },
+   {
+    "line": 41,
+    "name": "eq->neq"
+   },
+   {
+    "line": 50,
+    "name": "eq->neq"
+   },
+   {
+    "line": 50,
+    "name": "and->or"
+   },
+   {
+    "line": 60,
+    "name": "and->or"
+   },
+   {
+    "line": 60,
+    "name": "and->or"
+   },
+   {
+    "line": 33,
+    "name": "or->and"
+   },
+   {
+    "line": 62,
+    "name": "or->and"
+   },
+   {
+    "line": 50,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 46,
+    "name": "eq->neq"
+   },
+   {
+    "line": 51,
+    "name": "eq->neq"
+   },
+   {
+    "line": 59,
+    "name": "neq->eq"
+   },
+   {
+    "line": 46,
+    "name": "and->or"
+   },
+   {
+    "line": 43,
+    "name": "neq->eq"
+   },
+   {
+    "line": 48,
+    "name": "and->or"
+   },
+   {
+    "line": 48,
+    "name": "and->or"
+   },
+   {
+    "line": 20,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 34,
+    "name": "true->false"
+   },
+   {
+    "line": 77,
+    "name": "ge->gt"
+   },
+   {
+    "line": 77,
+    "name": "ge->gt"
+   },
+   {
+    "line": 37,
+    "name": "eq->neq"
+   },
+   {
+    "line": 78,
+    "name": "eq->neq"
+   },
+   {
+    "line": 78,
+    "name": "eq->neq"
+   },
+   {
+    "line": 75,
+    "name": "neq->eq"
+   },
+   {
+    "line": 72,
+    "name": "and->or"
+   },
+   {
+    "line": 77,
+    "name": "and->or"
+   },
+   {
+    "line": 78,
+    "name": "and->or"
+   },
+   {
+    "line": 79,
+    "name": "and->or"
+   },
+   {
+    "line": 79,
+    "name": "and->or"
+   },
+   {
+    "line": 79,
+    "name": "and->or"
+   },
+   {
+    "line": 34,
+    "name": "or->and"
+   },
+   {
+    "line": 34,
+    "name": "or->and"
+   },
+   {
+    "line": 37,
+    "name": "or->and"
+   },
+   {
+    "line": 19,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 48,
+    "name": "true->false"
+   },
+   {
+    "line": 53,
+    "name": "true->false"
+   },
+   {
+    "line": 59,
+    "name": "true->false"
+   },
+   {
+    "line": 53,
+    "name": "false->true"
+   },
+   {
+    "line": 59,
+    "name": "false->true"
+   },
+   {
+    "line": 73,
+    "name": "false->true"
+   },
+   {
+    "line": 37,
+    "name": "neq->eqeq"
+   },
+   {
+    "line": 23,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 36,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 39,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 7,
+    "name": "eq->neq"
+   },
+   {
+    "line": 8,
+    "name": "eq->neq"
+   },
+   {
+    "line": 14,
+    "name": "eq->neq"
+   },
+   {
+    "line": 8,
+    "name": "neq->eq"
+   },
+   {
+    "line": 14,
+    "name": "neq->eq"
+   },
+   {
+    "line": 21,
+    "name": "neq->eq"
+   },
+   {
+    "line": 21,
+    "name": "neq->eq"
+   },
+   {
+    "line": 8,
+    "name": "and->or"
+   },
+   {
+    "line": 14,
+    "name": "and->or"
+   },
+   {
+    "line": 21,
+    "name": "and->or"
+   },
+   {
+    "line": 16,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 26,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 27,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 37,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 55,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 57,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 67,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 92,
+    "name": "pluseq->minuseq"
+   },
+   {
+    "line": 94,
+    "name": "pluseq->minuseq"
+   }
+  ],
+  "test_argv": [
+   "node",
+   "--test",
+   "07_TESTS/unit/input.test.mjs",
+   "07_TESTS/unit/loop.test.mjs",
+   "07_TESTS/unit/state.test.mjs",
+   "07_TESTS/oracle/solvability.mjs"
+  ],
+  "total": 126
+ }
+}

@@ -1,0 +1,27 @@
+{
+  "pass": true,
+  "verdict": "OK",
+  "findings": [],
+  "coverage": {
+    "checked": true,
+    "missing": [],
+    "satisfied": [
+      "vr_core_hearth",
+      "vr_emitter_unit",
+      "vr_spark_burst",
+      "vr_light_counter",
+      "vr_buy_button",
+      "vr_progress_constellation",
+      "vr_end_screen",
+      "vr_locked_glyph",
+      "vr_ascension_altar",
+      "vr_quest_milestone"
+    ]
+  },
+  "resolution_stats": {
+    "ok": 0,
+    "blocked": 11,
+    "total": 11
+  },
+  "status": "MEASURED"
+}

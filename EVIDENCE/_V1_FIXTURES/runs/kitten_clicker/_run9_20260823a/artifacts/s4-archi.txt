@@ -1,0 +1,225 @@
+Everything is verified against the two gating realities (the before-build oracle `check_blueprint_contract.mjs` and the after-build consumer `check_architecture`). Here is the architecture.
+
+## Blueprint — kitten_clicker (s4-archi)
+
+**Découpage par responsabilité, pas par confort.** Trois couches, séparation dure logique → rendu → input (exigée par le contrat et par la doctrine du studio) :
+
+- **Couche données fondationnelle** : `world_content` (source unique du contenu déclaré : chatons/lieux/objets/quêtes) — ne dépend de rien.
+- **Couche logique pure** (`05_SYSTEMS/`) : `economy`, `collection`, `upgrades`, `pricing`, `decision`, `progression`, `goals`, `prestige`. Aucune ne dépend du runtime, du rendu, de l'input ni de l'audio.
+- **Couche adaptateurs runtime** (`06_RUNTIME/adapters/`) : `input_adapter` (canal d'entrée public unique → pilote la logique), `presentation` (lit l'état observable, ne le mute jamais), `audio` (feuille de side-effect, ne dépend de rien).
+
+**God-objects tués d'avance** : pas de module « game_state » fourre-tout. La `main.tscn`/composition-root (catégorie `godot.project_root`) et les harnais de `07_TESTS/oracle/` (bot de solvabilité, proof harness) sont du plumbing moteur / des fichiers de test — hors graphe de dépendances par construction (`check_architecture` ignore les fichiers de test et la racine). Chaque module du graphe répond à ≥1 feature réelle de la featuremap.
+
+**Couverture** : 12 modules couvrent les 17 features, chacune exactement une fois, zéro couverture fantôme. Graphe acyclique. 66 paires interdites explicites, dont les séparations `logique→rendu` et `logique→input` pour chacun des 9 modules logiques ; aucune paire interdite ne coïncide avec une dépendance déclarée (vérifié pair par pair).
+
+---
+
+### RAPPORT FINAL
+
+**software_verdict: BLOCKED** — l'oracle d'avant-build `check_blueprint_contract.mjs` n'a PAS été exécuté par moi (permissions : `run: aucun` ; Bash désactivé dans cette session). La conformité structurelle ci-dessous est établie par **lecture du code de l'oracle** (`check_blueprint_contract.mjs` l.105-251, `upstream_schema.mjs::featureIds` l.429-437) et vérification par construction, pas par exécution. Le verdict autoritaire revient à l'exécuteur qui matérialise `blueprint.json` et lance l'oracle.
+
+**evidence_verdict: MECHANICAL_VALIDATION_ONLY** — pour les faits vérifiables sans exécution (forme du contrat, couverture, acyclicité) : appuyés sur la lecture directe de l'oracle.
+
+**claim_verdict: NO_CLAIM_ALLOWED** — je ne peux pas certifier `OK` sans avoir exécuté l'oracle nommé dans mon contrat.
+
+**Faits appuyés (par lecture de l'oracle, à re-prouver par exécution) :**
+- 17/17 features de `featuremap.json` couvertes par ≥1 module (cible = `feat.id`, confirmé `upstream_schema.mjs::featureIds`) — aucune feature non couverte.
+- Aucune couverture fantôme : tous les `couvre[]` citent un `F_*` existant.
+- `deps_interdites` non vide (66 paires), inclut `[<logique>, presentation]` et `[<logique>, input_adapter]` pour les 9 modules logiques.
+- Graphe acyclique (WC/EC/PR/AU puits ; aucune arête retour).
+- Aucune dépendance déclarée présente dans `deps_interdites` (blueprint non auto-contradictoire).
+- Chaque module a une entrée `responsabilites[]` avec `responsabilite`, `couvre[]` non vide, `dependances[]` (présent, vide autorisé), `preuve_attendue{kind∈PROOF_KINDS, statement}`.
+
+**fog → HumanGate (Pierre) :** l'exécuteur doit lancer `node scripts/forge/check_blueprint_contract.mjs <run_dir>/blueprint.json --featuremap <run_dir>/featuremap.json` et confirmer `VERDICT BLUEPRINT: OK` avant s5.
+
+**Écart amont détecté (transmis à s5/s9, non bloquant s4) :** la featuremap (s3) ne décompose **aucune** feature pour (a) la production automatique passive — pourtant M3 du charter et un critère de succès —, ni (b) l'état-de-partie/runtime/solvabilité. J'ai absorbé (a) dans les responsabilités `collection` (rps par chaton) + `economy` (accrual), et traité (b) comme plumbing/tests hors module. Le bot de solvabilité (M5 / point (h)) vivra en `07_TESTS/oracle/solvability.*`, câblé au gate en s9 — ce n'est pas un module du blueprint.
+
+**SKIPPED_VALIDATION :**
+- item: exécution de `check_blueprint_contract.mjs` · périmètre: `blueprint.json` avant-build · statut: non fait · raison: `run: aucun` + Bash désactivé ; c'est le rôle de l'exécuteur.
+- item: `forge.static_oracles.check_architecture` · périmètre: code sous `games/kitten_clicker` · statut: non applicable ici · raison: oracle d'APRÈS-build ; sur `src` vide il serait vacuement vert (documenté dans l'en-tête de `check_blueprint_contract.mjs`).
+
+**RETURN LINEAGE**
+- why_task_existed:
+  - problem: le projet kitten_clicker n'a pas d'architecture gelée ; sans blueprint, s5 (WireMap) et s9 (build) n'ont pas de contrat de structure ni de séparation logique/rendu/input à respecter.
+  - oracle: `check_blueprint_contract.mjs` (avant-build) — nommé dans mon contrat comme l'oracle de cette étape.
+  - root_cause: non établie (activation par séquence Forge normale, dispatch `kitten_clicker-20260823a:s4-archi`, pas par un défaut mesuré).
+  - action_reason: produire le blueprint 4-clés (superset ratifié, cf. `manifest-434`) qui couvre les 17 features avec un graphe acyclique et des séparations de couche explicites.
+- result: blueprint conçu (12 modules, 66 paires interdites, 17/17 features couvertes, acyclique) émis dans le bloc terminal ; conformité vérifiée par lecture d'oracle, non par exécution (BLOCKED côté preuve exécutée).
+- proof: lecture de `check_blueprint_contract.mjs`, `upstream_schema.mjs`, `static_oracles.py::check_architecture`, `repo_map.yaml`, et du blueprint de référence `lab/forge_runs/pacman/blueprint.json`. Aucune commande exécutée (permissions/Bash).
+- learning: dans ce dépôt, un module du blueprint DOIT tracer vers une `feat.id` de la featuremap (`couvre` non vide validé) — donc les modules d'infrastructure sans feature (game_state, runtime_loop, solvability_bot) ne sont PAS des modules ici, contrairement à pacman dont la featuremap portait ces features ; ils deviennent composition-root/tests. À réutiliser pour tout jeu dont la featuremap est purement orientée-joueur.
+- next_reason: l'exécuteur doit matérialiser `blueprint.json` et lancer l'oracle avant-build ; la chaîne ne peut pas se fermer côté s4 tant que ce verdict n'est pas OK. Escalade normale au niveau exécuteur, pas un échec de conception.
+
+```json
+{
+  "game_id": "kitten_clicker",
+  "modules": [
+    "world_content",
+    "economy",
+    "collection",
+    "upgrades",
+    "pricing",
+    "decision",
+    "progression",
+    "goals",
+    "prestige",
+    "input_adapter",
+    "presentation",
+    "audio"
+  ],
+  "deps_interdites": [
+    ["world_content", "presentation"], ["world_content", "input_adapter"], ["world_content", "audio"],
+    ["economy", "presentation"], ["economy", "input_adapter"], ["economy", "audio"],
+    ["collection", "presentation"], ["collection", "input_adapter"], ["collection", "audio"],
+    ["upgrades", "presentation"], ["upgrades", "input_adapter"], ["upgrades", "audio"],
+    ["pricing", "presentation"], ["pricing", "input_adapter"], ["pricing", "audio"],
+    ["decision", "presentation"], ["decision", "input_adapter"], ["decision", "audio"],
+    ["progression", "presentation"], ["progression", "input_adapter"], ["progression", "audio"],
+    ["goals", "presentation"], ["goals", "input_adapter"], ["goals", "audio"],
+    ["prestige", "presentation"], ["prestige", "input_adapter"], ["prestige", "audio"],
+    ["presentation", "input_adapter"], ["presentation", "audio"],
+    ["input_adapter", "presentation"], ["input_adapter", "audio"],
+    ["audio", "world_content"], ["audio", "economy"], ["audio", "collection"], ["audio", "upgrades"], ["audio", "pricing"], ["audio", "decision"], ["audio", "progression"], ["audio", "goals"], ["audio", "prestige"], ["audio", "input_adapter"], ["audio", "presentation"],
+    ["world_content", "economy"], ["world_content", "collection"], ["world_content", "upgrades"], ["world_content", "pricing"], ["world_content", "decision"], ["world_content", "progression"], ["world_content", "goals"], ["world_content", "prestige"],
+    ["economy", "world_content"], ["economy", "collection"], ["economy", "upgrades"], ["economy", "pricing"], ["economy", "decision"], ["economy", "progression"], ["economy", "goals"], ["economy", "prestige"],
+    ["pricing", "world_content"], ["pricing", "economy"], ["pricing", "collection"], ["pricing", "upgrades"], ["pricing", "decision"], ["pricing", "progression"], ["pricing", "goals"], ["pricing", "prestige"]
+  ],
+  "ownership": {
+    "world_content": "03_WORLD/",
+    "economy": "05_SYSTEMS/economy/",
+    "collection": "05_SYSTEMS/collection/",
+    "upgrades": "05_SYSTEMS/upgrades/",
+    "pricing": "05_SYSTEMS/pricing/",
+    "decision": "05_SYSTEMS/decision/",
+    "progression": "05_SYSTEMS/progression/",
+    "goals": "05_SYSTEMS/goals/",
+    "prestige": "05_SYSTEMS/prestige/",
+    "input_adapter": "06_RUNTIME/adapters/input_adapter/",
+    "presentation": "06_RUNTIME/adapters/presentation/",
+    "audio": "06_RUNTIME/adapters/audio/"
+  },
+  "responsabilites": [
+    {
+      "module": "world_content",
+      "responsabilite": "Source UNIQUE du contenu declare du monde : charge et valide 03_WORLD/kittens.json (>=6 chatons nommes distincts {name, rarity, ronrons_per_sec}), places.json (>=2 lieux {id, name, unlock_tier}, refuge au tier 0), objects.json (>=3 objets {id, name, effect}) et quests.json (>=3 quetes {id, name, condition}). Aucun autre module ne redeclare de contenu.",
+      "couvre": ["F_REGISTRE_CHATONS", "F_REGISTRE_LIEUX", "F_REGISTRE_OBJETS", "F_REGISTRE_QUETES"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "file_write",
+        "statement": "Les quatre registres existent sous 03_WORLD/ et satisfont chacun leur cardinalite et leur schema minimal : kittens>=6 noms distincts, places>=2 dont refuge tier 0, objects>=3, quests>=3."
+      }
+    },
+    {
+      "module": "economy",
+      "responsabilite": "Detenir l'UNIQUE compteur `ronrons` (entier) et la valeur de gain par clic ; appliquer le gain d'un clic, l'accrual passif d'un montant fourni par le tick, et la depense d'un cout. Croissance monotone, persistance d'un tick a l'autre. Aucun autre module ne mute `ronrons`.",
+      "couvre": ["F_ACCUMULATION_RONRONS"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Un bot fait croitre `ronrons` par clics accumules jusqu'a franchir le cout du premier chaton ; le total affiche croit de facon monotone, persiste, et l'affordance acheter_chaton devient active au franchissement."
+      }
+    },
+    {
+      "module": "collection",
+      "responsabilite": "Detenir l'ensemble des chatons ADOPTES : adopter un chaton nomme distinct (defini par world_content) et exposer le compte ainsi que la production passive totale (somme des ronrons_per_sec). Proprietaire unique de « quels chatons sont adoptes ».",
+      "couvre": ["F_ADOPTION_CHATON"],
+      "dependances": ["world_content"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Avec des ronrons suffisants, l'adoption ajoute un chaton nomme distinct au HUD collection (collection +1) et augmente la production passive totale ; le cout est bien decremente par economy dans la meme transaction."
+      }
+    },
+    {
+      "module": "upgrades",
+      "responsabilite": "Detenir les niveaux d'amelioration de la pelote et appliquer leur effet : apres achat d'une amelioration, la valeur de gain par clic pelote est strictement superieure. Proprietaire unique des effets d'amelioration/objets sur le rendement du clic.",
+      "couvre": ["F_AMELIORATION_PELOTE"],
+      "dependances": ["world_content"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Un bot mesure le delta `ronrons` par clic pelote avant et apres acheter_amelioration : le delta apres est STRICTEMENT superieur (jamais un >= tautologique)."
+      }
+    },
+    {
+      "module": "pricing",
+      "responsabilite": "Source UNIQUE de la courbe de couts : exposer au moins 3 couts de palier DISTINCTS et strictement croissants (variance non nulle, regle Pierre 2026-07-21). Aucun cout n'est recopie ailleurs.",
+      "couvre": ["F_COURBE_PALIERS"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "L'oracle verifie >=3 couts de palier distincts et strictement croissants ; un bot atteint le 3e palier en un nombre de ticks FINI (solvabilite par execution)."
+      }
+    },
+    {
+      "module": "decision",
+      "responsabilite": "Materialiser le POINT DE DECISION significatif : au premier moment financable, presenter le choix adopter-un-chaton (production passive) vs ameliorer-la-pelote (rendement au clic), et prouver que la meilleure option differe selon la politique (idle vs actif). Ne mute aucun etat : il evalue.",
+      "couvre": ["F_DECISION_DEPENSE"],
+      "dependances": ["economy", "collection", "upgrades", "pricing"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Sonde a deux trajectoires sur >=300 frames : politique `idle` (aucun clic) vs `actif` (clic tous les 3 frames) ; la metrique `ronrons` finale DIFFERE selon l'option, prouvant que la decision porte une information."
+      }
+    },
+    {
+      "module": "progression",
+      "responsabilite": "Suivre le palier de progression et decider le deblocage des lieux : au palier requis atteint par les adoptions, `lieu_2` devient disponible dans la vue du refuge. Proprietaire unique de la logique de deblocage de lieu.",
+      "couvre": ["F_DEBLOCAGE_LIEU"],
+      "dependances": ["collection", "world_content"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Apres que les adoptions atteignent le seuil (unlock_tier de places.json), un bot observe l'apparition de `lieu_2` dans la vue du refuge (effet du deblocage)."
+      }
+    },
+    {
+      "module": "goals",
+      "responsabilite": "Calculer le texte du HUD `objectif` a partir des quetes et de l'etat de progression : un objectif initial non vide au demarrage, puis des objectifs successifs distincts (second chaton/palier, puis jalon de prestige). Proprietaire unique du contenu de `objectif`.",
+      "couvre": ["F_OBJECTIF_INITIAL", "F_OBJECTIFS_SUCCESSIFS"],
+      "dependances": ["world_content", "collection", "progression"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Au demarrage le HUD `objectif` porte un texte non vide nommant une cible d'adoption ; apres la premiere adoption il change pour un texte NOUVEAU et distinct, et plus tard pour un texte distinct des deux precedents nommant le jalon de prestige."
+      }
+    },
+    {
+      "module": "prestige",
+      "responsabilite": "Calculer l'etat post-prestige : remise a zero du compteur `ronrons` et increment d'un indicateur de bonus permanent. Proprietaire unique de l'indicateur de bonus permanent ; ne lit aucun rendu ni input.",
+      "couvre": ["F_PRESTIGE"],
+      "dependances": ["economy", "collection"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Un bot accumule des ronrons, declenche prestige, et observe `ronrons` retomber a 0 tandis qu'un indicateur de bonus permanent AUGMENTE strictement."
+      }
+    },
+    {
+      "module": "input_adapter",
+      "responsabilite": "CANAL D'ENTREE PUBLIC UNIQUE : traduire les clics (pelote, acheter_chaton, acheter_amelioration, prestige) depuis main.tscn en actions sur la logique. Le bot de solvabilite passe par lui, jamais par une ecriture directe dans l'etat. Ne rend rien, ne joue aucun son.",
+      "couvre": ["F_CARESSE_PELOTE"],
+      "dependances": ["economy", "collection", "upgrades", "prestige", "pricing"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Depuis main.tscn un bot declenche l'affordance `pelote` (action d'entree du joueur) et le compteur `ronrons` croit de facon monotone (+1 minimum par clic) via economy ; toutes les affordances joueur passent par ce canal unique."
+      }
+    },
+    {
+      "module": "presentation",
+      "responsabilite": "Rendre a partir du SEUL etat observable de la logique : identite visuelle distincte par rarete de chaton, et feedback visible au clic sur la pelote (rebond/particules, texte flottant +N). Lit l'etat, ne le mute jamais, ne consulte aucune regle et n'appelle ni input ni audio.",
+      "couvre": ["F_RARETE_VISUELLE", "F_FEEDBACK_CLIC_VISUEL"],
+      "dependances": ["economy", "collection", "upgrades", "progression", "goals", "prestige", "world_content"],
+      "preuve_attendue": {
+        "kind": "visual",
+        "statement": "En fenetre GPU reelle : les captures de deux raretes different en pixels au-dela d'un seuil ; et une capture pre/post clic differe en pixels sur la zone pelote (rebond et particule) dans la meme frame."
+      }
+    },
+    {
+      "module": "audio",
+      "responsabilite": "Emettre exactement un declenchement sonore, avec un identifiant de son distinct, pour chacun des quatre evenements (clic pelote, achat, deblocage, prestige), et journaliser chaque declenchement. Feuille de side-effect : ne depend d'aucun module.",
+      "couvre": ["F_AUDIO_EVENEMENTS"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Le journal de declenchements de 07_TESTS/oracle/core_audio.gd contient exactement une entree sonore par evenement pour les 4 evenements (4 identifiants de son distincts)."
+      }
+    }
+  ]
+}
+```
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "La featuremap s3 de kitten_clicker ne porte aucune feature pour la production automatique passive (pourtant exigee par M3 et les criteres de succes du charter) ni pour l'etat-de-partie/runtime/solvabilite, alors que la featuremap pacman de reference les portait.", "root_cause": "Decomposition s3 orientee strictement features-joueur : la production passive a ete absorbee implicitement dans l'adoption/accumulation, et le runtime/solvabilite n'a pas ete decompose en feature, ce qui force ces responsabilites hors du graphe de modules (composition-root et 07_TESTS)."}

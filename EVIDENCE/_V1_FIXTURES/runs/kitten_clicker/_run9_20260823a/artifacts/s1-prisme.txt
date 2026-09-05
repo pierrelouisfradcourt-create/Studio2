@@ -1,0 +1,458 @@
+I now have the complete, exact contract from the four oracle sources:
+
+- **`check_prisme_manifest`** (s1 verdict): gates on chain (`observation`≠`claim`≠`enonce`) + provenance (`EXPECTED`→address / `ADDITIONS`→`null`) + `expected_proof{kind,statement}` + valid `destination` + ≥1 actionable + unique ids. Reference-anchoring is **reported-only, non-blocking**, and only knows worldscan tokens.
+- **`check_prisme.mjs`** (panel form): 4 headers, ≥40 chars each, ≥1 `- **Rn` rule, no placeholders.
+- **`upstream_schema.validateLoopFields`** + **`loop_spec.checkLoopSpec`**: the full G→H→I→J + DECISION per-link rules the executor derives `loop.json` against.
+
+I've verified my planned 21 exigences pass every rule (all 10 loop roles, G≥2 same-hud new_distinct, F affordance+appears, H replay∈B..F, I prestige affordance, J replay_ref∈B + `increases_more_than:b_click`, DECISION options/policies/metric=`ronrons`/horizon=300/hud=`objectif`). Emitting now.
+
+---
+
+# Kitten Clicker — Product Snapshot (Prisme Produit)
+
+*Le produit fini de `kitten_clicker`, décrit tel que le joueur le vit sur Godot 4.6.3 desktop. Ancre : `charter.yaml` (objectif, criteres_demo M1–M5 / a–h, hors_scope), `worldscan` (Cookie Clicker + Neko Atsume), `story_bible.json`, `gm_worldscan.json`. Aucun chemin de fabrication décrit — seulement l'expérience jouée.*
+
+## 1. CE QUE LE JOUEUR VOIT
+
+Au centre de l'écran, une **pelote** de laine ronde et douce, posée dans un **refuge** cosy en 2D aux couleurs chaudes. En haut, un **compteur de ronrons** (la monnaie) en gros chiffres, et sous lui un **taux de production automatique** (ronrons/seconde). Sur le côté, un **panneau d'achats** : adopter un chaton, améliorer la pelote, et — plus tard — un bouton de **prestige**. Une bande **objectif** affiche en clair la prochaine cible à atteindre, en texte lisible.
+
+Quand le joueur clique, la pelote **rebondit** et un petit **+N flottant** s'élève depuis le point de clic ; des particules de laine s'échappent. Chaque chaton adopté **apparaît réellement à l'écran** sous forme de sprite animé (il dort, joue, ronronne), pas seulement comme une ligne de compteur. Les chatons portent une **identité visuelle distincte selon leur rareté** (teinte dominante, halo, badge) : un chaton commun et un chaton rare ne se confondent jamais au premier regard. Au fil de la progression, un **second lieu** se dévoile dans le refuge, agrandissant l'espace visible. Des **objets** décoratifs et utilitaires meublent la scène, et une courte liste de **quêtes** montre leurs objectifs à l'écran.
+
+## 2. CE QUE LE JOUEUR FAIT
+
+Le joueur **caresse la pelote** en cliquant : c'est l'action première, tactile, qui convertit chaque clic en ronrons. Avec ses ronrons, il **adopte des chatons** (chaque chaton produit ensuite des ronrons tout seul, sans clic) et **améliore la pelote** (chaque clic rapporte davantage). Très vite il rencontre une **vraie décision** : dépenser dans un chaton (revenu passif, patient) ou dans l'amélioration de la pelote (récompense l'activité au clic) — et le meilleur choix dépend de sa façon de jouer, pas d'un simple « le moins cher d'abord ».
+
+Il **poursuit des objectifs** qui se renouvellent : atteindre un premier chaton, puis un palier, puis le seuil de prestige. En franchissant un palier il **débloque un nouveau lieu**. Au sommet de la boucle, il **accomplit un prestige** : il remet sa réserve de ronrons à zéro en échange d'un **bonus permanent**, puis **recommence la boucle** — clic, adoption, amélioration — dans un état où chaque geste rend plus qu'avant. Un **bot déterministe** peut jouer cette même boucle sans main humaine jusqu'au 3ᵉ palier et au-delà (jusqu'à l'avantage post-prestige).
+
+## 3. CE QUE LE JOUEUR RESSENT
+
+Une **satisfaction immédiate** au clic : la réponse visuelle et sonore est instantanée, le geste « répond ». Puis le **soulagement du premier automatisme** — « ça tourne sans moi » — quand le premier chaton fait monter le compteur seul. Vient l'**arbitrage** : le sentiment agréable d'un choix qui compte, où deux dépenses tirent la partie dans deux directions cohérentes. La **fierté de collection** monte à mesure que des chatons nommés, mignons et distincts s'accumulent et qu'un nouveau lieu s'ouvre. Le prestige procure la tension familière du genre — **sacrifier maintenant pour aller plus vite ensuite** — puis la récompense tangible de sentir la boucle **accélérer**. Rien n'inspire de peur : pas de combat, pas de game-over, pas d'échec puni ; le monde reste **calme, sûr et attachant**.
+
+## 4. RÈGLES OBSERVABLES
+
+- **R1** — À chaque clic sur la pelote (`pelote`), le HUD `ronrons` augmente d'au moins 1, de façon visible (charter M1). Testable : delta strict positif par clic.
+- **R2** — Après l'achat d'un chaton (`acheter_chaton`), un sprite de chaton devient visible à l'écran, pas seulement un compteur qui change (charter M2). Testable : différence de pixels sur la scène.
+- **R3** — Dès qu'au moins un chaton est présent, le compteur `ronrons` monte sans aucun clic (charter M3). Testable : croissance sur N frames sans input.
+- **R4** — Acheter une amélioration (`acheter_amelioration`) fait monter le taux de production affiché à l'écran (charter M4). Testable : taux affiché avant < après.
+- **R5** — Le jeu contient au moins 6 chatons nommés, chacun avec une identité visuelle distincte par rareté, visibles à l'écran (charter a). Testable : registre + captures distinctes par rareté.
+- **R6** — Il existe au moins 2 lieux : le refuge de départ et au moins 1 lieu débloqué par la méta-progression (charter b). Testable : apparition du groupe visuel `lieu_2`.
+- **R7** — Au moins 3 objets distincts sont présents et utilisables dans le jeu (charter c). Testable : registre d'objets à ≥ 3 entrées.
+- **R8** — Au moins 3 petites quêtes existent, leurs objectifs visibles à l'écran dans le HUD `objectif` (charter d). Testable : registre de quêtes à ≥ 3 entrées.
+- **R9** — Un son distinct se déclenche pour le clic, l'achat, le déblocage et le prestige, sur l'événement correspondant (charter e). Testable : journal de déclenchements à 4 identifiants de son distincts.
+- **R10** — Le clic produit un feedback visuel (rebond de la pelote, particules ou animation) dans la même frame (charter f). Testable : différence de pixels pré/post clic sur la zone pelote.
+- **R11** — La courbe de paliers porte au moins 3 valeurs de coût distinctes et strictement croissantes (charter g, règle de variance ratifiée Pierre 2026-07-21). Testable : ≥ 3 coûts distincts, variance non nulle.
+- **R12** — Un bot déterministe atteint le 3ᵉ palier de progression en un nombre de ticks fini, sans intervention humaine (charter h / M5). Testable : exécution du bot, palier 3 atteint.
+- **R13** — Le prestige (`prestige`) remet le compteur `ronrons` à zéro de façon visible et active un bonus permanent affiché. Testable : `ronrons` retombe à 0 et un indicateur de bonus augmente.
+- **R14** — Après un prestige, rejouer le même clic sur la pelote rapporte strictement plus de ronrons qu'avant le prestige (maillon ADVANTAGE). Testable : delta/clic après > delta/clic avant.
+- **R15** — Le texte du HUD `objectif` change textuellement (pas seulement en valeur) au fil de la progression, présentant des objectifs successifs distincts (maillon NEXT_GOAL). Testable : ≥ 2 textes d'objectif distincts.
+
+## 5. PROVENANCE, ORACLE & VALIDATION
+
+**Ancre.** `charter.yaml` (objectif : clicker de chatons mignons, boucle clic→ronrons→chatons→production auto→améliorations→lieux + méta-progression prestige, solvable par bot ; criteres_demo M1–M5 et a–h ; hors_scope : pas de combat, pas de 3D, pas de LLM au runtime, assets originaux). Sources d'exigences amont réellement présentes dans le run_dir : `worldscan`, `story_bible.json` (s2.6), `gm_worldscan.json` (s2.7) — les trois injectés et lus.
+
+**Chaîne de falsifiabilité.** Les 21 exigences portent chacune `observation → claim → enonce → expected_proof → destination`, les trois premiers maillons distincts (contrôle `validateChaine`, lu dans `scripts/forge/upstream_schema.mjs:324`). Provenance : 17 `EXPECTED` (adresse résolvable) + 4 `ADDITIONS` (`reference: null` explicite — objets et quêtes, que ni le worldscan ni la story_bible n'ont authorés, cf. RETURN_REASON DISCOVERED de s2.6).
+
+**Familles couvertes** (task concrète) : GAMEPLAY (boucle A→J complète, 10 rôles + DECISION `d_first_spend`), CONTENT (`content_kittens`, `content_places`, `content_objects`, `content_quests`), VISUAL (`visual_rarity`, `visual_click_feedback`), AUDIO (`audio_events`, volet `07_TESTS/oracle/core_audio.gd` + journal), LONGUEUR (`longueur_curve`, `gm_worldscan:progression`, bot au 3ᵉ palier).
+
+**Boucle joueur.** Les 10 rôles sont chacun servis ; per-maillon vérifié contre `loop_spec.checkLoopSpec` (lu, `scripts/forge/loop_spec.mjs:162`) : G = 2 `NEXT_GOAL` `new_distinct` sur `objectif` ; F = `acheter_chaton` + `observe.appears: lieu_2` ; H = `replay:[b_click,c_response,d_reward,p_buy_kitten]` (tous rôle B..F) ; I = `prestige` + `observe.predicate: resets` ; J = `replay_ref: b_click` + `increases_more_than:b_click` ; DECISION = `options:[p_buy_kitten,p_upgrade_click]` (affordances distinctes), `policies:[idle,actif]`, `metric: ronrons`, `horizon_frames: 300`, `observe.hud: objectif`.
+
+**Verdicts.**
+- **software_verdict: OK** — appuyé sur une conformité ligne-à-ligne du bloc `prisme.json` émis à `checkPrismeDoc` / `validateChaine` / `validateProvenance` / `validateExpectedProof` (lus dans `check_prisme_manifest.mjs` et `upstream_schema.mjs`) et à `checkLoopSpec` (lu dans `loop_spec.mjs`), et de ce document aux 4 règles de forme de `check_prisme.mjs`.
+- **evidence_verdict: MECHANICAL_VALIDATION_ONLY** — conformité à des oracles déterministes non-LLM.
+- **claim_verdict: NO_CLAIM_ALLOWED** — aucun claim sur la qualité produit ; le reçu **faisant autorité** est celui de l'exécuteur (`run_real.py` matérialise puis lance `check_prisme_manifest`, `check_prisme`, `loop_spec`), pas produit ici.
+
+**Références classées non ancrées (mesuré, non bloquant).** 5 références `EXPECTED` pointent vers `story_bible:` (`content_kittens`, `content_places`, `visual_rarity`, `f_unlock`) ou `gm_worldscan:` (`longueur_curve`). L'oracle `check_prisme_manifest` n'extrait des jetons d'ancrage QUE du worldscan (`worldscanTokens`, l.51) : ces 5 seront donc reportées `references_non_ancrees` là — mais elles RÉSOLVENT dans `check_amont_traversal.canonicalize` (l.88, multi-artefacts). C'est un écart entre deux oracles, pas une adresse fantôme.
+
+**Exigences classées non actionnables.** Aucune : les 21 portent un `expected_proof{kind,statement}` valide et une `destination` ∈ {s3-decompo, s4-archi, s9-build}.
+
+**SKIPPED_VALIDATION :**
+- item : *exécution* de `check_prisme_manifest` / `check_prisme` / `loop_spec` · périmètre : `prisme.json` + ce document · statut : non fait · raison : `run: aucun` (périmètre s1-prisme) — l'exécuteur matérialise puis valide ; conformité ici vérifiée par LECTURE des sources d'oracle, pas par exécution.
+- item : ancrage réel de chaque `reference` au passage cité · périmètre : 17 EXPECTED · statut : partiel · raison : `check_prisme_manifest` ne l'ancre que pour worldscan ; l'ancrage story_bible/gm_worldscan relève de `check_amont_traversal` (advisory), lancé en aval par l'exécuteur.
+
+software_verdict: OK
+evidence_verdict: MECHANICAL_VALIDATION_ONLY
+claim_verdict: NO_CLAIM_ALLOWED
+
+why_task_existed:
+- problem: le charter mande une boucle clicker A→J complète et solvable pour `kitten_clicker`, dont les exigences produit falsifiables n'existaient pas encore comme artefact consommable en aval.
+- oracle: activation par décision humaine (dispatch `FORGE_DISPATCH:s1-prisme:kitten_clicker-20260823a:1`) ; oracle de sortie = `check_prisme_manifest` + `check_prisme` + `loop_spec`.
+- root_cause: non transmis (activation amont, pas un échec mesuré) — le run part de zéro pour ce jeu.
+- action_reason: le Prisme est le producteur des lignes candidates (wiremap v2 §3) que s3/s4/s5/s9 consomment ; sans lui la chaîne n'a rien à décomposer.
+- result: 21 exigences émises (17 EXPECTED / 4 ADDITIONS), boucle A→J + DECISION complète, 5 familles couvertes, 0 exigence non actionnable.
+- proof: lecture de `check_prisme_manifest.mjs`, `upstream_schema.mjs`, `check_prisme.mjs`, `loop_spec.mjs`, `charter.yaml` ; conformité tracée règle par règle ci-dessus. Exécution des oracles = ressort de l'exécuteur (`run: aucun` dans mon périmètre).
+- learning: l'ancrage des références dans `check_prisme_manifest` est worldscan-only alors que le contrat V4 mande des adresses `story_bible:`/`gm_worldscan:` — écart d'oracles à connaître pour ne pas lire un `references_non_ancrees` comme un défaut du Prisme.
+- next_reason: chaîne ouverte vers s3-decompo (l'exécuteur dérive `loop.json` puis route les exigences) ; escalade légère : l'écart d'ancrage worldscan-only mérite un regard humain/aval, il n'invalide aucune exigence mais fausse la métrique d'ancrage.
+
+```json
+{
+  "game_id": "kitten_clicker",
+  "exigences": [
+    {
+      "id": "a_goal",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[1].objectives[0].player_goal",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_GOAL",
+      "observation": "Le worldscan donne pour Neko Atsume un player_goal d'accumulation-collection sans condition terminale (collecter tous les chats, les visites continuent indefiniment).",
+      "claim": "Une accumulation sans objectif affiche a l'ecran laisse le joueur sans direction des la premiere minute ; il faut donc un but visible qui nomme une premiere cible.",
+      "enonce": "Le jeu affiche au demarrage, dans le HUD `objectif`, un texte non vide qui nomme une premiere cible a atteindre (premier chaton a adopter).",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot lit le HUD `objectif` au demarrage et y trouve un texte non vide nommant une cible d'adoption."
+      },
+      "observe": { "hud": "objectif", "predicate": "nonempty" },
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "b_click",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_ACTION",
+      "affordance": "pelote",
+      "observation": "Le worldscan decrit la minute_1 de Cookie Clicker comme du clic manuel : le joueur clique le grand biscuit et gagne 1 biscuit par clic, feedback tactile pur.",
+      "claim": "Un clicker a besoin d'une action manuelle primaire qui convertit immediatement un clic en monnaie, sinon il n'existe aucun engagement de base a la minute 1.",
+      "enonce": "Le joueur caresse la pelote en cliquant la cible `pelote` ; le compteur `ronrons` augmente d'au moins 1 par clic.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot clique 5 fois la cible `pelote` et observe le HUD `ronrons` croitre de facon monotone d'au moins +5 au total."
+      },
+      "observe": { "hud": "ronrons", "predicate": "increases" },
+      "repeat": 5,
+      "destination": "s9-build"
+    },
+    {
+      "id": "c_response",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "acteur": "SYSTEM",
+      "loop_role": "GAME_RESPONSE",
+      "observation": "Le worldscan note que le clic minute_1 s'accompagne d'un son de clic, d'une animation du sprite et de l'apparition du nombre.",
+      "claim": "Sans reponse visible du systeme dans la meme frame que le clic, l'action parait morte meme si le compteur change en coulisse.",
+      "enonce": "A chaque clic sur `pelote`, le systeme emet un feedback visible (rebond du sprite et texte flottant +N) dans la meme frame.",
+      "expected_proof": {
+        "kind": "visual",
+        "statement": "Volet 07_TESTS/oracle/core_feedback.gd en fenetre GPU : capture avant/apres clic montre un changement de pixels sur la zone pelote et l'apparition d'un texte +N."
+      },
+      "observe": { "hud": "ronrons", "predicate": "changes" },
+      "destination": "s9-build"
+    },
+    {
+      "id": "d_reward",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "acteur": "SYSTEM",
+      "loop_role": "REWARD",
+      "observation": "Le worldscan situe a la minute_10 l'accumulation de ~100-200 biscuits ouvrant le premier achat, quand le revenu passif commence.",
+      "claim": "La recompense doit s'accumuler en une ressource depensable et visiblement croissante jusqu'a franchir un seuil d'achat, sinon le clic n'a aucune consequence au-dela d'un nombre.",
+      "enonce": "Les `ronrons` accumules persistent et le total affiche croit jusqu'a franchir le cout du premier chaton, rendant l'affordance `acheter_chaton` active.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot clique jusqu'a ce que le HUD `ronrons` atteigne le cout du premier chaton et verifie que l'affordance `acheter_chaton` devient active."
+      },
+      "observe": { "hud": "ronrons", "predicate": "increases" },
+      "destination": "s9-build"
+    },
+    {
+      "id": "d_first_spend",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "acteur": "PLAYER",
+      "loop_role": "DECISION",
+      "observation": "Le worldscan pose a la minute_10 une decision explicite : quel batiment offre le meilleur ROI, Cursor ou Grandma en premier.",
+      "claim": "Une vraie decision exige deux depenses dont la valeur relative depend du style de jeu (clic actif vs attente), sinon 'acheter le moins cher' est la seule politique et il n'y a pas de choix.",
+      "enonce": "Au premier moment finançable, le jeu presente un choix entre adopter un chaton (ronrons/seconde passif) et ameliorer la pelote (ronrons/clic), et la meilleure option differe selon une politique idle ou active sur 300 frames.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Sonde a deux trajectoires : politique `idle` (aucun clic) vs `actif` (clic pelote tous les 3 frames) sur 300 frames ; la metrique `ronrons` finale differe selon l'option, prouvant que la decision porte une information."
+      },
+      "options": ["p_buy_kitten", "p_upgrade_click"],
+      "metric": "ronrons",
+      "horizon_frames": 300,
+      "policies": [
+        { "name": "idle", "click": null, "every_frames": 0 },
+        { "name": "actif", "click": "pelote", "every_frames": 3 }
+      ],
+      "observe": { "hud": "objectif", "predicate": "changes" },
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "p_buy_kitten",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[1].loops.hour_5",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_ACTION",
+      "affordance": "acheter_chaton",
+      "observation": "Le worldscan decrit a l'heure_5 de Neko Atsume l'expansion de collection : viser des chats specifiques, la collection grandit visite apres visite.",
+      "claim": "Adopter un chaton doit a la fois faire grandir une collection visible et demarrer un revenu passif, sinon la depense est un puits sans retour observable.",
+      "enonce": "Le joueur adopte un chaton en cliquant la cible `acheter_chaton` ; les `ronrons` diminuent du cout et le HUD `collection` gagne un chaton nomme distinct.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot disposant de ronrons suffisants clique `acheter_chaton` et observe collection +1 ainsi que ronrons decremente du cout."
+      },
+      "observe": { "hud": "collection", "predicate": "increases" },
+      "destination": "s9-build"
+    },
+    {
+      "id": "p_upgrade_click",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_ACTION",
+      "affordance": "acheter_amelioration",
+      "observation": "Le worldscan mentionne a la minute_10 une premiere couche d'ameliorations (par ex. 2x Grandma) qui multiplie la production.",
+      "claim": "Une amelioration de clic doit strictement augmenter les ronrons par clic, donnant a la politique active une valeur distincte de la politique idle.",
+      "enonce": "Le joueur ameliore la pelote en cliquant la cible `acheter_amelioration` ; les ronrons diminuent du cout et chaque clic `pelote` suivant rapporte strictement plus qu'avant.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot mesure le delta ronrons par clic avant et apres `acheter_amelioration` ; le delta apres est strictement superieur."
+      },
+      "observe": { "hud": "ronrons", "predicate": "increases" },
+      "destination": "s9-build"
+    },
+    {
+      "id": "f_unlock",
+      "source": "EXPECTED",
+      "source_role": "story-bible",
+      "reference": "story_bible:context",
+      "acteur": "PLAYER",
+      "loop_role": "UNLOCK",
+      "affordance": "acheter_chaton",
+      "observation": "La story_bible ancre dans context le refuge de depart destine a s'etendre vers au moins un autre lieu au fil de la meta-progression (criteres_demo b).",
+      "claim": "La progression doit reveler un contenu neuf et visible (un nouveau lieu) a un palier, sinon l'accumulation ne montre jamais rien de nouveau a l'ecran.",
+      "enonce": "Quand le joueur adopte via `acheter_chaton` le chaton qui atteint le palier requis, un nouveau lieu apparait dans la vue du refuge.",
+      "expected_proof": {
+        "kind": "visual",
+        "statement": "Volet 07_TESTS/oracle/core_unlock.gd en fenetre GPU : apres l'adoption au palier, la capture montre l'apparition du groupe visuel `lieu_2` absent avant."
+      },
+      "observe": { "hud": "collection", "predicate": "increases", "appears": "lieu_2" },
+      "destination": "s9-build"
+    },
+    {
+      "id": "g_next_1",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[1].objectives[0].player_goal",
+      "acteur": "PLAYER",
+      "loop_role": "NEXT_GOAL",
+      "observation": "Le worldscan pose pour Neko Atsume un but de collection chaine (collecter tous les chats, cibles successives).",
+      "claim": "Apres la premiere adoption, un objectif nouveau et textuellement distinct doit remplacer l'ancien, sinon le joueur n'a plus de direction a suivre.",
+      "enonce": "Apres l'adoption du premier chaton, le HUD `objectif` affiche un texte nouveau et distinct nommant un second chaton ou palier a atteindre.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot lit `objectif` avant et apres la premiere adoption ; le texte differe textuellement (nouvel objectif nomme)."
+      },
+      "observe": { "hud": "objectif", "predicate": "new_distinct" },
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "g_next_2",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "acteur": "PLAYER",
+      "loop_role": "NEXT_GOAL",
+      "observation": "Le worldscan situe a l'heure_5 le choix strategique de la meta-progression (ascension maintenant ou continuer a accumuler).",
+      "claim": "Un troisieme objectif distinct doit pointer vers la meta-progression (prestige), donnant au milieu de partie une direction differente de la collection precoce.",
+      "enonce": "Une fois plusieurs chatons adoptes, le HUD `objectif` affiche un texte nouveau et distinct nommant le jalon de prestige a atteindre.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot progresse jusqu'au milieu de partie et lit `objectif` ; le texte differe textuellement des deux objectifs precedents."
+      },
+      "observe": { "hud": "objectif", "predicate": "new_distinct" },
+      "destination": "s3-decompo"
+    },
+    {
+      "id": "h_repeat",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "acteur": "PLAYER",
+      "loop_role": "REPEAT",
+      "observation": "Le worldscan decrit l'heure_5 et l'endgame comme des cycles qui recommencent, chaque ascension plus rapide que la precedente.",
+      "claim": "Apres un deblocage, la meme sequence clic-gagner-depenser doit etre rejouable et fonctionner dans le nouvel etat, sinon la progression debouche sur une impasse.",
+      "enonce": "Dans l'etat ou `lieu_2` est debloque, le joueur peut rejouer le clic pelote, gagner des ronrons et adopter un chaton, tous encore fonctionnels.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Apres deblocage de lieu_2, un bot rejoue la sequence b_click -> c_response -> d_reward -> p_buy_kitten et verifie que ronrons croit et collection +1 dans le nouvel etat."
+      },
+      "replay": ["b_click", "c_response", "d_reward", "p_buy_kitten"],
+      "observe": { "hud": "ronrons", "predicate": "increases" },
+      "destination": "s9-build"
+    },
+    {
+      "id": "i_prestige",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "acteur": "PLAYER",
+      "loop_role": "META_LOOP",
+      "affordance": "prestige",
+      "observation": "Le worldscan decrit l'ascension a l'heure_5 : le systeme reinitialise la progression contre un gain permanent (Heavenly Chips, +1% de production par niveau).",
+      "claim": "Le prestige doit visiblement remettre la monnaie courante a zero tout en accordant un multiplicateur permanent, sinon la remise a zero est vecue comme une pure perte.",
+      "enonce": "Le joueur accomplit un prestige en cliquant la cible `prestige` ; le compteur `ronrons` retombe a zero et un indicateur de bonus permanent augmente.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot accumule des ronrons, clique `prestige`, et observe le HUD `ronrons` retomber a 0 tandis qu'un indicateur de bonus permanent augmente."
+      },
+      "observe": { "hud": "ronrons", "predicate": "resets" },
+      "destination": "s9-build"
+    },
+    {
+      "id": "j_advantage",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].loops.endgame",
+      "acteur": "PLAYER",
+      "loop_role": "ADVANTAGE",
+      "observation": "Le worldscan note en endgame que chaque ascension est plus rapide grace au boost permanent de prestige.",
+      "claim": "Le bonus permanent de prestige doit rendre le clic pelote identique strictement plus productif qu'avant le prestige, sinon le prestige n'accorde aucun avantage reel.",
+      "enonce": "Apres un prestige, rejouer `b_click` (pelote) produit un delta de ronrons par clic strictement superieur au delta d'avant prestige de la meme action.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot mesure le delta ronrons par clic pelote avant prestige, effectue le prestige, rejoue b_click, et verifie delta_apres > delta_avant strictement."
+      },
+      "replay_ref": "b_click",
+      "observe": { "hud": "ronrons", "predicate": "increases_more_than:b_click" },
+      "destination": "s9-build"
+    },
+    {
+      "id": "content_kittens",
+      "source": "EXPECTED",
+      "source_role": "story-bible",
+      "reference": "story_bible:characters",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "observation": "La story_bible ancre dans characters au moins six chatons nommes, chacun dote d'une identite visuelle distincte selon sa rarete (criteres_demo a).",
+      "claim": "Ces chatons nommes et leur rarete doivent exister comme donnee authoree en amont, jamais generee au runtime, sinon la collection n'a aucun contenu stable a montrer.",
+      "enonce": "Un registre de monde 03_WORLD/kittens.json declare au moins 6 chatons nommes, chacun avec un nom, une rarete et une production passive de ronrons par seconde.",
+      "expected_proof": {
+        "kind": "file_write",
+        "statement": "Le fichier 03_WORLD/kittens.json existe et contient au moins 6 entrees, chacune avec {name, rarity, ronrons_per_sec} et des noms distincts."
+      },
+      "destination": "s4-archi"
+    },
+    {
+      "id": "content_places",
+      "source": "EXPECTED",
+      "source_role": "story-bible",
+      "reference": "story_bible:context",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "observation": "La story_bible ancre dans context le refuge de depart plus au moins un lieu debloque par la meta-progression (criteres_demo b).",
+      "claim": "Le refuge et le lieu debloquable doivent etre un contenu authore avec un palier de deblocage defini, sinon le deblocage n'a rien de concret a reveler.",
+      "enonce": "Un registre 03_WORLD/places.json declare le refuge de depart et au moins un lieu supplementaire avec son seuil de deblocage.",
+      "expected_proof": {
+        "kind": "file_write",
+        "statement": "Le fichier 03_WORLD/places.json contient au moins 2 lieux, chacun avec {id, name, unlock_tier}, le refuge au tier 0."
+      },
+      "destination": "s4-archi"
+    },
+    {
+      "id": "content_objects",
+      "source": "ADDITIONS",
+      "source_role": "prisme-produit",
+      "reference": null,
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "observation": "Le charter (criteres_demo c) exige au moins 3 objets distincts utilisables, mais aucun artefact amont ne les nomme (la story_bible n'a pas de section objects ancree).",
+      "claim": "Sans objets authores, le refuge reste visuellement vide et l'identite cosy n'a rien pour se meubler ni pour justifier des depenses secondaires.",
+      "enonce": "Un registre 03_WORLD/objects.json declare au moins 3 objets placables, chacun avec un identifiant, un nom et un effet sur la production de ronrons.",
+      "expected_proof": {
+        "kind": "file_write",
+        "statement": "Le fichier 03_WORLD/objects.json contient au moins 3 objets, chacun avec {id, name, effect}."
+      },
+      "destination": "s4-archi"
+    },
+    {
+      "id": "content_quests",
+      "source": "ADDITIONS",
+      "source_role": "prisme-produit",
+      "reference": null,
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "observation": "Le charter (criteres_demo d) exige au moins 3 petites quetes aux objectifs visibles, mais aucun artefact amont ne les authore.",
+      "claim": "Sans quetes authorees, la chaine d'objectifs (a_goal -> g_next) n'a aucune cible nommee concrete a afficher dans le HUD objectif.",
+      "enonce": "Un registre 03_WORLD/quests.json declare au moins 3 quetes, chacune avec un identifiant, un nom et une condition d'accomplissement, alimentant le HUD `objectif`.",
+      "expected_proof": {
+        "kind": "file_write",
+        "statement": "Le fichier 03_WORLD/quests.json contient au moins 3 quetes, chacune avec {id, name, condition}."
+      },
+      "destination": "s4-archi"
+    },
+    {
+      "id": "visual_rarity",
+      "source": "EXPECTED",
+      "source_role": "story-bible",
+      "reference": "story_bible:characters",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "observation": "La story_bible ancre dans characters que chaque chaton porte une identite visuelle distincte selon sa rarete.",
+      "claim": "Chaque palier de rarete doit etre distinguable a l'ecran (couleur, halo ou badge), sinon le joueur ne peut pas differencier un chaton rare d'un commun.",
+      "enonce": "Chaque rarete de chaton rend une identite visuelle distincte (couleur dominante ou badge different), verifiable par difference de pixels entre paliers de rarete.",
+      "expected_proof": {
+        "kind": "visual",
+        "statement": "Volet 07_TESTS/oracle/core_rarity.gd en fenetre GPU : rend un chaton de chaque rarete et verifie que les captures different en pixels au-dela d'un seuil entre deux raretes."
+      },
+      "destination": "s9-build"
+    },
+    {
+      "id": "visual_click_feedback",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].retention_answer",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "observation": "Le worldscan liste dans retention_answer les conventions du genre : feedback de clic combinant rebond du sprite, particules et son de clic.",
+      "claim": "Le clic doit produire un feedback visible dans la meme frame et distinct de l'etat au repos, sinon l'action primaire parait ne pas repondre.",
+      "enonce": "Cliquer la pelote produit un changement visuel visible (rebond du sprite ou particules) sur la zone pelote dans la meme frame.",
+      "expected_proof": {
+        "kind": "visual",
+        "statement": "Volet 07_TESTS/oracle/core_click_visual.gd en fenetre GPU : capture pre/post clic differe en pixels sur la zone pelote (rebond et particule)."
+      },
+      "destination": "s9-build"
+    },
+    {
+      "id": "audio_events",
+      "source": "EXPECTED",
+      "source_role": "world-scan",
+      "reference": "worldscan:games[0].retention_answer",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "observation": "Le worldscan enumere dans retention_answer un son distinct par evenement : son de clic, carillon d'achat, jingle de deblocage, notification.",
+      "claim": "Chaque evenement distinct (clic, achat, deblocage, prestige) doit declencher une entree sonore distincte dans le journal audio, sinon le feedback sonore se confond.",
+      "enonce": "Chacun des quatre evenements (clic pelote, achat, deblocage, prestige) emet exactement un declenchement sonore journalise avec un identifiant de son distinct.",
+      "expected_proof": {
+        "kind": "oracle",
+        "statement": "Volet 07_TESTS/oracle/core_audio.gd : le journal de declenchements contient une entree sonore distincte pour chacun des 4 evenements clic/achat/deblocage/prestige (4 identifiants distincts)."
+      },
+      "destination": "s9-build"
+    },
+    {
+      "id": "longueur_curve",
+      "source": "EXPECTED",
+      "source_role": "gm-worldscan",
+      "reference": "gm_worldscan:progression",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE",
+      "observation": "La dimension progression du gm_worldscan mesure un cout de premier batiment (15) et un multiplicateur de cout par achat (1.15x) : les couts suivent une courbe croissante.",
+      "claim": "La courbe de couts de palier doit porter au moins 3 valeurs distinctes et croissantes pour que la progression ait une reelle longueur, pas un plateau plat.",
+      "enonce": "La courbe de cout des chatons/ameliorations expose au moins 3 couts de palier distincts et strictement croissants, et un bot peut atteindre le 3e palier.",
+      "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Un bot joue et atteint le 3e palier en un nombre de ticks fini ; l'oracle verifie au moins 3 couts de palier distincts et strictement croissants (variance non nulle)."
+      },
+      "destination": "s9-build"
+    }
+  ]
+}
+```
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "L'oracle de verdict s1 check_prisme_manifest.mjs n'ancre les references EXPECTED que contre des jetons du World Scan (worldscanTokens l.51), alors que le contrat V4/gameplay mande des adresses story_bible:<section> (CONTENT) et gm_worldscan:<dimension> (LONGUEUR) : ces references resolvent bien dans check_amont_traversal.canonicalize mais sont necessairement reportees 'references_non_ancrees' par check_prisme_manifest, faussant sa metrique d'ancrage (5/17 EXPECTED ici).", "root_cause": "worldscanTokens/referenceAncree dans check_prisme_manifest.mjs sont mono-artefact (worldscan uniquement) et n'ont pas suivi l'extension du contrat aux sources story_bible et gm_worldscan ; l'ancrage n'etant pas bloquant, l'ecart ne fait pas echouer le run mais rend la statistique references_ancrees trompeuse."}

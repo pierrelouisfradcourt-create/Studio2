@@ -1,0 +1,329 @@
+## RÔLE
+Builder (délégation bornée par l'ownership). Point de vue : développeur discipliné qui reste dans son module.
+
+## EXIGENCES COGNITIVES
+Exécution bornée, micro-commits, tenue à jour de la WireMap. Discipline de périmètre supérieure à la vitesse : ne déborde jamais l'ownership.
+
+## MÉMOIRE DE TRAVAIL
+Consomme le blueprint (étape 7) qui fixe son ownership et la WireMap (étape 5) qu'il doit tenir à jour. Conventions : CLAUDE.md + rules/ (par lane). Le repo a déjà été créé à l'étape 8 (Create Repo).
+
+## OBJECTIF
+Produire le code borné à l'ownership, avec la WireMap tenue à jour. Micro-commits exécutés. Consulter knowledge_base/search.mjs avant d'écrire une pièce de logique réutilisable, importer réellement ce qui matche, n'écrire que le delta (§2bis).
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Implémentation du code UNIQUEMENT dans l'ownership défini par le blueprint ; mise à jour de la WireMap (colonnes fichiers/fonction/version/preuve/statut).
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Ne sort JAMAIS de son ownership (blueprint). Ne touche pas à tests/** (zone protégée). Ne modifie pas l'architecture (blueprint, deps).
+
+## PERMISSIONS
+read: repo entier. write: UNIQUEMENT les fichiers de son ownership + la WireMap. run: l'oracle code (cargo/pytest/vitest via scripts/forge/oracles.json). create: fichiers de son ownership uniquement. delete: aucun. INTERDIT: tests/**.
+
+## GARDE-FOU
+Respecte l'ownership : n'écrit que dans les fichiers que le blueprint lui attribue. Micro-commits. Ne franchit pas les deps interdites du blueprint.
+
+## CRITÈRES DE RÉUSSITE
+Code dans l'ownership (aucun fichier hors périmètre modifié) ; oracle code vert ; WireMap à jour. Pour un JEU (objectif/condition de victoire joueur) : oracle de SOLVABILITÉ vert (un bot joue et GAGNE réellement) ET preuve e2e verte (click-through navigateur réel, cf. scripts/forge/contracts/PLAYABLE_CONTRACT.md).
+
+## ORACLES / TESTS
+Oracle CODE déterministe non-LLM : cargo / pytest / vitest via scripts/forge/oracles.json selon la lane. Jamais de LLM-as-judge. Pour un JEU : l'oracle CODE inclut OBLIGATOIREMENT un volet SOLVABILITÉ (solvability.mjs câblé dans run-oracle.mjs) — les mécaniques testées EN ISOLATION ne suffisent pas : un jeu aux objectifs inatteignables passe tous les tests de mécanique tout en étant injouable. Le volet mesure l'enveloppe d'action réelle du moteur, vérifie que les objectifs requis y sont, et fait JOUER un bot qui doit gagner. Modèle : scripts/forge/templates/solvability.template.mjs. L'oracle CODE d'un JEU inclut AUSSI OBLIGATOIREMENT un volet e2e (e2e.mjs, click-through navigateur réel câblé dans run-oracle.mjs) conforme au contrat de jouabilité (scripts/forge/contracts/PLAYABLE_CONTRACT.md) : la garde structurelle forge.static_oracles.check_e2e_harness REJETTE un e2e absent, non câblé, ou coquille (qui imprime PASS sans piloter). Enfin, pour un JEU, l'oracle-code inclut un GATE MUTATION (forge.mutation.run_mutation_test sur game.mjs + forge.static_oracles.check_mutation_gate) : « 100% des mutants tués OU chaque survivant trié équivalent avec justification dans games/<projet>/mutation_triage.json ». Un survivant non justifié => oracle rouge (auto-correction).
+
+## CONTRAT DE SORTIE
+diff (micro-commits) + WireMap à jour (colonnes fichiers/fonction/version/preuve/ statut) + reçu reuse_ratio.mjs (scripts/forge/reuse_ratio.mjs <dossier du jeu>). Pour un JEU : un volet solvability.mjs (bot-joue-et-gagne) ET un e2e.mjs (click-through navigateur réel, contrat de jouabilité) tous deux câblés dans run-oracle.mjs, en plus des mécaniques.
+
+## RAPPORT FINAL
+software/evidence/claim séparés ; cite l'oracle code utilisé ; liste les fichiers touchés vs ownership ; cite la sortie de reuse_ratio.mjs (evidence_path) et les requêtes SEARCH effectuées avant écriture (§2bis) ; claim_verdict: NO_CLAIM_ALLOWED. Sans oracle disponible => remonte un besoin HumanGate (fog), pas de claim. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- scripts/forge/contracts/SCHEMA.md
+- le blueprint.yaml (ownership) qui borne strictement sa zone d'écriture
+- la WireMap produite à l'étape 5 (fichiers/fonction/version/preuve/statut)
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s9-build:p1_beta-20260830-run1:4
+
+## TÂCHE CONCRÈTE (p1_beta-20260830-run1 / s9-build)
+Implémente le projet 'p1_beta' sous games/p1_beta, borné à ton ownership (blueprint) : code + harnais de preuve COMPLET conformément au contrat — run-oracle.mjs, e2e.mjs et solvability.mjs à la RACINE du jeu (exigence check_e2e_harness), PLUS les suites de convention mutation du studio logic.test.mjs et properties.test.mjs à la racine (le volet mutation du driver exécute par défaut : node --test logic.test.mjs properties.test.mjs — sans elles la baseline est rouge et l'étape échoue). Chaque asset_request.id doit finir resolved (fichier réel du jeu) ou blocked justifié dans asset_resolution.json (clé unique 'requests') — gate check_asset_consumption à s10a. Tiens la WireMap à jour (jamais wiremap_frozen.json). AUCUN commit (git/PowerShell) : le verdict signé et HumanGate s'en chargent.
+
+## ARTEFACTS AMONT (run_dir)
+Rappel ownership : tu n'écris QUE dans les fichiers que le blueprint.json ci-dessous t'attribue (contrat s9-build §5).
+
+### blueprint.json (chemin réel : C:\TACTICAL_CHESS_STUDIO\lab\forge_runs\p1_beta\blueprint.json)
+{
+ "modules": [
+  "index.html",
+  "main",
+  "engine",
+  "render",
+  "input",
+  "run-oracle",
+  "e2e",
+  "solvability"
+ ],
+ "deps_interdites": [
+  [
+   "engine",
+   "render"
+  ],
+  [
+   "engine",
+   "input"
+  ],
+  [
+   "engine",
+   "main"
+  ],
+  [
+   "engine",
+   "solvability"
+  ],
+  [
+   "engine",
+   "e2e"
+  ],
+  [
+   "engine",
+   "run-oracle"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "render"
+  ],
+  [
+   "render",
+   "main"
+  ],
+  [
+   "input",
+   "main"
+  ]
+ ]
+}
+
+### wiremap.json (chemin réel : C:\TACTICAL_CHESS_STUDIO\lab\forge_runs\p1_beta\wiremap.json)
+{
+ "features": [
+  {
+   "feature": "R1 objectif terminal affiché dès le tick 0",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "e2e.mjs: getElementById('objective').innerText au tick 0 est non vide et contient le seuil terminal '5000' ; couvert aussi par logic.test.mjs (currentObjective() phase 0)",
+   "couvre": [
+    "currentObjective"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R2 entrée attisage du foyer (affordance hearth)",
+   "fonction": "handleHearthClick",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "e2e.mjs: depuis index.html, 10 vrais clics Playwright sur #hearth -> window.__game.light strictement croissant, delta EXACT +10 (+1 par clic)",
+   "couvre": [
+    "handleHearthClick"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R3 réponse visuelle du foyer à l'attisage",
+   "fonction": "renderHearth",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "e2e.mjs: boxShadow de #hearth observé non-'none' dans la fenêtre du flash déclenché par un clic réel (main.mjs consomme lastStoke -> renderStokeFlash, retiré après 150ms)",
+   "couvre": [
+    "renderHearth"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R4 récompense stricte +1 lumiere par attisage",
+   "fonction": "stoke",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs: apres N appels stoke() sans achat, state.light === N exactement (egalite stricte, jamais >=)",
+   "couvre": [
+    "stoke"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R5 divergence de décision idle vs actif",
+   "fonction": "step",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs: deux trajectoires seedees (step(0)=idle vs step(3)=actif, horizon 300 frames) -> light=0 vs light>0, valeurs distinctes et non triviales (variance non nulle)",
+   "couvre": [
+    "step"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R6 entrée achat d'un émetteur (affordance buy_button)",
+   "fonction": "handleBuyClick",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "e2e.mjs: depuis index.html, clic Playwright sur #buy-button au premier moment ou light>=15 -> window.__game.emitterCount 0->1 (delta STRICT=1) et production passive devient >0",
+   "couvre": [
+    "handleBuyClick"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R7a objectif change vers second émetteur après le 1er achat",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "e2e.mjs + logic.test.mjs: currentObjective() apres le 1er achat (emitterCount=1) differe textuellement de l'objectif du tick 0 et enonce l'acquisition d'un second emetteur",
+   "couvre": [
+    "currentObjective"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R7b objectif change vers l'embrasement (seuil 5000)",
+   "fonction": "currentObjective",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs: au stade production passive active (emitterCount>=2), currentObjective() differe textuellement des deux objectifs precedents et nomme le seuil 5000",
+   "couvre": [
+    "currentObjective"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R8 boucle répétée par production passive des émetteurs",
+   "fonction": "applyEmitters",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs seede: avec >=1 emitter et sans clic, applyEmitters() incremente light de exactement emitterCount*EMITTER_RATE a chaque appel (croissance stricte, deterministe au rejeu)",
+   "couvre": [
+    "applyEmitters"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R9 entrée ascension après embrasement (affordance ascension_altar)",
+   "fonction": "handleAscensionClick",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "e2e.mjs: depuis index.html, apres embrasement (via __game_debug.reachThreshold()), clic Playwright reel sur #ascension-altar -> window.__game.light repasse a exactement 0 et ascensionGlow passe de 0 a >0",
+   "couvre": [
+    "handleAscensionClick"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R10 avantage méta de l'ascension (light_per_stoke rehaussé)",
+   "fonction": "ascend",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "logic.test.mjs + e2e.mjs: apres ascend(), lightPerStoke est strictement superieur au gain initial (comparaison stricte >, jamais >=)",
+   "couvre": [
+    "ascend"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R11 état terminal déterministe signalé à l'écran (light>=5000)",
+   "fonction": "isTerminal",
+   "fichiers": [
+    "engine.mjs"
+   ],
+   "preuve": "solvability.mjs: sonde seedee ATTEINT reellement light>=5000 dans un budget de 8000 ticks (gagne en 2454) -> isTerminal(state)===true ; e2e.mjs: ecran 'Embrasement complet' (#overlay) affiche et interaction (#hearth/#buy-button) neutralisee ; meme seed => meme tick terminal au rejeu (verifie dans solvability.mjs)",
+   "couvre": [
+    "isTerminal"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R12 glyphe d'état verrouillé sur un émetteur non accessible",
+   "fonction": "renderLockedGlyph",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "properties.test.mjs: sous le coût, #locked-glyph visible avec le texte 'X lumiere requise' ; masqué une fois abordable ; e2e.mjs confirme la cohérence en navigateur réel",
+   "couvre": [
+    "renderLockedGlyph"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R13 compteur de lumiere HUD lisible en continu",
+   "fonction": "renderLightCounter",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "properties.test.mjs: #light-counter (police tabulaire, plus gros element textuel du HUD) reflete exactement floor(light), mis a jour a chaque appel de renderHud()",
+   "couvre": [
+    "renderLightCounter"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  },
+  {
+   "feature": "R14 ambiance du champ se réchauffant avec la progression",
+   "fonction": "renderField",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "properties.test.mjs: capture a light=0/25%/50%/75%/100% de 5000 -> canal rouge de #field croit de facon monotone (jamais decroissant) ; capé au-delà du seuil (ratio borne a 1)",
+   "couvre": [
+    "renderField"
+   ],
+   "version": "1",
+   "statut": "implemented"
+  }
+ ]
+}
+
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- ⚑ [s10a-oracle-code] ORACLE DE JEU: tester la SOLVABILITÉ (un bot doit GAGNER), pas seulement les mécaniques en isolation — un jeu aux objectifs inatteignables passe tous les tests unitaires. Obligatoire s9-build.
+- ⚑ [s10a-oracle-code] JAMAIS de >= tautologique dans un test : asserter le comportement STRICT (kill tue vraiment, coins == n+1). Un >= masque une mécanique morte.
+- ⚑ [s12-verdict] Reçu code SANS evidence_path => exécution non prouvable => BLOCKED. Toujours passer evidence_path.
+- [s9-build] échec d'une tentative précédente à s9-build → ✅ RÉPARÉ: réparé à la tentative 2 (tier haiku)
+- [s10a-oracle-code] fichiers logiques inconnus (ni logic_files ni wiremap.json) — preuve mutation impossible ; hypothèse inconnue = BLOCKED
+- [s10c-oracle-wiremap] FAIL
+- [s9-build] échec d'une tentative précédente à s9-build → ✅ RÉPARÉ: réparé à la tentative 3 (tier sonnet)
+- [s10a-oracle-code] returncode=0
+- ⚑ [s10a-oracle-code] ORACLE DE JEU: tester la SOLVABILITÉ (un bot doit GAGNER), pas seulement les mécaniques en isolation — un jeu aux objectifs inatteignables passe tous les tests unitaires. Obligatoire s9-build.
+- ⚑ [s10a-oracle-code] JAMAIS de >= tautologique dans un test : asserter le comportement STRICT (kill tue vraiment, coins == n+1). Un >= masque une mécanique morte.
+- ⚑ [s12-verdict] Reçu code SANS evidence_path => exécution non prouvable => BLOCKED. Toujours passer evidence_path.
+- [manifest-8dc020c7654e816a] q_art_001 (blocking, loop_id=core_loop) a ete resolue par une decision de theme dont la seule modification recevable a eu lieu dans l'art_bible et dans gb_click_target.builder_contract, sans changer aucun champ mecanique de core_loop ; l'etiquette loop_id=core_loop est donc un mislabel (loop_id honnete = art_gm), a l'origine du HALT pilote 'theatre de questions (core_loop)', ici confirme et non requalifie. Accessoirement, le dossier design/ (content_requirements.md C.5 mandatory-read, calibration.md Lot D) est absent du run_dir, empechant toute reprise d'invariant depuis design:calibration. — cause: une question de thème transverse (habillage des entites) a ete etiquetee sur une boucle mecanique precise (core_loop) alors que sa resolution appartient a l'art_bible ; le canal design_questions accepte structurellement une answer non nulle comme fermeture (R1) sans verifier que la reponse a modifie la boucle etiquetee (R3-lite hors perimetre de ce contrat), laissant passer le mislabel. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-e2c94deb4875eb9a] Les sources design listees « A LIRE OBLIGATOIREMENT » (content_requirements.md / Carte de Jeu C.5) et Lot D (design/calibration.md, gameplay_loop_content_contract.md, progression_contract.md, design_intent.md) sont ABSENTES du run_dir p1_beta ; aucun invariant/target n'a pu etre repris de design:calibration. — cause: Le dossier design/ n'a pas ete provisionne par l'orchestrateur pour ce run ; les grandeurs ont ete derivees du worldscan/story_bible/art_bible + justification de design explicite tracee, sans source calibration a reprendre. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-2871ad005f5a9003] Mon game_master round 1 declarait quest_loop avec une transformation_perceptible 'un marqueur de jalon distinct s'affiche au franchissement' mais n'exposait AUCUN grey_block ni artist_requirement pour ce marqueur — le Builder n'avait donc aucune cible pour le construire ; l'Artiste l'a decouvert et a cree vr_quest_milestone en round 2. — cause: une transformation_perceptible de boucle encodee uniquement en proof/metric (proof_quest / quest_milestones_reached) sans grey_block correspondant : schema-valide mais mecaniquement orpheline cote Builder ; corrige round 2 par gb_quest_milestone (UI/FEEDBACK) + ar_quest_milestone. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-59ead0f6e7710365] L'artefact design/content_requirements.md (C.5 Gameplay Map), declare mandatory-read et 'injecte en amont' par le contrat s2.5-artbible, est absent du run_dir p1_beta (aucun dossier design/, aucun fichier *content_req*). — cause: L'executeur/driver n'a pas materialise ni injecte content_requirements.md a l'etape s2.5 de ce run full_content. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-c9a692b24e48f3db] echec de la tentative 1 a s2.5-artbible -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s9-build:p1_beta-20260830-run1:4

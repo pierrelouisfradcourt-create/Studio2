@@ -1,0 +1,10 @@
+{
+  "kittens": [
+    { "name": "Moustache",  "rarity": "common",     "ronrons_per_sec": 1 },
+    { "name": "Biscuit",    "rarity": "common",     "ronrons_per_sec": 1 },
+    { "name": "Nuage",      "rarity": "uncommon",   "ronrons_per_sec": 2 },
+    { "name": "Reglisse",   "rarity": "rare",       "ronrons_per_sec": 2 },
+    { "name": "Praline",    "rarity": "epic",       "ronrons_per_sec": 3 },
+    { "name": "Comete",     "rarity": "legendary",  "ronrons_per_sec": 3 }
+  ]
+}

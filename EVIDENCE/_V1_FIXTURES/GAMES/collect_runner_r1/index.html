@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Collect Runner</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #05070a;
+      color: #f1faee;
+      font-family: monospace;
+      height: 100%;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      gap: 12px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    canvas {
+      background: #0e1b2a;
+      border: 2px solid #5fd0ff;
+      max-width: 100%;
+      image-rendering: pixelated;
+    }
+    #help {
+      max-width: 800px;
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+    #fallback {
+      max-width: 600px;
+      text-align: center;
+    }
+    #error-banner {
+      display: none;
+      background: #e63946;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 4px;
+      max-width: 800px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1 style="margin: 0; font-size: 20px;">Collect Runner</h1>
+    <div id="error-banner"></div>
+    <canvas id="game-canvas" width="800" height="360"></canvas>
+    <div id="fallback" hidden></div>
+    <p id="help">
+      Fleches gauche/droite (ou A/D) : moduler la vitesse &middot;
+      Espace / Fleche haut / W : sauter &middot;
+      Ramassez les pieces, evitez les obstacles, terminez les 3 niveaux.
+    </p>
+  </div>
+
+  <script type="module">
+    import { CollectRunnerGame } from './game.mjs';
+    import { renderFrame, renderUnsupported } from './render.mjs';
+    import { createInputState } from './input.mjs';
+
+    const canvas = document.getElementById('game-canvas');
+    const fallback = document.getElementById('fallback');
+    const errorBanner = document.getElementById('error-banner');
+
+    function showError(message) {
+      errorBanner.textContent = message;
+      errorBanner.style.display = 'block';
+    }
+
+    const ctx = canvas.getContext && canvas.getContext('2d');
+    if (!ctx) {
+      canvas.hidden = true;
+      fallback.hidden = false;
+      renderUnsupported(fallback);
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const seedParam = Number.parseInt(params.get('seed'), 10);
+      const seed = Number.isFinite(seedParam) ? seedParam : 1;
+
+      const game = new CollectRunnerGame(seed);
+      // Exposed intentionally for external harnesses / manual inspection —
+      // not a debug overlay, no internal state is drawn on screen by default.
+      window.__game = game;
+
+      const input = createInputState(window);
+
+      let lastTs = null;
+      const MAX_DT_MS = 100; // clamp huge dt after tab was backgrounded
+
+      function loop(ts) {
+        try {
+          if (lastTs !== null) {
+            const dt = Math.min(ts - lastTs, MAX_DT_MS);
+            if (dt > 0) {
+              game.step(dt, input.read());
+            }
+          }
+          lastTs = ts;
+          renderFrame(canvas, game.view());
+        } catch (err) {
+          console.error('[collect-runner] fatal error in game loop', err);
+          showError('Erreur interne du jeu — voir la console.');
+          return; // stop the loop, do not spam errors every frame
+        }
+        window.requestAnimationFrame(loop);
+      }
+
+      window.requestAnimationFrame(loop);
+    }
+  </script>
+</body>
+</html>

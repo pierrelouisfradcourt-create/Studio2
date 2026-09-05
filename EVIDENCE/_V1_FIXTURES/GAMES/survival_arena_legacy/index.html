@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Survival Arena</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #05050a;
+    color: #eaeaf2;
+    font-family: "Segoe UI", system-ui, sans-serif;
+  }
+  h1 { margin: 4px 0 0; font-size: 20px; letter-spacing: 0.04em; }
+  #stage {
+    position: relative;
+    width: 800px;
+    max-width: 100%;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 800 / 600;
+    border: 2px solid #2a2a3c;
+    border-radius: 8px;
+    background: #101018;
+  }
+  #hud {
+    display: flex;
+    gap: 24px;
+    width: 800px;
+    max-width: 100%;
+    font-size: 15px;
+  }
+  .hud-block { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+  .hud-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #8a8aa0; }
+  #hpBarTrack {
+    width: 160px;
+    height: 10px;
+    background: #26263a;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  #hpBar { height: 100%; width: 100%; background: linear-gradient(90deg, #ff5252, #ffca28, #66bb6a); }
+  #score, #time, #hp { font-weight: 600; font-size: 16px; }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: rgba(5, 5, 10, 0.86);
+    border-radius: 8px;
+    text-align: center;
+  }
+  #overlay.hidden { display: none; }
+  #overlay h2 { margin: 0; font-size: 30px; color: #ff5252; letter-spacing: 0.06em; }
+  #overlay p { margin: 0; font-size: 15px; color: #cfcfe0; }
+  #restart {
+    margin-top: 6px;
+    padding: 10px 26px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #05050a;
+    background: #4fc3f7;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #restart:hover { background: #81d4fa; }
+  #help { font-size: 12px; color: #7a7a90; max-width: 800px; text-align: center; }
+</style>
+</head>
+<body>
+  <h1>SURVIVAL ARENA</h1>
+  <div id="hud">
+    <div class="hud-block">
+      <span class="hud-label">PV</span>
+      <span id="hp">100 / 100</span>
+      <div id="hpBarTrack"><div id="hpBar"></div></div>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">Score</span>
+      <span id="score">0</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">Temps</span>
+      <span id="time">0.0s</span>
+    </div>
+  </div>
+  <div id="stage">
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="overlay" class="hidden">
+      <h2>DÉFAITE</h2>
+      <p>Score final : <span id="finalScore">0</span></p>
+      <p>Survécu : <span id="finalTime">0.0s</span></p>
+      <button id="restart" type="button">Rejouer</button>
+    </div>
+  </div>
+  <p id="help">Flèches ou WASD pour bouger — tir automatique sur l'ennemi le plus proche.</p>
+
+  <script type="module">
+    import { SurvivalGame } from "./game.mjs";
+    import { draw, updateHud, updateOverlay } from "./render.mjs";
+    import { createInputTracker } from "./input.mjs";
+
+    const params = new URLSearchParams(location.search);
+    const seedParam = params.get("seed");
+    const initialSeed = seedParam !== null ? Number(seedParam) : (Date.now() >>> 0);
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const els = {
+      hp: document.getElementById("hp"),
+      hpBar: document.getElementById("hpBar"),
+      score: document.getElementById("score"),
+      time: document.getElementById("time"),
+      overlay: document.getElementById("overlay"),
+      finalScore: document.getElementById("finalScore"),
+      finalTime: document.getElementById("finalTime"),
+    };
+
+    const game = new SurvivalGame({ seed: initialSeed });
+    const { input } = createInputTracker(window);
+
+    // Expose l'état courant pour l'oracle (comme window.__belote côté belote-claude).
+    function publish() {
+      window.__game = game.view();
+    }
+
+    // Hooks de debug pour l'e2e — forcer un dégât instantané sans attendre une vraie
+    // collision, et relancer avec une seed connue. Pas de règle de jeu ici : simple
+    // délégation à l'API déjà exposée par SurvivalGame.
+    window.__game_debug = {
+      hit(amount) { game.debugHit(amount); publish(); },
+      reset(seed) { game.reset(seed !== undefined ? seed : (Date.now() >>> 0)); publish(); },
+    };
+
+    document.getElementById("restart").addEventListener("click", () => {
+      game.reset(Date.now() >>> 0);
+      publish();
+    });
+
+    let lastT = null;
+    function frame(t) {
+      if (lastT === null) lastT = t;
+      const dtMs = Math.min(100, t - lastT); // clamp anti-spirale si l'onglet était en pause
+      lastT = t;
+      game.step(dtMs, input);
+      const state = game.view();
+      draw(ctx, state);
+      updateHud(state, els);
+      updateOverlay(state, els);
+      window.__game = state;
+      requestAnimationFrame(frame);
+    }
+
+    publish();
+    requestAnimationFrame(frame);
+
+    console.log("interface prête");
+  </script>
+</body>
+</html>

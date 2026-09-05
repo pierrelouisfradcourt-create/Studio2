@@ -1,0 +1,154 @@
+{
+ "schema_version": 1,
+ "game_id": "kitten_clicker",
+ "steps": [
+  {
+   "role": "PLAYER_GOAL",
+   "ref": "a_goal",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "b_click",
+   "affordance": "pelote",
+   "repeat": 5,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "p_buy_kitten",
+   "affordance": "acheter_chaton",
+   "repeat": 1,
+   "observe": {
+    "hud": "collection",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "p_upgrade_click",
+   "affordance": "acheter_amelioration",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "c_response",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "REWARD",
+   "ref": "d_reward",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "DECISION",
+   "ref": "d_first_spend",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "changes"
+   },
+   "options": [
+    "p_buy_kitten",
+    "p_upgrade_click"
+   ],
+   "metric": "ronrons",
+   "horizon_frames": 300,
+   "policies": [
+    {
+     "name": "idle",
+     "click": null,
+     "every_frames": 0
+    },
+    {
+     "name": "actif",
+     "click": "pelote",
+     "every_frames": 3
+    }
+   ]
+  },
+  {
+   "role": "UNLOCK",
+   "ref": "f_unlock",
+   "affordance": "acheter_chaton",
+   "repeat": 1,
+   "observe": {
+    "hud": "collection",
+    "predicate": "increases",
+    "appears": "lieu_2"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "g_next_1",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "g_next_2",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "REPEAT",
+   "ref": "h_repeat",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   },
+   "replay": [
+    "b_click",
+    "c_response",
+    "d_reward",
+    "p_buy_kitten"
+   ]
+  },
+  {
+   "role": "META_LOOP",
+   "ref": "i_prestige",
+   "affordance": "prestige",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "resets"
+   }
+  },
+  {
+   "role": "ADVANTAGE",
+   "ref": "j_advantage",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases_more_than:b_click"
+   },
+   "replay_ref": "b_click"
+  }
+ ]
+}

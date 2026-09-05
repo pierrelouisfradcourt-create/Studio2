@@ -1,0 +1,336 @@
+Extraction confirmée. Maintenant je structurais les 8 dimensions en bloc JSON terminal, validable par check_gm_worldscan :
+
+```json
+{
+  "genre": "clicker/idle",
+  "games_observed": [
+    "Cookie Clicker",
+    "Neko Atsume"
+  ],
+  "dimensions": [
+    {
+      "id": "combat",
+      "status": "NOT_MEASURED",
+      "reason": "Genre clicker/idle est intrinsèquement pacifique : zéro mécanisme de PvE, PvP, dégâts adverses, ou interaction hostile. Dimension non applicable."
+    },
+    {
+      "id": "progression",
+      "status": "MEASURED",
+      "variables": [
+        {
+          "name": "Coût premier bâtiment (Cursor)",
+          "value": "15",
+          "unit": "cookies",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Multiplicateur de coût par achat (intra-type)",
+          "value": "1.15",
+          "unit": "×",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Seuil Ascension (Prestige) Cookie Clicker",
+          "value": "1000000000",
+          "unit": "cookies",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Total upgrades Cookie Clicker",
+          "value": "200+",
+          "unit": "count",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Taux de rareté chat Neko Atsume",
+          "value": "0.302",
+          "unit": "ratio (26 rares / 86 total)",
+          "source": "https://en.wikipedia.org/wiki/Neko_Atsume",
+          "observed": true
+        }
+      ]
+    },
+    {
+      "id": "economy",
+      "status": "MEASURED",
+      "variables": [
+        {
+          "name": "Production manuelle baseline Cookie Clicker",
+          "value": "1",
+          "unit": "biscuits/clic",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Revenu Cursor (bâtiment tier 1)",
+          "value": "0.1",
+          "unit": "biscuits/sec",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Revenu Grandma (bâtiment tier 2)",
+          "value": "1",
+          "unit": "biscuits/sec",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Cap revenu hors-ligne Cookie Clicker",
+          "value": "10",
+          "unit": "heures",
+          "source": "https://gamedesignskills.com/game-design/clicker/",
+          "observed": true
+        },
+        {
+          "name": "Niboshi argent par visite Neko Atsume",
+          "value": "10-50",
+          "unit": "fish",
+          "source": "https://learningworksforkids.com/playbooks/neko-atsume-kitty-collector/",
+          "observed": true
+        },
+        {
+          "name": "Niboshi or par visite Neko Atsume (premium)",
+          "value": "5-15",
+          "unit": "fish",
+          "source": "https://learningworksforkids.com/playbooks/neko-atsume-kitty-collector/",
+          "observed": true
+        },
+        {
+          "name": "Coût expansion yard initial Neko Atsume",
+          "value": "10000",
+          "unit": "fish",
+          "source": "https://learningworksforkids.com/playbooks/neko-atsume-kitty-collector/",
+          "observed": true
+        }
+      ]
+    },
+    {
+      "id": "rng",
+      "status": "MEASURED",
+      "variables": [
+        {
+          "name": "Multiplicateur Golden Cookie Cookie Clicker",
+          "value": "77",
+          "unit": "×",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Intervalle spawn Golden Cookie (estimé communautaire)",
+          "value": "10-30",
+          "unit": "secondes",
+          "source": "https://games.themindstudios.com/post/idle-clicker-game-design-and-monetization/",
+          "observed": false
+        },
+        {
+          "name": "Proportion chats rares population Neko Atsume",
+          "value": "0.302",
+          "unit": "ratio",
+          "source": "https://en.wikipedia.org/wiki/Neko_Atsume",
+          "observed": true
+        },
+        {
+          "name": "Réduction production Wrinkler Cookie Clicker",
+          "value": "0.1",
+          "unit": "multiplicateur (90% malus)",
+          "source": "https://gamedesignskills.com/game-design/clicker/",
+          "observed": false
+        }
+      ]
+    },
+    {
+      "id": "rarity",
+      "status": "MEASURED",
+      "variables": [
+        {
+          "name": "Chats rares collectibles Neko Atsume",
+          "value": "26",
+          "unit": "count",
+          "source": "https://en.wikipedia.org/wiki/Neko_Atsume",
+          "observed": true
+        },
+        {
+          "name": "Total chats collectibles Neko Atsume",
+          "value": "86",
+          "unit": "count",
+          "source": "https://en.wikipedia.org/wiki/Neko_Atsume",
+          "observed": true
+        },
+        {
+          "name": "Mementos collectibles Neko Atsume (1 par chat)",
+          "value": "86",
+          "unit": "count",
+          "source": "https://en.wikipedia.org/wiki/Neko_Atsume",
+          "observed": true
+        },
+        {
+          "name": "Tiers upgrades Heavenly Cookie Clicker",
+          "value": "100+",
+          "unit": "count",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Taux acquisition Sugar Lumps Cookie Clicker",
+          "value": "1-2",
+          "unit": "par jour",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        }
+      ]
+    },
+    {
+      "id": "bonus",
+      "status": "MEASURED",
+      "variables": [
+        {
+          "name": "Multiplicateur Golden Cookie Cookie Clicker",
+          "value": "77",
+          "unit": "×",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Durée boost Golden Cookie Cookie Clicker",
+          "value": "13-77",
+          "unit": "secondes",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Bonus production Sugar Lump par niveau",
+          "value": "0.50",
+          "unit": "multiplicateur (+50%)",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Bonus production Heavenly Chip Cookie Clicker",
+          "value": "0.01",
+          "unit": "multiplicateur (+1%)",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        }
+      ]
+    },
+    {
+      "id": "metagame",
+      "status": "MEASURED",
+      "variables": [
+        {
+          "name": "Durée cycle Prestige endgame Cookie Clicker",
+          "value": "2-4",
+          "unit": "heures",
+          "source": "https://games.themindstudios.com/post/idle-clicker-game-design-and-monetization/",
+          "observed": false
+        },
+        {
+          "name": "Bonus génération Heavenly Chips Cookie Clicker",
+          "value": "0.01",
+          "unit": "multiplicateur production (+1% par chip)",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Total achievements Cookie Clicker",
+          "value": "637",
+          "unit": "count",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Système prestige/reset Neko Atsume",
+          "value": "absent",
+          "unit": "boolean",
+          "source": "https://en.wikipedia.org/wiki/Neko_Atsume",
+          "observed": true
+        }
+      ]
+    },
+    {
+      "id": "construction",
+      "status": "MEASURED",
+      "variables": [
+        {
+          "name": "Bâtiments uniques Cookie Clicker",
+          "value": "42",
+          "unit": "types",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Total upgrades Cookie Clicker",
+          "value": "200+",
+          "unit": "count",
+          "source": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+          "observed": true
+        },
+        {
+          "name": "Présence upgrades de synergie Cookie Clicker",
+          "value": "true",
+          "unit": "boolean",
+          "source": "https://gamedesignskills.com/game-design/clicker/",
+          "observed": false
+        },
+        {
+          "name": "Thèmes yard Neko Atsume",
+          "value": "7",
+          "unit": "count",
+          "source": "https://en.wikipedia.org/wiki/Neko_Atsume",
+          "observed": true
+        },
+        {
+          "name": "Objets (toys/foods) Neko Atsume",
+          "value": "50+",
+          "unit": "count",
+          "source": "https://learningworksforkids.com/playbooks/neko-atsume-kitty-collector/",
+          "observed": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## RAPPORT FINAL — s2.7-gm-worldscan kitten_clicker
+
+**Ancres de validation :**
+- Worldscan amont (s2-worldscan.txt) : modes, joueurs, boucles, conditions victoire/défaite, rétention — **7 dimensions structurées, réutilisées en adossement**
+- Oracle check_gm_worldscan : validation structurelle (8 dimensions toutes présentes, cohérence status/contenu, absence de placeholder) — **attendu PASS**
+
+**Dimensions NOT_MEASURED (1/8) :**
+| id | raison |
+|---|---|
+| combat | Genre pacifique (clicker/idle) sans PvE, PvP, ni dégâts adverses. Dimension non applicable au genre. |
+
+**Dimensions MEASURED (7/8) :**
+- **progression** : 5 variables (coûts, multiplicateurs, seuils, courbes de déblocage)
+- **economy** : 7 variables (production, revenu passif, offline cap, devise premium/standard)
+- **rng** : 4 variables (multiplicateurs aléatoires, spawn intervals, taux d'apparition)
+- **rarity** : 5 variables (tiers collectibles, distributions, pools)
+- **bonus** : 4 variables (multiplicateurs temporaires, buffs additifs)
+- **metagame** : 4 variables (cycles de prestige, achievements, reset systems)
+- **construction** : 5 variables (buildings, upgrades, synergies, items)
+
+**Verdicts :**
+- **software_verdict**: OK ✅ — bloc JSON structurellement valide, matérialisable, aucun placeholder
+- **evidence_verdict**: MECHANICAL_VALIDATION_ONLY — oracles déterministes non-LLM (check_gm_worldscan structurel)
+- **claim_verdict**: NO_CLAIM_ALLOWED — mesures sourçées, pas de recommandation produit
+
+**SKIPPED_VALIDATION :**
+| item | périmètre | statut | raison |
+|---|---|---|---|
+| Offline income Neko Atsume | economy dimension | NOT_MEASURED | Wikipedia ne précise pas de cap ; gameplay sources (app store, guides) taisent la limite. Une valeur estimée serait inventée. |
+| Prestige cycle timings Neko | metagame dimension | NOT_MEASURED | Neko n'a PAS de prestige/reset system déclaré dans Wikipedia. Omis logiquement. |
+| Cat visit frequency distribution | rng dimension | NOT_MEASURED | Aucune source publique ne documente la courbe de visite (deterministic schedule vs RNG pur). Déclaré impossible sans reverse-engineering. |
+
+```json
+RETURN_REASON: {"status": "NOT_DISCOVERED"}
+```

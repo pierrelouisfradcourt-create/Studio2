@@ -1,0 +1,40 @@
+# Structure imposée D1 (bras Dirigé, paire pilote RUN 2) — NORMATIVE
+# Provenance : grammaire structurelle PROPOSÉE par Fable (2026-08-30), RATIFIÉE par Pierre
+# (2026-08-30, verbatim de la ratification au decision-log/protocole). Distinction verrouillée :
+# D1 est dirigé par cette grammaire ratifiée — ce n'est PAS une « conception par Pierre » au sens
+# créatif. La variable expérimentale est l'AUTEUR DE LA STRUCTURE, pas l'auteur de l'univers.
+# AUCUN thème, personnage, DA ni asset ici — délégués à la chaîne.
+
+structure:
+  core_loop: >
+    action manuelle → +1 unité de ressource R → dépenser R en générateurs →
+    production automatique de R par tick → dépenser R en générateurs/améliorations →
+    atteindre des seuils qui débloquent la suite. Boucle de fond : arbitrage permanent
+    « acheter maintenant vs épargner pour le palier supérieur ».
+  resources:
+    - R (unique ressource primaire, entière, visible en permanence)
+  actions:
+    - clic_manuel: "+gain_clic R (gain_clic modifiable par améliorations)"
+    - acheter_generateur_i: "visible dès déblocage, grisé si R insuffisant — refus observable, état inchangé"
+    - acheter_amelioration_j: "même règle de refus observable"
+  progression:
+    generateurs: "4 tiers (G1..G4), chacun produit prod[i] R/s"
+    ameliorations: "6 — 2 sur le clic (×2 puis ×4 du gain_clic), 4 « ×2 production » (une par générateur)"
+  unlocks: >
+    5 seuils sur le TOTAL CUMULÉ de R produit (jamais le solde) :
+    S1 révèle G2 · S2 révèle G3 · S3 révèle G4 · S4 révèle les améliorations ×2 prod ·
+    S5 = condition de FIN (victoire observable).
+  economy:
+    cout_generateur: "cout_base[i] × 1.12^(n_possedes_du_tier)  # croissance géométrique"
+    cout_base: [15, 100, 1100, 12000]
+    prod: [0.1, 1, 8, 47]          # R/s par unité
+    gain_clic_initial: 1
+    cout_ameliorations: [100, 500, 1000, 5000, 30000, 200000]
+    regles: "aucun revenu hors clic+générateurs ; aucune dépense hors achats (pas de vente)"
+  dimensioning:
+    seuils_cumules: [100, 1000, 12000, 150000, 1000000]   # S5 = fin de partie
+    fin: >
+      VICTOIRE quand total cumulé ≥ 1_000_000 R ; PAS d'état d'échec (fidèle au genre) —
+      la divergence des bots se mesure au TEMPS-jusqu'à-S5 et aux seuils atteints dans un
+      budget de ticks fixe, jamais par une défaite artificielle.
+    invariant_comptable: "solde == Σ(gains clic) + Σ(production) − Σ(dépenses), égalité exacte"

@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s5-wiremap", "git_head": "f8c50a05150cf88383c66accf942fdfc43b2c716", "hmac": "40a15b516ce07247fdf5924ff32447988c2424a781ca8e72d8c551f1b3ce9247", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "p1_beta-20260830-run1", "schema": "forge.context_manifest.v1", "ts": 1788103114.3314314}

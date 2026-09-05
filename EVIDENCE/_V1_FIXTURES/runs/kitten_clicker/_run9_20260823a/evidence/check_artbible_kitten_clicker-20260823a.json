@@ -1,0 +1,32 @@
+{
+  "pass": true,
+  "verdict": "OK",
+  "findings": [],
+  "coverage": {
+    "checked": true,
+    "missing": [],
+    "satisfied": [
+      "pelote",
+      "kitten_common",
+      "kitten_uncommon",
+      "kitten_rare",
+      "kitten_epic",
+      "kitten_legendary",
+      "refuge",
+      "lieu_2",
+      "obj_food_bowl",
+      "obj_scratching_post",
+      "obj_cushion_bed",
+      "fx_click_feedback",
+      "icon_ronrons",
+      "ui_stats_hud",
+      "ui_action_buttons",
+      "ui_objectif_banner"
+    ]
+  },
+  "resolution_stats": {
+    "ok": 0,
+    "blocked": 16,
+    "total": 16
+  }
+}

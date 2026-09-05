@@ -1,0 +1,85 @@
+{
+ "schema_version": 1,
+ "resources": [
+  {
+   "id": "ascension_glow",
+   "unit": "glow d'ascension",
+   "sources": [
+    "meta_reward"
+   ],
+   "sinks": [
+    "meta_action"
+   ],
+   "initial_stock": 0
+  },
+  {
+   "id": "light",
+   "unit": "lumiere",
+   "sources": [
+    "core_action",
+    "economy_reward"
+   ],
+   "sinks": [
+    "economy_action"
+   ],
+   "initial_stock": 0
+  }
+ ],
+ "formulas": [
+  {
+   "id": "ascension_bonus",
+   "text": "light_per_stoke = 1 * (1 + per_glow * ascension_glow)",
+   "params": {
+    "per_glow": 0.05
+   }
+  },
+  {
+   "id": "emitter_cost",
+   "text": "cost(n) = base * growth^n (cout du n-ieme emitter d'un type)",
+   "params": {
+    "base": 15,
+    "growth": 1.18
+   }
+  },
+  {
+   "id": "emitter_output",
+   "text": "output_passif = somme des taux des emetteurs actifs",
+   "params": {
+    "base_rate": 0.5
+   }
+  },
+  {
+   "id": "terminal_condition",
+   "text": "fin observable si light >= threshold",
+   "params": {
+    "threshold": 5000
+   }
+  }
+ ],
+ "invariants": [
+  {
+   "id": "core_light_per_stoke",
+   "value": 1,
+   "unit": "lumiere/clic",
+   "why": "rendement de base de l'action-coeur, fixe pour que l'increment du compteur soit lisible et le rejeu seede comparable ; valeur originale (jamais reprise de Cookie Clicker), forme heritee de la grammaire de genre worldscan:games[0].loops.minute_1"
+  },
+  {
+   "id": "economy_first_emitter_cost",
+   "value": 15,
+   "unit": "lumiere",
+   "why": "cout du premier emetteur, porte d'achat initiale ; valeur originale calibree pour un premier achat rapide mais non gratuit apres quelques attisages"
+  },
+  {
+   "id": "meta_ascension_bonus",
+   "value": 5,
+   "unit": "% lumiere/clic permanent par ascension",
+   "why": "bonus permanent d'ascension ; valeur originale, assez faible pour que la boucle reste finie et l'embrasement toujours l'objectif, assez sensible pour rendre l'ascension perceptible"
+  },
+  {
+   "id": "progression_threshold_light",
+   "value": 5000,
+   "unit": "lumiere",
+   "why": "seuil terminal decide (structure deleguee par le charter) ; choisi ATTEIGNABLE par une sonde deterministe dans un budget de ticks fixe tout en exigeant des achats d'emetteurs — pas d'idle infini (charter:condition_de_victoire). Repond au fond de q_art_001 : la fin est un seuil sur la ressource unique, pas un jalon-entite distinct"
+  }
+ ]
+}

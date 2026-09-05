@@ -25,8 +25,11 @@ from forge import run_real
 from forge.driver import ForgeDriver
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-P1_ALPHA = REPO_ROOT / "EVIDENCE" / "runs" / "p1_alpha"
-P1_BETA = REPO_ROOT / "EVIDENCE" / "runs" / "p1_beta"
+# Fixture V1 migrée le 2026-09-05 sous `EVIDENCE/_V1_FIXTURES/` (GO Pierre) : ces
+# artefacts viennent de runs V1 jamais rejoués, ils ne sont PAS des preuves V2 et
+# vivent donc à l'écart de `EVIDENCE/runs/`. Voir le README de ce dossier.
+P1_ALPHA = REPO_ROOT / "EVIDENCE" / "_V1_FIXTURES" / "runs" / "p1_alpha"
+P1_BETA = REPO_ROOT / "EVIDENCE" / "_V1_FIXTURES" / "runs" / "p1_beta"
 
 
 def _copy_run(tmp_path: Path, src: Path, name: str) -> Path:

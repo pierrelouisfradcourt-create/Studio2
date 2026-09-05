@@ -1,0 +1,134 @@
+Confirmed: `games/p1_beta` has no code yet — this is a pre-build step (s5). So the WireMap is the **plan** the builder (s9) must satisfy, isomorphic to `blueprint.json` and covering every rule referenced by the featuremap (`s3-decompo`) and `loop.json`. `check_wiremap` (post-build, s10c) will later verify these functions/files actually exist.
+
+I have the three binding upstream artifacts in context (charter, featuremap, blueprint, loop) and the frozen `repo_map.yaml`. Bash/Glob/LSP-for-python are disabled for this subagent, so I cannot execute any oracle — consistent with `permissions.run: aucun` for this contract.
+
+---
+
+## RAPPORT FINAL — s5-wiremap / p1_beta-20260830-run1
+
+**Point de vue tenu.** WireMap isomorphe au `blueprint.json`. Sections = modules du blueprint : `engine` (logique pure seedée, aucune dépendance vers render/input/main — `blueprint.deps_interdites`), `render` (dessin canvas), `input` (DOM→actions), plus `index.html`/`main` (entrypoint/bootstrap) et les sondes `run-oracle`/`e2e`/`solvability`. Aucune racine inventée (leçon pré-mortem « 04_CONTENT inventée ») : les `fichiers` sont les modules déclarés par s4, relatifs à la racine du code `games/p1_beta`, cible web = `index.html` à la racine (charter `plateforme_cible`).
+
+**Couverture du plan.** Une feuille par règle référencée en amont : R1–R7b, R9–R14 (source_refs de `s3-decompo`) + R8 (REPEAT de `loop.json`) = 15 features. Chaque règle est mappée à LA fonction qui l'implémente, dans le module qui la contient, avec une preuve déterministe citant la sonde correspondante. Le maillon de solvabilité (charter `criteres_succes`, pré-mortem s10a) est porté par R11 → `isTerminal` prouvé par `solvability.js` atteignant `light>=5000` dans un budget de ticks fixe, même seed ⇒ même tick.
+
+**Verdicts (séparés).**
+- `software_verdict: OK` — appuyé par l'ancre non-LLM structurelle : `blueprint.json` (modules + `deps_interdites`), `s3-decompo` (capacités/source_refs), `loop.json` (refs/affordances). La carte est isomorphe au blueprint et chaque règle amont porte ≥1 feuille avec fonction+fichiers+preuve non vides.
+- `evidence_verdict: MECHANICAL_VALIDATION_ONLY` — la conformité de forme est établie par inspection des artefacts amont, pas par exécution.
+- `claim_verdict: NO_CLAIM_ALLOWED` — je n'ai exécuté NI `check_wiremap_contract.mjs` (matérialisation + featuremap à la charge de l'exécuteur) NI `forge.static_oracles.check_wiremap` (post-build, le code n'existe pas encore). « La carte passe l'oracle » et « les fonctions existeront » sont des jugements à la charge de l'exécuteur + du build + HumanGate. **fog → Pierre / exécuteur** : (1) relancer `check_wiremap_contract` après matérialisation ; (2) le build s9 doit définir CES fonctions dans CES fichiers, sinon `check_wiremap` (s10c) rendra FAIL.
+
+**Résolution d'un conflit d'instructions (décision assumée, pas un silence).** Le gabarit générique du contrat exige `RETURN_REASON` en TOUTE DERNIÈRE LIGNE « aucun texte après » ; la TÂCHE CONCRÈTE exige que la réponse se termine par le bloc ```json``` que l'exécuteur parse pour matérialiser `wiremap.json`. Ces deux « dernier élément » s'excluent. Je fais primer l'exigence machine (bloc json en dernier, sinon la matérialisation casse) et place `RETURN_REASON` juste avant.
+
+**SKIPPED_VALIDATION**
+- item: exécution de `check_wiremap_contract.mjs` · périmètre: la carte ci-dessous vs `featuremap.json` · statut: **non fait** · raison: `permissions.run: aucun` ; l'exécuteur le relance après matérialisation.
+- item: exécution de `forge.static_oracles.check_wiremap` (fichiers existent / fonctions définies) · périmètre: `games/p1_beta` · statut: **non faisable** · raison: pré-build, aucun code n'existe encore (s10c le vérifiera).
+- item: format v2 `{systems[],lines[]}` + champ `couvre` · périmètre: livrable · statut: **non fait (délibéré)** · raison: la TÂCHE CONCRÈTE impose EXACTEMENT le format `check_wiremap` à 4 clés (`feature`/`fonction`/`fichiers`/`preuve`) ; ajouter des clés violerait « EXACTEMENT un objet de la forme ».
+- item: lecture ligne-à-ligne de `static_oracles.check_wiremap` · périmètre: `scripts/forge/static_oracles.py` · statut: **partiel** · raison: LSP python indisponible et grep désactivé pour ce subagent ; le format des 4 clés est dicté verbatim par la TÂCHE CONCRÈTE, source autoritaire du parseur.
+
+**why_task_existed:**
+- `problem:` un blueprint (s4) et une featuremap (s3) existent, mais aucune carte ne relie encore chaque règle de jeu à la fonction/fichier qui la réalisera ni à sa preuve attendue — sans quoi le build s9 n'a pas de cible vérifiable et `check_wiremap` (s10c) n'a rien à confronter au code.
+- `oracle:` aucun — activation par la position dans la chaîne full_content (étape 5), décision de séquencement, pas un défaut mesuré.
+- `root_cause:` non établie (activation nominale de pipeline, pas une panne).
+- `action_reason:` produire la WireMap isomorphe au blueprint qui donne au builder une cible par règle et à `check_wiremap` un contrat à vérifier après build.
+
+**result:** WireMap de 15 feuilles produite, isomorphe aux 8 modules du blueprint, couvrant R1–R14 (R7 dédoublé a/b) + R8, chaque feuille à `fonction`+`fichiers`+`preuve` non vides, maillon de solvabilité porté par R11.
+**proof:** aucune commande exécutée (`run: aucun`) ; ancrage = `blueprint.json`, `s3-decompo`, `loop.json`, `charter.yaml`, `repo_map.yaml` lus en contexte. L'exécuteur relancera `node scripts/forge/check_wiremap_contract.mjs <run_dir>/wiremap.json --featuremap <run_dir>/featuremap.json`.
+**learning:** la fin de partie (`condition_de_victoire`) est un SEUIL sur la ressource unique (`light>=5000`, confirmé `gm_worldscan.gb_terminal_rule`), pas un jalon-entité ; R11 doit donc mapper la règle terminale déterministe (`engine.isTerminal`) et non une entité de fin séparée — cela cadre la cible du builder et l'assertion de solvabilité (stricte, jamais un `>=` tautologique).
+**next_reason:** chaîne causale FERMÉE pour cette étape — le livrable est produit et cohérent avec l'amont ; le niveau supérieur (exécuteur) doit seulement matérialiser + relancer `check_wiremap_contract`, aucune cause non résolue ne persiste ici.
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}
+
+```json
+{
+  "features": [
+    {
+      "feature": "R1 objectif terminal affiché dès le tick 0",
+      "fonction": "getObjective",
+      "fichiers": ["engine.js"],
+      "preuve": "sonde run-oracle.js: getObjective(initialState) au tick 0 retourne une chaine non vide contenant le seuil terminal '5000' (assert nonempty && includes('5000'))"
+    },
+    {
+      "feature": "R2 entrée attisage du foyer (affordance hearth)",
+      "fonction": "handleHearthClick",
+      "fichiers": ["input.js"],
+      "preuve": "e2e.js: depuis index.html, clic sur l'affordance hearth 10 fois -> compteur lumiere strictement croissant, exactement +1 par clic"
+    },
+    {
+      "feature": "R3 réponse visuelle du foyer à l'attisage",
+      "fonction": "renderHearth",
+      "fichiers": ["render.js"],
+      "preuve": "e2e.js capture image-a-image: la luminance du pixel central du foyer change entre la frame du clic et la suivante (flash < 200ms detectable)"
+    },
+    {
+      "feature": "R4 récompense stricte +1 lumiere par attisage",
+      "fonction": "stoke",
+      "fichiers": ["engine.js"],
+      "preuve": "run-oracle.js seede: apres N appels stoke sans achat, state.light === N exactement (egalite stricte, jamais un >=)"
+    },
+    {
+      "feature": "R5 divergence de décision idle vs actif",
+      "fonction": "step",
+      "fichiers": ["engine.js"],
+      "preuve": "run-oracle.js: deux trajectoires seedees (politique idle vs actif, horizon 300 frames via step) -> 2 valeurs de light distinctes et non triviales (variance non nulle)"
+    },
+    {
+      "feature": "R6 entrée achat d'un émetteur (affordance buy_button)",
+      "fonction": "handleBuyClick",
+      "fichiers": ["input.js"],
+      "preuve": "e2e.js: depuis index.html, clic sur buy_button au premier moment ou light>=cost -> nombre d'emetteurs 0->1 et production passive devient >0"
+    },
+    {
+      "feature": "R7a objectif change vers second émetteur après le 1er achat",
+      "fonction": "getObjective",
+      "fichiers": ["engine.js"],
+      "preuve": "run-oracle.js: getObjective(stateApres1erAchat) differe textuellement de getObjective(stateInitial) et enonce l'acquisition d'un second emetteur"
+    },
+    {
+      "feature": "R7b objectif change vers l'embrasement (seuil 5000)",
+      "fonction": "getObjective",
+      "fichiers": ["engine.js"],
+      "preuve": "run-oracle.js: au stade production passive active, getObjective differe textuellement des deux objectifs precedents et nomme le seuil 5000"
+    },
+    {
+      "feature": "R8 boucle répétée par production passive des émetteurs",
+      "fonction": "applyEmitters",
+      "fichiers": ["engine.js"],
+      "preuve": "run-oracle.js seede: avec >=1 emitter et sans clic, applyEmitters incremente light de la production attendue a chaque tick (croissance stricte, deterministe au rejeu)"
+    },
+    {
+      "feature": "R9 entrée ascension après embrasement (affordance ascension_altar)",
+      "fonction": "handleAscensionClick",
+      "fichiers": ["input.js"],
+      "preuve": "e2e.js: depuis index.html, apres l'embrasement, clic sur ascension_altar -> light repasse a 0 et le compteur de glow d'ascension passe de 0 a >0"
+    },
+    {
+      "feature": "R10 avantage méta de l'ascension (light_per_stoke rehaussé)",
+      "fonction": "ascend",
+      "fichiers": ["engine.js"],
+      "preuve": "run-oracle.js: apres ascend(), le gain de light par attisage est strictement superieur au gain initial mesure en R2 (increases_more_than R2, comparaison stricte)"
+    },
+    {
+      "feature": "R11 état terminal déterministe signalé à l'écran (light>=5000)",
+      "fonction": "isTerminal",
+      "fichiers": ["engine.js"],
+      "preuve": "solvability.js: sonde seedee ATTEINT reellement light>=5000 dans un budget de ticks fixe -> isTerminal(state)===true, ecran 'Embrasement complet' affiche et interaction neutralisee ; meme seed => meme tick terminal au rejeu"
+    },
+    {
+      "feature": "R12 glyphe d'état verrouillé sur un émetteur non accessible",
+      "fonction": "renderLockedGlyph",
+      "fichiers": ["render.js"],
+      "preuve": "e2e.js: sur un emetteur verrouille, rendu d'un glyphe desature sans glow + libelle 'X lumiere requise' visible ; aucune teinte chaude ni halo empruntes"
+    },
+    {
+      "feature": "R13 compteur de lumiere HUD lisible en continu",
+      "fonction": "renderLightCounter",
+      "fichiers": ["render.js"],
+      "preuve": "e2e.js: le compteur HUD (chasse tabulaire) est le plus gros element textuel, mis a jour a chaque tick et jamais recouvert par les effets"
+    },
+    {
+      "feature": "R14 ambiance du champ se réchauffant avec la progression",
+      "fonction": "renderField",
+      "fichiers": ["render.js"],
+      "preuve": "e2e.js: captures a light=0, 2500, 5000 -> la teinte du fond se rechauffe de facon monotone avec le ratio light/5000 (borne a 1)"
+    }
+  ]
+}
+```

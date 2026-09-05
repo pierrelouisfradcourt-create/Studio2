@@ -1,0 +1,87 @@
+{
+ "game_id": "p1_alpha",
+ "inputs_recus": {
+  "worldscan": true,
+  "charter": false
+ },
+ "sections": [
+  {
+   "id": "context",
+   "status": "GROUNDED",
+   "elements": [
+    {
+     "statement": "p1_alpha est un jeu du genre incremental/clicker, destine au web.",
+     "source": "worldscan",
+     "ref": "RETURN_REASON.why_task_existed.problem : « Creer un jeu incremental/clicker web (p1_alpha) avec structure imposee requiert de comprendre les patterns eprouves du genre »",
+     "inferred": false
+    },
+    {
+     "statement": "Le genre observe ne porte, par defaut, aucun monde diegetique ni intrigue : les trois comparables sont des marathons economiques abstraits (croissance exponentielle d'une ressource), sans recit ni fin narrative.",
+     "source": "worldscan",
+     "ref": "Analyses Transversales, Observation cle : « Les trois jeux n'ont pas d'etat gagner — ce sont des marathons sans cap (prestige reset = objectif moyen terme, pas victoire finale) »",
+     "inferred": true
+    },
+    {
+     "statement": "Le worldscan se declare lui-meme sans autorite sur le monde propre de p1_alpha : il cartographie des patterns de genre, il ne definit pas l'univers du projet — le socle narrateur reste donc a fournir en aval.",
+     "source": "worldscan",
+     "ref": "Caveat & Delimitation : « elle cartographie les patterns structurels observes, jamais ne prescrit une architecture de p1_alpha » ; manifeste JSON champ « advisory: true »",
+     "inferred": false
+    }
+   ]
+  },
+  {
+   "id": "chronology",
+   "status": "NOT_GROUNDED",
+   "reason": "Aucune entree ne fournit de chronologie diegetique (frise d'evenements du monde) pour p1_alpha. Le worldscan ne decrit qu'une progression economique cote joueur (horizons minute_1 / minute_10 / hour_5 / endgame), qui est un systeme de jeu et non une histoire du monde — hors perimetre narratif. Le charter, jamais materialise, n'apporte rien."
+  },
+  {
+   "id": "stakes",
+   "status": "NOT_GROUNDED",
+   "reason": "Le worldscan mesure au contraire l'ABSENCE d'enjeu narratif : les trois comparables n'ont ni etat de defaite ni condition d'echec (objectives[].has_defeat_state = false, defeat_condition = null ; Cookie Clicker : « absence d'echec : impossible de perdre »). Aucun peril, menace ou perte du monde n'est donc ancrable pour p1_alpha ; la seule tension citee est une motivation de systeme (asymetrie d'acces aux achats), non un enjeu diegetique. Charter jamais materialise."
+  },
+  {
+   "id": "factions",
+   "status": "NOT_GROUNDED",
+   "reason": "Ni le worldscan ni le charter ne definissent de faction propre a p1_alpha. Les groupes nommes dans le worldscan (Grandmas / Wrinklers, heros, Managers) appartiennent aux jeux de REFERENCE (Cookie Clicker, Clicker Heroes, Idle Miner Tycoon), pas a p1_alpha — les transposer serait une invention. Charter jamais materialise (state.json : s0-contrat yaml_check.written = false)."
+  },
+  {
+   "id": "characters",
+   "status": "NOT_GROUNDED",
+   "reason": "Aucun personnage de p1_alpha n'est ancrable. Les personnages cites (Cid, Ivan, Brittany ; Ancients Siyalatas, Libertas) sont ceux de Clicker Heroes, jeu de reference, jamais de p1_alpha ; le genre observe est d'ailleurs sans avatar narratif (economie abstraite). Charter jamais materialise."
+  },
+  {
+   "id": "relations",
+   "status": "NOT_GROUNDED",
+   "reason": "Sans faction ni personnage ancre pour p1_alpha, aucune relation ne peut l'etre. La seule dynamique relationnelle citee (« structure parasite -> symbiose » des Wrinklers) est une mecanique de Cookie Clicker, pas une relation du monde de p1_alpha."
+  },
+  {
+   "id": "events",
+   "status": "NOT_GROUNDED",
+   "reason": "Aucun evenement narratif de p1_alpha n'est ancrable. Les evenements cites (Golden Cookies, Ascension, Grandmapocalypse, Transcendence, Leagues) sont des evenements-systeme des jeux de reference, pas des evenements du monde de p1_alpha, et relevent du jeu — hors perimetre narratif. Charter jamais materialise."
+  },
+  {
+   "id": "coherence_rules",
+   "status": "GROUNDED",
+   "elements": [
+    {
+     "statement": "Toute couche narrative eventuelle de p1_alpha doit rester sans cloture par victoire finale : le genre observe est un marathon sans cap et aucun comparable ne pose d'etat gagner.",
+     "source": "worldscan",
+     "ref": "Observation cle « marathons sans cap » + objectives[].has_win_state = false / victory_condition = null (Cookie Clicker, Clicker Heroes, Idle Miner Tycoon)",
+     "inferred": true
+    },
+    {
+     "statement": "La coherence du monde ne peut reposer sur une menace existentielle ni une condition de perte : aucun comparable n'a d'etat de defaite.",
+     "source": "worldscan",
+     "ref": "objectives[].has_defeat_state = false ; retention_answer Cookie Clicker : « absence d'echec : impossible de perdre »",
+     "inferred": true
+    },
+    {
+     "statement": "Un reset / prestige, s'il recoit un habillage narratif, ne doit pas se lire comme une mort ou une punition du monde : le genre le pose comme une fonctionnalite, pas un chatiment.",
+     "source": "worldscan",
+     "ref": "retention_answer Clicker Heroes : « reset reframed comme feature pas punition » (loops.hour_5 : Transcendence = reset non punitif)",
+     "inferred": true
+    }
+   ]
+  }
+ ]
+}

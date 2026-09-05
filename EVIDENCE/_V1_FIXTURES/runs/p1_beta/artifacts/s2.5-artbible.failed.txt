@@ -1,0 +1,54 @@
+`verdict: OK` — coverage closed (8/8 `required:true` entities satisfied; the one `required:false` background correctly needs no coverage). Resolution is `0 OK / 9 BLOCKED` — advisory and **legitimate** (the catalog holds only `candy-pop` and `flat-top-down` / genres shooter·tactical; it has no cosmic-luminous incremental style, so BLOCKED is a catalogue-incompleteness fact, not a contract error). This matches exactly what I documented in `## asset_rules`.
+
+---
+
+## RAPPORT FINAL — s2.5-artbible / p1_beta-20260830-run1 (Round 1)
+
+**Livrables produits** (écriture dans le périmètre autorisé uniquement) :
+- `lab/forge_runs/p1_beta/art_bible.md` — frontmatter `styles`/`mood_keywords` non vides + 3 sections v0.1 (IDENTITÉ VISUELLE / RATIONALE / BESOINS VISUELS) + les 8 sections héritage/décision nommées exactement.
+- `lab/forge_runs/p1_beta/asset_requests.json` — 9 requêtes (Asset Contract V0.1), `no_assets_needed:false`.
+
+**Identité décidée (bras LIBRE) :** « Le Foyer » — une forge de lumière cosmique. Aucun avatar, aucun monde nommé (cohérent avec `story_bible:context`/`characters` = NOT_GROUNDED). L'action cœur = attiser un foyer chaud unique → compteur de lumière ; achats = émetteurs froids qui apparaissent à l'écran ; fin = embrasement observable quand la constellation sature.
+
+**Oracle cité :** `scripts/forge/check_artbible.mjs` (déterministe, non-LLM).
+- `software_verdict: OK` — appuyé par le reçu `check_artbible.mjs` : `verdict:"OK"`, `coverage.checked:true`, `coverage.missing:[]`, 8/8 besoins `required:true` couverts par une requête de même `entity_role`. Auto-contrôle SANS autorité de preuve (fiche 3, 2026-08-30) — le reçu faisant foi est celui que le DRIVER ré-exécutera (`executed_by: driver`).
+- `evidence_verdict: MECHANICAL_VALIDATION_ONLY`
+- `claim_verdict: NO_CLAIM_ALLOWED` — l'adéquation esthétique réelle (est-ce « le bon style ») n'est PAS évaluée : `style_tag_match` compare des tags, pas des pixels → **fog → Pierre**.
+
+**Statut de résolution des 9 `asset_request` (advisory, jamais un pass/fail) :**
+
+| id | entity_role | style | résolution catalogue |
+|---|---|---|---|
+| req_core_hearth | other | ember-glow | BLOCKED (advisory) |
+| req_emitter_unit | item | luminous-vector | BLOCKED (advisory) |
+| req_spark_burst | effect | ember-glow | BLOCKED (advisory) |
+| req_light_counter | ui | hud-neon | BLOCKED (advisory) |
+| req_buy_button | ui | hud-neon | BLOCKED (advisory) |
+| req_progress_constellation | ui | luminous-vector | BLOCKED (advisory) |
+| req_end_screen | ui | luminous-vector | BLOCKED (advisory) |
+| req_locked_glyph | icon | hud-neon | BLOCKED (advisory) |
+| req_field_background | environment | deep-space-flat | BLOCKED (advisory) |
+
+9/9 `resolution_stats.blocked` — **légitime** : le catalogue (`candy-pop`, `flat-top-down`, genres shooter/tactical) ne contient aucun asset de style lumineux-cosmique-incremental. C'est un `resolution_stats.blocked` (catalogue incomplet), **distinct** d'un `coverage.missing` (qui est vide) → à sourcer en HumanGate, jamais assoupli pour forcer un OK (garde-fou respecté). Chaque `req.*.id` est donc **blocked-justifié** (satisfait `charter:criteres_succes` « resolved-avec-fichier OU blocked-justifié »).
+
+**SKIPPED_VALIDATION**
+- item: lecture de `design/content_requirements.md` (C.5, Gameplay Map) · périmètre: run `p1_beta` · statut: **non fait — artefact ABSENT du run_dir** (`design/` inexistant, aucun `*content_req*` trouvé) · raison: le contrat le déclare mandatory-read « injecté en amont par l'exécuteur », mais il n'a PAS été injecté à cette étape. J'ai travaillé sur les 3 ancres réellement présentes (charter, worldscan, story_bible). Remonté en question protocole au GM (fence, loop_id `art_gm`).
+- item: exécution FAISANT FOI de `check_artbible.mjs` · périmètre: les 2 livrables · statut: **non fait (par conception)** · raison: `permissions.run` = auto-contrôle sans autorité de preuve ; le reçu gatant est produit par le driver (`evidence/check_artbible_<run_id>.json`), pas par moi.
+- item: jugement d'adéquation esthétique / viewpoint des `style` déclarés · périmètre: 9 requêtes · statut: **hors capacité oracle** · raison: aucun oracle ne juge les pixels (limite assumée ASSET_CONTRACT_V0) → fog HumanGate.
+
+**RETURN LINEAGE**
+- `why_task_existed:`
+  - `problem:` la chaîne `full_content` de p1_beta (bras LIBRE) a besoin d'une identité visuelle décidée + de requêtes d'asset structurées couvrant chaque entité de la boucle clicker, avant l'architecture/le build.
+  - `oracle:` `check_artbible.mjs` (couverture besoin↔requête + forme) ; activation aussi par décision humaine (protocole RUN 2, paire pilote L/D).
+  - `root_cause:` non applicable (étape de production planifiée, pas une réparation) ; la Story Bible quasi-vide est un fait de genre, pas un défaut.
+  - `action_reason:` produire art_bible.md + asset_requests.json avec héritage cité (worldscan/story_bible) et couverture close, puis auto-contrôler jusqu'à `verdict:OK`.
+- `result:` deux livrables écrits ; auto-contrôle `verdict:OK`, coverage 8/8, resolution 0/9 (advisory BLOCKED légitime).
+- `proof:` `node scripts/forge/check_artbible.mjs lab/forge_runs/p1_beta/art_bible.md lab/forge_runs/p1_beta/asset_requests.json --json` → `{"pass":true,"verdict":"OK","coverage":{"checked":true,"missing":[],"satisfied":[8 ids]},"resolution_stats":{"ok":0,"blocked":9,"total":9}}`.
+- `learning:` sur un genre sans monde inhérent (story_bible 7/8 NOT_GROUNDED), l'identité visuelle est presque entièrement DÉCIDÉE ; l'héritage se réduit à des contraintes (`coherence_rules`) + les conventions de boucle du worldscan. Le catalogue actuel ne couvre aucun style incremental → BLOCKED advisory attendu et honnête. `content_requirements.md` non injecté à s2.5 est un écart de protocole à confirmer.
+- `next_reason:` chaîne NON fermée — l'aval doit agir : (1) le GM répond aux questions du fence (round 2) ou motive `ready_for_freeze:false` ; (2) le driver ré-exécute `check_artbible.mjs` (reçu faisant foi) ; (3) HumanGate tranche le sourcing des 9 assets BLOCKED et l'adéquation esthétique (fog). Une cause protocole non résolue persiste (map C.5 manquante) → escalade légitime.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "L'artefact design/content_requirements.md (C.5 Gameplay Map), declare mandatory-read et 'injecte en amont' par le contrat s2.5-artbible, est absent du run_dir p1_beta (aucun dossier design/, aucun fichier *content_req*).", "root_cause": "L'executeur/driver n'a pas materialise ni injecte content_requirements.md a l'etape s2.5 de ce run full_content."}
+
+```design_questions
+{"schema_version": 1, "round": 1, "questions": [{"id": "q_art_001", "from": "ART", "to": "GM", "round": 1, "about": "art_bible:BESOINS VISUELS", "loop_id": "core_loop", "missing": ["forme du declencheur d'etat terminal: seuil sur une ressource unique accumulee OU jalon/milestone distinct"], "why": "Mon identite visuelle mappe la progression vers la fin sur une constellation qui sature (vr_progress_constellation) puis un embrasement (vr_end_screen), en supposant que l'etat terminal se declenche quand la ressource-lumiere franchit un seuil. Si la boucle canonique route sa fin par un JALON distinct de la ressource (entite separee), il faudrait un asset de jalon dedie, non prevu ici. Reponse determine si vr_progress_constellation reste une entite ou doit etre dedoublee.", "blocking": true, "answer": null}, {"id": "q_art_002", "from": "ART", "to": "GM", "round": 1, "about": "art_bible:world_constraints", "loop_id": "art_gm", "missing": ["existence et injection de design/content_requirements.md (C.5 Gameplay Map) a l'etape s2.5"], "why": "Mon contrat declare content_requirements.md mandatory-read et injecte en amont, mais il est absent du run_dir (aucun design/, aucun *content_req*). J'ai produit l'art bible depuis charter+worldscan+story_bible seuls. Je dois savoir si la Gameplay Map existe deja a ce stade de full_content et si l'ART est cense la completer, ou si elle est produite plus en aval.", "blocking": false, "answer": null}], "declarations": {"ART": {"round": 1, "ready_for_freeze": false, "open_to_gm": 2}, "GM": {"round": 1, "ready_for_freeze": false, "open_to_art": 0}}}
+```

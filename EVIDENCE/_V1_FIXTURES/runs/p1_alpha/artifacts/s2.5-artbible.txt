@@ -1,0 +1,61 @@
+`verdict: OK` — coverage complete (12/12 requirements satisfied), form valid. The `resolution_stats: 12 BLOCKED` is **advisory and expected**: the catalog holds no incremental/clicker web-UI assets in the decided style (present styles: flat-top-down, lowpoly, photoscan-pbr, candy-pop). That is a legitimate `resolution_stats.blocked` (catalog incomplete), **not** a `coverage.missing` gap — reported as-is, never gamed.
+
+---
+
+## RAPPORT FINAL — s2.5-artbible (p1_alpha-20260830-run1)
+
+**Livrables écrits** (dans mon périmètre, `write` = ces deux fichiers uniquement) :
+- `lab/forge_runs/p1_alpha/art_bible.md` — frontmatter (`styles`, `mood_keywords` non vides) + 3 sections v0.1 (IDENTITÉ VISUELLE / RATIONALE / BESOINS VISUELS) + les 8 sections héritage/décision (`heritage_worldscan`, `heritage_story_bible`, `visual_language`, `affordance_rules`, `character_states`, `ui_readability`, `world_constraints`, `asset_rules`).
+- `lab/forge_runs/p1_alpha/asset_requests.json` — 12 requêtes, `no_assets_needed:false`.
+
+**Source décisive découverte** : `charter.yaml` n'existe pas sur disque (confirme le report s2.6 : `state.json → s0-contrat.yaml_check.written=false`). Mais `artifacts/s0-contrat.txt` porte le contrat produit (PROPOSITION) qui **cite `structure_imposee.yaml`, structure RATIFIÉE Pierre 2026-08-30**. J'ai donc ancré l'inventaire des entités sur une structure normative (1 cible, 4 générateurs G1–G4, 6 améliorations, 5 seuils S1–S5, victoire S5), pas sur une supposition de genre.
+
+**Asset_requests produits + statut de résolution** (résolution = ADVISORY, jamais un pass/fail) :
+
+| id | entity_role | type | style | résolution catalogue |
+|---|---|---|---|---|
+| req_click_target | item | sprite | flat-vector-2d | BLOCKED (advisory) |
+| req_resource_icon | icon | icon | clean-web-ui | BLOCKED (advisory) |
+| req_generator_g1..g4 | item | icon | flat-vector-2d | BLOCKED (advisory) ×4 |
+| req_upgrade_badges | icon | icon | clean-web-ui | BLOCKED (advisory) |
+| req_victory_screen | ui | sprite | clean-web-ui | BLOCKED (advisory) |
+| req_buy_panel | ui | sprite | clean-web-ui | BLOCKED (advisory) |
+| req_click_feedback | effect | vfx | flat-vector-2d | BLOCKED (advisory) |
+| req_threshold_unlock_fx | effect | vfx | flat-vector-2d | BLOCKED (advisory) |
+| req_background | environment | sprite | flat-vector-2d | BLOCKED (advisory) |
+
+12/12 `coverage.satisfied`, 0 `coverage.missing`. Les 12 BLOCKED de résolution = le catalogue n'a pas encore d'assets d'UI incremental/clicker web dans cette identité (sourcing = gate Pierre, jamais une auto-résolution « au plus proche »).
+
+**Verdicts**
+- `software_verdict: OK` — adossé à l'oracle `scripts/forge/check_artbible.mjs` (`verdict:"OK"`, `coverage.checked:true`, `missing:[]`). Auto-contrôle SANS autorité de preuve : le reçu faisant foi (`evidence/check_artbible_<run_id>.json`, `executed_by: driver`) est ré-émis par le DRIVER après livraison (fiche 3, 2026-08-30) — je ne l'auto-certifie pas.
+- `evidence_verdict: MECHANICAL_VALIDATION_ONLY` — forme + couverture besoin↔requête vérifiées mécaniquement ; l'adéquation esthétique et la véracité de la prose ne sont **pas** vérifiées.
+- `claim_verdict: NO_CLAIM_ALLOWED`.
+- **fog → HumanGate** : (1) conformité esthétique de tout asset résolu = jugement Pierre, jamais un claim (`style_tag_match` compare des tags, pas des pixels) ; (2) **thème concret non tranché** — délégué à la chaîne, non fixé en amont ; j'ai posé un défaut abstrait et l'ai porté au GM (bloc `design_questions`) ; (3) l'ancrage repose sur `s0-contrat` (PROPOSITION) : la structure est ratifiée via `structure_imposee.yaml`, mais le charter n'a jamais été matérialisé — décision de continuité de chaîne = Pierre.
+
+**SKIPPED_VALIDATION**
+- **Item** : reçu d'oracle faisant foi (`evidence/check_artbible_<run_id>.json`) · **Où** : run dir · **Statut** : non fait (volontaire) · **Raison** : hors permissions (`write` limité aux 2 livrables) ; le DRIVER le produit (`executed_by: driver`).
+- **Item** : adéquation *visuelle* du style aux besoins (viewpoint, « est-ce beau ») · **Où** : les 12 requêtes · **Statut** : non vérifiable par oracle · **Raison** : jugement esthétique interdit comme oracle — remonté en fog HumanGate.
+- **Item** : ancrage sur un `charter.yaml` matérialisé · **Où** : source héritée n°1 · **Statut** : impossible · **Raison** : charter jamais matérialisé ; substitué par `s0-contrat.txt` + `structure_imposee.yaml` (structure ratifiée).
+- **Item** : lecture de `design/content_requirements.md` (Gameplay Map / loop_id canoniques) · **Où** : entrée obligatoire du contrat · **Statut** : impossible · **Raison** : le fichier n'existe pas pour ce run (présent uniquement sous `lab/forge_runs/kitten_clicker/`) ; `loop_id` renseigné par la boucle canonique évidente `core_loop` (clic→R→générateurs→seuils→victoire, `s0-contrat:core_loop`).
+
+**RETURN LINEAGE — why_task_existed**
+- `problem:` produire l'identité visuelle actionnable qui gate la production d'assets d'un incremental/clicker web (p1_alpha), bras DIRIGÉ de la paire pilote RUN 2.
+- `oracle:` `check_artbible.mjs` (forme + couverture besoin↔requête) ; activation = décision humaine (paire pilote ratifiée Pierre 2026-08-30).
+- `root_cause:` non applicable (étape planifiée de la chaîne `full_content`, pas une réparation).
+- `action_reason:` traduire structure imposée + conventions héritées en une bible + des `asset_requests` structurés vérifiables.
+- `result:` art_bible.md + asset_requests.json livrés ; `check_artbible.mjs` = `OK` (12/12 couverts).
+- `proof:` `node scripts/forge/check_artbible.mjs lab/forge_runs/p1_alpha/art_bible.md lab/forge_runs/p1_alpha/asset_requests.json --json` → `{"pass":true,"verdict":"OK","coverage":{"checked":true,"missing":[],"satisfied":[…12]},"resolution_stats":{"ok":0,"blocked":12,"total":12}}`.
+- `learning:` quand `charter.yaml` manque mais que `s0-contrat` cite une `structure_imposee.yaml` ratifiée, l'inventaire des entités visuelles se dérive proprement de la structure ; ce qui reste réellement ouvert est le **thème**, pas la liste des entités — d'où une bible complète + une seule question ciblée au GM.
+- `next_reason:` la chaîne causale ne se ferme PAS ici : une décision non résolue persiste (le thème concret est délégué sans étape propriétaire) — elle est portée au Game Master (Round 1) et, en dernier ressort, à Pierre.
+
+Round 1 de la boucle ART↔GM ci-dessous. Le style, l'affordance, la lisibilité et l'inventaire des entités sont **tranchés** ; seule la propriété/définition du **thème** est ouverte.
+
+```design_questions
+{"schema_version": 1, "round": 1, "questions": [{"id": "q_art_001", "from": "ART", "to": "GM", "round": 1, "about": "art_bible:visual_language", "loop_id": "core_loop", "missing": ["theme_owner", "concrete_subject_of_R", "concrete_identity_of_G1_G4", "per_upgrade_iconography"], "why": "Le theme concret est delegue a la chaine (s0-contrat: non_impose_par_pierre) et aucune etape amont ne l'a fixe (Story Bible 2/8 GROUNDED, charter jamais materialise). J'ai tranche le STYLE (flat-vector-2d / clean-web-ui, palette, affordance, lisibilite) et pose un theme abstrait de croissance/accumulation par defaut pour livrer une bible complete et OK a l'oracle, mais le SUJET des assets (ce que R represente, ce que sont concretement G1-G4, la distinction des 6 ameliorations) depasse l'autorite de l'etape Art. Confirme le theme abstrait par defaut ou fournis un theme concret : les regles de style/affordance/lisibilite ne changent pas, mais le contenu de vr_click_target, vr_generator_g1..g4 et vr_upgrade_badges en depend directement.", "blocking": true, "answer": null}], "declarations": {"ART": {"round": 1, "ready_for_freeze": false, "open_to_gm": 1}, "GM": {"round": 1, "ready_for_freeze": false, "open_to_art": 0}}}
+```
+
+software_verdict: OK
+evidence_verdict: MECHANICAL_VALIDATION_ONLY
+claim_verdict: NO_CLAIM_ALLOWED
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "Le theme concret de p1_alpha est delegue a la chaine mais aucune etape amont ne le possede : la Story Bible (s2.6) est revenue quasi vide (2/8 sections GROUNDED) et l'etape Art n'a autorite que sur le STYLE, pas sur le SUJET — l'inventaire d'assets a donc pu etre ancre sur la structure ratifiee, mais le contenu thematique de la cible/generateurs/ameliorations reste sans decideur, comble par un defaut abstrait explicitement soumis au GM.", "root_cause": "charter.yaml jamais materialise (state.json s0-contrat.yaml_check.written=false) et delegation du theme 'a la chaine' sans etape proprietaire designee entre s0 et s2.5."}

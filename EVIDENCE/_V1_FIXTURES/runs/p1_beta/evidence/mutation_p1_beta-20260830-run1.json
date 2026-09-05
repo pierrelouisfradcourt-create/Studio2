@@ -1,0 +1,91 @@
+{
+ "detail": {
+  "baseline_ok": true,
+  "categories_exclues": [],
+  "code_sha256": {
+   "e2e.mjs": "a929c8578fadf6ed61acb1272554b923fddf6e10368b5746f02b68f78df00cb7",
+   "engine.mjs": "cb110bb9060dc5bfe57caaadd7f1b19a1c27e920237e09de2434f6428703d08e",
+   "input.mjs": "a9d1df0f7b9ea4590ae3eb4048c58e579d554b193606fecb3d991b156792b601",
+   "logic.test.mjs": "247c49fd1fd52c016c2e1babe89ae71d42bed009d53575972b2a98ce84bf935b",
+   "properties.test.mjs": "84c7d3f9d1d4cee37925b25b739618e974e2199bb9348b14d26baf1cd3de5c5d",
+   "render.mjs": "591b33f6da7986ef6b71d06407add287e8f84c302687de3153404465111fa88a",
+   "run-oracle.mjs": "11362a472b09582f3ccc8f81cba9ada593ed863fbd081b7e14a0085a0ac43399"
+  },
+  "compteurs_par_categorie": {
+   "sans_categorie": {
+    "fichiers": 3,
+    "jugee": true,
+    "killed": 39,
+    "total": 40
+   }
+  },
+  "game_dir": "C:\\TACTICAL_CHESS_STUDIO\\games\\p1_beta",
+  "gate_checked": true,
+  "killed": 39,
+  "logic_files": [
+   "engine.mjs",
+   "input.mjs",
+   "render.mjs"
+  ],
+  "mutation_exception": true,
+  "survivants_non_tries": [],
+  "survived": 1,
+  "test_argv": [
+   "node",
+   "--test",
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "test_files_scelles": [
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "total": 40,
+  "triage_sha256": "daed42fc5c5567dfb50d5174ed16efead132911d484eba2459aff8d04e6d4e7e",
+  "triaged_survivors": [
+   "and->or@L149"
+  ]
+ },
+ "gate": {
+  "checked": true,
+  "exception": true,
+  "passed": true,
+  "survivants_non_tries": [],
+  "triage_perimes": [],
+  "triaged_survivors": [
+   "and->or@L149"
+  ]
+ },
+ "mutation_result": {
+  "baseline_ok": true,
+  "killed": 39,
+  "per_file": {
+   "engine.mjs": {
+    "killed": 33,
+    "total": 34
+   },
+   "input.mjs": {
+    "killed": 1,
+    "total": 1
+   },
+   "render.mjs": {
+    "killed": 5,
+    "total": 5
+   }
+  },
+  "survived": 1,
+  "survivors": [
+   {
+    "line": 149,
+    "name": "and->or"
+   }
+  ],
+  "test_argv": [
+   "node",
+   "--test",
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "total": 40
+ }
+}

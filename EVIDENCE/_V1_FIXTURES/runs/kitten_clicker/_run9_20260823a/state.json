@@ -1,0 +1,1519 @@
+{
+ "catalog_brick_ids_snapshot": [
+  "pat-damage-floor",
+  "pat-forge-architecture_check_before_human_escalation",
+  "pat-forge-broken_loop_repair_not_report",
+  "pat-forge-diagnosis_is_not_workflow_end",
+  "pat-forge-entrypoint_is_undeclared_invariant",
+  "pat-forge-escalation_costs_avoid_default_route",
+  "pat-forge-forge_oracle_convention_undocumented",
+  "pat-forge-hardcoded_expected_state_breaks_on_growth",
+  "pat-forge-instrument_assumes_instead_of_reads",
+  "pat-forge-kb_humangate_to_controlled_autonomy",
+  "pat-forge-mutation_survivor_equivalence_requires_mechanical_proof",
+  "pat-forge-new_proof_needs_declared_executor",
+  "pat-forge-oracle_fail_vs_not_measured_marker",
+  "pat-forge-preflight_oracle_registration",
+  "pat-forge-reuse_tracking_oracle_dead_since_inception",
+  "pat-forge-run_status_not_liveness_proof",
+  "pat-forge-test_green_via_wrong_causal_path",
+  "pat-forge-timeout_greenfield_by_profile",
+  "pat-forge-wiremap_concept_reuse_requalification",
+  "pat-full-reachability",
+  "pat-zone-of-control",
+  "sys-damage-floor",
+  "sys-evader-basic",
+  "sys-grid-nav-m01",
+  "sys-guardian-zoc",
+  "sys-pursuer-continuous",
+  "sys-pursuer-mobile",
+  "sys-reachability"
+ ],
+ "created_ts": 1787461133.2587008,
+ "escalations": 0,
+ "humangate_notes": [
+  "next_reason de s9-build-godot-standard: la chaîne causale du BUILD est FERMÉE (jeu prouvé). Elle reste OUVERTE au niveau HumanGate pour DEUX réconciliations non résolubles au niveau forgeron : (a) la wiremap gelée doit recevoir ses 10 lignes `core.*` et une décision sur `core.end_condition` vs genre clicker ; (b) les 38 capacités du jeu doivent être ratifiées dans `capabilities.yaml`. Sans elles, s10s ne peut pas verdir, indépendamment ",
+  "next_reason de s9-build-godot-standard: chaîne FERMÉE au niveau forgeron. Reste OUVERTE : (1) DRIVER — la mesure d'autorité du gate mutation lui revient (re-run s10a) ; (2) HumanGate — 5 survivants triés ⇒ `exception:True` ⇒ Pierre ratifie l'équivalence, jamais un OK auto. Indépendamment, les deux réconciliations déjà remontées par le driver (10 lignes `core.*` de la wiremap gelée + 38 capacités à ratifier dans `capabilities.yaml`) bloq",
+  "escalade refusée: déjà au tier max (opus) — escalade impossible, remonter HumanGate"
+ ],
+ "is_game": true,
+ "model_override": null,
+ "pool_attempts": 1,
+ "profile": "full_godot_content",
+ "project": "kitten_clicker",
+ "run_id": "kitten_clicker-20260823a",
+ "run_status": "DONE",
+ "steps": {
+  "s0-contrat": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s0-contrat.txt",
+    "artifact_sha256": "79a981acd5cd19c70242e7362f7bc6d682899f3c1f229b1e0c3dee4e8bef52ef",
+    "cache_creation_tokens": 115058,
+    "cache_read_tokens": 1812709,
+    "cost_usd": 2.7136545000000005,
+    "duration_s": 463.34549951553345,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "chaîne **NON fermée** — le driver doit (a) persister le charter à l'emplacement de topologie correct, (b) exécuter ou confirmer le validateur CHARTER, (c) enchaîner s2-worldscan.",
+    "output_excerpt": "'agent — source tracée : lab/forge_runs/kitten_clicker/design_intent.md\n  (2026-08-21) et la TÂCHE CONCRÈTE du dispatch kitten_clicker-20260823a.\n\ncriteres_demo:\n  - \"M1 — Le compteur de ronrons augmente visiblement à chaque clic sur la pelote centrale\"\n  - \"M2 — Un chaton apparaît à l'écran après son achat (sprite visible, pas seulement un compteur qui change)\"\n  - \"M3 — La production continue sans clic : le compteur monte seul dès qu'au moins un chaton est présent\"\n  - \"M4 — Acheter une amélioration fait monter le taux de production affiché à l'écran\"\n  - \"M5 — Un bot atteint un palier de progression sans intervention humaine (boucle jouée jusqu'à ADVANTAGE)\"\n  - \"(a) Au moins 6 chatons NOMMÉS, chacun avec une identité visuelle distincte par rareté, visibles à l'écran\"\n  - \"(b) Au moins 2 lieux : le refuge de départ + au moins 1 lieu débloqué par la méta-progression\"\n  - \"(c) Au moins 3 objets distincts présents et utilisables dans le jeu\"\n  - \"(d) Au moins 3 petites quêtes dont les objectifs sont visibles à l'écran\"\n  - \"(e) Un son distinct pour clic, achat, déblocage et prestige, déclenché par l'événement correspondant (audio procédural accepté ; preuve = volet 07_TESTS/oracle/core_audio.gd avec journal des déclenchements)\"\n  - \"(f) Un feedback visuel au clic (animation, particules, ou rebond de la pelote)\"\n  - \"(g) Une courbe de paliers portant au moins 3 valeurs distinctes (règle de variance)\"\n  - \"(h) Un bot atteint le 3e palier en un nombre de ticks fini\"\n```\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Le sous-agent s0-contrat ne peut ni persister charter.yaml (outil Write desactive) ni executer/localiser un oracle CHARTER cable (run: aucun + Bash/Grep desactives) : le charter R7 est complet mais emis inline uniquement, sa persistance et sa validation restent a la charge du driver\", \"root_cause\": \"Outils d'ecriture et d'execution desactives pour cette session de sous-agent, et aucun validateur CHARTER cable trouve dans le perimetre de recherche lu\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 26304,
+    "tools_used": {
+     "Bash": 2,
+     "LSP": 2,
+     "Read": 18,
+     "Write": 1
+    },
+    "yaml_check": {
+     "champs": [
+      "actions_interdites",
+      "criteres_demo",
+      "criteres_succes",
+      "hors_scope",
+      "objectif",
+      "plateforme_cible",
+      "reference_jeu"
+     ],
+     "check": {
+      "oracle": "check_charter",
+      "raisons": [
+       "'actions_interdites[6]' contient un « à définir » résiduel : 'Aucun champ à définir, vide ou évasif dans les artefacts : un flou non résolu remonte en fog HumanGate, il ne passe pas'"
+      ],
+      "verdict": "FAIL"
+     },
+     "path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\charter.yaml",
+     "written": true
+    }
+   },
+   "next_reason": "chaîne **NON fermée** — le driver doit (a) persister le charter à l'emplacement de topologie correct, (b) exécuter ou confirmer le validateur CHARTER, (c) enchaîner s2-worldscan.",
+   "status": "OK",
+   "ts": 1787461596.805121
+  },
+  "s1-prisme": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s1-prisme.txt",
+    "artifact_sha256": "7304276f3c38ee069b9f73a61e454e8fa4eea16052b604137b13b0512a7fb59c",
+    "cache_creation_tokens": 116036,
+    "cache_read_tokens": 369823,
+    "cost_usd": 2.6228865,
+    "duration_s": 642.6583731174469,
+    "loop_check": {
+     "check": {
+      "problems": [],
+      "verdict": "OK"
+     },
+     "path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\loop.json",
+     "written": true
+    },
+    "markdown_check": {
+     "chars": 12939,
+     "check": {
+      "command": "node scripts/forge/prisme/check_prisme.mjs",
+      "returncode": 0,
+      "tail": [
+       "1/1 artefacts conformes structurellement.",
+       "RESULT: PASS"
+      ],
+      "verdict": "PASS"
+     },
+     "path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\product_snapshot.md",
+     "written": true
+    },
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "chaîne ouverte vers s3-decompo (l'exécuteur dérive `loop.json` puis route les exigences) ; escalade légère : l'écart d'ancrage worldscan-only mérite un regard humain/aval, il n'invalide aucune exigence mais fausse la métrique d'ancrage.",
+    "output_excerpt": "/deblocage/prestige (4 identifiants distincts).\"\n      },\n      \"destination\": \"s9-build\"\n    },\n    {\n      \"id\": \"longueur_curve\",\n      \"source\": \"EXPECTED\",\n      \"source_role\": \"gm-worldscan\",\n      \"reference\": \"gm_worldscan:progression\",\n      \"acteur\": \"SYSTEM\",\n      \"loop_role\": \"NONE\",\n      \"observation\": \"La dimension progression du gm_worldscan mesure un cout de premier batiment (15) et un multiplicateur de cout par achat (1.15x) : les couts suivent une courbe croissante.\",\n      \"claim\": \"La courbe de couts de palier doit porter au moins 3 valeurs distinctes et croissantes pour que la progression ait une reelle longueur, pas un plateau plat.\",\n      \"enonce\": \"La courbe de cout des chatons/ameliorations expose au moins 3 couts de palier distincts et strictement croissants, et un bot peut atteindre le 3e palier.\",\n      \"expected_proof\": {\n        \"kind\": \"bot_action\",\n        \"statement\": \"Un bot joue et atteint le 3e palier en un nombre de ticks fini ; l'oracle verifie au moins 3 couts de palier distincts et strictement croissants (variance non nulle).\"\n      },\n      \"destination\": \"s9-build\"\n    }\n  ]\n}\n```\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"L'oracle de verdict s1 check_prisme_manifest.mjs n'ancre les references EXPECTED que contre des jetons du World Scan (worldscanTokens l.51), alors que le contrat V4/gameplay mande des adresses story_bible:<section> (CONTENT) et gm_worldscan:<dimension> (LONGUEUR) : ces references resolvent bien dans check_amont_traversal.canonicalize mais sont necessairement reportees 'references_non_ancrees' par check_prisme_manifest, faussant sa metrique d'ancrage (5/17 EXPECTED ici).\", \"root_cause\": \"worldscanTokens/referenceAncree dans check_prisme_manifest.mjs sont mono-artefact (worldscan uniquement) et n'ont pas suivi l'extension du contrat aux sources story_bible et gm_worldscan ; l'ancrage n'etant pas bloquant, l'ecart ne fait pas echouer le run mais rend la statistique references_ancrees trompeuse.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 51111,
+    "tools_used": {
+     "Read": 6
+    }
+   },
+   "next_reason": "chaîne ouverte vers s3-decompo (l'exécuteur dérive `loop.json` puis route les exigences) ; escalade légère : l'écart d'ancrage worldscan-only mérite un regard humain/aval, il n'invalide aucune exigence mais fausse la métrique d'ancrage.",
+   "status": "OK",
+   "ts": 1787462877.0172994
+  },
+  "s10a-oracle-code": {
+   "attempts": 2,
+   "detail": {
+    "e2e": {
+     "passed": false,
+     "raisons": [
+      "tests/run_tests.gd n'énumère aucun fichier de test réel (DirAccess.open absent) — coquille probable"
+     ]
+    },
+    "evidence_path": "lab/forge_runs/kitten_clicker/evidence/oracle_kitten_clicker.log",
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "loop_bypass": {
+     "passed": true,
+     "violations": []
+    },
+    "loop_dead": false,
+    "mutation": {
+     "evaluation_forme": {
+      "categories_non_applicables": [],
+      "passed": true,
+      "raisons": [
+       "évaluation de forme seule -- aucun mutation_result fourni"
+      ],
+      "status": "OK"
+     },
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "budget_exceeded": false,
+       "code_sha256": {
+        "05_SYSTEMS/collection/collection.gd": "2ec7fd596c18a1c2f88b2917e1058f923beaabde097fdf84f73093a4fbaa43ba",
+        "05_SYSTEMS/decision/decision.gd": "417ec2874de045c8a4f946457db7fb5b613211da4d0e7a065d44741d582ffb1f",
+        "05_SYSTEMS/economy/economy.gd": "c6af3e905befe39a5ed4d99cb2e790a8291cf6c3b5afaedf6734944ae0f49b7e",
+        "05_SYSTEMS/goals/goals.gd": "a7ffdd4ad52b45d60ff5259b34976d53912d56af4bc41e3721a3e2f75dfcfa11",
+        "05_SYSTEMS/prestige/prestige.gd": "8ff6b55ad6ddfdf5f5f1048d0fb5d100edbd45535e4f691c4bc70dda6b2ebf8b",
+        "05_SYSTEMS/pricing/pricing.gd": "d4cce90d8d18d95aff3f99e913beef908af49bf20ac2cbca3ea927fbcf1b3774",
+        "05_SYSTEMS/progression/progression.gd": "db9e8898feebe72baa3073b34c78f6e978ba31ac1471c0eaa17cdea9ff7161c1",
+        "05_SYSTEMS/upgrades/upgrades.gd": "d59fa64a7d2124e81f956f0c052f4b12cfc995a11616f8c2e7e0954d832aae3d",
+        "05_SYSTEMS/world_content/world_content.gd": "e572c7f963f9ae7717980107e848db7587bdcda12f90c5a78180e412b66e95fb",
+        "tests/run_tests.gd": "e993237b6429a67ea0797465f094db62b0d627d63d62735294b3c02de9d7c066"
+       },
+       "declaration_conforme": true,
+       "evaluation_forme": {
+        "categories_non_applicables": [],
+        "declaration_conforme": true,
+        "passed": true,
+        "raisons": [],
+        "status": "OK"
+       },
+       "fichiers_sans_mutant": [
+        "05_SYSTEMS/pricing/pricing.gd",
+        "05_SYSTEMS/upgrades/upgrades.gd"
+       ],
+       "files": [
+        "05_SYSTEMS/collection/collection.gd",
+        "05_SYSTEMS/decision/decision.gd",
+        "05_SYSTEMS/economy/economy.gd",
+        "05_SYSTEMS/goals/goals.gd",
+        "05_SYSTEMS/prestige/prestige.gd",
+        "05_SYSTEMS/pricing/pricing.gd",
+        "05_SYSTEMS/progression/progression.gd",
+        "05_SYSTEMS/upgrades/upgrades.gd",
+        "05_SYSTEMS/world_content/world_content.gd"
+       ],
+       "game_dir": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker",
+       "gate_checked": true,
+       "killed": 43,
+       "mutants_executes": 48,
+       "mutants_generes": 48,
+       "mutation_exception": true,
+       "per_file": {
+        "05_SYSTEMS/collection/collection.gd": {
+         "killed": 7,
+         "mutants_executes": 8,
+         "mutants_generes": 8,
+         "total": 8
+        },
+        "05_SYSTEMS/decision/decision.gd": {
+         "killed": 8,
+         "mutants_executes": 9,
+         "mutants_generes": 9,
+         "total": 9
+        },
+        "05_SYSTEMS/economy/economy.gd": {
+         "killed": 3,
+         "mutants_executes": 5,
+         "mutants_generes": 5,
+         "total": 5
+        },
+        "05_SYSTEMS/goals/goals.gd": {
+         "killed": 2,
+         "mutants_executes": 2,
+         "mutants_generes": 2,
+         "total": 2
+        },
+        "05_SYSTEMS/prestige/prestige.gd": {
+         "killed": 3,
+         "mutants_executes": 3,
+         "mutants_generes": 3,
+         "total": 3
+        },
+        "05_SYSTEMS/pricing/pricing.gd": {
+         "killed": 0,
+         "mutants_executes": 0,
+         "mutants_generes": 0,
+         "total": 0
+        },
+        "05_SYSTEMS/progression/progression.gd": {
+         "killed": 6,
+         "mutants_executes": 6,
+         "mutants_generes": 6,
+         "total": 6
+        },
+        "05_SYSTEMS/upgrades/upgrades.gd": {
+         "killed": 0,
+         "mutants_executes": 0,
+         "mutants_generes": 0,
+         "total": 0
+        },
+        "05_SYSTEMS/world_content/world_content.gd": {
+         "killed": 14,
+         "mutants_executes": 15,
+         "mutants_generes": 15,
+         "total": 15
+        }
+       },
+       "proof_chain": {
+        "binaire": {
+         "path": "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe",
+         "version": "4.6.3.stable.official.7d41c59c4"
+        },
+        "command_declaree": [
+         "<bin:godot>",
+         "--headless",
+         "--path",
+         ".",
+         "--script",
+         "res://tests/run_tests.gd"
+        ],
+        "command_executee": [
+         "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe",
+         "--headless",
+         "--path",
+         ".",
+         "--script",
+         "res://tests/run_tests.gd"
+        ],
+        "cwd_execute": "games/kitten_clicker",
+        "declaration_conforme": true,
+        "parametres": {
+         "cost_class": "engine",
+         "max_mutants": 200,
+         "timeout_per_mutant_s": 30,
+         "total_timeout_s": 900
+        },
+        "resultat_brut_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\evidence\\mutation_kitten_clicker-20260823a.raw.json",
+        "resultat_brut_sha256": "533cbd3aa6000c16564531112b64ae7c2ac38888543582f924af2cd764654f23",
+        "runtime_declare": "godot",
+        "schema_version": 1,
+        "test_scripts_sha256": {
+         "tests/run_tests.gd": "e993237b6429a67ea0797465f094db62b0d627d63d62735294b3c02de9d7c066"
+        },
+        "wrapper_sha256": {}
+       },
+       "regime_preuve": "descripteur",
+       "runtime": "godot",
+       "survivants_non_tries": [],
+       "survived": 5,
+       "test_files_scelles": [
+        "tests/run_tests.gd"
+       ],
+       "total": 48,
+       "triage_sha256": "3a5876cf8aca6fd4c755ecc27f217c2905579a219fb2abdf30266a128fddb510",
+       "triaged_survivors": [
+        "and->or@L19",
+        "and->or@L34",
+        "ge->gt@L16",
+        "le->lt@L31",
+        "le->lt@L61"
+       ]
+      },
+      "evidence_path": "lab/forge_runs/kitten_clicker/evidence/mutation_kitten_clicker-20260823a.raw.json",
+      "evidence_sha256": "533cbd3aa6000c16564531112b64ae7c2ac38888543582f924af2cd764654f23",
+      "oracle_id": "mutation",
+      "run_id": "kitten_clicker-20260823a",
+      "status": "OK",
+      "ts": 1787472173.371651
+     },
+     "regime": "descripteur",
+     "signature": "30f6985d25fe697bd20f49ec36b3c4cfd67c6b0414d5b15d5bb262a55208f45f"
+    },
+    "oracle_measures": {
+     "mecanique": true,
+     "solvabilite": {
+      "failed_seeds": [],
+      "lost": 0,
+      "project": "games/kitten_clicker",
+      "trials": 20,
+      "verdict": "OK",
+      "won": 20
+     }
+    },
+    "player_loop": {
+     "checked": true,
+     "fails": [],
+     "fichier": "C:\\TACTICAL_CHESS_STUDIO\\scripts\\forge\\godot_probes\\player_loop.gd",
+     "mode_execution": "gpu_window",
+     "passed": true,
+     "payload": {
+      "data": {
+       "decision": {
+        "boot_reproducible": true,
+        "future": true,
+        "immediate": {
+         "A": true,
+         "B": true
+        },
+        "information": {
+         "A": true,
+         "B": true
+        },
+        "nondominance": {
+         "matrix": {
+          "p_buy_kitten": {
+           "actif": 2390.0,
+           "idle": 390.0
+          },
+          "p_upgrade_click": {
+           "actif": 4237.0,
+           "idle": 237.0
+          }
+         },
+         "pass": true
+        },
+        "options": [
+         "p_buy_kitten",
+         "p_upgrade_click"
+        ],
+        "pass": true,
+        "player_goal": true,
+        "reasons": [],
+        "ref": "d_first_spend",
+        "states": {
+         "p_buy_kitten": {
+          "affordances": [
+           "acheter_amelioration",
+           "acheter_chaton",
+           "caresse_longue",
+           "pelote",
+           "placer_au_jardin",
+           "prestige"
+          ],
+          "hud": {
+           "collection": "Chatons : 2",
+           "cout_acheter_amelioration": "Cout : 12",
+           "cout_acheter_chaton": "Cout : 15",
+           "effet_acheter_amelioration": "clic x2 -> 40 par caresse (rendement)",
+           "effet_acheter_chaton": "+2 ronron/s (production passive)",
+           "objectif": "Adopte encore un chaton pour ouvrir le jardin [ronrons 120]",
+           "prestige": "Prestige : 0",
+           "ronrons": "Ronrons : 120",
+           "taux": "Ronron/s : 1.0"
+          },
+          "objectif": "Adopte encore un chaton pour ouvrir le jardin [ronrons 120]"
+         },
+         "p_upgrade_click": {
+          "affordances": [
+           "acheter_amelioration",
+           "acheter_chaton",
+           "caresse_longue",
+           "pelote",
+           "placer_au_jardin",
+           "prestige"
+          ],
+          "hud": {
+           "collection": "Chatons : 1",
+           "cout_acheter_amelioration": "Cout : 16",
+           "cout_acheter_chaton": "Cout : 10",
+           "effet_acheter_amelioration": "clic x2 -> 80 par caresse (rendement)",
+           "effet_acheter_chaton": "+1 ronron/s (production passive)",
+           "objectif": "Adopte d'autres chatons (tu en as 1) pour agrandir le refuge [ronrons 102]",
+           "prestige": "Prestige : 0",
+           "ronrons": "Ronrons : 102",
+           "taux": "Ronron/s : 0.5"
+          },
+          "objectif": "Adopte d'autres chatons (tu en as 1) pour agrandir le refuge [ronrons 102]"
+         }
+        }
+       },
+       "deltas": {
+        "a_goal": 0.0,
+        "b_click": 50.0,
+        "b_click@replay": 180.0,
+        "c_response": 15.0,
+        "c_response@replay": 60.0,
+        "d_reward": 15.0,
+        "d_reward@replay": 60.0,
+        "f_unlock": 1.0,
+        "g_next_1": 60.0,
+        "g_next_2": 60.0,
+        "i_prestige": -680.0,
+        "j_advantage": 96.0,
+        "p_buy_kitten": 1.0,
+        "p_buy_kitten@replay": 1.0,
+        "p_upgrade_click": 8.0
+       },
+       "frames": 3645,
+       "reached_role": "ADVANTAGE",
+       "seen": {
+        "collection": [
+         "Chatons : 0",
+         "Chatons : 1",
+         "Chatons : 2",
+         "Chatons : 3",
+         "Chatons : 4"
+        ],
+        "objectif": [
+         "Caresse la pelote, puis adopte ton premier chaton [ronrons 0]",
+         "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 170]",
+         "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 230]",
+         "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 232]",
+         "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 292]"
+        ],
+        "ronrons": [
+         "Ronrons : 0",
+         "Ronrons : 50",
+         "Ronrons : 60",
+         "Ronrons : 68",
+         "Ronrons : 69",
+         "Ronrons : 84",
+         "Ronrons : 99",
+         "Ronrons : 294",
+         "Ronrons : 474",
+         "Ronrons : 476",
+         "Ronrons : 536",
+         "Ronrons : 538",
+         "Ronrons : 598",
+         "Ronrons : 680",
+         "Ronrons : 96"
+        ]
+       },
+       "steps": [
+        {
+         "affordance": "",
+         "after": "Caresse la pelote, puis adopte ton premier chaton [ronrons 0]",
+         "before": "Caresse la pelote, puis adopte ton premier chaton [ronrons 0]",
+         "pass": true,
+         "reason": "",
+         "ref": "a_goal",
+         "role": "PLAYER_GOAL"
+        },
+        {
+         "affordance": "pelote",
+         "after": "Ronrons : 50",
+         "before": "Ronrons : 0",
+         "pass": true,
+         "reason": "",
+         "ref": "b_click",
+         "role": "PLAYER_ACTION"
+        },
+        {
+         "affordance": "acheter_chaton",
+         "after": "Chatons : 1",
+         "before": "Chatons : 0",
+         "pass": true,
+         "reason": "",
+         "ref": "p_buy_kitten",
+         "role": "PLAYER_ACTION"
+        },
+        {
+         "affordance": "acheter_amelioration",
+         "after": "Ronrons : 68",
+         "before": "Ronrons : 60",
+         "pass": true,
+         "reason": "",
+         "ref": "p_upgrade_click",
+         "role": "PLAYER_ACTION"
+        },
+        {
+         "affordance": "",
+         "after": "Ronrons : 84",
+         "before": "Ronrons : 69",
+         "pass": true,
+         "reason": "",
+         "ref": "c_response",
+         "role": "GAME_RESPONSE"
+        },
+        {
+         "affordance": "",
+         "after": "Ronrons : 99",
+         "before": "Ronrons : 84",
+         "pass": true,
+         "reason": "",
+         "ref": "d_reward",
+         "role": "REWARD"
+        },
+        {
+         "affordance": "",
+         "after": "",
+         "before": "",
+         "pass": true,
+         "reason": "",
+         "ref": "d_first_spend",
+         "role": "DECISION"
+        },
+        {
+         "affordance": "acheter_chaton",
+         "after": "Chatons : 3",
+         "appears_after": 1,
+         "appears_before": 0,
+         "before": "Chatons : 2",
+         "pass": true,
+         "reason": "",
+         "ref": "f_unlock",
+         "role": "UNLOCK"
+        },
+        {
+         "affordance": "",
+         "after": "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 230]",
+         "before": "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 170]",
+         "pass": true,
+         "reason": "",
+         "ref": "g_next_1",
+         "role": "NEXT_GOAL"
+        },
+        {
+         "affordance": "",
+         "after": "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 292]",
+         "before": "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 232]",
+         "pass": true,
+         "reason": "",
+         "ref": "g_next_2",
+         "role": "NEXT_GOAL"
+        },
+        {
+         "affordance": "",
+         "after": "",
+         "before": "",
+         "pass": true,
+         "reason": "",
+         "ref": "h_repeat",
+         "replays": [
+          {
+           "after": "Ronrons : 474",
+           "before": "Ronrons : 294",
+           "pass": true,
+           "ref": "b_click"
+          },
+          {
+           "after": "Ronrons : 536",
+           "before": "Ronrons : 476",
+           "pass": true,
+           "ref": "c_response"
+          },
+          {
+           "after": "Ronrons : 598",
+           "before": "Ronrons : 538",
+           "pass": true,
+           "ref": "d_reward"
+          },
+          {
+           "after": "Chatons : 4",
+           "before": "Chatons : 3",
+           "pass": true,
+           "ref": "p_buy_kitten"
+          }
+         ],
+         "role": "REPEAT"
+        },
+        {
+         "affordance": "prestige",
+         "after": "Ronrons : 0",
+         "before": "Ronrons : 680",
+         "pass": true,
+         "reason": "",
+         "ref": "i_prestige",
+         "role": "META_LOOP"
+        },
+        {
+         "affordance": "",
+         "after": "Ronrons : 96",
+         "before": "Ronrons : 0",
+         "pass": true,
+         "reason": "",
+         "ref": "j_advantage",
+         "role": "ADVANTAGE"
+        }
+       ]
+      },
+      "fails": [],
+      "ok": true
+     },
+     "status": "OK"
+    },
+    "product_oracle_godot": {
+     "core_audio": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_audio.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "cues_distincts": [
+        "click",
+        "purchase",
+        "unlock",
+        "prestige"
+       ],
+       "declenchements": 35,
+       "fails": [],
+       "ok": true
+      },
+      "status": "OK"
+     },
+     "core_loop": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_loop.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "data": {
+        "collection_avant": 0,
+        "ronrons_avant": 0
+       },
+       "fails": [],
+       "ok": true
+      },
+      "status": "OK"
+     },
+     "core_render": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_render.gd",
+      "mode_execution": "gpu_window",
+      "passed": true,
+      "payload": {
+       "fails": [],
+       "ok": true,
+       "rarity_diff": 0.309801909451683
+      },
+      "status": "OK"
+     }
+    },
+    "product_oracle_godot_activation": {
+     "active": true,
+     "godot_capacity_present": true,
+     "proof_descriptor_present": true,
+     "reason": "contrat de preuve `proof:` présent ET oracles FORGE_ORACLE trouvés sur disque — fournisseur Godot activé",
+     "runtime_block": {
+      "active": true,
+      "reason": "run/main_scene déclaré"
+     }
+    },
+    "regime_preuve": "descripteur",
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": false,
+     "raisons": [
+      "run-oracle.mjs absent"
+     ]
+    },
+    "runtime_alive": {
+     "checked": true,
+     "fails": [],
+     "fichier": "C:\\TACTICAL_CHESS_STUDIO\\scripts\\forge\\godot_probes\\runtime_alive.gd",
+     "mode_execution": "gpu_window",
+     "passed": true,
+     "payload": {
+      "data": {
+       "changed_after_click": true,
+       "frames": 120,
+       "loaded": true,
+       "nodes_total": 40,
+       "nonmonochrome": true,
+       "root_children": 1,
+       "scene": "res://main.tscn",
+       "scripted_nodes": 4,
+       "system_scripts": 3
+      },
+      "fails": [],
+      "ok": true
+     },
+     "status": "OK"
+    },
+    "search_consulted": {
+     "count": 0,
+     "passed": false,
+     "raisons": [
+      "aucune recherche journalisée depuis 2026-08-23T04:58:52.927Z (contrat s9-build §2bis non respecté, ou aucune brique ne pouvait matcher)"
+     ]
+    },
+    "solvability": {
+     "checked": true,
+     "passed": false,
+     "raisons": [
+      "aucun script wrapper localisable dans runner_argv=[] — câblage non prouvé"
+     ],
+     "topology": "descripteur"
+    },
+    "solvability_mesure": {
+     "mesure": "cablage_du_harnais",
+     "ne_mesure_pas": "la solvabilite du jeu (won/trials) — un `passed: true` ne prouve AUCUNE partie gagnee",
+     "resultat_reel": "non remonte au recu : voir evidence/oracle_<jeu>.log, NON versionne (.gitignore:81)"
+    }
+   },
+   "last_oracle": "s10a-oracle-code",
+   "last_root_cause": "returncode=0; e2e non passé; solvability non passé (volets rouges: e2e, reuse_ratio_wired, search_consulted, solvability)",
+   "responsible_level": "build",
+   "status": "FAIL",
+   "ts": 1787472173.3726509
+  },
+  "s10b-oracle-archi": {
+   "attempts": 2,
+   "detail": {
+    "debordements_ownership": {
+     "checked": false,
+     "items": []
+    },
+    "deps_interdites_violées": [],
+    "modules_sans_test": [],
+    "passed": true
+   },
+   "last_oracle": "s10a-oracle-code",
+   "last_root_cause": "returncode=0; e2e non passé; solvability non passé; mutation=FAIL (volets rouges: e2e, reuse_ratio_wired, search_consulted, solvability)",
+   "responsible_level": "build",
+   "status": "OK",
+   "ts": 1787472173.4809859
+  },
+  "s10c-oracle-wiremap": {
+   "attempts": 2,
+   "detail": {
+    "amont_traversal": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "facts": {
+      "boucles_recompense": {
+       "addresses": [
+        "worldscan:games[0].loops.minute_1",
+        "worldscan:games[0].loops.minute_10",
+        "worldscan:games[0].loops.hour_5",
+        "worldscan:games[0].loops.endgame",
+        "worldscan:games[1].loops.minute_1",
+        "worldscan:games[1].loops.minute_10",
+        "worldscan:games[1].loops.hour_5",
+        "worldscan:games[1].loops.endgame",
+        "gm_worldscan:dimensions[2]",
+        "gm_worldscan:dimensions[4]",
+        "gm_worldscan:dimensions[5]"
+       ],
+       "exigences": [
+        "b_click",
+        "c_response",
+        "d_reward",
+        "d_first_spend",
+        "p_buy_kitten",
+        "p_upgrade_click",
+        "g_next_2",
+        "h_repeat",
+        "i_prestige",
+        "j_advantage"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_click_pelote_entree",
+        "cap_click_pelote_effet",
+        "cap_feedback_reponse_systeme",
+        "cap_accumulation_seuil_achat",
+        "cap_decision_premier_achat",
+        "cap_buy_kitten_entree",
+        "cap_buy_kitten_effet",
+        "cap_upgrade_click_entree",
+        "cap_upgrade_click_effet",
+        "cap_next_goal_2_effet",
+        "cap_prestige_entree",
+        "cap_prestige_effet"
+       ],
+       "lines": [
+        "economy.ronrons",
+        "collection.adopt",
+        "upgrades.click_power",
+        "decision.point",
+        "goals.objective",
+        "prestige.reset",
+        "presentation.render",
+        "input.pelote",
+        "input.acheter_chaton",
+        "input.acheter_amelioration",
+        "input.prestige"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_defaite": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "conditions_victoire": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "contraintes_narratives": {
+       "addresses": [
+        "story_bible:sections[0]",
+        "story_bible:sections[4]",
+        "story_bible:sections[5]",
+        "story_bible:sections[7]"
+       ],
+       "exigences": [
+        "f_unlock",
+        "content_kittens",
+        "content_places",
+        "visual_rarity"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_unlock_entree",
+        "cap_unlock_effet",
+        "cap_registre_kittens",
+        "cap_registre_places",
+        "cap_rarete_visuelle_distincte"
+       ],
+       "lines": [
+        "world.registries",
+        "progression.unlock",
+        "presentation.render"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "objectifs_joueur": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].player_goal",
+        "worldscan:games[1].objectives[0].player_goal"
+       ],
+       "exigences": [
+        "a_goal",
+        "g_next_1"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_objectif_demarrage",
+        "cap_next_goal_1_effet"
+       ],
+       "lines": [
+        "goals.objective"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "progression": {
+       "addresses": [
+        "gm_worldscan:dimensions[1]"
+       ],
+       "exigences": [
+        "longueur_curve"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_courbe_paliers_variance"
+       ],
+       "lines": [
+        "pricing.curve"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      }
+     },
+     "references": {
+      "adressables": 19,
+      "expected": 19,
+      "non_resolues": [],
+      "resolues": 19
+     },
+     "stages": [
+      "NOT_PRODUCED",
+      "PRODUCED",
+      "PRISME",
+      "GREY_BLOCKS",
+      "WIREMAP",
+      "BUILD"
+     ],
+     "verdict": "ADVISORY"
+    },
+    "features_manquantes": [],
+    "fonctions_renommées": [],
+    "obsoletes": [],
+    "passed": true,
+    "preuves_absentes": []
+   },
+   "last_oracle": "s10a-oracle-code",
+   "last_root_cause": "returncode=0; e2e non passé; solvability non passé; mutation=FAIL (volets rouges: e2e, reuse_ratio_wired, search_consulted, solvability)",
+   "responsible_level": "build",
+   "status": "OK",
+   "ts": 1787472173.6250958
+  },
+  "s10s-oracle-standard": {
+   "attempts": 2,
+   "detail": {
+    "budget": {
+     "chevauchement": [],
+     "empilement_violee": false,
+     "hors_budget": [],
+     "measured": true,
+     "passed": true,
+     "promis_non_depose": [],
+     "reuses_invalides": []
+    },
+    "collisions": {
+     "capacites_usine_utilisees": [],
+     "collisions": [],
+     "doubles_proprietaires": [],
+     "identifiants_ambigus": [],
+     "identifiants_inconnus": [
+      "collection.adopt:collection.adopt",
+      "collection.adopt:world.content",
+      "decision.point:collection.adopt",
+      "decision.point:decision.point",
+      "decision.point:economy.ronrons",
+      "decision.point:pricing.curve",
+      "decision.point:upgrades.click_power",
+      "economy.ronrons:economy.ronrons",
+      "goals.objective:collection.adopt",
+      "goals.objective:goals.objective",
+      "goals.objective:progression.unlock",
+      "goals.objective:world.content",
+      "input.acheter_amelioration:affordance:acheter_amelioration",
+      "input.acheter_amelioration:upgrades.click_power",
+      "input.acheter_chaton:affordance:acheter_chaton",
+      "input.acheter_chaton:collection.adopt",
+      "input.pelote:affordance:pelote",
+      "input.pelote:economy.ronrons",
+      "input.prestige:affordance:prestige",
+      "input.prestige:prestige.reset",
+      "presentation.render:collection.adopt",
+      "presentation.render:economy.ronrons",
+      "presentation.render:goals.objective",
+      "presentation.render:presentation.render",
+      "presentation.render:prestige.reset",
+      "presentation.render:progression.unlock",
+      "presentation.render:upgrades.click_power",
+      "presentation.render:world.content",
+      "prestige.reset:collection.adopt",
+      "prestige.reset:economy.ronrons",
+      "prestige.reset:prestige.reset",
+      "pricing.curve:pricing.curve",
+      "progression.unlock:collection.adopt",
+      "progression.unlock:progression.unlock",
+      "progression.unlock:world.content",
+      "upgrades.click_power:upgrades.click_power",
+      "upgrades.click_power:world.content",
+      "world.registries:world.content"
+     ],
+     "ordre_implicite": [],
+     "passed": false,
+     "trous": []
+    },
+    "contract_completeness": {
+     "passed": true,
+     "violations": []
+    },
+    "genre_coverage": {
+     "citations_non_resolues": [],
+     "citees": [],
+     "passed": false,
+     "raison": "genre_bible.genre_rules absent ou n'est pas une liste",
+     "refusees": [],
+     "regles_non_couvertes": [],
+     "verdict": "FAIL"
+    },
+    "gpu_window_directive": {
+     "fichiers_avec_directive": 1,
+     "fichiers_en_defaut": [],
+     "fichiers_examines": 3,
+     "fichiers_not_measured": [],
+     "illisibles": [],
+     "passed": true,
+     "raisons": [],
+     "sous_modules_ignores": [],
+     "verdict": "OK"
+    },
+    "index": {
+     "dossiers_hors_structure": [],
+     "dossiers_manquants": [],
+     "dossiers_orphelins": [],
+     "fichiers_manquants": [],
+     "orphelins": [],
+     "passed": true
+    },
+    "line_states": {
+     "core_omis": [
+      "core.boot",
+      "core.main_loop",
+      "core.input",
+      "core.game_state",
+      "core.end_condition",
+      "core.restart",
+      "core.exit",
+      "core.render",
+      "core.audio",
+      "core.error_handling"
+     ],
+     "deferred_incomplet": [],
+     "etats_invalides": [],
+     "expected_sans_reference": [],
+     "implemented_au_gel": [],
+     "lifecycle_invalide": [],
+     "not_applicable_sans_raison": [],
+     "not_applicable_sur_core": [],
+     "passed": false,
+     "required_apres_build": [],
+     "reused_concept_non_requalifie": [],
+     "source_manquante": [],
+     "system_parent_manquant": [],
+     "unknown_au_gel": []
+    },
+    "observable_coverage": {
+     "couvertes": [],
+     "lignes_sans_preuve": [],
+     "measured": true,
+     "observable_malformes": [],
+     "passed": true,
+     "verdict": "OK",
+     "violation": false,
+     "volets_absents": [],
+     "volets_en_echec": [],
+     "volets_non_mesures": []
+    },
+    "observable_volets_effectifs": {
+     "core_audio": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_audio.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "cues_distincts": [
+        "click",
+        "purchase",
+        "unlock",
+        "prestige"
+       ],
+       "declenchements": 35,
+       "fails": [],
+       "ok": true
+      },
+      "source": "godot",
+      "status": "OK"
+     },
+     "core_loop": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_loop.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "data": {
+        "collection_avant": 0,
+        "ronrons_avant": 0
+       },
+       "fails": [],
+       "ok": true
+      },
+      "source": "godot",
+      "status": "OK"
+     },
+     "core_render": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_render.gd",
+      "mode_execution": "gpu_window",
+      "passed": true,
+      "payload": {
+       "fails": [],
+       "ok": true,
+       "rarity_diff": 0.309801909451683
+      },
+      "source": "godot",
+      "status": "OK"
+     }
+    },
+    "observable_volets_resolution": {
+     "conflits_resolus_vers_web": [],
+     "regle": "un nom de volet présent des DEUX côtés (web ET godot) est résolu vers le fournisseur WEB — choix explicite, jamais une fusion silencieuse (correction Pierre ②, mission 2026-07-29)."
+    },
+    "placement": {
+     "adresse_incoherente": [],
+     "adresse_manquante": [],
+     "categorie_fichier_non_declaree": [],
+     "categorie_fichier_non_mappee": [],
+     "categorie_manquante": [],
+     "categorie_non_mappee": [],
+     "fichier_adresse_incoherente": [],
+     "identite_ambigue": [],
+     "passed": true,
+     "revendications_multiples": [],
+     "system_parent_inconnu": [],
+     "systeme_categorie_non_mappee": []
+    },
+    "product_oracle": {},
+    "product_oracle_godot": {
+     "core_audio": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_audio.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "cues_distincts": [
+        "click",
+        "purchase",
+        "unlock",
+        "prestige"
+       ],
+       "declenchements": 35,
+       "fails": [],
+       "ok": true
+      },
+      "status": "OK"
+     },
+     "core_loop": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_loop.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "data": {
+        "collection_avant": 0,
+        "ronrons_avant": 0
+       },
+       "fails": [],
+       "ok": true
+      },
+      "status": "OK"
+     },
+     "core_render": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_render.gd",
+      "mode_execution": "gpu_window",
+      "passed": true,
+      "payload": {
+       "fails": [],
+       "ok": true,
+       "rarity_diff": 0.309801909451683
+      },
+      "status": "OK"
+     }
+    }
+   },
+   "last_oracle": "s10s-oracle-standard",
+   "last_root_cause": "volets rouges du reçu: collisions, genre_coverage, line_states",
+   "responsible_level": "build",
+   "status": "FAIL",
+   "ts": 1787472173.776721
+  },
+  "s11-redteam-code": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s11-redteam-code.txt",
+    "artifact_sha256": "17e49073fa77b5483de2d645d1095ea59c6b3887112f4131db24d12b85565f1d",
+    "cache_creation_tokens": 132384,
+    "cache_read_tokens": 787285,
+    "cost_usd": 2.5868125,
+    "duration_s": 482.8194947242737,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "escalade s12-verdict / HumanGate : cause non résolue persistante (« plusieurs heures » inatteignable par le code ; 2 registres + 6 assets inertes ; #1 détruit des ronrons) ; à re-prouver par les oracles aval avant tout verdict signé, puis arbitrage Pierre.",
+    "output_excerpt": ">=1 ; appeler prestige() N fois (réinjecter 1 ronron entre chaque) ; asserter prestige_count==N, adopted inchangé, production/tick strictement croissante. Ancre: prestige.gd:9,17-18,27-33, game_controller.gd:290.\"}, {\"angle\": \"AUDIO / déterminisme\", \"faille\": \"Journal audio en static var (audio.gd:33) survivant à la réinstanciation de scène dans un même process ; seul reinitialiser() (audio.gd:38) le vide, jamais appelé par game_controller._ready (:53-85). Contamination inter-boots possible pour un oracle audio non réinitialisant.\", \"severite\": \"LOW\", \"reproduction\": \"Même process : jouer un cue, réinstancier main.tscn, relire Audio.journal() sans reinitialiser() -> longueur non remise à 0. Ancre: audio.gd:33,38, game_controller.gd:53-85.\"}, {\"angle\": \"COHÉRENCE (vérité de l'UI)\", \"faille\": \"Libellé d'effet '+N ronron/s' (decision.gd:48, ronrons_per_sec brut) != taux réellement produit qui passe par PASSIVE_UNIT=0.5/trame et le multiplicateur de prestige (game_controller.gd:296, economy.gd:57-63). Le '/s' affiché ne correspond ni à l'unité par trame ni au taux HUD.\", \"severite\": \"LOW\", \"reproduction\": \"Comparer l'entier de effect_text(...,'acheter_chaton') au taux post-adoption passive_rate*PASSIVE_UNIT*mult -> valeurs différentes. Ancre: decision.gd:46-48, game_controller.gd:296, economy.gd:57-63.\"}]}\n```\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"kitten_clicker: la LONGUEUR promise n'est pas portée par le code (courbes de coût linéaires + amélioration runaway + contenu borné à 6 chatons), 2 des 4 registres du monde (objects, quests) et 6 SVG sont chargés/listés mais jamais joués/rendus, et acheter_chaton détruit des ronrons au 7e achat (dépense avant validation)\", \"root_cause\": \"les oracles verts (variance de paliers, core_render, core_audio, cardinalité valid()) mesurent l'existence/variance ponctuelle mais ni la longueur, ni l'usage du contenu, ni le rendu des assets ; transaction non atomique dans input_adapter.act (spend avant adopt court-circuité)\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [
+     "[HIGH] correctness / cohérence mécanique — Transaction acheter_chaton non atomique : input_adapter.gd:74-77 dépense (Economy.spend) AVANT de valider l'adoption (Collection.adopt court-circuité par 'and'). Au 7e achat, collection pleine à 6 (collection.gd:16, kittens.json 6 entrées), le coût 35 est débité mais adopt échoue : ronrons détruits, aucun chaton, aucun signal. (repro: Adopter les 6 chatons ; poser ronrons>=35 ; act('acheter_chaton') ; asserter total-=35 ET count==6 ET aucun kitten_adopted. Ancre: input_adapter.gd:74-77, collection.gd:14-22, kittens.json.)",
+     "[HIGH] LONGUEUR — Courbes de coût linéaires (kitten_cost=5+5n pricing.gd:15-16, upgrade_cost=8+4L pricing.gd:19-20) + contenu borné (6 chatons, coût cumulé 105) : aucun mur exponentiel, progression épuisable en <1 min. L'oracle de variance de paliers (3 distincts) est vert mais ne mesure pas la 'plusieurs heures' promise. (repro: Seconde différence de paliers() étendue n=0..10 = 0 (arithmétique) ; coût cumulé 6 adoptions=105, ~11 clics à BASE_CLICK=10. Ancre: pricing.gd:15-25, collection.gd:16, kittens.json.)",
+     "[HIGH] LONGUEUR / équilibre — Amélioration : coût linéaire (8+4L, pricing.gd:19-20) mais récompense exponentielle (click_multiplier=2^level, upgrades.gd:18-19). Valeur de clic explose (input_adapter.gd:62-63), clics pour financer la prochaine amélioration décroissent vers <1 en ~2 niveaux : runaway, économie triviale. (repro: Pour L=0..10, ceil(upgrade_cost(L+1)/(base_click*click_multiplier(L))) non croissant et ->1. Ancre: upgrades.gd:18-19, pricing.gd:19-20, input_adapter.gd:62-63.)",
+     "[HIGH] COHÉRENCE monde↔mécanique — Registres objects et quests chargés/validés mais jamais joués : game_controller.gd:92-93 assigne _objects/_quests, jamais relus (fichier lu 1-310) ; aucun système ne les consomme. world_content.valid() (world_content.gd:60-68) ne teste que la cardinalité (existence, pas usage). objects.json et quests.json = contenu mort. (repro: Statique : aucune référence à _objects/_quests au-delà de game_controller.gd:92-93 (règle du consommateur d'artefact) ; ou dynamique : jouer les 4 conditions de quête, asserter aucun état/signal de complétion. Ancre: game_controller.gd:92-93, world_content.gd:35-39, objects.json, quests.json.)",
+     "[MEDIUM] COHÉRENCE monde↔mécanique — Affordances de branche mortes : game_controller.gd:231,257 affichent placer_au_jardin et caresse_longue (cliquables, libellés promettant une action) mais input_adapter.act (input_adapter.gd:68-86) n'a pas de case correspondant -> _: pass (l.85-86). Clic sans effet : ni état, ni son, ni visuel. (repro: Adopter 1 chaton -> placer_au_jardin apparaît ; snapshot _state + journal audio ; clic sur son rect via _input ; asserter _state ET journal inchangés. Ancre: game_controller.gd:231,257, input_adapter.gd:85-86.)",
+     "[MEDIUM] ASSETS chargés et rendus — 6 SVG déclarés dans la WireMap jamais chargés/rendus : obj_food_bowl.svg, obj_scratching_post.svg, obj_cushion_bed.svg, icon_ronrons.svg, ui_stats_hud.svg, ui_objectif_banner.svg. Seuls loaders du build : game_controller.gd (refuge, pelote, ui_action_buttons, lieu_2) et presentation.gd (kitten_%s, fx_click_feedback) ; main.tscn (9 lignes) ne charge que le contrôleur. Présents != rendus ; core_render reste vert sans les vérifier. (repro: Pour chacun des 6 chemins, asserter l'absence de load()/preload()/ext_resource dans l'ensemble .gd + .tscn (règle du consommateur d'artefact). Ancre: game_controller.gd:99,142,178-182,238, presentation.gd:39,55, main.tscn:1-9.)",
+     "[MEDIUM] LONGUEUR / équilibre méta-boucle — Prestige spammable : PRESTIGE_THRESHOLD=1 (prestige.gd:9) permet un prestige dès 1 ronron ; prestige() conserve les chatons adoptés (prestige.gd:27-33) donc passive_rate inchangé, et production_multiplier=1+count (prestige.gd:17-18) appliqué à la production (game_controller.gd:290). Empilement du multiplicateur permanent à coût quasi nul -> boucle dégénérée. (repro: État avec 1 chaton et ronrons>=1 ; appeler prestige() N fois (réinjecter 1 ronron entre chaque) ; asserter prestige_count==N, adopted inchangé, production/tick strictement croissante. Ancre: prestige.gd:9,17-18,27-33, game_controller.gd:290.)",
+     "[LOW] AUDIO / déterminisme — Journal audio en static var (audio.gd:33) survivant à la réinstanciation de scène dans un même process ; seul reinitialiser() (audio.gd:38) le vide, jamais appelé par game_controller._ready (:53-85). Contamination inter-boots possible pour un oracle audio non réinitialisant. (repro: Même process : jouer un cue, réinstancier main.tscn, relire Audio.journal() sans reinitialiser() -> longueur non remise à 0. Ancre: audio.gd:33,38, game_controller.gd:53-85.)",
+     "[LOW] COHÉRENCE (vérité de l'UI) — Libellé d'effet '+N ronron/s' (decision.gd:48, ronrons_per_sec brut) != taux réellement produit qui passe par PASSIVE_UNIT=0.5/trame et le multiplicateur de prestige (game_controller.gd:296, economy.gd:57-63). Le '/s' affiché ne correspond ni à l'unité par trame ni au taux HUD. (repro: Comparer l'entier de effect_text(...,'acheter_chaton') au taux post-adoption passive_rate*PASSIVE_UNIT*mult -> valeurs différentes. Ancre: decision.gd:46-48, game_controller.gd:296, economy.gd:57-63.)"
+    ],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 34786,
+    "tools_used": {
+     "Grep": 1,
+     "LSP": 1,
+     "Read": 20,
+     "Write": 1
+    }
+   },
+   "next_reason": "escalade s12-verdict / HumanGate : cause non résolue persistante (« plusieurs heures » inatteignable par le code ; 2 registres + 6 assets inertes ; #1 détruit des ronrons) ; à re-prouver par les oracles aval avant tout verdict signé, puis arbitrage Pierre.",
+   "status": "OK",
+   "ts": 1787472656.7332926
+  },
+  "s12-verdict": {
+   "attempts": 1,
+   "detail": {
+    "decision": "BLOCKED",
+    "software_verdict": "FAIL",
+    "verdict_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\verdict.json",
+    "verify_run": "AUTHENTIQUE"
+   },
+   "status": "OK",
+   "ts": 1787472657.0305614
+  },
+  "s2-worldscan": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s2-worldscan.txt",
+    "artifact_sha256": "a2b1fe30be60f4d0f38868c696aca89e99636b03a8ff1df5998a2e4301f68d98",
+    "cache_creation_tokens": 68667,
+    "cache_read_tokens": 541116,
+    "cost_usd": 0.4105266000000001,
+    "duration_s": 174.25601267814636,
+    "model": "claude-haiku-4-5-20251001",
+    "model_override": null,
+    "output_excerpt": "). Consume toys or remain. Observation: cat has item preferences.\",\n        \"hour_5\": \"Collection expansion: ~20+ visits, 1000+ silver fish. Unlock yard expansions (pay fish to add space). Remodel aesthetic (7 themes: mansion, shrine, factory, etc.). Target rare cats (26/86 total): buy specific toys/foods they prefer. Discovery: each cat unique personality (sleeps, plays, eats). Progression purely accumulative, no prestige/reset.\",\n        \"endgame\": \"86 cats collected (psychological goal, not terminal win). All mementos gathered (small gifts cats leave). Yard fully styled. Cats visit indefinitely if food placed. No new mechanics unlock; continuation of collection loop.\"\n      },\n      \"objectives\": [\n        {\n          \"mode\": \"solo_collection\",\n          \"has_win_state\": false,\n          \"victory_condition\": null,\n          \"has_defeat_state\": false,\n          \"defeat_condition\": null,\n          \"player_goal\": \"Collect all 86 cats (26 rare variants by strategic item placement). Accumulate niboshi currency. Unlock yard expansions and aesthetic themes. Gather all mementos. No terminal condition; indefinite cat visits.\"\n        }\n      ],\n      \"retention_answer\": \"Visual conventions: Cat sprite animations (playing, sleeping, eating), item physics (toys roll/float), yard grid expansion (visual scale-up), rarity indicator (glow/shine on rare cats), memento collection tab. Audio conventions: cat meow on arrival (notification alert), purchase chime (fish spent), yard remodel success tone (satisfying), gentle memento gift sound. Monotony risks: grinding if rares require prohibitively rare items; frustration if cat RNG prevents visits; complete passivity (no clicks) may feel like non-game to action-preference players; offline income saturation if uncapped (player loses check-in incentive). Narrative hook: cat personalities and collection completion drive engagement beyond pure accumulation.\"\n    }\n  ],\n  \"advisory\": true\n}\n```\n\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-haiku-4-5-20251001",
+    "runner": "claude",
+    "tokens": 8834,
+    "tools_used": {
+     "Read": 5,
+     "WebFetch": 4,
+     "WebSearch": 6
+    }
+   },
+   "status": "OK",
+   "ts": 1787461776.1790085
+  },
+  "s2.5-artbible": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s2.5-artbible.txt",
+    "artifact_sha256": "1c81d83d8e20bc973fe02edbe00479eb8a72302efe9ea67c962ee1ab3f75fec4",
+    "cache_creation_tokens": 128109,
+    "cache_read_tokens": 734807,
+    "cost_usd": 2.2566685,
+    "duration_s": 330.8707184791565,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "chaîne **fermée** proprement ici — verdict OK, couverture complète, aucune cause non résolue. La conformité esthétique (fog) est une décision HumanGate distincte, pas une escalade de correction.",
+    "output_excerpt": "rimètre : sons clic/achat/déblocage/prestige · statut : non traité · raison : le son n'est pas une entité **visuelle** ; hors périmètre d'un Art Bible, adressé par le volet audio du build.\n\n### RETURN LINEAGE\n- **why_task_existed:**\n  - problem: le Prisme (s1) a produit 15 règles observables citant des entités visuelles (pelote, chatons par rareté, lieux, objets, feedback, HUD) mais aucune identité visuelle ni demande d'asset structurée n'existait encore comme artefact consommable par s3/s4/s9.\n  - oracle: activation par décision humaine (dispatch `FORGE_DISPATCH:s2.5-artbible:kitten_clicker-20260823a:1`) ; oracle de sortie = `check_artbible.mjs`.\n  - root_cause: non transmis (activation amont, pas un échec mesuré) — étape normale de la chaîne.\n  - action_reason: sans art_bible + asset_requests couvrant chaque entité `required`, le build (s9) n'a ni direction visuelle ni contrat d'asset, et le vecteur « couverture affirmée en prose sans requête » (fermé en v0.1) reste ouvert.\n  - result: art_bible.md (3 sections + 17 visual_requirements) + asset_requests.json (16 requêtes, 1 par entité requise) ; `check_artbible.mjs` → OK, 16/16 couverts.\n  - proof: `node scripts/forge/check_artbible.mjs … --json` → `{\"verdict\":\"OK\",\"coverage\":{\"missing\":[]},\"resolution_stats\":{\"ok\":0,\"blocked\":16}}`, exit 0 ; reçu écrit dans `evidence/check_artbible_kitten_clicker-20260823a.json`.\n  - learning: dans ce studio, un art bible SVG-first résout toujours `BLOCKED` en résolution (catalogue = offre permanente, pas des SVG dessinés par run) — ne jamais lire ce `resolution_stats.blocked` comme un défaut de couverture ; les deux dimensions sont disjointes par construction.\n  - next_reason: chaîne **fermée** proprement ici — verdict OK, couverture complète, aucune cause non résolue. La conformité esthétique (fog) est une décision HumanGate distincte, pas une escalade de correction.\n\nSKIPPED_VALIDATION: voir section ci-dessus (3 items, tous assumés).\n\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 36995,
+    "tools_used": {
+     "Bash": 3,
+     "Read": 5,
+     "Write": 2
+    }
+   },
+   "next_reason": "chaîne **fermée** proprement ici — verdict OK, couverture complète, aucune cause non résolue. La conformité esthétique (fog) est une décision HumanGate distincte, pas une escalade de correction.",
+   "status": "OK",
+   "ts": 1787463208.0268817
+  },
+  "s2.6-story-bible": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s2.6-story-bible.txt",
+    "artifact_sha256": "91d91b1bfb67979c836d99a88d612b696261e3531f98565bba6a8939c6b945f8",
+    "cache_creation_tokens": 85632,
+    "cache_read_tokens": 750255,
+    "cost_usd": 1.7017974999999999,
+    "duration_s": 307.83253479003906,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "output_excerpt": "      },\n        {\n          \"statement\": \"Toute representation de chat est originale ou procedurale : aucune photo ni asset de chat reel n'entre dans le monde.\",\n          \"source\": \"charter\",\n          \"ref\": \"hors_scope : « Aucune photo ni asset de chat reel : identites visuelles originales ou procedurales uniquement »\",\n          \"inferred\": false\n        },\n        {\n          \"statement\": \"Le monde est un espace prive et solo : ni multijoueur, ni reseau, ni classement en ligne.\",\n          \"source\": \"charter\",\n          \"ref\": \"hors_scope : « Aucun multijoueur, reseau, classement en ligne ou sauvegarde cloud »\",\n          \"inferred\": false\n        },\n        {\n          \"statement\": \"La matiere narrative du monde est fixee en amont : aucun contenu narratif n'est genere par LLM au runtime du jeu.\",\n          \"source\": \"charter\",\n          \"ref\": \"hors_scope : « Aucune generation de contenu narratif ou d'assets par LLM au runtime du jeu »\",\n          \"inferred\": false\n        },\n        {\n          \"statement\": \"Le monde se donne en deux dimensions : aucun rendu 3D.\",\n          \"source\": \"charter\",\n          \"ref\": \"hors_scope : « Aucun rendu 3D : le jeu reste en 2D »\",\n          \"inferred\": false\n        }\n      ]\n    }\n  ]\n}\n```\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Le charter mande du contenu narratif concret (criteres_demo a : >=6 chatons NOMMES avec personnalite/rarete ; c : >=3 objets ; d : >=3 quetes) mais aucune des deux entrees injectees ne fournit ce materiau : noms, personnalites, histoires, evenements sont absents. La Story Bible ancre le CADRE (characters/relations/coherence GROUNDED) mais ne peut ancrer ces identites sans les inventer.\", \"root_cause\": \"Les entrees amont sont un worldscan de genre (patterns idle/clicker) et un charter de mecaniques/perimetre ; ni l'une ni l'autre n'est une source de matiere narrative authoree. Le contenu narratif concret releve de stations aval hors perimetre de ce GO (Character Bible, Quest Bible).\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 18826,
+    "tools_used": {
+     "Bash": 1,
+     "LSP": 1,
+     "Read": 6
+    }
+   },
+   "status": "OK",
+   "ts": 1787462084.1591437
+  },
+  "s2.7-gm-worldscan": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s2.7-gm-worldscan.txt",
+    "artifact_sha256": "44043693192ca1d515e796cb0df84fbc740a09f8903069a6623856d04e7316b5",
+    "cache_creation_tokens": 37552,
+    "cache_read_tokens": 150184,
+    "cost_usd": 0.18254640000000003,
+    "duration_s": 149.71586108207703,
+    "model": "claude-haiku-4-5-20251001",
+    "model_override": null,
+    "output_excerpt": "on — **7 dimensions structurées, réutilisées en adossement**\n- Oracle check_gm_worldscan : validation structurelle (8 dimensions toutes présentes, cohérence status/contenu, absence de placeholder) — **attendu PASS**\n\n**Dimensions NOT_MEASURED (1/8) :**\n| id | raison |\n|---|---|\n| combat | Genre pacifique (clicker/idle) sans PvE, PvP, ni dégâts adverses. Dimension non applicable au genre. |\n\n**Dimensions MEASURED (7/8) :**\n- **progression** : 5 variables (coûts, multiplicateurs, seuils, courbes de déblocage)\n- **economy** : 7 variables (production, revenu passif, offline cap, devise premium/standard)\n- **rng** : 4 variables (multiplicateurs aléatoires, spawn intervals, taux d'apparition)\n- **rarity** : 5 variables (tiers collectibles, distributions, pools)\n- **bonus** : 4 variables (multiplicateurs temporaires, buffs additifs)\n- **metagame** : 4 variables (cycles de prestige, achievements, reset systems)\n- **construction** : 5 variables (buildings, upgrades, synergies, items)\n\n**Verdicts :**\n- **software_verdict**: OK ✅ — bloc JSON structurellement valide, matérialisable, aucun placeholder\n- **evidence_verdict**: MECHANICAL_VALIDATION_ONLY — oracles déterministes non-LLM (check_gm_worldscan structurel)\n- **claim_verdict**: NO_CLAIM_ALLOWED — mesures sourçées, pas de recommandation produit\n\n**SKIPPED_VALIDATION :**\n| item | périmètre | statut | raison |\n|---|---|---|---|\n| Offline income Neko Atsume | economy dimension | NOT_MEASURED | Wikipedia ne précise pas de cap ; gameplay sources (app store, guides) taisent la limite. Une valeur estimée serait inventée. |\n| Prestige cycle timings Neko | metagame dimension | NOT_MEASURED | Neko n'a PAS de prestige/reset system déclaré dans Wikipedia. Omis logiquement. |\n| Cat visit frequency distribution | rng dimension | NOT_MEASURED | Aucune source publique ne documente la courbe de visite (deterministic schedule vs RNG pur). Déclaré impossible sans reverse-engineering. |\n\n```json\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}\n```",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-haiku-4-5-20251001",
+    "runner": "claude",
+    "tokens": 12289,
+    "tools_used": {
+     "WebFetch": 2
+    }
+   },
+   "status": "OK",
+   "ts": 1787462234.0189216
+  },
+  "s3-decompo": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s3-decompo.txt",
+    "artifact_sha256": "2c4663095bcb941a10b61eaaa4a48db9bae1bc673e5ea3b5761415533eeeffc6",
+    "cache_creation_tokens": 115537,
+    "cache_read_tokens": 263257,
+    "cost_usd": 2.2944035,
+    "duration_s": 486.268048286438,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "la chaîne causale NE se ferme PAS ici : le deadlock s3↔s5 sur les affordances joueur persiste (preuve : le pré-mortem `manifest-bd8c3e0` documente le même blocage), il exige une réconciliation Pierre entre `check_decompo` et `check_wiremap_contract`. s4 peut néanmoins consommer cette featuremap (blueprint), l'escalade porte sur s5.",
+    "output_excerpt": "te dans la meme frame.\",\n              \"source_ref\": \"visual_click_feedback\",\n              \"expected_proof\": {\n                \"kind\": \"visual\",\n                \"statement\": \"Volet 07_TESTS/oracle/core_click_visual.gd en fenetre GPU : capture pre/post clic differe en pixels sur la zone pelote (rebond et particule).\"\n              }\n            }\n          ]\n        },\n        {\n          \"id\": \"F_AUDIO_EVENEMENTS\",\n          \"capacites\": [\n            {\n              \"id\": \"cap_audio_quatre_evenements\",\n              \"capacite\": \"Chacun des quatre evenements (clic pelote, achat, deblocage, prestige) emet exactement un declenchement sonore journalise avec un identifiant de son distinct.\",\n              \"source_ref\": \"audio_events\",\n              \"expected_proof\": {\n                \"kind\": \"oracle\",\n                \"statement\": \"Volet 07_TESTS/oracle/core_audio.gd : le journal de declenchements contient une entree sonore distincte pour chacun des 4 evenements clic/achat/deblocage/prestige (4 identifiants distincts).\"\n              }\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}\n```\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Deadlock structurel entre deux contrats oracle figes d'etapes adjacentes pour les affordances joueur du clicker : check_decompo (s3) force TOUTE feuille d'une exigence PLAYER+affordance a etre bot_action+main.tscn (controle par feuille, lignes 131-147), ce qui interdit une feuille d'effet file_write|visual ; or check_wiremap_contract (s5, V4) exige d'atteindre une feuille d'effet file_write|visual de meme source_ref que l'entree joueur. Aucune feuille file_write|visual ne peut donc partager le source_ref de pelote/acheter_chaton/acheter_amelioration/prestige.\", \"root_cause\": \"Les regles V4 des deux etapes sont mutuellement incompatibles sur le genre clicker (effet d'action joueur = changement de compteur HUD, ni fichier ni pixel dedie partageant le source_ref de l'entree) ; reconciliation = decision Pierre, hors perimetre s3.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 40301,
+    "tools_used": {
+     "Read": 3
+    }
+   },
+   "next_reason": "la chaîne causale NE se ferme PAS ici : le deadlock s3↔s5 sur les affordances joueur persiste (preuve : le pré-mortem `manifest-bd8c3e0` documente le même blocage), il exige une réconciliation Pierre entre `check_decompo` et `check_wiremap_contract`. s4 peut néanmoins consommer cette featuremap (blueprint), l'escalade porte sur s5.",
+   "status": "OK",
+   "ts": 1787463694.543645
+  },
+  "s4-archi": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s4-archi.txt",
+    "artifact_sha256": "cfb5e90467a555233d0331609f2767034922f7b641b63661b867997823ab01f5",
+    "cache_creation_tokens": 144401,
+    "cache_read_tokens": 1081446,
+    "cost_usd": 2.955833,
+    "duration_s": 572.0486261844635,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "l'exécuteur doit matérialiser `blueprint.json` et lancer l'oracle avant-build ; la chaîne ne peut pas se fermer côté s4 tant que ce verdict n'est pas OK. Escalade normale au niveau exécuteur, pas un échec de conception.",
+    "output_excerpt": "rtir du SEUL etat observable de la logique : identite visuelle distincte par rarete de chaton, et feedback visible au clic sur la pelote (rebond/particules, texte flottant +N). Lit l'etat, ne le mute jamais, ne consulte aucune regle et n'appelle ni input ni audio.\",\n      \"couvre\": [\"F_RARETE_VISUELLE\", \"F_FEEDBACK_CLIC_VISUEL\"],\n      \"dependances\": [\"economy\", \"collection\", \"upgrades\", \"progression\", \"goals\", \"prestige\", \"world_content\"],\n      \"preuve_attendue\": {\n        \"kind\": \"visual\",\n        \"statement\": \"En fenetre GPU reelle : les captures de deux raretes different en pixels au-dela d'un seuil ; et une capture pre/post clic differe en pixels sur la zone pelote (rebond et particule) dans la meme frame.\"\n      }\n    },\n    {\n      \"module\": \"audio\",\n      \"responsabilite\": \"Emettre exactement un declenchement sonore, avec un identifiant de son distinct, pour chacun des quatre evenements (clic pelote, achat, deblocage, prestige), et journaliser chaque declenchement. Feuille de side-effect : ne depend d'aucun module.\",\n      \"couvre\": [\"F_AUDIO_EVENEMENTS\"],\n      \"dependances\": [],\n      \"preuve_attendue\": {\n        \"kind\": \"oracle\",\n        \"statement\": \"Le journal de declenchements de 07_TESTS/oracle/core_audio.gd contient exactement une entree sonore par evenement pour les 4 evenements (4 identifiants de son distincts).\"\n      }\n    }\n  ]\n}\n```\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"La featuremap s3 de kitten_clicker ne porte aucune feature pour la production automatique passive (pourtant exigee par M3 et les criteres de succes du charter) ni pour l'etat-de-partie/runtime/solvabilite, alors que la featuremap pacman de reference les portait.\", \"root_cause\": \"Decomposition s3 orientee strictement features-joueur : la production passive a ete absorbee implicitement dans l'adoption/accumulation, et le runtime/solvabilite n'a pas ete decompose en feature, ce qui force ces responsabilites hors du graphe de modules (composition-root et 07_TESTS).\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 38908,
+    "tools_used": {
+     "Bash": 3,
+     "Read": 13
+    }
+   },
+   "next_reason": "l'exécuteur doit matérialiser `blueprint.json` et lancer l'oracle avant-build ; la chaîne ne peut pas se fermer côté s4 tant que ce verdict n'est pas OK. Escalade normale au niveau exécuteur, pas un échec de conception.",
+   "status": "OK",
+   "ts": 1787464266.8327131
+  },
+  "s5-wiremap": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s5-wiremap.txt",
+    "artifact_sha256": "c1e3b6730feabee5e2ff1310468c032dc0e9e42af632fa913c4d842d216aa120",
+    "cache_creation_tokens": 160224,
+    "cache_read_tokens": 868839,
+    "cost_usd": 3.5327745,
+    "duration_s": 810.0005066394806,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "escalade — une cause non résolue persiste (deux contrats ratifiés en conflit) et la correction est hors de mon périmètre (`out_of_scope` : featuremap/blueprint/loop non modifiables). HumanGate doit trancher l'une des 3 options de réconciliation (fog §Verdicts). La chaîne ne se ferme PAS ici.",
+    "output_excerpt": "/4 affordances liées → gate non franchissable ; software_verdict BLOCKED.\n- proof: dérivation statique — `check_wiremap_contract.mjs:178-225` (`effectSourceRefById` limité à `expected_proof.kind ∈ {file_write,visual}`, l.182-186 ; `atteintEffetMemeExigence`, l.70-87) confrontée à `featuremap.json` (source_ref d'entrée des affordances : b_click/p_buy_kitten/p_upgrade_click/i_prestige, tous `bot_action` ; aucun présent dans le domaine de `effectSourceRefById`). Oracle non exécuté (Bash désactivé) → reçu autoritaire = exécuteur.\n- learning: le modèle de boucle Gameplay Contract (action-ref ≠ réponse-ref) et la règle de liaison V4 (effet visuel de même source_ref que l'entrée) sont mutuellement exclusifs pour tout genre dont l'effet d'action est un compteur `bot_action` et le visuel une étape de réponse distincte. Ce n'est pas propre à ce run — tout clicker/idle le heurtera. À porter comme leçon de contrat, pas comme bug de carte.\n- next_reason: escalade — une cause non résolue persiste (deux contrats ratifiés en conflit) et la correction est hors de mon périmètre (`out_of_scope` : featuremap/blueprint/loop non modifiables). HumanGate doit trancher l'une des 3 options de réconciliation (fog §Verdicts). La chaîne ne se ferme PAS ici.\n\nSKIPPED_VALIDATION : voir la section dédiée ci-dessus (3 items déclarés, aucun silence).\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"maillon_non_lie de check_wiremap_contract est structurellement insatisfiable pour les 4 affordances joueur de kitten_clicker : aucune feuille d'effet file_write|visual ne partage le source_ref de la feuille d'entree (b_click/p_buy_kitten/p_upgrade_click/i_prestige, toutes bot_action).\", \"root_cause\": \"Conflit entre deux contrats figes : loop.json/s3 modelisent entree+effet PLAYER en bot_action sous des source_ref separes (action vs reponse), tandis que s5 V4 exige un effet file_write|visual de MEME source_ref que l'entree ; incompatible pour un clicker a effet-compteur. Reconciliation = gate Pierre.\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 59855,
+    "tools_used": {
+     "Bash": 1,
+     "Read": 7,
+     "TaskCreate": 1,
+     "TaskUpdate": 1
+    }
+   },
+   "next_reason": "escalade — une cause non résolue persiste (deux contrats ratifiés en conflit) et la correction est hors de mon périmètre (`out_of_scope` : featuremap/blueprint/loop non modifiables). HumanGate doit trancher l'une des 3 options de réconciliation (fog §Verdicts). La chaîne ne se ferme PAS ici.",
+   "status": "OK",
+   "ts": 1787465077.0819962
+  },
+  "s6-redteam-plan": {
+   "attempts": 1,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s6-redteam-plan.txt",
+    "artifact_sha256": "8bbcb92750b7e92adcfe8df6e196131842fd3e76984ff207092d650d566fb66d",
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "cost_usd": 0.0,
+    "duration_s": 0.0,
+    "model": "qwen2.5-14b-instruct",
+    "model_override": null,
+    "output_excerpt": "s/<projet>/charter.yaml`.\n\n### Étape 2 : Analyse critique\nJe vais maintenant analyser le plan d'architecture et la WireMap en cherchant activement des failles potentielles. Je vais noter chaque angle mort, dépendance fragile ou câblage incohérent que je trouve.\n\n#### Exemple de Critique Potentielle (à illustrer avec les données réelles du projet)\n1. **Angle :** Architecture monolithique\n   - **Faille :** Risque d'effet domino en cas de panne.\n   - **Correction proposée :** Implémenter une architecture microservices pour isoler les modules critiques.\n\n2. **Angle :** Câblage des dépendances\n   - **Faille :** Dépendances cycliques entre services A et B.\n   - **Correction proposée :** Réorganiser le câblage pour éliminer la dépendance cyclique, par exemple en ajoutant un service intermédiaire.\n\n### Étape 3 : Production du rapport\nJe vais maintenant rédiger le rapport d'attaque avec les failles identifiées et les corrections proposées. Le rapport sera structuré comme suit :\n\n- Liste des failles sous forme {angle, faille, correction_proposée}.\n- Un verdict GO-si-corrigé pour chaque faille.\n- Artefacts archi/wiremap ajustés en cohérence avec les corrections proposées.\n\n### Étape 4 : Finalisation du rapport\nJe vais terminer le rapport en ajoutant la section finale obligatoire sur la lignée de retour et en vérifiant que toutes les validations nécessaires ont été effectuées ou justifiées.\n\nVoici un exemple de ce à quoi ressemblerait cette section finale :\n\n```json\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"Dépendances cycliques entre services A et B.\", \"root_cause\": \"Architecture initiale monolithique.\"}\n```\n\nSi aucun problème n'a été découvert, la ligne serait simplement :\n```json\nRETURN_REASON: {\"status\": \"NOT_DISCOVERED\"}\n```\n\n### Étape 5 : Remise du rapport\nUne fois le rapport finalisé et les artefacts ajustés enregistrés, je vais soumettre ces documents pour la prochaine étape du processus.\n\n---\n\nJe suis prêt à commencer l'analyse critique des artefacts fournis.",
+    "qwen_ok": true,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "qwen2.5-14b-instruct",
+    "runner": "qwen",
+    "tokens": 0
+   },
+   "status": "OK",
+   "ts": 1787465086.2335649
+  },
+  "s9-build-godot-standard": {
+   "attempts": 2,
+   "detail": {
+    "artifact_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\artifacts\\s9-build-godot-standard.txt",
+    "artifact_sha256": "858bb736d5108b71c8e639772b16c3b3d173226459134a4d7a86d017db5e40a0",
+    "cache_creation_tokens": 218221,
+    "cache_read_tokens": 8805200,
+    "cost_usd": 8.915140000000001,
+    "duration_s": 1622.9496293067932,
+    "model": "claude-opus-4-8",
+    "model_override": null,
+    "next_reason": "chaîne FERMÉE au niveau forgeron. Reste OUVERTE : (1) DRIVER — la mesure d'autorité du gate mutation lui revient (re-run s10a) ; (2) HumanGate — 5 survivants triés ⇒ `exception:True` ⇒ Pierre ratifie l'équivalence, jamais un OK auto. Indépendamment, les deux réconciliations déjà remontées par le driver (10 lignes `core.*` de la wiremap gelée + 38 capacités à ratifier dans `capabilities.yaml`) bloq",
+    "output_excerpt": " même ligne → clé partagée → intriables par design du gate). · *action_reason*: un mutant équivalent ne se tue pas (aucune entrée ne le distingue, prouvé) et un survivant ambigu ne se trie pas → séparer la garde pour rendre le survivant unique-key, puis trier les 5 avec preuve exécutée.\n- **result**: 5 survivants équivalents triés (clés uniques, justifs exécutées) ; decision.gd restructuré sans changement de comportement ; chaque kill/survive reproduit au binaire réel.\n- **proof**: godot 4.6.3.stable `run_tests.gd` → EXIT 0, 132/132 (avant+après) ; decision:34 ge->gt EXIT 1 (killed), and->or EXIT 0 (survives) ; 4 autres survivants EXIT 0 ; restaurations byte-identiques.\n- **learning**: en GDScript défensif, muter un opérateur de garde (borne, no-op à 0, retour typé) est souvent équivalent car le runtime recoerce le chemin dégardé ; deux opérateurs de même règle sur une ligne = clé `(name,line)` partagée intriable → écrire les gardes composées en conditions séparées rend chaque mutant adressable. Motif réutilisable pour tout cœur pur muté.\n- **next_reason**: chaîne FERMÉE au niveau forgeron. Reste OUVERTE : (1) DRIVER — la mesure d'autorité du gate mutation lui revient (re-run s10a) ; (2) HumanGate — 5 survivants triés ⇒ `exception:True` ⇒ Pierre ratifie l'équivalence, jamais un OK auto. Indépendamment, les deux réconciliations déjà remontées par le driver (10 lignes `core.*` de la wiremap gelée + 38 capacités à ratifier dans `capabilities.yaml`) bloquent s10s hors mutation.\n\nRETURN_REASON: {\"status\": \"DISCOVERED\", \"problem\": \"gate mutation FAIL 43/49 sur le build kitten_clicker : 5 mutants equivalents sur gardes defensives non tries + 2 mutants and->or sur une meme ligne (decision.gd:27) declares ambigus donc intriables par check_mutation_gate\", \"root_cause\": \"mutations d'operateur sur gardes defensives GDScript recoercees par le runtime (equivalentes) ; et cle (name,line) partagee par deux occurrences d'une regle sur une seule ligne = intriable par design du gate\"}",
+    "qwen_ok": false,
+    "redteam_blocked": false,
+    "redteam_findings": [],
+    "reviewer": "claude-opus-4-8",
+    "runner": "claude",
+    "tokens": 93282,
+    "tools_used": {
+     "Bash": 34,
+     "Edit": 1,
+     "Read": 11,
+     "TaskCreate": 3,
+     "TaskUpdate": 5,
+     "Write": 4
+    }
+   },
+   "last_oracle": "s10a-oracle-code",
+   "last_root_cause": "returncode=0; e2e non passé; solvability non passé; mutation=FAIL (volets rouges: e2e, reuse_ratio_wired, search_consulted, solvability)",
+   "next_reason": "chaîne FERMÉE au niveau forgeron. Reste OUVERTE : (1) DRIVER — la mesure d'autorité du gate mutation lui revient (re-run s10a) ; (2) HumanGate — 5 survivants triés ⇒ `exception:True` ⇒ Pierre ratifie l'équivalence, jamais un OK auto. Indépendamment, les deux réconciliations déjà remontées par le driver (10 lignes `core.*` de la wiremap gelée + 38 capacités à ratifier dans `capabilities.yaml`) bloq",
+   "responsible_level": "build",
+   "status": "OK",
+   "ts": 1787472103.4313886
+  }
+ },
+ "transition": "OK",
+ "updated_ts": 1787472695.153378
+}

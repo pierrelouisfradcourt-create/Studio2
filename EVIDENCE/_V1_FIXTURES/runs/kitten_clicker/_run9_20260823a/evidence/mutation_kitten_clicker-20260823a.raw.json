@@ -1,0 +1,146 @@
+{
+ "forme": {
+  "categories_non_applicables": [],
+  "declaration_conforme": true,
+  "passed": true,
+  "raisons": [],
+  "status": "OK"
+ },
+ "gate": {
+  "checked": true,
+  "exception": true,
+  "passed": true,
+  "survivants_non_tries": [],
+  "triage_perimes": [],
+  "triaged_survivors": [
+   "and->or@L19",
+   "and->or@L34",
+   "ge->gt@L16",
+   "le->lt@L31",
+   "le->lt@L61"
+  ]
+ },
+ "mutation_execution": {
+  "baseline_ok": true,
+  "binaire": {
+   "path": "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe",
+   "version": "4.6.3.stable.official.7d41c59c4"
+  },
+  "budget_exceeded": false,
+  "command_declaree": [
+   "<bin:godot>",
+   "--headless",
+   "--path",
+   ".",
+   "--script",
+   "res://tests/run_tests.gd"
+  ],
+  "command_executee": [
+   "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe",
+   "--headless",
+   "--path",
+   ".",
+   "--script",
+   "res://tests/run_tests.gd"
+  ],
+  "cwd_execute": "games/kitten_clicker",
+  "fichiers_sans_mutant": [
+   "05_SYSTEMS/pricing/pricing.gd",
+   "05_SYSTEMS/upgrades/upgrades.gd"
+  ],
+  "files": [
+   "05_SYSTEMS/collection/collection.gd",
+   "05_SYSTEMS/decision/decision.gd",
+   "05_SYSTEMS/economy/economy.gd",
+   "05_SYSTEMS/goals/goals.gd",
+   "05_SYSTEMS/prestige/prestige.gd",
+   "05_SYSTEMS/pricing/pricing.gd",
+   "05_SYSTEMS/progression/progression.gd",
+   "05_SYSTEMS/upgrades/upgrades.gd",
+   "05_SYSTEMS/world_content/world_content.gd"
+  ],
+  "killed": 43,
+  "mutants_executes": 48,
+  "mutants_generes": 48,
+  "per_file": {
+   "05_SYSTEMS/collection/collection.gd": {
+    "killed": 7,
+    "mutants_executes": 8,
+    "mutants_generes": 8,
+    "total": 8
+   },
+   "05_SYSTEMS/decision/decision.gd": {
+    "killed": 8,
+    "mutants_executes": 9,
+    "mutants_generes": 9,
+    "total": 9
+   },
+   "05_SYSTEMS/economy/economy.gd": {
+    "killed": 3,
+    "mutants_executes": 5,
+    "mutants_generes": 5,
+    "total": 5
+   },
+   "05_SYSTEMS/goals/goals.gd": {
+    "killed": 2,
+    "mutants_executes": 2,
+    "mutants_generes": 2,
+    "total": 2
+   },
+   "05_SYSTEMS/prestige/prestige.gd": {
+    "killed": 3,
+    "mutants_executes": 3,
+    "mutants_generes": 3,
+    "total": 3
+   },
+   "05_SYSTEMS/pricing/pricing.gd": {
+    "killed": 0,
+    "mutants_executes": 0,
+    "mutants_generes": 0,
+    "total": 0
+   },
+   "05_SYSTEMS/progression/progression.gd": {
+    "killed": 6,
+    "mutants_executes": 6,
+    "mutants_generes": 6,
+    "total": 6
+   },
+   "05_SYSTEMS/upgrades/upgrades.gd": {
+    "killed": 0,
+    "mutants_executes": 0,
+    "mutants_generes": 0,
+    "total": 0
+   },
+   "05_SYSTEMS/world_content/world_content.gd": {
+    "killed": 14,
+    "mutants_executes": 15,
+    "mutants_generes": 15,
+    "total": 15
+   }
+  },
+  "survived": 5,
+  "survivors": [
+   {
+    "line": 16,
+    "name": "ge->gt"
+   },
+   {
+    "line": 34,
+    "name": "and->or"
+   },
+   {
+    "line": 31,
+    "name": "le->lt"
+   },
+   {
+    "line": 61,
+    "name": "le->lt"
+   },
+   {
+    "line": 19,
+    "name": "and->or"
+   }
+  ],
+  "total": 48
+ }
+}

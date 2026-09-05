@@ -1,0 +1,57 @@
+Both artifacts are delivered and the oracle passes. Final report below.
+
+---
+
+## RAPPORT FINAL — s2.5-artbible / kitten_clicker-20260823a
+
+**software_verdict: OK**
+**evidence_verdict: MECHANICAL_VALIDATION_ONLY**
+**claim_verdict: NO_CLAIM_ALLOWED**
+
+### Livrables produits
+- `lab/forge_runs/kitten_clicker/art_bible.md` — frontmatter (`styles[]`, `mood_keywords[]` non vides) + 3 sections (IDENTITÉ VISUELLE / RATIONALE / BESOINS VISUELS), la dernière portant le bloc ```json {visual_requirements:[…]} (17 entrées).
+- `lab/forge_runs/kitten_clicker/asset_requests.json` — Asset Contract V0.1, `{requests[16], no_assets_needed:false, reason:null}`.
+- `evidence_path` : `lab/forge_runs/kitten_clicker/evidence/check_artbible_kitten_clicker-20260823a.json`
+
+### Oracle (non-LLM) qui appuie chaque affirmation
+`node scripts/forge/check_artbible.mjs art_bible.md asset_requests.json` → **`verdict: "OK"`**, exit 0. `findings: []`, `coverage.checked:true`, `coverage.missing:[]`, 16/16 besoins `required:true` satisfaits. (Cet oracle délègue la forme des requêtes à `asset_request.mjs::validateRequestShape` — zéro erreur.)
+
+### Couverture besoin↔requête (mécanique, la seule dimension gating)
+Chaque entité visuelle du Prisme rattachée à une règle Rn a `required:true` et **sa propre** requête (jamais une requête générique) :
+
+| Entité | entity_role | règle | statut résolution* |
+|---|---|---|---|
+| pelote | item | R1, R10 | BLOCKED |
+| kitten_common/uncommon/rare/epic/legendary (×5) | collectible | R2, R5 | BLOCKED |
+| refuge, lieu_2 | environment | R6 | BLOCKED |
+| obj_food_bowl, obj_scratching_post, obj_cushion_bed | item | R7 | BLOCKED |
+| fx_click_feedback | effect | R10 | BLOCKED |
+| icon_ronrons | icon | R1 | BLOCKED |
+| ui_stats_hud, ui_action_buttons, ui_objectif_banner | ui | R1/R4/R8/R13/R15 | BLOCKED |
+| ambient_decor | environment | *aucune* → `required:false` | (aucune requête) |
+
+\* **STATISTIQUE ADVISORY, jamais un critère pass/fail** : `resolution_stats = {ok:0, blocked:16, total:16}`. Ce BLOCKED est **légitime** (`resolution_stats.blocked`, catalogue incomplet — pas `coverage.missing`) : le studio n'a aucun SVG chat original catalogué, et la tâche prescrit que **le builder écrit lui-même les SVG**. Je n'ai assoupli aucune contrainte pour forcer un OK de résolution (garde-fou anti-gaming respecté).
+
+### FOG (jugement humain, jamais un claim)
+- **Conformité esthétique non évaluée** : `style_tag_match` compare des tags, pas des pixels. Que « flat-cute-2d / cozy-storybook / warm-pastel » + la palette rende réellement « mignon, chaleureux, lisible à 640×480 » relève du jugement de Pierre (HumanGate), pas de cet oracle.
+- **Adéquation viewpoint** : le contrat V0.1 ne détecte pas si un style top-down conviendrait à une scène frontale (limite connue, non corrigée). Non applicable ici (jeu sans navigation), signalé par prudence.
+
+### SKIPPED_VALIDATION
+- item : *jugement esthétique* de l'Art Bible · périmètre : art_bible.md · statut : non fait (hors périmètre) · raison : interdit par le garde-fou (aucun LLM-as-judge sur l'esthétique) → remonté en fog HumanGate.
+- item : *résolution catalogue des 16 requêtes* · périmètre : asset_requests.json · statut : fait mais **advisory** (0 OK / 16 BLOCKED) · raison : catalogue sans SVG chat original ; production déléguée au builder — jamais un critère de verdict.
+- item : *entité AUDIO (R9)* · périmètre : sons clic/achat/déblocage/prestige · statut : non traité · raison : le son n'est pas une entité **visuelle** ; hors périmètre d'un Art Bible, adressé par le volet audio du build.
+
+### RETURN LINEAGE
+- **why_task_existed:**
+  - problem: le Prisme (s1) a produit 15 règles observables citant des entités visuelles (pelote, chatons par rareté, lieux, objets, feedback, HUD) mais aucune identité visuelle ni demande d'asset structurée n'existait encore comme artefact consommable par s3/s4/s9.
+  - oracle: activation par décision humaine (dispatch `FORGE_DISPATCH:s2.5-artbible:kitten_clicker-20260823a:1`) ; oracle de sortie = `check_artbible.mjs`.
+  - root_cause: non transmis (activation amont, pas un échec mesuré) — étape normale de la chaîne.
+  - action_reason: sans art_bible + asset_requests couvrant chaque entité `required`, le build (s9) n'a ni direction visuelle ni contrat d'asset, et le vecteur « couverture affirmée en prose sans requête » (fermé en v0.1) reste ouvert.
+  - result: art_bible.md (3 sections + 17 visual_requirements) + asset_requests.json (16 requêtes, 1 par entité requise) ; `check_artbible.mjs` → OK, 16/16 couverts.
+  - proof: `node scripts/forge/check_artbible.mjs … --json` → `{"verdict":"OK","coverage":{"missing":[]},"resolution_stats":{"ok":0,"blocked":16}}`, exit 0 ; reçu écrit dans `evidence/check_artbible_kitten_clicker-20260823a.json`.
+  - learning: dans ce studio, un art bible SVG-first résout toujours `BLOCKED` en résolution (catalogue = offre permanente, pas des SVG dessinés par run) — ne jamais lire ce `resolution_stats.blocked` comme un défaut de couverture ; les deux dimensions sont disjointes par construction.
+  - next_reason: chaîne **fermée** proprement ici — verdict OK, couverture complète, aucune cause non résolue. La conformité esthétique (fog) est une décision HumanGate distincte, pas une escalade de correction.
+
+SKIPPED_VALIDATION: voir section ci-dessus (3 items, tous assumés).
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

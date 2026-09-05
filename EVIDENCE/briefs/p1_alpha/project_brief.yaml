@@ -1,0 +1,58 @@
+projet: p1_alpha
+intention: >
+  Bras DIRIGÉ (D1) de la paire pilote RUN 2 (protocole docs/forge/RUN2_PILOTE_PROTOCOLE_V0.md).
+  Produire un jeu incremental/clicker web jouable dont la STRUCTURE est intégralement imposée
+  par le fichier normatif structure_imposee.yaml (même dossier), en fermant toute la chaîne de
+  preuve full_content. Question mesurée par la paire : que produit la chaîne quand la structure
+  lui est donnée, comparé à quand elle l'invente (p1_beta) ? La qualité ludique n'est pas jugée
+  par ce run (donnée M7, jugement humain en aveugle). Paire PILOTE : mesure la mesurabilité du
+  protocole, ne prétend pas répondre à la question expérimentale complète (≥2 paires).
+contraintes:
+  normative_refs:
+    - spec: FORGE_DESIGN_FREEDOM_SPEC_V0
+      rules: [N1, N2, N3, N4, N7, N8, N9]
+  project_specific:
+    techniques:
+      - "genre : incremental/clicker — FIXÉ PAR PIERRE (2026-08-30), non délégable"
+      - >
+        STRUCTURE IMPOSÉE NORMATIVE : lab/forge_briefs/p1_alpha/structure_imposee.yaml —
+        chaque valeur (croissance 1.12, coûts de base, productions, coûts d'améliorations,
+        seuils cumulés, fin à 1_000_000 R, invariant comptable) est reprise TELLE QUELLE ;
+        toute déviation est un écart déclaré en champ structuré, jamais silencieux (règle N6
+        mesurée post-hoc en M3)
+      - "fin de partie OBSERVABLE requise (victoire S5) ; pas d'état d'échec — fidèle au genre"
+      - "socle sonde web (N1) : HTML+JS, déterminisme seedé, window.__game, harnais complet à la racine"
+    experimentales:
+      - "bras D de la paire pilote L/D — variable manipulée : l'AUTEUR DE LA STRUCTURE"
+      - "preuves par propriétaires distincts du producteur (gates fiches 2/3/5 armées)"
+cible: web (HTML+JS canvas)
+references_autorisees:
+  - ref: "lab/forge_briefs/p1_alpha/structure_imposee.yaml (NORMATIF, pas une inspiration)"
+    source: "grammaire structurelle proposée Fable 2026-08-30, RATIFIÉE Pierre 2026-08-30"
+  - ref: "Cookie Clicker — grammaire de genre UNIQUEMENT, jamais une copie (aucun asset, nom, contenu)"
+    source: "Pierre 2026-08-30 (choix du genre de la paire pilote)"
+criteres_sortie:
+  - "chaîne full_content complète : verdict signé + verify_run AUTHENTIQUE"
+  - "structure du jeu == structure_imposee.yaml, écarts éventuels déclarés en champ structuré (jamais silencieux)"
+  - "design_questions/r2/design_freeze exercés normalement (la structure imposée ne dispense pas du canal)"
+  - "chaque asset_request.id resolved-avec-fichier ou blocked-justifié (gate check_asset_consumption)"
+  - "check_artbible exécuté par le driver (executed_by: driver)"
+  - "s11 red-team indépendant réel (qwen, independent: true) ; LM Studio down → HALT sans fallback"
+  - "bots de mesure : temps-jusqu'à-S5 et seuils atteints à budget de ticks fixe, valeurs à variance non triviale"
+libertes_deleguees:
+  - "thème et univers"
+  - "personnages/entités et leur nommage"
+  - "direction artistique"
+  - "assets nécessaires à la production"
+  - "présentation/HUD et micro-interactions non couvertes par la structure"
+  - "tout détail d'implémentation non fixé par structure_imposee.yaml"
+provenance:
+  genre: "Pierre 2026-08-30 (paire pilote incremental/clicker)"
+  structure: >
+    grammaire structurelle PROPOSÉE par Fable (2026-08-30), RATIFIÉE par Pierre (2026-08-30).
+    Distinction verrouillée : ce n'est pas une « conception par Pierre » au sens créatif —
+    la variable expérimentale est l'auteur de la structure, pas l'auteur de l'univers.
+  protocole: "paire pilote ratifiée Pierre 2026-08-30 (une paire, déclarée pilote, jamais la validation ≥2 paires)"
+  criteres_sortie: "Pierre 2026-08-30 (sas RUN 2 pilote)"
+  libertes_deleguees: "Pierre 2026-08-30 — thème/DA/assets libres dans les DEUX bras (une seule variable manipulée)"
+  redaction: "Fable (poste de commande), session 2026-08-30"

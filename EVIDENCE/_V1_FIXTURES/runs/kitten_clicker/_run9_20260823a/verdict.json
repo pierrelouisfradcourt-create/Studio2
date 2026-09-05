@@ -1,0 +1,1108 @@
+{
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "decision": "BLOCKED",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "git_head": "0a9f4d4da5375459d5caef9360b9d46fa69165af",
+ "hmac": "eb916e20cdb0c2e468cff5f341dff9dc93b714f65d68ed475f5e3037aceb3934",
+ "humangate_flags": [
+  "standard rouge: ['collisions', 'genre_coverage', 'line_states']",
+  "mutation: 5 survivant(s) trié(s) par le producteur (and->or@L19, and->or@L34, ge->gt@L16, le->lt@L31, le->lt@L61) — équivalence NON vérifiée mécaniquement, ratification HumanGate obligatoire avant tout claim positif",
+  "red-team dégradé: reviewer indépendant n'a pas tourné (fallback)"
+ ],
+ "is_game": true,
+ "nonce": "15688d44132d0e1829715f420d88233b",
+ "oracles": {
+  "archi": {
+   "detail": {
+    "debordements_ownership": {
+     "checked": false,
+     "items": []
+    },
+    "deps_interdites_violées": [],
+    "modules_sans_test": [],
+    "passed": true
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "archi",
+   "run_id": "kitten_clicker-20260823a",
+   "status": "OK",
+   "ts": 1787472173.4809859
+  },
+  "code": {
+   "detail": {
+    "e2e": {
+     "passed": false,
+     "raisons": [
+      "tests/run_tests.gd n'énumère aucun fichier de test réel (DirAccess.open absent) — coquille probable"
+     ]
+    },
+    "evidence_seal": {
+     "evidence_path": "lab/forge_runs/kitten_clicker/evidence/oracle_kitten_clicker.log",
+     "reason": "FLUX_D_EXPLOITATION_IGNORE_PAR_GIT",
+     "sealed": false
+    },
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "loop_bypass": {
+     "passed": true,
+     "violations": []
+    },
+    "loop_dead": false,
+    "mutation": {
+     "evaluation_forme": {
+      "categories_non_applicables": [],
+      "passed": true,
+      "raisons": [
+       "évaluation de forme seule -- aucun mutation_result fourni"
+      ],
+      "status": "OK"
+     },
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "budget_exceeded": false,
+       "code_sha256": {
+        "05_SYSTEMS/collection/collection.gd": "2ec7fd596c18a1c2f88b2917e1058f923beaabde097fdf84f73093a4fbaa43ba",
+        "05_SYSTEMS/decision/decision.gd": "417ec2874de045c8a4f946457db7fb5b613211da4d0e7a065d44741d582ffb1f",
+        "05_SYSTEMS/economy/economy.gd": "c6af3e905befe39a5ed4d99cb2e790a8291cf6c3b5afaedf6734944ae0f49b7e",
+        "05_SYSTEMS/goals/goals.gd": "a7ffdd4ad52b45d60ff5259b34976d53912d56af4bc41e3721a3e2f75dfcfa11",
+        "05_SYSTEMS/prestige/prestige.gd": "8ff6b55ad6ddfdf5f5f1048d0fb5d100edbd45535e4f691c4bc70dda6b2ebf8b",
+        "05_SYSTEMS/pricing/pricing.gd": "d4cce90d8d18d95aff3f99e913beef908af49bf20ac2cbca3ea927fbcf1b3774",
+        "05_SYSTEMS/progression/progression.gd": "db9e8898feebe72baa3073b34c78f6e978ba31ac1471c0eaa17cdea9ff7161c1",
+        "05_SYSTEMS/upgrades/upgrades.gd": "d59fa64a7d2124e81f956f0c052f4b12cfc995a11616f8c2e7e0954d832aae3d",
+        "05_SYSTEMS/world_content/world_content.gd": "e572c7f963f9ae7717980107e848db7587bdcda12f90c5a78180e412b66e95fb",
+        "tests/run_tests.gd": "e993237b6429a67ea0797465f094db62b0d627d63d62735294b3c02de9d7c066"
+       },
+       "declaration_conforme": true,
+       "evaluation_forme": {
+        "categories_non_applicables": [],
+        "declaration_conforme": true,
+        "passed": true,
+        "raisons": [],
+        "status": "OK"
+       },
+       "fichiers_sans_mutant": [
+        "05_SYSTEMS/pricing/pricing.gd",
+        "05_SYSTEMS/upgrades/upgrades.gd"
+       ],
+       "files": [
+        "05_SYSTEMS/collection/collection.gd",
+        "05_SYSTEMS/decision/decision.gd",
+        "05_SYSTEMS/economy/economy.gd",
+        "05_SYSTEMS/goals/goals.gd",
+        "05_SYSTEMS/prestige/prestige.gd",
+        "05_SYSTEMS/pricing/pricing.gd",
+        "05_SYSTEMS/progression/progression.gd",
+        "05_SYSTEMS/upgrades/upgrades.gd",
+        "05_SYSTEMS/world_content/world_content.gd"
+       ],
+       "game_dir": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker",
+       "gate_checked": true,
+       "killed": 43,
+       "mutants_executes": 48,
+       "mutants_generes": 48,
+       "mutation_exception": true,
+       "per_file": {
+        "05_SYSTEMS/collection/collection.gd": {
+         "killed": 7,
+         "mutants_executes": 8,
+         "mutants_generes": 8,
+         "total": 8
+        },
+        "05_SYSTEMS/decision/decision.gd": {
+         "killed": 8,
+         "mutants_executes": 9,
+         "mutants_generes": 9,
+         "total": 9
+        },
+        "05_SYSTEMS/economy/economy.gd": {
+         "killed": 3,
+         "mutants_executes": 5,
+         "mutants_generes": 5,
+         "total": 5
+        },
+        "05_SYSTEMS/goals/goals.gd": {
+         "killed": 2,
+         "mutants_executes": 2,
+         "mutants_generes": 2,
+         "total": 2
+        },
+        "05_SYSTEMS/prestige/prestige.gd": {
+         "killed": 3,
+         "mutants_executes": 3,
+         "mutants_generes": 3,
+         "total": 3
+        },
+        "05_SYSTEMS/pricing/pricing.gd": {
+         "killed": 0,
+         "mutants_executes": 0,
+         "mutants_generes": 0,
+         "total": 0
+        },
+        "05_SYSTEMS/progression/progression.gd": {
+         "killed": 6,
+         "mutants_executes": 6,
+         "mutants_generes": 6,
+         "total": 6
+        },
+        "05_SYSTEMS/upgrades/upgrades.gd": {
+         "killed": 0,
+         "mutants_executes": 0,
+         "mutants_generes": 0,
+         "total": 0
+        },
+        "05_SYSTEMS/world_content/world_content.gd": {
+         "killed": 14,
+         "mutants_executes": 15,
+         "mutants_generes": 15,
+         "total": 15
+        }
+       },
+       "proof_chain": {
+        "binaire": {
+         "path": "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe",
+         "version": "4.6.3.stable.official.7d41c59c4"
+        },
+        "command_declaree": [
+         "<bin:godot>",
+         "--headless",
+         "--path",
+         ".",
+         "--script",
+         "res://tests/run_tests.gd"
+        ],
+        "command_executee": [
+         "C:\\Users\\Studio-Dev\\Desktop\\Godot_v4.6.3-stable_win64.exe\\Godot_v4.6.3-stable_win64_console.exe",
+         "--headless",
+         "--path",
+         ".",
+         "--script",
+         "res://tests/run_tests.gd"
+        ],
+        "cwd_execute": "games/kitten_clicker",
+        "declaration_conforme": true,
+        "parametres": {
+         "cost_class": "engine",
+         "max_mutants": 200,
+         "timeout_per_mutant_s": 30,
+         "total_timeout_s": 900
+        },
+        "resultat_brut_path": "C:\\TACTICAL_CHESS_STUDIO\\lab\\forge_runs\\kitten_clicker\\evidence\\mutation_kitten_clicker-20260823a.raw.json",
+        "resultat_brut_sha256": "533cbd3aa6000c16564531112b64ae7c2ac38888543582f924af2cd764654f23",
+        "runtime_declare": "godot",
+        "schema_version": 1,
+        "test_scripts_sha256": {
+         "tests/run_tests.gd": "e993237b6429a67ea0797465f094db62b0d627d63d62735294b3c02de9d7c066"
+        },
+        "wrapper_sha256": {}
+       },
+       "regime_preuve": "descripteur",
+       "runtime": "godot",
+       "survivants_non_tries": [],
+       "survived": 5,
+       "test_files_scelles": [
+        "tests/run_tests.gd"
+       ],
+       "total": 48,
+       "triage_sha256": "3a5876cf8aca6fd4c755ecc27f217c2905579a219fb2abdf30266a128fddb510",
+       "triaged_survivors": [
+        "and->or@L19",
+        "and->or@L34",
+        "ge->gt@L16",
+        "le->lt@L31",
+        "le->lt@L61"
+       ]
+      },
+      "evidence_path": "lab/forge_runs/kitten_clicker/evidence/mutation_kitten_clicker-20260823a.raw.json",
+      "evidence_sha256": "533cbd3aa6000c16564531112b64ae7c2ac38888543582f924af2cd764654f23",
+      "oracle_id": "mutation",
+      "run_id": "kitten_clicker-20260823a",
+      "status": "OK",
+      "ts": 1787472173.371651
+     },
+     "regime": "descripteur",
+     "signature": "30f6985d25fe697bd20f49ec36b3c4cfd67c6b0414d5b15d5bb262a55208f45f"
+    },
+    "oracle_measures": {
+     "mecanique": true,
+     "solvabilite": {
+      "failed_seeds": [],
+      "lost": 0,
+      "project": "games/kitten_clicker",
+      "trials": 20,
+      "verdict": "OK",
+      "won": 20
+     }
+    },
+    "player_loop": {
+     "checked": true,
+     "fails": [],
+     "fichier": "C:\\TACTICAL_CHESS_STUDIO\\scripts\\forge\\godot_probes\\player_loop.gd",
+     "mode_execution": "gpu_window",
+     "passed": true,
+     "payload": {
+      "data": {
+       "decision": {
+        "boot_reproducible": true,
+        "future": true,
+        "immediate": {
+         "A": true,
+         "B": true
+        },
+        "information": {
+         "A": true,
+         "B": true
+        },
+        "nondominance": {
+         "matrix": {
+          "p_buy_kitten": {
+           "actif": 2390.0,
+           "idle": 390.0
+          },
+          "p_upgrade_click": {
+           "actif": 4237.0,
+           "idle": 237.0
+          }
+         },
+         "pass": true
+        },
+        "options": [
+         "p_buy_kitten",
+         "p_upgrade_click"
+        ],
+        "pass": true,
+        "player_goal": true,
+        "reasons": [],
+        "ref": "d_first_spend",
+        "states": {
+         "p_buy_kitten": {
+          "affordances": [
+           "acheter_amelioration",
+           "acheter_chaton",
+           "caresse_longue",
+           "pelote",
+           "placer_au_jardin",
+           "prestige"
+          ],
+          "hud": {
+           "collection": "Chatons : 2",
+           "cout_acheter_amelioration": "Cout : 12",
+           "cout_acheter_chaton": "Cout : 15",
+           "effet_acheter_amelioration": "clic x2 -> 40 par caresse (rendement)",
+           "effet_acheter_chaton": "+2 ronron/s (production passive)",
+           "objectif": "Adopte encore un chaton pour ouvrir le jardin [ronrons 120]",
+           "prestige": "Prestige : 0",
+           "ronrons": "Ronrons : 120",
+           "taux": "Ronron/s : 1.0"
+          },
+          "objectif": "Adopte encore un chaton pour ouvrir le jardin [ronrons 120]"
+         },
+         "p_upgrade_click": {
+          "affordances": [
+           "acheter_amelioration",
+           "acheter_chaton",
+           "caresse_longue",
+           "pelote",
+           "placer_au_jardin",
+           "prestige"
+          ],
+          "hud": {
+           "collection": "Chatons : 1",
+           "cout_acheter_amelioration": "Cout : 16",
+           "cout_acheter_chaton": "Cout : 10",
+           "effet_acheter_amelioration": "clic x2 -> 80 par caresse (rendement)",
+           "effet_acheter_chaton": "+1 ronron/s (production passive)",
+           "objectif": "Adopte d'autres chatons (tu en as 1) pour agrandir le refuge [ronrons 102]",
+           "prestige": "Prestige : 0",
+           "ronrons": "Ronrons : 102",
+           "taux": "Ronron/s : 0.5"
+          },
+          "objectif": "Adopte d'autres chatons (tu en as 1) pour agrandir le refuge [ronrons 102]"
+         }
+        }
+       },
+       "deltas": {
+        "a_goal": 0.0,
+        "b_click": 50.0,
+        "b_click@replay": 180.0,
+        "c_response": 15.0,
+        "c_response@replay": 60.0,
+        "d_reward": 15.0,
+        "d_reward@replay": 60.0,
+        "f_unlock": 1.0,
+        "g_next_1": 60.0,
+        "g_next_2": 60.0,
+        "i_prestige": -680.0,
+        "j_advantage": 96.0,
+        "p_buy_kitten": 1.0,
+        "p_buy_kitten@replay": 1.0,
+        "p_upgrade_click": 8.0
+       },
+       "frames": 3645,
+       "reached_role": "ADVANTAGE",
+       "seen": {
+        "collection": [
+         "Chatons : 0",
+         "Chatons : 1",
+         "Chatons : 2",
+         "Chatons : 3",
+         "Chatons : 4"
+        ],
+        "objectif": [
+         "Caresse la pelote, puis adopte ton premier chaton [ronrons 0]",
+         "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 170]",
+         "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 230]",
+         "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 232]",
+         "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 292]"
+        ],
+        "ronrons": [
+         "Ronrons : 0",
+         "Ronrons : 50",
+         "Ronrons : 60",
+         "Ronrons : 68",
+         "Ronrons : 69",
+         "Ronrons : 84",
+         "Ronrons : 99",
+         "Ronrons : 294",
+         "Ronrons : 474",
+         "Ronrons : 476",
+         "Ronrons : 536",
+         "Ronrons : 538",
+         "Ronrons : 598",
+         "Ronrons : 680",
+         "Ronrons : 96"
+        ]
+       },
+       "steps": [
+        {
+         "affordance": "",
+         "after": "Caresse la pelote, puis adopte ton premier chaton [ronrons 0]",
+         "before": "Caresse la pelote, puis adopte ton premier chaton [ronrons 0]",
+         "pass": true,
+         "reason": "",
+         "ref": "a_goal",
+         "role": "PLAYER_GOAL"
+        },
+        {
+         "affordance": "pelote",
+         "after": "Ronrons : 50",
+         "before": "Ronrons : 0",
+         "pass": true,
+         "reason": "",
+         "ref": "b_click",
+         "role": "PLAYER_ACTION"
+        },
+        {
+         "affordance": "acheter_chaton",
+         "after": "Chatons : 1",
+         "before": "Chatons : 0",
+         "pass": true,
+         "reason": "",
+         "ref": "p_buy_kitten",
+         "role": "PLAYER_ACTION"
+        },
+        {
+         "affordance": "acheter_amelioration",
+         "after": "Ronrons : 68",
+         "before": "Ronrons : 60",
+         "pass": true,
+         "reason": "",
+         "ref": "p_upgrade_click",
+         "role": "PLAYER_ACTION"
+        },
+        {
+         "affordance": "",
+         "after": "Ronrons : 84",
+         "before": "Ronrons : 69",
+         "pass": true,
+         "reason": "",
+         "ref": "c_response",
+         "role": "GAME_RESPONSE"
+        },
+        {
+         "affordance": "",
+         "after": "Ronrons : 99",
+         "before": "Ronrons : 84",
+         "pass": true,
+         "reason": "",
+         "ref": "d_reward",
+         "role": "REWARD"
+        },
+        {
+         "affordance": "",
+         "after": "",
+         "before": "",
+         "pass": true,
+         "reason": "",
+         "ref": "d_first_spend",
+         "role": "DECISION"
+        },
+        {
+         "affordance": "acheter_chaton",
+         "after": "Chatons : 3",
+         "appears_after": 1,
+         "appears_before": 0,
+         "before": "Chatons : 2",
+         "pass": true,
+         "reason": "",
+         "ref": "f_unlock",
+         "role": "UNLOCK"
+        },
+        {
+         "affordance": "",
+         "after": "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 230]",
+         "before": "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 170]",
+         "pass": true,
+         "reason": "",
+         "ref": "g_next_1",
+         "role": "NEXT_GOAL"
+        },
+        {
+         "affordance": "",
+         "after": "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 292]",
+         "before": "Le jardin est ouvert — tente un prestige pour un bonus permanent [ronrons 232]",
+         "pass": true,
+         "reason": "",
+         "ref": "g_next_2",
+         "role": "NEXT_GOAL"
+        },
+        {
+         "affordance": "",
+         "after": "",
+         "before": "",
+         "pass": true,
+         "reason": "",
+         "ref": "h_repeat",
+         "replays": [
+          {
+           "after": "Ronrons : 474",
+           "before": "Ronrons : 294",
+           "pass": true,
+           "ref": "b_click"
+          },
+          {
+           "after": "Ronrons : 536",
+           "before": "Ronrons : 476",
+           "pass": true,
+           "ref": "c_response"
+          },
+          {
+           "after": "Ronrons : 598",
+           "before": "Ronrons : 538",
+           "pass": true,
+           "ref": "d_reward"
+          },
+          {
+           "after": "Chatons : 4",
+           "before": "Chatons : 3",
+           "pass": true,
+           "ref": "p_buy_kitten"
+          }
+         ],
+         "role": "REPEAT"
+        },
+        {
+         "affordance": "prestige",
+         "after": "Ronrons : 0",
+         "before": "Ronrons : 680",
+         "pass": true,
+         "reason": "",
+         "ref": "i_prestige",
+         "role": "META_LOOP"
+        },
+        {
+         "affordance": "",
+         "after": "Ronrons : 96",
+         "before": "Ronrons : 0",
+         "pass": true,
+         "reason": "",
+         "ref": "j_advantage",
+         "role": "ADVANTAGE"
+        }
+       ]
+      },
+      "fails": [],
+      "ok": true
+     },
+     "status": "OK"
+    },
+    "product_oracle_godot": {
+     "core_audio": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_audio.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "cues_distincts": [
+        "click",
+        "purchase",
+        "unlock",
+        "prestige"
+       ],
+       "declenchements": 35,
+       "fails": [],
+       "ok": true
+      },
+      "status": "OK"
+     },
+     "core_loop": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_loop.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "data": {
+        "collection_avant": 0,
+        "ronrons_avant": 0
+       },
+       "fails": [],
+       "ok": true
+      },
+      "status": "OK"
+     },
+     "core_render": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_render.gd",
+      "mode_execution": "gpu_window",
+      "passed": true,
+      "payload": {
+       "fails": [],
+       "ok": true,
+       "rarity_diff": 0.309801909451683
+      },
+      "status": "OK"
+     }
+    },
+    "product_oracle_godot_activation": {
+     "active": true,
+     "godot_capacity_present": true,
+     "proof_descriptor_present": true,
+     "reason": "contrat de preuve `proof:` présent ET oracles FORGE_ORACLE trouvés sur disque — fournisseur Godot activé",
+     "runtime_block": {
+      "active": true,
+      "reason": "run/main_scene déclaré"
+     }
+    },
+    "regime_preuve": "descripteur",
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": false,
+     "raisons": [
+      "run-oracle.mjs absent"
+     ]
+    },
+    "runtime_alive": {
+     "checked": true,
+     "fails": [],
+     "fichier": "C:\\TACTICAL_CHESS_STUDIO\\scripts\\forge\\godot_probes\\runtime_alive.gd",
+     "mode_execution": "gpu_window",
+     "passed": true,
+     "payload": {
+      "data": {
+       "changed_after_click": true,
+       "frames": 120,
+       "loaded": true,
+       "nodes_total": 40,
+       "nonmonochrome": true,
+       "root_children": 1,
+       "scene": "res://main.tscn",
+       "scripted_nodes": 4,
+       "system_scripts": 3
+      },
+      "fails": [],
+      "ok": true
+     },
+     "status": "OK"
+    },
+    "search_consulted": {
+     "count": 0,
+     "passed": false,
+     "raisons": [
+      "aucune recherche journalisée depuis 2026-08-23T04:58:52.927Z (contrat s9-build §2bis non respecté, ou aucune brique ne pouvait matcher)"
+     ]
+    },
+    "solvability": {
+     "checked": true,
+     "passed": false,
+     "raisons": [
+      "aucun script wrapper localisable dans runner_argv=[] — câblage non prouvé"
+     ],
+     "topology": "descripteur"
+    },
+    "solvability_mesure": {
+     "mesure": "cablage_du_harnais",
+     "ne_mesure_pas": "la solvabilite du jeu (won/trials) — un `passed: true` ne prouve AUCUNE partie gagnee",
+     "resultat_reel": "non remonte au recu : voir evidence/oracle_<jeu>.log, NON versionne (.gitignore:81)"
+    }
+   },
+   "evidence_path": "lab/forge_runs/kitten_clicker/evidence/oracle_kitten_clicker.log",
+   "evidence_sha256": "",
+   "oracle_id": "code",
+   "run_id": "kitten_clicker-20260823a",
+   "status": "FAIL",
+   "ts": 1787472173.3726509
+  },
+  "standard": {
+   "detail": {
+    "budget": {
+     "chevauchement": [],
+     "empilement_violee": false,
+     "hors_budget": [],
+     "measured": true,
+     "passed": true,
+     "promis_non_depose": [],
+     "reuses_invalides": []
+    },
+    "collisions": {
+     "capacites_usine_utilisees": [],
+     "collisions": [],
+     "doubles_proprietaires": [],
+     "identifiants_ambigus": [],
+     "identifiants_inconnus": [
+      "collection.adopt:collection.adopt",
+      "collection.adopt:world.content",
+      "decision.point:collection.adopt",
+      "decision.point:decision.point",
+      "decision.point:economy.ronrons",
+      "decision.point:pricing.curve",
+      "decision.point:upgrades.click_power",
+      "economy.ronrons:economy.ronrons",
+      "goals.objective:collection.adopt",
+      "goals.objective:goals.objective",
+      "goals.objective:progression.unlock",
+      "goals.objective:world.content",
+      "input.acheter_amelioration:affordance:acheter_amelioration",
+      "input.acheter_amelioration:upgrades.click_power",
+      "input.acheter_chaton:affordance:acheter_chaton",
+      "input.acheter_chaton:collection.adopt",
+      "input.pelote:affordance:pelote",
+      "input.pelote:economy.ronrons",
+      "input.prestige:affordance:prestige",
+      "input.prestige:prestige.reset",
+      "presentation.render:collection.adopt",
+      "presentation.render:economy.ronrons",
+      "presentation.render:goals.objective",
+      "presentation.render:presentation.render",
+      "presentation.render:prestige.reset",
+      "presentation.render:progression.unlock",
+      "presentation.render:upgrades.click_power",
+      "presentation.render:world.content",
+      "prestige.reset:collection.adopt",
+      "prestige.reset:economy.ronrons",
+      "prestige.reset:prestige.reset",
+      "pricing.curve:pricing.curve",
+      "progression.unlock:collection.adopt",
+      "progression.unlock:progression.unlock",
+      "progression.unlock:world.content",
+      "upgrades.click_power:upgrades.click_power",
+      "upgrades.click_power:world.content",
+      "world.registries:world.content"
+     ],
+     "ordre_implicite": [],
+     "passed": false,
+     "trous": []
+    },
+    "contract_completeness": {
+     "passed": true,
+     "violations": []
+    },
+    "genre_coverage": {
+     "citations_non_resolues": [],
+     "citees": [],
+     "passed": false,
+     "raison": "genre_bible.genre_rules absent ou n'est pas une liste",
+     "refusees": [],
+     "regles_non_couvertes": [],
+     "verdict": "FAIL"
+    },
+    "gpu_window_directive": {
+     "fichiers_avec_directive": 1,
+     "fichiers_en_defaut": [],
+     "fichiers_examines": 3,
+     "fichiers_not_measured": [],
+     "illisibles": [],
+     "passed": true,
+     "raisons": [],
+     "sous_modules_ignores": [],
+     "verdict": "OK"
+    },
+    "index": {
+     "dossiers_hors_structure": [],
+     "dossiers_manquants": [],
+     "dossiers_orphelins": [],
+     "fichiers_manquants": [],
+     "orphelins": [],
+     "passed": true
+    },
+    "line_states": {
+     "core_omis": [
+      "core.boot",
+      "core.main_loop",
+      "core.input",
+      "core.game_state",
+      "core.end_condition",
+      "core.restart",
+      "core.exit",
+      "core.render",
+      "core.audio",
+      "core.error_handling"
+     ],
+     "deferred_incomplet": [],
+     "etats_invalides": [],
+     "expected_sans_reference": [],
+     "implemented_au_gel": [],
+     "lifecycle_invalide": [],
+     "not_applicable_sans_raison": [],
+     "not_applicable_sur_core": [],
+     "passed": false,
+     "required_apres_build": [],
+     "reused_concept_non_requalifie": [],
+     "source_manquante": [],
+     "system_parent_manquant": [],
+     "unknown_au_gel": []
+    },
+    "observable_coverage": {
+     "couvertes": [],
+     "lignes_sans_preuve": [],
+     "measured": true,
+     "observable_malformes": [],
+     "passed": true,
+     "verdict": "OK",
+     "violation": false,
+     "volets_absents": [],
+     "volets_en_echec": [],
+     "volets_non_mesures": []
+    },
+    "observable_volets_effectifs": {
+     "core_audio": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_audio.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "cues_distincts": [
+        "click",
+        "purchase",
+        "unlock",
+        "prestige"
+       ],
+       "declenchements": 35,
+       "fails": [],
+       "ok": true
+      },
+      "source": "godot",
+      "status": "OK"
+     },
+     "core_loop": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_loop.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "data": {
+        "collection_avant": 0,
+        "ronrons_avant": 0
+       },
+       "fails": [],
+       "ok": true
+      },
+      "source": "godot",
+      "status": "OK"
+     },
+     "core_render": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_render.gd",
+      "mode_execution": "gpu_window",
+      "passed": true,
+      "payload": {
+       "fails": [],
+       "ok": true,
+       "rarity_diff": 0.309801909451683
+      },
+      "source": "godot",
+      "status": "OK"
+     }
+    },
+    "observable_volets_resolution": {
+     "conflits_resolus_vers_web": [],
+     "regle": "un nom de volet présent des DEUX côtés (web ET godot) est résolu vers le fournisseur WEB — choix explicite, jamais une fusion silencieuse (correction Pierre ②, mission 2026-07-29)."
+    },
+    "placement": {
+     "adresse_incoherente": [],
+     "adresse_manquante": [],
+     "categorie_fichier_non_declaree": [],
+     "categorie_fichier_non_mappee": [],
+     "categorie_manquante": [],
+     "categorie_non_mappee": [],
+     "fichier_adresse_incoherente": [],
+     "identite_ambigue": [],
+     "passed": true,
+     "revendications_multiples": [],
+     "system_parent_inconnu": [],
+     "systeme_categorie_non_mappee": []
+    },
+    "product_oracle": {},
+    "product_oracle_godot": {
+     "core_audio": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_audio.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "cues_distincts": [
+        "click",
+        "purchase",
+        "unlock",
+        "prestige"
+       ],
+       "declenchements": 35,
+       "fails": [],
+       "ok": true
+      },
+      "status": "OK"
+     },
+     "core_loop": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_loop.gd",
+      "mode_execution": "headless",
+      "passed": true,
+      "payload": {
+       "data": {
+        "collection_avant": 0,
+        "ronrons_avant": 0
+       },
+       "fails": [],
+       "ok": true
+      },
+      "status": "OK"
+     },
+     "core_render": {
+      "checked": true,
+      "fails": [],
+      "fichier": "C:\\TACTICAL_CHESS_STUDIO\\games\\kitten_clicker\\07_TESTS\\oracle\\core_render.gd",
+      "mode_execution": "gpu_window",
+      "passed": true,
+      "payload": {
+       "fails": [],
+       "ok": true,
+       "rarity_diff": 0.309801909451683
+      },
+      "status": "OK"
+     }
+    }
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "standard",
+   "run_id": "kitten_clicker-20260823a",
+   "status": "FAIL",
+   "ts": 1787472173.776721
+  },
+  "wiremap": {
+   "detail": {
+    "amont_traversal": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "facts": {
+      "boucles_recompense": {
+       "addresses": [
+        "worldscan:games[0].loops.minute_1",
+        "worldscan:games[0].loops.minute_10",
+        "worldscan:games[0].loops.hour_5",
+        "worldscan:games[0].loops.endgame",
+        "worldscan:games[1].loops.minute_1",
+        "worldscan:games[1].loops.minute_10",
+        "worldscan:games[1].loops.hour_5",
+        "worldscan:games[1].loops.endgame",
+        "gm_worldscan:dimensions[2]",
+        "gm_worldscan:dimensions[4]",
+        "gm_worldscan:dimensions[5]"
+       ],
+       "exigences": [
+        "b_click",
+        "c_response",
+        "d_reward",
+        "d_first_spend",
+        "p_buy_kitten",
+        "p_upgrade_click",
+        "g_next_2",
+        "h_repeat",
+        "i_prestige",
+        "j_advantage"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_click_pelote_entree",
+        "cap_click_pelote_effet",
+        "cap_feedback_reponse_systeme",
+        "cap_accumulation_seuil_achat",
+        "cap_decision_premier_achat",
+        "cap_buy_kitten_entree",
+        "cap_buy_kitten_effet",
+        "cap_upgrade_click_entree",
+        "cap_upgrade_click_effet",
+        "cap_next_goal_2_effet",
+        "cap_prestige_entree",
+        "cap_prestige_effet"
+       ],
+       "lines": [
+        "economy.ronrons",
+        "collection.adopt",
+        "upgrades.click_power",
+        "decision.point",
+        "goals.objective",
+        "prestige.reset",
+        "presentation.render",
+        "input.pelote",
+        "input.acheter_chaton",
+        "input.acheter_amelioration",
+        "input.prestige"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_defaite": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "conditions_victoire": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "contraintes_narratives": {
+       "addresses": [
+        "story_bible:sections[0]",
+        "story_bible:sections[4]",
+        "story_bible:sections[5]",
+        "story_bible:sections[7]"
+       ],
+       "exigences": [
+        "f_unlock",
+        "content_kittens",
+        "content_places",
+        "visual_rarity"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_unlock_entree",
+        "cap_unlock_effet",
+        "cap_registre_kittens",
+        "cap_registre_places",
+        "cap_rarete_visuelle_distincte"
+       ],
+       "lines": [
+        "world.registries",
+        "progression.unlock",
+        "presentation.render"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "objectifs_joueur": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].player_goal",
+        "worldscan:games[1].objectives[0].player_goal"
+       ],
+       "exigences": [
+        "a_goal",
+        "g_next_1"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_objectif_demarrage",
+        "cap_next_goal_1_effet"
+       ],
+       "lines": [
+        "goals.objective"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "progression": {
+       "addresses": [
+        "gm_worldscan:dimensions[1]"
+       ],
+       "exigences": [
+        "longueur_curve"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_courbe_paliers_variance"
+       ],
+       "lines": [
+        "pricing.curve"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      }
+     },
+     "references": {
+      "adressables": 19,
+      "expected": 19,
+      "non_resolues": [],
+      "resolues": 19
+     },
+     "stages": [
+      "NOT_PRODUCED",
+      "PRODUCED",
+      "PRISME",
+      "GREY_BLOCKS",
+      "WIREMAP",
+      "BUILD"
+     ],
+     "verdict": "ADVISORY"
+    },
+    "features_manquantes": [],
+    "fonctions_renommées": [],
+    "obsoletes": [],
+    "passed": true,
+    "preuves_absentes": []
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "wiremap",
+   "run_id": "kitten_clicker-20260823a",
+   "status": "OK",
+   "ts": 1787472173.6250958
+  }
+ },
+ "project": "kitten_clicker",
+ "provenance_ok": true,
+ "redteam_advisory": [
+  "[HIGH] correctness / cohérence mécanique — Transaction acheter_chaton non atomique : input_adapter.gd:74-77 dépense (Economy.spend) AVANT de valider l'adoption (Collection.adopt court-circuité par 'and'). Au 7e achat, collection pleine à 6 (collection.gd:16, kittens.json 6 entrées), le coût 35 est débité mais adopt échoue : ronrons détruits, aucun chaton, aucun signal. (repro: Adopter les 6 chatons ; poser ronrons>=35 ; act('acheter_chaton') ; asserter total-=35 ET count==6 ET aucun kitten_adopted. Ancre: input_adapter.gd:74-77, collection.gd:14-22, kittens.json.)",
+  "[HIGH] LONGUEUR — Courbes de coût linéaires (kitten_cost=5+5n pricing.gd:15-16, upgrade_cost=8+4L pricing.gd:19-20) + contenu borné (6 chatons, coût cumulé 105) : aucun mur exponentiel, progression épuisable en <1 min. L'oracle de variance de paliers (3 distincts) est vert mais ne mesure pas la 'plusieurs heures' promise. (repro: Seconde différence de paliers() étendue n=0..10 = 0 (arithmétique) ; coût cumulé 6 adoptions=105, ~11 clics à BASE_CLICK=10. Ancre: pricing.gd:15-25, collection.gd:16, kittens.json.)",
+  "[HIGH] LONGUEUR / équilibre — Amélioration : coût linéaire (8+4L, pricing.gd:19-20) mais récompense exponentielle (click_multiplier=2^level, upgrades.gd:18-19). Valeur de clic explose (input_adapter.gd:62-63), clics pour financer la prochaine amélioration décroissent vers <1 en ~2 niveaux : runaway, économie triviale. (repro: Pour L=0..10, ceil(upgrade_cost(L+1)/(base_click*click_multiplier(L))) non croissant et ->1. Ancre: upgrades.gd:18-19, pricing.gd:19-20, input_adapter.gd:62-63.)",
+  "[HIGH] COHÉRENCE monde↔mécanique — Registres objects et quests chargés/validés mais jamais joués : game_controller.gd:92-93 assigne _objects/_quests, jamais relus (fichier lu 1-310) ; aucun système ne les consomme. world_content.valid() (world_content.gd:60-68) ne teste que la cardinalité (existence, pas usage). objects.json et quests.json = contenu mort. (repro: Statique : aucune référence à _objects/_quests au-delà de game_controller.gd:92-93 (règle du consommateur d'artefact) ; ou dynamique : jouer les 4 conditions de quête, asserter aucun état/signal de complétion. Ancre: game_controller.gd:92-93, world_content.gd:35-39, objects.json, quests.json.)",
+  "[MEDIUM] COHÉRENCE monde↔mécanique — Affordances de branche mortes : game_controller.gd:231,257 affichent placer_au_jardin et caresse_longue (cliquables, libellés promettant une action) mais input_adapter.act (input_adapter.gd:68-86) n'a pas de case correspondant -> _: pass (l.85-86). Clic sans effet : ni état, ni son, ni visuel. (repro: Adopter 1 chaton -> placer_au_jardin apparaît ; snapshot _state + journal audio ; clic sur son rect via _input ; asserter _state ET journal inchangés. Ancre: game_controller.gd:231,257, input_adapter.gd:85-86.)",
+  "[MEDIUM] ASSETS chargés et rendus — 6 SVG déclarés dans la WireMap jamais chargés/rendus : obj_food_bowl.svg, obj_scratching_post.svg, obj_cushion_bed.svg, icon_ronrons.svg, ui_stats_hud.svg, ui_objectif_banner.svg. Seuls loaders du build : game_controller.gd (refuge, pelote, ui_action_buttons, lieu_2) et presentation.gd (kitten_%s, fx_click_feedback) ; main.tscn (9 lignes) ne charge que le contrôleur. Présents != rendus ; core_render reste vert sans les vérifier. (repro: Pour chacun des 6 chemins, asserter l'absence de load()/preload()/ext_resource dans l'ensemble .gd + .tscn (règle du consommateur d'artefact). Ancre: game_controller.gd:99,142,178-182,238, presentation.gd:39,55, main.tscn:1-9.)",
+  "[MEDIUM] LONGUEUR / équilibre méta-boucle — Prestige spammable : PRESTIGE_THRESHOLD=1 (prestige.gd:9) permet un prestige dès 1 ronron ; prestige() conserve les chatons adoptés (prestige.gd:27-33) donc passive_rate inchangé, et production_multiplier=1+count (prestige.gd:17-18) appliqué à la production (game_controller.gd:290). Empilement du multiplicateur permanent à coût quasi nul -> boucle dégénérée. (repro: État avec 1 chaton et ronrons>=1 ; appeler prestige() N fois (réinjecter 1 ronron entre chaque) ; asserter prestige_count==N, adopted inchangé, production/tick strictement croissante. Ancre: prestige.gd:9,17-18,27-33, game_controller.gd:290.)",
+  "[LOW] AUDIO / déterminisme — Journal audio en static var (audio.gd:33) survivant à la réinstanciation de scène dans un même process ; seul reinitialiser() (audio.gd:38) le vide, jamais appelé par game_controller._ready (:53-85). Contamination inter-boots possible pour un oracle audio non réinitialisant. (repro: Même process : jouer un cue, réinstancier main.tscn, relire Audio.journal() sans reinitialiser() -> longueur non remise à 0. Ancre: audio.gd:33,38, game_controller.gd:53-85.)",
+  "[LOW] COHÉRENCE (vérité de l'UI) — Libellé d'effet '+N ronron/s' (decision.gd:48, ronrons_per_sec brut) != taux réellement produit qui passe par PASSIVE_UNIT=0.5/trame et le multiplicateur de prestige (game_controller.gd:296, economy.gd:57-63). Le '/s' affiché ne correspond ni à l'unité par trame ni au taux HUD. (repro: Comparer l'entier de effect_text(...,'acheter_chaton') au taux post-adoption passive_rate*PASSIVE_UNIT*mult -> valeurs différentes. Ancre: decision.gd:46-48, game_controller.gd:296, economy.gd:57-63.)"
+ ],
+ "redteam_ran": false,
+ "redteam_reviewer": "claude-opus-4-8",
+ "run_id": "kitten_clicker-20260823a",
+ "scope": "FULL",
+ "software_verdict": "FAIL",
+ "ts": 1787472656.881096
+}

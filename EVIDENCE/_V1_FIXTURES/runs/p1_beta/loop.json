@@ -1,0 +1,134 @@
+{
+ "schema_version": 1,
+ "game_id": "p1_beta",
+ "steps": [
+  {
+   "role": "PLAYER_GOAL",
+   "ref": "R1",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "R2",
+   "affordance": "hearth",
+   "repeat": 1,
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "R3",
+   "repeat": 1,
+   "observe": {
+    "hud": "foyer",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "REWARD",
+   "ref": "R4",
+   "repeat": 1,
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "DECISION",
+   "ref": "R5",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "changes"
+   },
+   "options": [
+    "R2",
+    "R6"
+   ],
+   "metric": "lumiere",
+   "horizon_frames": 300,
+   "policies": [
+    {
+     "name": "idle",
+     "click": null,
+     "every_frames": 0
+    },
+    {
+     "name": "actif",
+     "click": "hearth",
+     "every_frames": 3
+    }
+   ]
+  },
+  {
+   "role": "UNLOCK",
+   "ref": "R6",
+   "affordance": "buy_button",
+   "repeat": 1,
+   "observe": {
+    "hud": "emetteurs",
+    "predicate": "changes",
+    "appears": "emetteurs"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "R7a",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "R7b",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "REPEAT",
+   "ref": "R8",
+   "repeat": 1,
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "increases"
+   },
+   "replay": [
+    "R2",
+    "R3",
+    "R4",
+    "R6"
+   ]
+  },
+  {
+   "role": "META_LOOP",
+   "ref": "R9",
+   "affordance": "ascension_altar",
+   "repeat": 1,
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "resets"
+   }
+  },
+  {
+   "role": "ADVANTAGE",
+   "ref": "R10",
+   "repeat": 1,
+   "observe": {
+    "hud": "lumiere",
+    "predicate": "increases_more_than:R2"
+   },
+   "replay_ref": "R2"
+  }
+ ]
+}

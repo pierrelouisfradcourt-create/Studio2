@@ -1,0 +1,1368 @@
+{
+ "genre": "incremental / clicker",
+ "games_observed": [
+  "Cookie Clicker",
+  "Clicker Heroes",
+  "Idle Miner Tycoon"
+ ],
+ "dimensions": [
+  {
+   "id": "combat",
+   "status": "NOT_MEASURED",
+   "reason": "Le genre incremental/clicker observe n'a pas de dimension de combat adversariale mesurable : ni Cookie Clicker ni Idle Miner Tycoon n'ont d'affrontement, et le 'damage/DPS' de Clicker Heroes est un debit de production sans etat de defaite (has_defeat_state=false partout), deja capte sous progression/economy. p1_alpha, par structure imposee, n'a aucun combat. Aucune grandeur de combat n'est donc observable sans en inventer une."
+  },
+  {
+   "id": "progression",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "facteur_croissance_cout_par_achat",
+     "value": "~1.15 (Cookie Clicker, batiments) ; 1.12 retenu par p1_alpha",
+     "unit": "facteur multiplicatif par achat",
+     "source": "https://cookieclicker.fandom.com/wiki/Building",
+     "observed": true
+    },
+    {
+     "name": "seuils_de_deblocage_ameliorations_par_compte",
+     "value": "deblocages tous les 1/5/25/50 achats d'un batiment",
+     "unit": "nombre d'achats du batiment (par compte, pas par temps)",
+     "source": "worldscan:games[0].loops.minute_10",
+     "observed": true
+    },
+    {
+     "name": "cadence_premier_prestige",
+     "value": "~1e12 cookies cumules -> 1 Heavenly Chip (+1% CpS permanent)",
+     "unit": "ressource cumulee par palier de prestige",
+     "source": "worldscan:games[0].loops.hour_5",
+     "observed": true
+    }
+   ]
+  },
+  {
+   "id": "economy",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "cout_de_base_des_tiers",
+     "value": "Cursor 15 / Grandma 100 / Farm 1100 (Cookie Clicker) — p1_alpha reprend [15,100,1100,12000]",
+     "unit": "unites de ressource (cookies)",
+     "source": "https://cookieclicker.fandom.com/wiki/Building",
+     "observed": true
+    },
+    {
+     "name": "production_de_base_par_unite",
+     "value": "Cursor 0.1 CpS / Grandma 1 CpS (Cookie Clicker) — p1_alpha reprend [0.1,1,8,47] R/s",
+     "unit": "unites/s par unite possedee",
+     "source": "https://cookieclicker.fandom.com/wiki/Building",
+     "observed": true
+    },
+    {
+     "name": "regle_prix_geometrique",
+     "value": "prix croit geometriquement a chaque achat (base x facteur^n)",
+     "unit": "loi de cout (geometrique)",
+     "source": "https://dinogame.gg/blog/how-cookie-clicker-progression-works/",
+     "observed": true
+    }
+   ]
+  },
+  {
+   "id": "rng",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "intervalle_evenement_bonus_aleatoire",
+     "value": "Golden Cookies a intervalles aleatoires (~30 s observes dans le scan)",
+     "unit": "secondes entre apparitions aleatoires",
+     "source": "worldscan:games[0].loops.minute_10",
+     "observed": true
+    },
+    {
+     "name": "effet_evenement_bonus_aleatoire",
+     "value": "x2 production ou +7% selon le tirage",
+     "unit": "multiplicateur/bonus temporaire",
+     "source": "worldscan:games[0].loops.minute_10",
+     "observed": true
+    }
+   ]
+  },
+  {
+   "id": "rarity",
+   "status": "NOT_MEASURED",
+   "reason": "Le genre idle/incremental observe n'a pas de systeme de rarete de butin a distribution tiree : les rares cites (Sugar Lumps, Heavenly Chips de Cookie Clicker) sont des RESSOURCES rares, pas une distribution de rarete d'objets, et sont deja captees sous progression/economy. Clicker Heroes et Idle Miner Tycoon n'exposent aucune table de rarete. p1_alpha, par structure imposee, n'a ni objets ni rarete. Aucune grandeur de rarete n'est observable sans invention."
+  },
+  {
+   "id": "bonus",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "multiplicateur_amelioration_de_clic",
+     "value": "ameliorations qui multiplient le gain de clic ; p1_alpha reprend x2 puis x4",
+     "unit": "multiplicateur du gain par clic",
+     "source": "https://dinogame.gg/blog/how-cookie-clicker-progression-works/",
+     "observed": true
+    },
+    {
+     "name": "multiplicateur_permanent_de_prestige",
+     "value": "Hero Soul +10% DPS ; Heavenly Chip +1% CpS (permanents)",
+     "unit": "multiplicateur permanent par unite de prestige",
+     "source": "worldscan:games[1].loops.minute_10",
+     "observed": true
+    },
+    {
+     "name": "multiplicateur_de_specialisation",
+     "value": "Gild x1.5 DPS concentre sur un heros (Clicker Heroes)",
+     "unit": "multiplicateur par palier de specialisation",
+     "source": "worldscan:games[1].loops.minute_10",
+     "observed": true
+    }
+   ]
+  },
+  {
+   "id": "metagame",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "cadence_des_cycles_de_prestige",
+     "value": "Ascension 2-5 h / Transcendence 20-50 h (Clicker Heroes) ; Ascension 5-10 h (Cookie Clicker)",
+     "unit": "heures par cycle de reset",
+     "source": "worldscan:games[1].loops.endgame",
+     "observed": true
+    },
+    {
+     "name": "axes_de_build_meta",
+     "value": "Idle vs Active (Clicker Heroes) — deux familles de build orientant les upgrades",
+     "unit": "nombre d'axes de build distincts",
+     "source": "worldscan:games[1].loops.endgame",
+     "observed": true
+    },
+    {
+     "name": "meta_competitif_calendaire",
+     "value": "8 Leagues, classement quotidien/hebdomadaire (Idle Miner Tycoon)",
+     "unit": "nombre de ligues / cadence de recompense",
+     "source": "worldscan:games[2].loops.endgame",
+     "observed": true
+    }
+   ]
+  },
+  {
+   "id": "construction",
+   "status": "MEASURED",
+   "variables": [
+    {
+     "name": "profondeur_de_chaine_de_production",
+     "value": "chaine a 3 etages Shafts -> Elevator -> Warehouse (Idle Miner Tycoon)",
+     "unit": "nombre d'etages dependants",
+     "source": "worldscan:games[2].loops.minute_1",
+     "observed": true
+    },
+    {
+     "name": "nombre_de_sites_construits_en_endgame",
+     "value": "5-10 mines simultanees en endgame (Idle Miner Tycoon)",
+     "unit": "sites de production simultanes",
+     "source": "worldscan:games[2].loops.endgame",
+     "observed": true
+    },
+    {
+     "name": "taille_du_pool_de_managers",
+     "value": "31 Managers (boosts uniques, cooldowns) — Idle Miner Tycoon",
+     "unit": "entites de boost disponibles",
+     "source": "worldscan:games[2].loops.hour_5",
+     "observed": true
+    }
+   ]
+  }
+ ],
+ "sources_consumed": {
+  "worldscan": [
+   "worldscan:games[0].retention_answer",
+   "worldscan:games[0].loops.minute_10",
+   "worldscan:games[0].objectives[0].has_win_state",
+   "worldscan:games[1].loops.minute_10",
+   "worldscan:games[2].loops.minute_1",
+   "worldscan:advisory"
+  ],
+  "story_bible": [
+   "story_bible:context",
+   "story_bible:coherence_rules"
+  ],
+  "art_bible": [
+   "art_bible:visual_language",
+   "art_bible:affordance_rules",
+   "art_bible:character_states",
+   "art_bible:heritage_worldscan",
+   "art_bible:saving_arbitrage_perception",
+   "art_bible:strategy_divergence_perception"
+  ]
+ },
+ "game_master": {
+  "world_interpretation": [
+   {
+    "fact": "Le genre retient par le feedback constant des nombres qui montent et par l'asymetrie d'acces aux achats (toujours un achat proche mais jamais immediat) : c'est la sensation-coeur a servir.",
+    "source": "worldscan:games[0].retention_answer"
+   },
+   {
+    "fact": "p1_alpha n'a aucun recit, personnage ni faction ancres : la couche narrative est volontairement vide, le socle a fournir en aval — le theme concret revient donc au Game Master (delegue a la chaine).",
+    "source": "story_bible:context"
+   },
+   {
+    "fact": "L'identite visuelle decidee reserve l'accent de couleur aux nombres qui montent, au gain de clic et aux achats possibles ; le SUJET concret des entites (ce que R represente, ce que sont G1-G4) restait ouvert et adresse au GM.",
+    "source": "art_bible:visual_language"
+   },
+   {
+    "fact": "Le genre n'a par convention ni victoire ni defaite ; la structure imposee AJOUTE une unique fin positive (S5 = 1 000 000 R cumule), a traiter comme un aboutissement heureux, jamais un game over.",
+    "source": "worldscan:games[0].objectives[0].has_win_state"
+   },
+   {
+    "fact": "La coherence interdit toute cloture par defaite ou menace : aucun comparable n'a d'etat d'echec, et un reset/prestige ne doit jamais se lire comme une punition.",
+    "source": "story_bible:coherence_rules"
+   },
+   {
+    "fact": "L'arbitrage acheter-maintenant vs epargner (boucle de fond imposee) est rendu perceptible sans lecture chiffree : chaque bouton non finançable porte une jauge de progres-vers-abordable qui se remplit (l'epargne devient un remplissage qui monte) et un apercu compare le gain du prochain palier a son cout — reponse de l'Artiste au Round 2 aux questions du GM, integree ici pour completer economy_loop.",
+    "source": "art_bible:saving_arbitrage_perception"
+   },
+   {
+    "fact": "La divergence de strategie d'allocation (clic-lourd vs generateurs-d'abord), seule competence du jeu et grandeur mesuree a S10, est rendue perceptible : un indicateur de rythme R/s distinct du solde et deux signatures d'effet BURST (clic) vs PULSE (production automatique) montrent 'd'ou vient le R' — reponse de l'Artiste au Round 2, integree ici pour completer skill_loop.",
+    "source": "art_bible:strategy_divergence_perception"
+   }
+  ],
+  "loops": {
+   "core_loop": {
+    "steps": [
+     {
+      "id": "core_click",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "Le joueur clique sur la cible centrale pour produire du R.",
+      "metric_ref": "core_reactions_per_click",
+      "proof_ref": "proof_core",
+      "affordance": "cible_cliquable"
+     },
+     {
+      "id": "core_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "La cible reagit visiblement (deformation + eclat) a chaque clic.",
+      "metric_ref": "core_reactions_per_click",
+      "proof_ref": "proof_core"
+     },
+     {
+      "id": "core_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "Un '+gain_clic' flotte pres de la cible et le solde R augmente a l'ecran (D2).",
+      "metric_ref": "core_reactions_per_click",
+      "proof_ref": "proof_core",
+      "resource": "R"
+     },
+     {
+      "id": "core_progression",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "Les gains de clic alimentent le total cumule vers le premier seuil.",
+      "metric_ref": "core_reactions_per_click",
+      "proof_ref": "proof_core",
+      "resource": "R"
+     },
+     {
+      "id": "core_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Continuer a cliquer ou basculer vers l'achat d'un generateur des que 15 R sont reunis.",
+      "metric_ref": "core_reactions_per_click",
+      "proof_ref": "proof_core"
+     }
+    ],
+    "produces": "gain_clic R et l'attention initiale du joueur",
+    "consumes": [
+     "meta_loop"
+    ],
+    "unlocks": [
+     "gameplay_loop"
+    ],
+    "transformation_perceptible": {
+     "text": "Le solde R monte visiblement a chaque clic et un '+N' apparait pres de la cible.",
+     "proof_ref": "proof_core"
+    },
+    "metric_propre": "core_reactions_per_click"
+   },
+   "gameplay_loop": {
+    "steps": [
+     {
+      "id": "gp_buy",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "Le joueur depense R pour acheter un generateur automatique.",
+      "metric_ref": "gameplay_auto_prod_rate",
+      "proof_ref": "proof_gameplay",
+      "affordance": "acheter_generateur",
+      "resource": "R"
+     },
+     {
+      "id": "gp_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "Le generateur achete apparait possede et R diminue a l'ecran (D3).",
+      "metric_ref": "gameplay_auto_prod_rate",
+      "proof_ref": "proof_gameplay"
+     },
+     {
+      "id": "gp_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "R monte desormais tout seul par tick (production automatique visible).",
+      "metric_ref": "gameplay_auto_prod_rate",
+      "proof_ref": "proof_gameplay",
+      "resource": "R"
+     },
+     {
+      "id": "gp_progression",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "La production automatique accelere la croissance du total cumule.",
+      "metric_ref": "gameplay_auto_prod_rate",
+      "proof_ref": "proof_gameplay",
+      "resource": "R"
+     },
+     {
+      "id": "gp_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Acheter une unite de plus du tier courant ou epargner pour le tier superieur.",
+      "metric_ref": "gameplay_auto_prod_rate",
+      "proof_ref": "proof_gameplay"
+     }
+    ],
+    "produces": "un flux de production automatique de R par tick",
+    "consumes": [
+     "core_loop"
+    ],
+    "unlocks": [
+     "progression_loop",
+     "economy_loop"
+    ],
+    "transformation_perceptible": {
+     "text": "Apres un achat, R augmente sans cliquer et le rythme de montee est visiblement plus rapide.",
+     "proof_ref": "proof_gameplay"
+    },
+    "metric_propre": "gameplay_auto_prod_rate"
+   },
+   "progression_loop": {
+    "steps": [
+     {
+      "id": "prog_accumulate",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "Le joueur accumule du R (clic + production) vers le prochain seuil cumule.",
+      "metric_ref": "progression_thresholds_crossed",
+      "proof_ref": "proof_progression",
+      "resource": "R"
+     },
+     {
+      "id": "prog_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "Le total cumule (distinct du solde) est affiche et progresse vers le seuil.",
+      "metric_ref": "progression_thresholds_crossed",
+      "proof_ref": "proof_progression"
+     },
+     {
+      "id": "prog_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "Au franchissement d'un seuil, un nouvel element est revele (vr_threshold_unlock_fx, D5).",
+      "metric_ref": "progression_thresholds_crossed",
+      "proof_ref": "proof_progression"
+     },
+     {
+      "id": "prog_step",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "Chaque seuil franchi ouvre le suivant : S1->G2, S2->G3, S3->G4, S4->ameliorations x2 prod, S5->fin.",
+      "metric_ref": "progression_thresholds_crossed",
+      "proof_ref": "proof_progression"
+     },
+     {
+      "id": "prog_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Viser le prochain seuil rapidement ou consolider la production avant de franchir.",
+      "metric_ref": "progression_thresholds_crossed",
+      "proof_ref": "proof_progression"
+     }
+    ],
+    "produces": "des franchissements de seuils qui revelent de nouveaux elements",
+    "consumes": [
+     "gameplay_loop",
+     "core_loop"
+    ],
+    "unlocks": [
+     "content_loop",
+     "quest_loop"
+    ],
+    "transformation_perceptible": {
+     "text": "Au passage d'un seuil cumule, un nouveau generateur ou les ameliorations apparaissent a l'ecran.",
+     "proof_ref": "proof_progression"
+    },
+    "metric_propre": "progression_thresholds_crossed"
+   },
+   "content_loop": {
+    "steps": [
+     {
+      "id": "content_use",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "Le joueur achete le nouveau tier/amelioration revele.",
+      "metric_ref": "content_unlocked_count",
+      "proof_ref": "proof_content",
+      "affordance": "acheter_element_revele",
+      "resource": "R"
+     },
+     {
+      "id": "content_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "Le nouvel element passe de cache/verrouille a achetable de facon lisible.",
+      "metric_ref": "content_unlocked_count",
+      "proof_ref": "proof_content"
+     },
+     {
+      "id": "content_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "Le nouvel element ajoute une source de production ou un multiplicateur.",
+      "metric_ref": "content_unlocked_count",
+      "proof_ref": "proof_content"
+     },
+     {
+      "id": "content_progression",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "L'inventaire disponible s'etoffe (4 tiers + 6 ameliorations au total).",
+      "metric_ref": "content_unlocked_count",
+      "proof_ref": "proof_content"
+     },
+     {
+      "id": "content_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Integrer le nouvel element maintenant ou finir d'exploiter les precedents.",
+      "metric_ref": "content_unlocked_count",
+      "proof_ref": "proof_content"
+     }
+    ],
+    "produces": "de nouveaux generateurs et ameliorations disponibles a l'achat",
+    "consumes": [
+     "progression_loop"
+    ],
+    "unlocks": [
+     "economy_loop",
+     "world_loop"
+    ],
+    "transformation_perceptible": {
+     "text": "Un tier ou un lot d'ameliorations jusqu'ici absent devient visible et cliquable.",
+     "proof_ref": "proof_content"
+    },
+    "metric_propre": "content_unlocked_count"
+   },
+   "economy_loop": {
+    "steps": [
+     {
+      "id": "eco_spend",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "Le joueur depense R selon le cout courant (cout_base x 1.12^n).",
+      "metric_ref": "economy_spend_ratio",
+      "proof_ref": "proof_economy",
+      "resource": "R"
+     },
+     {
+      "id": "eco_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "Le cout affiche monte apres chaque achat ; un achat impossible est grise et R ne bouge pas (D4).",
+      "metric_ref": "economy_spend_ratio",
+      "proof_ref": "proof_economy"
+     },
+     {
+      "id": "eco_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "La depense se convertit en production ou multiplicateur supplementaire.",
+      "metric_ref": "economy_spend_ratio",
+      "proof_ref": "proof_economy",
+      "resource": "R"
+     },
+     {
+      "id": "eco_progression",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "La croissance geometrique 1.12 rend chaque unite suivante plus chere, deplacant l'optimum.",
+      "metric_ref": "economy_spend_ratio",
+      "proof_ref": "proof_economy"
+     },
+     {
+      "id": "eco_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Acheter maintenant (gain immediat) ou epargner pour le palier superieur (meilleur rendement) — la boucle de fond imposee.",
+      "metric_ref": "economy_spend_ratio",
+      "proof_ref": "proof_economy"
+     }
+    ],
+    "produces": "une allocation de R entre achat immediat et epargne",
+    "consumes": [
+     "gameplay_loop",
+     "content_loop"
+    ],
+    "unlocks": [
+     "skill_loop"
+    ],
+    "transformation_perceptible": {
+     "text": "Le cout du prochain achat change a l'ecran apres chaque achat ; un bouton non finançable n'est plus un etat mort mais une jauge de progres-vers-abordable qui se remplit (l'epargne devient un remplissage qui monte), et un apercu du gain du prochain palier place a cote du cout rend l'arbitrage acheter-maintenant vs epargner visible sans arithmetique — representation confirmee par l'Artiste au Round 2 (art_bible:saving_arbitrage_perception).",
+     "proof_ref": "proof_economy"
+    },
+    "metric_propre": "economy_spend_ratio"
+   },
+   "skill_loop": {
+    "steps": [
+     {
+      "id": "skill_allocate",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "Le joueur choisit une strategie d'allocation (clic-lourd vs generateurs-d'abord).",
+      "metric_ref": "skill_time_to_s5_ticks",
+      "proof_ref": "proof_skill"
+     },
+     {
+      "id": "skill_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "Le rythme de montee de R reflete la strategie choisie.",
+      "metric_ref": "skill_time_to_s5_ticks",
+      "proof_ref": "proof_skill"
+     },
+     {
+      "id": "skill_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "Une meilleure allocation atteint les seuils plus tot (temps-jusqu'a-S5 plus court).",
+      "metric_ref": "skill_time_to_s5_ticks",
+      "proof_ref": "proof_skill"
+     },
+     {
+      "id": "skill_progression",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "L'ecart de temps-jusqu'a-S5 entre strategies materialise l'effet de la competence (S10).",
+      "metric_ref": "skill_time_to_s5_ticks",
+      "proof_ref": "proof_skill"
+     },
+     {
+      "id": "skill_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Reviser la strategie d'allocation a chaque nouveau tier debloque.",
+      "metric_ref": "skill_time_to_s5_ticks",
+      "proof_ref": "proof_skill"
+     }
+    ],
+    "produces": "un temps-jusqu'a-S5 dependant de la strategie",
+    "consumes": [
+     "economy_loop"
+    ],
+    "unlocks": [
+     "meta_loop"
+    ],
+    "transformation_perceptible": {
+     "text": "Deux strategies distinctes produisent des rythmes visiblement differents : l'indicateur de rythme R/s (distinct du solde et du cumul) monte durablement en 'generateurs-d'abord' et oscille en 'clic-lourd', et la source du R se lit a l'oeil — BURST de clic sur la Source vs nappe de PULSE des emetteurs — representation confirmee par l'Artiste au Round 2 (art_bible:strategy_divergence_perception).",
+     "proof_ref": "proof_skill"
+    },
+    "metric_propre": "skill_time_to_s5_ticks"
+   },
+   "world_loop": {
+    "steps": [
+     {
+      "id": "world_populate",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "En debloquant des tiers, le joueur peuple progressivement la page unique.",
+      "metric_ref": "world_board_fill",
+      "proof_ref": "proof_world",
+      "affordance": "cible_cliquable"
+     },
+     {
+      "id": "world_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "Le plateau (page unique) montre plus d'elements actifs a mesure que les tiers apparaissent.",
+      "metric_ref": "world_board_fill",
+      "proof_ref": "proof_world"
+     },
+     {
+      "id": "world_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "L'ecran plus riche signale visuellement l'avancement (sans etat spatial ni exploration).",
+      "metric_ref": "world_board_fill",
+      "proof_ref": "proof_world"
+     },
+     {
+      "id": "world_progression",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "Le remplissage du plateau croit de G1 seul jusqu'a G1..G4 + ameliorations.",
+      "metric_ref": "world_board_fill",
+      "proof_ref": "proof_world"
+     },
+     {
+      "id": "world_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Suivre l'apparition d'un nouvel element ou rester concentre sur la production courante.",
+      "metric_ref": "world_board_fill",
+      "proof_ref": "proof_world"
+     }
+    ],
+    "produces": "un plateau visuellement plus peuple a chaque deblocage",
+    "consumes": [
+     "content_loop"
+    ],
+    "unlocks": [
+     "meta_loop"
+    ],
+    "transformation_perceptible": {
+     "text": "La page passe d'un seul dispositif a un tableau de bord peuple de plusieurs generateurs et badges.",
+     "proof_ref": "proof_world"
+    },
+    "metric_propre": "world_board_fill"
+   },
+   "quest_loop": {
+    "steps": [
+     {
+      "id": "quest_pursue",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "Le joueur poursuit le seuil courant affiche comme objectif.",
+      "metric_ref": "quest_goal_progress",
+      "proof_ref": "proof_quest"
+     },
+     {
+      "id": "quest_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "Une jauge/objectif indique la distance au prochain seuil.",
+      "metric_ref": "quest_goal_progress",
+      "proof_ref": "proof_quest"
+     },
+     {
+      "id": "quest_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "Atteindre le seuil valide l'objectif et en affiche le suivant (next_goal).",
+      "metric_ref": "quest_goal_progress",
+      "proof_ref": "proof_quest"
+     },
+     {
+      "id": "quest_progression",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "La suite d'objectifs S1->S5 structure la partie comme une chaine de buts.",
+      "metric_ref": "quest_goal_progress",
+      "proof_ref": "proof_quest"
+     },
+     {
+      "id": "quest_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Optimiser pour le prochain but immediat ou pour l'objectif final (S5).",
+      "metric_ref": "quest_goal_progress",
+      "proof_ref": "proof_quest"
+     }
+    ],
+    "produces": "un objectif courant explicite et son successeur",
+    "consumes": [
+     "progression_loop"
+    ],
+    "unlocks": [
+     "meta_loop"
+    ],
+    "transformation_perceptible": {
+     "text": "L'objectif affiche se met a jour vers le seuil suivant des qu'un seuil est atteint.",
+     "proof_ref": "proof_quest"
+    },
+    "metric_propre": "quest_goal_progress"
+   },
+   "meta_loop": {
+    "steps": [
+     {
+      "id": "meta_aim",
+      "kind": "action",
+      "actor": "PLAYER",
+      "why": "Le joueur oriente toute son activite vers l'unique objectif terminal (1 000 000 R cumule).",
+      "metric_ref": "meta_victory_progress",
+      "proof_ref": "proof_meta"
+     },
+     {
+      "id": "meta_feedback",
+      "kind": "feedback",
+      "actor": "SYSTEM",
+      "why": "La progression vers la victoire (part de 1 000 000) est lisible en permanence.",
+      "metric_ref": "meta_victory_progress",
+      "proof_ref": "proof_meta"
+     },
+     {
+      "id": "meta_reward",
+      "kind": "reward",
+      "actor": "SYSTEM",
+      "why": "A S5, l'ecran de victoire positif s'affiche et result devient 'VICTORY' (D7, S11).",
+      "metric_ref": "meta_victory_progress",
+      "proof_ref": "proof_meta"
+     },
+     {
+      "id": "meta_progression",
+      "kind": "progression",
+      "actor": "SYSTEM",
+      "why": "L'objectif terminal donne un sens a toutes les autres boucles (aucun prestige — hors V1).",
+      "metric_ref": "meta_victory_progress",
+      "proof_ref": "proof_meta"
+     },
+     {
+      "id": "meta_decision",
+      "kind": "decision",
+      "actor": "PLAYER",
+      "why": "Choisir le chemin (clic/production/ordre d'achat) qui atteint la victoire le plus efficacement.",
+      "metric_ref": "meta_victory_progress",
+      "proof_ref": "proof_meta"
+     }
+    ],
+    "produces": "l'orientation de la partie vers la victoire observable",
+    "consumes": [
+     "skill_loop",
+     "progression_loop",
+     "quest_loop",
+     "world_loop"
+    ],
+    "unlocks": [],
+    "transformation_perceptible": {
+     "text": "Quand le cumul atteint 1 000 000, le jeu bascule visiblement sur un ecran de victoire et s'arrete.",
+     "proof_ref": "proof_meta"
+    },
+    "metric_propre": "meta_victory_progress"
+   }
+  },
+  "economy_model": {
+   "resources": [
+    {
+     "id": "R",
+     "unit": "R (unite entiere, visible en permanence)",
+     "sources": [
+      "clic_manuel",
+      "production_automatique_generateurs"
+     ],
+     "sinks": [
+      "achat_generateur",
+      "achat_amelioration"
+     ],
+     "initial_stock": 0
+    }
+   ],
+   "formulas": [
+    {
+     "id": "f_gen_cost",
+     "text": "cout_generateur[i] = cout_base[i] x 1.12^(n_possedes_du_tier) — croissance geometrique",
+     "params": {
+      "cout_base": [
+       15,
+       100,
+       1100,
+       12000
+      ],
+      "growth": 1.12,
+      "source": "structure_imposee.yaml:economy"
+     }
+    },
+    {
+     "id": "f_prod",
+     "text": "production_auto par tick = somme_i (n_possedes[i] x prod[i]) ; prod exprimee en R/s",
+     "params": {
+      "prod": [
+       0.1,
+       1,
+       8,
+       47
+      ],
+      "source": "structure_imposee.yaml:economy.prod",
+      "fog_a": "duree du tick NON FIXEE (FOG-A) — conversion R/s -> R/tick indeterminee, a declarer par le build"
+     }
+    },
+    {
+     "id": "f_click_gain",
+     "text": "gain par clic = gain_clic_initial x produit(ameliorations de clic achetees) ; x2 puis x4",
+     "params": {
+      "gain_clic_initial": 1,
+      "click_mults": [
+       2,
+       4
+      ],
+      "source": "structure_imposee.yaml:economy + progression"
+     }
+    },
+    {
+     "id": "f_upgrade_prod",
+     "text": "amelioration 'x2 prod' : prod[i] x= 2 pour le generateur cible (une par generateur)",
+     "params": {
+      "gen_mult": 2,
+      "count": 4,
+      "source": "structure_imposee.yaml:progression.ameliorations"
+     }
+    },
+    {
+     "id": "f_upgrade_cost",
+     "text": "cout des 6 ameliorations (2 clic puis 4 production)",
+     "params": {
+      "cout_ameliorations": [
+       100,
+       500,
+       1000,
+       5000,
+       30000,
+       200000
+      ],
+      "source": "structure_imposee.yaml:economy.cout_ameliorations"
+     }
+    },
+    {
+     "id": "f_thresholds",
+     "text": "seuil S_k franchi quand total_cumule >= seuils_cumules[k] ; S1->G2, S2->G3, S3->G4, S4->ameliorations x2 prod, S5->VICTORY",
+     "params": {
+      "seuils_cumules": [
+       100,
+       1000,
+       12000,
+       150000,
+       1000000
+      ],
+      "base": "TOTAL CUMULE, jamais le solde",
+      "source": "structure_imposee.yaml:dimensioning"
+     }
+    },
+    {
+     "id": "f_invariant_comptable",
+     "text": "R_solde == somme(gains clic) + somme(production) - somme(depenses), egalite EXACTE",
+     "params": {
+      "representation_proposee": "point-fixe / entiers d'echelle (FOG-B, remonte HumanGate)",
+      "affichage": "plancher entier",
+      "source": "structure_imposee.yaml:dimensioning.invariant_comptable"
+     }
+    }
+   ]
+  },
+  "progression_metrics": [
+   {
+    "id": "inv_gain_clic_initial",
+    "kind": "invariant",
+    "value": 1,
+    "unit": "R/clic",
+    "why": "Gain de clic initial impose (structure_imposee.yaml:economy.gain_clic_initial=1) ; porte l'onboarding avant toute production automatique."
+   },
+   {
+    "id": "inv_threshold_s1",
+    "kind": "invariant",
+    "value": 100,
+    "unit": "R cumule",
+    "why": "Seuil cumule S1 impose (structure_imposee.yaml:dimensioning.seuils_cumules[0]=100) ; revele G2."
+   },
+   {
+    "id": "inv_threshold_s2",
+    "kind": "invariant",
+    "value": 1000,
+    "unit": "R cumule",
+    "why": "Seuil S2 (seuils_cumules[1]=1000) ; revele G3."
+   },
+   {
+    "id": "inv_threshold_s3",
+    "kind": "invariant",
+    "value": 12000,
+    "unit": "R cumule",
+    "why": "Seuil S3 (seuils_cumules[2]=12000) ; revele G4."
+   },
+   {
+    "id": "inv_threshold_s4",
+    "kind": "invariant",
+    "value": 150000,
+    "unit": "R cumule",
+    "why": "Seuil S4 (seuils_cumules[3]=150000) ; revele les ameliorations x2 production."
+   },
+   {
+    "id": "inv_threshold_s5_victory",
+    "kind": "invariant",
+    "value": 1000000,
+    "unit": "R cumule",
+    "why": "Seuil S5 = fin (seuils_cumules[4]=1000000) : total cumule >= 1 000 000 => VICTORY, aucun etat d'echec (structure_imposee.yaml:dimensioning.fin)."
+   },
+   {
+    "id": "target_onboarding_clicks_to_g1",
+    "kind": "target",
+    "range": {
+     "min": 12,
+     "max": 20
+    },
+    "unit": "clics",
+    "why": "Fenetre d'onboarding de DESIGN : le premier achat (G1, cout de base 15 R, cf. economy_model:f_gen_cost) doit etre 'proche mais pas immediat', ancre sur la retention du genre (worldscan:games[0].retention_answer). Tolerance de design assumee et declaree comme telle, jamais une valeur mesuree sur p1_alpha ; a verifier au run des bots."
+   },
+   {
+    "id": "target_tier_run_length",
+    "kind": "target",
+    "range": {
+     "min": 5,
+     "max": 15
+    },
+    "unit": "achats successifs d'un meme tier",
+    "why": "Fenetre de DESIGN ou un tier reste un achat attractif avant que le palier superieur ne domine, consequence de la croissance geometrique 1.12 par achat (economy_model:f_gen_cost). Tolerance de design justifiee, non mesuree — a confirmer par le run des bots (S10)."
+   },
+   {
+    "id": "core_reactions_per_click",
+    "kind": "observation",
+    "unit": "reactions visibles/clic",
+    "why": "Chaque clic sur la cible produit une reaction visible (juice) et +gain_clic R (D2)."
+   },
+   {
+    "id": "gameplay_auto_prod_rate",
+    "kind": "observation",
+    "unit": "R/s",
+    "why": "Taux de production automatique courant, somme des generateurs possedes (D3) — depend du tick (FOG-A, non fixe)."
+   },
+   {
+    "id": "progression_thresholds_crossed",
+    "kind": "observation",
+    "unit": "seuils franchis (0..5)",
+    "why": "Nombre de seuils cumules S1..S5 franchis, base du deblocage (D5)."
+   },
+   {
+    "id": "content_unlocked_count",
+    "kind": "observation",
+    "unit": "elements reveles",
+    "why": "Nombre de tiers/ameliorations reveles et disponibles a l'achat."
+   },
+   {
+    "id": "economy_spend_ratio",
+    "kind": "observation",
+    "unit": "part de R depensee vs epargnee (0..1)",
+    "why": "Part du R gagne reinvestie dans les achats vs epargnee pour un palier superieur — trace l'arbitrage de fond ; sa moitie epargne est desormais rendue perceptible par la jauge de progres-vers-abordable (art_bible:saving_arbitrage_perception)."
+   },
+   {
+    "id": "skill_time_to_s5_ticks",
+    "kind": "observation",
+    "unit": "ticks jusqu'a S5",
+    "why": "Temps-jusqu'a-S5, depend de la strategie d'allocation ; grandeur de divergence mesuree par S10 (>=2 valeurs distinctes), rendue perceptible par l'indicateur de rythme R/s et les signatures BURST/PULSE (art_bible:strategy_divergence_perception)."
+   },
+   {
+    "id": "world_board_fill",
+    "kind": "observation",
+    "unit": "part du plateau peuplee (0..1)",
+    "why": "Part de la page occupee par les tiers/ameliorations reveles — croit quand un seuil ouvre un nouvel element."
+   },
+   {
+    "id": "quest_goal_progress",
+    "kind": "observation",
+    "unit": "part vers le prochain seuil (0..1)",
+    "why": "Progression du total cumule vers le prochain seuil affiche comme objectif courant."
+   },
+   {
+    "id": "meta_victory_progress",
+    "kind": "observation",
+    "unit": "part de 1 000 000 R cumule (0..1)",
+    "why": "Progression du total cumule vers l'unique objectif terminal (VICTORY)."
+   }
+  ],
+  "proof_model": [
+   {
+    "id": "proof_core",
+    "measures": "core_reactions_per_click",
+    "how": "player_loop",
+    "expected": "Un clic scripte produit exactement +gain_clic R et une reaction visible ; verifie par le run des bots via window.__game (D2, S1)."
+   },
+   {
+    "id": "proof_gameplay",
+    "measures": "gameplay_auto_prod_rate",
+    "how": "player_loop",
+    "expected": "Apres achat d'un generateur, R monte tout seul par tick d'un montant = somme(possedes x prod) ; verifie etat-a-etat (D3)."
+   },
+   {
+    "id": "proof_progression",
+    "measures": "progression_thresholds_crossed",
+    "how": "player_loop",
+    "expected": "Au tick de franchissement de seuils_cumules[k] sur le CUMUL, l'element associe est revele (assertion stricte sur le cumul, jamais le solde ; S6)."
+   },
+   {
+    "id": "proof_content",
+    "measures": "content_unlocked_count",
+    "how": "hud",
+    "expected": "Le nombre d'elements visibles/achetables augmente d'exactement 1 (ou du lot S4) au franchissement du seuil correspondant."
+   },
+   {
+    "id": "proof_economy",
+    "measures": "economy_spend_ratio",
+    "how": "decision",
+    "expected": "Un achat impossible (R insuffisant) laisse R strictement inchange (D4, S7) ; un achat possible decremente R du cout exact (S5)."
+   },
+   {
+    "id": "proof_skill",
+    "measures": "skill_time_to_s5_ticks",
+    "how": "player_loop",
+    "expected": "Deux bots divergents (clic-lourd vs generateurs-d'abord) atteignent S5 en >=2 temps-jusqu'a-S5 distincts non triviaux (S10)."
+   },
+   {
+    "id": "proof_world",
+    "measures": "world_board_fill",
+    "how": "hud",
+    "expected": "L'apparition d'un tier au franchissement d'un seuil augmente la surface peuplee du plateau (evenement visible, vr_threshold_unlock_fx)."
+   },
+   {
+    "id": "proof_quest",
+    "measures": "quest_goal_progress",
+    "how": "hud",
+    "expected": "L'objectif courant affiche (prochain seuil) et sa jauge de progres se mettent a jour a chaque gain de cumul."
+   },
+   {
+    "id": "proof_meta",
+    "measures": "meta_victory_progress",
+    "how": "player_loop",
+    "expected": "A total_cumule >= 1 000 000, result passe a 'VICTORY' (derive de l'etat, jamais litteral) et l'ecran de victoire s'affiche (S9, S11)."
+   },
+   {
+    "id": "proof_inv_gain_clic",
+    "measures": "inv_gain_clic_initial",
+    "how": "registry",
+    "expected": "gain_clic initial == 1 verifie par egalite stricte contre structure_imposee (S5, S12)."
+   },
+   {
+    "id": "proof_inv_s1",
+    "measures": "inv_threshold_s1",
+    "how": "registry",
+    "expected": "seuils_cumules[0] == 100, egalite stricte (S6) ; un mutant qui deplace ce seuil doit etre tue (S13)."
+   },
+   {
+    "id": "proof_inv_s2",
+    "measures": "inv_threshold_s2",
+    "how": "registry",
+    "expected": "seuils_cumules[1] == 1000, egalite stricte (S6)."
+   },
+   {
+    "id": "proof_inv_s3",
+    "measures": "inv_threshold_s3",
+    "how": "registry",
+    "expected": "seuils_cumules[2] == 12000, egalite stricte (S6)."
+   },
+   {
+    "id": "proof_inv_s4",
+    "measures": "inv_threshold_s4",
+    "how": "registry",
+    "expected": "seuils_cumules[3] == 150000, egalite stricte (S6)."
+   },
+   {
+    "id": "proof_inv_s5",
+    "measures": "inv_threshold_s5_victory",
+    "how": "registry",
+    "expected": "seuils_cumules[4] == 1000000 et condition de fin, egalite stricte (S6, S11)."
+   },
+   {
+    "id": "proof_target_onboarding",
+    "measures": "target_onboarding_clicks_to_g1",
+    "how": "player_loop",
+    "expected": "Un bot clic-seul atteint 15 R et achete G1 ; nombre de clics observe dans la fenetre [12,20] (mesure au run des bots, S9)."
+   },
+   {
+    "id": "proof_target_tier_run",
+    "measures": "target_tier_run_length",
+    "how": "player_loop",
+    "expected": "Nombre d'achats successifs rentables d'un tier avant bascule, mesure dans la fenetre [5,15] (run des bots, S10)."
+   }
+  ],
+  "grey_blocks": [
+   {
+    "id": "gb_click_target",
+    "type": "ITEM",
+    "role": "AFFORDANCE",
+    "state": "AVAILABLE",
+    "requires": [],
+    "player_meaning": "Je clique ici pour produire R — c'est mon action de depart.",
+    "builder_contract": "Cible centrale cliquable (theme decide: une Source lumineuse d'Eclat, cf. reponse q_art_001) qui emet +gain_clic R et une reaction visible a chaque clic (etats repos->enfoncee->juice, D2).",
+    "proof_ref": "proof_core"
+   },
+   {
+    "id": "gb_resource_counter",
+    "type": "UI",
+    "role": "FEEDBACK",
+    "state": "AVAILABLE",
+    "requires": [],
+    "player_meaning": "Je vois mon solde R et mon total cumule monter en permanence.",
+    "builder_contract": "Compteur R (solde) + total cumule distinct et etiquete, toujours visibles, chiffres tabulaires (D1, S1).",
+    "proof_ref": "proof_gameplay"
+   },
+   {
+    "id": "gb_generator_g1",
+    "type": "ITEM",
+    "role": "AFFORDANCE",
+    "state": "AVAILABLE",
+    "requires": [],
+    "player_meaning": "J'achete mon premier producteur automatique des le depart.",
+    "builder_contract": "Generateur tier 1 (theme: petit emetteur de lumiere), achetable au chargement, cout de base 15 R (x1.12^n), production 0,1 R/s ; etats achetable/non-achetable/possede.",
+    "proof_ref": "proof_gameplay"
+   },
+   {
+    "id": "gb_generator_g2",
+    "type": "ITEM",
+    "role": "PROGRESSION_GATE",
+    "state": "LOCKED",
+    "requires": [
+     "inv_threshold_s1"
+    ],
+    "unlock": [
+     "gb_generator_g2"
+    ],
+    "next_goal": "Atteindre 1 000 R cumule (S2) pour reveler G3.",
+    "player_meaning": "G2 est verrouille ; je vois qu'il apparaitra a 100 R cumule.",
+    "builder_contract": "Tier 2 cache jusqu'a S1 (100 cumule) ; a S1, apparition observable (vr_threshold_unlock_fx) ; production 1 R/s, cout de base 100 R ; apercu de la condition pendant le verrou.",
+    "proof_ref": "proof_progression"
+   },
+   {
+    "id": "gb_generator_g3",
+    "type": "ITEM",
+    "role": "PROGRESSION_GATE",
+    "state": "LOCKED",
+    "requires": [
+     "inv_threshold_s2"
+    ],
+    "unlock": [
+     "gb_generator_g3"
+    ],
+    "next_goal": "Atteindre 12 000 R cumule (S3) pour reveler G4.",
+    "player_meaning": "G3 est verrouille ; il apparaitra a 1 000 R cumule.",
+    "builder_contract": "Tier 3 cache jusqu'a S2 (1 000 cumule) ; apparition observable a S2 ; production 8 R/s, cout de base 1 100 R.",
+    "proof_ref": "proof_progression"
+   },
+   {
+    "id": "gb_generator_g4",
+    "type": "ITEM",
+    "role": "PROGRESSION_GATE",
+    "state": "LOCKED",
+    "requires": [
+     "inv_threshold_s3"
+    ],
+    "unlock": [
+     "gb_generator_g4"
+    ],
+    "next_goal": "Atteindre 150 000 R cumule (S4) pour reveler les ameliorations x2 production.",
+    "player_meaning": "G4 est verrouille ; il apparaitra a 12 000 R cumule.",
+    "builder_contract": "Tier 4 cache jusqu'a S3 (12 000 cumule) ; apparition observable ; production 47 R/s, cout de base 12 000 R.",
+    "proof_ref": "proof_progression"
+   },
+   {
+    "id": "gb_upgrades_click",
+    "type": "ITEM",
+    "role": "REWARD",
+    "state": "AVAILABLE",
+    "requires": [],
+    "player_meaning": "J'ameliore mon clic pour qu'il rapporte davantage.",
+    "builder_contract": "Deux ameliorations de clic (x2 puis x4 du gain_clic), couts 100 et 500 R ; etats achetable/non-achetable/achetee ; effet visible (+N par clic double puis quadruple, D6).",
+    "proof_ref": "proof_economy"
+   },
+   {
+    "id": "gb_upgrades_prod",
+    "type": "ITEM",
+    "role": "PROGRESSION_GATE",
+    "state": "LOCKED",
+    "requires": [
+     "inv_threshold_s4"
+    ],
+    "unlock": [
+     "gb_upgrades_prod"
+    ],
+    "next_goal": "Atteindre 1 000 000 R cumule (S5) pour la victoire.",
+    "player_meaning": "Les ameliorations de production sont verrouillees ; elles apparaitront a 150 000 R cumule.",
+    "builder_contract": "Quatre ameliorations x2 production (une par generateur), revelees au seuil S4 (150 000 cumule) ; couts 1 000/5 000/30 000/200 000 R ; effet visible (montee de R acceleree, D6).",
+    "proof_ref": "proof_progression"
+   },
+   {
+    "id": "gb_buy_panel",
+    "type": "UI",
+    "role": "AFFORDANCE",
+    "state": "AVAILABLE",
+    "requires": [],
+    "player_meaning": "Je vois quoi acheter, a quel cout, et ce que je possede.",
+    "builder_contract": "Panneau d'achat listant generateurs et ameliorations avec cout courant, nombre possede et etat achetable/grise-refuse (D3, D4) ; chaque bouton non finançable porte la jauge de progres-vers-abordable (art_bible:saving_arbitrage_perception) et l'apercu du gain du prochain palier ; chaque cout accompagne de l'icone R.",
+    "proof_ref": "proof_economy"
+   },
+   {
+    "id": "gb_victory_screen",
+    "type": "UI",
+    "role": "REWARD",
+    "state": "LOCKED",
+    "requires": [
+     "inv_threshold_s5_victory"
+    ],
+    "unlock": [
+     "gb_victory_screen"
+    ],
+    "next_goal": "(fin de partie — VICTORY, aucun etat d'echec)",
+    "player_meaning": "Quand j'atteins 1 000 000 R cumule, je vois que j'ai gagne.",
+    "builder_contract": "Ecran/panneau de victoire positif affiche par-dessus le jeu a S5 (result=='VICTORY', derive de l'etat) ; aucun code visuel de defaite (D7, S11).",
+    "proof_ref": "proof_meta"
+   },
+   {
+    "id": "gb_threshold_unlock_fx",
+    "type": "RULE",
+    "role": "FEEDBACK",
+    "state": "AVAILABLE",
+    "requires": [],
+    "player_meaning": "Un franchissement de seuil est un moment visible ou quelque chose s'ouvre.",
+    "builder_contract": "Effet de franchissement de seuil (apparition d'un tier/lot d'ameliorations) qui rend le deblocage perceptible comme une nouvelle possibilite, pas un simple +X% (D5).",
+    "proof_ref": "proof_progression"
+   },
+   {
+    "id": "gb_click_feedback",
+    "type": "RULE",
+    "role": "FEEDBACK",
+    "state": "AVAILABLE",
+    "requires": [],
+    "player_meaning": "Chaque clic me repond immediatement.",
+    "builder_contract": "Retour visuel immediat du clic (signature BURST : eclat + '+N' flottant) porteur de la satisfaction de croissance ; distinct de la PULSE de production automatique (art_bible:strategy_divergence_perception).",
+    "proof_ref": "proof_core"
+   }
+  ],
+  "artist_requirements": [
+   {
+    "id": "ar_click_target",
+    "grey_block": "gb_click_target",
+    "states_to_show": [
+     "AVAILABLE"
+    ],
+    "visible_reason": false,
+    "visible_requirement": "aucune condition (disponible des le chargement)",
+    "preview": false,
+    "affordance_visual": "cible centrale la plus grande, accent reserve, reaction au survol/enfoncement",
+    "readability": "se distingue de tout autre element comme seule affordance de clic"
+   },
+   {
+    "id": "ar_resource_counter",
+    "grey_block": "gb_resource_counter",
+    "states_to_show": [
+     "AVAILABLE"
+    ],
+    "visible_reason": false,
+    "visible_requirement": "aucune condition",
+    "preview": false,
+    "affordance_visual": "typographie la plus grande et contrastee ; total cumule distinct du solde",
+    "readability": "chiffres tabulaires, grands nombres abreges lisiblement (1.2M)"
+   },
+   {
+    "id": "ar_generator_g1",
+    "grey_block": "gb_generator_g1",
+    "states_to_show": [
+     "AVAILABLE",
+     "OWNED"
+    ],
+    "visible_reason": false,
+    "visible_requirement": "aucune condition (achetable au chargement)",
+    "preview": false,
+    "affordance_visual": "silhouette la plus modeste de la gamme, accent si achetable",
+    "readability": "cout avec icone R ; compteur d'unites possedees visible"
+   },
+   {
+    "id": "ar_generator_g2",
+    "grey_block": "gb_generator_g2",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE",
+     "OWNED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "100 R cumule (S1)",
+    "preview": true,
+    "affordance_visual": "silhouette plus imposante que G1 ; apparition marquee au seuil",
+    "readability": "etat verrouille lisible avec sa condition, puis achetable/grise/possede non confondables"
+   },
+   {
+    "id": "ar_generator_g3",
+    "grey_block": "gb_generator_g3",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE",
+     "OWNED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "1 000 R cumule (S2)",
+    "preview": true,
+    "affordance_visual": "escalade de silhouette poursuivie",
+    "readability": "condition affichee pendant le verrou ; etats non confondables"
+   },
+   {
+    "id": "ar_generator_g4",
+    "grey_block": "gb_generator_g4",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE",
+     "OWNED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "12 000 R cumule (S3)",
+    "preview": true,
+    "affordance_visual": "sommet de la gamme, silhouette la plus imposante",
+    "readability": "condition affichee pendant le verrou ; etats non confondables"
+   },
+   {
+    "id": "ar_upgrades_click",
+    "grey_block": "gb_upgrades_click",
+    "states_to_show": [
+     "AVAILABLE",
+     "OWNED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "cout 100 R puis 500 R",
+    "preview": false,
+    "affordance_visual": "badge d'amelioration au gabarit commun ; marque acquis une fois achete",
+    "readability": "effet lisible (+N par clic double puis quadruple)"
+   },
+   {
+    "id": "ar_upgrades_prod",
+    "grey_block": "gb_upgrades_prod",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE",
+     "OWNED"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "150 000 R cumule (S4)",
+    "preview": true,
+    "affordance_visual": "quatre badges x2 prod, un par generateur, reveles ensemble",
+    "readability": "verrou avec condition ; effet lisible (montee de R acceleree)"
+   },
+   {
+    "id": "ar_buy_panel",
+    "grey_block": "gb_buy_panel",
+    "states_to_show": [
+     "AVAILABLE"
+    ],
+    "visible_reason": false,
+    "visible_requirement": "aucune condition",
+    "preview": false,
+    "affordance_visual": "cadre de boutique distinct ; boutons achetables vs grises non confondables ; le grise porte la jauge de progres-vers-abordable (indisponible != statique)",
+    "readability": "cout + icone R + nombre possede lisibles d'un coup d'oeil ; la jauge reste discrete et n'ecrase pas le libelle"
+   },
+   {
+    "id": "ar_victory_screen",
+    "grey_block": "gb_victory_screen",
+    "states_to_show": [
+     "LOCKED",
+     "AVAILABLE"
+    ],
+    "visible_reason": true,
+    "visible_requirement": "1 000 000 R cumule (S5)",
+    "preview": false,
+    "affordance_visual": "panneau de fin franc, centre, teinte de celebration reservee",
+    "readability": "victoire sans ambiguite, n'obscurcit pas au point de faire croire a une panne"
+   }
+  ]
+ }
+}

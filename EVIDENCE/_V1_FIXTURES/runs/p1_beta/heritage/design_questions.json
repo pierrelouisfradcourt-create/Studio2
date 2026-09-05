@@ -1,0 +1,56 @@
+{
+ "schema_version": 1,
+ "round": 2,
+ "questions": [
+  {
+   "id": "q_art_001",
+   "from": "ART",
+   "to": "GM",
+   "round": 1,
+   "about": "art_bible:visual_language",
+   "loop_id": "core_loop",
+   "missing": [
+    "forme du declencheur d'etat terminal: seuil sur une ressource unique accumulee OU jalon/milestone distinct"
+   ],
+   "why": "Ma section visual_language mappe la progression vers la fin sur une montee de glow continue du fond puis un embrasement final (vr_progress_constellation -> vr_end_screen), en supposant que l'etat terminal se declenche quand la ressource-lumiere franchit un seuil. Si la boucle canonique route sa fin par un JALON distinct de la ressource (entite separee), il faudrait un asset de jalon dedie, non prevu ici. La reponse determine si vr_progress_constellation reste une entite unique ou doit etre dedoublee.",
+   "blocking": true,
+   "answer": {
+    "round": 2,
+    "by": "GM",
+    "ref": "gm_worldscan:game_master.loops.core_loop.core_progression",
+    "text": "Etat terminal = SEUIL sur la ressource unique 'light' (light>=5000, cf. progression_threshold_light et gb_terminal_rule), JAMAIS un jalon-entite distinct. La meme lumiere que le foyer produit (core_loop) est celle qui atteint le seuil terminal : aucune monnaie de jalon separee, aucune entite terminale distincte. J'ai reecrit core_loop.core_progression pour rendre cet axe UNIQUE explicite. Donc vr_progress_constellation reste UNE seule entite (la lecture visuelle de light/seuil), aucun dedoublement. Les jalons intermediaires (quest_loop) sont des reperes DISCRETS sur ce meme axe light, distincts de la jauge continue, jamais le declencheur terminal — j'ai ajoute gb_quest_milestone + ar_quest_milestone pour ton vr_quest_milestone, le marqueur n'avait pas de grey_block avant."
+   }
+  },
+  {
+   "id": "q_art_002",
+   "from": "ART",
+   "to": "GM",
+   "round": 1,
+   "about": "art_bible:world_constraints",
+   "loop_id": "art_gm",
+   "missing": [
+    "existence et injection de design/content_requirements.md (C.5 Gameplay Map) a l'etape s2.5"
+   ],
+   "why": "Mon contrat declare content_requirements.md mandatory-read et injecte en amont, mais il est absent du run_dir (aucun design/, aucun *content_req*). J'ai produit l'art bible depuis charter+worldscan+story_bible seuls. Je dois savoir si la Gameplay Map existe deja a ce stade de full_content et si l'ART est cense la completer, ou si elle est produite plus en aval.",
+   "blocking": false,
+   "answer": {
+    "round": 2,
+    "by": "GM",
+    "ref": "gm_worldscan:game_master.world_interpretation",
+    "text": "Confirme : design/content_requirements.md (Gameplay Map C.5) N'A PAS ete injecte dans ce run — aucun dossier design/ dans le run_dir (verifie). Je l'ai lu comme mandatory-read mais absent, et j'ai donc produit game_master depuis charter+worldscan+story_bible+art_bible seuls, exactement comme toi : cf. world_interpretation dont les 5 sources sont worldscan/story_bible/art_bible, jamais content_requirements. Doctrine du contrat (Lot D) : un fichier design absent se DECLARE, on ne compense pas par invention. La Gameplay Map n'est pas produite par les stations ART/GM de ce run ; son absence est un etat connu et declare, pas un defaut a corriger ici. A remonter en fog HumanGate si une Gameplay Map amont est attendue pour full_content — hors de notre perimetre a tous deux."
+   }
+  }
+ ],
+ "declarations": {
+  "ART": {
+   "round": 2,
+   "ready_for_freeze": true,
+   "open_to_gm": 0
+  },
+  "GM": {
+   "round": 2,
+   "ready_for_freeze": true,
+   "open_to_art": 0
+  }
+ }
+}

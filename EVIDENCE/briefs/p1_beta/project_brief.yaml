@@ -1,0 +1,55 @@
+projet: p1_beta
+intention: >
+  Bras LIBRE (L1) de la paire pilote RUN 2 (protocole docs/forge/RUN2_PILOTE_PROTOCOLE_V0.md).
+  Produire un jeu incremental/clicker web jouable dont la STRUCTURE (boucles, ressources,
+  actions, progression, déblocages, économie, dimensionnement, condition de fin) est
+  ENTIÈREMENT INVENTÉE par la chaîne, en fermant toute la chaîne de preuve full_content.
+  Question mesurée par la paire : que produit la chaîne quand elle invente la structure,
+  comparé à quand on la lui donne (p1_alpha) ? La qualité ludique n'est pas jugée par ce run
+  (donnée M7, jugement humain en aveugle). Paire PILOTE : mesure la mesurabilité du protocole,
+  ne prétend pas répondre à la question expérimentale complète (≥2 paires).
+contraintes:
+  normative_refs:
+    - spec: FORGE_DESIGN_FREEDOM_SPEC_V0
+      rules: [N1, N2, N3, N4, N7, N8, N9]
+  project_specific:
+    techniques:
+      - "genre : incremental/clicker — FIXÉ PAR PIERRE (2026-08-30), non délégable"
+      - "fin de partie OBSERVABLE requise (une sonde doit finir — un idle infini n'est pas prouvable)"
+      - "socle sonde web (N1) : HTML+JS, déterminisme seedé, window.__game, harnais complet à la racine"
+      - >
+        ISOLEMENT DU BRAS (réserve méthodologique Pierre 2026-08-30) : ce projet ne consulte
+        JAMAIS lab/forge_briefs/p1_alpha/** ni aucune valeur de la structure du bras dirigé.
+        Toute grandeur structurelle de ce jeu (coefficients, coûts, seuils, comptes) est inventée
+        ici, avec provenance agent tracée au charter (N2). La revue post-hoc cherche les valeurs
+        signatures du bras D dans les sorties de ce bras : une contamination invalide la paire.
+    experimentales:
+      - "bras L de la paire pilote L/D — variable manipulée : l'AUTEUR DE LA STRUCTURE"
+      - "preuves par propriétaires distincts du producteur (gates fiches 2/3/5 armées)"
+cible: web (HTML+JS canvas)
+references_autorisees:
+  - ref: "Cookie Clicker — grammaire de genre UNIQUEMENT, jamais une copie (aucun asset, nom, contenu, aucune valeur numérique reprise)"
+    source: "Pierre 2026-08-30 (choix du genre de la paire pilote)"
+criteres_sortie:
+  - "chaîne full_content complète : verdict signé + verify_run AUTHENTIQUE"
+  - "structure entièrement documentée au charter avec provenance agent (N2) — aucune grandeur inventée en aval sans source charter (mesure M2)"
+  - "design_questions/r2/design_freeze exercés normalement"
+  - "chaque asset_request.id resolved-avec-fichier ou blocked-justifié (gate check_asset_consumption)"
+  - "check_artbible exécuté par le driver (executed_by: driver)"
+  - "s11 red-team indépendant réel (qwen, independent: true) ; LM Studio down → HALT sans fallback"
+  - "bots de mesure : temps-jusqu'à-la-fin et jalons atteints à budget de ticks fixe, valeurs à variance non triviale"
+libertes_deleguees:
+  - "TOUTE la structure : boucles, ressources, actions, progression, déblocages, économie, dimensionnement, condition de fin"
+  - "thème et univers"
+  - "personnages/entités et leur nommage"
+  - "direction artistique"
+  - "assets nécessaires à la production"
+  - "présentation/HUD et micro-interactions"
+provenance:
+  genre: "Pierre 2026-08-30 (paire pilote incremental/clicker)"
+  structure: "DÉLÉGUÉE à la chaîne — c'est la définition du bras Libre (variable expérimentale)"
+  isolement: "réserve méthodologique Pierre 2026-08-30 — aucune valeur du bras D ne doit atteindre ce bras"
+  protocole: "paire pilote ratifiée Pierre 2026-08-30 (une paire, déclarée pilote, jamais la validation ≥2 paires)"
+  criteres_sortie: "Pierre 2026-08-30 (sas RUN 2 pilote)"
+  libertes_deleguees: "Pierre 2026-08-30 — thème/DA/assets libres dans les DEUX bras (une seule variable manipulée)"
+  redaction: "Fable (poste de commande), session 2026-08-30"

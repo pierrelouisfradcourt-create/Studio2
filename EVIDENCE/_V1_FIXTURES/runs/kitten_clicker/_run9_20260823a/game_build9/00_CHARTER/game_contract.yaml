@@ -1,0 +1,71 @@
+# KITTEN CLICKER — contrat de jeu (s9-build-godot-standard, kitten_clicker-20260823a).
+# Format : scripts/forge/standard/SCHEMA.md §1 — schema FERME, 6 cles obligatoires + `proof`.
+schema_version: 1
+game_id: kitten_clicker
+node: 1
+runtimes: [rules, godot]
+
+budget:
+  # reuses VIDE : aucune brique de bibliotheque au tier `validated` ne convient a ce
+  # clicker (check_budget exige tier validated). L'audio est REUTILISE par CODE (patron
+  # de synthese pacman) mais adapte a `allowed_deps: []` de la carte — voir la note du
+  # rapport de build ; ce n'est pas un depot de bibliotheque, donc hors `budget`.
+  reuses: []
+  # adds VIDE : ce build ne PROMET aucun depot en bibliotheque (loi d'empilement,
+  # len(adds) <= 1 respecte). Aucune brique n'est declaree reutilisable ailleurs.
+  adds: []
+
+assets:
+  # generated : les 17 sprites SVG sont ECRITS par le builder (aucun CC0 catalogue ne
+  # correspond a un refuge a chatons original — cf. art_bible §2 garde-fou honnetete).
+  plan: generated
+
+# =====================================================================================
+# DESCRIPTEUR DE PREUVE — contrat docs/forge/CONTRAT_PREUVE_MUTATION_V1.md.
+# =====================================================================================
+proof:
+  schema_version: 1
+  runtime: godot
+
+  mutation:
+    # Seule la LOGIQUE PURE (category `system`) est mutee. Les adaptateurs de
+    # presentation/entree/audio (category `system.adapter`) ne sont pas mutes en aveugle
+    # (mesure Pong 2026-07-27 : adaptateurs 0 % de mutants tues). Les donnees et assets
+    # ne sont pas du code.
+    categories_mutables: [system]
+    categories_exclues:
+      - system.adapter        # input/presentation/audio -> oracle produit, pas mutation
+      - world.rules           # registres JSON, pas du code
+      - asset.sprite          # SVG, binaire visuel
+      - test.oracle           # volets 07_TESTS/oracle
+      - test.solvability      # solvability.gd
+      - godot.project_root    # project.godot / main.tscn / game_controller.gd / solvability.gd
+      - godot.project_tests   # tests/run_tests.gd
+      - charter               # 00_CHARTER
+      - wiremap               # 09_WIREMAP
+
+    command: ["<bin:godot>", "--headless", "--path", ".", "--script", "res://tests/run_tests.gd"]
+    cwd: "games/kitten_clicker"
+    binary_ref: godot
+    expects_exit_zero: true
+
+    budget:
+      max_mutants: 200
+      timeout_per_mutant_s: 30
+      total_timeout_s: 900
+      cost_class: engine
+
+    seals:
+      wrapper: []
+      test_scripts: ["tests/run_tests.gd"]
+
+  solvability:
+    # Bot DETERMINISTE jouant par le SEUL canal du joueur (InputEvent sur main.tscn +
+    # lecture des Label du groupe "hud"), jamais Economy/api_*/05_SYSTEMS. Critere : le
+    # bot atteint le 3e palier de progression (3 chatons adoptes) en un nombre FINI de
+    # frames. Emet `FORGE_TRIAL {succeeded, ticks}` puis quit(0) dans tous les cas.
+    entry: "solvability.gd"
+    max_ticks: 4000
+    trials: 3
+    trial_timeout_ms: 60000
+    total_timeout_s: 250

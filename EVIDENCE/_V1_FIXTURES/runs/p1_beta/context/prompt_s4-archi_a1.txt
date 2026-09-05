@@ -1,0 +1,443 @@
+## RÔLE
+Architecte (étape 4). Point de vue imposé : architecte logiciel senior qui découpe par responsabilité, pas par confort.
+
+## EXIGENCES COGNITIVES
+Raisonnement architecture profond, effort élevé. Doit tenir un graphe de dépendances complet en tête et détecter les cycles avant qu'ils existent.
+
+## MÉMOIRE DE TRAVAIL
+Consomme la featuremap (étape 3) ; sur repo existant, connaît le blueprint en place (diff d'archi, pas réinvention). Conventions : CLAUDE.md + rules/.
+
+## OBJECTIF
+Produire blueprint.yaml gelé : modules + responsabilités · deps autorisées/interdites (ex : ui→api→engine ok, ui→engine interdit) · ownership · invariants d'archi.
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Découpage en modules, graphe de dépendances autorisées/interdites, ownership par module, invariants d'architecture. Écrit uniquement blueprint.yaml.
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Aucune écriture de code d'implémentation. Ne crée aucun fichier source. Ne décide pas la WireMap (étape 5). Ne touche pas aux lanes protégées (tests/, src/).
+
+## PERMISSIONS
+read: repo entier. write: blueprint.yaml uniquement. create: blueprint.yaml. run: aucun. delete: aucun.
+
+## GARDE-FOU
+Jamais « au feeling » : la structure physique est une CONSÉQUENCE du blueprint, justifiée par la featuremap. Tue les god-objects avant qu'ils existent. Toute dépendance interdite doit être explicite.
+
+## CRITÈRES DE RÉUSSITE
+blueprint valide ; chaque feature de la featuremap couverte par ≥1 module ; chaque module porte une responsabilité et une preuve attendue ; aucune dépendance cyclique ; aucune dépendance déclarée qui soit elle-même interdite ; deps_interdites listées explicitement et non vides.
+
+## ORACLES / TESTS
+DEUX ORACLES, DEUX MOMENTS — ne pas les confondre. AVANT build (ici) : `node scripts/forge/check_blueprint_contract.mjs <run_dir>/blueprint.json --featuremap <run_dir>/featuremap.json` répond « cette architecture couvre-t-elle le besoin ? » (couverture, responsabilités, cycles, contradictions, preuves). APRÈS build (étape s10b) : `forge.static_oracles.check_architecture` répond « le code respecte-t-il l'architecture ? ». Appelé en amont sur un src vide, il ne trouve aucun import et serait vacuement vert : ce n'est pas ton oracle. Jamais de LLM-as-judge.
+
+## CONTRAT DE SORTIE
+Un bloc ```json``` TERMINAL, matérialisé en blueprint.json par l'exécuteur (tu n'écris JAMAIS ce fichier toi-même) : {"modules": ["<id>", ...], "deps_interdites": [["source", "cible"], ...], "ownership": {...}, "responsabilites": [{"module", "responsabilite", "couvre": ["<id de feature>"], "dependances": ["<module>"], "preuve_attendue": {"kind", "statement"}}]}. `modules` reste une liste de CHAÎNES (forme consommée telle quelle par check_architecture après build — ne jamais la transformer en objets). RÈGLES DURES : `couvre` cite l'`id` EXACT d'une feature de featuremap.json — une feature que nul module ne couvre signifie que l'architecture ne répond pas au besoin. `dependances` est OBLIGATOIRE et peut être vide (module feuille), jamais absent ; les consommateurs en sont DÉRIVÉS mécaniquement, ne les saisis pas. Ne déclare jamais une dépendance que tu inscris toi-même dans deps_interdites.
+
+## RAPPORT FINAL
+software/evidence/claim séparés ; cite le reçu de check_blueprint_contract ; liste les features non couvertes et les couvertures fantômes ; claim_verdict: NO_CLAIM_ALLOWED. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- scripts/forge/standard/repo_map.yaml
+- scripts/forge/contracts/SCHEMA.md
+- l'artefact featuremap produit par l'étape 3 (Décompo fonctionnelle)
+- le blueprint.yaml existant si le repo est déjà structuré
+- lab/forge_runs/<projet>/knowledge_packet.json — patterns externes cités, ADVISORY jamais prescriptif
+- lab/forge_runs/<projet>/charter.yaml — INTENT LINEAGE : intention humaine, invariants, hors_scope, et le bloc `provenance` (source Pierre, fog_humangate). HERITE, jamais reecrit : l'etape verifie que sa decision la respecte, ou remonte le conflit.
+- scripts/forge/standard/repo_map.yaml — TABLE FIGEE des racines et des gabarits d'adresse. Realite verifiable, pas une intention : toute adresse decidee ici y est confrontee (defaut mesure 2026-08-05 : racine 04_CONTENT inventee, 232 019 tokens de reprise).
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s4-archi:p1_beta-20260830-run1:1
+
+## TÂCHE CONCRÈTE (p1_beta-20260830-run1 / s4-archi)
+Conçois l'architecture du projet 'p1_beta' (code à créer sous games/p1_beta). Termine ta réponse par UN bloc ```json ... ``` contenant EXACTEMENT un objet de la forme {"modules": ["<dossier ou fichier de premier niveau sous la racine du code>", ...], "deps_interdites": [["<module_source>", "<module_cible>"], ...]} — format lu par forge.static_oracles.check_architecture. deps_interdites est OBLIGATOIRE et NON VIDE : déclare au minimum la séparation logique→rendu et logique→input (un blueprint sans dépendance interdite est rejeté par l'exécuteur — un tel projet relève du fog HumanGate, pas d'un oracle vide). Tu n'écris AUCUN fichier : l'exécuteur matérialise lui-même blueprint.json depuis ce bloc.
+
+## ARTEFACTS AMONT (run_dir)
+
+### charter.yaml (chemin réel : C:\TACTICAL_CHESS_STUDIO\lab\forge_runs\p1_beta\charter.yaml)
+objectif: 'Produire un jeu incremental/clicker web JOUABLE (HTML+JS canvas), créé
+  de zéro sous games/p1_beta, dont TOUTE la structure (boucles, ressources, actions,
+  progression, déblocages, économie, dimensionnement, condition de fin) est INVENTÉE
+  PAR LA CHAÎNE elle-même — jamais fournie. C''est le bras LIBRE (L) de la paire pilote
+  L/D de RUN 2 : variable manipulée = l''AUTEUR DE LA STRUCTURE. Fermer la chaîne
+  full_content jusqu''au verdict signé + verify_run AUTHENTIQUE. La qualité ludique
+  n''est PAS jugée par ce run (donnée M7, jugement humain en aveugle) : l''objectif
+  est la fermeture MESURABLE de la chaîne, pas un jeu « bon ».
+
+  '
+hors_scope:
+- 'Invention des GRANDEURS structurelles (coefficients, coûts, seuils, comptes, économie,
+  dimensionnement) : DÉLÉGUÉE à l''aval (s2 world scan, design, s4 architecture) —
+  pas décidée au charter. Le charter EXIGE leur provenance N2, il ne les FIXE pas.'
+- Décision d'architecture technique (s4) et world scan (s2).
+- 'Jugement de la QUALITÉ ludique / du fun : donnée M7, jugement humain en aveugle.'
+- 'Réponse à la question expérimentale complète (≥2 paires) : cette paire est PILOTE
+  — elle mesure la mesurabilité du protocole, elle ne valide pas « libre > dirigé
+  ».'
+- 'Copie de Cookie Clicker : aucun asset, nom, contenu, ni valeur numérique repris.'
+- Toute consultation de lab/forge_briefs/p1_alpha/** ou d'une valeur du bras dirigé
+  (D).
+- Écriture hors games/p1_beta ; lanes protégées (tests/, src/).
+criteres_succes:
+- 'Chaîne full_content complète : verdict signé + verify_run rend AUTHENTIQUE.'
+- Structure entièrement documentée avec provenance agent (N2) — aucune grandeur inventée
+  en aval sans source tracée (mesure M2 satisfaite).
+- design_questions / r2 / design_freeze exercés normalement.
+- Chaque asset_request.id est resolved-avec-fichier OU blocked-justifié (check_asset_consumption).
+- 'check_artbible exécuté par le driver (executed_by: driver).'
+- 's11 red-team indépendant réel (qwen, independent: true) ; LM Studio down => HALT
+  sans fallback.'
+- 'Bots de mesure : temps-jusqu''à-la-fin et jalons à budget de ticks fixe, à variance
+  NON triviale (≥2 valeurs distinctes non triviales — règle de variance des métriques).'
+- 'SOLVABILITÉ prouvée : au moins une sonde déterministe ATTEINT réellement la fin
+  observable (pas un test unitaire en isolation, pas un >= tautologique).'
+actions_interdites:
+- NE JAMAIS consulter lab/forge_briefs/p1_alpha/** ni aucune valeur structurelle du
+  bras D (isolement — Pierre 2026-08-30). Une contamination invalide la paire.
+- NE JAMAIS reprendre de Cookie Clicker un asset, nom, contenu ou valeur numérique.
+- NE JAMAIS inventer une grandeur structurelle en aval sans source tracée au charter
+  (N2 / M2).
+- 'NE JAMAIS livrer un idle infini : la fin doit être ATTEIGNABLE et OBSERVABLE.'
+- NE JAMAIS statuer la solvabilité par un test en isolation ni par un >= tautologique
+  — asserter le comportement STRICT ; une sonde doit FINIR (leçon s10a pré-mortem).
+- NE JAMAIS émettre un reçu code sans evidence_path (=> BLOCKED, leçon s12 pré-mortem).
+- 'NE JAMAIS substituer un fallback à s11 si LM Studio est down : HALT.'
+- 'NE JAMAIS de LLM-as-judge : oracles déterministes non-LLM ; red-team advisory,
+  jamais juge.'
+- NE JAMAIS écrire hors games/p1_beta ni toucher tests/ ou src/.
+plateforme_cible: 'web — HTML + JS (canvas). Socle sonde N1 : déterminisme seedé,
+  window.__game exposé, harnais complet à la racine de games/p1_beta. [SOURCE PIERRE
+  : project_brief.yaml `cible`]
+
+  '
+reference_jeu: 'Cookie Clicker — grammaire de genre incremental/clicker UNIQUEMENT,
+  jamais une copie (aucun asset, nom, contenu ni valeur numérique repris). [SOURCE
+  PIERRE 2026-08-30 : project_brief.yaml `references_autorisees`]
+
+  '
+criteres_demo:
+- L'action cœur (clic/action) produit à l'écran un compteur de ressource qui AUGMENTE
+  visiblement — la boucle est observable, pas seulement dans window.__game.
+- Au moins un déblocage/achat modifie OBSERVABLEMENT l'écran (nouvelle affordance
+  visible OU taux de production visiblement changé) — progression observable.
+- Le jeu atteint et SIGNALE À L'ÉCRAN un état terminal (écran/marqueur de fin) dans
+  un budget de ticks fixe — la fin observable exigée par le brief.
+- Même seed => même déroulé (déterminisme seedé, vérifiable par rejeu d'une sonde).
+joueur_cible: 'Jeu-SONDE, pas produit expédié. Consommateurs réels : (1) bots de mesure
+  déterministes (temps-jusqu''à-la-fin, jalons à budget de ticks fixe) ; (2) évaluateur
+  humain en aveugle (M7). Public notionnel DÉRIVÉ du genre fixé : joueur d''incremental/clicker
+  web. Dérivé du genre Pierre + finalité expérimentale du brief — non inventé, non
+  stipulé nominativement par Pierre.
+
+  '
+condition_de_victoire: 'Le jeu DOIT définir un état terminal OBSERVABLE et ATTEIGNABLE
+  : une sonde déterministe seedée l''atteint dans un budget de ticks fixe, et il est
+  signalé À L''ÉCRAN. Idle infini INTERDIT (non prouvable). La FORME exacte de la
+  fin (ressource/seuil/jalon déclencheur) est DÉLÉGUÉE (structure = variable expérimentale)
+  : le charter exige l''EXISTENCE et l''OBSERVABILITÉ d''une fin atteignable, il n''en
+  fixe pas la valeur.
+
+  '
+perimetre_v1: 'V1 minimal JOUABLE : une boucle incremental/clicker complète et fermée
+  — action(s) → ressource(s) visible(s) → au moins un déblocage/achat changeant observablement
+  l''état → progression → état terminal observable atteignable. Socle sonde web N1
+  à la racine de games/p1_beta. La structure interne (quelles ressources, quels coûts,
+  quelle économie, quel dimensionnement) est inventée en aval avec provenance agent
+  tracée (N2) — hors de ce contrat de cadrage.
+
+  '
+
+
+### artifacts/s3-decompo.txt (chemin réel : C:\TACTICAL_CHESS_STUDIO\lab\forge_runs\p1_beta\artifacts\s3-decompo.txt)
+I've now verified the exact contract of both oracles (`check_decompo.mjs` + `upstream_schema.mjs`). The binding constraints are unambiguous, and they force several non-obvious structural decisions. Here is the decomposition.
+
+---
+
+## RAPPORT FINAL — s3-decompo / p1_beta-20260830-run1
+
+**software/evidence/claim séparés.**
+- `software_verdict: OK` — appuyé par lecture ligne-à-ligne des deux oracles non-LLM (`check_decompo.mjs`, `upstream_schema.mjs`). L'arbre respecte `validateFeaturemap` (systèmes/features/feuilles non vides, ids uniques, `expected_proof{kind∈PROOF_KINDS, statement}`) et `checkDecompoDoc` (couverture, non-invention, entrées joueur, maillons F..J, grey blocks).
+- `evidence_verdict: MECHANICAL_VALIDATION_ONLY`
+- `claim_verdict: NO_CLAIM_ALLOWED` — je n'ai **pas exécuté** `check_decompo` (`permissions.run: aucun`). La conformité est établie **par inspection du code**, pas par un reçu. L'exécuteur re-lance l'oracle et signe ; « la featuremap passe » est un jugement à sa charge + HumanGate.
+
+**Reçu d'oracle cité (attendu, non exécuté par moi).** Commande que l'exécuteur doit lancer :
+`node scripts/forge/chec
+[tronqué]
+```json
+{
+  "game_id": "p1_beta",
+  "systemes": [
+    {
+      "id": "SYS_CORE_LOOP",
+      "features": [
+        {
+          "id": "FEAT_GOAL",
+          "capacites": [
+            {
+              "id": "cap_goal_terminal_hud",
+              "capacite": "Le HUD affiche en continu, dès le tick 0, un objectif de fin non vide nommant le seuil terminal (embrasement à 5000 lumiere), tant que le seuil n'est pas franchi.",
+              "source_ref": "R1",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "une sonde lit le HUD objectif au tick 0 et trouve une chaine non vide nommant le seuil terminal 5000"
+              }
+            },
+            {
+              "id": "gb_constellation",
+              "capacite": "La constellation/jauge de progression rend visible, en permanence, l'avancée de la lumiere vers le seuil terminal (lecture unique de light/seuil), et déclenche l'écran de fin à saturation.",
+              "source_ref": "R1",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "constellation/jauge qui se remplit proportionnellement a light/threshold ; a 100% elle declenche l'ecran de fin — porte de progression perceptible, pas un simple pourcentage."
+              }
+            }
+          ]
+        },
+        {
+          "id": "FEAT_STOKE",
+          "capacites": [
+            {
+              "id": "cap_stoke_input",
+              "capacite": "ENTRÉE joueur : le joueur agit sur l'affordance nommée hearth (attiser le foyer) depuis la scène/entrypoint racine ; l'entrée est réellement câblée, pas décorative.",
+              "source_ref": "R2",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "une sonde, depuis main.tscn (scene/entrypoint racine ; pour la cible web = index.html), clique l'affordance hearth 10 fois et mesure que le compteur lumiere est strictement croissant, +1 par clic"
+              }
+            },
+            {
+              "id": "cap_hearth_response",
+              "capacite": "EFFET : à chaque attisage, l'état visuel du foyer change (flash chaud bref < 200 ms) de façon détectable image à image.",
+              "source_ref": "R3",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "capture image-a-image : le pixel central du foyer change de luminance entre la frame du clic et la suivante"
+              }
+            },
+            {
+              "id": "gb_hearth",
+              "capacite": "Objet foyer : source chaude émissive centrale, cliquable, qui réagit à l'attisage par une gerbe d'éclats et incrémente le compteur (grey block gb_hearth ; porté sur R3, exigence non-joueur la plus proche, car R2 est réservée à la preuve d'entrée main.tscn).",
+              "source_ref": "R3",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "rendre un foyer chaud emissif au centre de l'ecran ; au clic, emettre une gerbe d'eclats chauds et incrementer le compteur de lumiere — nouvelle interaction, pas cosmetique."
+              }
+            },
+            {
+              "id": "cap_light_reward",
+              "capacite": "EFFET/récompense : chaque attisage crédite exactement +1 lumiere au compteur, vérifiable par égalité stricte (jamais un >=).",
+              "source_ref": "R4",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "sonde seedee : apres N clics sans achat, lumiere == N exactement (jamais un >=)"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FEAT_DECISION",
+          "capacites": [
+            {
+              "id": "cap_decision_divergence",
+              "capacite": "Point de décision significatif : deux politiques (idle vs actif) produisent des trajectoires de lumiere mesurablement distinctes à horizon fixe — le choix n'est pas cosmétique.",
+              "source_ref": "R5",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "sonde a deux trajectoires : politiques idle vs actif produisent 2 valeurs de lumiere distinctes non triviales a 300 frames"
+              }
+            },
+            {
+              "id": "gb_buy_button",
+              "capacite": "Bouton d'achat : affordance UI présentée par le point de décision, affichant le coût, or si abordable / désaturé sinon (grey block gb_buy_button ; porté sur R5, qui oppose hearth et buy_button, car R6 est réservée à la preuve d'entrée main.tscn).",
+              "source_ref": "R5",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "bouton affichant le cout courant ; etat or si abordable, desature sinon ; au clic quand abordable, declenche l'achat (changement d'etat de scene)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_ECONOMY",
+      "features": [
+        {
+          "id": "FEAT_BUY",
+          "capacites": [
+            {
+              "id": "cap_buy_input",
+              "capacite": "ENTRÉE joueur (maillon F/UNLOCK) : le joueur agit sur l'affordance nommée buy_button pour acheter un émetteur quand la lumiere suffit, depuis la scène/entrypoint racine.",
+              "source_ref": "R6",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "une sonde, depuis main.tscn (scene/entrypoint racine ; pour la cible web = index.html), clique l'affordance buy_button au premier moment ou lumiere>=15 ; le groupe visuel emetteurs passe de 0 a 1 element distinct et la production passive devient >0"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FEAT_EMITTER_PROGRESS",
+          "capacites": [
+            {
+              "id": "cap_next_goal_second_emitter",
+              "capacite": "EFFET VISIBLE (maillon G/NEXT_GOAL) : après le premier émetteur, le label HUD objectif change pour un texte nouveau (acheter un second émetteur pour densifier la production passive).",
+              "source_ref": "R7a",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "capture du HUD objectif : apres le 1er achat, le texte objectif differe textuellement de l'objectif initial (nouvel enonce : acheter un second emetteur)"
+              }
+            },
+            {
+              "id": "gb_emitter",
+              "capacite": "Objet émetteur : à l'achat, une silhouette froide apparaît autour du foyer et démarre un producteur passif visible — l'automatisation devient un objet à l'écran, pas seulement un coefficient (grey block gb_emitter ; porté sur R7a, l'exigence des émetteurs à acquérir, car R6 est réservée à la preuve d'entrée main.tscn).",
+              "source_ref": "R7a",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "a l'achat (light >= cost), faire APPARAITRE une silhouette froide luminescente autour du foyer et demarrer un filet de lumiere passif visible — nouvelle possibilite a voir et a faire."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_PROGRESSION_END",
+      "features": [
+        {
+          "id": "FEAT_NEXT_GOAL_END",
+          "capacites": [
+            {
+              "id": "cap_next_goal_embrasement",
+              "capacite": "EFFET VISIBLE (maillon G/NEXT_GOAL) : quand la production passive est active, le label HUD objectif change encore pour un texte distinct des deux précédents, nommant le seuil d'embrasement (5000 lumiere).",
+              "source_ref": "R7b",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "capture du HUD objectif : le texte a ce stade differe textuellement des deux objectifs precedents et nomme le seuil 5000"
+              }
+            }
+          ]
+        },
+        {
+          "id": "FEAT_TERMINAL",
+          "capacites": [
+            {
+              "id": "gb_end_screen",
+              "capacite": "État terminal signalé à l'écran : au franchissement de 5000 lumiere, un panneau d'embrasement plein écran avec le libellé texte 'Embrasement complet' s'affiche et neutralise l'interaction (réalise l'exigence R11).",
+              "source_ref": "R11",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "quand light >= threshold, afficher un panneau d'embrasement blanc-chaud + un libelle texte explicite ('Embrasement complet') et neutraliser l'interaction de jeu — etat terminal signale a l'ecran."
+              }
+            },
+            {
+              "id": "gb_terminal_rule",
+              "capacite": "Règle terminale déterministe seedée derrière l'écran de fin : light>=seuil déclenche l'état terminal, même seed => même tick d'embrasement (grey block gb_terminal_rule, sans exigence Prisme dédiée ; porté sur R11, l'écran de fin observable qu'elle déclenche).",
+              "source_ref": "R11",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "regle deterministe seedee : si light >= threshold alors etat terminal ; meme seed => meme tick d'embrasement, verifiable par rejeu de sonde."
+              }
+            }
+          ]
+        },
+        {
+          "id": "FEAT_AMBIENCE",
+          "capacites": [
+            {
+              "id": "cap_field_warmth",
+              "capacite": "Le fond se réchauffe continûment de l'indigo vers le violet chaud en fonction de light/5000 (borné à 1), en parallèle du compteur — lecture périphérique de la progression.",
+              "source_ref": "R14",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "capture a light=0, 2500, 5000 : la teinte de fond se rechauffe de facon monotone avec le ratio"
+              }
+            },
+            {
+              "id": "gb_quest_milestone",
+              "capacite": "Marqueur de jalon discret : au franchissement d'un seuil intermédiaire de lumiere, un repère ponctuel apparaît brièvement, distinct de la jauge continue (grey block gb_quest_milestone, sans exigence Prisme dédiée — ajouté au GM round 2 ; porté sur R14, l'autre exigence de progression-feedback SYSTEM).",
+              "source_ref": "R14",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "quand quest_milestones_reached s'incremente (franchissement d'un seuil intermediaire de light), afficher un marqueur de jalon DISCRET et ponctuel, distinct de la constellation continue (jauge light/seuil) : apparition breve puis fondu, non modal, n'occulte jamais le compteur ni le foyer — un repere de progression, pas la jauge terminale. Repond au round-2 vr_quest_milestone de l'Artiste (le marqueur avait un proof/metric mais aucune cible Builder avant ce grey_block)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_META_ASCENSION",
+      "features": [
+        {
+          "id": "FEAT_ASCENSION",
+          "capacites": [
+            {
+              "id": "cap_ascension_input",
+              "capacite": "ENTRÉE joueur (maillon I/META_LOOP) : après l'embrasement, le joueur agit sur l'affordance nommée ascension_altar ; la lumiere retombe visiblement à zéro et un glow d'ascension permanent est crédité.",
+              "source_ref": "R9",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "une sonde, depuis main.tscn (scene/entrypoint racine ; pour la cible web = index.html), clique l'affordance ascension_altar apres l'embrasement ; la lumiere repasse a 0 et un compteur de glow d'ascension passe de 0 a >0"
+              }
+            },
+            {
+              "id": "gb_ascension_altar",
+              "capacite": "Objet autel d'ascension : nouvelle zone visible et interactive apparaissant après l'embrasement, qui convertit la progression en glow d'ascension et rehausse durablement light_per_stoke (grey block gb_ascension_altar ; porté sur R10, l'effet méta de l'ascension, car R9 est réservée à la preuve d'entrée main.tscn).",
+              "source_ref": "R10",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "apres l'embrasement, proposer un autel d'ascension qui convertit la progression en glow d'ascension et rehausse durablement light_per_stoke ; nouvelle zone/ecran visible et interactive."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SYS_HUD_READABILITY",
+      "features": [
+        {
+          "id": "FEAT_HUD",
+          "capacites": [
+            {
+              "id": "gb_light_counter",
+              "capacite": "Compteur de lumiere HUD : à chasse tabulaire, plus gros élément textuel de l'écran, mis à jour chaque tick, jamais recouvert par les effets (réalise l'exigence R13).",
+              "source_ref": "R13",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "afficher un compteur HUD a chasse tabulaire, plus gros element textuel de l'ecran, mis a jour chaque tick, jamais recouvert par les effets."
+              }
+            },
+            {
+              "id": "gb_locked_glyph",
+              "capacite": "Glyphe d'état verrouillé : sur un émetteur non accessible, glyphe désaturé sans glow + condition visible ('X lumiere requise'), sans emprunter le chaud ni un halo (réalise l'exigence R12).",
+              "source_ref": "R12",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "sur un emetteur verrouille, afficher un glyphe desature sans glow + la raison visible ('X lumiere requise') ; ne jamais emprunter le chaud ni un halo."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- ⚑ [s10a-oracle-code] ORACLE DE JEU: tester la SOLVABILITÉ (un bot doit GAGNER), pas seulement les mécaniques en isolation — un jeu aux objectifs inatteignables passe tous les tests unitaires. Obligatoire s9-build.
+- ⚑ [s10a-oracle-code] JAMAIS de >= tautologique dans un test : asserter le comportement STRICT (kill tue vraiment, coins == n+1). Un >= masque une mécanique morte.
+- ⚑ [s12-verdict] Reçu code SANS evidence_path => exécution non prouvable => BLOCKED. Toujours passer evidence_path.
+- [s2.5-artbible] échec d'une tentative précédente à s2.5-artbible → ✅ RÉPARÉ: réparé à la tentative 2 (tier opus)
+- [s2.7-gm-worldscan] échec d'une tentative précédente à s2.7-gm-worldscan → ✅ RÉPARÉ: réparé à la tentative 2 (tier opus)
+- ⚑ [s10a-oracle-code] ORACLE DE JEU: tester la SOLVABILITÉ (un bot doit GAGNER), pas seulement les mécaniques en isolation — un jeu aux objectifs inatteignables passe tous les tests unitaires. Obligatoire s9-build.
+- ⚑ [s10a-oracle-code] JAMAIS de >= tautologique dans un test : asserter le comportement STRICT (kill tue vraiment, coins == n+1). Un >= masque une mécanique morte.
+- ⚑ [s12-verdict] Reçu code SANS evidence_path => exécution non prouvable => BLOCKED. Toujours passer evidence_path.
+- [manifest-e2c94deb4875eb9a] Les sources design listees « A LIRE OBLIGATOIREMENT » (content_requirements.md / Carte de Jeu C.5) et Lot D (design/calibration.md, gameplay_loop_content_contract.md, progression_contract.md, design_intent.md) sont ABSENTES du run_dir p1_beta ; aucun invariant/target n'a pu etre repris de design:calibration. — cause: Le dossier design/ n'a pas ete provisionne par l'orchestrateur pour ce run ; les grandeurs ont ete derivees du worldscan/story_bible/art_bible + justification de design explicite tracee, sans source calibration a reprendre. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-2871ad005f5a9003] Mon game_master round 1 declarait quest_loop avec une transformation_perceptible 'un marqueur de jalon distinct s'affiche au franchissement' mais n'exposait AUCUN grey_block ni artist_requirement pour ce marqueur — le Builder n'avait donc aucune cible pour le construire ; l'Artiste l'a decouvert et a cree vr_quest_milestone en round 2. — cause: une transformation_perceptible de boucle encodee uniquement en proof/metric (proof_quest / quest_milestones_reached) sans grey_block correspondant : schema-valide mais mecaniquement orpheline cote Builder ; corrige round 2 par gb_quest_milestone (UI/FEEDBACK) + ar_quest_milestone. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-59ead0f6e7710365] L'artefact design/content_requirements.md (C.5 Gameplay Map), declare mandatory-read et 'injecte en amont' par le contrat s2.5-artbible, est absent du run_dir p1_beta (aucun dossier design/, aucun fichier *content_req*). — cause: L'executeur/driver n'a pas materialise ni injecte content_requirements.md a l'etape s2.5 de ce run full_content. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-c9a692b24e48f3db] echec de la tentative 1 a s2.5-artbible -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-f96a9786fe00f7fa] La bible round 1 ne couvrait pas l'autel d'ascension ni le marqueur de jalon requis par le modele de monde du GM materialise ensuite (asset requis manquant). — cause: En full_content l'art bible precede gm_worldscan ; l'ART round 1 ne peut pas anticiper les entites introduites par le GM. La round 2 de la boucle de completion mutuelle est le mecanisme prevu pour fermer ce trou, exerce ici. -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s4-archi:p1_beta-20260830-run1:1

@@ -1,0 +1,67 @@
+# Structure imposée D — V2 — RATIFIÉE Pierre 2026-08-30 (sas de pré-enregistrement RUN 2)
+# Ratification exacte : économie et mappings v2 inchangés · tick_ms: 100 · budget_ticks_mesure:
+# 72000 (porté de 36000 — raison MÉTHODOLOGIQUE : à 95,4 % de budget consommé par un bot
+# quasi-optimal, la mesure « temps-jusqu'à-la-fin » n'était pas robuste aux différences de
+# stratégie des bots) · comptabilité milli-R entiers · clic_x4 = cumul séquentiel · fin S5 =
+# 1 000 000 R cumulés · pas d'état d'échec artificiel.
+# CAVEAT PIERRE (verbatim) : « La simulation de bureau établit la cohérence de dimensionnement
+# rapportée, mais elle ne devient pas une preuve de solvabilité runtime. Celle-ci restera une
+# obligation de la future paire. »
+# V1 (structure_imposee.yaml) reste l'archive du pilote, INCHANGÉE. Aucun thème/DA/personnage ici.
+
+structure:
+  core_loop: >
+    action manuelle → +gain_clic R → dépenser R en générateurs → production automatique
+    de R par tick → dépenser R en générateurs/améliorations → atteindre des seuils qui
+    débloquent la suite. Boucle de fond : arbitrage « acheter maintenant vs épargner ».
+  resources:
+    - R (unique ressource primaire, visible en permanence)
+
+  # ── CORRECTION 3 (R-entier vs production fractionnaire, incohérence détectée) ──
+  comptabilite: >
+    Toute la comptabilité interne est en MILLI-R ENTIERS (1 R = 1000 mR). La production
+    « 0.1 R/s » vaut exactement 100 mR/s ; au tick de 100 ms cela fait 10 mR/tick, ENTIER.
+    L'invariant comptable est exact par construction (aucun flottant dans l'état) :
+    solde_mR == Σ(gains_clic_mR) + Σ(production_mR) − Σ(dépenses_mR), égalité exacte.
+    L'affichage montre floor(solde_mR / 1000) — règle d'affichage, jamais de comptabilité.
+
+  # ── CORRECTION 2 (tick_rate jamais fixé, grandeur manquante détectée) ──
+  temps:
+    tick_ms: 100                 # 10 ticks logiques/s — pas fixe, déterministe
+    budget_ticks_mesure: 72000   # 2 h simulées (ratifié Pierre 2026-08-30, marge de mesure ×2)
+                                 # (temps-jusqu'à-S5 exprimé en ticks de 100 ms)
+
+  actions:
+    - clic_manuel: "+gain_clic (modifiable par améliorations) ; refus jamais applicable"
+    - acheter_generateur_i: "visible dès déblocage, grisé si R insuffisant — refus observable, état inchangé"
+    - acheter_amelioration_j: "même règle de refus observable"
+  progression:
+    generateurs: "4 tiers (G1..G4), chacun produit prod[i] R/s"
+    ameliorations: "6 — cf. mapping EXPLICITE ci-dessous (correction 1)"
+  unlocks: >
+    5 seuils sur le TOTAL CUMULÉ de R produit (jamais le solde) :
+    S1 révèle G2 · S2 révèle G3 · S3 révèle G4 · S4 révèle les améliorations ×2 prod ·
+    S5 = condition de FIN (victoire observable). Les 2 améliorations de CLIC sont
+    disponibles dès le début (précision nouvelle — trou de déblocage détecté).
+  economy:
+    cout_generateur: "cout_base[i] × 1.12^(n_possedes_du_tier)"
+    cout_base: [15, 100, 1100, 12000]
+    prod: [0.1, 1, 8, 47]        # R/s par unité (comptés en mR entiers, cf. comptabilite)
+    gain_clic_initial: 1
+
+    # ── CORRECTION 1 (mapping améliorations↔coûts jamais apparié, ambiguïté détectée) ──
+    ameliorations_mapping:
+      - {id: clic_x2,  effet: "gain_clic ×2 (depuis la valeur COURANTE)", cout: 100,    dispo: "début"}
+      - {id: clic_x4,  effet: "gain_clic ×2 (encore — cumul séquentiel : base×4 au total)", cout: 5000, dispo: "début", requiert: clic_x2}
+      - {id: prod_g1_x2, effet: "prod G1 ×2", cout: 500,    dispo: "S4"}
+      - {id: prod_g2_x2, effet: "prod G2 ×2", cout: 1000,   dispo: "S4"}
+      - {id: prod_g3_x2, effet: "prod G3 ×2", cout: 30000,  dispo: "S4"}
+      - {id: prod_g4_x2, effet: "prod G4 ×2", cout: 200000, dispo: "S4"}
+    regles: "aucun revenu hors clic+générateurs ; aucune dépense hors achats (pas de vente)"
+  dimensioning:
+    seuils_cumules: [100, 1000, 12000, 150000, 1000000]
+    fin: >
+      VICTOIRE quand total cumulé ≥ 1_000_000 R ; PAS d'état d'échec (fidèle au genre) —
+      divergence des bots mesurée au temps-jusqu'à-S5 (en ticks) et aux seuils atteints
+      dans budget_ticks_mesure, jamais par une défaite artificielle.
+    invariant_comptable: "cf. comptabilite (milli-R entiers, égalité exacte par construction)"

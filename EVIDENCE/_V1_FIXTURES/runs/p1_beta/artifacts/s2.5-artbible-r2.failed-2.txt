@@ -1,0 +1,65 @@
+All verified against reality. Summary of what the files actually show:
+
+- **`check_artbible.mjs` → `VERDICT ART_BIBLE: OK`** (my work-discipline self-check; the driver re-runs it for the gating receipt). Advisory resolution `0 OK / 11 BLOCKED / 11` — the **legitimate** `resolution_stats.blocked` (catalogue has no "cosmic luminous incremental" style), exactly as my `asset_rules` section predicts. This is *not* `coverage.missing`; coverage is complete, which is why the verdict is OK.
+- All **8 heritage/decision sections** present (l.198–365); each `heritage_*` cites real `worldscan:`/`story_bible:` addresses.
+- Both GM answers resolve against `gm_worldscan.json`; all 9 GM `artist_requirements` map 1:1 to my `visual_requirements`.
+
+**Genuine assessment of the two answers (Pierre: a motivated refusal is still acceptable):**
+
+- **q_art_001 (blocking)** — CLOSED. The GM decided the terminal state is a **threshold on the unique resource `light` (≥5000), never a distinct milestone-entity** (`core_progression`, `progression_threshold_light`, `gb_terminal_rule`, all resolvable). This resolves my exact ambiguity: `vr_progress_constellation` stays single — which my bible v0.2 already reflects. The GM additionally created `gb_quest_milestone` + `ar_quest_milestone` to give my round-2 `vr_quest_milestone` a Builder target it lacked.
+- **q_art_002 (non-blocking)** — CLOSED. The GM confirmed `content_requirements.md` is genuinely absent, **declared** rather than compensated by invention, out of scope for both ART/GM stations, correctly routed to fog. This resolves my uncertainty without inventing anything.
+
+No open question forces a refusal. I re-declare **`ready_for_freeze: true`** — honestly, not by injection. The `content_requirements.md` absence remains a real fog→HumanGate item, which I surface below; it is orthogonal to the art bible's own freeze-readiness.
+
+---
+
+## RAPPORT FINAL — s2.5-artbible-r2 (re-déclaration) / p1_beta-20260830-run1
+
+**Périmètre de cette passe (dispatch `:2`).** Ronde de re-déclaration décidée par Pierre (`design_intent.md`, HumanGate 2026-08-30). AUCUNE modification de `art_bible.md` ni `asset_requests.json` — les deux sont inchangés depuis la réconciliation round 2. Seul acte : relire les réponses réellement présentes dans `design_questions.json`, les confronter à `gm_worldscan.json`, et re-déclarer mon état.
+
+**software_verdict: OK** — appuyé par l'oracle non-LLM `check_artbible.mjs` (sortie mesurée : `VERDICT ART_BIBLE: OK`) et par la résolution effective de chaque ancre citée dans `gm_worldscan.json` (q_art_001 → `core_progression`/`progression_threshold_light`/`gb_terminal_rule` ; réconciliation → `meta_loop`/`gb_ascension_altar`/`ar_ascension_altar`/`quest_loop`/`gb_quest_milestone`/`ar_quest_milestone` ; q_art_002 → `world_interpretation`). Toutes vérifiées présentes par lecture directe du fichier.
+
+**evidence_verdict: MECHANICAL_VALIDATION_ONLY** — mon exécution de `check_artbible.mjs` est une discipline de travail SANS autorité de preuve ; le reçu faisant foi est celui que le DRIVER produit (`evidence/check_artbible_<run_id>.json`, `executed_by: driver`), fiche 3.
+
+**claim_verdict: NO_CLAIM_ALLOWED** — je ne certifie aucune qualité esthétique (`style_tag_match` compare des tags, jamais des pixels) ; « les answers ferment mes questions » est mon jugement de conformité structurelle appuyé sur des ancres résolvables, pas un claim d'oracle sur le fond design.
+
+**Asset requests produits (10, inchangés round 2) + statut de résolution (advisory, jamais jugé) :**
+
+| id | entity_role | style | résolution catalogue |
+|---|---|---|---|
+| req_core_hearth | other | ember-glow | BLOCKED (légitime) |
+| req_emitter_unit | item | luminous-vector | BLOCKED (légitime) |
+| req_spark_burst | effect | ember-glow | BLOCKED (légitime) |
+| req_light_counter | ui | hud-neon | BLOCKED (légitime) |
+| req_buy_button | ui | hud-neon | BLOCKED (légitime) |
+| req_progress_constellation | ui | luminous-vector | BLOCKED (légitime) |
+| req_end_screen | ui | luminous-vector | BLOCKED (légitime) |
+| req_locked_glyph | icon | hud-neon | BLOCKED (légitime) |
+| req_ascension_altar | environment | luminous-vector | BLOCKED (légitime) |
+| req_quest_milestone | ui | hud-neon | BLOCKED (légitime) |
+| req_field_background (required:false) | environment | deep-space-flat | BLOCKED (légitime) |
+
+`0 OK / 11 BLOCKED / 11` = `resolution_stats.blocked` LÉGITIME (catalogue incomplet pour le style cosmique lumineux). Ce n'est PAS `coverage.missing` — la couverture besoin↔requête est complète (verdict OK). À rapporter tel quel, jamais assoupli.
+
+**FOG → HumanGate (Pierre) :**
+1. **Conformité esthétique réelle** des assets qui seront résolus — hors capacité de tout oracle non-LLM ; jugement humain.
+2. **`design/content_requirements.md` (Gameplay Map C.5) absent du run_dir** — confirmé par ART et GM, déclaré, hors périmètre des stations ART/GM. À trancher : une Gameplay Map amont est-elle attendue pour `full_content`, ou son absence est-elle l'état nominal de cette topologie ? (Reste un finding du pilote, non effacé.)
+3. **Catalogue sans style incremental lumineux** — les 11 requêtes résoudront BLOCKED ; une ingestion catalogue est une gate Pierre explicite.
+
+**SKIPPED_VALIDATION :**
+- item: exécution gatante de `check_artbible.mjs` · périmètre: reçu faisant foi · statut: non fait (par conception) · raison: `permissions.run` = auto-contrôle seul ; le DRIVER re-exécute et produit le reçu `executed_by: driver`.
+- item: vérité de fond des réponses GM (que la décision design soit *bonne*, pas seulement résolvable) · périmètre: q_art_001/q_art_002 · statut: non fait (hors capacité oracle) · raison: aucun oracle ne juge la pertinence d'une décision design ; j'ai vérifié la RÉSOLVABILITÉ et la COHÉRENCE des ancres, pas la sagesse du choix — rattrapage aval red-team/HumanGate.
+- item: résolution catalogue OK · périmètre: 11 requêtes · statut: non applicable · raison: advisory par contrat, jamais un critère pass/fail ; BLOCKED bien formé = résultat légitime.
+
+**RETURN LINEAGE —**
+- `why_task_existed:` { `problem:` ma déclaration round-2 `ready_for_freeze:false` était antérieure aux réponses formelles du GM ; l'état ART était périmé et non re-évalué contre les answers matérialisées · `oracle:` non transmis comme oracle — activation par décision humaine (Pierre, `design_intent.md`, canal HumanGate) · `root_cause:` topologie 2-rondes sans créneau ART après l'étape GM (finding du pilote, conservé) · `action_reason:` seule une re-lecture des answers réelles + re-déclaration ART peut lever ou confirmer le HALT, sans inventer de succès } · `result:` réponses q_art_001 (blocking) et q_art_002 (non-blocking) relues et confrontées à `gm_worldscan.json` ; toutes deux fermées sur ancres résolvables ; `check_artbible.mjs` = OK ; bible/requests inchangées ; ART re-déclaré `ready_for_freeze:true` · `proof:` `node scripts/forge/check_artbible.mjs … → VERDICT ART_BIBLE: OK` + lecture directe de `design_questions.json` (answers `by:GM`) et de `gm_worldscan.json` (ancres présentes) · `learning:` une boucle de complétion mutuelle à 2 piliers a besoin d'un créneau de re-déclaration du pilier amont APRÈS le pilier aval, sinon sa dernière déclaration fige un état antérieur aux réponses qu'il attendait — la re-déclaration HumanGate est le correctif exercé ici · `next_reason:` chaîne causale FERMÉE côté ART : mes deux questions sont answered et résolvables, l'oracle est OK, aucun défaut résiduel ne persiste ; le passage au design_freeze relève du driver/HumanGate, pas d'une action ART supplémentaire.
+
+Bloc de re-déclaration (append-only, round 3 — n'efface pas le HALT round-2 conservé en preuve ; ART re-déclaré après lecture des answers, GM cité à son état réel vérifié `ready_for_freeze:true`) :
+
+```design_questions
+{"schema_version": 1, "round": 3, "questions": [], "declarations": {"ART": {"round": 3, "ready_for_freeze": true, "open_to_gm": 0}, "GM": {"round": 2, "ready_for_freeze": true, "open_to_art": 0}}}
+```
+
+SKIPPED_VALIDATION: aucun autre item — les trois ci-dessus sont assumés et explicités.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "La topologie 2-rondes de la boucle de completion mutuelle n'a pas de creneau de re-declaration ART apres l'etape GM : la derniere declaration ART (round 2 ready_for_freeze:false) a fige un etat anterieur aux reponses GM materialisees ensuite, forcant une ronde HumanGate hors-boucle pour re-declarer.", "root_cause": "Absence de creneau ART post-GM dans la topologie de la boucle (finding du pilote, conserve dans les preuves)."}

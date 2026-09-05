@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Collect Runner R2</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #0d0f14; height: 100%; overflow: hidden; }
+  #wrap { display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; gap: 8px; }
+  canvas { background: #1b1f2a; border: 2px solid #333; image-rendering: pixelated; }
+  #help { color: #9aa0a8; font: 13px monospace; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="canvas" width="800" height="400"></canvas>
+  <div id="help">Fleches/QSD : gauche/droite | Espace/Haut/W : saut | R : rejouer</div>
+</div>
+<script type="module">
+import { CollectRunnerGame, generateLevels } from './game.mjs';
+import { createKeyboardInput } from './input.mjs';
+import { renderFrame } from './render.mjs';
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function seedFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('seed');
+  if (raw !== null && raw !== '' && !Number.isNaN(Number(raw))) return Number(raw);
+  return Math.floor(Math.random() * 0xffffffff);
+}
+
+function totalCoinsFor(seed) {
+  return generateLevels(seed).reduce((sum, lvl) => sum + lvl.coins.length, 0);
+}
+
+let seed = seedFromUrl();
+let game = new CollectRunnerGame({ seed });
+window.__game = game;
+
+const keyboard = createKeyboardInput(window);
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyR') {
+    game = new CollectRunnerGame({ seed });
+    window.__game = game;
+  }
+});
+
+let lastTs = null;
+const MAX_FRAME_MS = 100; // clamp huge gaps (tab backgrounded) before they even reach step()
+
+function frame(ts) {
+  if (lastTs === null) lastTs = ts;
+  const dtMs = Math.min(MAX_FRAME_MS, ts - lastTs);
+  lastTs = ts;
+
+  game.step(dtMs, keyboard.state);
+  renderFrame(ctx, game.view(), { totalCoins: totalCoinsFor(seed), totalLevels: 3 });
+
+  requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

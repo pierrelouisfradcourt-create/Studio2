@@ -1,0 +1,33 @@
+{
+  "pass": true,
+  "verdict": "OK",
+  "findings": [],
+  "coverage": {
+    "checked": true,
+    "missing": [],
+    "satisfied": [
+      "vr_click_target",
+      "vr_resource_icon",
+      "vr_generator_g1",
+      "vr_generator_g2",
+      "vr_generator_g3",
+      "vr_generator_g4",
+      "vr_upgrade_badges",
+      "vr_victory_screen",
+      "vr_buy_panel",
+      "vr_click_feedback",
+      "vr_threshold_unlock_fx",
+      "vr_background",
+      "vr_affordability_meter",
+      "vr_yield_preview",
+      "vr_rate_indicator",
+      "vr_autoprod_pulse"
+    ]
+  },
+  "resolution_stats": {
+    "ok": 0,
+    "blocked": 16,
+    "total": 16
+  },
+  "status": "MEASURED"
+}

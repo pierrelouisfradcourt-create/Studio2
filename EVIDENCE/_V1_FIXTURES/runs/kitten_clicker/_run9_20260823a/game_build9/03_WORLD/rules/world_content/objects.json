@@ -1,0 +1,7 @@
+{
+  "objects": [
+    { "id": "obj_food_bowl",       "name": "Gamelle de croquettes", "effect": "attire les chatons" },
+    { "id": "obj_scratching_post", "name": "Arbre a chat",           "effect": "occupe les chatons" },
+    { "id": "obj_cushion_bed",     "name": "Coussin moelleux",       "effect": "repose les chatons" }
+  ]
+}

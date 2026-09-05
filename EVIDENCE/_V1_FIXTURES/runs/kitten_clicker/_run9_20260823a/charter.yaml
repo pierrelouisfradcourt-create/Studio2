@@ -1,0 +1,72 @@
+objectif: Produire un petit clicker de chatons mignons sur Godot 4.6.3 desktop, jouable
+  plusieurs heures, dont la boucle de progression (clic -> ronrons -> chatons -> production
+  automatique -> améliorations -> nouveaux chatons/lieux) et la méta-progression (prestige)
+  sont cohérentes, observables à l'écran, et prouvées solvables par un bot déterministe.
+hors_scope:
+- Aucun multijoueur, réseau, classement en ligne ou sauvegarde cloud
+- Aucune monétisation, microtransaction, publicité ou achat intégré
+- Aucune cible autre que Godot 4.6.3 desktop (pas de build web, mobile ni console)
+- 'Aucun rendu 3D : le jeu reste en 2D'
+- Aucun système de combat, PNJ hostile, ou game-over par échec du joueur
+- 'Aucune photo ni asset de chat réel : identités visuelles originales ou procédurales
+  uniquement'
+- Aucune génération de contenu narratif ou d'assets par LLM au runtime du jeu
+criteres_succes:
+- 'La boucle A->J est prouvée : chaque maillon (clic, ronrons, achat chaton, production
+  auto, amélioration, déblocage lieu, quête, prestige) produit un changement de possibilité
+  mesurable, jamais un simple texte ni une sortie de LLM'
+- 'Un bot déterministe atteint le 3e palier de progression en un nombre de ticks fini
+  : solvabilité prouvée par exécution, pas par un test unitaire en isolation'
+- La courbe de paliers porte au moins 3 valeurs distinctes non triviales (règle de
+  variance ratifiée Pierre 2026-07-21)
+- Chaque compétence déclarée (production automatique, amélioration, déblocage de lieu,
+  prestige) est réellement reconnaissable à l'exécution, pas seulement déclarée dans
+  un document
+- Les sorties du world scan (conditions_victoire, conditions_defaite, objectifs_joueur,
+  progression, boucles_recompense) sont consommées en aval (Grey Blocks, WireMap,
+  Builder), pas seulement présentes dans le document (sonde check_amont_traversal.mjs,
+  advisory)
+- Les oracles non-LLM du profil (code, archi, wiremap, standard, mutation, solvabilité)
+  sont verts et le verdict agrégé est signé HMAC et re-vérifié
+actions_interdites:
+- Aucun git commit ni push sans go explicite de Pierre (HumanGate décide merge/reject/freeze)
+- 'Ne toucher à aucune lane protégée : src/, autopilot.py, scripts/studioV2/, tests/'
+- 'Aucun oracle LLM-as-judge : les oracles de preuve restent déterministes non-LLM'
+- 'Aucune assertion tautologique (avec >=) dans les tests : asserter le comportement
+  strict (coins == n+1, un kill tue vraiment)'
+- Aucun appel à une API Anthropic externe
+- Ne jamais inventer ni supposer reference_jeu ou plateforme_cible sans source Pierre
+  traçable
+- 'Aucun champ à définir, vide ou évasif dans les artefacts : un flou non résolu remonte
+  en fog HumanGate, il ne passe pas'
+- 'Ne jamais passer un reçu de code sans evidence_path : exécution non prouvable =>
+  BLOCKED'
+- 'Aucun rendu Godot en --headless pour la capture : la fenêtre GPU est obligatoire
+  (le driver dummy rend une texture nulle)'
+plateforme_cible: 'Godot 4.6.3, desktop, fenêtre GPU réelle (rendu on-screen, jamais
+  --headless qui produit une texture nulle et aucun PNG). Source : design_intent.md
+  (Pierre, 2026-08-21).'
+reference_jeu: 'Cookie Clicker (boucle incrémentale, progression, paliers) + Neko
+  Atsume (collection de chatons, attractivité, identité mignonne). Choix de Pierre,
+  jamais de l''agent — source tracée : lab/forge_runs/kitten_clicker/design_intent.md
+  (2026-08-21) et la TÂCHE CONCRÈTE du dispatch kitten_clicker-20260823a.'
+criteres_demo:
+- M1 — Le compteur de ronrons augmente visiblement à chaque clic sur la pelote centrale
+- M2 — Un chaton apparaît à l'écran après son achat (sprite visible, pas seulement
+  un compteur qui change)
+- 'M3 — La production continue sans clic : le compteur monte seul dès qu''au moins
+  un chaton est présent'
+- M4 — Acheter une amélioration fait monter le taux de production affiché à l'écran
+- M5 — Un bot atteint un palier de progression sans intervention humaine (boucle jouée
+  jusqu'à ADVANTAGE)
+- (a) Au moins 6 chatons NOMMÉS, chacun avec une identité visuelle distincte par rareté,
+  visibles à l'écran
+- '(b) Au moins 2 lieux : le refuge de départ + au moins 1 lieu débloqué par la méta-progression'
+- (c) Au moins 3 objets distincts présents et utilisables dans le jeu
+- (d) Au moins 3 petites quêtes dont les objectifs sont visibles à l'écran
+- (e) Un son distinct pour clic, achat, déblocage et prestige, déclenché par l'événement
+  correspondant (audio procédural accepté ; preuve = volet 07_TESTS/oracle/core_audio.gd
+  avec journal des déclenchements)
+- (f) Un feedback visuel au clic (animation, particules, ou rebond de la pelote)
+- (g) Une courbe de paliers portant au moins 3 valeurs distinctes (règle de variance)
+- (h) Un bot atteint le 3e palier en un nombre de ticks fini

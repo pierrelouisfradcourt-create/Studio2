@@ -1,0 +1,91 @@
+objectif: 'Produire un jeu incremental/clicker web JOUABLE (HTML+JS canvas), créé
+  de zéro sous games/p1_beta, dont TOUTE la structure (boucles, ressources, actions,
+  progression, déblocages, économie, dimensionnement, condition de fin) est INVENTÉE
+  PAR LA CHAÎNE elle-même — jamais fournie. C''est le bras LIBRE (L) de la paire pilote
+  L/D de RUN 2 : variable manipulée = l''AUTEUR DE LA STRUCTURE. Fermer la chaîne
+  full_content jusqu''au verdict signé + verify_run AUTHENTIQUE. La qualité ludique
+  n''est PAS jugée par ce run (donnée M7, jugement humain en aveugle) : l''objectif
+  est la fermeture MESURABLE de la chaîne, pas un jeu « bon ».
+
+  '
+hors_scope:
+- 'Invention des GRANDEURS structurelles (coefficients, coûts, seuils, comptes, économie,
+  dimensionnement) : DÉLÉGUÉE à l''aval (s2 world scan, design, s4 architecture) —
+  pas décidée au charter. Le charter EXIGE leur provenance N2, il ne les FIXE pas.'
+- Décision d'architecture technique (s4) et world scan (s2).
+- 'Jugement de la QUALITÉ ludique / du fun : donnée M7, jugement humain en aveugle.'
+- 'Réponse à la question expérimentale complète (≥2 paires) : cette paire est PILOTE
+  — elle mesure la mesurabilité du protocole, elle ne valide pas « libre > dirigé
+  ».'
+- 'Copie de Cookie Clicker : aucun asset, nom, contenu, ni valeur numérique repris.'
+- Toute consultation de lab/forge_briefs/p1_alpha/** ou d'une valeur du bras dirigé
+  (D).
+- Écriture hors games/p1_beta ; lanes protégées (tests/, src/).
+criteres_succes:
+- 'Chaîne full_content complète : verdict signé + verify_run rend AUTHENTIQUE.'
+- Structure entièrement documentée avec provenance agent (N2) — aucune grandeur inventée
+  en aval sans source tracée (mesure M2 satisfaite).
+- design_questions / r2 / design_freeze exercés normalement.
+- Chaque asset_request.id est resolved-avec-fichier OU blocked-justifié (check_asset_consumption).
+- 'check_artbible exécuté par le driver (executed_by: driver).'
+- 's11 red-team indépendant réel (qwen, independent: true) ; LM Studio down => HALT
+  sans fallback.'
+- 'Bots de mesure : temps-jusqu''à-la-fin et jalons à budget de ticks fixe, à variance
+  NON triviale (≥2 valeurs distinctes non triviales — règle de variance des métriques).'
+- 'SOLVABILITÉ prouvée : au moins une sonde déterministe ATTEINT réellement la fin
+  observable (pas un test unitaire en isolation, pas un >= tautologique).'
+actions_interdites:
+- NE JAMAIS consulter lab/forge_briefs/p1_alpha/** ni aucune valeur structurelle du
+  bras D (isolement — Pierre 2026-08-30). Une contamination invalide la paire.
+- NE JAMAIS reprendre de Cookie Clicker un asset, nom, contenu ou valeur numérique.
+- NE JAMAIS inventer une grandeur structurelle en aval sans source tracée au charter
+  (N2 / M2).
+- 'NE JAMAIS livrer un idle infini : la fin doit être ATTEIGNABLE et OBSERVABLE.'
+- NE JAMAIS statuer la solvabilité par un test en isolation ni par un >= tautologique
+  — asserter le comportement STRICT ; une sonde doit FINIR (leçon s10a pré-mortem).
+- NE JAMAIS émettre un reçu code sans evidence_path (=> BLOCKED, leçon s12 pré-mortem).
+- 'NE JAMAIS substituer un fallback à s11 si LM Studio est down : HALT.'
+- 'NE JAMAIS de LLM-as-judge : oracles déterministes non-LLM ; red-team advisory,
+  jamais juge.'
+- NE JAMAIS écrire hors games/p1_beta ni toucher tests/ ou src/.
+plateforme_cible: 'web — HTML + JS (canvas). Socle sonde N1 : déterminisme seedé,
+  window.__game exposé, harnais complet à la racine de games/p1_beta. [SOURCE PIERRE
+  : project_brief.yaml `cible`]
+
+  '
+reference_jeu: 'Cookie Clicker — grammaire de genre incremental/clicker UNIQUEMENT,
+  jamais une copie (aucun asset, nom, contenu ni valeur numérique repris). [SOURCE
+  PIERRE 2026-08-30 : project_brief.yaml `references_autorisees`]
+
+  '
+criteres_demo:
+- L'action cœur (clic/action) produit à l'écran un compteur de ressource qui AUGMENTE
+  visiblement — la boucle est observable, pas seulement dans window.__game.
+- Au moins un déblocage/achat modifie OBSERVABLEMENT l'écran (nouvelle affordance
+  visible OU taux de production visiblement changé) — progression observable.
+- Le jeu atteint et SIGNALE À L'ÉCRAN un état terminal (écran/marqueur de fin) dans
+  un budget de ticks fixe — la fin observable exigée par le brief.
+- Même seed => même déroulé (déterminisme seedé, vérifiable par rejeu d'une sonde).
+joueur_cible: 'Jeu-SONDE, pas produit expédié. Consommateurs réels : (1) bots de mesure
+  déterministes (temps-jusqu''à-la-fin, jalons à budget de ticks fixe) ; (2) évaluateur
+  humain en aveugle (M7). Public notionnel DÉRIVÉ du genre fixé : joueur d''incremental/clicker
+  web. Dérivé du genre Pierre + finalité expérimentale du brief — non inventé, non
+  stipulé nominativement par Pierre.
+
+  '
+condition_de_victoire: 'Le jeu DOIT définir un état terminal OBSERVABLE et ATTEIGNABLE
+  : une sonde déterministe seedée l''atteint dans un budget de ticks fixe, et il est
+  signalé À L''ÉCRAN. Idle infini INTERDIT (non prouvable). La FORME exacte de la
+  fin (ressource/seuil/jalon déclencheur) est DÉLÉGUÉE (structure = variable expérimentale)
+  : le charter exige l''EXISTENCE et l''OBSERVABILITÉ d''une fin atteignable, il n''en
+  fixe pas la valeur.
+
+  '
+perimetre_v1: 'V1 minimal JOUABLE : une boucle incremental/clicker complète et fermée
+  — action(s) → ressource(s) visible(s) → au moins un déblocage/achat changeant observablement
+  l''état → progression → état terminal observable atteignable. Socle sonde web N1
+  à la racine de games/p1_beta. La structure interne (quelles ressources, quels coûts,
+  quelle économie, quel dimensionnement) est inventée en aval avec provenance agent
+  tracée (N2) — hors de ce contrat de cadrage.
+
+  '

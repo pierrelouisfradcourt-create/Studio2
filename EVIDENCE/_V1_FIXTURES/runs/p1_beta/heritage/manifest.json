@@ -1,0 +1,10 @@
+{
+  "run_id": "p1_beta-20260830-run1",
+  "ts": "2026-08-30T14:47:38.516618+00:00",
+  "files": {
+    "art_bible.md": "5db4a35184e5ccfe0407c34d464fdc1aa8cb14699afd4780b5d27002f0b63e02",
+    "gm_worldscan.json": "bdeafd186175efbae9d4df9b39315caec597a7e7d95ca26aed4ef199d990b8b9",
+    "design_questions.json": "b1f396918ef962474f5f9f39c4c6b9761f22832f5ef26bd5bff90e2ed3dbed63"
+  },
+  "at": "design_freeze"
+}

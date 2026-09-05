@@ -1,0 +1,195 @@
+{
+  "requests": [
+    {
+      "id": "req_core_hearth",
+      "entity_role": "other",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "ember-glow",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_emitter_unit",
+      "entity_role": "item",
+      "purpose": "gameplay",
+      "type": "sprite",
+      "style": "luminous-vector",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_spark_burst",
+      "entity_role": "effect",
+      "purpose": "feedback",
+      "type": "vfx",
+      "style": "ember-glow",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_light_counter",
+      "entity_role": "ui",
+      "purpose": "ui",
+      "type": "icon",
+      "style": "hud-neon",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_buy_button",
+      "entity_role": "ui",
+      "purpose": "ui",
+      "type": "icon",
+      "style": "hud-neon",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_progress_constellation",
+      "entity_role": "ui",
+      "purpose": "feedback",
+      "type": "sprite",
+      "style": "luminous-vector",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_end_screen",
+      "entity_role": "ui",
+      "purpose": "feedback",
+      "type": "sprite",
+      "style": "luminous-vector",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_locked_glyph",
+      "entity_role": "icon",
+      "purpose": "ui",
+      "type": "icon",
+      "style": "hud-neon",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    },
+    {
+      "id": "req_field_background",
+      "entity_role": "environment",
+      "purpose": "decoration",
+      "type": "sprite",
+      "style": "deep-space-flat",
+      "references": [],
+      "constraints": {
+        "format": "2D",
+        "runtime": "html",
+        "license_allowed": ["CC0-1.0", "MIT", "CC-BY-4.0", "CC-BY-3.0"],
+        "genre": ["incremental", "clicker", "idle"],
+        "max_size_kb": null
+      },
+      "acceptance_tests": [
+        { "check": "resolved" },
+        { "check": "format_runtime_match" },
+        { "check": "style_tag_match" },
+        { "check": "license_in_allowlist" }
+      ]
+    }
+  ],
+  "no_assets_needed": false,
+  "reason": null
+}

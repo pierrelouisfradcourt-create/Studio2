@@ -1,0 +1,19 @@
+{
+  "round": 2,
+  "status": {
+    "ART": "READY",
+    "GM": "READY"
+  },
+  "open_questions": {
+    "ART_to_GM": 0,
+    "GM_to_ART": 0
+  },
+  "blocking_gaps": 0,
+  "answered": 2,
+  "asked": 2,
+  "shared_design_pct": 100,
+  "ready_for_freeze": {
+    "ART": true,
+    "GM": true
+  }
+}

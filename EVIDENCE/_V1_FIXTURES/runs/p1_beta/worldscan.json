@@ -1,0 +1,116 @@
+{
+ "games": [
+  {
+   "game": "Cookie Clicker",
+   "sources": [
+    {
+     "url": "https://www.playcookieclicker.com/cookie-clicker-strategy/",
+     "type": "article",
+     "timestamp": null
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Cookie_Clicker",
+     "type": "wiki",
+     "timestamp": null
+    },
+    {
+     "url": "https://www.playcookieclicker.com/",
+     "type": "screenshot",
+     "timestamp": null
+    }
+   ],
+   "loops": {
+    "minute_1": "Manual clicking accumulates first cookies; player purchases Cursor (first automation building). Feedback loop: number increases, next purchase unlocks.",
+    "minute_10": "Exponential scaling via Cursor+Grandma synergies. Golden Cookies (random events worth x7 CPS) reward attention. Early minigame unlocks. Passive income becomes visible.",
+    "hour_5": "~10+ factories active. Grandmapocalypse event system introduces risk/reward mechanics. Sugar Lumps (24-hour cooldown resource) unlock building levels and minigames. Garden minigame introduces genetics.",
+    "endgame": "Ascension cycles (voluntary reset for permanent Heavenly Chip bonuses). Frenzy+Click Frenzy+Building Bonus combo chains (expert play). 637 achievements = infinite collection. Pantheon customization (late prestige system)."
+   },
+   "objectives": [
+    {
+     "mode": "vanilla",
+     "has_win_state": false,
+     "victory_condition": null,
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Infinite accumulation + achievement collection (637 total) + optimize combo chains + discover hidden mechanics"
+    }
+   ],
+   "retention_answer": "Exponential progression creates eternal sense of power. Sugar Lumps (24h cycle) + 637 achievements provide daily check-ins and infinite long-term goals. Golden Cookies reward frequent returning. Seasonal events (Christmas, Halloween) create calendar-based reasons to play. Wrinkler/Grandmapocalypse narrative provides discovery-based engagement. Prestige resets offer satisfying 'restart with advantage' cycles every ~10-20 hours."
+  },
+  {
+   "game": "Clicker Heroes",
+   "sources": [
+    {
+     "url": "https://blog.clickerheroes.com/clicker-heroes-players-guide-strategy/",
+     "type": "article",
+     "timestamp": null
+    },
+    {
+     "url": "https://blog.clickerheroes.com/why-clicker-games-are-so-popular-insights-from-clicker-heroes-and-top-titles/",
+     "type": "article",
+     "timestamp": null
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Incremental_game",
+     "type": "wiki",
+     "timestamp": null
+    }
+   ],
+   "loops": {
+    "minute_1": "Direct clicking defeats monsters, earning gold. Purchase first hero (Treebeast) = automation begins. Feedback: monster health decreases, gold increases, hero levels up.",
+    "minute_10": "Multiple heroes synergize. Early upgrades increase damage. First ascension (reset for permanent Hero Souls) teaches the prestige cycle. Strategy emerges: which hero to prioritize for cost/benefit.",
+    "hour_5": "Zones 200-2000 progression. Ancient farming (permanent bonuses across runs). Gild management (concentrate multipliers on primary hero). Ascension loops: farm → reach wall → ascend → spend souls → farm again.",
+    "endgame": "Zone 10,000+. Transcension timing (mega-reset for Ancient Souls, cross-transcension prestige). Outsider upgrades (meta-bonuses). Optimization becomes mathematical: when to ascend, which Outsider to upgrade, sequence of builds."
+   },
+   "objectives": [
+    {
+     "mode": "climb",
+     "has_win_state": false,
+     "victory_condition": null,
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Reach maximum zone; optimize ascension timing; collect Ancients; transcend for long-term prestige"
+    }
+   ],
+   "retention_answer": "Prestige/ascension cycle creates satisfying 'mini-victory' every session (farm → hit wall → reset with +10% bonus). Long-term progression visible across runs (Hero Soul growth, zone progression 1→200→2000→10000+). Idle mechanic enables casual play without active attention. Each Ancients purchase (+1% per level) provides incremental sense of progress. Transcension (mega-reset) creates secondary long-term loop. Mathematical optimization appeals to theorycrafting players."
+  },
+  {
+   "game": "Kittens Game",
+   "sources": [
+    {
+     "url": "https://store.steampowered.com/app/1097410/Kittens_Game/",
+     "type": "article",
+     "timestamp": null
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Incremental_game",
+     "type": "wiki",
+     "timestamp": null
+    },
+    {
+     "url": "https://www.incrementaldb.com/game/kittens-game",
+     "type": "article",
+     "timestamp": null
+    }
+   ],
+   "loops": {
+    "minute_1": "Kittens assign to jobs (Worker). Catnip resource production begins. First buildings (Hut, Farm) unlocked via purchases. Feedback: catnip number increases; new buildings/job assignments appear.",
+    "minute_10": "First technologies unlock (Agriculture). Seasons introduce variable production (spring/summer=+yield; winter=-70% yield risk). Resource diversification (wood, ore added). Assignation strategy emerges: balance worker vs job roles.",
+    "hour_5": "Deep tech tree (50+ technologies). Multiple resources and cross-resource crafting (wood+ore→metal). Management complexity rises. Winter survival risk: harsh weather can starve village if overexpanded. Strategic building = survival challenge.",
+    "endgame": "Space buildings, space techs, exotic matter loops. Timeloop mechanic (rogue-like reset for prestige bonuses). Narrative progression: civilization leaves planet. Late-game focused on optimization and exploring prestige resets."
+   },
+   "objectives": [
+    {
+     "mode": "village_survival",
+     "has_win_state": true,
+     "victory_condition": "Reach space age (major long-term milestone); maintain non-zero kitten population across winter",
+     "has_defeat_state": true,
+     "defeat_condition": "Catnip reaches zero; kitten population dies (game can end if overexpanded before harsh winter)",
+     "player_goal": "Progress tech tree; survive seasonal cycles; expand village; eventually colonize space"
+    }
+   ],
+   "retention_answer": "Survivability (threat of starvation) creates tension absent in pure idle games, requiring active seasonal management. Winter cycles force periodic check-ins (player must prepare 3-4 seasons in advance). 50+ resource web rewards discovery and mastery. Tech tree provides structured long-term progression goals. Prestige resets (timeloop) offer replay value and 'new start with advantage' cycles. Narrative arc (leaving planet) provides thematic long-term engagement. Village management depth appeals to strategy players."
+  }
+ ],
+ "advisory": true
+}
