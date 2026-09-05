@@ -239,6 +239,15 @@ def test_lesson_rejects_unknown_status(tmp_path):
 # Compatibilité : anciennes leçons de méthode (pré-schéma)
 # =====================================================================================
 
+_HG1_REASON = (
+    "HumanGate HG1 (Pierre, 2026-09-05, option A) : témoin historique du corpus de méthode V1 "
+    "(EVIDENCE/reports/forge_error_journal.jsonl · error_journal/_global_.jsonl) — corpus V1 NON "
+    "migré, décision de migration NON prise ; de plus conftest.py:_isolate_evidence_writes "
+    "redirige ces journaux pour tout module. Ne pas réintroduire les anciennes lessons pour "
+    "verdir ce test.")
+
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=_HG1_REASON)
 def test_legacy_global_lessons_reads_real_corpus():
     """Corpus RÉEL, lecture seule (mission, preuve #6) : les 3 leçons de méthode
     connues (`project=_global_`, `run_id=_method_`) du monolithe historique restent
@@ -350,6 +359,7 @@ def test_premortem_unknown_current_generation_flags_everything(tmp_path):
     assert lm.MARKER_GENERATION_MISMATCH in line
 
 
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=_HG1_REASON)
 def test_premortem_legacy_lessons_are_marked_generation_mismatch(tmp_path):
     """Les leçons legacy (corpus réel) apparaissent, TOUJOURS marquées à réexaminer
     — jamais silencieusement traitées comme 'même génération'."""
