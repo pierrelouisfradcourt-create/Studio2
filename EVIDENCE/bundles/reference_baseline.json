@@ -546,14 +546,14 @@
   "forge/wiremap_nav.mjs": "5f0eb2ff6e02f113e0255020637b2214180c0078da809d21ac67413133fa95c1",
   "forge/wiremap_nav.test.mjs": "4ad84b6596d1f3dacaf90749bc3fb63ae756c99415f06ff8d90d6af6788b0b5e"
  },
- "git_head": "9be78d226727fcc09cd9496514c04049dc27cc5c",
+ "git_head": "7a0e6dffe1b612ac5c95eece08aab036f4e692ed",
  "protected": [
   "GAMES/pong/**",
   "forge/**",
   "control_plane/registry.py",
   ".claude/hooks/**"
  ],
- "recorded_at": "2026-09-05T11:54:28.499Z",
+ "recorded_at": "2026-09-05T11:54:30.014Z",
  "schema": "forge.reference_guard.baseline.v1",
  "unreadable": []
 }
