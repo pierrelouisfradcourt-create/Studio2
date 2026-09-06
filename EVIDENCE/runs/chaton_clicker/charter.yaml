@@ -1,0 +1,78 @@
+objectif: 'Creer de zero, sous GAMES/chaton_clicker/, un jeu jouable du genre cookie
+  clicker (idle/clicker) ou les cookies sont remplaces par des chatons : le joueur
+  clique un chaton pour produire une ressource, achete des producteurs qui la generent
+  sans clic (tick deterministe), debloque des ameliorations et progresse par paliers
+  jusqu''a une forme de prestige. Le jeu doit etre JOUABLE par un joueur reel avec
+  ses seules entrees souris/clavier, pas seulement solvable par un canal interne (lecon
+  V1 kitten_clicker, run 6 du 2026-08-22 : 20/20 solvable mais injouable).'
+plateforme_cible: 'web/HTML : page HTML+JS unique, logique metier en module .mjs testable
+  hors navigateur, RNG seede, tick deterministe (pas de Date.now dans la logique),
+  exposition window.__game, actions DOM-only, determinisme reproductible par hash
+  (socle N1). Aucun binaire Godot ni Blender.'
+reference_jeu: 'Cookie Clicker (Orteil, 2013) comme reference de GENRE uniquement
+  (clic vers ressource, producteurs passifs, ameliorations, paliers/prestige), pas
+  une source a recopier ; le theme remplace les cookies par des chatons. Source Pierre
+  2026-09-05 : « fait moi un cookie clicker, remplace les cookie par des chatons ».'
+hors_scope:
+- 'Toute lignee non-web : aucun moteur Godot ni Blender requis ou utilise (lignee
+  Godot V2 non configuree sur le poste, forge/godot.config.json absent) ; un recours
+  silencieux a Godot est un ecart a signaler.'
+- 'Multijoueur, backend serveur, comptes, sauvegarde cloud ou reseau : hors V1.'
+- 'Toute ecriture hors des surfaces V2 declarees (GAMES/chaton_clicker/ pour le jeu,
+  EVIDENCE/runs/chaton_clicker/ pour le run) : lab/, scripts/forge/ et games/ sont
+  interdits.'
+- 'Recopie du code ou des assets de Cookie Clicker : seul le genre est repris.'
+- 'Regles normatives N5 (separation concepteur/instrumenteur) et N6 (fidelite charter
+  vers build) : non mecanisees pour ce run, donc non couvertes (fog HumanGate) ; ne
+  pas les pretendre couvertes.'
+- 'Perimetre de l''etape s0 elle-meme : ne produit que charter.yaml ; pas d''architecture
+  (etape 4), pas de world scan (etape 2), pas de code, pas de touche a src/ ni aux
+  surfaces de test declarees.'
+criteres_succes:
+- Le jeu se charge dans un navigateur et une session complete est jouable a la souris
+  (clic sur le chaton, achat d'un producteur, achat d'une amelioration, prestige)
+  sans tutoriel externe.
+- 'Boucle joueur complete : le clic produit la ressource ; au moins un producteur
+  la genere sans clic via un tick deterministe ; au moins une amelioration modifie
+  le taux ; au moins un palier/prestige est atteignable.'
+- 'loop_check : les exigences du Prisme couvrent les maillons de la boucle joueur
+  (PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL,
+  REPEAT, META_LOOP, ADVANTAGE) ; un maillon manquant est un FAIL rapporte, jamais
+  absorbe.'
+- Solvabilite prouvee par un bot-joueur qui n'utilise QUE les affordances DOM du joueur
+  (clics) et la lecture du DOM, jamais un appel direct a l'economie interne.
+- 'Tous les artefacts dans les surfaces V2 : run_dir sous EVIDENCE/runs/chaton_clicker/,
+  jeu sous GAMES/chaton_clicker/.'
+- Determinisme reproductible par hash ; production passive testable hors navigateur.
+- Verdict signe HMAC produit avec la cle V2 (forge/.forge_key) ET re-verifie authentique
+  par verify_run, pas seulement present.
+actions_interdites:
+- 'Verdir par contournement : reecrire un oracle pour le rendre vert, ou un volet
+  e2e qui rend exit 0 / PASS sans reellement piloter un navigateur (lecon manifest-3a1dde).'
+- Modifier un test preexistant a la passe sans gate Pierre explicite (regime create_allowed_modify_denied)
+  ; creer un test reste permis.
+- Recours silencieux au moteur Godot ou Blender au lieu de la lignee web.
+- Ecrire un artefact hors des surfaces V2 declarees (lab/, scripts/forge/, games/,
+  src/, surfaces de test declarees).
+- Utiliser Date.now() ou une horloge murale dans la logique metier au lieu du tick
+  deterministe.
+- Prouver la solvabilite via un appel a l'economie interne au lieu des affordances
+  DOM du joueur.
+- Signer avec une cle heritee de V1 au lieu de forge/.forge_key.
+- 'En cas d''indisponibilite de LM Studio, se replier silencieusement vers une autre
+  source : le run doit HALT/BLOCKED.'
+- Renseigner plateforme_cible ou reference_jeu depuis une supposition d'agent sans
+  source Pierre tracable, ou pretendre couvert un fog HumanGate.
+criteres_demo:
+- Un chaton cliquable est visible a l'ecran ; cliquer dessus incremente un compteur
+  de ressource visible et le chaton reagit visuellement au clic.
+- Apres l'achat d'au moins un producteur, le compteur de ressource augmente tout seul,
+  sans clic, sous les yeux du joueur.
+- Un bouton d'achat de producteur devient accessible quand la ressource suffit, et
+  son cout affiche augmente visiblement apres chaque achat.
+- Une amelioration achetable est visible et son effet se voit apres achat (le taux
+  de production ou le gain par clic augmente a l'ecran).
+- 'Un palier / prestige observable est atteignable : il transforme visiblement l''etat
+  et affiche un avantage persistant.'
+- Toute grandeur observee par un critere (ressource, taux, cout, objectif) est lisible
+  directement dans le DOM.

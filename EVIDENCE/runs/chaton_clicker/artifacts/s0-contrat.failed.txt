@@ -1,0 +1,147 @@
+I have enough to ground the work. Key facts established:
+
+- **SCHEMA.md** confirms the contract discipline (3 états d'un champ ; NO_CLAIM_ALLOWED ; vocabulaire OK/FAIL/BLOCKED ; SKIPPED_VALIDATION obligatoire).
+- **Project Bible** : n'existe pas (`EVIDENCE/runs/chaton_clicker/PROJECT_BIBLE.md` absent) — donc pas de décisions validées/abandonnées à respecter au-delà du brief.
+- **Brief** : source de commande unique, lu intégralement. Genre + thème = Pierre. `cible` web/HTML = **hypothèse agent déclarée en fog**. Cookie Clicker = référence de genre **nommée par Pierre**.
+- **Oracle `check_charter`** : nommé dans les `criteres_sortie` du brief, mais sa source n'est pas lisible (lecture seule, pas de recherche fichier) et `run: aucun` — je ne peux pas l'exécuter. Tâche = **texte seul, aucun fichier écrit** : `charter.yaml` n'est donc pas produit ici et l'oracle n'est pas passé.
+
+Voici le contrat produit — **en texte, aucun fichier écrit**, conformément à la tâche concrète.
+
+---
+
+# CONTRAT PRODUIT — chaton_clicker (proposition texte s0, NON écrite sur disque)
+
+> Chaque champ porte sa **source de vérité**. Ce qui n'a pas de source Pierre explicite est marqué **FOG_HUMANGATE** et non revendiqué comme conforme (cf. garde-fou : `reference_jeu` et `plateforme_cible` sont un design-intent, jamais une invention d'agent).
+
+```yaml
+objectif: >
+  Créer de zéro, sous GAMES/chaton_clicker/, un jeu du genre « cookie clicker » où les
+  cookies sont remplacés par des chatons : le joueur CLIQUE un chaton pour produire une
+  ressource, ACHÈTE des producteurs qui la génèrent sans clic, DÉBLOQUE des améliorations
+  et PROGRESSE par paliers jusqu'à une forme de prestige. Le jeu doit être réellement
+  JOUABLE par un joueur humain avec ses seules entrées souris/clavier — pas seulement
+  « solvable » par un canal interne (leçon V1 kitten_clicker, run 6 2026-08-22 :
+  25 exigences à la voix passive → jeu « solvable 20/20 » mais injouable).
+  # source: Pierre 2026-09-05 (verbatim « fait moi un cookie clicker, remplace les cookie
+  #         par des chatons. via notre méthode de forge ») ; clause de jouabilité = agent,
+  #         dérivée de la leçon V1 mesurée.
+
+hors_scope:
+  - Multijoueur, réseau, compte utilisateur, sauvegarde cloud ou backend serveur.
+  - Toute lignée Godot ou Blender : aucun binaire Godot/Blender requis ni utilisé
+    (lignée Godot V2 non configurée sur le poste — forge/godot.config.json absent).
+  - Reprise du design du projet V1 kitten_clicker (lignée Godot, 9 runs) comme source :
+    projet DISTINCT, jamais présenté comme son replay.
+  - Contenu au-delà de la boucle minimale jouable prouvée (le « minimal jouable » borne
+    le V1 ; le volume exact de producteurs/améliorations/paliers reste une liberté déléguée).
+  - Tutoriel externe : le jeu doit être jouable sans lui.
+  - Couverture des règles N5 (séparation concepteur/instrumenteur) et N6 (fidélité
+    charter→build) : NON mécanisées pour ce run — non revendiquées couvertes (FOG_HUMANGATE).
+  # source: brief non_delegue + contraintes.project_specific + provenance.fog_n5/fog_n6.
+
+criteres_succes:  # = criteres_sortie du brief (autorité non déléguée)
+  - Le run s'exécute dans les surfaces V2 : run_dir sous EVIDENCE/runs/chaton_clicker/, jamais lab/.
+  - Le jeu est écrit sous GAMES/chaton_clicker/, jamais games/ ni ailleurs.
+  - charter produit par s0 et validé par check_charter.
+  - prisme.json, featuremap.json, blueprint et wiremap.json produits et validés par leurs oracles amont.
+  - Chaque ligne de wiremap porte un `couvre` NON VIDE citant l'id EXACT d'une capacité de featuremap.json.
+  - loop_check : les exigences du Prisme couvrent les maillons de la boucle joueur
+    (PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL, REPEAT,
+    META_LOOP, ADVANTAGE) — un maillon manquant est un FAIL rapporté, jamais absorbé.
+  - Preuves s10 produites (s10a-oracle-code avec e2e/mutation/solvabilité ; s10b-oracle-archi ; s10c-oracle-wiremap).
+  - Solvabilité prouvée par un bot-joueur qui n'utilise QUE les affordances DOM (clics) et la
+    lecture du DOM — jamais un appel direct à l'économie interne.
+  - Verdict signé HMAC produit ET re-vérifié authentique par verify_run (pas seulement présent).
+  - Clé de signature = celle de V2 (forge/.forge_key), jamais une clé héritée de V1.
+  - Le jeu se charge dans un navigateur et une session complète est jouable à la souris sans tutoriel externe.
+  - LM Studio indisponible ⇒ HALT/BLOCKED, sans repli silencieux vers une autre source.
+  - Aucun artefact écrit hors des surfaces V2 déclarées (lab/, scripts/forge/, games/ ⇒ FAIL).
+  # source: brief criteres_sortie. NOTE provenance : ces critères ne sont PAS ratifiés Pierre
+  #         pour CE projet (calqués sur v2_breakout_slice + ajouts agent) → à ratifier HumanGate.
+
+actions_interdites:
+  - Écrire hors des surfaces V2 déclarées (lab/, scripts/forge/, games/) — FAIL.
+  - Recourir à Godot ou Blender, silencieusement ou non.
+  - Produire un « vert » par contournement / verdissement (« 0 failed » n'est pas l'objectif).
+  - Prouver la solvabilité via un appel direct à l'économie interne au lieu des affordances DOM.
+  - Utiliser une clé de signature héritée de V1 au lieu de forge/.forge_key.
+  - Employer Date.now() (ou toute horloge murale) dans la logique de jeu — tick déterministe requis.
+  - Se replier silencieusement sur une autre source si LM Studio est indisponible.
+  - Modifier un test préexistant à la passe sans gate Pierre explicite (régime create_allowed_modify_denied).
+  - Prétendre couvertes les règles N5/N6 non mécanisées.
+  # source: brief criteres_sortie + contraintes.techniques + non_delegue ; règle tests.md ;
+  #         MEMORY feedback-go-explicite-et-xfail-temoins.
+
+plateforme_cible: "web/HTML — page HTML+JS unique, RNG seedé, logique métier en module .mjs
+  testable hors navigateur, window.__game exposé, actions DOM-only, déterminisme par hash (socle N1)"
+  # FOG_HUMANGATE — provenance: HYPOTHÈSE AGENT, non dite par Pierre. Retenu faute de choix
+  #   Pierre tracé, parce que web est la seule lignée exercée par V2 et que la lignée Godot
+  #   n'est pas configurée (forge/godot.config.json absent, mesuré 2026-09-05).
+  #   → Pierre doit CONFIRMER web/HTML ou RENVOYER vers Godot. Non revendiqué conforme.
+
+reference_jeu: "Cookie Clicker (Orteil, 2013) — référence de GENRE UNIQUEMENT
+  (clic → ressource, producteurs passifs, améliorations, paliers/prestige). Pas une source
+  à recopier ; le projet V1 kitten_clicker (Godot) n'en est PAS une source de design."
+  # source: Pierre 2026-09-05 — « fait moi un cookie clicker ». Choix de genre EXPLICITE de Pierre. ✓
+
+criteres_demo:  # critères OBSERVABLES (lisibles dans le DOM / visibles à l'écran, jouables souris)
+  - Un chaton est VISIBLE à l'écran et CLIQUABLE à la souris.
+  - Un compteur de ressource est VISIBLE et AUGMENTE à chaque clic sur le chaton.
+  - Au moins un producteur est ACHETABLE et, une fois acheté, fait augmenter la ressource
+    SANS clic (production passive observable dans le compteur).
+  - Au moins une amélioration est ACHETABLE et son effet est OBSERVABLE (clic ou production accru).
+  - Au moins un palier / déblocage est OBSERVABLE : du nouveau contenu apparaît à l'écran au franchissement d'un seuil.
+  - Une forme de prestige est ATTEIGNABLE et son effet est OBSERVABLE après reset.
+  - La session est jouable du démarrage jusqu'à cette démo à la SEULE souris, sans tutoriel externe.
+  # source: genre Pierre (cookie clicker → se joue en cliquant) ; spécifiques observables
+  #   dérivés par l'agent de ce genre + leçon V1 kitten_clicker (jouable ≠ solvable).
+  #   Le genre est Pierre ; la liste observable précise est agent → à ratifier HumanGate.
+```
+
+Aucun champ n'est « à définir », vide ou évasif. Le seul champ dont l'**autorité** manque est `plateforme_cible` : il est **rempli** (le schéma l'exige non vide) mais **remonté en FOG_HUMANGATE**, jamais présenté comme conforme.
+
+---
+
+# RAPPORT FINAL
+
+**software / evidence / claim — séparés.**
+
+- **software_verdict :** *aucun* — l'oracle `check_charter` n'a **pas** été exécuté. Raisons mécaniques : (1) tâche = « texte seul, aucun fichier écrit » → `charter.yaml` n'est pas produit sur disque, il n'y a rien à valider ; (2) `permissions.run: aucun` ; (3) la source de l'oracle n'est même pas lisible (lecture seule par chemin, outils de recherche désactivés). Je ne peux donc pas produire un `software_verdict` OK/FAIL/BLOCKED sur la validité de schéma.
+- **evidence_verdict :** *sans objet* — aucune validation mécanique n'a tourné.
+- **claim_verdict : `NO_CLAIM_ALLOWED`** — je ne peux pas auto-certifier que le charter est schéma-valide sans passer `check_charter`. Le contenu texte ci-dessus est une proposition ; sa validité de schéma sera établie quand l'étape d'écriture de `charter.yaml` fera tourner l'oracle.
+
+**Oracle cité :** `check_charter` (validateur de schéma déterministe non-LLM, nommé dans `criteres_sortie` du brief). Non exécuté ici (voir SKIPPED_VALIDATION).
+
+**Flous du prompt — résolus vs remontés :**
+
+Résolus (source Pierre traçable) :
+- `objectif` — dérivé du verbatim Pierre (intention brief).
+- `reference_jeu` = Cookie Clicker (genre) — **choix Pierre explicite** 2026-09-05.
+- Genre + thème (chatons), lignée web imposée côté exclusion Godot/Blender — non délégués, tracés brief.
+
+Remontés en **FOG_HUMANGATE** (jamais inventés / jamais revendiqués conformes) :
+- **`plateforme_cible` (web/HTML)** — hypothèse agent, **sans source Pierre**. Pierre doit confirmer web ou renvoyer vers Godot. C'est exactement le fog du pré-mortem `manifest-0204e25b924ba5a0`.
+- **`criteres_demo[]`** — le genre est Pierre, mais la liste observable précise est dérivée par l'agent ; à ratifier.
+- **`criteres_succes[]`** — non ratifiés par Pierre pour CE projet (calqués sur v2_breakout_slice + ajouts agent).
+- **N5 / N6** — non mécanisées ce run (provenance.fog_n5/fog_n6) ; non revendiquées couvertes.
+
+**RÈGLE DE RESTITUTION :** chaque champ « résolu » cite sa source Pierre ; chaque champ sans oracle/sans source Pierre est en fog, pas en claim. Aucune affirmation de conformité n'est émise sans oracle.
+
+**SKIPPED_VALIDATION :**
+- item: exécution de l'oracle `check_charter` sur `charter.yaml` · où: étape s0 chaton_clicker · statut: **non fait** · raison: tâche « texte seul, aucun fichier écrit » (pas de fichier à valider) + `run: aucun` + source de l'oracle non lisible.
+- item: ratification Pierre de `plateforme_cible` et des `criteres_succes[]`/`criteres_demo[]` · où: HumanGate s0 · statut: **non fait** · raison: hors autorité de l'agent — remonté en fog, décision Pierre.
+
+**RETURN LINEAGE (FORGE_CAUSAL_LINEAGE_V2 §3) :**
+- **why_task_existed :**
+  - `problem:` la Forge V2 n'a pas de contrat produit formalisé pour chaton_clicker ; les tentatives s0 précédentes ont échoué (exécuteur `claude -p` returncode=1 : workspace non « trusted », dialogue de confiance non accepté) et une tentative antérieure a rempli `plateforme_cible` sans source Pierre.
+  - `oracle:` aucun oracle n'a détecté l'activation — activation par décision humaine (dispatch Forge s0-contrat, marqueur FORGE_DISPATCH:s0-contrat:chaton-clicker-20260906:1).
+  - `root_cause:` deux causes distinctes — (a) infrastructure : `claude -p` bloqué par le dialogue de confiance du workspace non accepté ; (b) design-intent : la lignée Godot V2 n'est pas configurée sur le poste (forge/godot.config.json absent), donc `plateforme_cible` reste un fog non tranché par Pierre.
+  - `action_reason:` cette passe formalise le contrat en TEXTE (tâche concrète = texte seul), remplit les 7 champs sans « à définir » et isole proprement le seul champ sans autorité (`plateforme_cible`) en fog au lieu de l'inventer.
+- **result :** contrat produit en texte, 7 champs remplis, 0 « à définir », 0 vide ; `reference_jeu` porte une source Pierre traçable ; `plateforme_cible` remonté en FOG_HUMANGATE ; aucun fichier écrit.
+- **proof :** aucune commande exécutée (`run: aucun`, Bash désactivé). Ancrage documentaire : `EVIDENCE/briefs/chaton_clicker/project_brief.yaml` (lu) et `forge/contracts/SCHEMA.md` (lu). La validité de schéma n'est PAS prouvée ici — voir SKIPPED_VALIDATION.
+- **learning :** le schéma `check_charter` exige `plateforme_cible` NON VIDE, alors même que ce champ n'a pas de source Pierre pour chaton_clicker — tension structurelle : l'oracle de forme force un remplissage que l'autorité ne couvre pas. Le geste correct est de remplir la valeur en la marquant fog HumanGate, et de ne jamais émettre de claim de conformité dessus. Resservira à toute étape s0 tant que la lignée Godot reste non configurée.
+- **next_reason :** le niveau supérieur (HumanGate/Pierre) DOIT agir : trancher `plateforme_cible` (confirmer web/HTML ou renvoyer Godot), et ratifier `criteres_succes[]`/`criteres_demo[]` avant que s0 n'écrive `charter.yaml` et ne passe `check_charter`. Cause non résolue persistante (fog plateforme + trust dialog pour l'exécuteur) ⇒ la chaîne n'est PAS fermée ici.
+
+SKIPPED_VALIDATION: (renseigné ci-dessus — non « aucun »)
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "plateforme_cible est exigee non vide par check_charter mais n'a aucune source Pierre pour chaton_clicker ; remplir la case revient a inventer une autorite absente", "root_cause": "lignee Godot V2 non configuree sur le poste (forge/godot.config.json absent), donc web/HTML reste une hypothese agent non tranchee par Pierre"}

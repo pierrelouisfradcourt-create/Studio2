@@ -1,0 +1,54 @@
+## Rapport final — s9-build chaton_clicker (tentative 4)
+
+### 1. SOFTWARE
+
+**Root cause de cette tentative** : la tentative 3 avait rendu `run-oracle.mjs` vert (4/4 volets), mais le gate mutation **réel** exécuté par `s10a-oracle-code` a ensuite mesuré `mutation=FAIL` : 13 mutants survivants sur 33, `mutation_triage.json` resté `[]`. Ce ne sont pas des défauts de forme — ce sont 13 lignes réellement exécutées (bornes d'index de `acheterProducteur`, compteurs internes `achatsCount`/`caressesCount`/`prestigeCount`/`_cloneSalt`, fréquence exacte de caresse dans `comparerPolitiques`, contenu exact des textes d'objectif, garde partielle `!win || !doc`, re-masquage du panier après renouveau) dont l'effet n'était vérifié par aucune assertion.
+
+**Correction** : chacune des 13 lignes a été retracée précisément (recoupement du reçu `survivors[]`/`per_file` avec le code source ligne par ligne — détail complet dans `BUILDER_REPORT.md`), puis comblée par un test qui trace le chemin muté, jamais une assertion générique. Un seul changement de production : `comparerPolitiques()` expose `caressesActif` (compteur déjà existant, simplement remonté) pour rendre la fréquence de caresse observable sans dupliquer la logique dans le test.
+
+**Fichiers touchés** (tous dans l'ownership `logic`/harnais builder) : `logic.mjs` (1 retour enrichi), `logic.test.mjs` (13 tests neufs/étendus), `BUILDER_REPORT.md`. `GAMES/chaton_clicker/tests/logic.test.mjs` (surface protégée) **non touché**.
+
+### 2. RECHERCHE (§2bis)
+
+`knowledge_base/search.mjs "mutation testing survivant test cible"` consulté — aucune brique réutilisable ; le pattern KB `pat-forge-test_green_via_wrong_causal_path` confirme le diagnostic (un test vert par chemin différent de celui qu'il prétend vérifier).
+
+### 3. EVIDENCE
+
+- `node --test logic.test.mjs properties.test.mjs` : **50/50 pass** (oracle `node --test`).
+- `node run-oracle.mjs` réexécuté en entier : 4/4 volets bloquants verts (unit+propriétés, solvabilité DOM-only PASS, e2e navigateur réel PASS, reuse_ratio mesuré 0.000).
+- **Auto-vérification du gate mutation** (Python direct refusé par la permission de cette session, comme en tentative 3) : réimplémentation fidèle des règles exactes de `forge/mutation.py` en Node (script jetable hors repo), exécutée contre les 4 fichiers réels avec la suite réelle → **33/33 tués (100%)**, réparti 21/9/3/0 par fichier — identique au reçu officiel `mutation_chaton-clicker-20260906.json`.
+
+### 4. VERDICTS
+
+- **software_verdict** : OK — `run-oracle.mjs` intégralement réexécuté, vert.
+- **software_verdict (mutation gate)** : NO_CLAIM_ALLOWED côté officiel — auto-vérification à 100%, mais seule l'exécution réelle de `forge/mutation_proof.py` par `s10a-oracle-code` fait foi.
+- **evidence_verdict** : MECHANICAL_VALIDATION_ONLY.
+- **claim_verdict** : NO_CLAIM_ALLOWED pour le score mutation officiel.
+
+### 5. SKIPPED_VALIDATION
+
+| Item | Périmètre | Statut | Raison |
+|---|---|---|---|
+| Exécution réelle du gate mutation officiel (`python -m forge.mutation`) | logic/render/input/main.mjs | Non exécuté | Permission Python refusée cette session aussi ; contournée par auto-vérification fidèle, jamais présentée comme équivalente |
+| Nettoyage artefacts orphelins tentative 2 | GAMES/chaton_clicker/ | Non fait | `delete: aucun` ; un fichier est en outre sous surface protégée |
+| Oracle Godot/assets 3D | — | Non applicable | Projet web/HTML |
+
+### 6. WireMap
+
+`EVIDENCE/runs/chaton_clicker/wiremap.json` non modifié — déjà correct (17/17 capacités couvertes, s10c-oracle-wiremap déjà PASS). Aucune fonction nouvelle introduite, seul le retour de `comparerPolitiques` (R9) a été enrichi.
+
+---
+
+## RETURN LINEAGE (FORGE_CAUSAL_LINEAGE_V2 §3)
+
+**why_task_existed:** `problem:` s10a-oracle-code a mesuré mutation=FAIL (13/33 survivants, triage vide) sur la sortie tentative 3. `oracle:` `forge.mutation_proof` (receipt, `gate.passed=false`, lu dans state.json avant écriture). `root_cause:` 13 lignes exécutées sans assertion dépendant de leur effet précis — la suite tentative 3 vérifiait des propriétés agrégées plausibles, pas les effets exacts. `action_reason:` chaque trou retracé à sa ligne exacte puis comblé par une assertion spécifique à sa mutation.
+
+**result:** 13/13 trous comblés, auto-vérifié 33/33 (100%) ; run-oracle.mjs reste vert (50/50, solvabilité PASS, e2e PASS).
+
+**proof:** sorties complètes citées en section 3 (`node --test`, `node run-oracle.mjs`, script d'auto-vérification, `node --check`).
+
+**learning:** un test de propriété agrégée (« diff > 0 », « textes distincts ») ne tue pas les mutations internes à sa mécanique — il faut un test par effet observable précis en plus ; le mutation testing rend ce trou visible là où la lecture du code ne le montre pas.
+
+**next_reason:** le score officiel reste à établir par `s10a-oracle-code` (seule exécution qui fait foi). Une divergence avec l'auto-vérification serait une découverte légitime de cette étape, pas un signe de fabrication — aucun triage n'a été inventé.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "13 mutants sur 33 survivaient au gate mutation officiel car des lignes reellement executees (bornes d'index, compteurs internes, frequence exacte de caresse, contenu exact des textes d'objectif, garde de nullite partielle, re-masquage du panier) n'avaient aucune assertion dependante de leur effet precis", "root_cause": "la suite de tests verifiait des proprietes agregees plausibles sans jamais asserter l'effet observable exact de chaque ligne mutee, un trou que la couverture de lignes ne revele pas mais que le mutation testing rend mecaniquement visible"}

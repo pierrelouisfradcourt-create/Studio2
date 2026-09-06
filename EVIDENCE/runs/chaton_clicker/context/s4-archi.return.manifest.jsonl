@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s4-archi", "git_head": "6c10c536532dec5cbb29e807e5052563656cd9ba", "hmac": "2a32c4f12c86315cb75fcd7ff7acb1eaee9c060b5b5394c1e7a448fba97a8cee", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "chaton-clicker-20260906", "schema": "forge.context_manifest.v1", "ts": 1788647452.4422123}

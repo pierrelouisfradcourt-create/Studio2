@@ -1,0 +1,341 @@
+{
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "decision": "HUMANGATE_READY",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "execution_proof_attestation": "self",
+ "execution_proof_note": "auto-attesté (chemin B headless) : les événements spawn_authorized/spawn_executed de ce run ont été écrits par le driver qui exécute les spawns, aucun observateur tiers ne les a constatés",
+ "git_head": "6c10c536532dec5cbb29e807e5052563656cd9ba",
+ "hmac": "69fabda619aaf5b0a5d996ed382701cb146913d1a15abc1ba300f1b01813135a",
+ "humangate_flags": [
+  "standard non vérifiée (oracle sauté dans ce profil)",
+  "red-team dégradé: reviewer indépendant n'a pas tourné (fallback)"
+ ],
+ "is_game": true,
+ "nonce": "d84eba3323a3585d1cd10f980ce06eb3",
+ "oracles": {
+  "archi": {
+   "detail": {
+    "debordements_ownership": {
+     "checked": false,
+     "items": []
+    },
+    "deps_interdites_violées": [],
+    "modules_sans_test": [],
+    "passed": true
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "archi",
+   "run_id": "chaton-clicker-20260906",
+   "status": "OK",
+   "ts": 1788650866.424291
+  },
+  "code": {
+   "detail": {
+    "art_response_dead": false,
+    "asset_consumption": {
+     "checked": false,
+     "reason": "aucun asset_requests.json produit par la chaîne amont",
+     "status": "SKIPPED"
+    },
+    "e2e": {
+     "passed": true,
+     "raisons": []
+    },
+    "economy_bypass_dead": false,
+    "evidence_seal": {
+     "evidence_path": "EVIDENCE/runs/chaton_clicker/evidence/oracle_chaton_clicker.log",
+     "reason": "FLUX_D_EXPLOITATION_IGNORE_PAR_GIT",
+     "sealed": false
+    },
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "logic_files_source": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\EVIDENCE\\runs\\chaton_clicker\\wiremap.json",
+    "loop_dead": false,
+    "measure_tick": {
+     "checked": false,
+     "reason": "Brief sans 'mesure.tick_ms' valide — aucune contribution au gate (non-régression des profils/briefs existants)",
+     "status": "SKIPPED"
+    },
+    "mutation": {
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "categories_exclues": [],
+       "code_sha256": {
+        "e2e.mjs": "02e43ed80913de7ce6854c56dbea1ba7de33964ac4be51b43af74715cd4c39d8",
+        "input.mjs": "5afe3949194df7d86e16d670cd07fc64c1fd59a2013274d08a7ea63c7b38023d",
+        "logic.mjs": "c54526c1ec7ab74d6b6162fecc2e1ddd926a0ef5a6fc3f19acd6a6d755c681ba",
+        "logic.test.mjs": "ffabfd87f363a113f8317912971a86903c7e6dbd179c0387711baaa5142f889f",
+        "main.mjs": "c882e5cf6c64bb53f46535b8b20ec604fbef32cd569e7beece462c9f7b85757c",
+        "properties.test.mjs": "7b1f649615308b64c91deed6ab33f5c655c329e7d4d0dde8b3dbbf44ab751dbc",
+        "render.mjs": "78449cf401ea2a2b527213a1b935d71032a1dbd9b8b65738976339f1f2aa71fb",
+        "run-oracle.mjs": "140371861eef9f2b75378d32f195577c622770bacdc9e4e81f23af55a6859c6a"
+       },
+       "compteurs_par_categorie": {
+        "sans_categorie": {
+         "fichiers": 4,
+         "jugee": true,
+         "killed": 33,
+         "total": 33
+        }
+       },
+       "game_dir": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\GAMES\\chaton_clicker",
+       "gate_checked": true,
+       "killed": 33,
+       "logic_files": [
+        "input.mjs",
+        "logic.mjs",
+        "main.mjs",
+        "render.mjs"
+       ],
+       "mutation_exception": false,
+       "survivants_non_tries": [],
+       "survived": 0,
+       "test_argv": [
+        "node",
+        "--test",
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "test_files_scelles": [
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "total": 33,
+       "triage_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+       "triaged_survivors": []
+      },
+      "evidence_path": "EVIDENCE/runs/chaton_clicker/evidence/mutation_chaton-clicker-20260906.json",
+      "evidence_sha256": "2e9ffa37536f558d6e4dc2bf7d7a8e95023626a1167146621239c8eb29ea6a6c",
+      "oracle_id": "mutation",
+      "run_id": "chaton-clicker-20260906",
+      "status": "OK",
+      "ts": 1788650866.244323
+     },
+     "signature": "85b98c7d7172e3d5a68ee3d961f3989e9a283e3326f3f596b5e0ec7f3e7076f0"
+    },
+    "product_oracle_godot_activation": {
+     "active": false,
+     "godot_capacity_present": false,
+     "proof_descriptor_present": false,
+     "reason": "aucun descripteur `proof:` bien formé dans game_contract.yaml ; aucun oracle FORGE_ORACLE trouvé sous C:\\Users\\Studio-Dev\\Desktop\\Studio2\\GAMES\\chaton_clicker/07_TESTS/oracle/",
+     "runtime_block": {
+      "active": false,
+      "reason": "pas de run/main_scene"
+     }
+    },
+    "regime_preuve": "historique",
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": true,
+     "raisons": []
+    },
+    "runtime_alive": {
+     "checked": false,
+     "passed": false,
+     "reason": "pas de run/main_scene (module bibliothèque)",
+     "status": "SKIPPED"
+    },
+    "search_consulted": {
+     "count": 9,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability": {
+     "checked": true,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability_mesure": {
+     "mesure": "cablage_du_harnais",
+     "ne_mesure_pas": "la solvabilite du jeu (won/trials) — un `passed: true` ne prouve AUCUNE partie gagnee",
+     "resultat_reel": "non remonte au recu : voir evidence/oracle_<jeu>.log, NON versionne (.gitignore:81)"
+    }
+   },
+   "evidence_path": "EVIDENCE/runs/chaton_clicker/evidence/oracle_chaton_clicker.log",
+   "evidence_sha256": "",
+   "oracle_id": "code",
+   "run_id": "chaton-clicker-20260906",
+   "status": "OK",
+   "ts": 1788650866.2490802
+  },
+  "standard": {
+   "detail": {
+    "reason": "non applicable au profil full"
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "standard",
+   "run_id": "chaton-clicker-20260906",
+   "status": "SKIPPED",
+   "ts": 1788651417.3917785
+  },
+  "wiremap": {
+   "detail": {
+    "amont_traversal": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "facts": {
+      "boucles_recompense": {
+       "addresses": [
+        "worldscan:games[0].loops.minute_1",
+        "worldscan:games[0].loops.minute_10",
+        "worldscan:games[0].loops.hour_5",
+        "worldscan:games[0].loops.endgame",
+        "worldscan:games[1].loops.minute_1",
+        "worldscan:games[1].loops.minute_10",
+        "worldscan:games[1].loops.hour_5",
+        "worldscan:games[1].loops.endgame"
+       ],
+       "exigences": [
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P10",
+        "P11",
+        "P12"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_caresser_chaton_entree",
+        "cap_caresser_chaton_gain",
+        "cap_reponse_visuelle_caresse",
+        "cap_debloquer_bouton_producteur",
+        "cap_acheter_producteur_entree",
+        "cap_production_passive_producteur",
+        "cap_cout_producteur_croissant",
+        "cap_arbitrage_actif_vs_passif",
+        "cap_objectif_suivant_deuxieme_producteur",
+        "cap_objectif_suivant_amelioration",
+        "cap_renouveau_portee_entree",
+        "cap_renouveau_portee_reset",
+        "cap_avantage_permanent_prestige"
+       ],
+       "lines": [
+        "R2 caresse_clic_cable",
+        "R3 caresse_gain_ronrons",
+        "R4 reponse_visuelle_caresse",
+        "R5 deblocage_bouton_producteur",
+        "R6 achat_producteur_clic_cable",
+        "R7 production_passive_au_tick",
+        "R8 cout_producteur_croissant",
+        "R9 arbitrage_actif_vs_passif",
+        "R10 objectif_suivant_deuxieme_producteur",
+        "R11 objectif_suivant_amelioration",
+        "R13 renouveau_clic_cable",
+        "R14 renouveau_reset_ronrons",
+        "R15 avantage_permanent_prestige"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_defaite": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "conditions_victoire": {
+       "addresses": [
+        "worldscan:games[1].objectives[0].victory_condition"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "contraintes_narratives": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "objectifs_joueur": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].player_goal",
+        "worldscan:games[1].objectives[0].player_goal"
+       ],
+       "exigences": [
+        "P01"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_afficher_objectif_courant"
+       ],
+       "lines": [
+        "R1 objectif_courant_affiche"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "progression": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      }
+     },
+     "references": {
+      "adressables": 12,
+      "expected": 12,
+      "non_resolues": [],
+      "resolues": 12
+     },
+     "stages": [
+      "NOT_PRODUCED",
+      "PRODUCED",
+      "PRISME",
+      "GREY_BLOCKS",
+      "WIREMAP",
+      "BUILD"
+     ],
+     "verdict": "ADVISORY"
+    },
+    "features_manquantes": [],
+    "fonctions_renommées": [],
+    "obsoletes": [],
+    "passed": true,
+    "preuves_absentes": []
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "wiremap",
+   "run_id": "chaton-clicker-20260906",
+   "status": "OK",
+   "ts": 1788650866.5603123
+  }
+ },
+ "project": "chaton_clicker",
+ "provenance_ok": true,
+ "redteam_advisory": [
+  "[HIGH] zone morte / doublon divergent / conformite wiremap — Deux arbres d'implementation incompatibles livres dans le meme diff : src/*.mjs (mort, non conforme au wiremap, import node:crypto irresolvable en navigateur, gainParCaresse/coutProducteur absents comme fonctions) coexiste avec l'arbre racine vivant charge par index.html ; un oracle resolvant src_root=src/ teste l'arbre non conforme et src/* n'est couvert par aucun test execute (mutants survivants garantis). (repro: grep -n \"constructor(containerId\" GAMES/chaton_clicker/src/render.mjs (L2) ET grep -n \"constructor(doc, containerId\" GAMES/chaton_clicker/render.mjs (L18) : deux classes Renderer d'arite incompatible ; grep -n \"from 'crypto'\" GAMES/chaton_clicker/src/logic.mjs (L1) absent de GAMES/chaton_clicker/logic.mjs)",
+  "[MEDIUM] ecart contrat/code - determinisme R16 sur code livre — src/main.mjs pilote le tick sur Date.now() (accumulateur temps reel), violant le garde-fou 'jamais de Date.now()' enonce par main.mjs racine ; si src/main.mjs est pris pour l'entree, la cadence devient dependante du temps reel et la premisse de R16/P13 (meme graine => meme hash) ne tient plus. (repro: grep -n \"Date.now()\" GAMES/chaton_clicker/src/main.mjs (L12,41,53) non nul ; grep -n \"Date.now()\" GAMES/chaton_clicker/main.mjs vide)",
+  "[MEDIUM] preuve factice / couverture trompeuse / surface protegee — GAMES/chaton_clicker/tests/logic.test.mjs (surface protegee GAMES/*/tests/**) importe ../src/logic.mjs : il teste l'arbre MORT et divergent. La vraie couverture (logic.test.mjs, properties.test.mjs) vit a la racine du jeu, HORS du glob protege ; un outil globant tests/** validerait le code qui ne tourne pas. (repro: grep -n \"from '../src/logic.mjs'\" GAMES/chaton_clicker/tests/logic.test.mjs (L1) contre logic.test.mjs:10 (from './logic.mjs'))",
+  "[MEDIUM] lacune d'evidence / preuve absente — Les oracles navigateur e2e.mjs et solvability.mjs (preuves wiremap de R1/R2/R4/R6/R7/R13/R17) exigent Playwright, absent du poste ; ils echouent ferme (RESULT/SOLVABILITY: FAIL, exit 1 - correct, aucun vert par defaut) mais ces capacites restent NON PROUVEES sur ce poste. BLOCKED, remonte en fog HumanGate. (repro: e2e.mjs:33-48 et solvability.mjs:31-46 : loadChromium() jette si Playwright absent -> catch -> RESULT: FAIL (e2e.mjs:186) / SOLVABILITY: FAIL (solvability.mjs:130))",
+  "[LOW] surface d'abus laissee en production — main.mjs expose window.__game et window.__game_debug.donnerRonrons(n) sans aucune garde runtime (ni flag debug ni check d'environnement) ; le commentaire 'reserve a e2e' n'est pas applique - un joueur peut cheater l'economie/prestige depuis la console. (repro: grep -n \"__game_debug\" GAMES/chaton_clicker/main.mjs (L68-74) : hook defini inconditionnellement dans createGame, appele par autoBootstrap au chargement)",
+  "[LOW] ecart d'intention non capte par l'oracle — wiremap R11 = cap_objectif_suivant_amelioration ('vise une amelioration') mais le 3e objectif du code pointe le prestige/renouveau et aucun mecanisme d'amelioration distinct n'existe ; l'oracle ne verifie que la distinction/le libelle exact des textes, pas l'existence d'une mecanique d'amelioration - l'ecart d'intention passe au vert. (repro: logic.mjs:138-142 (objectifCourant, 3e branche = prestige) confronte a logic.test.mjs:205-223 (assertion sur libelle exact seulement))"
+ ],
+ "redteam_ran": false,
+ "redteam_reviewer": "claude-opus-4-8",
+ "run_id": "chaton-clicker-20260906",
+ "scope": "FULL",
+ "software_verdict": "OK",
+ "ts": 1788651417.411951
+}

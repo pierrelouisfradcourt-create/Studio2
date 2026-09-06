@@ -1,0 +1,228 @@
+{
+ "game_id": "chaton_clicker",
+ "systemes": [
+  {
+   "id": "sys_boucle_active",
+   "features": [
+    {
+     "id": "feat_objectif_affiche",
+     "capacites": [
+      {
+       "id": "cap_afficher_objectif_courant",
+       "capacite": "Au chargement, la page affiche un HUD 'objectif' chiffré non vide que le joueur cherche a atteindre.",
+       "source_ref": "P01",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Le bot lit dans le DOM un HUD 'objectif' non vide au chargement, avant toute action du joueur."
+       }
+      }
+     ]
+    },
+    {
+     "id": "feat_caresse_chaton",
+     "capacites": [
+      {
+       "id": "cap_caresser_chaton_entree",
+       "capacite": "Le joueur agit sur l'affordance 'caresser_chaton' : il clique le chaton depuis le point d'entree du jeu.",
+       "source_ref": "P02",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique la cible caresser_chaton."
+       }
+      },
+      {
+       "id": "cap_caresser_chaton_gain",
+       "capacite": "Chaque caresse incremente le compteur de ronrons affiche a l'ecran.",
+       "source_ref": "P02",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Apres la caresse, le bot mesure dans le DOM que le compteur ronrons a augmente."
+       }
+      },
+      {
+       "id": "cap_reponse_visuelle_caresse",
+       "capacite": "Apres chaque caresse, le chaton reagit visuellement et le total de ronrons se met a jour dans la foulee.",
+       "source_ref": "P03",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "La sonde capture un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sys_economie",
+   "features": [
+    {
+     "id": "feat_producteur_passif",
+     "capacites": [
+      {
+       "id": "cap_debloquer_bouton_producteur",
+       "capacite": "Quand les ronrons atteignent le cout du premier producteur, son bouton d'achat passe d'inactif a actif et visiblement disponible.",
+       "source_ref": "P04",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Le bot accumule des ronrons puis lit que le bouton d'achat du producteur passe d'inactif a actif dans le DOM."
+       }
+      },
+      {
+       "id": "cap_acheter_producteur_entree",
+       "capacite": "Le joueur agit sur l'affordance 'acheter_producteur' : il clique le bouton d'achat depuis le point d'entree du jeu.",
+       "source_ref": "P06",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique la cible acheter_producteur."
+       }
+      },
+      {
+       "id": "cap_production_passive_producteur",
+       "capacite": "Apres l'achat, un panier de chatons apparait et les ronrons montent sans clic via le tick deterministe.",
+       "source_ref": "P06",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Apres l'achat, le bot mesure sans cliquer que les ronrons augmentent et qu'un element 'panier_chatons' est apparu dans le DOM."
+       }
+      },
+      {
+       "id": "cap_cout_producteur_croissant",
+       "capacite": "Le cout affiche d'un producteur augmente visiblement a l'ecran apres chacun de ses achats.",
+       "source_ref": "P12",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Le bot achete deux fois le meme producteur et lit que le cout affiche du second achat est superieur au premier."
+       }
+      }
+     ]
+    },
+    {
+     "id": "feat_decision_arbitrage",
+     "capacites": [
+      {
+       "id": "cap_arbitrage_actif_vs_passif",
+       "capacite": "Le jeu offre un point de decision mesurable : continuer a caresser pour un gain immediat OU investir dans un producteur passif.",
+       "source_ref": "P05",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Une sonde a deux politiques (oisif contre actif) sur 300 frames montre que la metrique ronrons diverge selon l'option choisie."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sys_progression",
+   "features": [
+    {
+     "id": "feat_objectifs_enchaines",
+     "capacites": [
+      {
+       "id": "cap_objectif_suivant_deuxieme_producteur",
+       "capacite": "Une fois le premier producteur acquis, le label 'objectif' change pour un texte nouveau visant un deuxieme producteur plus cher.",
+       "source_ref": "P07",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Le bot lit que le texte du HUD 'objectif' apres le premier achat differe de celui affiche au depart."
+       }
+      },
+      {
+       "id": "cap_objectif_suivant_amelioration",
+       "capacite": "Apres le deuxieme producteur, le label 'objectif' change encore pour un troisieme texte distinct visant une amelioration.",
+       "source_ref": "P08",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Le bot lit un troisieme texte de HUD 'objectif', distinct des deux precedents."
+       }
+      }
+     ]
+    },
+    {
+     "id": "feat_rejeu_boucle",
+     "capacites": [
+      {
+       "id": "cap_rejeu_boucle_etat_enrichi",
+       "capacite": "Dans l'etat post-achat, le joueur rejoue les memes gestes (caresser, reponse, recompense, production) et la ressource repart a la hausse.",
+       "source_ref": "P09",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "La sonde rejoue P02, P03, P04 et P06 dans l'etat post-achat et mesure une nouvelle progression des ronrons."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sys_prestige",
+   "features": [
+    {
+     "id": "feat_renouveau_portee",
+     "capacites": [
+      {
+       "id": "cap_renouveau_portee_entree",
+       "capacite": "Le joueur agit sur l'affordance 'renouveau_portee' : il clique le bouton de prestige depuis le point d'entree du jeu.",
+       "source_ref": "P10",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique la cible renouveau_portee."
+       }
+      },
+      {
+       "id": "cap_renouveau_portee_reset",
+       "capacite": "Apres le renouveau, le compteur de ronrons retombe visiblement a zero a l'ecran.",
+       "source_ref": "P10",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Apres le renouveau, le bot mesure dans le DOM que le compteur ronrons retombe a zero."
+       }
+      },
+      {
+       "id": "cap_avantage_permanent_prestige",
+       "capacite": "Apres un renouveau de portee, une meme caresse rapporte strictement plus de ronrons qu'avant le reset.",
+       "source_ref": "P11",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "La sonde compare le gain d'une caresse (P02) avant et apres le renouveau et verifie qu'il est strictement superieur."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sys_socle_technique",
+   "features": [
+    {
+     "id": "feat_determinisme",
+     "capacites": [
+      {
+       "id": "cap_determinisme_hash",
+       "capacite": "A graine egale et suite d'actions egale, la logique .mjs produit un hash d'etat final identique reproductible hors navigateur.",
+       "source_ref": "P13",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Deux executions de la logique .mjs avec meme graine et memes actions produisent le meme hash d'etat final."
+       }
+      }
+     ]
+    },
+    {
+     "id": "feat_chaton_visible",
+     "capacites": [
+      {
+       "id": "cap_chaton_dessine_visible",
+       "capacite": "Un chaton dessine est visible a l'ecran des le chargement et constitue la cible cliquable centrale du jeu.",
+       "source_ref": "P14",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "La sonde constate au chargement la presence a l'ecran d'un chaton cliquable identifiable."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,85 @@
+I have the schema and the brief. Bash and file-discovery tools are unavailable, but the contract's `CONTRAT DE SORTIE` authoritatively fixes the 7 field names, and the previous rejection was purely a YAML **form** error (an unquoted wrapped line containing a colon/paren at line 16). The fix is a single clean fenced block with every scalar and list item quoted. My task is text-only (no file written) — the materializer extracts the block below.
+
+---
+
+## charter — chaton_clicker (s0-contrat)
+
+```yaml
+objectif: 'Creer de zero, sous GAMES/chaton_clicker/, un jeu jouable du genre cookie clicker (idle/clicker) ou les cookies sont remplaces par des chatons : le joueur clique un chaton pour produire une ressource, achete des producteurs qui la generent sans clic (tick deterministe), debloque des ameliorations et progresse par paliers jusqu''a une forme de prestige. Le jeu doit etre JOUABLE par un joueur reel avec ses seules entrees souris/clavier, pas seulement solvable par un canal interne (lecon V1 kitten_clicker, run 6 du 2026-08-22 : 20/20 solvable mais injouable).'
+plateforme_cible: 'web/HTML : page HTML+JS unique, logique metier en module .mjs testable hors navigateur, RNG seede, tick deterministe (pas de Date.now dans la logique), exposition window.__game, actions DOM-only, determinisme reproductible par hash (socle N1). Aucun binaire Godot ni Blender.'
+reference_jeu: 'Cookie Clicker (Orteil, 2013) comme reference de GENRE uniquement (clic vers ressource, producteurs passifs, ameliorations, paliers/prestige), pas une source a recopier ; le theme remplace les cookies par des chatons. Source Pierre 2026-09-05 : « fait moi un cookie clicker, remplace les cookie par des chatons ».'
+hors_scope:
+  - 'Toute lignee non-web : aucun moteur Godot ni Blender requis ou utilise (lignee Godot V2 non configuree sur le poste, forge/godot.config.json absent) ; un recours silencieux a Godot est un ecart a signaler.'
+  - 'Multijoueur, backend serveur, comptes, sauvegarde cloud ou reseau : hors V1.'
+  - 'Toute ecriture hors des surfaces V2 declarees (GAMES/chaton_clicker/ pour le jeu, EVIDENCE/runs/chaton_clicker/ pour le run) : lab/, scripts/forge/ et games/ sont interdits.'
+  - 'Recopie du code ou des assets de Cookie Clicker : seul le genre est repris.'
+  - 'Regles normatives N5 (separation concepteur/instrumenteur) et N6 (fidelite charter vers build) : non mecanisees pour ce run, donc non couvertes (fog HumanGate) ; ne pas les pretendre couvertes.'
+  - 'Perimetre de l''etape s0 elle-meme : ne produit que charter.yaml ; pas d''architecture (etape 4), pas de world scan (etape 2), pas de code, pas de touche a src/ ni aux surfaces de test declarees.'
+criteres_succes:
+  - 'Le jeu se charge dans un navigateur et une session complete est jouable a la souris (clic sur le chaton, achat d''un producteur, achat d''une amelioration, prestige) sans tutoriel externe.'
+  - 'Boucle joueur complete : le clic produit la ressource ; au moins un producteur la genere sans clic via un tick deterministe ; au moins une amelioration modifie le taux ; au moins un palier/prestige est atteignable.'
+  - 'loop_check : les exigences du Prisme couvrent les maillons de la boucle joueur (PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL, REPEAT, META_LOOP, ADVANTAGE) ; un maillon manquant est un FAIL rapporte, jamais absorbe.'
+  - 'Solvabilite prouvee par un bot-joueur qui n''utilise QUE les affordances DOM du joueur (clics) et la lecture du DOM, jamais un appel direct a l''economie interne.'
+  - 'Tous les artefacts dans les surfaces V2 : run_dir sous EVIDENCE/runs/chaton_clicker/, jeu sous GAMES/chaton_clicker/.'
+  - 'Determinisme reproductible par hash ; production passive testable hors navigateur.'
+  - 'Verdict signe HMAC produit avec la cle V2 (forge/.forge_key) ET re-verifie authentique par verify_run, pas seulement present.'
+actions_interdites:
+  - 'Verdir par contournement : reecrire un oracle pour le rendre vert, ou un volet e2e qui rend exit 0 / PASS sans reellement piloter un navigateur (lecon manifest-3a1dde).'
+  - 'Modifier un test preexistant a la passe sans gate Pierre explicite (regime create_allowed_modify_denied) ; creer un test reste permis.'
+  - 'Recours silencieux au moteur Godot ou Blender au lieu de la lignee web.'
+  - 'Ecrire un artefact hors des surfaces V2 declarees (lab/, scripts/forge/, games/, src/, surfaces de test declarees).'
+  - 'Utiliser Date.now() ou une horloge murale dans la logique metier au lieu du tick deterministe.'
+  - 'Prouver la solvabilite via un appel a l''economie interne au lieu des affordances DOM du joueur.'
+  - 'Signer avec une cle heritee de V1 au lieu de forge/.forge_key.'
+  - 'En cas d''indisponibilite de LM Studio, se replier silencieusement vers une autre source : le run doit HALT/BLOCKED.'
+  - 'Renseigner plateforme_cible ou reference_jeu depuis une supposition d''agent sans source Pierre tracable, ou pretendre couvert un fog HumanGate.'
+criteres_demo:
+  - 'Un chaton cliquable est visible a l''ecran ; cliquer dessus incremente un compteur de ressource visible et le chaton reagit visuellement au clic.'
+  - 'Apres l''achat d''au moins un producteur, le compteur de ressource augmente tout seul, sans clic, sous les yeux du joueur.'
+  - 'Un bouton d''achat de producteur devient accessible quand la ressource suffit, et son cout affiche augmente visiblement apres chaque achat.'
+  - 'Une amelioration achetable est visible et son effet se voit apres achat (le taux de production ou le gain par clic augmente a l''ecran).'
+  - 'Un palier / prestige observable est atteignable : il transforme visiblement l''etat et affiche un avantage persistant.'
+  - 'Toute grandeur observee par un critere (ressource, taux, cout, objectif) est lisible directement dans le DOM.'
+```
+
+---
+
+## RAPPORT FINAL — s0-contrat / chaton-clicker-20260906
+
+**software / evidence / claim séparés :**
+
+- **software_verdict :** OK — les 7 champs requis (`objectif`, `hors_scope[]`, `criteres_succes[]`, `actions_interdites[]`, `plateforme_cible`, `reference_jeu`, `criteres_demo[]`) sont remplis, aucun vide, aucun « à définir ». Correction de forme demandée appliquée : bloc YAML unique, tout scalaire et tout item de liste quotés en simple-quote (apostrophes internes doublées) — la ligne 16 fautive de la tentative 1 (parenthèse `(lignée Godot V2…` contenant un `:` lue comme clé simple) n'existe plus.
+- **evidence_verdict :** MECHANICAL_VALIDATION_ONLY — appuyé sur l'oracle CHARTER déterministe non-LLM (validateur de schéma `check_charter` : parse le YAML, échoue si un champ requis est vide/absent/« à définir »).
+- **claim_verdict :** NO_CLAIM_ALLOWED — je ne peux pas exécuter `check_charter` moi-même (permissions `run: aucun`, Bash désactivé). Je n'affirme donc PAS que l'oracle est vert : je livre un charter dont la forme et les champs sont conformes au schéma, à faire valider par `check_charter` à l'étape suivante.
+
+**Oracle cité :** validateur de schéma CHARTER (`check_charter`), non-LLM — jamais de LLM-as-judge.
+
+**Flous du prompt — résolus vs remontés :**
+
+Résolus (source traçable dans le brief) :
+- `objectif`, genre, thème, clause de jouabilité par un joueur réel — dérivés de l'intention Pierre 2026-09-05 + leçon V1 kitten_clicker.
+- `reference_jeu` — **source Pierre traçable** : « fait moi un cookie clicker » (brief `references_autorisees` / `provenance.genre`). Référence de genre uniquement, pas une source à recopier.
+- `hors_scope[]`, `criteres_succes[]`, `actions_interdites[]`, `criteres_demo[]` — dérivés des `criteres_sortie`, `libertes_deleguees`, `non_delegue` du brief et des pré-mortems (manifest-3a1dde e2e-coquille, manifest-0204e25b hypothèse plateforme).
+
+Remontés en **fog HumanGate** (pas de claim de conformité) :
+- **`plateforme_cible` = web/HTML : HYPOTHÈSE AGENT, PAS de source Pierre.** Le brief lui-même la déclare `FOG_HUMANGATE` (`provenance.cible` : web retenu faute de config Godot sur le poste, `forge/godot.config.json` absent). Le champ est rempli parce que le schéma l'exige non vide ; sa **provenance n'est pas ratifiée**. → Pierre doit confirmer web/HTML OU renvoyer vers Godot. Non présenté comme conforme (leçon AutoBattler : ne pas trancher `reference_jeu`/plateforme sans Pierre).
+- **N5 / N6** non mécanisées ce run (`fog_n5`, `fog_n6`) → placées en `hors_scope`, non prétendues couvertes.
+- **Provenance Pierre de `reference_jeu`** : traçable au verbatim, mais la ratification formelle du charter par Pierre pour CE projet n'a pas eu lieu (`provenance.criteres_sortie` : « Aucun critère n'a été ratifié par Pierre pour CE projet ») → à ratifier en HumanGate.
+
+**SKIPPED_VALIDATION :**
+- item : exécution de l'oracle `check_charter` sur le bloc produit · périmètre : charter.yaml chaton_clicker · statut : non fait · raison : permissions `run: aucun` + Bash désactivé pour cette session ; la validation mécanique revient au matérialiseur / à l'étape oracle aval.
+- item : localisation/lecture d'un charter de référence (ex. v2_breakout_slice) et du code de `check_charter` · périmètre : forge/ · statut : non fait · raison : aucun outil de listage/recherche disponible (Bash, Grep, Glob absents) ; noms de champs pris de la source autoritaire `CONTRAT DE SORTIE`.
+- item : vérification de provenance Pierre de `plateforme_cible` · périmètre : design-intent · statut : non fait (non vérifiable par schéma) · raison : fait de gate, pas de schéma → remonté en fog HumanGate ci-dessus.
+
+**RETURN LINEAGE (FORGE_CAUSAL_LINEAGE_V2 §3) :**
+- `why_task_existed:`
+  - `problem:` le projet chaton_clicker n'a pas de contrat produit matérialisable ; la tentative 1 de s0 a été REFUSÉE (YAML illisible ligne 16).
+  - `oracle:` matérialiseur de charter (rejet « aucun bloc charter valide, YAML illisible ») + pré-mortem s0 (échec trust-dialog des tentatives exécuteur LLM).
+  - `root_cause:` un item de liste multi-ligne non quoté contenant une parenthèse et un `:` a été lu par le parseur YAML comme une clé simple mal formée.
+  - `action_reason:` re-émettre le même fond dans un bloc YAML dont chaque scalaire et item est quoté supprime mécaniquement toute ambiguïté de clé simple.
+- `result:` bloc charter.yaml complet (7 champs remplis, aucun vide/« à définir »), forme corrigée, produit en texte seul (aucun fichier écrit, conforme à la tâche).
+- `proof:` non exécutable ici (`run: aucun`) ; commande de vérification à lancer en aval : `check_charter` sur le bloc matérialisé. Auto-inspection : parse mental du bloc OK, aucun `:` hors quote, aucun item non quoté.
+- `learning:` dans un charter, tout item de liste ou scalaire portant `:`, `(`, `«` ou une apostrophe doit être single-quoté et tenu sur une ligne physique ; ne jamais laisser un item wrapper sur une 2e ligne non quotée.
+- `next_reason:` le niveau supérieur doit agir — deux fogs HumanGate restent non résolus (plateforme_cible sans source Pierre ; ratification du charter pour ce projet). La chaîne causale du défaut de FORME est FERMÉE ; celle du design-intent reste OUVERTE jusqu'à sign-off Pierre.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "plateforme_cible=web/HTML est une hypothese agent exigee non vide par le schema charter mais sans source Pierre tracable, remontee en fog HumanGate", "root_cause": "lignee Godot V2 non configuree sur le poste (forge/godot.config.json absent), l'agent a suppose web faute de choix Pierre trace"}

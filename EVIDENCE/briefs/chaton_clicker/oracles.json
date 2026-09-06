@@ -1,0 +1,6 @@
+{
+ "chaton_clicker": {
+  "cwd": "GAMES/chaton_clicker",
+  "command": ["node", "run-oracle.mjs"]
+ }
+}

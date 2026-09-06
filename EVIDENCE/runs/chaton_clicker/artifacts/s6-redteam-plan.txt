@@ -1,0 +1,21 @@
+Pour commencer cette tâche, je vais suivre les étapes nécessaires pour analyser le blueprint gelé et la WireMap du projet en question. Mon objectif est de chercher activement où le plan casse, en me concentrant sur l'architecture et le câblage, sans jamais remplacer les oracles techniques ou juger à leur place.
+
+### Étape 1 : Consommation des artefacts
+Je vais d'abord consommer le blueprint gelé (étape 4) et la WireMap (étape 5). Ces documents contiennent l'ensemble des décisions architecturales et de câblage qui ont été prises pour le projet. Je vais les examiner attentivement à la recherche de failles potentielles, d'angles morts, de dépendances fragiles ou de câblages incohérents.
+
+### Étape 2 : Analyse critique
+Une fois que j'ai consommé ces artefacts, je vais analyser le plan sous l'angle d'un attaquant indépendant. Je vais chercher activement les points faibles du système et évaluer comment ils pourraient être exploités.
+
+### Étape 3 : Proposition de corrections
+Pour chaque faille trouvée, j'établirai une proposition de correction qui corrigerait la faille sans remettre en question les décisions architecturales ou techniques sous-jacentes. Ces propositions seront documentées dans le rapport d'attaque.
+
+### Étape 4 : Rédaction du rapport
+Je vais rédiger un rapport détaillé listant chaque faille trouvée, la description de l'angle mort ou de la vulnérabilité, ainsi que les corrections proposées. Le rapport sera structuré selon le format spécifié et inclura un verdict GO-si-corrigé pour chaque problème identifié.
+
+### Étape 5 : Ajustement des artefacts
+Si des ajustements sont nécessaires aux artefacts d'architecture ou de wiremap, je vais les apporter en conséquence. Ces modifications seront documentées dans le rapport et justifiées par la correction proposée.
+
+### Étape 6 : Validation et retour
+Enfin, j'examinerai soigneusement mon travail pour m'assurer que chaque affirmation est appuyée par un oracle ou une preuve mécanique. Si des validations sont manquantes ou si des problèmes ont été découverts, je documenterai cela dans le rapport final.
+
+Je vais maintenant commencer l'étape 1 et consommer les artefacts nécessaires pour entamer mon analyse critique du plan.

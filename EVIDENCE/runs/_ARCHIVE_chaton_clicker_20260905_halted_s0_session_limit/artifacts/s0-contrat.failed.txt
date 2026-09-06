@@ -1,0 +1,123 @@
+I have everything I need: the canonical schema (`forge/contracts/SCHEMA.md`), the source-of-command brief, the pré-mortem, and confirmation that **no Project Bible exists yet** for this project. My dispatch is explicit: **texte seul, aucun fichier écrit**. So I produce the charter as text and remonte the fogs — I do not write `charter.yaml` and do not run the oracle (my permissions are `run: aucun`).
+
+---
+
+# CHARTER — chaton_clicker (étape s0-contrat)
+
+## Cadrage narratif (intention · joueur cible · victoire · périmètre V1)
+
+**Intention.** Un *cookie-clicker* à thème chatons : le joueur clique un chaton pour produire une ressource, achète des producteurs qui la génèrent sans clic, débloque des améliorations et progresse par paliers jusqu'à une forme de prestige. Source Pierre 2026-09-05 (verbatim) : « fait moi un cookie clicker, remplace les cookie par des chatons. via notre méthode de forge ». **Contrainte cardinale héritée de la leçon V1 kitten_clicker (run 6, 2026-08-22)** : le jeu doit être *jouable par un joueur réel à la souris*, pas seulement « solvable » par un canal interne.
+
+**Joueur cible.** Joueur occasionnel, sans notice ni tutoriel externe : il comprend la boucle en cliquant. Le seul canal d'entrée est la souris ; le seul canal d'observation est le DOM.
+
+**Condition de « victoire ».** Un clicker n'a pas de victoire terminale : la réussite est la *progression observable*. Condition minimale V1 : le joueur franchit au moins un palier / une première étape de prestige visible à l'écran. La forme exacte du prestige et les seuils sont délégués aux étapes de conception (liberté N4 du Brief) — le charter en fixe la **forme observable**, pas les chiffres.
+
+**Périmètre V1 minimal jouable.** Un chaton cliquable → une ressource ; au moins un producteur passif achetable ; au moins une amélioration débloquable ; au moins un palier/prestige atteignable. Le tout dans une page HTML+JS unique (socle N1), logique métier en `.mjs` testable hors navigateur, tick déterministe (pas de `Date.now()` dans la logique).
+
+---
+
+## charter.yaml (contenu proposé — NON écrit sur disque, ce dispatch est texte-seul)
+
+```yaml
+objectif: >-
+  Livrer sous GAMES/chaton_clicker/ un jeu web du genre cookie-clicker à thème
+  chatons, JOUABLE de bout en bout par un joueur humain à la souris : cliquer un
+  chaton produit une ressource, des producteurs achetés la génèrent sans clic,
+  des améliorations débloquables modifient les taux, et une progression par
+  paliers mène à une forme de prestige. La jouabilité réelle est prouvée par un
+  bot-joueur n'utilisant QUE les affordances DOM (clics + lecture du DOM), jamais
+  un appel direct à l'économie interne.
+
+hors_scope:
+  - Lignée Godot/Blender — aucun binaire, aucun recours silencieux (godot.config.json absent, mesuré 2026-09-05).
+  - Multijoueur, sauvegarde cloud, backend serveur, persistance réseau.
+  - Recopie de Cookie Clicker (référence de GENRE uniquement) ou du corpus V1 kitten_clicker (lignée Godot).
+  - Écriture de code, décision d'architecture (étape 4), world scan (étape 2) — hors de cette étape s0.
+  - Tout écrit hors des surfaces V2 (lab/, scripts/forge/, games/).
+  - Tutoriel ou notice externe requis pour comprendre la boucle.
+
+criteres_succes:
+  - Run exécuté dans les surfaces V2 : run_dir sous EVIDENCE/runs/chaton_clicker/ (jamais lab/), jeu sous GAMES/chaton_clicker/ (jamais games/).
+  - charter validé par check_charter (oracle de schéma déterministe non-LLM).
+  - prisme.json, featuremap.json, blueprint et wiremap.json produits et validés par leurs oracles amont.
+  - Chaque ligne de wiremap porte un `couvre` NON VIDE citant l'id EXACT d'une capacité de featuremap.json.
+  - loop_check : les 10 maillons de la boucle joueur (PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL, REPEAT, META_LOOP, ADVANTAGE) sont couverts ; un maillon manquant est un FAIL rapporté.
+  - Preuves s10 produites : s10a-oracle-code (e2e + mutation + solvabilité), s10b-oracle-archi, s10c-oracle-wiremap.
+  - Solvabilité prouvée par un bot-joueur DOM-only ; jamais par un appel direct à l'économie interne.
+  - Verdict HMAC signé ET re-vérifié authentique par verify_run — clé V2 forge/.forge_key, jamais une clé héritée de V1.
+  - Une session complète est jouable à la souris dans un navigateur (clic chaton, achat, amélioration, prestige) sans tutoriel externe.
+  - Socle N1 respecté : page HTML+JS unique, RNG seedé, logique métier en .mjs testable hors navigateur, exposition window.__game, tick déterministe.
+  - LM Studio indisponible => HALT/BLOCKED, sans repli silencieux vers une autre source.
+
+actions_interdites:
+  - Écrire hors des surfaces V2 (lab/, scripts/forge/, games/), ou modifier un test préexistant sans gate Pierre explicite.
+  - Recourir à Godot ou Blender, même en repli silencieux.
+  - Verdir par contournement : e2e-coquille rendant PASS sans piloter de navigateur ; prouver la solvabilité par l'économie interne au lieu des clics DOM.
+  - Recopier Cookie Clicker ou réutiliser le corpus V1 kitten_clicker comme source de design.
+  - Signer avec une clé héritée de V1.
+  - Utiliser Date.now() (ou toute horloge murale) dans la logique métier.
+  - Présenter un fog (plateforme_cible, N5, N6, critères non ratifiés) comme une conformité prouvée.
+
+plateforme_cible: >-
+  web/HTML — page HTML+JS unique conforme au socle N1. [FOG_HUMANGATE : valeur
+  HYPOTHÉTIQUE posée par l'agent, non dite par Pierre ; retenue parce que c'est
+  la seule lignée exercée par V2 et que la lignée Godot n'est pas configurée sur
+  le poste. Pierre confirme web/HTML ou renvoie vers Godot.]
+
+reference_jeu: >-
+  Cookie Clicker (Orteil, 2013) — référence de GENRE uniquement : clic -> ressource,
+  producteurs passifs, améliorations, paliers/prestige ; thème chatons à la place
+  des cookies. Source Pierre 2026-09-05 (verbatim) « fait moi un cookie clicker,
+  remplace les cookie par des chatons ». Pas une source à recopier.
+
+criteres_demo:
+  - Un chaton visible et cliquable à l'écran ; chaque clic incrémente un compteur de ressource lisible dans le DOM.
+  - Au moins un producteur achetable visible ; après achat, la ressource augmente SEULE (sans clic) et un taux/seconde non nul est affiché.
+  - Au moins une amélioration débloquable visible dont l'activation change un chiffre observable (taux de clic ou de production).
+  - Un palier / prestige atteignable dont le franchissement change un état visuel observable à l'écran.
+  - Toute la session se joue à la souris, sans clavier ni tutoriel externe.
+```
+
+**Note de conformité de schéma (auto-inspection, PAS un claim d'oracle) :** les 7 champs requis — `objectif · hors_scope[] · criteres_succes[] · actions_interdites[] · plateforme_cible · reference_jeu · criteres_demo[]` — sont tous remplis, aucun « à définir », aucun vide. `criteres_demo[]` porte des critères **observables** (pas des mécaniques internes), conforme au CONTRAT DE SORTIE.
+
+---
+
+## FINAL REPORT
+
+**software / evidence / claim — séparés :**
+
+- **software_verdict : BLOCKED (pour le claim de validité).** L'oracle `check_charter` (validateur de schéma déterministe non-LLM) est l'ancre qui appuierait « charter valide ». Je ne l'ai **pas exécuté** : ce dispatch est *texte-seul* et mes permissions sont `run: aucun`. La conformité de schéma ci-dessus est une auto-inspection, pas une mesure d'oracle.
+- **evidence_verdict :** aucune validation mécanique produite à cette étape (aucun fichier écrit, aucun oracle lancé).
+- **claim_verdict : NO_CLAIM_ALLOWED.** Je ne certifie pas « charter valide » — cela dépend de `check_charter` s'exécutant sur le fichier réellement écrit, en aval.
+
+**Oracle charter utilisé :** `check_charter` — **cité, non exécuté** (texte-seul + `run: aucun`). Son verdict est requis avant que ce charter ne soit tenu pour valide.
+
+**Flous du prompt — résolus vs remontés :**
+
+Résolus (à partir du Brief, source de commande) :
+- Genre + thème : cookie-clicker / chatons — source Pierre traçable.
+- reference_jeu : Cookie Clicker (genre) — **source Pierre explicite et traçable**, ce n'est PAS un fog.
+- Boucle, hors-scope, critères de succès, actions interdites, criteres_demo observables : dérivés du Brief et de la leçon V1.
+
+Remontés en **fog HumanGate** (jamais claim de conformité) :
+- **plateforme_cible (web/HTML)** — HYPOTHÈSE de l'agent, **sans source Pierre explicite** (le Brief lui-même la déclare FOG_HUMANGATE). Champ rempli pour satisfaire le schéma, mais la provenance est un fog : *Pierre confirme web ou renvoie vers Godot*. Conforme à la leçon AutoBattler citée dans mon garde-fou.
+- **N5 / N6** — non mécanisées pour ce run (hérité du Brief) : ne pas prétendre couvertes.
+- **Critères de sortie / de succès** — **aucun n'a été ratifié par Pierre pour CE projet** (Brief, provenance.criteres_sortie) ; calqués sur v2_breakout_slice. À ratifier à la HumanGate.
+
+**why_task_existed :**
+- `problem:` non transmis (activation par décision humaine — dispatch FORGE s0 pour formaliser le contrat produit du projet chaton_clicker).
+- `oracle:` aucun — activation humaine (marqueur FORGE_DISPATCH:s0-contrat).
+- `root_cause:` non établie (pas un défaut ; point d'entrée normal de la boucle Forge).
+- `action_reason:` un run Forge ne démarre jamais sans charter validé en étape 0 ; cette tâche produit ce charter comme premier maillon.
+
+`result:` charter produit **en texte** (7 champs remplis, 0 « à définir ») ; fichier NON écrit et oracle NON exécuté, conformément au dispatch texte-seul et à `run: aucun`.
+`proof:` aucune commande exécutée (Bash désactivé ; `run: aucun`). Preuves de lecture : `forge/contracts/SCHEMA.md` (schéma canonique 16 champs), `EVIDENCE/briefs/chaton_clicker/project_brief.yaml` (source de commande), `EVIDENCE/briefs/v2_breakout_full/project_brief.yaml` (gabarit) ; `EVIDENCE/runs/chaton_clicker/PROJECT_BIBLE.md` **absent** (vérifié).
+`learning:` le Brief chaton_clicker porte déjà, dans sa `provenance`, la distinction source-Pierre vs hypothèse-agent champ par champ — le charter n'a qu'à *hériter* ces fogs (plateforme_cible, N5, N6, critères non ratifiés), jamais à les résoudre unilatéralement.
+`next_reason:` le niveau supérieur doit agir — (1) GO Pierre pour écrire réellement `charter.yaml` et lancer `check_charter` ; (2) HumanGate pour lever le fog plateforme_cible (web vs Godot) et ratifier les critères de sortie. La chaîne causale n'est PAS fermée : une décision de design-intent (plateforme_cible) reste non tranchée par une source Pierre.
+
+**SKIPPED_VALIDATION :**
+- item: exécution de `check_charter` · où: charter chaton_clicker · statut: non fait · raison: dispatch texte-seul + permission `run: aucun` ; validation reportée à l'écriture réelle du fichier (GO Pierre).
+- item: écriture de `charter.yaml` sur disque · où: EVIDENCE/runs/chaton_clicker/ · statut: non fait · raison: la tâche concrète impose « texte seul, aucun fichier écrit » ; aucun GO nommé d'écriture.
+- item: vérification de provenance Pierre de `reference_jeu` · où: charter · statut: partiel · raison: traçable à un verbatim Pierre (fait de gate, non mécanisable par le validateur de schéma) — établi par lecture, pas par oracle.
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "plateforme_cible (web/HTML) est une hypothese agent sans source Pierre explicite, exigee non vide par le schema charter mais non tranchee par Pierre", "root_cause": "la lignee Godot V2 n'est pas configuree sur le poste (forge/godot.config.json absent), l'agent a suppose web faute de choix Pierre trace"}

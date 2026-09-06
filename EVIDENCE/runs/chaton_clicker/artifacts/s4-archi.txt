@@ -1,0 +1,122 @@
+I have everything I need. The two oracles are now unambiguous:
+
+- **Pre-build** (`check_blueprint_contract.mjs`): needs `modules` (string list), `deps_interdites` (non-empty), and an additive `responsabilites[]` whose `couvre[]` cites **feature-level ids** (`featureIds()` returns `sys.features[].id`, i.e. the `feat_*` ids — **not** the `cap_*` leaves), no cycles, no self-contradiction.
+- **Post-build** (`static_oracles.check_architecture`): `_module_of` = first folder under the code root; a forbidden pair fires when a file in module A imports a token matching module B. So `modules` must be the **top-level folders/files under `GAMES/chaton_clicker/`**, and the real fault line for a web clicker is horizontal: pure logic ⊥ DOM render ⊥ DOM input, with a single composition root.
+
+The charter pins the web/legacy topology (single HTML page, business logic in headless-testable `.mjs`, `window.__game`, deterministic tick) — so the numbered `05_SYSTEMS/` standard is Godot-topology and does not apply here; the module names follow the web-legacy convention (`logic/` core, like `GAMES/collect_runner`). No `GAMES/chaton_clicker/blueprint.yaml` exists yet (repo not yet structured — only `EVIDENCE/runs/chaton_clicker/` is present), so this is a fresh blueprint, not a diff.
+
+---
+
+## Rapport final — Architecture (s4-archi / chaton_clicker)
+
+**software** — Blueprint d'architecture pour `GAMES/chaton_clicker/` (code web à créer), dérivé par lecture seule de la featuremap s3 (`artifacts/s3-decompo.txt`, 9 features `feat_*` / 17 capacités), du `charter.yaml` (INTENT LINEAGE : web/HTML, logique `.mjs` headless, tick déterministe, DOM-only, `window.__game`), de `forge/standard/repo_map.yaml` et des deux oracles (`check_blueprint_contract.mjs`, `forge/static_oracles.py::check_architecture`).
+
+**Découpage par responsabilité (4 modules, altitude = dossier de premier niveau sous la racine du code) :**
+
+| Module | Responsabilité (une seule) | Couvre (feat) | Dépend de | Preuve attendue |
+|---|---|---|---|---|
+| `logic` | Simulation déterministe de l'état de jeu : gain par caresse, production passive + courbe de coût, point de décision (divergence), rejeu enrichi, prestige (reset + avantage permanent), RNG seedé + hash. **Aucun DOM.** | caresse, producteur, décision, rejeu, renouveau, déterminisme | — (feuille pure) | oracle |
+| `render` | Vue pure : dessine le chaton, le HUD objectif, les boutons, réagit visuellement ; lit un état, n'écrit jamais la logique ni l'input. | objectif_affiche, objectifs_enchaines, chaton_visible, caresse (réponse visuelle) | logic | visual |
+| `input` | Liaison des affordances joueur : câble les événements DOM (clic chaton, achat, prestige) vers les actions `logic`. | caresse (entrée), producteur (entrée achat), renouveau (entrée) | logic | bot_action |
+| `main` | Racine de composition : bootstrap depuis `index.html`, câble logic+render+input, expose `window.__game`, pilote le tick déterministe qui rend la production passive observable. | producteur (tick live) | logic, render, input | bot_action |
+
+**Graphe autorisé** (dérivé des `dependances`, consommateurs dérivés mécaniquement — non saisis) : `render→logic`, `input→logic`, `main→{logic,render,input}`, `logic→∅`. Acyclique par construction (`logic` est un puits ; `main` une source).
+
+**Dépendances INTERDITES explicites (7)** — la séparation `logique→rendu` et `logique→input` est le socle imposé, complétée pour tuer tout god-object et tout cycle :
+- `[logic, render]` · `[logic, input]` — **le cœur métier ne touche jamais le DOM** (mandat charter : logique headless, testable hors navigateur).
+- `[logic, main]` — le cœur reste indépendant du bootstrap (réutilisable, testable seul → preuve de déterminisme sur `logic/` sans `main`).
+- `[render, input]` · `[input, render]` — vue et input s'ignorent ; ils ne communiquent que via `logic`/`main`.
+- `[render, main]` · `[input, main]` — une feuille n'importe jamais la racine de composition (fermeture des cycles logic/render/input ↔ main).
+
+**evidence** — Ancres non-LLM invoquées, **non exécutées** (permission `run: aucun`, aucun fichier écrit) :
+- **Couverture** : les 9 features de la featuremap (`feat_objectif_affiche`, `feat_caresse_chaton`, `feat_producteur_passif`, `feat_decision_arbitrage`, `feat_objectifs_enchaines`, `feat_rejeu_boucle`, `feat_renouveau_portee`, `feat_determinisme`, `feat_chaton_visible`) sont chacune dans le `couvre[]` d'≥1 module. **0 feature non couverte.**
+- **Non-invention (couverture fantôme)** : tous les ids de `couvre[]` valent des `feat_*` réellement déclarés (`featureIds()` = niveau feature, vérifié dans `upstream_schema.mjs:497`). **0 couverture fantôme.**
+- **Cycles** : DFS sur le graphe d'arêtes déclarées → aucun cycle (`logic` puits).
+- **Non-contradiction** : aucune arête déclarée (`render→logic`, `input→logic`, `main→logic/render/input`) n'appartient à `deps_interdites`.
+- **`deps_interdites` non vide** : 7 paires, toutes sur des modules ∈ `{logic,render,input,main}`.
+- **Alignement post-build** : `modules` reste une **liste de chaînes** (consommée telle quelle par `check_architecture` qui fait `set(blueprint["modules"])`) ; les paires interdites sont attrapables par les imports réels (`logic/*.mjs` important `../render/*` → token `render` ∈ modules → violation `(logic,render)`).
+- **Reçu `check_blueprint_contract.mjs`** : **absent** — non exécuté (`run: aucun`). Commande que l'exécuteur doit lancer après matérialisation :
+  `node forge/check_blueprint_contract.mjs EVIDENCE/runs/chaton_clicker/blueprint.json --featuremap EVIDENCE/runs/chaton_clicker/featuremap.json`
+
+**claim** — Aucun oracle exécuté de mon côté ⇒ **claim_verdict: NO_CLAIM_ALLOWED**. La validation mécanique (couverture / non-invention / cycles / non-contradiction / vacuité `deps_interdites`) reste à confirmer par l'exécuteur via `check_blueprint_contract.mjs`. Besoin HumanGate (fog) : confirmer le vert du reçu pré-build avant s5-wiremap.
+
+### RETURN LINEAGE
+- **why_task_existed:**
+  - **problem:** le pipeline chaton_clicker a produit sa featuremap (s3, 9 features / 17 capacités) ; il manque le blueprint gelé (modules + dépendances autorisées/interdites) que `check_architecture` (post-build s10b) et la WireMap (s5) consommeront — sans lui, l'archi ne serait décidée qu'« au feeling » à la construction.
+  - **oracle:** aucun — activation par la séquence de dispatch Forge (`FORGE_DISPATCH:s4-archi:chaton-clicker-20260906:1`), décision de séquencement, pas détection d'un défaut.
+  - **root_cause:** non établie (étape nominale de la chaîne, pas d'échec amont).
+  - **action_reason:** découper par responsabilité (logique/rendu/input/racine) et déclarer explicitement les dépendances interdites, seul moyen de garantir couverture + acyclicité + séparation testable-headless AVANT que le code n'existe.
+- **result:** blueprint complet produit en texte (4 modules, 9/9 features couvertes, 7 paires interdites, graphe acyclique, 0 auto-contradiction). Non matérialisé (je n'écris pas `blueprint.json`) ; oracle pré-build non exécuté.
+- **proof:** aucune commande exécutée (`run: aucun`). Vérifications de couverture/non-invention/cycles consignées ci-dessus par lecture des oracles ; commande `check_blueprint_contract.mjs` fournie à l'exécuteur.
+- **learning:** pour un jeu web-legacy, la frontière d'architecture *oracle-enforçable* est le premier segment de dossier (`_module_of`), et `check_blueprint_contract` cible les ids de **feature** (`feat_*`), jamais les `cap_*` — un `couvre` citant une capacité aurait produit une couverture fantôme sur les 9 lignes. La granularité fine (economy/prestige/rng/hash) reste interne à `logic/`, conséquence du blueprint, pas module oracle.
+- **next_reason:** la chaîne continue proprement vers l'exécuteur, qui doit (1) matérialiser `blueprint.json` depuis le bloc terminal, (2) exécuter `check_blueprint_contract.mjs` et vérifier le vert avant s5-wiremap. Cause résiduelle non résolue : le reçu oracle manque (je ne peux pas l'exécuter) → escalade légère à l'exécuteur/HumanGate, pas fermeture.
+
+### SKIPPED_VALIDATION
+- **Item :** exécution de l'oracle `check_blueprint_contract.mjs`. **Où :** blueprint chaton_clicker. **Statut :** non fait. **Raison :** permission `run: aucun` et je n'écris jamais `blueprint.json` (matérialisé par l'exécuteur) — l'oracle ne peut pas tourner sur un fichier inexistant.
+- **Item :** oracle post-build `forge.static_oracles.check_architecture`. **Où :** `GAMES/chaton_clicker/` (code). **Statut :** non applicable maintenant. **Raison :** `src` vide → vacuement vert (0 import) ; c'est l'oracle de l'étape s10b, pas le mien.
+- **Item :** lecture d'un `blueprint.yaml` préexistant. **Où :** `GAMES/chaton_clicker/`. **Statut :** sans objet. **Raison :** le dossier n'existe pas encore (repo non structuré) — création fraîche, pas un diff d'archi.
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}
+
+```json
+{
+  "modules": ["logic", "render", "input", "main"],
+  "deps_interdites": [
+    ["logic", "render"],
+    ["logic", "input"],
+    ["logic", "main"],
+    ["render", "input"],
+    ["input", "render"],
+    ["render", "main"],
+    ["input", "main"]
+  ],
+  "ownership": {
+    "logic": "Cœur métier déterministe (économie, tick, prestige, RNG seedé, hash) — pur, sans DOM, testable hors navigateur.",
+    "render": "Vue DOM : chaton, HUD objectif, boutons, réponses visuelles. Lit l'état, n'écrit jamais la logique.",
+    "input": "Câblage des affordances joueur (clic chaton, achat producteur, prestige) vers les actions de logic.",
+    "main": "Racine de composition : bootstrap depuis index.html, câble logic+render+input, expose window.__game, pilote le tick déterministe."
+  },
+  "responsabilites": [
+    {
+      "module": "logic",
+      "responsabilite": "Simulation déterministe de l'état de jeu : gain par caresse, production passive et courbe de coût croissante, point de décision actif/passif, rejeu enrichi, prestige (reset + avantage permanent), RNG seedé et hash d'état — aucune dépendance au DOM.",
+      "couvre": ["feat_caresse_chaton", "feat_producteur_passif", "feat_decision_arbitrage", "feat_rejeu_boucle", "feat_renouveau_portee", "feat_determinisme"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Deux exécutions headless de logic/ a graine et suite d'actions egales produisent le meme hash d'etat final ; une sonde a deux politiques (oisif contre actif) sur >=300 frames montre la divergence de la metrique ronrons ; le gain d'une caresse apres renouveau est strictement superieur — le tout prouve sans DOM."
+      }
+    },
+    {
+      "module": "render",
+      "responsabilite": "Vue DOM pure : dessine le chaton cliquable, affiche le HUD objectif et son changement de texte au fil de la progression, rend la reaction visuelle a la caresse et la mise a jour du compteur. Lit un etat fourni, n'ecrit jamais la logique ni l'input.",
+      "couvre": ["feat_objectif_affiche", "feat_objectifs_enchaines", "feat_chaton_visible", "feat_caresse_chaton"],
+      "dependances": ["logic"],
+      "preuve_attendue": {
+        "kind": "visual",
+        "statement": "La sonde constate au chargement un chaton cliquable et un HUD 'objectif' non vide, puis un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic, et un texte d'objectif distinct apres chaque palier."
+      }
+    },
+    {
+      "module": "input",
+      "responsabilite": "Liaison des affordances joueur : câble les evenements DOM (clic sur le chaton, clic d'achat de producteur, clic de renouveau de portee) vers les actions publiques de logic, sans jamais toucher au rendu.",
+      "couvre": ["feat_caresse_chaton", "feat_producteur_passif", "feat_renouveau_portee"],
+      "dependances": ["logic"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique via les seules affordances DOM les cibles caresser_chaton, acheter_producteur et renouveau_portee, et chaque clic declenche l'action de logic correspondante."
+      }
+    },
+    {
+      "module": "main",
+      "responsabilite": "Racine de composition : bootstrap depuis index.html, câble logic+render+input, expose window.__game et pilote le tick deterministe qui rend la production passive observable a l'ecran sans clic.",
+      "couvre": ["feat_producteur_passif"],
+      "dependances": ["logic", "render", "input"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Apres achat d'un producteur, le bot mesure sans cliquer que les ronrons augmentent via le tick pilote par main et qu'un element 'panier_chatons' est apparu ; window.__game est expose au chargement."
+      }
+    }
+  ]
+}
+```

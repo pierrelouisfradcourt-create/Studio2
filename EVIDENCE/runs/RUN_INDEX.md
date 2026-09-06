@@ -9,3 +9,9 @@ un index (9G, ratifié Pierre 2026-09-02).
 
 ## runm-breakout-20260902 — 2026-09-02
 résultat         : projet=runm_breakout · statut=HALTED · verdict=BLOCKED · ts=2026-09-02T16:01:05Z
+
+## chaton-clicker-20260905 — 2026-09-05
+résultat         : projet=chaton_clicker · statut=HALTED · verdict=BLOCKED · ts=2026-09-05T13:41:40Z
+
+## chaton-clicker-20260906 — 2026-09-05
+résultat         : projet=chaton_clicker · statut=HALTED · verdict=BLOCKED · ts=2026-09-05T22:37:16Z

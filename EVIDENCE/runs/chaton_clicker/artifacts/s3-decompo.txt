@@ -1,0 +1,290 @@
+## Rapport final — Décomposition Fonctionnelle (s3-decompo / chaton_clicker)
+
+**software** — Arbre Système→Feature→capacité construit par lecture seule du Prisme (`artifacts/s1-prisme.txt`, exigences P01–P14), du World Scan (`artifacts/s2-worldscan.txt`, advisory) et du `charter.yaml`. 5 systèmes, 8 features, **17 feuilles**. Chaque feuille porte `{capacite, source_ref, expected_proof}` ; `source_ref` cite l'`id` exact d'une exigence de prisme.json ; chaque `expected_proof` est recopié de l'exigence d'origine (kind + statement), jamais inventé.
+
+**evidence** — Ancres non-LLM invoquées, non exécutées (permission `run: aucun`, aucun fichier écrit) :
+- **Couverture** : P01…P14 sont toutes portées par ≥1 feuille (table ci-dessous). 0 exigence orpheline.
+- **Non-invention** : les 17 `source_ref` valent P01…P14 — aucun id inexistant.
+- **Game loop V4 / maillons** :
+  - Règle B — `P02` (PLAYER_ACTION, affordance `caresser_chaton`) → **entrée** `cap_caresser_chaton_entree` (bot_action depuis le point d'entrée web `index.html`/`main.mjs`, `check_decompo.POINTS_ENTREE`) **+ effet** `cap_caresser_chaton_gain`. Point d'entrée WEB, pas `main.tscn` (charter `hors_scope` : lignée Godot non requise).
+  - F (UNLOCK `P06`) → entrée `cap_acheter_producteur_entree` + effet `cap_production_passive_producteur`.
+  - G (NEXT_GOAL `P07`, `P08`) → feuilles d'**effet visible** sourcées (le label `objectif` change pour un texte distinct) — pas d'entrée seule.
+  - I (META_LOOP `P10`) → entrée `cap_renouveau_portee_entree` + effet `cap_renouveau_portee_reset`.
+  - H (REPEAT `P09`) : `replay:[P02,P03,P04,P06]` — les 4 cibles sont couvertes par des feuilles → pas de `boucle_replay_non_couvert`.
+  - J (ADVANTAGE `P11`) : `replay_ref:P02` — couvert → pas de `boucle_replay_non_couvert`.
+- **Grey blocks** : `gm_worldscan.json`/`story_bible.json` ABSENTS du run_dir (profil web/HTML, confirmé par le Prisme). Pas de `--gm`, 0 grey block mesuré, comportement inchangé.
+
+Table de couverture (exigence → feuille(s)) :
+
+| Exigence | loop_role | feuille(s) | kind |
+|---|---|---|---|
+| P01 | PLAYER_GOAL | cap_afficher_objectif_courant | bot_action |
+| P02 | PLAYER_ACTION | cap_caresser_chaton_entree · cap_caresser_chaton_gain | bot_action |
+| P03 | GAME_RESPONSE | cap_reponse_visuelle_caresse | visual |
+| P04 | REWARD | cap_debloquer_bouton_producteur | bot_action |
+| P05 | DECISION | cap_arbitrage_actif_vs_passif | oracle |
+| P06 | UNLOCK (F) | cap_acheter_producteur_entree · cap_production_passive_producteur | bot_action |
+| P07 | NEXT_GOAL (G) | cap_objectif_suivant_deuxieme_producteur | bot_action |
+| P08 | NEXT_GOAL (G) | cap_objectif_suivant_amelioration | bot_action |
+| P09 | REPEAT (H) | cap_rejeu_boucle_etat_enrichi | oracle |
+| P10 | META_LOOP (I) | cap_renouveau_portee_entree · cap_renouveau_portee_reset | bot_action |
+| P11 | ADVANTAGE (J) | cap_avantage_permanent_prestige | oracle |
+| P12 | NONE | cap_cout_producteur_croissant | bot_action |
+| P13 | NONE | cap_determinisme_hash | oracle |
+| P14 | NONE | cap_chaton_dessine_visible | visual |
+
+- Exigences non couvertes : **aucune**.
+- Feuilles non sourcées (source_ref absent/non résolu) : **aucune**.
+- Reçu `check_decompo` : **absent** — l'oracle n'a pas été exécuté (permission `run: aucun`, étape texte-seul). Commande que l'exécuteur doit lancer après matérialisation :
+  `node forge/check_decompo.mjs EVIDENCE/runs/chaton_clicker/featuremap.json --prisme EVIDENCE/runs/chaton_clicker/prisme.json`
+  (sans `--gm` : aucun `game_master`/`grey_blocks` dans le run_dir).
+
+**claim** — Aucun oracle exécuté de mon côté ⇒ **claim_verdict: NO_CLAIM_ALLOWED**. La validation mécanique (couverture / non-invention / complétude / maillons F–J) reste à faire par l'exécuteur via `check_decompo.mjs` ; besoin HumanGate (fog) : confirmation que le reçu oracle passe au vert avant s4-archi.
+
+### RETURN LINEAGE
+- **why_task_existed:**
+  - **problem:** le pipeline chaton_clicker a franchi s0/s1/s2 ; il manque l'arbre fonctionnel Système→Feature→capacité aux ids stables que la WireMap (s5) consommera.
+  - **oracle:** aucun — activation par la séquence de dispatch Forge (`FORGE_DISPATCH:s3-decompo:chaton-clicker-20260906:1`), décision de séquencement, pas détection d'un défaut.
+  - **root_cause:** non établie (pas d'échec amont ; étape nominale de la chaîne).
+  - **action_reason:** énumérer exhaustivement depuis le Prisme et attacher à chaque feuille sa preuve héritée, seul moyen de garantir couverture + non-invention avant l'archi.
+- **result:** featuremap complète produite en texte (17 feuilles, 14/14 exigences couvertes, maillons B/F/G/H/I/J honorés, 0 grey block attendu). Non matérialisée (je n'écris pas le fichier) ; oracle non exécuté.
+- **proof:** aucune commande exécutée (`run: aucun`). Vérification manuelle de couverture/non-invention consignée dans la table ci-dessus ; commande `check_decompo.mjs` fournie à l'exécuteur.
+- **learning:** point d'entrée = WEB (`index.html`/`main.mjs`) et non `main.tscn` — les 3 capacités d'entrée (P02/P06/P10) l'ancrent explicitement, conformément à la correction 2026-09-05 (`v2_breakout_slice_r1`).
+- **next_reason:** la chaîne continue proprement vers l'exécuteur, qui doit (1) matérialiser featuremap.json, (2) exécuter `check_decompo.mjs` et vérifier le vert avant s4-archi. Cause non résolue résiduelle : le reçu oracle manque (je ne peux pas l'exécuter) → escalade légère à l'exécuteur/HumanGate, pas fermeture.
+
+### SKIPPED_VALIDATION
+- **Item :** exécution de l'oracle `check_decompo.mjs`. **Où :** featuremap chaton_clicker. **Statut :** non fait. **Raison :** permission `run: aucun` et étape texte-seul (aucun fichier écrit) — l'oracle appartient à l'exécuteur après matérialisation.
+- **Item :** vérification que `source_ref` résout contre un `prisme.json` matérialisé. **Où :** run_dir. **Statut :** partiel — validé contre le bloc JSON du Prisme lu dans `artifacts/s1-prisme.txt` (P01…P14), pas contre un `prisme.json` sur disque. **Raison :** le fichier `prisme.json` n'est pas cité comme présent dans le run_dir ; l'exécuteur doit confirmer que la projection est byte-cohérente.
+
+```json
+{
+  "game_id": "chaton_clicker",
+  "systemes": [
+    {
+      "id": "sys_boucle_active",
+      "features": [
+        {
+          "id": "feat_objectif_affiche",
+          "capacites": [
+            {
+              "id": "cap_afficher_objectif_courant",
+              "capacite": "Au chargement, la page affiche un HUD 'objectif' chiffré non vide que le joueur cherche a atteindre.",
+              "source_ref": "P01",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot lit dans le DOM un HUD 'objectif' non vide au chargement, avant toute action du joueur."
+              }
+            }
+          ]
+        },
+        {
+          "id": "feat_caresse_chaton",
+          "capacites": [
+            {
+              "id": "cap_caresser_chaton_entree",
+              "capacite": "Le joueur agit sur l'affordance 'caresser_chaton' : il clique le chaton depuis le point d'entree du jeu.",
+              "source_ref": "P02",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique la cible caresser_chaton."
+              }
+            },
+            {
+              "id": "cap_caresser_chaton_gain",
+              "capacite": "Chaque caresse incremente le compteur de ronrons affiche a l'ecran.",
+              "source_ref": "P02",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Apres la caresse, le bot mesure dans le DOM que le compteur ronrons a augmente."
+              }
+            },
+            {
+              "id": "cap_reponse_visuelle_caresse",
+              "capacite": "Apres chaque caresse, le chaton reagit visuellement et le total de ronrons se met a jour dans la foulee.",
+              "source_ref": "P03",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "La sonde capture un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sys_economie",
+      "features": [
+        {
+          "id": "feat_producteur_passif",
+          "capacites": [
+            {
+              "id": "cap_debloquer_bouton_producteur",
+              "capacite": "Quand les ronrons atteignent le cout du premier producteur, son bouton d'achat passe d'inactif a actif et visiblement disponible.",
+              "source_ref": "P04",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot accumule des ronrons puis lit que le bouton d'achat du producteur passe d'inactif a actif dans le DOM."
+              }
+            },
+            {
+              "id": "cap_acheter_producteur_entree",
+              "capacite": "Le joueur agit sur l'affordance 'acheter_producteur' : il clique le bouton d'achat depuis le point d'entree du jeu.",
+              "source_ref": "P06",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique la cible acheter_producteur."
+              }
+            },
+            {
+              "id": "cap_production_passive_producteur",
+              "capacite": "Apres l'achat, un panier de chatons apparait et les ronrons montent sans clic via le tick deterministe.",
+              "source_ref": "P06",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Apres l'achat, le bot mesure sans cliquer que les ronrons augmentent et qu'un element 'panier_chatons' est apparu dans le DOM."
+              }
+            },
+            {
+              "id": "cap_cout_producteur_croissant",
+              "capacite": "Le cout affiche d'un producteur augmente visiblement a l'ecran apres chacun de ses achats.",
+              "source_ref": "P12",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot achete deux fois le meme producteur et lit que le cout affiche du second achat est superieur au premier."
+              }
+            }
+          ]
+        },
+        {
+          "id": "feat_decision_arbitrage",
+          "capacites": [
+            {
+              "id": "cap_arbitrage_actif_vs_passif",
+              "capacite": "Le jeu offre un point de decision mesurable : continuer a caresser pour un gain immediat OU investir dans un producteur passif.",
+              "source_ref": "P05",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Une sonde a deux politiques (oisif contre actif) sur 300 frames montre que la metrique ronrons diverge selon l'option choisie."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sys_progression",
+      "features": [
+        {
+          "id": "feat_objectifs_enchaines",
+          "capacites": [
+            {
+              "id": "cap_objectif_suivant_deuxieme_producteur",
+              "capacite": "Une fois le premier producteur acquis, le label 'objectif' change pour un texte nouveau visant un deuxieme producteur plus cher.",
+              "source_ref": "P07",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot lit que le texte du HUD 'objectif' apres le premier achat differe de celui affiche au depart."
+              }
+            },
+            {
+              "id": "cap_objectif_suivant_amelioration",
+              "capacite": "Apres le deuxieme producteur, le label 'objectif' change encore pour un troisieme texte distinct visant une amelioration.",
+              "source_ref": "P08",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot lit un troisieme texte de HUD 'objectif', distinct des deux precedents."
+              }
+            }
+          ]
+        },
+        {
+          "id": "feat_rejeu_boucle",
+          "capacites": [
+            {
+              "id": "cap_rejeu_boucle_etat_enrichi",
+              "capacite": "Dans l'etat post-achat, le joueur rejoue les memes gestes (caresser, reponse, recompense, production) et la ressource repart a la hausse.",
+              "source_ref": "P09",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "La sonde rejoue P02, P03, P04 et P06 dans l'etat post-achat et mesure une nouvelle progression des ronrons."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sys_prestige",
+      "features": [
+        {
+          "id": "feat_renouveau_portee",
+          "capacites": [
+            {
+              "id": "cap_renouveau_portee_entree",
+              "capacite": "Le joueur agit sur l'affordance 'renouveau_portee' : il clique le bouton de prestige depuis le point d'entree du jeu.",
+              "source_ref": "P10",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique la cible renouveau_portee."
+              }
+            },
+            {
+              "id": "cap_renouveau_portee_reset",
+              "capacite": "Apres le renouveau, le compteur de ronrons retombe visiblement a zero a l'ecran.",
+              "source_ref": "P10",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Apres le renouveau, le bot mesure dans le DOM que le compteur ronrons retombe a zero."
+              }
+            },
+            {
+              "id": "cap_avantage_permanent_prestige",
+              "capacite": "Apres un renouveau de portee, une meme caresse rapporte strictement plus de ronrons qu'avant le reset.",
+              "source_ref": "P11",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "La sonde compare le gain d'une caresse (P02) avant et apres le renouveau et verifie qu'il est strictement superieur."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sys_socle_technique",
+      "features": [
+        {
+          "id": "feat_determinisme",
+          "capacites": [
+            {
+              "id": "cap_determinisme_hash",
+              "capacite": "A graine egale et suite d'actions egale, la logique .mjs produit un hash d'etat final identique reproductible hors navigateur.",
+              "source_ref": "P13",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Deux executions de la logique .mjs avec meme graine et memes actions produisent le meme hash d'etat final."
+              }
+            }
+          ]
+        },
+        {
+          "id": "feat_chaton_visible",
+          "capacites": [
+            {
+              "id": "cap_chaton_dessine_visible",
+              "capacite": "Un chaton dessine est visible a l'ecran des le chargement et constitue la cible cliquable centrale du jeu.",
+              "source_ref": "P14",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "La sonde constate au chargement la presence a l'ecran d'un chaton cliquable identifiable."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

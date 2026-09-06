@@ -1,0 +1,115 @@
+The Write tool is disabled for this session, so I cannot persist a file. In this pipeline the deliverable `rapport_redteam_code.md` is emitted as my response text — `forge.run_real.extract_redteam_findings` parses the JSON block from it. Here is the complete report.
+
+---
+
+# Rapport Red-Team CODE — chaton_clicker (s11-redteam-code, aveuglé)
+
+FORGE_DISPATCH:s11-redteam-code:chaton-clicker-20260906:1
+
+**Posture** : auditeur à contexte vierge. Je n'ai lu que le code produit sous `GAMES/chaton_clicker/**` (le diff s9) + `forge/contracts/SCHEMA.md` et `.claude/rules/**`. Je ne vois pas le raisonnement du builder ; je ne corrige rien ; je ne touche pas aux surfaces de test déclarées. Permissions : `read` seul, `run: aucun`.
+
+**Conséquence de `run: aucun`** : je n'exécute aucun oracle. Chaque faille est appuyée sur une **ancre statique** (fichier:ligne) qu'un oracle non-LLM déterministe en aval peut re-vérifier (existence de fichier, `grep`/AST, comparaison de signatures). Je ne me substitue jamais à l'oracle : je fournis la cible re-exécutable.
+
+**Fait structurant** : `GAMES/chaton_clicker/` est ENTIÈREMENT neuf dans ce run (`git status` : `?? GAMES/chaton_clicker/`). Il contient **DEUX arbres d'implémentation complets et incompatibles** du même jeu :
+
+- **Arbre racine** (`GAMES/chaton_clicker/*.mjs`) — cohérent, chargé par `index.html:126`, couvert par `logic.test.mjs` + `properties.test.mjs`, orchestré par `run-oracle.mjs`. C'est le jeu qui tourne. Il porte les fonctions exactes du `wiremap` (`coutProducteur`, `gainParCaresse`, `hashEtat` FNV-1a, `makeRng` mulberry32, `Renderer(doc, id)`, `InputHandler(gameState, doc, cb)`).
+- **Arbre `src/`** (`GAMES/chaton_clicker/src/*.mjs`) + le test `GAMES/chaton_clicker/tests/logic.test.mjs` — implémentation DIVERGENTE, non chargée par `index.html`, non exécutée par `run-oracle.mjs`/`package.json`, non conforme au `wiremap`.
+
+Cette dualité est la source de la majorité des failles.
+
+---
+
+## SÉPARATION software / evidence / claim
+- **software_verdict** par finding, appuyé sur une **ancre statique re-vérifiable** (`evidence_verdict: MECHANICAL_VALIDATION_ONLY`, non exécutée par moi, exécutable en aval).
+- **claim_verdict: NO_CLAIM_ALLOWED** — le red-team CRITIQUE, il ne certifie pas ; les oracles s10 restent la source de preuve.
+- Lacune d'évidence sans oracle exécutable sur ce poste → **fog HumanGate** (F4), jamais un claim.
+- Vocabulaire : `OK` / `FAIL` / `BLOCKED`.
+
+---
+
+## FAILLES
+
+### F1 — Deux arbres d'implémentation incompatibles livrés dans le même diff (zone morte + écart contrat) — HIGH
+- **Angle** : zone morte / doublon divergent / conformité wiremap.
+- **Faille** : le diff livre `src/logic.mjs`, `src/render.mjs`, `src/input.mjs`, `src/main.mjs` — seconde implémentation jamais atteinte par le runtime ni les oracles, **non conforme au wiremap**. Mêmes noms de classe, contrats d'API incompatibles :
+  - `src/render.mjs:2` `constructor(containerId = 'game')` (document global) vs `render.mjs:18` `constructor(doc, containerId = 'game')` (DOM injecté).
+  - `src/input.mjs:2` `constructor(gameState, renderer)` vs `input.mjs:7` `constructor(gameState, doc, onAction)`.
+  - `src/logic.mjs:1` `import crypto from 'crypto'` + `sha256` (`src/logic.mjs:90`) — `node:crypto` irrésolvable en navigateur — vs FNV-1a pur JS racine (`logic.mjs:42-56`), fait « parce que `node:crypto` est irrésolvable en navigateur » (`logic.mjs:11-16`).
+  - Le wiremap déclare R8 `coutProducteur` et R15 `gainParCaresse` comme **fonctions** : présentes racine (`logic.mjs:91`, `logic.mjs:77` getter), **absentes** de `src/logic.mjs` (coût inline `src/logic.mjs:40` ; `gainParCaresse` = propriété numérique `src/logic.mjs:8`).
+- **Impact adverse** : un oracle résolvant `src_root = src/` teste l'arbre non conforme — exactement le symptôme du pré-mortem `s10a` (« fichiers introuvables sous src_root » puis `mutation=FAIL`). `src/*` n'est couvert par aucun test exécuté → mutants survivants garantis.
+- **Reproduction (ancre statique)** : `grep -n "constructor(containerId" GAMES/chaton_clicker/src/render.mjs` (L2) ET `grep -n "constructor(doc, containerId" GAMES/chaton_clicker/render.mjs` (L18) ; `grep -n "from 'crypto'" GAMES/chaton_clicker/src/logic.mjs` (L1) absent de `logic.mjs`. `software_verdict: FAIL`, `evidence_verdict: MECHANICAL_VALIDATION_ONLY`.
+
+### F2 — `src/main.mjs` viole le garde-fou de déterminisme (`Date.now()` en boucle de jeu) — MEDIUM
+- **Angle** : écart contrat/code (déterminisme R16) sur code livré.
+- **Faille** : `src/main.mjs:12` `this.lastFrameTime = Date.now()`, `:53` `const now = Date.now()` + accumulateur `deltaTime` (`:53-61`). C'est le geste interdit par l'en-tête racine (`main.mjs:1-3` : « un pas logique fixe par frame — jamais de `Date.now()` »). Si `src/main.mjs` est pris pour l'entrée (nom canonique sous `src/`), la cadence devient dépendante du temps réel → la prémisse R16/P13 (« même graine + même suite d'actions => même hash ») ne tient plus en navigateur.
+- **Reproduction** : `grep -n "Date.now()" GAMES/chaton_clicker/src/main.mjs` (L12,41,53) non nul ; vide dans `main.mjs`. `software_verdict: FAIL`, `evidence_verdict: MECHANICAL_VALIDATION_ONLY`.
+
+### F3 — La surface de test protégée `tests/**` valide l'arbre mort ; la vraie couverture est HORS surface protégée — MEDIUM
+- **Angle** : preuve factice / couverture trompeuse / surface protégée.
+- **Faille** : `tests/logic.test.mjs:1` importe `../src/logic.mjs` → teste l'arbre MORT. Attentes couplées à `src/` (ex. `acheterProducteur` renvoie `{success:true,...}` `src/logic.mjs:42` vs booléen nu `logic.mjs:109`). Or la convention de surfaces protégées vise `GAMES/*/tests/**` (`.claude/rules/tests.md`) : le fichier protégé pointe sur du code mort, tandis que la VRAIE couverture (`logic.test.mjs`, `properties.test.mjs`) vit à la racine du jeu, **hors** du glob protégé. Un outil globant `tests/**` exercerait l'implémentation qui ne tourne pas.
+- **Reproduction** : `grep -n "from '../src/logic.mjs'" GAMES/chaton_clicker/tests/logic.test.mjs` (L1) vs `logic.test.mjs:10` (`from './logic.mjs'`). `software_verdict: FAIL`, `evidence_verdict: MECHANICAL_VALIDATION_ONLY`.
+
+### F4 — Oracles navigateur (e2e / solvabilité) non exécutables sur ce poste → preuves wiremap non vérifiées (BLOCKED, fog) — MEDIUM
+- **Angle** : lacune d'évidence / preuve absente (≠ preuve factice).
+- **Faille** : le wiremap attribue R1, R2, R4, R6, R7, R13, R17 à `e2e.mjs`/`solvability.mjs`, qui exigent Playwright/Chromium — absent du poste (`e2e.mjs:9-11`, et mémoire projet venv/`requests` cassés). Les deux échouent **fermé** (`RESULT: FAIL` `e2e.mjs:186`, `SOLVABILITY: FAIL` `solvability.mjs:130`, exit 1) — bon comportement, **aucun vert par défaut** (contrairement au piège pré-mortem `manifest-3a1dde…`, autre jeu). Mais R1/R2/R4/R6/R7/R13/R17 restent **NON PROUVÉES** ici. Je ne peux ni exécuter (`run: aucun`) ni claim.
+- **Reproduction** : `e2e.mjs:33-48` / `solvability.mjs:31-46` (`loadChromium()` jette → `catch` → FAIL). `software_verdict: BLOCKED`, `claim_verdict: NO_CLAIM_ALLOWED`. **fog HumanGate** : Pierre doit décider où/comment tournent ces oracles (installer Playwright, `PLAYWRIGHT_NODE_MODULES`, ou statuer non-prouvé) avant tout verdict de jouabilité.
+
+### F5 — Porte dérobée de debug exposée en production (`window.__game_debug`, `window.__game`) — LOW
+- **Angle** : surface d'abus laissée en production.
+- **Faille** : `main.mjs:63` `win.__game = gameState` et `main.mjs:68-74` `win.__game_debug.donnerRonrons(n)` sans **aucune garde runtime** (ni flag `?debug`, ni check d'environnement). Le commentaire « RÉSERVÉ à e2e » n'est pas appliqué : un joueur peut faire `__game_debug.donnerRonrons(1e9)` en console et court-circuiter l'économie/le prestige. `solvability.mjs:1-8` s'en abstient correctement, mais le hook reste un vecteur de triche trivial dans le binaire livré.
+- **Reproduction** : `grep -n "__game_debug" GAMES/chaton_clicker/main.mjs` (L68-74), défini inconditionnellement dans `createGame` (appelé par `autoBootstrap` au chargement). `software_verdict: FAIL`, `evidence_verdict: MECHANICAL_VALIDATION_ONLY`.
+
+### F6 — Écart d'intention sur R11 : le 3e objectif vise le prestige, pas une « amélioration » — LOW
+- **Angle** : écart contrat/code (intention de capacité) non capté par l'oracle.
+- **Faille** : wiremap R11 = `cap_objectif_suivant_amelioration` (« un 3e texte … vise une amélioration »). Le code renvoie « Renouvelle ta portée pour un bonus permanent » (`logic.mjs:141`) → prestige ; **aucun mécanisme d'« amélioration »/upgrade distinct** n'existe (producteurs + prestige seulement). L'oracle `objectifCourant: texte exact` (`logic.test.mjs:205-223`) ne vérifie que la distinction/le libellé exact, pas qu'un objectif « visant une amélioration » corresponde à une mécanique réelle : l'écart d'intention passe au vert.
+- **Reproduction** : `logic.mjs:138-142` (3e branche = prestige) vs `logic.test.mjs:205-223` (libellé exact seulement). `software_verdict: OK` côté oracle (le test passe), intention non prouvée → `claim_verdict: NO_CLAIM_ALLOWED`, jugement Pierre (fog léger).
+
+---
+
+## Ce qui a résisté à l'audit adverse (arbre racine — le code qui tourne)
+Contrôlé sans faille reproductible, sur l'arbre vivant (preuve = oracles s10, non claim par moi) :
+- **R8 coût croissant** : `logic.mjs:101-110`, `cost = round(cost*1.15*100)/100`, strictement croissant.
+- **R14/R15 prestige** : `renouveauPortee` (`logic.mjs:124-135`) borne le gain à `max(1, …)` et remet les coûts à la base (`:131`, contrairement à `src/`) ; `gainParCaresse = 1 + prestige*0.1` (`logic.mjs:77`) toujours > 1 après reset.
+- **R9 divergence actif/passif** : sur état neuf, passif=0, actif caresse 1/5 → `diff>0` (`logic.mjs:160-174`).
+- **R16 déterminisme** : `hashEtat` FNV-1a pur (`logic.mjs:190-200`), RNG mulberry32 seedé (`:19-27`), clones à flux RNG dérivé indépendant (`:145-157`).
+- **Câblage** : boutons réutilisés par id à travers les re-rendus (pas de listener perdu/doublé) ; `index.html:126` charge bien l'arbre racine.
+
+---
+
+## SKIPPED_VALIDATION
+
+| Item | Périmètre | Statut | Raison |
+|---|---|---|---|
+| Exécution oracles unitaires (`logic.test.mjs`, `properties.test.mjs`) | arbre racine | non fait | `run: aucun` — ancres statiques fournies pour re-exécution aval |
+| Exécution e2e navigateur (`e2e.mjs`) | R1/R2/R4/R6/R7/R13/R17 | non fait | `run: aucun` + Playwright absent (F4) — fog |
+| Exécution bot solvabilité (`solvability.mjs`) | jouabilité DOM-only | non fait | `run: aucun` + Playwright absent (F4) — fog |
+| Confirmation dynamique que `src/*` est injoignable au runtime | arbre `src/` | partiel | prouvé statiquement (non chargé par `index.html`/`run-oracle.mjs`/`package.json`) ; pas d'exécution navigateur |
+| Lecture de `blueprint.json` référencé par les en-têtes | `GAMES/chaton_clicker/` | non fait | absent sous `GAMES/chaton_clicker/` (les commentaires le citent) ; hors périmètre lecture (probable run_dir) — signalé, non bloquant |
+| Confrontation au `featuremap.json` (ids exacts) | R11 | partiel | hors périmètre du sous-agent aveuglé (seul le wiremap m'est fourni) ; F6 laissée à Pierre |
+
+---
+
+## RAPPORT FINAL (verdicts typés)
+- **software_verdict** : `FAIL` sur F1, F2, F3, F5 (ancres statiques re-vérifiables) ; `BLOCKED` sur F4 (oracle navigateur indisponible) ; `OK` côté oracle unitaire pour F6, intention non prouvée.
+- **evidence_verdict** : `MECHANICAL_VALIDATION_ONLY` — toutes mes preuves sont statiques ; aucun oracle exécuté (`run: aucun`).
+- **claim_verdict** : `NO_CLAIM_ALLOWED` — advisory, alimente `redteam_advisory` uniquement.
+- **fog → HumanGate** : (a) où/comment exécuter les oracles navigateur (F4) ; (b) statuer sur `src/` + `tests/logic.test.mjs` (code mort à retirer ou re-conformer — F1/F2/F3) ; (c) intention R11 (F6).
+
+---
+
+## RETURN LINEAGE (FORGE_CAUSAL_LINEAGE_V2 §3)
+- **why_task_existed** :
+  - **problem** : le code de `chaton_clicker` (s9) devait être audité en adverse, contexte vierge, pour écarts contrat/code, preuves factices et zones mortes, avant verdict signé.
+  - **oracle** : aucun — activation par dispatch de la boucle Forge, pas par un oracle rouge.
+  - **root_cause** : le diff s9 livre DEUX arbres superposés (racine vivant conforme + `src/` mort divergent), vraisemblablement le résidu des tentatives s9 échouées puis reprises (pré-mortem : s9 réparé aux tentatives 2 puis 3, tiers différents) ; l'arbre abandonné n'a pas été nettoyé.
+  - **action_reason** : produire un rapport de failles indépendant, chaque faille appuyée sur une ancre statique re-exécutable par un oracle non-LLM, sans me substituer aux oracles.
+- **result** : rapport produit — 6 failles (1 HIGH, 3 MEDIUM, 2 LOW) + lacune d'évidence en fog. Aucune correction (hors périmètre). Aucune surface de test modifiée. Écriture fichier impossible (outil Write désactivé) → livrable émis en réponse pour `extract_redteam_findings`.
+- **proof** : lectures de `GAMES/chaton_clicker/{logic,render,input,main}.mjs`, `src/{logic,render,input,main}.mjs`, `tests/logic.test.mjs`, `logic.test.mjs`, `properties.test.mjs`, `e2e.mjs`, `solvability.mjs`, `server.mjs`, `run-oracle.mjs`, `index.html`, `package.json` ; `forge/contracts/SCHEMA.md`. Ancres citées par finding. Aucune commande exécutée (`run: aucun`).
+- **learning** : sur ce dépôt, un jeu web « neuf » peut arriver avec un arbre `src/` fantôme concurrent de l'arbre racine réellement câblé par `index.html` ; l'ambiguïté `src_root` du wiremap/oracle (pré-mortem s10a) en est le symptôme direct. Vérifier quel arbre `index.html` + `package.json` + `run-oracle.mjs` désignent avant de faire confiance aux noms de fichiers bruts du wiremap.
+- **next_reason** : escalade requise — cause non résolue (double arbre F1/F2/F3), preuve manquante (oracles navigateur F4, BLOCKED), correction possible (nettoyage `src/`+`tests/logic.test.mjs`). Chaîne NON fermée : `claim_verdict: NO_CLAIM_ALLOWED`, décision Pierre attendue.
+
+```json
+{"findings": [{"angle": "zone morte / doublon divergent / conformite wiremap", "faille": "Deux arbres d'implementation incompatibles livres dans le meme diff : src/*.mjs (mort, non conforme au wiremap, import node:crypto irresolvable en navigateur, gainParCaresse/coutProducteur absents comme fonctions) coexiste avec l'arbre racine vivant charge par index.html ; un oracle resolvant src_root=src/ teste l'arbre non conforme et src/* n'est couvert par aucun test execute (mutants survivants garantis).", "severite": "HIGH", "reproduction": "grep -n \"constructor(containerId\" GAMES/chaton_clicker/src/render.mjs (L2) ET grep -n \"constructor(doc, containerId\" GAMES/chaton_clicker/render.mjs (L18) : deux classes Renderer d'arite incompatible ; grep -n \"from 'crypto'\" GAMES/chaton_clicker/src/logic.mjs (L1) absent de GAMES/chaton_clicker/logic.mjs"}, {"angle": "ecart contrat/code - determinisme R16 sur code livre", "faille": "src/main.mjs pilote le tick sur Date.now() (accumulateur temps reel), violant le garde-fou 'jamais de Date.now()' enonce par main.mjs racine ; si src/main.mjs est pris pour l'entree, la cadence devient dependante du temps reel et la premisse de R16/P13 (meme graine => meme hash) ne tient plus.", "severite": "MEDIUM", "reproduction": "grep -n \"Date.now()\" GAMES/chaton_clicker/src/main.mjs (L12,41,53) non nul ; grep -n \"Date.now()\" GAMES/chaton_clicker/main.mjs vide"}, {"angle": "preuve factice / couverture trompeuse / surface protegee", "faille": "GAMES/chaton_clicker/tests/logic.test.mjs (surface protegee GAMES/*/tests/**) importe ../src/logic.mjs : il teste l'arbre MORT et divergent. La vraie couverture (logic.test.mjs, properties.test.mjs) vit a la racine du jeu, HORS du glob protege ; un outil globant tests/** validerait le code qui ne tourne pas.", "severite": "MEDIUM", "reproduction": "grep -n \"from '../src/logic.mjs'\" GAMES/chaton_clicker/tests/logic.test.mjs (L1) contre logic.test.mjs:10 (from './logic.mjs')"}, {"angle": "lacune d'evidence / preuve absente", "faille": "Les oracles navigateur e2e.mjs et solvability.mjs (preuves wiremap de R1/R2/R4/R6/R7/R13/R17) exigent Playwright, absent du poste ; ils echouent ferme (RESULT/SOLVABILITY: FAIL, exit 1 - correct, aucun vert par defaut) mais ces capacites restent NON PROUVEES sur ce poste. BLOCKED, remonte en fog HumanGate.", "severite": "MEDIUM", "reproduction": "e2e.mjs:33-48 et solvability.mjs:31-46 : loadChromium() jette si Playwright absent -> catch -> RESULT: FAIL (e2e.mjs:186) / SOLVABILITY: FAIL (solvability.mjs:130)"}, {"angle": "surface d'abus laissee en production", "faille": "main.mjs expose window.__game et window.__game_debug.donnerRonrons(n) sans aucune garde runtime (ni flag debug ni check d'environnement) ; le commentaire 'reserve a e2e' n'est pas applique - un joueur peut cheater l'economie/prestige depuis la console.", "severite": "LOW", "reproduction": "grep -n \"__game_debug\" GAMES/chaton_clicker/main.mjs (L68-74) : hook defini inconditionnellement dans createGame, appele par autoBootstrap au chargement"}, {"angle": "ecart d'intention non capte par l'oracle", "faille": "wiremap R11 = cap_objectif_suivant_amelioration ('vise une amelioration') mais le 3e objectif du code pointe le prestige/renouveau et aucun mecanisme d'amelioration distinct n'existe ; l'oracle ne verifie que la distinction/le libelle exact des textes, pas l'existence d'une mecanique d'amelioration - l'ecart d'intention passe au vert.", "severite": "LOW", "reproduction": "logic.mjs:138-142 (objectifCourant, 3e branche = prestige) confronte a logic.test.mjs:205-223 (assertion sur libelle exact seulement)"}]}
+```
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "Le diff s9 de chaton_clicker livre deux arbres d'implementation incompatibles (racine vivant conforme + src/ mort divergent non conforme au wiremap) et une surface de test protegee (tests/logic.test.mjs) couplee a l'arbre mort ; oracles navigateur non executables sur le poste.", "root_cause": "Residu non nettoye des tentatives s9 echouees puis reprises (tiers differents), laissant un arbre src/ abandonne concurrent de l'arbre racine reellement cable par index.html"}

@@ -1,0 +1,373 @@
+## RÔLE
+Builder (délégation bornée par l'ownership). Point de vue : développeur discipliné qui reste dans son module.
+
+## EXIGENCES COGNITIVES
+Exécution bornée, micro-commits, tenue à jour de la WireMap. Discipline de périmètre supérieure à la vitesse : ne déborde jamais l'ownership.
+
+## MÉMOIRE DE TRAVAIL
+Consomme le blueprint (étape 7) qui fixe son ownership et la WireMap (étape 5) qu'il doit tenir à jour. Conventions : CLAUDE.md + rules/ (par lane). Le repo a déjà été créé à l'étape 8 (Create Repo).
+
+## OBJECTIF
+Produire le code borné à l'ownership, avec la WireMap tenue à jour. Micro-commits exécutés. Consulter knowledge_base/search.mjs avant d'écrire une pièce de logique réutilisable, importer réellement ce qui matche, n'écrire que le delta (§2bis).
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Implémentation du code UNIQUEMENT dans l'ownership défini par le blueprint ; mise à jour de la WireMap (colonnes fichiers/fonction/version/preuve/statut).
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Ne sort JAMAIS de son ownership (blueprint). Ne modifie pas les surfaces de test déclarées (forge/test_surfaces.yaml). Un test peut être CRÉÉ (c'est un livrable), jamais MODIFIÉ s'il préexiste à ta passe — régime create_allowed_modify_denied, forge/test_surfaces.yaml. Ne modifie pas l'architecture (blueprint, deps).
+
+## PERMISSIONS
+read: repo entier. write: UNIQUEMENT les fichiers de son ownership + la WireMap. run: l'oracle code (cargo/pytest/vitest via forge/oracles.json). create: fichiers de son ownership uniquement. delete: aucun. INTERDIT: MODIFICATION de les surfaces de test déclarées (forge/test_surfaces.yaml) (création permise).
+
+## GARDE-FOU
+Respecte l'ownership : n'écrit que dans les fichiers que le blueprint lui attribue. Micro-commits. Ne franchit pas les deps interdites du blueprint.
+
+## CRITÈRES DE RÉUSSITE
+Code dans l'ownership (aucun fichier hors périmètre modifié) ; oracle code vert ; WireMap à jour. Pour un JEU (objectif/condition de victoire joueur) : oracle de SOLVABILITÉ vert (un bot joue et GAGNE réellement) ET preuve e2e verte (click-through navigateur réel, cf. forge/contracts/PLAYABLE_CONTRACT.md).
+
+## ORACLES / TESTS
+Oracle CODE déterministe non-LLM : cargo / pytest / vitest via forge/oracles.json selon la lane. Jamais de LLM-as-judge. Pour un JEU : l'oracle CODE inclut OBLIGATOIREMENT un volet SOLVABILITÉ (solvability.mjs câblé dans run-oracle.mjs) — les mécaniques testées EN ISOLATION ne suffisent pas : un jeu aux objectifs inatteignables passe tous les tests de mécanique tout en étant injouable. Le volet mesure l'enveloppe d'action réelle du moteur, vérifie que les objectifs requis y sont, et fait JOUER un bot qui doit gagner. Modèle : forge/templates/solvability.template.mjs. L'oracle CODE d'un JEU inclut AUSSI OBLIGATOIREMENT un volet e2e (e2e.mjs, click-through navigateur réel câblé dans run-oracle.mjs) conforme au contrat de jouabilité (forge/contracts/PLAYABLE_CONTRACT.md) : la garde structurelle forge.static_oracles.check_e2e_harness REJETTE un e2e absent, non câblé, ou coquille (qui imprime PASS sans piloter). Enfin, pour un JEU, l'oracle-code inclut un GATE MUTATION (forge.mutation.run_mutation_test sur game.mjs + forge.static_oracles.check_mutation_gate) : « 100% des mutants tués OU chaque survivant trié équivalent avec justification dans GAMES/<projet>/mutation_triage.json ». Un survivant non justifié => oracle rouge (auto-correction).
+
+## CONTRAT DE SORTIE
+diff (micro-commits) + WireMap à jour (colonnes fichiers/fonction/version/preuve/ statut) + reçu reuse_ratio.mjs (forge/reuse_ratio.mjs <dossier du jeu>). Pour un JEU : un volet solvability.mjs (bot-joue-et-gagne) ET un e2e.mjs (click-through navigateur réel, contrat de jouabilité) tous deux câblés dans run-oracle.mjs, en plus des mécaniques.
+
+## RAPPORT FINAL
+software/evidence/claim séparés ; cite l'oracle code utilisé ; liste les fichiers touchés vs ownership ; cite la sortie de reuse_ratio.mjs (evidence_path) et les requêtes SEARCH effectuées avant écriture (§2bis) ; claim_verdict: NO_CLAIM_ALLOWED. Sans oracle disponible => remonte un besoin HumanGate (fog), pas de claim. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- forge/contracts/SCHEMA.md
+- le blueprint.yaml (ownership) qui borne strictement sa zone d'écriture
+- la WireMap produite à l'étape 5 (fichiers/fonction/version/preuve/statut)
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s9-build:chaton-clicker-20260906:4
+
+## TÂCHE CONCRÈTE (chaton-clicker-20260906 / s9-build)
+Implémente le projet 'chaton_clicker' sous GAMES/chaton_clicker, borné à ton ownership (blueprint) : code + run-oracle.mjs + solvability + e2e conformément au contrat. Tiens la WireMap à jour. AUCUN commit (git/PowerShell) : le verdict signé et HumanGate s'en chargent — les « micro-commits » du contrat sont suspendus par l'exécuteur.
+
+## ARTEFACTS AMONT (run_dir)
+Rappel ownership : tu n'écris QUE dans les fichiers que le blueprint.json ci-dessous t'attribue (contrat s9-build §5).
+
+### blueprint.json (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker\blueprint.json)
+{
+ "modules": [
+  "logic",
+  "render",
+  "input",
+  "main"
+ ],
+ "deps_interdites": [
+  [
+   "logic",
+   "render"
+  ],
+  [
+   "logic",
+   "input"
+  ],
+  [
+   "logic",
+   "main"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "render"
+  ],
+  [
+   "render",
+   "main"
+  ],
+  [
+   "input",
+   "main"
+  ]
+ ],
+ "ownership": {
+  "logic": "Cœur métier déterministe (économie, tick, prestige, RNG seedé, hash) — pur, sans DOM, testable hors navigateur.",
+  "render": "Vue DOM : chaton, HUD objectif, boutons, réponses visuelles. Lit l'état, n'écrit jamais la logique.",
+  "input": "Câblage des affordances joueur (clic chaton, achat producteur, prestige) vers les actions de logic.",
+  "main": "Racine de composition : bootstrap depuis index.html, câble logic+render+input, expose window.__game, pilote le tick déterministe."
+ },
+ "responsabilites": [
+  {
+   "module": "logic",
+   "responsabilite": "Simulation déterministe de l'état de jeu : gain par caresse, production passive et courbe de coût croissante, point de décision actif/passif, rejeu enrichi, prestige (reset + avantage permanent), RNG seedé et hash d'état — aucune dépendance au DOM.",
+   "couvre": [
+    "feat_caresse_chaton",
+    "feat_producteur_passif",
+    "feat_decision_arbitrage",
+    "feat_rejeu_boucle",
+    "feat_renouveau_portee",
+    "feat_determinisme"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Deux exécutions headless de logic/ a graine et suite d'actions egales produisent le meme hash d'etat final ; une sonde a deux politiques (oisif contre actif) sur >=300 frames montre la divergence de la metrique ronrons ; le gain d'une caresse apres renouveau est strictement superieur — le tout prouve sans DOM."
+   }
+  },
+  {
+   "module": "render",
+   "responsabilite": "Vue DOM pure : dessine le chaton cliquable, affiche le HUD objectif et son changement de texte au fil de la progression, rend la reaction visuelle a la caresse et la mise a jour du compteur. Lit un etat fourni, n'ecrit jamais la logique ni l'input.",
+   "couvre": [
+    "feat_objectif_affiche",
+    "feat_objectifs_enchaines",
+    "feat_chaton_visible",
+    "feat_caresse_chaton"
+   ],
+   "dependances": [
+    "logic"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "La sonde constate au chargement un chaton cliquable et un HUD 'objectif' non vide, puis un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic, et un texte d'objectif distinct apres chaque palier."
+   }
+  },
+  {
+   "module": "input",
+   "responsabilite": "Liaison des affordances joueur : câble les evenements DOM (clic sur le chaton, clic d'achat de producteur, clic de renouveau de portee) vers les actions publiques de logic, sans jamais toucher au rendu.",
+   "couvre": [
+    "feat_caresse_chaton",
+    "feat_producteur_passif",
+    "feat_renouveau_portee"
+   ],
+   "dependances": [
+    "logic"
+   ],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique via les seules affordances DOM les cibles caresser_chaton, acheter_producteur et renouveau_portee, et chaque clic declenche l'action de logic correspondante."
+   }
+  },
+  {
+   "module": "main",
+   "responsabilite": "Racine de composition : bootstrap depuis index.html, câble logic+render+input, expose window.__game et pilote le tick deterministe qui rend la production passive observable a l'ecran sans clic.",
+   "couvre": [
+    "feat_producteur_passif"
+   ],
+   "dependances": [
+    "logic",
+    "render",
+    "input"
+   ],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Apres achat d'un producteur, le bot mesure sans cliquer que les ronrons augmentent via le tick pilote par main et qu'un element 'panier_chatons' est apparu ; window.__game est expose au chargement."
+   }
+  }
+ ]
+}
+
+### wiremap.json (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker\wiremap.json)
+{
+ "features": [
+  {
+   "feature": "R1 objectif_courant_affiche",
+   "fonction": "renderObjectif",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "e2e.mjs : au chargement, le HUD DOM 'objectif' est lu non vide avant toute action (P01)",
+   "couvre": [
+    "cap_afficher_objectif_courant"
+   ]
+  },
+  {
+   "feature": "R2 caresse_clic_cable",
+   "fonction": "brancherCaresse",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "solvability.mjs : le bot clique la cible DOM caresser_chaton (affordance joueur), l'action logic.caresser est declenchee (P02 entree)",
+   "couvre": [
+    "cap_caresser_chaton_entree"
+   ]
+  },
+  {
+   "feature": "R3 caresse_gain_ronrons",
+   "fonction": "caresser",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::caresser : ronrons(state') > ronrons(state) apres une caresse, hors navigateur (P02 gain)",
+   "couvre": [
+    "cap_caresser_chaton_gain"
+   ]
+  },
+  {
+   "feature": "R4 reponse_visuelle_caresse",
+   "fonction": "reagirCaresse",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "e2e.mjs : capture d'un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic (P03)",
+   "couvre": [
+    "cap_reponse_visuelle_caresse"
+   ]
+  },
+  {
+   "feature": "R5 deblocage_bouton_producteur",
+   "fonction": "producteurAbordable",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::producteurAbordable : faux tant que ronrons < cout, vrai des que ronrons >= cout du 1er producteur (P04)",
+   "couvre": [
+    "cap_debloquer_bouton_producteur"
+   ]
+  },
+  {
+   "feature": "R6 achat_producteur_clic_cable",
+   "fonction": "brancherAchat",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "solvability.mjs : le bot clique le bouton DOM acheter_producteur (affordance joueur), l'action logic.acheterProducteur est declenchee (P06 entree)",
+   "couvre": [
+    "cap_acheter_producteur_entree"
+   ]
+  },
+  {
+   "feature": "R7 production_passive_au_tick",
+   "fonction": "tick",
+   "fichiers": [
+    "logic.mjs",
+    "main.mjs"
+   ],
+   "preuve": "logic.test.mjs::tick : apres achat, N applications deterministes de tick augmentent ronrons sans caresse ; e2e.mjs voit apparaitre panier_chatons (P06 effet)",
+   "couvre": [
+    "cap_production_passive_producteur"
+   ]
+  },
+  {
+   "feature": "R8 cout_producteur_croissant",
+   "fonction": "coutProducteur",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::coutProducteur : cout(n+1) > cout(n) pour deux achats successifs du meme producteur (P12)",
+   "couvre": [
+    "cap_cout_producteur_croissant"
+   ]
+  },
+  {
+   "feature": "R9 arbitrage_actif_vs_passif",
+   "fonction": "comparerPolitiques",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::comparerPolitiques : sur 300 frames deterministes, la metrique ronrons diverge entre politique oisif et actif (P05)",
+   "couvre": [
+    "cap_arbitrage_actif_vs_passif"
+   ]
+  },
+  {
+   "feature": "R10 objectif_suivant_deuxieme_producteur",
+   "fonction": "objectifCourant",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::objectifCourant : le texte d'objectif apres le 1er achat differe du texte initial (P07)",
+   "couvre": [
+    "cap_objectif_suivant_deuxieme_producteur"
+   ]
+  },
+  {
+   "feature": "R11 objectif_suivant_amelioration",
+   "fonction": "objectifCourant",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::objectifCourant : un 3e texte d'objectif, distinct des deux precedents, vise une amelioration (P08)",
+   "couvre": [
+    "cap_objectif_suivant_amelioration"
+   ]
+  },
+  {
+   "feature": "R12 rejeu_boucle_etat_enrichi",
+   "fonction": "rejouerBoucle",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::rejouerBoucle : rejoue P02/P03/P04/P06 dans l'etat post-achat et mesure une nouvelle progression des ronrons (P09)",
+   "couvre": [
+    "cap_rejeu_boucle_etat_enrichi"
+   ]
+  },
+  {
+   "feature": "R13 renouveau_clic_cable",
+   "fonction": "brancherRenouveau",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "preuve": "solvability.mjs : le bot clique le bouton DOM renouveau_portee (affordance joueur), l'action logic.renouveauPortee est declenchee (P10 entree)",
+   "couvre": [
+    "cap_renouveau_portee_entree"
+   ]
+  },
+  {
+   "feature": "R14 renouveau_reset_ronrons",
+   "fonction": "renouveauPortee",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::renouveauPortee : apres renouveau, ronrons(state') == 0 (P10 effet)",
+   "couvre": [
+    "cap_renouveau_portee_reset"
+   ]
+  },
+  {
+   "feature": "R15 avantage_permanent_prestige",
+   "fonction": "gainParCaresse",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::gainParCaresse : le gain d'une caresse apres renouveau est strictement superieur au gain avant reset (P11)",
+   "couvre": [
+    "cap_avantage_permanent_prestige"
+   ]
+  },
+  {
+   "feature": "R16 determinisme_par_hash",
+   "fonction": "hashEtat",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "preuve": "logic.test.mjs::hashEtat : deux executions a meme graine et meme suite d'actions produisent un hash d'etat final identique, hors navigateur (P13)",
+   "couvre": [
+    "cap_determinisme_hash"
+   ]
+  },
+  {
+   "feature": "R17 chaton_dessine_visible",
+   "fonction": "dessinerChaton",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "preuve": "e2e.mjs : au chargement, un chaton dessine cliquable identifiable est present a l'ecran (P14)",
+   "couvre": [
+    "cap_chaton_dessine_visible"
+   ]
+  }
+ ]
+}
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- [s9-build] échec d'une tentative précédente à s9-build → ✅ RÉPARÉ: réparé à la tentative 2 (tier haiku)
+- [s10a-oracle-code] fichiers logiques introuvables sous src_root, même après normalisation du préfixe repo-relatif — hypothèse inconnue = BLOCKED : ['input.mjs', 'logic.mjs', 'main.mjs', 'render.mjs']
+- [s10c-oracle-wiremap] FAIL
+- [s9-build] échec d'une tentative précédente à s9-build → ✅ RÉPARÉ: réparé à la tentative 3 (tier sonnet)
+- [s10a-oracle-code] returncode=0; mutation=FAIL
+- [manifest-dfeaa01ee9eaa0a1] plateforme_cible=web/HTML est une hypothese agent exigee non vide par le schema charter mais sans source Pierre tracable, remontee en fog HumanGate — cause: lignee Godot V2 non configuree sur le poste (forge/godot.config.json absent), l'agent a suppose web faute de choix Pierre trace -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-cec5891069cc1358] plateforme_cible est exigee non vide par check_charter mais n'a aucune source Pierre pour chaton_clicker ; remplir la case revient a inventer une autorite absente — cause: lignee Godot V2 non configuree sur le poste (forge/godot.config.json absent), donc web/HTML reste une hypothese agent non tranchee par Pierre -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-0204e25b924ba5a0] plateforme_cible (web/HTML) est une hypothese agent sans source Pierre explicite, exigee non vide par le schema charter mais non tranchee par Pierre — cause: la lignee Godot V2 n'est pas configuree sur le poste (forge/godot.config.json absent), l'agent a suppose web faute de choix Pierre trace -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-3a1dde0761b33e9a] Le volet e2e du gate rend exit 0 et 'RESULT: PASS' sans jamais piloter de navigateur quand Playwright est absent ; la garde anti-coquille check_e2e_harness ne peut pas le voir car elle inspecte la source, pas la branche prise au runtime. Par ailleurs mutation_triage.json ecrit comme objet JSON etait silencieusement ignore par load_mutation_triage, qui n'accepte qu'un tableau au premier niveau. — cause: Deux gardes statiques jugent la FORME du harnais (tokens dans la source, schema du fichier) sans point de mesure sur son COMPORTEMENT reel : un repli runtime non instrumente et un rejet de schema non journalise passent tous deux pour des verts. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-1a6f50782223899f] wiremap.json.couvre citait des noms de fonction au lieu des ids exacts de capacites de featuremap.json, faisant echouer l'oracle pre-build check_wiremap_contract.mjs (0/10 capacites couvertes) — cause: confusion entre deux oracles homonymes-en-esprit (check_wiremap_contract.mjs pre-build vs check_wiremap post-build) portant sur des champs distincts du meme fichier wiremap.json, jamais corrigee par les tentatives precedentes de s9-build qui ne traitaient que le gel de jeu de regles et le champ fonction -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s9-build:chaton-clicker-20260906:4

@@ -1,0 +1,6 @@
+{
+  "require": [],
+  "spec": "tests/**/*.test.mjs",
+  "node-option": ["loader=esmock"],
+  "timeout": 10000
+}

@@ -1,0 +1,267 @@
+## RÔLE
+Prisme Produit (étape 1). Point de vue imposé : réalisateur qui décrit le produit FINI tel que le joueur le vit, pas le chemin pour y arriver.
+
+## EXIGENCES COGNITIVES
+Vision produit concrète. Sépare strictement ce que le joueur voit / fait / ressent, et n'énonce que des Règles observables (testables).
+
+## MÉMOIRE DE TRAVAIL
+Consomme le charter (étape 0) + le prompt utilisateur. Connaît les conventions produit du studio.
+
+## OBJECTIF
+Produire product_snapshot.md : le produit fini décomposé en facettes — ce que le joueur voit, ce qu'il fait, ce qu'il ressent, + les Règles observables. 4 sections obligatoires, aucun flou, aucun « à définir ».
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Capture de la vision produit finie : expérience joueur (voit/fait/ressent) + liste des Règles observables. Écrit product_snapshot.md uniquement.
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Ne décompose pas en features (c'est l'étape 3) ; ne décide ni l'architecture ni le code ; ne fait pas le world scan.
+
+## PERMISSIONS
+read: repo + charter. write: product_snapshot.md uniquement. create: product_snapshot.md. run: aucun. delete: aucun.
+
+## GARDE-FOU
+Décrit le produit FINI, jamais le chemin. Toute règle DOIT être observable (donc testable plus tard). Aucun champ « à définir ».
+
+## CRITÈRES DE RÉUSSITE
+product_snapshot.md valide, 4 sections remplies, chaque règle observable et cohérente avec le charter. ET bloc ```json``` terminal valide : chaque exigence porte la chaîne complète observation -> claim -> enonce -> expected_proof -> destination (les trois premiers maillons DIFFÉRENTS), avec sa provenance (source/source_role/reference).
+
+## ORACLES / TESTS
+Oracle déterministe non-LLM : `node forge/check_prisme_manifest.mjs <run_dir>/prisme.json --worldscan <run_dir>/worldscan.json`. Vérifie la chaîne Observation -> Claim -> Exigence -> Preuve attendue -> Destination, la provenance, et l'ancrage des références dans le World Scan. Ne juge JAMAIS la qualité du texte. Une exigence sans preuve attendue exploitable est CLASSÉE non actionnable (fait mesuré), elle ne fait échouer l'étape que si AUCUNE exigence ne l'est. (La conformité markdown du panel reste `forge/prisme/check_prisme.mjs`.)
+
+## CONTRAT DE SORTIE
+DEUX sorties, les deux obligatoires. (1) product_snapshot.md : {ce_que_le_joueur_voit, ce_qu_il_fait, ce_qu_il_ressent, regles_observables[]}. M3'b (GO Pierre 2026-08-14) — COMMENT tu le livres : tu n'écris AUCUN fichier. TOUT LE TEXTE de ta réponse SITUÉ HORS du bloc ```json``` terminal EST product_snapshot.md — l'exécuteur le matérialise tel quel (il retire le bloc JSON et la ligne RETURN_REASON, rien d'autre). Ta réponse doit donc ÊTRE ce document, pas un rapport qui le décrit. FORMAT EXIGÉ par l'oracle check_prisme.mjs, à respecter au caractère près : quatre en-têtes `## <n>. <TITRE>` dont les titres contiennent `CE QUE LE JOUEUR VOIT`, `CE QUE LE JOUEUR FAIT`, `CE QUE LE JOUEUR RESSENT` et `RÈGLES OBSERVABLES` ; chaque section ≥ 40 caractères de contenu réel ; au moins une règle numérotée en début de ligne sous la forme `- **R1` (puis R2, R3…) ; aucun placeholder (`à définir`, `TBD`, `???`, `TODO`, `XXX`). Mesuré le 2026-08-13 (run p2a-return-snapshot) : le fichier a bien été matérialisé (8516 octets, propre) mais check_prisme l'a REFUSÉ — « aucune règle numérotée "- **Rn" » — parce que la réponse était rédigée comme un rapport, l'agent ignorant que sa prose DEVIENDRAIT cet artefact. Le défaut était dans le contrat, pas dans la rédaction. (2) Un bloc ```json``` TERMINAL, matérialisé en prisme.json par l'exécuteur (tu n'écris JAMAIS ce fichier toi-même) : {"game_id": "<id>", "exigences": [{"id", "source": "EXPECTED"|"ADDITIONS", "source_role", "reference", "observation", "claim", "enonce", "expected_proof": {"kind": "bot_action"|"oracle"|"mutation"|"visual"|"file_write", "statement"}, "destination": "s3-decompo"|"s4-archi"|"s5-wiremap"|"s9-build"}]}. CHAÎNE DE FALSIFIABILITÉ, trois maillons qui doivent DIFFÉRER : `observation` (ce que la source montre) -> `claim` (ce que tu en déduis, et qui peut être faux indépendamment de l'observation) -> `enonce` (ce que le jeu doit alors garantir). Recopier l'un dans l'autre satisfait le schéma sans rien déduire, et rend indécidable le lieu d'une panne : donnée fausse, ou déduction fausse ? RÈGLES DURES : `source` vaut EXPECTED (vu dans un artefact amont -> `reference` est une ADRESSE, jamais une prose : `worldscan:<chemin>` (ex. `worldscan:games[0].objectives[0].victory_condition`, `worldscan:games[0].loops.minute_10`), `story_bible:<id de section>` (ex. `story_bible:stakes`), `gm_worldscan:<id de dimension>` (ex. `gm_worldscan:progression`) — la sonde check_amont_traversal.mjs RÉSOUT chaque adresse dans l'artefact ; une adresse qui ne résout rien compte comme référence non résolue, mesurée et reportée) ou ADDITIONS (ta proposition -> `reference` vaut EXPLICITEMENT null, jamais un champ omis). `CORE` t'est INTERDIT : l'origine d'une exigence CORE est `core_list` par construction, elle ne transite jamais par un modèle. Le champ vocabulaire est celui de la ligne de wiremap v2 (standard/SCHEMA.md §3) : tes exigences sont des lignes candidates. V4 GAME LOOP (GO Pierre 2026-08-22, champs ADDITIFS — ajoutés à la ligne d'exigence ci-dessus, rien retiré) : LE SUJET PLAYER ENTRE DANS LE CONTRAT. Chaque exigence porte désormais `acteur: "PLAYER"|"SYSTEM"` (qui agit) et `loop_role` ∈ {PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL, REPEAT, META_LOOP, ADVANTAGE, NONE} (sa position dans la séquence de boucle imposée : PLAYER_GOAL -> PLAYER_ACTION -> GAME_RESPONSE -> REWARD -> DECISION -> UNLOCK -> NEXT_GOAL -> REPEAT -> META_LOOP -> ADVANTAGE ; NONE = exigence produit ordinaire, hors boucle). Une exigence PLAYER porte `affordance` (le nom de la cible cliquable, ex. `acheter_chaton`) OU est un objectif affiché (`observe.hud`). GAMEPLAY CONTRACT (GO Pierre 2026-08-22, 10 maillons A..J, C = AFFORDANCE porté par B) — `observe: {hud, predicate}` est OBLIGATOIRE pour TOUTE exigence de boucle (rôle ≠ NONE), `predicate` ∈ "nonempty" | "increases" | "changes" | "decreases" | "resets" | "new_distinct" | "contains:<txt>" | "appears:<groupe>" | "increases_more_than:<ref>". RÈGLES PAR MAILLON (au-delà d'« au moins une exigence par rôle ») : G (NEXT_GOAL) : AU MOINS DEUX exigences, toutes `observe.predicate: "new_distinct"` sur LE MÊME `observe.hud` (ex. `objectif`) — GOAL_2 doit différer TEXTUELLEMENT de GOAL_1 à l'écran, pas seulement changer de valeur. F (UNLOCK) : au moins une exigence porte, EN PLUS de `affordance`, un champ `observe.appears: "<groupe>"` — la preuve de Progression (nouvelle affordance/HUD/contenu visible après F). H (REPEAT) : au moins une exigence avec `replay: ["<id>", ...]`, la liste des ids d'exigences de rôle B..F (PLAYER_ACTION|GAME_RESPONSE|REWARD|UNLOCK) à rejouer dans le nouvel état — la preuve que la boucle recommence pour de vrai, pas par convention. I (META_LOOP) : au moins une exigence PLAYER avec `affordance` (le geste de prestige) ET `observe` dont le prédicat visible est `decreases` ou `resets` (un reset qui se VOIT, ex. `ronrons` retombe à zéro). J (ADVANTAGE) : au moins une exigence avec `replay_ref: "<id de B>"` (l'id d'une exigence PLAYER_ACTION rejouée après I) et `observe.predicate: "increases_more_than:<le même id>"` — le delta de cette action après le prestige doit être strictement supérieur au delta initial, prouvé par la mesure, jamais par un texte. DECISION (extension 2026-08-23, GO Pierre « contrat exécutable : point de décision + sonde à deux trajectoires », définition ratifiée `studio_brain/gamedesign/kitten_clicker_decision_significative.md`) — entre REWARD et UNLOCK dans la séquence de boucle : AU MOINS une exigence dont `options` porte exactement 2 refs d'exigences de rôle PLAYER_ACTION ou UNLOCK portant chacune `affordance` (les deux affordances DOIVENT être distinctes) ; `policies` porte AU MOINS 2 politiques `{name, click, every_frames}` (noms distincts, `click` = null ou une affordance PLAYER_ACTION existante, `every_frames >= 1` dès que `click` n'est pas null) ; `metric` nomme un `observe.hud` DÉJÀ observé par une autre exigence de boucle ; `horizon_frames` >= 60 ; `observe: {hud: "objectif", predicate}` (le step DECISION s'affiche comme un objectif). Forme figée du plan (exemple concret Kitten Clicker) : `{"loop_role": "DECISION", "options": ["p_buy_kitten", "p_upgrade_click"], "metric": "ronrons", "horizon_frames": 300, "policies": [{"name": "idle", "click": null, "every_frames": 0}, {"name": "actif", "click": "pelote", "every_frames": 3}], "observe": {"hud": "objectif", "predicate": "changes"}}`. RÈGLE : AU MOINS UNE EXIGENCE PAR RÔLE (les 10 rôles de boucle, NONE exclu), PLUS les règles par maillon ci-dessus pour G/F/H/I/J/DECISION — sans quoi la boucle joueur est incomplète et injouable (mesuré, run 7 : boucle atteint G mais s'arrête là — G ne compte qu'un objectif, H et J n'existent pas encore comme maillons). Les rôles PLAYER_ACTION / UNLOCK / META_LOOP sont rédigés à LA VOIX ACTIVE, LE JOUEUR POUR SUJET — jamais la voix passive (« Acheter un chaton fait apparaître… » est REFUSÉ ; « Le joueur peut acheter un chaton en cliquant la cible `acheter_chaton` ; la collection affichée augmente » est attendu). `loop.json` (la boucle dérivée) N'EST JAMAIS ÉCRIT PAR TOI : c'est une PROJECTION DÉTERMINISTE de `prisme.json`, dérivée et matérialisée par l'EXÉCUTEUR après ta réponse. Si tu émets un bloc ```json``` nommé `loop` ou tentes de produire un fichier `loop.json`, il est IGNORÉ. SOURÇAGE GM (Lot B, T3, 2026-08-23, plan `2026-08-23-forge-lot-b-game-master.md`) : toute exigence de boucle (`acteur: "PLAYER"` ou `loop_role` ≠ NONE) doit citer, dans son champ `reference`, une adresse `gm_worldscan:game_master.loops.<loop>.<step_id>` ou `gm_worldscan:game_master.grey_blocks.<id>` — les métriques `progression_metrics` du Game Master sont reprises TELLES QUELLES (jamais réinventées), et les `target` avec leur tolérance. ADDITIF, MESURÉ (jamais gaté avant le run 10, verrou GO Pierre) : `check_prisme_manifest` rapporte `stats.exigences_sourcees_gm` / `stats.exigences_boucle` — baseline mesurée run 9 (avant `game_master`) : 0/13.
+
+## RAPPORT FINAL
+Restitution standard : cite le charter comme ancre ET le reçu de check_prisme_manifest ; liste les exigences classées non actionnables et les références non ancrées ; claim_verdict: NO_CLAIM_ALLOWED. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- forge/contracts/SCHEMA.md
+- charter.yaml produit par l'étape 0
+- story_bible.json (s2.6) et gm_worldscan.json (s2.7) S'ILS SONT PRÉSENTS dans le run_dir : ce sont des SOURCES d'exigences au même titre que le World Scan (profil full_godot_narratif) ; absents => tu le dis, tu ne compenses pas
+- design/progression_contract.md et design/calibration.md (Lot D 2026-08-23, GO Pierre — fuite de mesure fermee : le design n'etait lu par personne) S'ILS SONT PRÉSENTS dans le run_dir : l'ordre des exigences de boucle DANS LE PRISME EST LA PRÉCÉDENCE JOUÉE (loop_spec.mjs les projette dans l'ordre d'apparition, plus jamais par tri alphabétique) — écris-les DANS L'ORDRE OÙ LE JOUEUR LES VIT (P01 -> P12) ; absents => comportement inchangé, tu ne compenses pas
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s1-prisme:chaton-clicker-20260906:1
+
+## TÂCHE CONCRÈTE (chaton-clicker-20260906 / s1-prisme)
+Analyse le concept du projet 'chaton_clicker' sous les angles ressenti joueur, risques de design et originalité. Artefact narratif, aucun fichier écrit.
+
+## ARTEFACTS AMONT (run_dir)
+
+### artifacts/s2-worldscan.txt (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker\artifacts\s2-worldscan.txt)
+Basé sur ma recherche, voici mon observation architecturale sur deux jeux comparables au projet `chaton_clicker` : **Cookie Clicker** et **Neko Atsume**, deux piliers du genre clicker/idle et pet-collection games.
+
+---
+
+## **OBSERVATION ARCHITECTURALE**
+
+### **1. Cookie Clicker — Le paradigme du Genre Clicker/Idle**
+
+**Archétype identifié** : Incremental progression game avec prestige resets infinis.
+
+**Progression sur 4 horizons** :
+- **Minute 1** : Le joueur clique manuellement sur un grand cookie (1 cookie/clic). Engagement immédiat par action directe.
+- **Minute 10** : Premier palier d'acquisition — achat de Cursor (5 cookies), puis Grandma (10 cookies). Transition vers production passive (auto-clickers génèrent cookies/sec).
+- **Heure 5** : Synergies émergentes — accumulation vers ~1 million de cookies all-time, déblocage de Golden Cookies (bonus temporaires), construction de synergies via upgrades multiplicatifs, découverte des premiers bâtiments moyens (Farm, Mine).
+- **Endgame** : Boucles de prestige infinies — reset stratégique pour accumuler Heavenly Chips → débloquer Dragon bonuses → recommencer avec multiplicateurs permanents. Chaque cycle raccourcit la durée pour atteindre le seuil suivant (sensation de "fast-forward" addictive).
+
+**Économie & Rétention** :
+- Courbe de coût exponentielle (chaque upgrade 1.15× plus cher) crée des phases distinctes : "rush cheap upgrades" (slot-machine-like) suivi de "long save" (gratification différée). Psychologie du renforcement à schéma variable.
+- Prestige tree offre une progression *permanente* même après reset complet — chaque prestige donne +1% de production, stacking infiniment. Aucune défaite possible ; progression monotone.
+- Minigames intégrés (Grandmapocalypse = branche secrète débloquée par Grandma, Wrinklers = parasites récompensant ; Grimoire = sort-casting au late-game) créent des phases de surprise et de découverte.
+
+**Condition de victoire/défaite** :
+- **has_win_state: false** — Pas de fin définie. Cookie Clicker est un jeu de **marathon** explicitement.
+- **has_defeat_state: false** — Aucune condition de défaite ; perte de cookies = recalcul de production, pas sanction.
+
+**Pourquoi le joueur revient ?** Les cycles prestige se raccourcissent exponentiellement — chaque session sent plus *puissante* que la précédente. Les achievements et secrets (minigames débloqués) créent des points de curiosité. La variable-rate reinforcement (Golden Cookies imprévisibles) pique la dopamine.
+
+**Briques architecturales supposées** :
+- *Tick-based production engine* : bâtiments génèrent cookies sur une boucle de tick (idéal pour offline progression).
+- *Prestige tree persistence* : système de sauvegarde hiberné à travers les resets (local storage JSON).
+- *RNG event layer* : Golden Cookies, Wrinklers spawned aléatoirement sur la grille (variable reinforcement).
+- *Upgrade graph* : DAG d'unlock (prérequis + déverrouillage progressif).
+- *Minigame subsystems* : chaque branche (Grandmapocalypse, Grimoire, Pantheon) est un subsystème presque indie.
+
+---
+
+### **2. Neko Atsume — Collectathon Idle avec Économie Asynchrone**
+
+**Archétype identifié** : Pet collection game avec progression time-gated et spawn passif.
+
+**Progression sur 4 horizons** :
+- **Minute 1** : Placer nourriture + jouets dans le yard. L'interface est minimaliste (drag-and-drop). Aucune action "active" requise après la première interaction.
+- **Minute 10** : Fermer l'app. Les chats visitent *pendant que l'app est fermée* et laissent des poissons (currency) avant de partir. Retourner à l'app = collecte des récompenses. Découverte des chats visuels.
+- **Heure 5** : Expérimentation avec les préférences — tester différents jouets/nourriture pour attirer des chats spécifiques. Progression vers des rares (30+ cat variants avec unlock conditions). Achat de yard expansions (doublage de l'espace à 180 poissons or).
+- **Endgame** : Collectathon complet — débloquer tous les 86+ chats et rares. La "fin" est nominale mais le jeu continue indéfiniment (nouvelles versions = nouveaux chats).
+
+**Économie & Rétention** :
+- Monnaie duale (poisson argent vs or). Les chats paient mieux si jouets/nourriture sont à leur goût → incitation à expérimenter.
+- Spawn scheduler invisible crée un *loop asynchrone* : "apparition chat = notification viscérale", "yard upgrade = déblocage de stratégies" → retour quotidien.
+- Préférences cachées créent une dimension puzzle : "Quel chat préfère le minou ? Le gant de laine ?" Réponse découverte par essai-erreur, recherche en wiki ou attente (émerge via sessions multiples).
+- Catbook = compendium photographique (gamification du collecte).
+
+**Condition de victoire/défaite** :
+- **has_win_state: true** — Victoire nominale = collecter tous les 86+ chats (Catbook complet).
+- **has_defeat_state: false** — Aucune défaite. Progression monotone, jamais de "game over".
+- **player_goal** : "Assembler la collection complète en fournissant les bons jouets aux bons moments."
+
+**Pourquoi le joueur revient ?** L'aesthetic des chats (mignonnerie, diversité visuelle) crée l'attachement. La collection psychology ("gotta catch 'em all") est un moteur prouvé. Les rares cats créent des *checkpoint psychologiques* — "débloquer le chat 47/86" est une micro-victoire. L'offline progression = récompense juste d'attendre.
+
+**Briques architecturales supposées** :
+- *Spawn manager* : probabilités de visite basées sur item combos présents et temps écoulé depuis fermeture.
+- *Preference matrix* : cat × item → weight (détermine spawn probability + payout fish bonus).
+- *Progression gate* : rare cats stockées dans DB avec unlock conditions (item combo XYZ présent lors de visite).
+- *Offline time multiplier* : récompense poisson augmente si app fermée longtemps.
+- *Persistence layer* : Catbook sauvegardé localement, listing à travers les sessions.
+- *Item durability system* (v2) : jouets cassent après N visites, incitant à l'achat régulier.
+
+---
+
+## **PATTERNS ARCHITECTURAUX CANDIDATS À L'IMPORT**
+
+### Communs aux deux jeux :
+1. **Variable Schedule Reinforcement** : alternance de "rushes" rapides (upgrades bon marché) et "long saves" (prestige/rare cats) crée des pics d'engagement.
+2. **Offline Progression Reward** : jeu continu quand fermé → justifie retours quotidiens (besoin d'une *tick-based engine* robuste).
+3. **Local Storage Persistence** : progression survit aux restarts ; sauvegarde implicite assurant zéro frustration d'oubli.
+4. **Progression Gate via Economics** : déblocage de contenu corrélé au earning (prestige level → Grimoire, fish count → yard expansion).
+5. **Prestige/Collection Loop** : reset partiel (réinitialiser grind, garder boni) ou progression nominale (collecte infinie) crée l'illusion d'une fin tout en gardant un hook.
+
+### Risques connus du genre :
+- **Inflation d'exponentielles** : courbes de coût mal calibrées peuvent "trivialiser" le mid-game (tout gratuit très vite) ou "mur" le late-game (progression gelée des heures).
+- **Prestige fatigue** : trop de cycles = lassitude ; Neko Atsume l'évite en supprimant les resets (collection continue).
+- **Cookie Clicker paradox** : le jeu "peut se jouer tout seul" → engagement zéro si pas d'événements/minigames pour surprendre.
+- **Pet collection saturation** : au-delà de ~100 cats, reconnaissance visuelle s'effondre ; Neko Atsume l'adresse via catégories + Catbook.
+
+---
+
+## **SOURCES CITÉES**
+
+**Cookie Clicker** :
+- [Cookie Clicker Official Wiki & Strategy Guide](https://www.playcookieclicker.com/)
+- [YouTube: "EASY Beginners Guide From START to ASCENSION // Cookie Clicker"](https://www.youtube.com/watch?v=EqcP3vq0rE8) (February 2026)
+- [Pocket Gamer: Cookie Clicker Ascension Guide](https://www.pocketgamer.com/cookie-clicker/ascension-guide/)
+- [Medium: "Clicker Games: A Technical Exploration of Incremental System Architecture"](https://medium.com/@tommcfly2025/clicker-games-a-technical-exploration-of-incremental-system-architecture-b6d842e6963e)
+- [Dinogame GG: "What Is an Idle Game? The Genre That Plays Itself"](https://dinogame.gg/blog/what-is-an-idle-game/)
+
+**Neko Atsume** :
+- [Medium: "Game Design Breakdown: The Simplicity of Neko Atsume" (by Alexia Mandeville)](https://alexiamandeville.medium.com/game-design-breakdown-the-simplicity-of-neko-atsume-a8616a937a47)
+- [Neko Atsume Fandom Wiki](https://nekoatsume.fandom.com/wiki/Neko_Atsume)
+- [YouTube: "Neko Atsume: Kitty Collector - 3-Minute Gameplay (Android Walkthrough)"](https://www.youtube.com/watch?v=sJnTZ90sr0g) (April 7, 2026)
+- [MDA Analysis: "MDA: Neko Atsume – Krystal Li – The Mechanics of Magic"](https://mechanicsofmagic.com/2024/04/07/mda-neko-atsume/) (April 2024)
+- [iMore Game Guide: "Neko Atsume game guide: How to collect all the cats!"](https://www.imore.com/neko-atsume-game-guide-how-collect-all-cats)
+
+---
+
+```json
+{
+  "games": [
+    {
+      "game": "Cookie Clicker",
+      "sources": [
+        {
+          "url": "https://www.playcookieclicker.com/",
+          "type": "article"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=EqcP3vq0rE8",
+          "type": "video",
+          "timestamp": "2026-02-01"
+        },
+        {
+          "url": "https://www.pocketgamer.com/cookie-clicker/ascension-guide/",
+          "type": "article"
+        },
+        {
+          "url": "https://medium.com/@tommcfly2025/clicker-games-a-technical-exploration-of-incremental-system-architecture-b6d842e6963e",
+          "type": "article"
+        }
+      ],
+      "loops": {
+        "minute_1": "Manual click on giant cookie (1 cookie per click). Immediate feedback loop: click → +1 cookie → visual counter increment.",
+        "minute_10": "Purchase first buildings (Cursor 5c, Grandma 10c). Transition to passive income; buildings auto-generate cookies/sec. Initial synergies unlock (Cursor × Grandma = upgrade bonuses).",
+        "hour_5": "Accumulate towards ~1M all-time cookies baked. Golden Cookie hunting (random spawns, temporary 7× production multiplier). Unlock mid-game buildings (Farm, Mine, Factory). Upgrade purchasing creates exponential cost jumps; players experience 'prestige threshold awareness'.",
+        "endgame": "Prestige reset cycles: accumulate Heavenly Chips (cube root of all-time cookies baked), spend on permanent Heavenly Upgrades (+1% CPS each). Each cycle shortens grind time to next reset. Late-game unlock: Dragon bonuses (massive multipliers), Grimoire (spell-casting minigame), Pantheon (passive blessing system). Infinite progression with no win state."
+      },
+      "objectives": [
+        {
+          "mode": "Prestige Progression (solo)",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Optimize ascension cycles to maximize Heavenly Chips gained; unlock Dragon bonuses and end-game systems (Grimoire, Pantheon) to achieve maximum prestige and CPS production."
+        }
+      ],
+      "retention_answer": "Prestige resets create exponential acceleration: each cycle feels 5-10× faster than the last, triggering reward dopamine spikes. Variable schedule reinforcement alternates cheap-upgrade 'slots' with long-save patience tests. Minigame discovery (Grandmapocalypse, Wrinklers, Wrath Cookies) creates surprise checkpoints. Golden Cookies spawn unpredictably, rewarding active play. No failure state means zero frustration; only upward numbers."
+    },
+    {
+      "game": "Neko Atsume",
+      "sources": [
+        {
+          "url": "https://alexiamandeville.medium.com/game-design-breakdown-the-simplicity-of-neko-atsume-a8616a937a47",
+          "type": "article"
+        },
+        {
+          "url": "https://nekoatsume.fandom.com/wiki/Neko_Atsume",
+          "type": "wiki"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=sJnTZ90sr0g",
+          "type": "video",
+          "timestamp": "2026-04-07"
+        },
+        {
+          "url": "https://mechanicsofmagic.com/2024/04/07/mda-neko-atsume/",
+          "type": "article"
+        },
+        {
+          "url": "https://www.imore.com/neko-atsume-game-guide-how-collect-all-cats",
+          "type": "article"
+        }
+      ],
+      "loops": {
+        "minute_1": "Drag-and-drop food and toys into yard. Minimal interaction; app remains active for ~30 seconds. Interface clarity and tactile feedback establish minimal friction. Aesthetic appeal of items shown in yard creates immediate attachment.",
+        "minute_10": "Close app. Cats visit asynchronously while app is closed. Return to app after 5-30 mins → find cats present, collect fish rewards (silver + gold). Visual discovery of cat variety (different animations, sizes, colors) triggers collectathon psychology.",
+        "hour_5": "Experiment with item combos to attract rares. Gold fish earned → purchase new toys/furniture → unlock rare cat unlock conditions. Yard expansion purchase (180+ gold fish) doubles available spaces. Catbook photo album grows; each new cat photo is a micro-achievement.",
+        "endgame": "Collectathon loop: systematically unlock all 86+ cat variants by matching preference patterns. Hidden unlock conditions (e.g., 'Tabby cat only appears if Deluxe Box + Sushi present') discovered via wiki or trial-and-error. No true 'end'; game continues indefinitely (v2 adds durability mechanics, new cats, new challenges). Progression becomes 100% completion hunt."
+      },
+      "objectives": [
+        {
+          "mode": "Solo Collectathon (no PvP/coop)",
+          "has_win_state": true,
+          "victory_condition": "Collect all 86+ cats (including rare variants) and achieve Catbook completion",
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Discover each cat's preferred food/toy combination and assemble a complete yard collection, expanding yard as needed and documenting all cats in the Catbook photo album."
+        }
+      ],
+      "retention_answer": "Collection psychology ('gotta catch 'em all') is primal; each new cat is a dopamine spike. Visual appeal (cute cat designs, variety) creates intrinsic motivation. Time-gating (cats only appear offline) rewards periodic returns. Preference puzzle (discovering hidden unlock conditions) engages curiosity over hours. No failure state eliminates frustration. Offline progression = reward for patience; opening app becomes a 'treasure check' ritual."
+    }
+  ],
+  "advisory": true
+}
+```
+
+---
+
+## SKIPPED_VALIDATION
+
+- **Validation non effectuée** : Profondeur de l'analyse architecturale de briques candidates à importer. L'étape demande une analyse de patterns éprouvés *du studio* (jeux verts de la base de code) — la knowledge_base locale n'a pas été accessible pour relier Cookie Clicker et Neko Atsume aux systèmes internes Studio2. **Périmètre** : Cartographie de réutilisabilité (quel pattern du studio s'aligne avec quel pattern externe). **Raison** : Pas d'accès à la structure interne de la knowledge_
+[tronqué]
+```json
+{"status": "NOT_DISCOVERED"}
+```
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- [s0-contrat] exécuteur LLM en échec à s0-contrat après 2 tentatives: claude -p returncode=1: Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects["C:/Users/Studio-Dev/Desktop/Studio2"].hasTrustDialogAccepted: true in C:\Users\Studio-Dev\.claude.json.
+
+- [manifest-0204e25b924ba5a0] plateforme_cible (web/HTML) est une hypothese agent sans source Pierre explicite, exigee non vide par le schema charter mais non tranchee par Pierre — cause: la lignee Godot V2 n'est pas configuree sur le poste (forge/godot.config.json absent), l'agent a suppose web faute de choix Pierre trace -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-3a1dde0761b33e9a] Le volet e2e du gate rend exit 0 et 'RESULT: PASS' sans jamais piloter de navigateur quand Playwright est absent ; la garde anti-coquille check_e2e_harness ne peut pas le voir car elle inspecte la source, pas la branche prise au runtime. Par ailleurs mutation_triage.json ecrit comme objet JSON etait silencieusement ignore par load_mutation_triage, qui n'accepte qu'un tableau au premier niveau. — cause: Deux gardes statiques jugent la FORME du harnais (tokens dans la source, schema du fichier) sans point de mesure sur son COMPORTEMENT reel : un repli runtime non instrumente et un rejet de schema non journalise passent tous deux pour des verts. -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-1a6f50782223899f] wiremap.json.couvre citait des noms de fonction au lieu des ids exacts de capacites de featuremap.json, faisant echouer l'oracle pre-build check_wiremap_contract.mjs (0/10 capacites couvertes) — cause: confusion entre deux oracles homonymes-en-esprit (check_wiremap_contract.mjs pre-build vs check_wiremap post-build) portant sur des champs distincts du meme fichier wiremap.json, jamais corrigee par les tentatives precedentes de s9-build qui ne traitaient que le gel de jeu de regles et le champ fonction -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-b9ccb45f63380824] wiremap.json violait le gel de jeu de regles s5 (3 lignes hors-regle ajoutees) et portait une fonction fictive (decrementRemaining) qui aurait fait echouer check_wiremap — cause: une tentative anterieure de s9-build a documente ses oracles de preuve (tests/solvabilite/e2e) comme de nouvelles entrees `feature` dans la WireMap au lieu de les rattacher a une regle R* existante -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-5a749fd796b89bd0] echec de la tentative 5 a s9-build — cause: returncode=0; mutation=FAIL (volets rouges: runtime_alive) -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s1-prisme:chaton-clicker-20260906:1

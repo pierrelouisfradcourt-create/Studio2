@@ -1,0 +1,112 @@
+{
+ "catalog_brick_ids_snapshot": [
+  "pat-damage-floor",
+  "pat-forge-architecture_check_before_human_escalation",
+  "pat-forge-broken_loop_repair_not_report",
+  "pat-forge-diagnosis_is_not_workflow_end",
+  "pat-forge-entrypoint_is_undeclared_invariant",
+  "pat-forge-escalation_costs_avoid_default_route",
+  "pat-forge-forge_oracle_convention_undocumented",
+  "pat-forge-hardcoded_expected_state_breaks_on_growth",
+  "pat-forge-instrument_assumes_instead_of_reads",
+  "pat-forge-kb_humangate_to_controlled_autonomy",
+  "pat-forge-mutation_survivor_equivalence_requires_mechanical_proof",
+  "pat-forge-new_proof_needs_declared_executor",
+  "pat-forge-oracle_fail_vs_not_measured_marker",
+  "pat-forge-preflight_oracle_registration",
+  "pat-forge-reuse_tracking_oracle_dead_since_inception",
+  "pat-forge-run_status_not_liveness_proof",
+  "pat-forge-test_green_via_wrong_causal_path",
+  "pat-forge-timeout_greenfield_by_profile",
+  "pat-forge-wiremap_concept_reuse_requalification",
+  "pat-full-reachability",
+  "pat-zone-of-control",
+  "sys-damage-floor",
+  "sys-evader-basic",
+  "sys-grid-nav-m01",
+  "sys-guardian-zoc",
+  "sys-pursuer-continuous",
+  "sys-pursuer-mobile",
+  "sys-reachability"
+ ],
+ "created_ts": 1788615527.2913797,
+ "escalations": 0,
+ "is_game": true,
+ "model_override": null,
+ "profile": "full",
+ "project": "chaton_clicker",
+ "reason": "exécuteur LLM en échec à s0-contrat après 2 tentatives: claude -p returncode=1: Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"C:/Users/Studio-Dev/Desktop/Studio2\"].hasTrustDialogAccepted: true in C:\\Users\\Studio-Dev\\.claude.json.\n",
+ "run_id": "chaton-clicker-20260905",
+ "run_status": "HALTED",
+ "steps": {
+  "s0-contrat": {
+   "attempts": 2,
+   "detail": {
+    "executor_diagnostic": {
+     "duration_s": 0.0,
+     "measured": true,
+     "process_state": "MODEL_REACHED",
+     "returncode": 1,
+     "stderr_tail": "Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"C:/Users/Studio-Dev/Desktop/Studio2\"].hasTrustDialogAccepted: true in C:\\Users\\Studio-Dev\\.claude.json.\n",
+     "timeout": false,
+     "transient_retries_count": 0
+    },
+    "materialize_retries": [
+     "charter.yaml non matérialisable — aucun bloc charter valide (1 bloc(s) yaml inspecté(s)) : bloc 1: check_charter FAIL — 'criteres_succes[0]' absent ou vide; 'criteres_succes[4]' absent ou vide; 'criteres_succes[5]' absent ou vide; 'criteres_succes[9]' absent ou vide; 'actions_interdites[2]' absent ou vide"
+    ],
+    "reason": "exécuteur LLM en échec à s0-contrat après 2 tentatives: claude -p returncode=1: Ignoring 7 permissions.allow entries from .claude/settings.json: this workspace has not been trusted. Run Claude Code interactively here once and accept the trust dialog, or set projects[\"C:/Users/Studio-Dev/Desktop/Studio2\"].hasTrustDialogAccepted: true in C:\\Users\\Studio-Dev\\.claude.json.\n"
+   },
+   "status": "BLOCKED",
+   "ts": 1788615700.461181
+  },
+  "s1-prisme": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s10a-oracle-code": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s10b-oracle-archi": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s10c-oracle-wiremap": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s11-redteam-code": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s12-verdict": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s2-worldscan": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s3-decompo": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s4-archi": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s5-wiremap": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s6-redteam-plan": {
+   "attempts": 0,
+   "status": "PENDING"
+  },
+  "s9-build": {
+   "attempts": 0,
+   "status": "PENDING"
+  }
+ },
+ "updated_ts": 1788615700.4641814
+}

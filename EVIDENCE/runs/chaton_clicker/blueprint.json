@@ -1,0 +1,112 @@
+{
+ "modules": [
+  "logic",
+  "render",
+  "input",
+  "main"
+ ],
+ "deps_interdites": [
+  [
+   "logic",
+   "render"
+  ],
+  [
+   "logic",
+   "input"
+  ],
+  [
+   "logic",
+   "main"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "render"
+  ],
+  [
+   "render",
+   "main"
+  ],
+  [
+   "input",
+   "main"
+  ]
+ ],
+ "ownership": {
+  "logic": "Cœur métier déterministe (économie, tick, prestige, RNG seedé, hash) — pur, sans DOM, testable hors navigateur.",
+  "render": "Vue DOM : chaton, HUD objectif, boutons, réponses visuelles. Lit l'état, n'écrit jamais la logique.",
+  "input": "Câblage des affordances joueur (clic chaton, achat producteur, prestige) vers les actions de logic.",
+  "main": "Racine de composition : bootstrap depuis index.html, câble logic+render+input, expose window.__game, pilote le tick déterministe."
+ },
+ "responsabilites": [
+  {
+   "module": "logic",
+   "responsabilite": "Simulation déterministe de l'état de jeu : gain par caresse, production passive et courbe de coût croissante, point de décision actif/passif, rejeu enrichi, prestige (reset + avantage permanent), RNG seedé et hash d'état — aucune dépendance au DOM.",
+   "couvre": [
+    "feat_caresse_chaton",
+    "feat_producteur_passif",
+    "feat_decision_arbitrage",
+    "feat_rejeu_boucle",
+    "feat_renouveau_portee",
+    "feat_determinisme"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Deux exécutions headless de logic/ a graine et suite d'actions egales produisent le meme hash d'etat final ; une sonde a deux politiques (oisif contre actif) sur >=300 frames montre la divergence de la metrique ronrons ; le gain d'une caresse apres renouveau est strictement superieur — le tout prouve sans DOM."
+   }
+  },
+  {
+   "module": "render",
+   "responsabilite": "Vue DOM pure : dessine le chaton cliquable, affiche le HUD objectif et son changement de texte au fil de la progression, rend la reaction visuelle a la caresse et la mise a jour du compteur. Lit un etat fourni, n'ecrit jamais la logique ni l'input.",
+   "couvre": [
+    "feat_objectif_affiche",
+    "feat_objectifs_enchaines",
+    "feat_chaton_visible",
+    "feat_caresse_chaton"
+   ],
+   "dependances": [
+    "logic"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "La sonde constate au chargement un chaton cliquable et un HUD 'objectif' non vide, puis un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic, et un texte d'objectif distinct apres chaque palier."
+   }
+  },
+  {
+   "module": "input",
+   "responsabilite": "Liaison des affordances joueur : câble les evenements DOM (clic sur le chaton, clic d'achat de producteur, clic de renouveau de portee) vers les actions publiques de logic, sans jamais toucher au rendu.",
+   "couvre": [
+    "feat_caresse_chaton",
+    "feat_producteur_passif",
+    "feat_renouveau_portee"
+   ],
+   "dependances": [
+    "logic"
+   ],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Depuis le point d'entree du jeu (index.html / main.mjs), le bot clique via les seules affordances DOM les cibles caresser_chaton, acheter_producteur et renouveau_portee, et chaque clic declenche l'action de logic correspondante."
+   }
+  },
+  {
+   "module": "main",
+   "responsabilite": "Racine de composition : bootstrap depuis index.html, câble logic+render+input, expose window.__game et pilote le tick deterministe qui rend la production passive observable a l'ecran sans clic.",
+   "couvre": [
+    "feat_producteur_passif"
+   ],
+   "dependances": [
+    "logic",
+    "render",
+    "input"
+   ],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Apres achat d'un producteur, le bot mesure sans cliquer que les ronrons augmentent via le tick pilote par main et qu'un element 'panier_chatons' est apparu ; window.__game est expose au chargement."
+   }
+  }
+ ]
+}

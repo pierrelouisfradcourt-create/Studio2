@@ -5,7 +5,7 @@
 | _global_ | 0 | non | C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\reports\error_journal\_global_.jsonl |
 | forge | 0 | non | C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\reports\error_journal\forge.jsonl |
 | godot | 0 | non | C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\reports\error_journal\godot.jsonl |
-| html | 13 | oui | C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\reports\error_journal\html.jsonl |
+| html | 25 | oui | C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\reports\error_journal\html.jsonl |
 | playtest | 0 | non | C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\reports\error_journal\playtest.jsonl |
 | python | 0 | non | C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\reports\error_journal\python.jsonl |
 | rust | 0 | non | C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\reports\error_journal\rust.jsonl |

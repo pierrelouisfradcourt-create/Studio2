@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s3-decompo", "git_head": "6c10c536532dec5cbb29e807e5052563656cd9ba", "hmac": "27cc296673fe1710dcef83abc33372086216f8e6c4f8f584d62e834a494d190b", "kind": "return", "reason": {"status": "NOT_DISCOVERED"}, "run_id": "chaton-clicker-20260906", "schema": "forge.context_manifest.v1", "ts": 1788647179.063461}

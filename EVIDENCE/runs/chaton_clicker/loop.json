@@ -1,0 +1,134 @@
+{
+ "schema_version": 1,
+ "game_id": "chaton_clicker",
+ "steps": [
+  {
+   "role": "PLAYER_GOAL",
+   "ref": "P01",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "P02",
+   "affordance": "caresser_chaton",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "P03",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "REWARD",
+   "ref": "P04",
+   "repeat": 1,
+   "observe": {
+    "hud": "bouton_producteur",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "DECISION",
+   "ref": "P05",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "changes"
+   },
+   "options": [
+    "P02",
+    "P06"
+   ],
+   "metric": "ronrons",
+   "horizon_frames": 300,
+   "policies": [
+    {
+     "name": "oisif",
+     "click": null,
+     "every_frames": 0
+    },
+    {
+     "name": "actif",
+     "click": "caresser_chaton",
+     "every_frames": 3
+    }
+   ]
+  },
+  {
+   "role": "UNLOCK",
+   "ref": "P06",
+   "affordance": "acheter_producteur",
+   "repeat": 1,
+   "observe": {
+    "hud": "production_sec",
+    "predicate": "increases",
+    "appears": "panier_chatons"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "P07",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "P08",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "REPEAT",
+   "ref": "P09",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   },
+   "replay": [
+    "P02",
+    "P03",
+    "P04",
+    "P06"
+   ]
+  },
+  {
+   "role": "META_LOOP",
+   "ref": "P10",
+   "affordance": "renouveau_portee",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "resets"
+   }
+  },
+  {
+   "role": "ADVANTAGE",
+   "ref": "P11",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases_more_than:P02"
+   },
+   "replay_ref": "P02"
+  }
+ ]
+}
