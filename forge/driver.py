@@ -110,10 +110,13 @@ from forge.static_oracles import (
     check_feature_set_frozen,
     check_harness_no_hardcoded_flags,
     check_measure_tick,
+    check_player_loop_coverage,
+    check_player_loop_proof,
     check_reuse_ratio_wired,
     check_search_consulted,
     check_solvability_wired,
     check_wiremap,
+    check_wiremap_canal,
     frozen_features_from_wiremap,
     load_frozen_features,
     utc_iso_now,
@@ -4343,7 +4346,45 @@ class ForgeDriver:
         # Story Bible / GM) jusqu'au build est MESURÉE ici, en ADVISORY — elle ne
         # change jamais le statut, qui reste celui de check_wiremap seul.
         wire["amont_traversal"] = self._amont_traversal_advisory()
+        # Chantier canal-de-preuve (GO Pierre 2026-09-07) : MESURÉ ici pour la même
+        # raison — ADVISORY, ne change jamais le statut de CETTE étape (qui reste
+        # celui de check_wiremap seul). Lu par _player_loop_facts à s12 (extra_advisory).
+        wire["canal"] = self._player_loop_canal_advisory(wiremap)
         self._finish_step(state, entry, "OK" if wire["passed"] else "FAIL", wire)
+
+    def _player_loop_canal_advisory(self, wiremap: dict) -> dict:
+        """ADVISORY (chantier canal-de-preuve, GO Pierre 2026-09-07, plan
+        docs/superpowers/plans/2026-09-07-canal-de-preuve-loop.md) : mesure si les
+        rôles de boucle joueur (loop.json) sont couverts par un canal PLAYER_LOOP/
+        META_LOOP réellement rattaché à une exécution (`forge.static_oracles`).
+
+        Ne modifie JAMAIS le statut de s10c (check_wiremap seul en décide) ni
+        `software_verdict` (plié en `extra_advisory` à s12, jamais dans le calcul
+        du verdict — même architecture que `_prisme_facts`/`_observable_facts`).
+        `NOT_MEASURED` (WireMap sans champ `canal` — tout run antérieur à ce
+        chantier) n'est ni FAIL ni PASS : invariant 1, aucun rétro-verdissement.
+
+        Jamais d'exception : une lecture manquante/malformée (featuremap.json ou
+        loop.json absents, journal d'oracle introuvable) rend un statut motivé,
+        pas un crash de l'étape déterministe qui l'appelle."""
+        try:
+            forme = check_wiremap_canal(wiremap)
+            featuremap = self._read_json(self.run_dir / "featuremap.json") or {}
+            loop_json = self._read_json(self.run_dir / "loop.json") or {}
+            couverture = check_player_loop_coverage(wiremap, featuremap, loop_json)
+            log_path = self.run_dir / "evidence" / f"oracle_{self.project}.log"
+            log_text = ""
+            if log_path.exists():
+                try:
+                    log_text = log_path.read_text(encoding="utf-8", errors="replace")
+                except OSError:
+                    log_text = ""
+            preuve_execution = check_player_loop_proof(wiremap, log_text)
+            return {"forme": forme, "couverture": couverture,
+                    "preuve_execution": preuve_execution}
+        except Exception as exc:  # noqa: BLE001 — advisory : jamais de crash d'étape pour ça
+            return {"status": "NOT_MEASURED",
+                    "reason": f"canal advisory en échec: {type(exc).__name__}: {exc}"}
 
     def _amont_traversal_advisory(self) -> dict:
         """ADVISORY : délègue le spawn à `oracle.run_amont_traversal_probe` — le
@@ -4684,7 +4725,8 @@ class ForgeDriver:
         agg = build_aggregate_verdict(
             self.project, self.run_id, code_r, archi_r, wire_r, reviewer,
             redteam_ran=ran, redteam_findings=findings, redteam_blocked=blocked,
-            extra_advisory=self._prisme_facts(state) + self._observable_facts(state),
+            extra_advisory=(self._prisme_facts(state) + self._observable_facts(state)
+                           + self._player_loop_facts(state)),
             standard=std_r,
             git_head=current_git_head(), nonce=new_nonce(), ts=time.time(),
             key_file=self.key_file,
@@ -5192,6 +5234,37 @@ class ForgeDriver:
             "du code ; gate dur = décision HumanGate non prise, lot 1 ADR-003)",
         )
 
+    def _player_loop_facts(self, state: dict) -> tuple[str, ...]:
+        """Chantier canal-de-preuve (GO Pierre 2026-09-07, câblage s10c/s12) — même
+        architecture que `_prisme_facts`/`_observable_facts` : OBJECTION SIGNÉE via
+        `extra_advisory`, jamais dans `software_verdict`. Ce que
+        `_player_loop_canal_advisory` a mesuré à s10c (jamais bloquant là non plus)
+        devient ici visible dans `humangate_flags`, ou rien du tout si
+        `NOT_MEASURED` — un WireMap sans champ `canal` (tout run antérieur au
+        chantier) n'est ni pénalisé ni loué : invariant 1, aucun rétro-verdissement,
+        et symétriquement aucune rétro-pénalité."""
+        d = state.get("steps", {}).get("s10c-oracle-wiremap", {}).get("detail", {})
+        canal = d.get("canal") if isinstance(d, dict) else None
+        if not isinstance(canal, dict):
+            return ()
+        facts: list[str] = []
+        forme = canal.get("forme")
+        if isinstance(forme, dict) and forme.get("passed") is False:
+            facts.append("canal-de-preuve (forme) : " + "; ".join(forme.get("raisons", ())))
+        couverture = canal.get("couverture")
+        if isinstance(couverture, dict) and couverture.get("status") == "FAIL":
+            roles = ", ".join(couverture.get("roles_manquants", ())) or "non cités par le reçu"
+            facts.append(
+                f"canal-de-preuve (couverture) : rôle(s) joueur non prouvés en "
+                f"PLAYER_LOOP/META_LOOP [{roles}] — WHITE_BOX/PLAYER_INPUT seuls ne "
+                "suffisent jamais (advisory, jamais un juge du code ; gate dur = "
+                "décision HumanGate non prise, chantier canal-de-preuve)")
+        preuve_execution = canal.get("preuve_execution")
+        if isinstance(preuve_execution, dict) and preuve_execution.get("passed") is False:
+            facts.append(
+                "canal-de-preuve (exécution) : " + "; ".join(preuve_execution.get("raisons", ())))
+        return tuple(facts)
+
     # --- escalade (boucle fermée EN CODE, mêmes bornes que forge.escalate) ----
 
     def _builder_step(self) -> str | None:
@@ -5541,7 +5614,8 @@ class ForgeDriver:
             agg = build_aggregate_verdict(
                 self.project, self.run_id, code_r, archi_r, wire_r, reviewer,
                 redteam_ran=ran, redteam_findings=findings, redteam_blocked=blocked,
-                extra_advisory=self._prisme_facts(state) + self._observable_facts(state),
+                extra_advisory=(self._prisme_facts(state) + self._observable_facts(state)
+                               + self._player_loop_facts(state)),
                 standard=std_r,
                 git_head=current_git_head(), nonce=new_nonce(), ts=time.time(),
                 key_file=self.key_file, scope="PARTIAL",
