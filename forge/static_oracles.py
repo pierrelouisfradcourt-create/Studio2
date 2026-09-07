@@ -1816,3 +1816,235 @@ def check_asset_consumption(asset_requests: dict, resolution: dict, src_root: Pa
 
     return {"passed": not raisons, "raisons": raisons, "resolved": resolved_n,
             "blocked": blocked_n, "missing": missing, "checked": True}
+
+
+# --- Canal de preuve des rôles de boucle -------------------------------------------
+# Chantier canal-de-preuve (GO Pierre 2026-09-07), plan :
+# docs/superpowers/plans/2026-09-07-canal-de-preuve-loop.md
+#
+# Diagnostic (audit lecture-seule chaton-clicker-20260906) : le système de preuve ne
+# distinguait jamais « la logique sait le faire » (appel direct à logic.mjs, test
+# unitaire, mutation testing) de « le joueur peut le faire » (DOM réel, navigateur
+# réel). Trois fonctions ADDITIVES ci-dessous, aucune ne modifie check_wiremap
+# existant ni son contrat de retour — un run antérieur à ce chantier continue de se
+# vérifier exactement comme avant.
+#
+# Invariants ratifiés Pierre (révision 2 du plan, à ne jamais relâcher) :
+#   1. Aucun rétro-verdissement des runs déjà signés — cf. NOT_MEASURED ci-dessous.
+#   2. WHITE_BOX ne satisfait JAMAIS PLAYER_LOOP/META_LOOP, quel que soit le nombre
+#      de lignes WHITE_BOX empilées sur la même capacité.
+#   3. `canal: PLAYER_LOOP` seul ne suffit pas : il doit être rattaché à une preuve
+#      identifiable ET exécutable (`check_player_loop_proof`), pas seulement à une
+#      étiquette d'enum à côté d'un `preuve` inchangé.
+# Périmètre fermé (accord Pierre) : `check_wiremap_contract.mjs` / `schema_version:
+# 2` restent HORS de ce chantier — chantier de migration de schéma séparé, pour ne
+# pas mélanger deux migrations dans un seul GO.
+
+LOOP_PROOF_CANALS = ("WHITE_BOX", "PLAYER_INPUT", "PLAYER_LOOP", "META_LOOP")
+
+# Rôles de `loop.json` qui sont des arêtes de boucle JOUEUR — `ROLE_ORDER` de
+# `forge/loop_spec.mjs` MOINS `PLAYER_GOAL` (une lecture de HUD sans action, jamais
+# une arête cliquable). DUPLICATION CONNUE, ASSUMÉE : `loop_spec.mjs` (JS) est la
+# source canonique de `ROLE_ORDER` ; ce module (Python) ne peut pas l'importer
+# directement. Une dérive entre les deux listes ne serait pas détectée
+# mécaniquement — limite déclarée, pas cachée (si un rôle est ajouté à
+# `ROLE_ORDER`, cette liste doit être mise à jour à la main).
+PLAYER_LOOP_ROLES = frozenset({
+    "PLAYER_ACTION", "GAME_RESPONSE", "REWARD", "DECISION", "UNLOCK",
+    "NEXT_GOAL", "REPEAT", "META_LOOP", "ADVANTAGE",
+})
+
+
+def check_wiremap_canal(wiremap: dict) -> dict:
+    """Le champ additif `canal` (par ligne v1 `features[]`), quand présent, est-il
+    une valeur connue de `LOOP_PROOF_CANALS` ?
+
+    Ne juge JAMAIS l'absence de `canal` — un WireMap antérieur à ce chantier n'a pas
+    ce champ, ce n'est pas une erreur de FORME (cf. `check_player_loop_coverage`
+    pour la sémantique `NOT_MEASURED` sur l'absence). Une valeur mal formée (hors
+    enum) EST une erreur de forme. Retourne {passed, raisons[]} — même doctrine que
+    `check_wiremap` (FAIL honnête, jamais d'exception sur une entrée malformée)."""
+    if not isinstance(wiremap, dict):
+        return {"passed": False,
+                "raisons": [f"wiremap n'est pas un mapping (reçu {type(wiremap).__name__})"]}
+    raisons: list[str] = []
+    features = wiremap.get("features")
+    if not isinstance(features, list):
+        return {"passed": True, "raisons": []}  # rien à juger — check_wiremap le signale déjà
+    for i, feat in enumerate(features):
+        if not isinstance(feat, dict) or "canal" not in feat:
+            continue
+        canal = feat["canal"]
+        name = feat.get("feature", f"features[{i}]")
+        values = canal if isinstance(canal, list) else [canal]
+        if not values:
+            raisons.append(f"{name}.canal : liste vide (retirer le champ plutôt "
+                           "que le laisser vide)")
+            continue
+        for v in values:
+            if v not in LOOP_PROOF_CANALS:
+                raisons.append(
+                    f"{name}.canal : {v!r} hors de l'enum connu {LOOP_PROOF_CANALS}")
+    return {"passed": not raisons, "raisons": raisons}
+
+
+def _loop_role_by_ref(loop_json: dict) -> dict:
+    """{ref: role} depuis `loop_json['steps']` — jamais d'exception sur une entrée
+    malformée (ref/role absents ou mal typés = entrée ignorée, pas une erreur ici ;
+    la forme de loop.json est de la responsabilité de `loop_spec.mjs::checkLoopSpec`,
+    pas de ce module)."""
+    out: dict = {}
+    steps = loop_json.get("steps") if isinstance(loop_json, dict) else None
+    if not isinstance(steps, list):
+        return out
+    for step in steps:
+        if not isinstance(step, dict):
+            continue
+        ref = step.get("ref")
+        role = step.get("role")
+        if isinstance(ref, str) and ref.strip() and isinstance(role, str):
+            out[ref] = role
+    return out
+
+
+def _capacity_source_ref_by_id(featuremap: dict) -> dict:
+    """{capacite_id: source_ref} — parcourt `systemes[].features[].capacites[]`
+    de featuremap.json. Jamais d'exception sur une entrée malformée."""
+    out: dict = {}
+    systemes = featuremap.get("systemes") if isinstance(featuremap, dict) else None
+    if not isinstance(systemes, list):
+        return out
+    for sys_ in systemes:
+        if not isinstance(sys_, dict):
+            continue
+        for feat in sys_.get("features", []) or []:
+            if not isinstance(feat, dict):
+                continue
+            for cap in feat.get("capacites", []) or []:
+                if not isinstance(cap, dict):
+                    continue
+                cid = cap.get("id")
+                sref = cap.get("source_ref")
+                if isinstance(cid, str) and cid.strip() and isinstance(sref, str):
+                    out[cid] = sref
+    return out
+
+
+def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict) -> dict:
+    """Un rôle de boucle JOUEUR (`PLAYER_LOOP_ROLES`) est-il couvert par au moins
+    une ligne WireMap dont le `canal` est `PLAYER_LOOP` (ou `META_LOOP` pour le
+    rôle `META_LOOP`) ? `WHITE_BOX`/`PLAYER_INPUT` seuls NE COMPTENT JAMAIS
+    (invariant 2, plan révision 2) — un rôle couvert uniquement par ces canaux
+    reste manquant ici, quel que soit le nombre de lignes empilées sur la capacité.
+
+    Trois statuts, jamais confondus (N7 : jamais de PASS sur un volet non
+    mesuré) :
+    - `NOT_MEASURED` : AUCUNE ligne du WireMap ne porte le champ `canal` — run
+      antérieur à ce chantier (mesuré : `chaton_clicker-20260906`,
+      `v2_breakout_slice_r1`, `runm_breakout`, tous sans ce champ au 2026-09-07).
+      Ni FAIL ni PASS : aucun verdict déjà signé n'est rétro-jugé (invariant 1).
+    - `FAIL` : au moins une ligne porte `canal`, et au moins un rôle joueur
+      référencé par `loop_json` n'est couvert par aucune ligne `PLAYER_LOOP`/
+      `META_LOOP` pertinente.
+    - `PASS` : chaque rôle joueur référencé est couvert par au moins une ligne au
+      canal adéquat.
+
+    Retourne {passed: bool|None, status, roles_manquants: [...], raisons: [...]}.
+    `passed` vaut `None` sous `NOT_MEASURED` — jamais un booléen qui prétendrait
+    trancher une mesure qui n'a pas eu lieu."""
+    features = wiremap.get("features") if isinstance(wiremap, dict) else None
+    if not isinstance(features, list):
+        features = []
+
+    any_canal = any(isinstance(f, dict) and "canal" in f for f in features)
+    if not any_canal:
+        return {"passed": None, "status": "NOT_MEASURED", "roles_manquants": [],
+                "raisons": ["aucune ligne WireMap ne porte le champ 'canal' — run "
+                           "antérieur au chantier canal-de-preuve, non rétro-jugé"]}
+
+    role_by_ref = _loop_role_by_ref(loop_json)
+    source_ref_by_cap = _capacity_source_ref_by_id(featuremap)
+
+    # {capacite_id: {canaux observés à travers TOUTES les lignes qui la couvrent}}
+    canals_by_cap: dict[str, set] = {}
+    for feat in features:
+        if not isinstance(feat, dict):
+            continue
+        canal = feat.get("canal")
+        values = canal if isinstance(canal, list) else ([canal] if canal else [])
+        couvre = feat.get("couvre")
+        couvre_ids = couvre if isinstance(couvre, list) else ([couvre] if couvre else [])
+        for cid in couvre_ids:
+            if isinstance(cid, str):
+                canals_by_cap.setdefault(cid, set()).update(
+                    v for v in values if isinstance(v, str))
+
+    raisons: list[str] = []
+    roles_manquants: list[str] = []
+    # Un rôle peut être porté par PLUSIEURS refs (ex. NEXT_GOAL apparaît 2 fois,
+    # P07 et P08 sur chaton_clicker) — chaque ref est jugée séparément : un rôle à
+    # N occurrences dans loop.json exige N preuves distinctes, pas une seule.
+    for ref, role in sorted(role_by_ref.items()):
+        if role not in PLAYER_LOOP_ROLES:
+            continue
+        required_canal = "META_LOOP" if role == "META_LOOP" else "PLAYER_LOOP"
+        cap_ids = [cid for cid, sref in source_ref_by_cap.items() if sref == ref]
+        if not cap_ids:
+            roles_manquants.append(ref)
+            raisons.append(f"{ref} (rôle {role}) : aucune capacité de featuremap "
+                           "ne le cite en source_ref — traçabilité rompue")
+            continue
+        couvert = any(required_canal in canals_by_cap.get(cid, set()) for cid in cap_ids)
+        if not couvert:
+            roles_manquants.append(ref)
+            canaux_vus = sorted({c for cid in cap_ids for c in canals_by_cap.get(cid, set())})
+            raisons.append(
+                f"{ref} (rôle {role}) : couvert uniquement par {canaux_vus or ['<aucun>']}"
+                f" — {required_canal} requis, WHITE_BOX/PLAYER_INPUT seuls ne suffisent jamais")
+
+    return {"passed": not roles_manquants, "status": "FAIL" if roles_manquants else "PASS",
+            "roles_manquants": roles_manquants, "raisons": raisons}
+
+
+def check_player_loop_proof(wiremap: dict, oracle_log_text: str) -> dict:
+    """Un `canal: PLAYER_LOOP`/`META_LOOP` ne vaut preuve que rattaché à une
+    exécution RÉELLE (invariant 3, plan révision 2 — « canal déclaré ne vaut pas
+    preuve à lui seul »). Exige un `preuve_ref` (un ref de `loop.json`, ex. "P06")
+    sur CHAQUE ligne ainsi taguée, et vérifie que ce ref apparaît littéralement dans
+    le journal d'exécution réel (`oracle_log_text` — le contenu de
+    `EVIDENCE/runs/<projet>/evidence/oracle_<projet>.log`, où `e2e.mjs` imprime déjà
+    des lignes nommées `"P06 entrée : ..."`, mesuré sur `chaton_clicker-20260906`).
+
+    Vérification VOLONTAIREMENT FAIBLE (une sous-chaîne dans un texte), pas une
+    preuve cryptographique de causalité — mais elle ferme la faille précise nommée
+    par Pierre : un agent qui poserait `canal: PLAYER_LOOP` sans qu'aucune
+    exécution réelle ne mentionne la référence échoue ici, parce que le journal est
+    produit par le CODE QUI TOURNE, pas par l'agent qui écrit la WireMap.
+
+    Retourne {passed, raisons[]}. `oracle_log_text` vide/absent -> chaque ligne
+    PLAYER_LOOP/META_LOOP est en échec nommé (jamais un vert par défaut faute de
+    journal fourni)."""
+    features = wiremap.get("features") if isinstance(wiremap, dict) else None
+    if not isinstance(features, list):
+        return {"passed": True, "raisons": []}
+
+    raisons: list[str] = []
+    log = oracle_log_text or ""
+    for i, feat in enumerate(features):
+        if not isinstance(feat, dict):
+            continue
+        canal = feat.get("canal")
+        values = canal if isinstance(canal, list) else ([canal] if canal else [])
+        if not any(v in ("PLAYER_LOOP", "META_LOOP") for v in values):
+            continue
+        name = feat.get("feature", f"features[{i}]")
+        preuve_ref = feat.get("preuve_ref")
+        if not isinstance(preuve_ref, str) or not preuve_ref.strip():
+            raisons.append(f"{name} : canal PLAYER_LOOP/META_LOOP sans 'preuve_ref' "
+                           "(un ref de loop.json, ex. 'P06') — rien à rattacher à un journal")
+            continue
+        if preuve_ref not in log:
+            raisons.append(f"{name} : preuve_ref {preuve_ref!r} déclaré, jamais observé "
+                           "dans le journal d'exécution fourni — canal non prouvé")
+
+    return {"passed": not raisons, "raisons": raisons}
