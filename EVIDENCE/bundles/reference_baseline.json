@@ -1,8 +1,8 @@
 {
- "combined_sha256": "215d16426e4496566bd84d44c12ffc8c228fc3875b8dedb6eabd988d8d7a0513",
+ "combined_sha256": "73c90183774d1f23bcffc74055eb39187cd92b6d10e5cbfffcf069ebef953405",
  "complete": true,
  "config_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\forge\\reference_protected.yaml",
- "file_count": 541,
+ "file_count": 543,
  "files": {
   ".claude/hooks/agent_authority_allowlist_v0.json": "177387ee901b90ce6ba82b3bec0bf146dd6bc3d5c6907ccf52be489610075d7e",
   ".claude/hooks/posttool_forge_executed.py": "703d1d76b2cebe3ae98e7f84fcbb81b7b99e0fd35e5ad3496e9ef2508b2a3d88",
@@ -169,7 +169,7 @@
   "forge/declaration_watchlist.json": "77d6c46aa803ea3db8cc09485363c6460dc62fde38389fd07e47062a490082e1",
   "forge/director.py": "737dcab16c9e9b7b3bc8e0d2d06449a1dc83d696f9ddec12f49fe34c09c02e1e",
   "forge/dispatch.py": "5687cccca3907e788bd281a3dc67c58d3952fee7f0e84bea329e0281d0ff5315",
-  "forge/driver.py": "180471d66c8601b6296cb2fe41c38eb24ae4d5403f9f23078b584710810ada42",
+  "forge/driver.py": "71dff971363c40dd61786223e57caa7d19fdec44714211536213708171deec95",
   "forge/emitter.py": "7fdfcf726cc9d07b0abb8c326e6444f54c613ade6524238b748611b3c6f0ced6",
   "forge/escalate.py": "5d4488cb884ff8211f1b88a9f2dbf54c355084fae8a950e6bb95abe243f29bc3",
   "forge/execution_binding.mjs": "e27202204fd65f72cd0fcd4d4d5e4c22b2da07e882374b661804edbd08085a6e",
@@ -256,7 +256,7 @@
   "forge/root_problems.json": "9f4df51d07dba60d3c5ed45d7f13aa7c54806eb0fae2a57708d1b3fb493faf2c",
   "forge/run_identity.py": "37e020ba90f1d36f62538886ca25a99ca92e61481d04ee30f4d026cb7c252b71",
   "forge/run_identity.schema.json": "e4f44637c3640fbefd055528113d6e0c8e83f271d3ccb4648e09d726c4f59b2e",
-  "forge/run_real.py": "f066043f9d98a45c7e8450a804746e652e45a786c5441b919149bef141366eb5",
+  "forge/run_real.py": "7270c5bbd52542317f3cbbf6d84a116d2754c3fa21002dcb63e27caaf8224bf4",
   "forge/runtime.py": "536d4aea11d302d6b9bdb75d04bd7fe55659b049cce90e793bb40a3bbee1a060",
   "forge/runtime_inventory_oracle.py": "22bf29e637de5b36614fa98feb992525043b560628fee0eaef8eb346220979d9",
   "forge/search_usage.mjs": "9d2142d4ca6fa2c3d87035ff3e4ceb979a116842ac1e17f662e6b9e34c417328",
@@ -273,7 +273,7 @@
   "forge/standard/factory_capabilities.yaml": "b931423ed3cd30656db01fc91863fce42db19cfddb0df41dc3d989064d6730f0",
   "forge/standard/repo_map.yaml": "0a80fa46a457ace2aa05187b072a491d13f2117b78aebca3d638aae6e21ffe63",
   "forge/standard_oracles.py": "203890ffc9e3a5fcc59cf5daade92e076082146624013d79355127c9ea3766f8",
-  "forge/static_oracles.py": "3d762b94d91d7e6f8c7008b028ac2bb306e0a12ff4f430530469b6f6f2dc3e6a",
+  "forge/static_oracles.py": "b1ed88654d7e42651d530c51c8d93ef99e274dd6cd63c427585a15564339d78e",
   "forge/studio_expectations.json": "ba37a5a12e81d1ae72d83b7e987312c67809d6269cc6c3af68f55e81b287fda1",
   "forge/studio_link.py": "2b9b77fc371e0b2055d181b1c4c9c4036f914fd1b76a291ca78a242364f81b6c",
   "forge/studio_selfaudit.mjs": "69ee8a9bd039edb0a7d2b79b17f7c2eece1a1c2cacb061c47409a486f544fc69",
@@ -367,6 +367,7 @@
   "forge/tests/test_driver_next_reason.py": "f4396ae614553fbb4b396f2a9910c0566e0e034f442f906e3a7b075cda258549",
   "forge/tests/test_driver_p2_premortem_playtest.py": "1ad220eea4d16fdcfb253d5c7a419a8dcfead0b9c16eca3fdd70d8b2c0eced92",
   "forge/tests/test_driver_p3_escalation_why_and_runlog.py": "bd250e55fcdb777ad42331f639a22da6c9e1dacf21d47e247c3987e23487153f",
+  "forge/tests/test_driver_player_loop_wiring.py": "0f1c4e1adf097b97b847a33ea6e75e187bd5fce490cd48543b10380695daf6fc",
   "forge/tests/test_driver_premortem_lessons_wiring.py": "142e724868e975d5bc4d12e6bd1fc61afcb1aaeb5ef5ea10bd1b14d2247ecf63",
   "forge/tests/test_driver_product_block_unconditional.py": "8cbd65d21912e40d54ff71cb6499325c5e700683500c82f9b8f53ebb5c762121",
   "forge/tests/test_driver_product_oracle.py": "9ddf503267cd02e35db44226500ab74d8b94da94367d64de5c7a801815d5569c",
@@ -413,6 +414,7 @@
   "forge/tests/test_learning_memory.py": "48c345affcebab6f55652a404c6edce250dfcb4c5e25d7d620f714a22cef58a6",
   "forge/tests/test_loop_bypass_guard.py": "8b22ed8f24deb91d9d4bb70c1d4ecd4f73b51cd3f823f8981382f75902812ca0",
   "forge/tests/test_loop_json_upstream.py": "878013208f10f469bc039a2d109d0e3af0245ff20040268c5895f5d9203de120",
+  "forge/tests/test_loop_proof_canal.py": "7b7179afc33eecc3c54550edfcbc869e70b46c43d5970e02be8079c7ae7eacdb",
   "forge/tests/test_loop_spec_materialized.py": "c728c956ee899a856da7ef7f4f09743b885fc8efba7686d873789b081d3f7fd2",
   "forge/tests/test_lot_a_tuyau_artbible_gm.py": "137d3ea4897dad40653c885f415bbb947c4c1bfb85f3ccfcb3053d840207662f",
   "forge/tests/test_lot_d_fuites_mesure.py": "40b2fb00851927629b6e59214786fc9d4c3812d0f7b85a1c6e2f79c82e35b5ad",
@@ -546,14 +548,14 @@
   "forge/wiremap_nav.mjs": "5f0eb2ff6e02f113e0255020637b2214180c0078da809d21ac67413133fa95c1",
   "forge/wiremap_nav.test.mjs": "4ad84b6596d1f3dacaf90749bc3fb63ae756c99415f06ff8d90d6af6788b0b5e"
  },
- "git_head": "7a0e6dffe1b612ac5c95eece08aab036f4e692ed",
+ "git_head": "5e17c92e6f071cbbd9a8e6b9da6a68b52cc83c32",
  "protected": [
   "GAMES/pong/**",
   "forge/**",
   "control_plane/registry.py",
   ".claude/hooks/**"
  ],
- "recorded_at": "2026-09-05T11:54:30.014Z",
+ "recorded_at": "2026-09-07T18:50:06.698Z",
  "schema": "forge.reference_guard.baseline.v1",
  "unreadable": []
 }
