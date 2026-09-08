@@ -1965,6 +1965,42 @@ def _capacity_source_ref_by_id(featuremap: dict) -> dict:
     return out
 
 
+def _capacity_expected_kind_by_id(featuremap: dict) -> dict:
+    """{capacite_id: expected_proof.kind} — parcourt `systemes[].features[].
+    capacites[]` de featuremap.json. Jamais d'exception sur une entrée malformée."""
+    out: dict = {}
+    systemes = featuremap.get("systemes") if isinstance(featuremap, dict) else None
+    if not isinstance(systemes, list):
+        return out
+    for sys_ in systemes:
+        if not isinstance(sys_, dict):
+            continue
+        for feat in sys_.get("features", []) or []:
+            if not isinstance(feat, dict):
+                continue
+            for cap in feat.get("capacites", []) or []:
+                if not isinstance(cap, dict):
+                    continue
+                cid = cap.get("id")
+                proof = cap.get("expected_proof")
+                kind = proof.get("kind") if isinstance(proof, dict) else None
+                if isinstance(cid, str) and cid.strip() and isinstance(kind, str):
+                    out[cid] = kind
+    return out
+
+
+# `expected_proof.kind` reconnus comme JOUEUR par `forge/check_decompo.mjs`
+# (EFFECT_KINDS = ['file_write', 'visual'] + `bot_action` pour les capacités
+# d'ENTRÉE et, règle V4 boucle joueur, pour certaines capacités d'EFFET aussi —
+# mesuré : `cap_caresser_effet` de chaton_clicker porte `kind: bot_action`).
+# Chantier S5 expected_proof.kind (GO Pierre 2026-09-08, plan
+# docs/superpowers/plans/2026-09-08-s5-expected-proof-kind.md). Liste fermée,
+# maintenue à la main ici — DÉRIVE POSSIBLE si `check_decompo.mjs` introduit un
+# nouveau `kind` joueur sans mise à jour symétrique de ce module (limite
+# déclarée, pas cachée ; question ouverte du plan, non tranchée).
+PLAYER_EXPECTED_KINDS = frozenset({"bot_action", "visual", "file_write"})
+
+
 def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict) -> dict:
     """Un rôle de boucle JOUEUR (`PLAYER_LOOP_ROLES`) est-il couvert par au moins
     une ligne WireMap dont le `canal` est `PLAYER_LOOP` (ou `META_LOOP` pour le
@@ -2005,10 +2041,27 @@ def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict)
     `passed` (une référence non résolue est aussi grave qu'un rôle manquant :
     aucune trace fiable n'existe entre la carte et le plan).
 
+    RÉVISÉ (chantier S5 expected_proof.kind, GO Pierre 2026-09-08, plan
+    docs/superpowers/plans/2026-09-08-s5-expected-proof-kind.md) : `kind_non_
+    honore` — troisième dimension de défaut, INDÉPENDANTE des rôles de
+    loop.json (contrairement aux deux passes ci-dessus). Quand une capacité
+    porte `expected_proof.kind` ∈ `PLAYER_EXPECTED_KINDS` (`bot_action`,
+    `visual`, `file_write` — décidé et mécaniquement vérifié dès s3, cf.
+    `forge/check_decompo.mjs`), au moins une ligne qui la `couvre` DOIT porter
+    `PLAYER_LOOP`/`META_LOOP` dans son `canal` — `WHITE_BOX` seul ne suffit
+    JAMAIS à honorer un `kind` déjà décidé côté joueur, même si un test
+    unitaire existe et vérifie honnêtement le même fait (mesuré : `R3` de
+    `chaton_clicker` cite `logic.test.mjs::caresser` en `WHITE_BOX` alors que
+    `cap_caresser_effet` porte `kind: bot_action` depuis featuremap.json — le
+    texte de s3 le disait déjà explicitement, transmis verbatim à s5 ; la cause
+    n'était ni un artefact manquant ni l'agent, mais l'absence de cette règle
+    dans `s5-wiremap.yaml`). S'applique à TOUTE capacité `expected_proof.kind`
+    joueur, qu'elle soit ou non `source_ref` d'un rôle `PLAYER_LOOP_ROLES`.
+
     Retourne {passed: bool|None, status, roles_manquants: [...],
-    couvre_non_resolu: [...], raisons: [...]}. `passed` vaut `None` sous
-    `NOT_MEASURED` — jamais un booléen qui prétendrait trancher une mesure qui
-    n'a pas eu lieu."""
+    couvre_non_resolu: [...], kind_non_honore: [...], raisons: [...]}.
+    `passed` vaut `None` sous `NOT_MEASURED` — jamais un booléen qui
+    prétendrait trancher une mesure qui n'a pas eu lieu."""
     features = wiremap.get("features") if isinstance(wiremap, dict) else None
     if not isinstance(features, list):
         features = []
@@ -2016,7 +2069,7 @@ def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict)
     any_canal = any(isinstance(f, dict) and "canal" in f for f in features)
     if not any_canal:
         return {"passed": None, "status": "NOT_MEASURED", "roles_manquants": [],
-                "couvre_non_resolu": [],
+                "couvre_non_resolu": [], "kind_non_honore": [],
                 "raisons": ["aucune ligne WireMap ne porte le champ 'canal' — run "
                            "antérieur au chantier canal-de-preuve, non rétro-jugé"]}
 
@@ -2097,10 +2150,29 @@ def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict)
                 "non couvert(s) en PLAYER_LOOP/META_LOOP — un rejeu n'hérite pas "
                 "d'une preuve qui n'existe pas")
 
-    return {"passed": not (roles_manquants or couvre_non_resolu),
-            "status": "FAIL" if (roles_manquants or couvre_non_resolu) else "PASS",
+    # Dimension 3 — kind_non_honore : INDÉPENDANTE des rôles de loop.json, sur
+    # TOUTE capacité dont expected_proof.kind exige une preuve joueur (cf.
+    # docstring). Réutilise canals_by_cap déjà construit ci-dessus — aucun
+    # second parcours des features.
+    expected_kind_by_cap = _capacity_expected_kind_by_id(featuremap)
+    kind_non_honore: list[str] = []
+    for cid, kind in sorted(expected_kind_by_cap.items()):
+        if kind not in PLAYER_EXPECTED_KINDS:
+            continue
+        canaux = canals_by_cap.get(cid, set())
+        if not ({"PLAYER_LOOP", "META_LOOP"} & canaux):
+            kind_non_honore.append(
+                f"{cid} : expected_proof.kind={kind!r} (preuve joueur exigée dès "
+                f"la décomposition), couvert uniquement par {sorted(canaux) or ['<aucun>']}"
+                " — WHITE_BOX/PLAYER_INPUT seuls ne suffisent jamais à honorer un "
+                "kind déjà décidé côté joueur")
+    raisons.extend(kind_non_honore)
+
+    defauts = roles_manquants or couvre_non_resolu or kind_non_honore
+    return {"passed": not defauts, "status": "FAIL" if defauts else "PASS",
             "roles_manquants": roles_manquants,
-            "couvre_non_resolu": couvre_non_resolu, "raisons": raisons}
+            "couvre_non_resolu": couvre_non_resolu,
+            "kind_non_honore": kind_non_honore, "raisons": raisons}
 
 
 def check_player_loop_proof(wiremap: dict, oracle_log_text: str) -> dict:

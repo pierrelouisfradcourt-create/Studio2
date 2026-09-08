@@ -109,6 +109,20 @@ output_contract: >-
   (ex. `cap_caresser_entree`, `cap_caresser_effet`, …), jamais `rejouerBoucle`
   (nom de méthode — rejeté, mesuré sur 3 runs indépendants). Cette exception ne
   dispense JAMAIS de la règle générale pour toute ligne NON-REJEU.
+  PRÉFÉRENCE DE CANAL SELON `expected_proof.kind` (GO Pierre 2026-09-08, plan
+  S5 expected_proof.kind) : quand une capacité que tu `couvres` porte, dans
+  featuremap.json (ou dans le texte de décomposition amont), un
+  `expected_proof.kind` ∈ {`bot_action`, `visual`, `file_write`} — une preuve
+  JOUEUR déjà décidée à l'étape de décomposition — le `canal` de la ligne qui
+  la couvre DOIT inclure `PLAYER_LOOP` (ou `META_LOOP` si le rôle concerné est
+  META_LOOP). Un test unitaire (`WHITE_BOX`) reste une preuve légitime EN PLUS
+  (`canal: ["PLAYER_LOOP", "WHITE_BOX"]`) si les deux existent réellement, mais
+  `WHITE_BOX` SEUL ne suffit JAMAIS à honorer un `kind` déjà décidé côté joueur
+  — même si le test unitaire vérifie honnêtement le même fait. Exemple mesuré
+  (chaton_clicker) : `cap_caresser_effet` porte `kind: bot_action` ; une ligne
+  qui la couvre en `canal: WHITE_BOX` seul (citant `logic.test.mjs::caresser`)
+  est rejetée, même si ce test est correct — la preuve DOM/e2e existe déjà
+  (`e2e.mjs`) et doit être citée en `PLAYER_LOOP`.
 
 # --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
 skill: aucun
