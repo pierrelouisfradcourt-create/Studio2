@@ -1,0 +1,249 @@
+Both oracles are now fully traced. I have exactly what I need — no other tools are required (this step is text-only, `run: aucun`). Here is my decomposition.
+
+---
+
+## RAPPORT FINAL — s3-decompo · chaton_clicker_canal_probe_2
+
+### software (appuyé par oracle non-LLM — lecture de source, non exécuté)
+J'ai lu et tracé les deux oracles déterministes qui jugent cet artefact : `forge/check_decompo.mjs` et `forge/upstream_schema.mjs`. La featuremap ci-dessous est construite pour satisfaire mécaniquement leurs trois mesures :
+
+- **COUVERTURE** (`check_decompo.mjs:285-289`) : toute exigence P01–P14 est portée par ≥1 feuille OU est un rejeu (`rejouables`). P09 (REPEAT) et P11 (ADVANTAGE) sont exemptés par construction — l'oracle les exclut de la couverture générique et les vérifie via `replay`/`replay_ref`.
+- **NON-INVENTION** (`:231-235`) : chaque `source_ref` cite l'`id` EXACT d'une exigence de `s1-prisme.txt` ; aucun id inventé.
+- **BOUCLE JOUEUR V4** (`:213-229`) : les 3 exigences `acteur=PLAYER`+`affordance` (P02, P06, P10) sont décomposées en une capacité d'ENTRÉE **et** une capacité d'EFFET. **Point mécanique décisif** : l'oracle contrôle *chaque* feuille sourcée sur une telle exigence — les DEUX feuilles doivent donc être `bot_action` ET citer le point d'entrée. Lignée **web** → `POINTS_ENTREE` retient `index.html`/`main.mjs` (`:162`) ; j'ancre chaque feuille sur `index.html`, jamais `main.tscn` (l'incident `v2_breakout_slice_r1` corrigé le 2026-09-05).
+
+### evidence : MECHANICAL_VALIDATION_ONLY
+Reçu de check_decompo **prédit** (non exécuté, `run: aucun`) :
+- `exigences_couvertes` = 12/14 par feuille + P09/P11 en rejouables → `exigences_non_couvertes: []`
+- `feuilles_non_sourcees: []` (15 feuilles, 15 sources résolvant P01–P08/P10/P12–P14)
+- `boucle_sans_entree: []` (6 feuilles PLAYER+affordance, toutes `bot_action`+`index.html`)
+- `boucle_sans_effet: []` (P07/P08 en `visual`, membres de `EFFECT_KINDS` — pré-mortem `manifest-bade66954` respecté : je n'hérite PAS littéralement le `kind:bot_action` du Prisme pour un NEXT_GOAL)
+- `boucle_replay_non_couvert: []` (P09→[P02,P03,P04,P06] couverts ; P11→P02 couvert)
+- `maillons_couverts` attendus : F=2, G=2, H=1, I=2, J=1
+- `grey_blocks: 0` (pas de `--gm` : profil web, `gm_worldscan.json`/`story_bible.json` ABSENTS, confirmé par le Prisme)
+
+### claim : NO_CLAIM_ALLOWED
+L'oracle n'a pas été exécuté (permission `run: aucun`) : je ne peux pas auto-certifier un `OK` d'exécution. Le verdict réel appartient à l'exécuteur qui matérialisera `featuremap.json` puis lancera `check_decompo.mjs`. Je livre un artefact tracé contre la source, pas un vert prononcé.
+
+### Exigences non couvertes
+Aucune. P09/P11 sans feuille propre est **conforme** (rejeux, garde-fou H/J), non une omission.
+
+### Feuilles non sourcées
+Aucune. Les 15 feuilles citent une exigence réelle du Prisme.
+
+### why_task_existed
+- **problem:** re-convocation de la décompo fonctionnelle pour `chaton_clicker_canal_probe_2` (2e sonde du canal-de-preuve) ; les ids de capacités doivent rester stables car cités en aval par la WireMap (s5).
+- **oracle:** aucun — activation par dispatch Forge (`FORGE_DISPATCH:s3-decompo:...:1`), décision humaine de pipeline.
+- **root_cause:** non transmis (le `why` amont n'accompagne pas ce dispatch) ; les pré-mortems fournissent en revanche les causes des échecs passés à éviter (kind bot_action sur NEXT_GOAL, feuilles P09/P11 absentes traitées comme problème, arbre `src/` mort — ce dernier hors périmètre s3).
+- **action_reason:** produire l'arbre Système→Feature→capacité où chaque feuille hérite sa preuve du Prisme, ancrée sur `index.html`, avec ids stables et lisibles.
+- **result:** featuremap à 4 systèmes / 8 features / 15 feuilles, tracée contre `check_decompo.mjs` + `upstream_schema.mjs` (verdict prédit OK, non exécuté).
+- **proof:** `Read forge/check_decompo.mjs` + `Read forge/upstream_schema.mjs` ; aucune commande exécutée (`run: aucun`).
+- **learning:** pour une exigence PLAYER+affordance, la feuille d'EFFET doit AUSSI être `bot_action` et citer le point d'entrée — sinon `boucle_sans_entree` la frappe ; l'oracle contrôle *toute* feuille sourcée, pas seulement la feuille d'entrée. Les ids retenus (`cap_caresser_entree`, `cap_acheter_producteur_effet`, …) sont à conserver à l'identique en re-convocation.
+- **next_reason:** chaîne causale FERMÉE côté s3 — artefact complet, aucune cause non résolue à mon niveau. L'exécuteur matérialise et lance l'oracle ; s5-wiremap consommera ces ids.
+
+### SKIPPED_VALIDATION
+- **item:** exécution réelle de `check_decompo.mjs` · **où:** featuremap ci-dessous vs `prisme.json` · **statut:** non fait · **raison:** permission `run: aucun` ; validation par lecture+traçage de la source uniquement, verdict d'exécution délégué à l'exécuteur.
+- **item:** couverture grey blocks (`--gm`) · **où:** n/a · **statut:** non applicable · **raison:** `gm_worldscan.json` ABSENT du run_dir (profil web/HTML) — 0 grey block, comportement inchangé de l'oracle.
+
+```json
+{
+  "game_id": "chaton_clicker",
+  "systemes": [
+    {
+      "id": "s_clic_ressource",
+      "features": [
+        {
+          "id": "f_caresse",
+          "capacites": [
+            {
+              "id": "cap_caresser_entree",
+              "capacite": "Le joueur caresse le chaton en cliquant l'affordance caresser_chaton depuis le point d'entree du jeu.",
+              "source_ref": "P02",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible caresser_chaton."
+              }
+            },
+            {
+              "id": "cap_caresser_effet",
+              "capacite": "Chaque caresse incremente le compteur de ronrons affiche.",
+              "source_ref": "P02",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Dans la page index.html, apres le clic sur caresser_chaton, le bot mesure dans le DOM que le compteur ronrons a augmente."
+              }
+            },
+            {
+              "id": "cap_reponse_caresse",
+              "capacite": "Le chaton et le compteur reagissent visuellement dans la foulee de la caresse.",
+              "source_ref": "P03",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "La sonde capture un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic."
+              }
+            }
+          ]
+        },
+        {
+          "id": "f_avatar_felin",
+          "capacites": [
+            {
+              "id": "cap_chaton_visible",
+              "capacite": "Un chaton dessine, cliquable, est present a l'ecran des le chargement.",
+              "source_ref": "P14",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "La sonde constate au chargement la presence a l'ecran d'un chaton cliquable identifiable."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s_economie",
+      "features": [
+        {
+          "id": "f_producteur",
+          "capacites": [
+            {
+              "id": "cap_recompense_bouton_producteur",
+              "capacite": "L'accumulation de ronrons rend le bouton d'achat du producteur actif et disponible.",
+              "source_ref": "P04",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot accumule des ronrons puis lit que le bouton d'achat du producteur passe d'inactif a actif dans le DOM."
+              }
+            },
+            {
+              "id": "cap_acheter_producteur_entree",
+              "capacite": "Le joueur achete un producteur en cliquant l'affordance acheter_producteur depuis le point d'entree du jeu.",
+              "source_ref": "P06",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible acheter_producteur."
+              }
+            },
+            {
+              "id": "cap_acheter_producteur_effet",
+              "capacite": "Apres l'achat, un panier de chatons apparait et les ronrons montent sans clic (production passive).",
+              "source_ref": "P06",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Dans la page index.html, apres l'achat et sans cliquer, le bot mesure que les ronrons augmentent et qu'un element 'panier_chatons' est apparu dans le DOM."
+              }
+            }
+          ]
+        },
+        {
+          "id": "f_cout",
+          "capacites": [
+            {
+              "id": "cap_cout_croissant",
+              "capacite": "Le cout affiche d'un producteur augmente visiblement apres chacun de ses achats.",
+              "source_ref": "P12",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot achete deux fois le meme producteur et lit que le cout affiche du second achat est superieur au premier."
+              }
+            }
+          ]
+        },
+        {
+          "id": "f_arbitrage",
+          "capacites": [
+            {
+              "id": "cap_decision_clic_vs_producteur",
+              "capacite": "Le jeu offre un arbitrage mesurable : caresser pour un gain immediat ou investir dans un producteur passif.",
+              "source_ref": "P05",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Une sonde a deux politiques (oisif contre actif) sur 300 frames montre que la metrique ronrons diverge selon l'option choisie."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s_progression",
+      "features": [
+        {
+          "id": "f_objectif",
+          "capacites": [
+            {
+              "id": "cap_objectif_initial",
+              "capacite": "Un objectif courant chiffre en ronrons est affiche des le chargement, avant toute action.",
+              "source_ref": "P01",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot lit dans le DOM un HUD 'objectif' non vide au chargement, avant toute action du joueur."
+              }
+            },
+            {
+              "id": "cap_objectif_second",
+              "capacite": "Apres le premier achat, le label objectif change pour un texte nouveau visant un deuxieme producteur.",
+              "source_ref": "P07",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Le label 'objectif' affiche, apres le premier achat, un texte nouveau visant un deuxieme producteur, distinct du texte affiche au depart."
+              }
+            },
+            {
+              "id": "cap_objectif_amelioration",
+              "capacite": "Apres le deuxieme producteur, le label objectif change encore pour viser une amelioration.",
+              "source_ref": "P08",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Le label 'objectif' affiche, apres le deuxieme producteur, un troisieme texte visant une amelioration, distinct des deux precedents."
+              }
+            }
+          ]
+        },
+        {
+          "id": "f_prestige",
+          "capacites": [
+            {
+              "id": "cap_renouveau_entree",
+              "capacite": "Le joueur declenche un renouveau de portee (prestige) en cliquant l'affordance renouveau_portee depuis le point d'entree du jeu.",
+              "source_ref": "P10",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible renouveau_portee."
+              }
+            },
+            {
+              "id": "cap_renouveau_effet_reset",
+              "capacite": "Le renouveau de portee fait retomber visiblement le compteur de ronrons a zero.",
+              "source_ref": "P10",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Dans la page index.html, apres le clic sur renouveau_portee, le bot mesure dans le DOM que le compteur ronrons retombe a zero."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s_socle",
+      "features": [
+        {
+          "id": "f_determinisme",
+          "capacites": [
+            {
+              "id": "cap_hash_deterministe",
+              "capacite": "A graine egale et suite d'actions egale, la logique produit un hash d'etat identique, reproductible hors navigateur.",
+              "source_ref": "P13",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Deux executions de la logique .mjs avec meme graine et memes actions produisent le meme hash d'etat final."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+RETURN_REASON: {"status": "NOT_DISCOVERED"}

@@ -1,0 +1,369 @@
+{
+ "claim_verdict": "NO_CLAIM_ALLOWED",
+ "decision": "HUMANGATE_READY_WITH_OBJECTION",
+ "evidence_verdict": "MECHANICAL_VALIDATION_ONLY",
+ "execution_proof_attestation": "self",
+ "execution_proof_note": "auto-attesté (chemin B headless) : les événements spawn_authorized/spawn_executed de ce run ont été écrits par le driver qui exécute les spawns, aucun observateur tiers ne les a constatés",
+ "git_head": "c4b38ba17e35f6bbe8e2c31e88561890225d9868",
+ "hmac": "22429cccecfdef47097adb7c5a11a184d61f7b624b5c1a2151116e27c9eb4a99",
+ "humangate_flags": [
+  "standard non vérifiée (oracle sauté dans ce profil)",
+  "red-team dégradé: reviewer indépendant n'a pas tourné (fallback)",
+  "canal-de-preuve (couverture) : rôle(s) joueur non prouvés en PLAYER_LOOP/META_LOOP [P02, P03, P05, P08, P09, P11] — WHITE_BOX/PLAYER_INPUT seuls ne suffisent jamais (advisory, jamais un juge du code ; gate dur = décision HumanGate non prise, chantier canal-de-preuve)"
+ ],
+ "is_game": true,
+ "nonce": "6a75fe4508da78d0b514ced0cf813d26",
+ "oracles": {
+  "archi": {
+   "detail": {
+    "debordements_ownership": {
+     "checked": false,
+     "items": []
+    },
+    "deps_interdites_violées": [],
+    "modules_sans_test": [],
+    "passed": true
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "archi",
+   "run_id": "chaton-clicker-canal-probe-2-20260908",
+   "status": "OK",
+   "ts": 1788853134.9773748
+  },
+  "code": {
+   "detail": {
+    "art_response_dead": false,
+    "asset_consumption": {
+     "checked": false,
+     "reason": "aucun asset_requests.json produit par la chaîne amont",
+     "status": "SKIPPED"
+    },
+    "e2e": {
+     "passed": true,
+     "raisons": []
+    },
+    "economy_bypass_dead": false,
+    "evidence_seal": {
+     "evidence_path": "EVIDENCE/runs/chaton_clicker_canal_probe_2/evidence/oracle_chaton_clicker_canal_probe_2.log",
+     "reason": "FLUX_D_EXPLOITATION_IGNORE_PAR_GIT",
+     "sealed": false
+    },
+    "harness_no_hardcoded_flags": {
+     "passed": true,
+     "raisons": []
+    },
+    "logic_files_source": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\EVIDENCE\\runs\\chaton_clicker_canal_probe_2\\wiremap.json",
+    "loop_dead": false,
+    "measure_tick": {
+     "checked": false,
+     "reason": "Brief sans 'mesure.tick_ms' valide — aucune contribution au gate (non-régression des profils/briefs existants)",
+     "status": "SKIPPED"
+    },
+    "mutation": {
+     "receipt": {
+      "detail": {
+       "baseline_ok": true,
+       "categories_exclues": [],
+       "code_sha256": {
+        "e2e.mjs": "02e43ed80913de7ce6854c56dbea1ba7de33964ac4be51b43af74715cd4c39d8",
+        "input.mjs": "5afe3949194df7d86e16d670cd07fc64c1fd59a2013274d08a7ea63c7b38023d",
+        "logic.mjs": "c54526c1ec7ab74d6b6162fecc2e1ddd926a0ef5a6fc3f19acd6a6d755c681ba",
+        "logic.test.mjs": "ffabfd87f363a113f8317912971a86903c7e6dbd179c0387711baaa5142f889f",
+        "properties.test.mjs": "7b1f649615308b64c91deed6ab33f5c655c329e7d4d0dde8b3dbbf44ab751dbc",
+        "render.mjs": "78449cf401ea2a2b527213a1b935d71032a1dbd9b8b65738976339f1f2aa71fb",
+        "run-oracle.mjs": "140371861eef9f2b75378d32f195577c622770bacdc9e4e81f23af55a6859c6a"
+       },
+       "compteurs_par_categorie": {
+        "sans_categorie": {
+         "fichiers": 3,
+         "jugee": true,
+         "killed": 24,
+         "total": 24
+        }
+       },
+       "game_dir": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\GAMES\\chaton_clicker_canal_probe_2",
+       "gate_checked": true,
+       "killed": 24,
+       "logic_files": [
+        "input.mjs",
+        "logic.mjs",
+        "render.mjs"
+       ],
+       "mutation_exception": false,
+       "survivants_non_tries": [],
+       "survived": 0,
+       "test_argv": [
+        "node",
+        "--test",
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "test_files_scelles": [
+        "logic.test.mjs",
+        "properties.test.mjs"
+       ],
+       "total": 24,
+       "triage_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+       "triaged_survivors": []
+      },
+      "evidence_path": "EVIDENCE/runs/chaton_clicker_canal_probe_2/evidence/mutation_chaton-clicker-canal-probe-2-20260908.json",
+      "evidence_sha256": "ca1ede6b98f0f348357d4c965a0f6f1311601bf63a75ab23cd9ceb008dbb72ef",
+      "oracle_id": "mutation",
+      "run_id": "chaton-clicker-canal-probe-2-20260908",
+      "status": "OK",
+      "ts": 1788853134.8054283
+     },
+     "signature": "67c8507b7816f7094117f5c3490f26ac39e31a5aa4d3a45a218f0fd7f3b2bf01"
+    },
+    "product_oracle_godot_activation": {
+     "active": false,
+     "godot_capacity_present": false,
+     "proof_descriptor_present": false,
+     "reason": "aucun descripteur `proof:` bien formé dans game_contract.yaml ; aucun oracle FORGE_ORACLE trouvé sous C:\\Users\\Studio-Dev\\Desktop\\Studio2\\GAMES\\chaton_clicker_canal_probe_2/07_TESTS/oracle/",
+     "runtime_block": {
+      "active": false,
+      "reason": "pas de run/main_scene"
+     }
+    },
+    "regime_preuve": "historique",
+    "returncode": 0,
+    "reuse_ratio_wired": {
+     "passed": true,
+     "raisons": []
+    },
+    "runtime_alive": {
+     "checked": false,
+     "passed": false,
+     "reason": "pas de run/main_scene (module bibliothèque)",
+     "status": "SKIPPED"
+    },
+    "search_consulted": {
+     "count": 0,
+     "passed": false,
+     "raisons": [
+      "aucune recherche journalisée depuis 2026-09-08T07:16:11.962Z (contrat s9-build §2bis non respecté, ou aucune brique ne pouvait matcher)"
+     ]
+    },
+    "solvability": {
+     "checked": true,
+     "passed": true,
+     "raisons": []
+    },
+    "solvability_mesure": {
+     "mesure": "cablage_du_harnais",
+     "ne_mesure_pas": "la solvabilite du jeu (won/trials) — un `passed: true` ne prouve AUCUNE partie gagnee",
+     "resultat_reel": "non remonte au recu : voir evidence/oracle_<jeu>.log, NON versionne (.gitignore:81)"
+    }
+   },
+   "evidence_path": "EVIDENCE/runs/chaton_clicker_canal_probe_2/evidence/oracle_chaton_clicker_canal_probe_2.log",
+   "evidence_sha256": "",
+   "oracle_id": "code",
+   "run_id": "chaton-clicker-canal-probe-2-20260908",
+   "status": "OK",
+   "ts": 1788853134.8294628
+  },
+  "standard": {
+   "detail": {
+    "reason": "non applicable au profil increment"
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "standard",
+   "run_id": "chaton-clicker-canal-probe-2-20260908",
+   "status": "SKIPPED",
+   "ts": 1788853617.1711233
+  },
+  "wiremap": {
+   "detail": {
+    "amont_traversal": {
+     "claim_verdict": "NO_CLAIM_ALLOWED",
+     "facts": {
+      "boucles_recompense": {
+       "addresses": [
+        "worldscan:games[0].loops.minute_1",
+        "worldscan:games[0].loops.minute_10",
+        "worldscan:games[0].loops.hour_5",
+        "worldscan:games[0].loops.endgame",
+        "worldscan:games[1].loops.minute_1",
+        "worldscan:games[1].loops.minute_10",
+        "worldscan:games[1].loops.hour_5",
+        "worldscan:games[1].loops.endgame"
+       ],
+       "exigences": [
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P10",
+        "P11",
+        "P12"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_caresser_entree",
+        "cap_caresser_effet",
+        "cap_reponse_caresse",
+        "cap_recompense_bouton_producteur",
+        "cap_acheter_producteur_entree",
+        "cap_acheter_producteur_effet",
+        "cap_cout_croissant",
+        "cap_decision_clic_vs_producteur",
+        "cap_objectif_second",
+        "cap_objectif_amelioration",
+        "cap_renouveau_entree",
+        "cap_renouveau_effet_reset"
+       ],
+       "lines": [
+        "R2 Clic sur le chaton cable a caresser (entree joueur)",
+        "R3 Caresser incremente les ronrons (effet)",
+        "R4 Reaction visuelle a la caresse",
+        "R5 Bouton d'achat passe actif des que la ressource suffit",
+        "R6 Achat d'un producteur par clic reel (entree)",
+        "R7 Production passive au tick sans clic (effet d'achat)",
+        "R8 Cout du producteur croissant apres chaque achat",
+        "R9 Point de decision : oisif contre actif divergent",
+        "R10 Objectif renouvele apres le 1er achat",
+        "R11 Objectif renouvele apres le 2e palier (amelioration)",
+        "R13 Bouton de renouveau de portee cable par clic reel (entree)",
+        "R14 Renouveau de portee remet les ronrons a zero (effet)"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "conditions_defaite": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "conditions_victoire": {
+       "addresses": [
+        "worldscan:games[1].objectives[0].victory_condition"
+       ],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": true,
+       "reached": "PRODUCED"
+      },
+      "contraintes_narratives": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      },
+      "objectifs_joueur": {
+       "addresses": [
+        "worldscan:games[0].objectives[0].player_goal",
+        "worldscan:games[1].objectives[0].player_goal"
+       ],
+       "exigences": [
+        "P01"
+       ],
+       "files_present": true,
+       "leaves": [
+        "cap_objectif_initial"
+       ],
+       "lines": [
+        "R1 Objectif courant affiche au chargement"
+       ],
+       "produced": true,
+       "reached": "BUILD"
+      },
+      "progression": {
+       "addresses": [],
+       "exigences": [],
+       "files_present": null,
+       "leaves": [],
+       "lines": [],
+       "produced": false,
+       "reached": "NOT_PRODUCED"
+      }
+     },
+     "references": {
+      "adressables": 12,
+      "expected": 12,
+      "non_resolues": [],
+      "resolues": 12
+     },
+     "stages": [
+      "NOT_PRODUCED",
+      "PRODUCED",
+      "PRISME",
+      "GREY_BLOCKS",
+      "WIREMAP",
+      "BUILD"
+     ],
+     "verdict": "ADVISORY"
+    },
+    "canal": {
+     "couverture": {
+      "passed": false,
+      "raisons": [
+       "P02 (rôle PLAYER_ACTION) : couvert uniquement par ['PLAYER_INPUT', 'WHITE_BOX'] — PLAYER_LOOP requis, WHITE_BOX/PLAYER_INPUT seuls ne suffisent jamais",
+       "P03 (rôle GAME_RESPONSE) : couvert uniquement par ['WHITE_BOX'] — PLAYER_LOOP requis, WHITE_BOX/PLAYER_INPUT seuls ne suffisent jamais",
+       "P05 (rôle DECISION) : couvert uniquement par ['WHITE_BOX'] — PLAYER_LOOP requis, WHITE_BOX/PLAYER_INPUT seuls ne suffisent jamais",
+       "P08 (rôle NEXT_GOAL) : couvert uniquement par ['WHITE_BOX'] — PLAYER_LOOP requis, WHITE_BOX/PLAYER_INPUT seuls ne suffisent jamais",
+       "P09 (rôle REPEAT) : aucune capacité de featuremap ne le cite en source_ref — traçabilité rompue",
+       "P11 (rôle ADVANTAGE) : aucune capacité de featuremap ne le cite en source_ref — traçabilité rompue"
+      ],
+      "roles_manquants": [
+       "P02",
+       "P03",
+       "P05",
+       "P08",
+       "P09",
+       "P11"
+      ],
+      "status": "FAIL"
+     },
+     "forme": {
+      "passed": true,
+      "raisons": []
+     },
+     "preuve_execution": {
+      "passed": true,
+      "raisons": []
+     }
+    },
+    "features_manquantes": [],
+    "fonctions_renommées": [],
+    "obsoletes": [],
+    "passed": true,
+    "preuves_absentes": []
+   },
+   "evidence_path": "",
+   "evidence_sha256": "",
+   "oracle_id": "wiremap",
+   "run_id": "chaton-clicker-canal-probe-2-20260908",
+   "status": "OK",
+   "ts": 1788853135.1035814
+  }
+ },
+ "project": "chaton_clicker_canal_probe_2",
+ "provenance_ok": true,
+ "redteam_advisory": [
+  "[HIGH] zone morte / residu src divergent — Arbre src/ (src/logic.mjs, src/render.mjs, src/input.mjs) present mais jamais importe par index.html->main.mjs (qui importe ./logic.mjs ./render.mjs ./input.mjs racine) ; diverge du code vivant (snake_case, economie differente, textes objectif differents) et src/logic.mjs:1 importe node:crypto irresolvable en navigateur. Recurrence exacte des pre-mortems b69705172fd086c4/5bcb9253623ca207/a71dc0c52d697c15. (repro: grep -n \"from './\" GAMES/chaton_clicker_canal_probe_2/main.mjs => ./logic.mjs ./render.mjs ./input.mjs (aucun src/) ; grep -rn 'src/' index.html main.mjs => 0 ; grep -n crypto GAMES/chaton_clicker_canal_probe_2/src/logic.mjs => src/logic.mjs:1 import crypto from 'crypto')",
+  "[HIGH] preuve factice sur surface protegee — tests/logic.test.mjs:1 importe ../src/logic.mjs (arbre mort), pas le code cable par index.html. Ses assertions sont soudees a l'API src/ : P09 lit result.ronrons_apres/producteurs_achetes (snake_case), P08 exige objectifCourant().includes('prestige'). Contre le code vivant ces assertions echouent. Vert permanent ne prouvant rien sur le jeu reel, sur surface declaree protegee (GAMES/*/tests/**), non reference par le wiremap. (repro: node -e \"import('./GAMES/chaton_clicker_canal_probe_2/logic.mjs').then(m=>{const s=new m.GameState(42);s.ronrons=100;s.acheterProducteur(0);s.ronrons=50;s.acheterProducteur(1);console.log(s.objectifCourant())})\" => 'Achete un arbre a chats...' (pas de 'prestige' => P08 FAIL) ; node -e sur rejouerBoucle => keys ['ronronsApres','producteursAchetes'] (test lit result.ronrons_apres=undefined => P09 FAIL) ; repointer tests/logic.test.mjs:1 vers ../logic.mjs puis node --test => P08/P09 rouges)",
+  "[MEDIUM] bug de determinisme dans le code mort — src/logic.mjs:101 cloned.rng = this.rng : le clone partage la meme closure RNG (etat mutable) que l'original et les autres clones ; comparerPolitiques clone passif et actif depuis la meme origine, chaque caresser() sur actif perturbe les tirages de passif. Le determinisme meme seed+meme suite=>meme trajectoire est rompu. La racine (logic.mjs:145-148) derive un RNG sale neuf par clone et l'asserte (logic.test.mjs:301) ; cette assertion echouerait contre src/. (repro: node -e \"import('./GAMES/chaton_clicker_canal_probe_2/src/logic.mjs').then(m=>{const s=new m.GameState(14);const a=s.clone(),b=s.clone();const da=[...Array(3)].map(()=>a.rng());const db=[...Array(3)].map(()=>b.rng());console.log(da,db)})\" => a.rng et b.rng sont la meme closure, tirages de b poursuivent ceux de a (etat partage))",
+  "[MEDIUM] provenance de preuve navigateur hors arbre V2 — e2e.mjs:30 et solvability.mjs:28 codent en dur join('C:','TACTICAL_CHESS_STUDIO','llm-lego','node_modules') — chemin absolu de l'installation V1. package.json:15 declare playwright mais aucun node_modules livre en V2. La preuve 'navigateur reel' (P04/P06/P07/P10/P11, PASS solvabilite) n'est ancrable que si l'arbre V1 existe sur la machine ; repli honnete RESULT: FAIL sinon, mais preuve non reproductible sur poste V2 propre. (repro: grep -n TACTICAL_CHESS_STUDIO GAMES/chaton_clicker_canal_probe_2/e2e.mjs GAMES/chaton_clicker_canal_probe_2/solvability.mjs => e2e.mjs:30, solvability.mjs:28 ; sur poste sans arbre V1 et sans npm i playwright : node GAMES/chaton_clicker_canal_probe_2/e2e.mjs => 'playwright introuvable' + RESULT: FAIL)",
+  "[LOW] piege d'execution de test — run-oracle.mjs:26 et package.json nomment explicitement logic.test.mjs properties.test.mjs (racine) donc le gate teste le bon code, mais un 'node --test' sans argument dans le repertoire du jeu declenche la decouverte recursive de Node (>=v20) qui inclut tests/logic.test.mjs ; ce dernier passe au vert contre src/ mort, melange au run vivant — un operateur voyant 'tests OK' ne distingue pas le leurre. (repro: cd GAMES/chaton_clicker_canal_probe_2 && node --test => decouvre et execute racine logic.test.mjs (vivant) ET tests/logic.test.mjs (mort, importe ../src/) ; les deux au vert dans le meme run)"
+ ],
+ "redteam_ran": false,
+ "redteam_reviewer": "claude-opus-4-8",
+ "run_id": "chaton-clicker-canal-probe-2-20260908",
+ "scope": "FULL",
+ "software_verdict": "OK",
+ "ts": 1788853617.1881778
+}

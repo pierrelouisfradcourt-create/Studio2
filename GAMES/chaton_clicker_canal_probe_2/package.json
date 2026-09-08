@@ -1,0 +1,17 @@
+{
+  "name": "chaton-clicker",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Cookie clicker (Orteil, 2013) — genre uniquement — avec des chatons à la place des cookies. Économie déterministe, prestige, bot-joueur DOM-only.",
+  "main": "main.mjs",
+  "scripts": {
+    "test": "node --test logic.test.mjs properties.test.mjs",
+    "oracle": "node run-oracle.mjs",
+    "solvability": "node solvability.mjs",
+    "e2e": "node e2e.mjs",
+    "dev": "node server.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}

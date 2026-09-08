@@ -1,0 +1,210 @@
+{
+ "features": [
+  {
+   "feature": "R1 Objectif courant affiche au chargement",
+   "fonction": "renderObjectif",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "couvre": [
+    "cap_objectif_initial"
+   ],
+   "preuve": "e2e.mjs (navigateur reel) : #objectif porte un texte non vide des le chargement, avant toute action (log 'HUD objectif au chargement'). logic.test.mjs 'createGame: le HUD objectif est deja rendu au premier appel'. Exigence P01 (PLAYER_GOAL), hors liste de roles a canal."
+  },
+  {
+   "feature": "R2 Clic sur le chaton cable a caresser (entree joueur)",
+   "fonction": "brancherCaresse",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "couvre": [
+    "cap_caresser_entree"
+   ],
+   "canal": "PLAYER_INPUT",
+   "preuve": "e2e.mjs : clic reel sur [data-testid=caresser_chaton] declenche gameState.caresser (log 'clic caresser_chaton : ronrons X -> Y'). logic.test.mjs 'InputHandler.brancherCaresse: un clic declenche logic.caresser()'. Clic joueur reel, mais le journal e2e n'imprime PAS 'P02' -> non ancrable PLAYER_LOOP (rejet aval)."
+  },
+  {
+   "feature": "R3 Caresser incremente les ronrons (effet)",
+   "fonction": "caresser",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "couvre": [
+    "cap_caresser_effet"
+   ],
+   "canal": "WHITE_BOX",
+   "preuve": "logic.test.mjs 'caresser: ronrons augmente apres une caresse' (appel direct, gain = gainParCaresse, crit via RNG seede). e2e observe aussi ronrons monter apres le clic reel, mais sans imprimer 'P02' au journal -> seul l'appel direct est ancrable."
+  },
+  {
+   "feature": "R4 Reaction visuelle a la caresse",
+   "fonction": "reagirCaresse",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "couvre": [
+    "cap_reponse_caresse"
+   ],
+   "canal": "WHITE_BOX",
+   "preuve": "logic.test.mjs 'Renderer.reagirCaresse: ajoute la classe de reaction visuelle' (appel direct). e2e observe la classe 'caresse-feedback' via MutationObserver arme avant le clic (log 'reaction visuelle de caresse observee'), mais sans 'P03' au journal -> non ancrable PLAYER_LOOP. Exigence P03 (GAME_RESPONSE)."
+  },
+  {
+   "feature": "R5 Bouton d'achat passe actif des que la ressource suffit",
+   "fonction": "afficherProducteurs",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "couvre": [
+    "cap_recompense_bouton_producteur"
+   ],
+   "canal": "PLAYER_LOOP",
+   "preuve_ref": "P04",
+   "preuve": "e2e.mjs : waitForFunction observe [data-testid=acheter_producteur_0] passer de disabled a actif dans le DOM reel (log 'P04 : bouton producteur passe actif apres accumulation de ronrons'). Ref 'P04' imprime litteralement au journal."
+  },
+  {
+   "feature": "R6 Achat d'un producteur par clic reel (entree)",
+   "fonction": "brancherAchat",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "couvre": [
+    "cap_acheter_producteur_entree"
+   ],
+   "canal": "PLAYER_LOOP",
+   "preuve_ref": "P06",
+   "preuve": "e2e.mjs : clic reel sur le bouton d'achat -> gameState.acheterProducteur, ronrons diminuent (log 'P06 entree : clic reel sur acheter_producteur_0'). Ref 'P06' imprime litteralement."
+  },
+  {
+   "feature": "R7 Production passive au tick sans clic (effet d'achat)",
+   "fonction": "tick",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "couvre": [
+    "cap_acheter_producteur_effet"
+   ],
+   "canal": "PLAYER_LOOP",
+   "preuve_ref": "P06",
+   "preuve": "e2e.mjs : apres l'achat par clic, 'panier_chatons' apparait et les ronrons montent sans clic via le tick pilote par main (logs 'P06 effet : panier_chatons visible apres achat' et 'P06 effet : ronrons progressent sans clic (production passive par tick)'). Ref 'P06' imprime litteralement."
+  },
+  {
+   "feature": "R8 Cout du producteur croissant apres chaque achat",
+   "fonction": "acheterProducteur",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "couvre": [
+    "cap_cout_croissant"
+   ],
+   "preuve": "logic.test.mjs 'coutProducteur: le cout croit strictement apres chaque achat du meme producteur' (facteur growth=1.15, appel direct). Exigence P12, hors loop.json -> aucun canal."
+  },
+  {
+   "feature": "R9 Point de decision : oisif contre actif divergent",
+   "fonction": "comparerPolitiques",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "couvre": [
+    "cap_decision_clic_vs_producteur"
+   ],
+   "canal": "WHITE_BOX",
+   "preuve": "logic.test.mjs 'comparerPolitiques: la politique active depasse la passive sur 300 frames' (diff > 0, appel direct). Aucun 'P05' imprime par e2e/solvability -> non prouve par le canal joueur, seul l'oracle interne est ancrable."
+  },
+  {
+   "feature": "R10 Objectif renouvele apres le 1er achat",
+   "fonction": "objectifCourant",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "couvre": [
+    "cap_objectif_second"
+   ],
+   "canal": "PLAYER_LOOP",
+   "preuve_ref": "P07",
+   "preuve": "e2e.mjs : apres le clic d'achat reel, #objectif porte un texte distinct de celui du chargement (log 'P07 : objectif change -> ...'). Change observe dans le DOM reel, ref 'P07' imprime litteralement."
+  },
+  {
+   "feature": "R11 Objectif renouvele apres le 2e palier (amelioration)",
+   "fonction": "objectifCourant",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "couvre": [
+    "cap_objectif_amelioration"
+   ],
+   "canal": "WHITE_BOX",
+   "preuve": "logic.test.mjs 'objectifCourant: texte exact a chaque palier' (3e texte 'Renouvelle ta portee...', appel direct). e2e n'achete jamais le 2e producteur -> aucun 'P08' au journal -> pas de canal joueur ancre. Exigence P08 (NEXT_GOAL)."
+  },
+  {
+   "feature": "R12 Rejeu de la boucle dans l'etat enrichi",
+   "fonction": "rejouerBoucle",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "canal": "WHITE_BOX",
+   "preuve": "logic.test.mjs 'rejouerBoucle: rejoue caresse/achat/tick dans l'etat post-achat et progresse' (ronronsApres > 0, appel direct). Exigence P09 (REPEAT) traitee en rejouable par la featuremap, sans feuille propre -> aucune capacite a couvrir ; aucun 'P09' au journal.",
+   "couvre": [
+    "logic.test.mjs 'rejouerBoucle: rejoue caresse/achat/tick dans l'etat post-achat et progresse' (ronronsApres > 0, appel direct). Exigence P09 (REPEAT) traitee en…"
+   ]
+  },
+  {
+   "feature": "R13 Bouton de renouveau de portee cable par clic reel (entree)",
+   "fonction": "brancherRenouveau",
+   "fichiers": [
+    "input.mjs"
+   ],
+   "couvre": [
+    "cap_renouveau_entree"
+   ],
+   "canal": "META_LOOP",
+   "preuve_ref": "P10",
+   "preuve": "e2e.mjs : clic reel sur [data-testid=renouveau_portee] -> gameState.renouveauPortee, prestige devient > 0 (log 'P10/P11 : clic renouveau_portee ...'). Ref 'P10' imprime litteralement ; role META_LOOP."
+  },
+  {
+   "feature": "R14 Renouveau de portee remet les ronrons a zero (effet)",
+   "fonction": "renouveauPortee",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "couvre": [
+    "cap_renouveau_effet_reset"
+   ],
+   "canal": "META_LOOP",
+   "preuve_ref": "P10",
+   "preuve": "e2e.mjs : apres le clic renouveau reel, data-ronrons retombe a 0 et data-prestige > 0 dans le DOM (log 'P10/P11 : ... ronrons=0, prestige=...'). Reset observable, ref 'P10' imprime litteralement ; role META_LOOP."
+  },
+  {
+   "feature": "R15 Avantage permanent du prestige (gain par caresse)",
+   "fonction": "gainParCaresse",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "canal": "WHITE_BOX",
+   "preuve": "logic.test.mjs 'gainParCaresse: strictement superieur apres un renouveau' (getter 1 + prestige*0.1). e2e imprime 'P10/P11' MAIS lit gainParCaresse via window.__game (etat interne, pas une affordance DOM) -> effet non DOM-observable -> WHITE_BOX. Exigence P11 (ADVANTAGE), rejouable sans feuille featuremap.",
+   "couvre": [
+    "gainParCaresse"
+   ]
+  },
+  {
+   "feature": "R16 Hash d'etat deterministe reproductible hors navigateur",
+   "fonction": "hashEtat",
+   "fichiers": [
+    "logic.mjs"
+   ],
+   "couvre": [
+    "cap_hash_deterministe"
+   ],
+   "preuve": "logic.test.mjs 'hashEtat: meme seed + meme suite d'actions => meme hash' (FNV-1a pur JS, aucun Date.now, appel direct). Exigence P13, hors loop.json -> aucun canal."
+  },
+  {
+   "feature": "R17 Chaton dessine, visible et cliquable au chargement",
+   "fonction": "dessinerChaton",
+   "fichiers": [
+    "render.mjs"
+   ],
+   "couvre": [
+    "cap_chaton_visible"
+   ],
+   "preuve": "e2e.mjs : la cible [data-testid=caresser_chaton] est visible des le chargement (locator.isVisible() vrai, log 'chaton visible et cliquable'). logic.test.mjs 'Renderer.dessinerChaton: cree un chaton cliquable identifiable'. Exigence P14, hors loop.json -> aucun canal."
+  }
+ ]
+}

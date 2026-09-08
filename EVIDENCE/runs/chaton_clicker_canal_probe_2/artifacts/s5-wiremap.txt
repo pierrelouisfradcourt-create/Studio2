@@ -1,0 +1,205 @@
+I have everything I need: the two wiremap oracles (contract before-build, static after-build), the four game modules, the two player-channel oracles (`e2e.mjs`, `solvability.mjs`), the unit tests, the featuremap (s3), the blueprint (s4) and `loop.json`. Every function I map is verified present in source, and I've traced exactly which loop refs each oracle prints to its journal.
+
+---
+
+## RAPPORT FINAL — s5-wiremap · chaton_clicker_canal_probe_2
+
+### software (appuyé par ancres non-LLM — lecture de source, non exécuté ; `run: aucun`)
+
+J'ai construit la WireMap isomorphe au blueprint (`logic`/`render`/`input`/`main`) et à la featuremap (15 feuilles). Chaque feuille est ancrée sur un **fichier existant** et une **fonction définie**, vérifiés par lecture directe :
+
+- `logic.mjs` : `caresser`, `producteurAbordable`, `acheterProducteur`, `tick`, `coutProducteur`(via `acheterProducteur`), `comparerPolitiques`, `objectifCourant`, `rejouerBoucle`, `renouveauPortee`, `gainParCaresse`, `hashEtat` — tous présents.
+- `render.mjs` : `renderObjectif`, `dessinerChaton`, `reagirCaresse`, `afficherProducteurs` — tous présents.
+- `input.mjs` : `brancherCaresse`, `brancherAchat`, `brancherRenouveau` — tous présents.
+
+→ `forge.static_oracles.check_wiremap` (oracle APRÈS build, celui que vise la tâche) est **prédit OK** : fichiers existants + fonctions définies pour les 17 lignes. Ancre = `Read` des 4 modules ; **non exécuté**.
+
+### Canal de preuve — ce que le journal des oracles imprime RÉELLEMENT
+
+Mesure littérale des refs `loop.json` émis au journal (condition dure de l'exécuteur pour `PLAYER_LOOP`/`META_LOOP`) :
+
+- `e2e.mjs` imprime : **P04, P06, P07, P10, P11**.
+- `solvability.mjs` n'imprime **aucun** ref.
+
+Donc **seuls** P04/P06/P07/P10 sont ancrables `PLAYER_LOOP`/`META_LOOP` avec un effet DOM-observable :
+
+| Feuille | rôle loop | canal | preuve_ref | pourquoi |
+|---|---|---|---|---|
+| R5 bouton actif | P04 REWARD | `PLAYER_LOOP` | P04 | DOM réel + « P04 : bouton producteur passé actif » |
+| R6 achat (entrée) | P06 UNLOCK | `PLAYER_LOOP` | P06 | clic réel + « P06 entrée : clic réel… » |
+| R7 production passive (effet) | P06 UNLOCK | `PLAYER_LOOP` | P06 | DOM réel + « P06 effet : panier… / ronrons sans clic » |
+| R10 objectif → 2 | P07 NEXT_GOAL | `PLAYER_LOOP` | P07 | DOM réel + « P07 : objectif changé » |
+| R13 renouveau (entrée) | P10 META_LOOP | `META_LOOP` | P10 | clic réel + « P10/P11 : clic renouveau_portee » |
+| R14 reset ronrons (effet) | P10 META_LOOP | `META_LOOP` | P10 | DOM réel + « P10/P11 : … ronrons=0 » |
+
+Les autres feuilles de rôle-boucle retombent honnêtement : **R2** (P02, clic réel mais aucun « P02 » au journal) → `PLAYER_INPUT` ; **R3/R4/R9/R11/R12/R15** → `WHITE_BOX` (preuve ancrable = appel direct `logic.test.mjs`). R15 (P11) : « P11 » est imprimé mais `gainParCaresse` est lu via `window.__game` (état interne, pas une affordance DOM) → `WHITE_BOX`. R1/R8/R16/R17 (P01, P12, P13, P14 — hors `loop.json`) → **aucun canal**.
+
+### Reçu check_wiremap_contract (oracle AVANT build)
+
+**Non exécuté** (`run: aucun`, et Bash désactivé). Prédiction sur le plan de couverture : les **15 capacités** de la featuremap sont toutes portées par une ligne `couvre` (R1–R11, R13, R14, R16, R17). `capacites_non_couvertes: []` prédite, `couverture_fantome: []` prédite (chaque `couvre` cite un `id` exact de s3-decompo). Réserve honnête : le bloc de sortie est au **format statique** (`feature/fonction/fichiers/preuve` + `canal`), pas au schéma v2 `provides/requires` — `check_wiremap_contract` ne calculerait donc **pas** `affordances_liees` sur ce bloc ; ce n'est pas l'oracle visé par la tâche.
+
+### Capacités non couvertes
+Aucune. P09 (REPEAT, R12) et P11 (ADVANTAGE, R15) n'ont pas de feuille featuremap propre (rejouables, conformes à s3) : ligne présente, `couvre` volontairement absent — pas une omission.
+
+### claim : NO_CLAIM_ALLOWED
+Aucun oracle exécuté (`run: aucun`). Le verdict d'exécution appartient à l'exécuteur qui matérialisera `wiremap.json` et lancera `check_wiremap`. Je livre une carte tracée contre le code et les journaux, pas un vert prononcé.
+
+### why_task_existed
+- **problem:** re-convocation de la WireMap pour `chaton_clicker_canal_probe_2` (2e sonde du canal-de-preuve) ; il faut confronter les étiquettes de canal à ce que les oracles impriment réellement.
+- **oracle:** aucun — activation par dispatch Forge (`FORGE_DISPATCH:s5-wiremap:…:1`), décision humaine de pipeline.
+- **root_cause:** non transmis pour l'activation ; en revanche les pré-mortems fournissent la cause des échecs à éviter (sous-déclaration de canal, résidu `src/`, refs non imprimés au journal).
+- **action_reason:** produire la carte isomorphe où chaque ligne cite sa fonction/fichier réels et un canal HONNÊTE, jamais une étiquette `PLAYER_LOOP` que le journal ne soutient pas.
+- **result:** WireMap 17 lignes, 15 capacités couvertes, 4 refs (P04/P06/P07/P10) ancrés `PLAYER_LOOP`/`META_LOOP`, le reste honnêtement `PLAYER_INPUT`/`WHITE_BOX`.
+- **proof:** `Read` de `logic.mjs`, `render.mjs`, `input.mjs`, `main.mjs`, `e2e.mjs`, `solvability.mjs`, `logic.test.mjs`, `check_wiremap_contract.mjs`, `repo_map.yaml`, `SCHEMA.md` ; aucune commande exécutée.
+- **learning:** le journal de `e2e.mjs` de probe_2 est identique à probe_1 — il imprime P04/P06/P07/P10/P11 mais **pas** P02/P03/P05/P08/P09. Une étiquette `PLAYER_LOOP` sur caresser (P02/P03) serait rejetée en aval faute de ligne « P02 » au journal : le faux-négatif pointé par le pré-mortem 2026-09-07 est INCORRIGIBLE au niveau wiremap tant que l'oracle n'imprime pas le ref.
+- **next_reason:** chaîne causale OUVERTE vers l'étape qui code les oracles (s9) : la couverture-plan est complète, mais la preuve-joueur de P02/P03 existe dans `e2e.mjs` sans être ancrée par un ref imprimé. Le niveau supérieur doit décider si `e2e.mjs`/`solvability.mjs` doivent imprimer « P02/P03/P05/P08/P09 » pour rendre ces maillons ancrables `PLAYER_LOOP`. Hors de mon périmètre (`out_of_scope` : je ne code rien).
+
+### SKIPPED_VALIDATION
+- **item:** exécution de `forge.static_oracles.check_wiremap` · **où:** wiremap ci-dessous vs code `GAMES/chaton_clicker_canal_probe_2` · **statut:** non fait · **raison:** `run: aucun` + Bash désactivé ; validation par lecture/traçage de source, verdict d'exécution délégué à l'exécuteur.
+- **item:** exécution de `check_wiremap_contract.mjs` · **où:** wiremap vs featuremap · **statut:** non fait · **raison:** `run: aucun` ; de plus le format statique demandé ne porte pas `provides/requires`, hors périmètre de cet oracle.
+- **item:** exécution réelle de `e2e.mjs`/`solvability.mjs` (confirmer que Playwright résout et que les refs s'impriment vraiment) · **où:** poste local · **statut:** non fait · **raison:** `run: aucun` ; l'ancrage `PLAYER_LOOP` repose sur les lignes `log.push('P04/P06/P07/P10…')` LUES dans la source — l'exécuteur aval revérifiera leur émission effective.
+
+```json
+{
+  "features": [
+    {
+      "feature": "R1 Objectif courant affiche au chargement",
+      "fonction": "renderObjectif",
+      "fichiers": ["render.mjs"],
+      "couvre": ["cap_objectif_initial"],
+      "preuve": "e2e.mjs (navigateur reel) : #objectif porte un texte non vide des le chargement, avant toute action (log 'HUD objectif au chargement'). logic.test.mjs 'createGame: le HUD objectif est deja rendu au premier appel'. Exigence P01 (PLAYER_GOAL), hors liste de roles a canal."
+    },
+    {
+      "feature": "R2 Clic sur le chaton cable a caresser (entree joueur)",
+      "fonction": "brancherCaresse",
+      "fichiers": ["input.mjs"],
+      "couvre": ["cap_caresser_entree"],
+      "canal": "PLAYER_INPUT",
+      "preuve": "e2e.mjs : clic reel sur [data-testid=caresser_chaton] declenche gameState.caresser (log 'clic caresser_chaton : ronrons X -> Y'). logic.test.mjs 'InputHandler.brancherCaresse: un clic declenche logic.caresser()'. Clic joueur reel, mais le journal e2e n'imprime PAS 'P02' -> non ancrable PLAYER_LOOP (rejet aval)."
+    },
+    {
+      "feature": "R3 Caresser incremente les ronrons (effet)",
+      "fonction": "caresser",
+      "fichiers": ["logic.mjs"],
+      "couvre": ["cap_caresser_effet"],
+      "canal": "WHITE_BOX",
+      "preuve": "logic.test.mjs 'caresser: ronrons augmente apres une caresse' (appel direct, gain = gainParCaresse, crit via RNG seede). e2e observe aussi ronrons monter apres le clic reel, mais sans imprimer 'P02' au journal -> seul l'appel direct est ancrable."
+    },
+    {
+      "feature": "R4 Reaction visuelle a la caresse",
+      "fonction": "reagirCaresse",
+      "fichiers": ["render.mjs"],
+      "couvre": ["cap_reponse_caresse"],
+      "canal": "WHITE_BOX",
+      "preuve": "logic.test.mjs 'Renderer.reagirCaresse: ajoute la classe de reaction visuelle' (appel direct). e2e observe la classe 'caresse-feedback' via MutationObserver arme avant le clic (log 'reaction visuelle de caresse observee'), mais sans 'P03' au journal -> non ancrable PLAYER_LOOP. Exigence P03 (GAME_RESPONSE)."
+    },
+    {
+      "feature": "R5 Bouton d'achat passe actif des que la ressource suffit",
+      "fonction": "afficherProducteurs",
+      "fichiers": ["render.mjs"],
+      "couvre": ["cap_recompense_bouton_producteur"],
+      "canal": "PLAYER_LOOP",
+      "preuve_ref": "P04",
+      "preuve": "e2e.mjs : waitForFunction observe [data-testid=acheter_producteur_0] passer de disabled a actif dans le DOM reel (log 'P04 : bouton producteur passe actif apres accumulation de ronrons'). Ref 'P04' imprime litteralement au journal."
+    },
+    {
+      "feature": "R6 Achat d'un producteur par clic reel (entree)",
+      "fonction": "brancherAchat",
+      "fichiers": ["input.mjs"],
+      "couvre": ["cap_acheter_producteur_entree"],
+      "canal": "PLAYER_LOOP",
+      "preuve_ref": "P06",
+      "preuve": "e2e.mjs : clic reel sur le bouton d'achat -> gameState.acheterProducteur, ronrons diminuent (log 'P06 entree : clic reel sur acheter_producteur_0'). Ref 'P06' imprime litteralement."
+    },
+    {
+      "feature": "R7 Production passive au tick sans clic (effet d'achat)",
+      "fonction": "tick",
+      "fichiers": ["logic.mjs"],
+      "couvre": ["cap_acheter_producteur_effet"],
+      "canal": "PLAYER_LOOP",
+      "preuve_ref": "P06",
+      "preuve": "e2e.mjs : apres l'achat par clic, 'panier_chatons' apparait et les ronrons montent sans clic via le tick pilote par main (logs 'P06 effet : panier_chatons visible apres achat' et 'P06 effet : ronrons progressent sans clic (production passive par tick)'). Ref 'P06' imprime litteralement."
+    },
+    {
+      "feature": "R8 Cout du producteur croissant apres chaque achat",
+      "fonction": "acheterProducteur",
+      "fichiers": ["logic.mjs"],
+      "couvre": ["cap_cout_croissant"],
+      "preuve": "logic.test.mjs 'coutProducteur: le cout croit strictement apres chaque achat du meme producteur' (facteur growth=1.15, appel direct). Exigence P12, hors loop.json -> aucun canal."
+    },
+    {
+      "feature": "R9 Point de decision : oisif contre actif divergent",
+      "fonction": "comparerPolitiques",
+      "fichiers": ["logic.mjs"],
+      "couvre": ["cap_decision_clic_vs_producteur"],
+      "canal": "WHITE_BOX",
+      "preuve": "logic.test.mjs 'comparerPolitiques: la politique active depasse la passive sur 300 frames' (diff > 0, appel direct). Aucun 'P05' imprime par e2e/solvability -> non prouve par le canal joueur, seul l'oracle interne est ancrable."
+    },
+    {
+      "feature": "R10 Objectif renouvele apres le 1er achat",
+      "fonction": "objectifCourant",
+      "fichiers": ["logic.mjs"],
+      "couvre": ["cap_objectif_second"],
+      "canal": "PLAYER_LOOP",
+      "preuve_ref": "P07",
+      "preuve": "e2e.mjs : apres le clic d'achat reel, #objectif porte un texte distinct de celui du chargement (log 'P07 : objectif change -> ...'). Change observe dans le DOM reel, ref 'P07' imprime litteralement."
+    },
+    {
+      "feature": "R11 Objectif renouvele apres le 2e palier (amelioration)",
+      "fonction": "objectifCourant",
+      "fichiers": ["logic.mjs"],
+      "couvre": ["cap_objectif_amelioration"],
+      "canal": "WHITE_BOX",
+      "preuve": "logic.test.mjs 'objectifCourant: texte exact a chaque palier' (3e texte 'Renouvelle ta portee...', appel direct). e2e n'achete jamais le 2e producteur -> aucun 'P08' au journal -> pas de canal joueur ancre. Exigence P08 (NEXT_GOAL)."
+    },
+    {
+      "feature": "R12 Rejeu de la boucle dans l'etat enrichi",
+      "fonction": "rejouerBoucle",
+      "fichiers": ["logic.mjs"],
+      "canal": "WHITE_BOX",
+      "preuve": "logic.test.mjs 'rejouerBoucle: rejoue caresse/achat/tick dans l'etat post-achat et progresse' (ronronsApres > 0, appel direct). Exigence P09 (REPEAT) traitee en rejouable par la featuremap, sans feuille propre -> aucune capacite a couvrir ; aucun 'P09' au journal."
+    },
+    {
+      "feature": "R13 Bouton de renouveau de portee cable par clic reel (entree)",
+      "fonction": "brancherRenouveau",
+      "fichiers": ["input.mjs"],
+      "couvre": ["cap_renouveau_entree"],
+      "canal": "META_LOOP",
+      "preuve_ref": "P10",
+      "preuve": "e2e.mjs : clic reel sur [data-testid=renouveau_portee] -> gameState.renouveauPortee, prestige devient > 0 (log 'P10/P11 : clic renouveau_portee ...'). Ref 'P10' imprime litteralement ; role META_LOOP."
+    },
+    {
+      "feature": "R14 Renouveau de portee remet les ronrons a zero (effet)",
+      "fonction": "renouveauPortee",
+      "fichiers": ["logic.mjs"],
+      "couvre": ["cap_renouveau_effet_reset"],
+      "canal": "META_LOOP",
+      "preuve_ref": "P10",
+      "preuve": "e2e.mjs : apres le clic renouveau reel, data-ronrons retombe a 0 et data-prestige > 0 dans le DOM (log 'P10/P11 : ... ronrons=0, prestige=...'). Reset observable, ref 'P10' imprime litteralement ; role META_LOOP."
+    },
+    {
+      "feature": "R15 Avantage permanent du prestige (gain par caresse)",
+      "fonction": "gainParCaresse",
+      "fichiers": ["logic.mjs"],
+      "canal": "WHITE_BOX",
+      "preuve": "logic.test.mjs 'gainParCaresse: strictement superieur apres un renouveau' (getter 1 + prestige*0.1). e2e imprime 'P10/P11' MAIS lit gainParCaresse via window.__game (etat interne, pas une affordance DOM) -> effet non DOM-observable -> WHITE_BOX. Exigence P11 (ADVANTAGE), rejouable sans feuille featuremap."
+    },
+    {
+      "feature": "R16 Hash d'etat deterministe reproductible hors navigateur",
+      "fonction": "hashEtat",
+      "fichiers": ["logic.mjs"],
+      "couvre": ["cap_hash_deterministe"],
+      "preuve": "logic.test.mjs 'hashEtat: meme seed + meme suite d'actions => meme hash' (FNV-1a pur JS, aucun Date.now, appel direct). Exigence P13, hors loop.json -> aucun canal."
+    },
+    {
+      "feature": "R17 Chaton dessine, visible et cliquable au chargement",
+      "fonction": "dessinerChaton",
+      "fichiers": ["render.mjs"],
+      "couvre": ["cap_chaton_visible"],
+      "preuve": "e2e.mjs : la cible [data-testid=caresser_chaton] est visible des le chargement (locator.isVisible() vrai, log 'chaton visible et cliquable'). logic.test.mjs 'Renderer.dessinerChaton: cree un chaton cliquable identifiable'. Exigence P14, hors loop.json -> aucun canal."
+    }
+  ]
+}
+```
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "e2e.mjs/solvability.mjs de probe_2 n'impriment au journal que les refs loop.json P04/P06/P07/P10/P11, jamais P02/P03/P05/P08/P09 ; le clic reel de caresser (P02) et sa reponse (P03) sont pourtant reellement exerces par e2e (clic + assertion ronrons increases) mais restent non ancrables PLAYER_LOOP faute de la ligne de ref au journal, forcant PLAYER_INPUT/WHITE_BOX", "root_cause": "les oracles joueur n'ancrent pas chaque pas de boucle avec sa ref loop.json (recurrence exacte du defaut mesure 2026-09-07, manifest-a71dc0c52d697c15, non corrige dans e2e.mjs de probe_2) ; correction hors perimetre s5-wiremap (je ne code pas les oracles), a porter en s9-build"}

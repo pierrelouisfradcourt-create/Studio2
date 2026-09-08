@@ -1,0 +1,87 @@
+{
+ "games": [
+  {
+   "game": "Cookie Clicker",
+   "sources": [
+    {
+     "url": "https://www.playcookieclicker.com/",
+     "type": "article"
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=EqcP3vq0rE8",
+     "type": "video",
+     "timestamp": "2026-02-01"
+    },
+    {
+     "url": "https://www.pocketgamer.com/cookie-clicker/ascension-guide/",
+     "type": "article"
+    },
+    {
+     "url": "https://medium.com/@tommcfly2025/clicker-games-a-technical-exploration-of-incremental-system-architecture-b6d842e6963e",
+     "type": "article"
+    }
+   ],
+   "loops": {
+    "minute_1": "Manual click on giant cookie (1 cookie per click). Immediate feedback loop: click → +1 cookie → visual counter increment.",
+    "minute_10": "Purchase first buildings (Cursor 5c, Grandma 10c). Transition to passive income; buildings auto-generate cookies/sec. Initial synergies unlock (Cursor × Grandma = upgrade bonuses).",
+    "hour_5": "Accumulate towards ~1M all-time cookies baked. Golden Cookie hunting (random spawns, temporary 7× production multiplier). Unlock mid-game buildings (Farm, Mine, Factory). Upgrade purchasing creates exponential cost jumps; players experience 'prestige threshold awareness'.",
+    "endgame": "Prestige reset cycles: accumulate Heavenly Chips (cube root of all-time cookies baked), spend on permanent Heavenly Upgrades (+1% CPS each). Each cycle shortens grind time to next reset. Late-game unlock: Dragon bonuses (massive multipliers), Grimoire (spell-casting minigame), Pantheon (passive blessing system). Infinite progression with no win state."
+   },
+   "objectives": [
+    {
+     "mode": "Prestige Progression (solo)",
+     "has_win_state": false,
+     "victory_condition": null,
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Optimize ascension cycles to maximize Heavenly Chips gained; unlock Dragon bonuses and end-game systems (Grimoire, Pantheon) to achieve maximum prestige and CPS production."
+    }
+   ],
+   "retention_answer": "Prestige resets create exponential acceleration: each cycle feels 5-10× faster than the last, triggering reward dopamine spikes. Variable schedule reinforcement alternates cheap-upgrade 'slots' with long-save patience tests. Minigame discovery (Grandmapocalypse, Wrinklers, Wrath Cookies) creates surprise checkpoints. Golden Cookies spawn unpredictably, rewarding active play. No failure state means zero frustration; only upward numbers."
+  },
+  {
+   "game": "Neko Atsume",
+   "sources": [
+    {
+     "url": "https://alexiamandeville.medium.com/game-design-breakdown-the-simplicity-of-neko-atsume-a8616a937a47",
+     "type": "article"
+    },
+    {
+     "url": "https://nekoatsume.fandom.com/wiki/Neko_Atsume",
+     "type": "wiki"
+    },
+    {
+     "url": "https://www.youtube.com/watch?v=sJnTZ90sr0g",
+     "type": "video",
+     "timestamp": "2026-04-07"
+    },
+    {
+     "url": "https://mechanicsofmagic.com/2024/04/07/mda-neko-atsume/",
+     "type": "article"
+    },
+    {
+     "url": "https://www.imore.com/neko-atsume-game-guide-how-collect-all-cats",
+     "type": "article"
+    }
+   ],
+   "loops": {
+    "minute_1": "Drag-and-drop food and toys into yard. Minimal interaction; app remains active for ~30 seconds. Interface clarity and tactile feedback establish minimal friction. Aesthetic appeal of items shown in yard creates immediate attachment.",
+    "minute_10": "Close app. Cats visit asynchronously while app is closed. Return to app after 5-30 mins → find cats present, collect fish rewards (silver + gold). Visual discovery of cat variety (different animations, sizes, colors) triggers collectathon psychology.",
+    "hour_5": "Experiment with item combos to attract rares. Gold fish earned → purchase new toys/furniture → unlock rare cat unlock conditions. Yard expansion purchase (180+ gold fish) doubles available spaces. Catbook photo album grows; each new cat photo is a micro-achievement.",
+    "endgame": "Collectathon loop: systematically unlock all 86+ cat variants by matching preference patterns. Hidden unlock conditions (e.g., 'Tabby cat only appears if Deluxe Box + Sushi present') discovered via wiki or trial-and-error. No true 'end'; game continues indefinitely (v2 adds durability mechanics, new cats, new challenges). Progression becomes 100% completion hunt."
+   },
+   "objectives": [
+    {
+     "mode": "Solo Collectathon (no PvP/coop)",
+     "has_win_state": true,
+     "victory_condition": "Collect all 86+ cats (including rare variants) and achieve Catbook completion",
+     "has_defeat_state": false,
+     "defeat_condition": null,
+     "player_goal": "Discover each cat's preferred food/toy combination and assemble a complete yard collection, expanding yard as needed and documenting all cats in the Catbook photo album."
+    }
+   ],
+   "retention_answer": "Collection psychology ('gotta catch 'em all') is primal; each new cat is a dopamine spike. Visual appeal (cute cat designs, variety) creates intrinsic motivation. Time-gating (cats only appear offline) rewards periodic returns. Preference puzzle (discovering hidden unlock conditions) engages curiosity over hours. No failure state eliminates frustration. Offline progression = reward for patience; opening app becomes a 'treasure check' ritual."
+  }
+ ],
+ "advisory": true
+}

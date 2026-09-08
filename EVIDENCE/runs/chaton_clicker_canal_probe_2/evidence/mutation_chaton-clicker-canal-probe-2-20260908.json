@@ -1,0 +1,82 @@
+{
+ "detail": {
+  "baseline_ok": true,
+  "categories_exclues": [],
+  "code_sha256": {
+   "e2e.mjs": "02e43ed80913de7ce6854c56dbea1ba7de33964ac4be51b43af74715cd4c39d8",
+   "input.mjs": "5afe3949194df7d86e16d670cd07fc64c1fd59a2013274d08a7ea63c7b38023d",
+   "logic.mjs": "c54526c1ec7ab74d6b6162fecc2e1ddd926a0ef5a6fc3f19acd6a6d755c681ba",
+   "logic.test.mjs": "ffabfd87f363a113f8317912971a86903c7e6dbd179c0387711baaa5142f889f",
+   "properties.test.mjs": "7b1f649615308b64c91deed6ab33f5c655c329e7d4d0dde8b3dbbf44ab751dbc",
+   "render.mjs": "78449cf401ea2a2b527213a1b935d71032a1dbd9b8b65738976339f1f2aa71fb",
+   "run-oracle.mjs": "140371861eef9f2b75378d32f195577c622770bacdc9e4e81f23af55a6859c6a"
+  },
+  "compteurs_par_categorie": {
+   "sans_categorie": {
+    "fichiers": 3,
+    "jugee": true,
+    "killed": 24,
+    "total": 24
+   }
+  },
+  "game_dir": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\GAMES\\chaton_clicker_canal_probe_2",
+  "gate_checked": true,
+  "killed": 24,
+  "logic_files": [
+   "input.mjs",
+   "logic.mjs",
+   "render.mjs"
+  ],
+  "mutation_exception": false,
+  "survivants_non_tries": [],
+  "survived": 0,
+  "test_argv": [
+   "node",
+   "--test",
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "test_files_scelles": [
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "total": 24,
+  "triage_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+  "triaged_survivors": []
+ },
+ "gate": {
+  "checked": true,
+  "exception": false,
+  "passed": true,
+  "survivants_non_tries": [],
+  "triage_perimes": [],
+  "triaged_survivors": []
+ },
+ "mutation_result": {
+  "baseline_ok": true,
+  "killed": 24,
+  "per_file": {
+   "input.mjs": {
+    "killed": 0,
+    "total": 0
+   },
+   "logic.mjs": {
+    "killed": 21,
+    "total": 21
+   },
+   "render.mjs": {
+    "killed": 3,
+    "total": 3
+   }
+  },
+  "survived": 0,
+  "survivors": [],
+  "test_argv": [
+   "node",
+   "--test",
+   "logic.test.mjs",
+   "properties.test.mjs"
+  ],
+  "total": 24
+ }
+}

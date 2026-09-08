@@ -1,0 +1,132 @@
+Both oracles are fully traced, the featuremap is loaded, and the two advisory upstream artifacts (`knowledge_packet.json`, an existing `blueprint.yaml`) are confirmed absent — new game, web profile, no world scan. This step is text-only (`run: aucun`). Here is the architecture.
+
+---
+
+## RAPPORT FINAL — s4-archi · chaton_clicker_canal_probe_2
+
+### software (appuyé par oracle non-LLM — lecture de source, non exécuté)
+
+J'ai lu et tracé les **deux** oracles qui jugent ce blueprint, aux deux moments distincts :
+
+- **AVANT build (le mien)** — `forge/check_blueprint_contract.mjs` : exige `modules` (liste de chaînes non vide, sans doublon), `deps_interdites` non vide et bien formée, `responsabilites[]` non vide avec `{module, responsabilite, couvre[], dependances[], preuve_attendue{kind,statement}}`, **chaque feature de la featuremap couverte** par ≥1 module, **aucune couverture fantôme**, **aucun cycle**, **aucune contradiction** (une dépendance déclarée aussi présente dans `deps_interdites`).
+- **APRÈS build (s10b)** — `forge.static_oracles.check_architecture` : `set(blueprint["modules"])`, puis pour chaque fichier source `src_mod = _module_of(path)` et `imported = _imports(path) & modules` ; une arête `(src_mod, target) ∈ deps_interdites` est une violation.
+
+**Point mécanique décisif (identité de module = STEM, jamais le nom de fichier).** `_module_of` d'un fichier racine rend `rel.stem` (`static_oracles.py:78`) et `_imports` d'un import local rend `Path(part).stem` (`:89`). Les deux côtés comparent donc des **radicaux sans extension**. Si je nommais un module `"logic.mjs"`, `_imports` produirait `"logic"`, l'intersection avec `{"logic.mjs"}` serait vide, et **check_architecture serait vacuement vert** — exactement le faux-vert que la doctrine combat. Mes modules sont donc les stems : `logic`, `render`, `input`, `main`.
+
+**Découpage par responsabilité (4 modules, racine du jeu — PAS de `src/`).**
+
+| module | responsabilité | dépend de | couvre |
+|---|---|---|---|
+| `logic` | cœur déterministe DOM-agnostique : état, RNG seedé, **tick déterministe (jamais Date.now)**, incrément par caresse, production passive, coût croissant, effet d'amélioration, progression d'objectif, reset de prestige, **hash d'état** | — (feuille) | f_caresse, f_producteur, f_cout, f_arbitrage, f_objectif, f_prestige, f_determinisme |
+| `render` | lit l'état de `logic` et écrit le DOM : chaton cliquable, compteur ronrons, bouton d'achat (actif/inactif), coût affiché, panier_chatons, label objectif, reset visible. **Aucune mutation d'état, aucun binding d'entrée** | logic | f_avatar_felin, f_caresse, f_producteur, f_cout, f_objectif |
+| `input` | lie les affordances DOM (`caresser_chaton`, `acheter_producteur`, `renouveau_portee`) aux actions de `logic`. **Aucune logique de jeu, aucun rendu** | logic | f_caresse, f_producteur, f_prestige |
+| `main` | racine de composition : instancie l'état seedé, câ​ble render+input, pilote la boucle de tick déterministe, expose `window.__game`. **Seul module qui connaît render ET input** ; puits (rien ne l'importe) | logic, render, input | f_producteur, f_determinisme |
+
+**`deps_interdites` (7 paires, minimum du contrat + durcissement anti-god-object).** Minimum imposé : `logic→render` et `logic→input` (le cœur métier ignore l'affichage et l'entrée). J'ajoute `render↔input` (frères découplés, ils ne communiquent que via `logic`/`main`) et `*→main` (`logic→main`, `render→main`, `input→main`) qui fait de la racine de composition un **puits** : nul ne remonte vers elle, ce qui tue par construction le seul cycle possible (`main` importe tout → si un importé remontait vers `main`, cycle).
+
+### evidence : MECHANICAL_VALIDATION_ONLY
+
+Reçu de `check_blueprint_contract.mjs` **prédit** (non exécuté, `run: aucun`), tracé contre le code de l'oracle :
+- `modules` : 4 chaînes non vides distinctes → `duplicateIds` = [] ✓
+- `deps_interdites` : 7 paires `[str,str]` de modules connus, longueur > 0 → règle anti-vacuité satisfaite (`:128`) ✓
+- `responsabilites` : 4 entrées, chacune avec `module ∈ modules`, `responsabilite` non vide, `couvre[]` non vide, `dependances[]` présent (vide autorisé pour `logic`), `preuve_attendue{kind ∈ PROOF_KINDS, statement}` ✓
+- **couverture** : les 8 feature-ids de `featureIds(featuremap)` — f_caresse, f_avatar_felin, f_producteur, f_cout, f_arbitrage, f_objectif, f_prestige, f_determinisme — sont tous dans un `couvre` → `features_non_couvertes: []` ✓
+- **couverture fantôme** : tout `couvre` cite un id réel de la featuremap → `couverture_fantome: []` ✓
+- **cycles** (`detecterCycles`) : arêtes {render→logic, input→logic, main→logic, main→render, main→input} → DAG, `[]` ✓
+- **contradiction** (`:222-228`) : aucune arête déclarée n'appartient à `deps_interdites` (les paires interdites sont `logic→…` et `…→main`, jamais `render/input/main→logic` ni `main→render/input`) → `[]` ✓
+- `stats` prédites : 4 modules / 4 responsabilités / 8 sur 8 features couvertes / 7 paires interdites / 5 arêtes.
+
+Pour `check_architecture` (après build) : `modules` reste une liste de chaînes-stems, donc `set(...)` ne casse pas, et les paires interdites sont détectables car alignées sur les stems que produiront `_module_of`/`_imports`.
+
+### claim : NO_CLAIM_ALLOWED
+
+L'oracle `check_blueprint_contract.mjs` n'a pas été exécuté (permission `run: aucun`). Je ne peux pas auto-certifier un `OK` d'exécution : le verdict réel appartient à l'exécuteur qui matérialisera `blueprint.json` depuis mon bloc terminal puis lancera l'oracle. Je livre un blueprint tracé contre la source des deux oracles, pas un vert prononcé.
+
+### Features non couvertes
+Aucune. Les 8 features de la featuremap sont couvertes par ≥1 module.
+
+### Couvertures fantômes
+Aucune. Chaque `couvre` cite un id de feature réel.
+
+### fog → HumanGate (jugement, hors oracle)
+- **Conflit de lignée d'intention mesuré, non résolu par moi.** `charter.yaml` (objectif, hors_scope, criteres_succes) fige la racine **`GAMES/chaton_clicker/`**, alors que la TÂCHE CONCRÈTE et le run_dir ciblent **`GAMES/chaton_clicker_canal_probe_2`** (résidu de sonde probe-2). Mon blueprint est volontairement **agnostique à la racine** (modules par radical relatif : `logic`/`render`/`input`/`main`), donc l'architecture tient dans les deux cas — mais l'écart d'adresse racine relève d'une décision Pierre (fog), pas d'un oracle. Je le remonte sans le trancher.
+
+### why_task_existed
+- **problem:** re-convocation de l'étape architecture pour `chaton_clicker_canal_probe_2` (2e sonde du canal-de-preuve) ; sans blueprint gelé, `check_architecture` en aval serait vacuement vert (aucune paire interdite à confronter aux imports).
+- **oracle:** aucun — activation par dispatch Forge (`FORGE_DISPATCH:s4-archi:chaton-clicker-canal-probe-2-20260908:1`), décision humaine de pipeline.
+- **root_cause:** non transmis (le `why` amont n'accompagne pas ce dispatch). Les pré-mortems fournissent en revanche les causes des échecs passés à éviter : arbre `src/` divergent couplé à un test protégé (manifest-a71dc0c52d697c15 / -5bcb9253), et faux-vert d'oracle vacant (en-tête de `check_blueprint_contract.mjs`).
+- **action_reason:** produire un blueprint gelé qui (1) couvre chaque feature de la featuremap par ≥1 module portant responsabilité + preuve attendue, (2) déclare explicitement `logique→rendu` et `logique→input` interdites plus le durcissement anti-god-object, (3) nomme les modules par leur radical pour que la confrontation post-build aux imports réels soit mécaniquement possible.
+- **result:** blueprint à 4 modules / 5 arêtes autorisées / 7 paires interdites, DAG sans cycle, 8/8 features couvertes, 0 contradiction — tracé contre `check_blueprint_contract.mjs` + `check_architecture` (verdict prédit OK, non exécuté).
+- **proof:** `Read forge/check_blueprint_contract.mjs`, `forge/upstream_schema.mjs`, `forge/static_oracles.py`, `forge/standard/repo_map.yaml`, `EVIDENCE/runs/chaton_clicker_canal_probe_2/featuremap.json` + `charter.yaml` ; `knowledge_packet.json` et blueprint préexistant confirmés absents ; aucune commande exécutée (`run: aucun`).
+- **learning:** l'identité de module côté `check_architecture` est le **stem** (`_module_of`/`_imports`), jamais le nom de fichier avec extension — un blueprint qui liste `logic.mjs` désarme silencieusement l'oracle post-build. Faire de la racine de composition (`main`) un **puits** via `*→main` interdit tue le seul cycle possible d'une topologie logic/render/input/main sans rien coûter à la composition (les arêtes `main→*` restent autorisées).
+- **next_reason:** chaîne causale FERMÉE côté s4 — blueprint complet, aucune cause non résolue à mon niveau. L'exécuteur matérialise `blueprint.json` et lance l'oracle ; s5-wiremap consommera ces modules et leurs invariants de dépendance. Le seul point ouvert (racine `chaton_clicker/` vs `chaton_clicker_canal_probe_2`) est remonté en fog, hors de ma décision.
+
+### SKIPPED_VALIDATION
+- **item:** exécution réelle de `check_blueprint_contract.mjs` · **où:** blueprint.json (matérialisé) vs `featuremap.json` · **statut:** non fait · **raison:** permission `run: aucun` ; validation par lecture+traçage de la source, verdict d'exécution délégué à l'exécuteur.
+- **item:** `check_architecture` (post-build) · **où:** `GAMES/chaton_clicker_canal_probe_2` · **statut:** non applicable à cette étape · **raison:** `src` vide en amont → l'oracle serait vacuement vert (en-tête `check_blueprint_contract.mjs`) ; c'est l'oracle de s10b, pas le mien.
+- **item:** diff d'architecture contre un blueprint existant · **où:** run_dir / jeu · **statut:** non applicable · **raison:** jeu neuf, aucun `blueprint.yaml` préexistant (mesuré absent).
+- **item:** lecture du `knowledge_packet.json` (advisory) · **où:** run_dir · **statut:** non fait · **raison:** fichier absent (profil web, pas de world scan) — advisory jamais prescriptif, aucun impact sur le blueprint.
+
+```json
+{
+  "modules": ["logic", "render", "input", "main"],
+  "deps_interdites": [
+    ["logic", "render"],
+    ["logic", "input"],
+    ["render", "input"],
+    ["input", "render"],
+    ["logic", "main"],
+    ["render", "main"],
+    ["input", "main"]
+  ],
+  "ownership": {
+    "logic": "Économie et progression déterministes, DOM-agnostiques : état, RNG seedé, tick déterministe, caresse, production passive, coût, amélioration, objectif, prestige, hash d'état.",
+    "render": "Projection lecture seule de l'état de logic vers le DOM ; aucune mutation d'état, aucun binding d'entrée.",
+    "input": "Traduction des affordances DOM (caresser_chaton, acheter_producteur, renouveau_portee) en actions de logic ; aucune logique métier, aucun rendu.",
+    "main": "Racine de composition : instancie l'état seedé, câble render+input, pilote la boucle de tick déterministe, expose window.__game ; puits (rien ne l'importe)."
+  },
+  "responsabilites": [
+    {
+      "module": "logic",
+      "responsabilite": "Cœur métier déterministe et DOM-agnostique : état seedé, tick déterministe sans horloge murale, incrément par caresse, production passive des producteurs, coût croissant, effet d'amélioration, progression d'objectif, reset de prestige, et hash d'état reproductible hors navigateur.",
+      "couvre": ["f_caresse", "f_producteur", "f_cout", "f_arbitrage", "f_objectif", "f_prestige", "f_determinisme"],
+      "dependances": [],
+      "preuve_attendue": {
+        "kind": "oracle",
+        "statement": "Deux exécutions de logic.mjs à graine et suite d'actions égales produisent le même hash d'état final, et une sonde à deux politiques (oisif vs actif) montre la métrique ronrons diverger — sans jamais toucher au DOM."
+      }
+    },
+    {
+      "module": "render",
+      "responsabilite": "Projection lecture seule de l'état de logic vers le DOM : chaton cliquable au chargement, compteur de ronrons, bouton d'achat actif/inactif, coût affiché croissant, panier_chatons, label objectif et reset de prestige visibles. Ne mute jamais l'état et ne lie aucune entrée.",
+      "couvre": ["f_avatar_felin", "f_caresse", "f_producteur", "f_cout", "f_objectif"],
+      "dependances": ["logic"],
+      "preuve_attendue": {
+        "kind": "visual",
+        "statement": "La sonde capture au chargement le chaton cliquable, puis après action le rendu à jour dans le DOM (compteur, état du bouton, coût, panier, label objectif)."
+      }
+    },
+    {
+      "module": "input",
+      "responsabilite": "Câblage des affordances DOM du joueur (caresser_chaton, acheter_producteur, renouveau_portee) vers les actions de logic, à la souris uniquement. N'embarque aucune logique de jeu et ne fait aucun rendu.",
+      "couvre": ["f_caresse", "f_producteur", "f_prestige"],
+      "dependances": ["logic"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Depuis index.html, le bot clique caresser_chaton, acheter_producteur puis renouveau_portee et l'action logique correspondante est déclenchée à chaque fois."
+      }
+    },
+    {
+      "module": "main",
+      "responsabilite": "Racine de composition chargée par index.html : instancie l'état de logic avec la graine, câble render et input, démarre la boucle de tick déterministe (pas de Date.now) et expose window.__game. Seul module connaissant render et input ; puits que nul module n'importe.",
+      "couvre": ["f_producteur", "f_determinisme"],
+      "dependances": ["logic", "render", "input"],
+      "preuve_attendue": {
+        "kind": "bot_action",
+        "statement": "Au chargement d'index.html, window.__game est exposé et la boucle de tick fait monter les ronrons sans clic après achat d'un producteur, de façon reproductible à graine égale."
+      }
+    }
+  ]
+}
+```
+RETURN_REASON: {"status": "DISCOVERED", "problem": "charter.yaml fige la racine GAMES/chaton_clicker/ alors que le dispatch et le run_dir ciblent GAMES/chaton_clicker_canal_probe_2 — conflit de lignee d'intention sur l'adresse racine", "root_cause": "residu de sonde : le charter de probe-2 herite du texte objectif/hors_scope de chaton_clicker sans re-ancrer la racine sur le nom de run probe-2"}

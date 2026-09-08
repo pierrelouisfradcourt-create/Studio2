@@ -1,0 +1,395 @@
+## RÔLE
+Architecte (étape 4). Point de vue imposé : architecte logiciel senior qui découpe par responsabilité, pas par confort.
+
+## EXIGENCES COGNITIVES
+Raisonnement architecture profond, effort élevé. Doit tenir un graphe de dépendances complet en tête et détecter les cycles avant qu'ils existent.
+
+## MÉMOIRE DE TRAVAIL
+Consomme la featuremap (étape 3) ; sur repo existant, connaît le blueprint en place (diff d'archi, pas réinvention). Conventions : CLAUDE.md + rules/.
+
+## OBJECTIF
+Produire blueprint.yaml gelé : modules + responsabilités · deps autorisées/interdites (ex : ui→api→engine ok, ui→engine interdit) · ownership · invariants d'archi.
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Découpage en modules, graphe de dépendances autorisées/interdites, ownership par module, invariants d'architecture. Écrit uniquement blueprint.yaml.
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Aucune écriture de code d'implémentation. Ne crée aucun fichier source. Ne décide pas la WireMap (étape 5). Ne touche pas à la lane protégée src/ ni à les surfaces de test déclarées (forge/test_surfaces.yaml).
+
+## PERMISSIONS
+read: repo entier. write: blueprint.yaml uniquement. create: blueprint.yaml. run: aucun. delete: aucun.
+
+## GARDE-FOU
+Jamais « au feeling » : la structure physique est une CONSÉQUENCE du blueprint, justifiée par la featuremap. Tue les god-objects avant qu'ils existent. Toute dépendance interdite doit être explicite.
+
+## CRITÈRES DE RÉUSSITE
+blueprint valide ; chaque feature de la featuremap couverte par ≥1 module ; chaque module porte une responsabilité et une preuve attendue ; aucune dépendance cyclique ; aucune dépendance déclarée qui soit elle-même interdite ; deps_interdites listées explicitement et non vides.
+
+## ORACLES / TESTS
+DEUX ORACLES, DEUX MOMENTS — ne pas les confondre. AVANT build (ici) : `node forge/check_blueprint_contract.mjs <run_dir>/blueprint.json --featuremap <run_dir>/featuremap.json` répond « cette architecture couvre-t-elle le besoin ? » (couverture, responsabilités, cycles, contradictions, preuves). APRÈS build (étape s10b) : `forge.static_oracles.check_architecture` répond « le code respecte-t-il l'architecture ? ». Appelé en amont sur un src vide, il ne trouve aucun import et serait vacuement vert : ce n'est pas ton oracle. Jamais de LLM-as-judge.
+
+## CONTRAT DE SORTIE
+Un bloc ```json``` TERMINAL, matérialisé en blueprint.json par l'exécuteur (tu n'écris JAMAIS ce fichier toi-même) : {"modules": ["<id>", ...], "deps_interdites": [["source", "cible"], ...], "ownership": {...}, "responsabilites": [{"module", "responsabilite", "couvre": ["<id de feature>"], "dependances": ["<module>"], "preuve_attendue": {"kind", "statement"}}]}. `modules` reste une liste de CHAÎNES (forme consommée telle quelle par check_architecture après build — ne jamais la transformer en objets). RÈGLES DURES : `couvre` cite l'`id` EXACT d'une feature de featuremap.json — une feature que nul module ne couvre signifie que l'architecture ne répond pas au besoin. `dependances` est OBLIGATOIRE et peut être vide (module feuille), jamais absent ; les consommateurs en sont DÉRIVÉS mécaniquement, ne les saisis pas. Ne déclare jamais une dépendance que tu inscris toi-même dans deps_interdites.
+
+## RAPPORT FINAL
+software/evidence/claim séparés ; cite le reçu de check_blueprint_contract ; liste les features non couvertes et les couvertures fantômes ; claim_verdict: NO_CLAIM_ALLOWED. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- forge/standard/repo_map.yaml
+- forge/contracts/SCHEMA.md
+- l'artefact featuremap produit par l'étape 3 (Décompo fonctionnelle)
+- le blueprint.yaml existant si le repo est déjà structuré
+- EVIDENCE/runs/<projet>/knowledge_packet.json — patterns externes cités, ADVISORY jamais prescriptif
+- EVIDENCE/runs/<projet>/charter.yaml — INTENT LINEAGE : intention humaine, invariants, hors_scope, et le bloc `provenance` (source Pierre, fog_humangate). HERITE, jamais reecrit : l'etape verifie que sa decision la respecte, ou remonte le conflit.
+- forge/standard/repo_map.yaml — TABLE FIGEE des racines et des gabarits d'adresse. Realite verifiable, pas une intention : toute adresse decidee ici y est confrontee (defaut mesure 2026-08-05 : racine 04_CONTENT inventee, 232 019 tokens de reprise).
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s4-archi:chaton-clicker-canal-probe-2-20260908:1
+
+## TÂCHE CONCRÈTE (chaton-clicker-canal-probe-2-20260908 / s4-archi)
+Conçois l'architecture du projet 'chaton_clicker_canal_probe_2' (code à créer sous GAMES/chaton_clicker_canal_probe_2). Termine ta réponse par UN bloc ```json ... ``` contenant EXACTEMENT un objet de la forme {"modules": ["<dossier ou fichier de premier niveau sous la racine du code>", ...], "deps_interdites": [["<module_source>", "<module_cible>"], ...]} — format lu par forge.static_oracles.check_architecture. deps_interdites est OBLIGATOIRE et NON VIDE : déclare au minimum la séparation logique→rendu et logique→input (un blueprint sans dépendance interdite est rejeté par l'exécuteur — un tel projet relève du fog HumanGate, pas d'un oracle vide). Tu n'écris AUCUN fichier : l'exécuteur matérialise lui-même blueprint.json depuis ce bloc.
+
+## ARTEFACTS AMONT (run_dir)
+
+### charter.yaml (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker_canal_probe_2\charter.yaml)
+objectif: 'Creer de zero, sous GAMES/chaton_clicker/, un jeu jouable du genre cookie
+  clicker (idle/clicker) ou les cookies sont remplaces par des chatons : le joueur
+  clique un chaton pour produire une ressource, achete des producteurs qui la generent
+  sans clic (tick deterministe), debloque des ameliorations et progresse par paliers
+  jusqu''a une forme de prestige. Le jeu doit etre JOUABLE par un joueur reel avec
+  ses seules entrees souris/clavier, pas seulement solvable par un canal interne (lecon
+  V1 kitten_clicker, run 6 du 2026-08-22 : 20/20 solvable mais injouable).'
+plateforme_cible: 'web/HTML : page HTML+JS unique, logique metier en module .mjs testable
+  hors navigateur, RNG seede, tick deterministe (pas de Date.now dans la logique),
+  exposition window.__game, actions DOM-only, determinisme reproductible par hash
+  (socle N1). Aucun binaire Godot ni Blender.'
+reference_jeu: 'Cookie Clicker (Orteil, 2013) comme reference de GENRE uniquement
+  (clic vers ressource, producteurs passifs, ameliorations, paliers/prestige), pas
+  une source a recopier ; le theme remplace les cookies par des chatons. Source Pierre
+  2026-09-05 : « fait moi un cookie clicker, remplace les cookie par des chatons ».'
+hors_scope:
+- 'Toute lignee non-web : aucun moteur Godot ni Blender requis ou utilise (lignee
+  Godot V2 non configuree sur le poste, forge/godot.config.json absent) ; un recours
+  silencieux a Godot est un ecart a signaler.'
+- 'Multijoueur, backend serveur, comptes, sauvegarde cloud ou reseau : hors V1.'
+- 'Toute ecriture hors des surfaces V2 declarees (GAMES/chaton_clicker/ pour le jeu,
+  EVIDENCE/runs/chaton_clicker/ pour le run) : lab/, scripts/forge/ et games/ sont
+  interdits.'
+- 'Recopie du code ou des assets de Cookie Clicker : seul le genre est repris.'
+- 'Regles normatives N5 (separation concepteur/instrumenteur) et N6 (fidelite charter
+  vers build) : non mecanisees pour ce run, donc non couvertes (fog HumanGate) ; ne
+  pas les pretendre couvertes.'
+- 'Perimetre de l''etape s0 elle-meme : ne produit que charter.yaml ; pas d''architecture
+  (etape 4), pas de world scan (etape 2), pas de code, pas de touche a src/ ni aux
+  surfaces de test declarees.'
+criteres_succes:
+- Le jeu se charge dans un navigateur et une session complete est jouable a la souris
+  (clic sur le chaton, achat d'un producteur, achat d'une amelioration, prestige)
+  sans tutoriel externe.
+- 'Boucle joueur complete : le clic produit la ressource ; au moins un producteur
+  la genere sans clic via un tick deterministe ; au moins une amelioration modifie
+  le taux ; au moins un palier/prestige est atteignable.'
+- 'loop_check : les exigences du Prisme couvrent les maillons de la boucle joueur
+  (PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL,
+  REPEAT, META_LOOP, ADVANTAGE) ; un maillon manquant est un FAIL rapporte, jamais
+  absorbe.'
+- Solvabilite prouvee par un bot-joueur qui n'utilise QUE les affordances DOM du joueur
+  (clics) et la lecture du DOM, jamais un appel direct a l'economie interne.
+- 'Tous les artefacts dans les surfaces V2 : run_dir sous EVIDENCE/runs/chaton_clicker/,
+  jeu sous GAMES/chaton_clicker/.'
+- Determinisme reproductible par hash ; production passive testable hors navigateur.
+- Verdict signe HMAC produit avec la cle V2 (forge/.forge_key) ET re-verifie authentique
+  par verify_run, pas seulement present.
+actions_interdites:
+- 'Verdir par contournement : reecrire un oracle pour le rendre vert, ou un volet
+  e2e qui rend exit 0 / PASS sans reellement piloter un navigateur (lecon manifest-3a1dde).'
+- Modifier un test preexistant a la passe sans gate Pierre explicite (regime create_allowed_modify_denied)
+  ; creer un test reste permis.
+- Recours silencieux au moteur Godot ou Blender au lieu de la lignee web.
+- Ecrire un artefact hors des surfaces V2 declarees (lab/, scripts/forge/, games/,
+  src/, surfaces de test declarees).
+- Utiliser Date.now() ou une horloge murale dans la logique metier au lieu du tick
+  deterministe.
+- Prouver la solvabilite via un appel a l'economie interne au lieu des affordances
+  DOM du joueur.
+- Signer avec une cle heritee de V1 au lieu de forge/.forge_key.
+- 'En cas d''indisponibilite de LM Studio, se replier silencieusement vers une autre
+  source : le run doit HALT/BLOCKED.'
+- Renseigner plateforme_cible ou reference_jeu depuis une supposition d'agent sans
+  source Pierre tracable, ou pretendre couvert un fog HumanGate.
+criteres_demo:
+- Un chaton cliquable est visible a l'ecran ; cliquer dessus incremente un compteur
+  de ressource visible et le chaton reagit visuellement au clic.
+- Apres l'achat d'au moins un producteur, le compteur de ressource augmente tout seul,
+  sans clic, sous les yeux du joueur.
+- Un bouton d'achat de producteur devient accessible quand la ressource suffit, et
+  son cout affiche augmente visiblement apres chaque achat.
+- Une amelioration achetable est visible et son effet se voit apres achat (le taux
+  de production ou le gain par clic augmente a l'ecran).
+- 'Un palier / prestige observable est atteignable : il transforme visiblement l''etat
+  et affiche un avantage persistant.'
+- Toute grandeur observee par un critere (ressource, taux, cout, objectif) est lisible
+  directement dans le DOM.
+
+
+### artifacts/s3-decompo.txt (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker_canal_probe_2\artifacts\s3-decompo.txt)
+Both oracles are now fully traced. I have exactly what I need — no other tools are required (this step is text-only, `run: aucun`). Here is my decomposition.
+
+---
+
+## RAPPORT FINAL — s3-decompo · chaton_clicker_canal_probe_2
+
+### software (appuyé par oracle non-LLM — lecture de source, non exécuté)
+J'ai lu et tracé les deux oracles déterministes qui jugent cet artefact : `forge/check_decompo.mjs` et `forge/upstream_schema.mjs`. La featuremap ci-dessous est construite pour satisfaire mécaniquement leurs trois mesures :
+
+- **COUVERTURE** (`check_decompo.mjs:285-289`) : toute exigence P01–P14 est portée par ≥1 feuille OU est un rejeu (`rejouables`). P09 (REPEAT) et P11 (ADVANTAGE) sont exemptés par construction — l'oracle les exclut de la couverture générique et les vérifie via `replay`/`replay_ref`.
+- **NON-INVENTION** (`:231-235`) : chaque `source_ref` cite l'`id` EXACT d'une exigence de `s1-prisme.txt` ; aucun id inventé.
+- **BOUCLE JOUEUR V4** (`:213-229`) : les 3 exigences `acteur=PLAYER`+`affordance` (P02, P06, P10) sont décomposées en une capacité d'ENTRÉE **et** une capacité d'EFFET. **Point mécanique décisif** : l'oracle contrôle *chaque* feuille sourcée sur une telle exigence — les DEUX feuilles doivent donc être `bot_action` ET citer le point d'entrée. Lignée **web** → `POINTS_ENTREE` retient `index.html`/`main.mjs` (`:162`) ; j'ancre chaque feuille sur `index.html`, jamais `main.tscn` (l'incident `v2_breakout_slice_r1` corrigé le 2026-09-05).
+
+### evidence : MECHANICAL_VALIDATION_ONLY
+Reçu de check_decompo **prédit** (non exécuté, `run: aucun`) :
+- `exigences_couvertes` = 12/14 par feuille + P09/P11 en rejouables → `exigences_non_couvertes: []`
+- `feuilles_non_sourcees: []` (15 feuilles, 15 sources résolvant P01–P08/P10/P12–P14)
+- `boucle_sans_entree: []` (6 feuilles PLAYER+affordance, toutes `bot_action`+`index.html`)
+- `boucle_sans_effet: []` (P07/P08 en `visual`, membres de `EFFECT_KINDS` — pré-mortem `manifest-bade66954` respecté : je n'hérite PAS littéralement le `kind:bot_action` du Prisme pour un NEXT_GOAL)
+- `boucle_replay_non_couvert: []` (P09→[P02,P03,P04,P06] couverts ; P11→P02 couvert)
+- `maillons_couverts` attendus : F=2, G=2, H=1, I=2, J=1
+- `grey_blocks: 0` (pas de `--gm` : profil web, `gm_worldscan.json`/`story_bible.json` ABSENTS, confirmé par le Prisme)
+
+### claim : NO_CLAIM_ALLOWED
+L'oracle n'a pas été exécuté (permission `run: aucun`) : je ne peux pas auto-certifier un `OK` d'exécution. Le verdict réel appartient à l'exécuteur qui matérialisera `featuremap.json` puis lancera `check_decompo.mjs`. Je livre un artefact tracé contre la source, pas un vert prononcé.
+
+### Exigences non couvertes
+Aucune. P09/P11 sans feuille propre est **conforme** (rejeux, garde-fou H/J), non une omission.
+
+### Feuilles non sourcées
+Aucune. Les 15 feuilles citent une exigence réelle du Prisme.
+
+### why_task_existed
+- **problem:** re-convocation de la décompo fonctionnelle pour `chaton_clicker_canal_probe_2` (2e sonde du canal-de-preuve) ; les ids de capacités doivent rester stables car cités en aval par la WireMap (s5).
+- **oracle:** aucun — activation par dispatch Forge (`FORGE_DISPATCH:s3-decompo:...:1`), décision humaine de pipeline.
+- **root_cause:** non transmis (le `why` amont n'accompagne pas ce dispatch) ; les pré-mortems fournissent en revanche les causes des échecs passés à éviter (kind bot_action sur NEXT_GOAL, feuilles P09/P11 absentes traitées comme problème, arbre `src/` mort — ce dernier hors périmètre s3).
+- **action_reason:** produire l'arbre Système→Feature→capacité où chaque feuille hérite sa preuve du Prisme, ancrée sur `index.html`, avec ids stables et lisibles.
+- **result:** featuremap à 4 systèmes / 8 features / 15 feuilles, tracée contre `check_decompo.mjs` + `upstream_schema.mjs` (verdict prédit OK, non exécuté).
+- **proof:** `Read forge/check_decompo.mjs` + `Read forge/upstream_schema.mjs` ; aucune commande exécutée (`run: aucun`).
+- **learning:** pour une exigence PLAYER+affordance, la feuille d'EFFET doit AUSSI être `bot_action` et citer le point d'entrée — sinon `boucle_sans_entree` la frappe ; l'oracle contrôle *toute* feuille sourcée, pas seulement la feuille d'entrée. Les ids retenus (`cap_caresser_entree`, `cap_acheter_producteur_effet`, …) sont à conserver à l'identique en re-convocation.
+- **next_reason:** chaîne causale FERMÉE côté s3 — artefact complet, aucune cause non résolue à mon niveau. L'exécuteur matérialise et lance l'oracle ; s5-wiremap consommera ces ids.
+
+### SKIPPED_VALIDATION
+- **item:** exécution réelle de `check_decompo.mjs` · **où:** featuremap ci-dessous vs `prisme.json` · **statut:** non fait · **raison:** permission `run: aucun` ; validation par lecture+traçage de la source uniquement, verdict d'exécution délégué à l'exécuteur.
+- **item:** couverture grey blocks (`--gm`) · **où:** n/a · **statut:** non applicable · **raison:** `gm_worldscan.json` ABSENT du run_dir (profil web/HTML) — 0 grey block, comportement inchangé de l'oracle.
+
+```json
+{
+  "game_id": "chaton_clicker",
+  "systemes": [
+    {
+      "id": "s_clic_ressource",
+      "features": [
+        {
+          "id": "f_caresse",
+          "capacites": [
+            {
+              "id": "cap_caresser_entree",
+              "capacite": "Le joueur caresse le chaton en cliquant l'affordance caresser_chaton depuis le point d'entree du jeu.",
+              "source_ref": "P02",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible caresser_chaton."
+              }
+            },
+            {
+              "id": "cap_caresser_effet",
+              "capacite": "Chaque caresse incremente le compteur de ronrons affiche.",
+              "source_ref": "P02",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Dans la page index.html, apres le clic sur caresser_chaton, le bot mesure dans le DOM que le compteur ronrons a augmente."
+              }
+            },
+            {
+              "id": "cap_reponse_caresse",
+              "capacite": "Le chaton et le compteur reagissent visuellement dans la foulee de la caresse.",
+              "source_ref": "P03",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "La sonde capture un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic."
+              }
+            }
+          ]
+        },
+        {
+          "id": "f_avatar_felin",
+          "capacites": [
+            {
+              "id": "cap_chaton_visible",
+              "capacite": "Un chaton dessine, cliquable, est present a l'ecran des le chargement.",
+              "source_ref": "P14",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "La sonde constate au chargement la presence a l'ecran d'un chaton cliquable identifiable."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s_economie",
+      "features": [
+        {
+          "id": "f_producteur",
+          "capacites": [
+            {
+              "id": "cap_recompense_bouton_producteur",
+              "capacite": "L'accumulation de ronrons rend le bouton d'achat du producteur actif et disponible.",
+              "source_ref": "P04",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot accumule des ronrons puis lit que le bouton d'achat du producteur passe d'inactif a actif dans le DOM."
+              }
+            },
+            {
+              "id": "cap_acheter_producteur_entree",
+              "capacite": "Le joueur achete un producteur en cliquant l'affordance acheter_producteur depuis le point d'entree du jeu.",
+              "source_ref": "P06",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible acheter_producteur."
+              }
+            },
+            {
+              "id": "cap_acheter_producteur_effet",
+              "capacite": "Apres l'achat, un panier de chatons apparait et les ronrons montent sans clic (production passive).",
+              "source_ref": "P06",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Dans la page index.html, apres l'achat et sans cliquer, le bot mesure que les ronrons augmentent et qu'un element 'panier_chatons' est apparu dans le DOM."
+              }
+            }
+          ]
+        },
+        {
+          "id": "f_cout",
+          "capacites": [
+            {
+              "id": "cap_cout_croissant",
+              "capacite": "Le cout affiche d'un producteur augmente visiblement apres chacun de ses achats.",
+              "source_ref": "P12",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot achete deux fois le meme producteur et lit que le cout affiche du second achat est superieur au premier."
+              }
+            }
+          ]
+        },
+        {
+          "id": "f_arbitrage",
+          "capacites": [
+            {
+              "id": "cap_decision_clic_vs_producteur",
+              "capacite": "Le jeu offre un arbitrage mesurable : caresser pour un gain immediat ou investir dans un producteur passif.",
+              "source_ref": "P05",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Une sonde a deux politiques (oisif contre actif) sur 300 frames montre que la metrique ronrons diverge selon l'option choisie."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s_progression",
+      "features": [
+        {
+          "id": "f_objectif",
+          "capacites": [
+            {
+              "id": "cap_objectif_initial",
+              "capacite": "Un objectif courant chiffre en ronrons est affiche des le chargement, avant toute action.",
+              "source_ref": "P01",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Le bot lit dans le DOM un HUD 'objectif' non vide au chargement, avant toute action du joueur."
+              }
+            },
+            {
+              "id": "cap_objectif_second",
+              "capacite": "Apres le premier achat, le label objectif change pour un texte nouveau visant un deuxieme producteur.",
+              "source_ref": "P07",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Le label 'objectif' affiche, apres le premier achat, un texte nouveau visant un deuxieme producteur, distinct du texte affiche au depart."
+              }
+            },
+            {
+              "id": "cap_objectif_amelioration",
+              "capacite": "Apres le deuxieme producteur, le label objectif change encore pour viser une amelioration.",
+              "source_ref": "P08",
+              "expected_proof": {
+                "kind": "visual",
+                "statement": "Le label 'objectif' affiche, apres le deuxieme producteur, un troisieme texte visant une amelioration, distinct des deux precedents."
+              }
+            }
+          ]
+        },
+        {
+          "id": "f_prestige",
+          "capacites": [
+            {
+              "id": "cap_renouveau_entree",
+              "capacite": "Le joueur declenche un renouveau de portee (prestige) en cliquant l'affordance renouveau_portee depuis le point d'entree du jeu.",
+              "source_ref": "P10",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible renouveau_portee."
+              }
+            },
+            {
+              "id": "cap_renouveau_effet_reset",
+              "capacite": "Le renouveau de portee fait retomber visiblement le compteur de ronrons a zero.",
+              "source_ref": "P10",
+              "expected_proof": {
+                "kind": "bot_action",
+                "statement": "Dans la page index.html, apres le clic sur renouveau_portee, le bot mesure dans le DOM que le compteur ronrons retombe a zero."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s_socle",
+      "features": [
+        {
+          "id": "f_determinisme",
+          "capacites": [
+            {
+              "id": "cap_hash_deterministe",
+              "capacite": "A graine egale et suite d'actions egale, la logique produit un hash d'etat identique, reproductible hors navigateur.",
+              "source_ref": "P13",
+              "expected_proof": {
+                "kind": "oracle",
+                "statement": "Deux executions de la logique .mjs avec meme graine et memes actions produisent le meme hash d'etat final."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+RETURN_REASON: {"status": "NOT_DISCOVERED"}
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- [manifest-a71dc0c52d697c15] 6 des 10 aretes de boucle joueur (P02, P03, P05, P08, P09, P11) ne sont pas prouvables par le canal joueur ancre : e2e.mjs n'imprime au journal que P04/P06/P07/P10, solvability.mjs n'imprime aucun ref, P05/P08 ne sont prouves qu'en interne, et P09/P11 n'ont aucune feuille en featuremap ; en outre un arbre src/ divergent (src/logic.mjs, import 'crypto', snake_case) est couple a tests/logic.test.mjs et ne teste pas le code cable par index.html — cause: les oracles e2e.mjs/solvability.mjs n'ancrent pas chaque pas de boucle avec sa ref loop.json, la decompo s3 traite P09/P11 en rejouables sans feuille, et un residu src/ des tentatives s9 anterieures (pre-mortem manifest-b69705172fd086c4) subsiste a cote de l'arbre racine vivant -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-bade66954a84d819] Le Prisme (s1) declare expected_proof.kind='bot_action' pour les exigences NEXT_GOAL P07/P08, alors que le maillon G de l'oracle s3 (check_decompo.mjs, EFFECT_KINDS) n'accepte que file_write|visual : un heritage litteral du kind aurait produit un FAIL boucle_sans_effet. J'ai porte P07/P08 en feuilles d'effet 'visual' (contenu fidele a l'observe objectif=new_distinct), conformement au garde-fou V4 maillon G. — cause: kind bot_action attribue en amont a un NEXT_GOAL, incoherent avec le contrat maillon-G de l'oracle s3 qui exige un effet visible file_write|visual -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-5bcb9253623ca207] arbre src/ mort et divergent livre a cote de l'arbre racine vivant, avec le test protege tests/logic.test.mjs couple a ce src/ mort (preuve factice) — cause: residu non nettoye de tentatives s9 anterieures, recurrence exacte du pre-mortem manifest-b69705172fd086c4 -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-b5db3a9d9a14c308] 13 mutants sur 33 survivaient au gate mutation officiel car des lignes reellement executees (bornes d'index, compteurs internes, frequence exacte de caresse, contenu exact des textes d'objectif, garde de nullite partielle, re-masquage du panier) n'avaient aucune assertion dependante de leur effet precis — cause: la suite de tests verifiait des proprietes agregees plausibles sans jamais asserter l'effet observable exact de chaque ligne mutee, un trou que la couverture de lignes ne revele pas mais que le mutation testing rend mecaniquement visible -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-d4a027c061a5fe3a] echec de la tentative 3 a s9-build — cause: returncode=0; mutation=FAIL (volets rouges: runtime_alive) -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s4-archi:chaton-clicker-canal-probe-2-20260908:1

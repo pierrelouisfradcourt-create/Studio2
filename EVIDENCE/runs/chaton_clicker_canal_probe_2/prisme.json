@@ -1,0 +1,302 @@
+{
+ "game_id": "chaton_clicker",
+ "exigences": [
+  {
+   "id": "P01",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].objectives[0].player_goal",
+   "observation": "Dans Cookie Clicker, le but du joueur est d'optimiser une ressource unique qui grimpe sans plafond ni condition de defaite.",
+   "claim": "Un clicker tient parce que le joueur poursuit un objectif chiffre affiche en permanence, jamais une victoire finale.",
+   "enonce": "Le jeu affiche a l'ecran un objectif courant chiffre en ronrons que le joueur cherche a atteindre des la premiere seconde.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot lit dans le DOM un HUD 'objectif' non vide au chargement, avant toute action du joueur."
+   },
+   "destination": "s5-wiremap",
+   "acteur": "PLAYER",
+   "loop_role": "PLAYER_GOAL",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "id": "P02",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.minute_1",
+   "observation": "Cookie Clicker demarre par un clic manuel sur un grand cookie qui donne +1 par clic avec un compteur qui s'incremente.",
+   "claim": "Le geste d'amorce doit etre un clic direct sur l'avatar du theme, sinon le joueur n'a aucune prise tactile immediate.",
+   "enonce": "Le joueur peut caresser le chaton en cliquant la cible `caresser_chaton` ; le compteur de ronrons affiche augmente a chaque clic.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot clique la cible caresser_chaton et mesure dans le DOM que le compteur ronrons a augmente."
+   },
+   "destination": "s9-build",
+   "acteur": "PLAYER",
+   "loop_role": "PLAYER_ACTION",
+   "affordance": "caresser_chaton",
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   }
+  },
+  {
+   "id": "P03",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.minute_1",
+   "observation": "Le clic sur le cookie declenche un retour visuel immediat et l'increment du compteur a l'ecran.",
+   "claim": "La reponse du jeu doit etre visible dans la meme frame que le clic, sans quoi le lien cause-effet se perd.",
+   "enonce": "Apres chaque caresse, le chaton reagit visuellement par une animation et le total de ronrons se met a jour a l'ecran dans la foulee.",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "La sonde capture un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic."
+   },
+   "destination": "s9-build",
+   "acteur": "SYSTEM",
+   "loop_role": "GAME_RESPONSE",
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "changes"
+   }
+  },
+  {
+   "id": "P04",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.minute_10",
+   "observation": "Vers la minute 10 de Cookie Clicker, l'accumulation rend accessible l'achat du premier batiment producteur.",
+   "claim": "La premiere recompense doit etre l'ouverture d'un achat, pas un simple nombre, pour donner un but a l'accumulation.",
+   "enonce": "Quand les ronrons atteignent le cout du premier producteur, son bouton d'achat devient actif et visiblement disponible.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot accumule des ronrons puis lit que le bouton d'achat du producteur passe d'inactif a actif dans le DOM."
+   },
+   "destination": "s5-wiremap",
+   "acteur": "SYSTEM",
+   "loop_role": "REWARD",
+   "observe": {
+    "hud": "bouton_producteur",
+    "predicate": "changes"
+   }
+  },
+  {
+   "id": "P05",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.minute_10",
+   "observation": "Cookie Clicker oppose tres tot le clic actif qui paie tout de suite a l'achat d'un producteur passif qui paie dans la duree.",
+   "claim": "Sans arbitrage mesurable entre gain immediat et investissement passif, la boucle n'offre aucune vraie decision au joueur.",
+   "enonce": "Le jeu affiche un point de decision : continuer a caresser pour des ronrons immediats OU acheter un producteur qui les genere sans clic.",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "Une sonde a deux politiques (oisif contre actif) sur 300 frames montre que la metrique ronrons diverge selon l'option choisie."
+   },
+   "destination": "s4-archi",
+   "acteur": "SYSTEM",
+   "loop_role": "DECISION",
+   "options": [
+    "P02",
+    "P06"
+   ],
+   "metric": "ronrons",
+   "horizon_frames": 300,
+   "policies": [
+    {
+     "name": "oisif",
+     "click": null,
+     "every_frames": 0
+    },
+    {
+     "name": "actif",
+     "click": "caresser_chaton",
+     "every_frames": 3
+    }
+   ],
+   "observe": {
+    "hud": "objectif",
+    "predicate": "changes"
+   }
+  },
+  {
+   "id": "P06",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.minute_10",
+   "observation": "L'achat d'un batiment dans Cookie Clicker fait apparaitre une production automatique de cookies par seconde.",
+   "claim": "Le premier achat doit faire surgir un contenu neuf visible, la production passive, pour prouver au joueur que progresser debloque.",
+   "enonce": "Le joueur peut acheter un producteur en cliquant la cible `acheter_producteur` ; un panier de chatons apparait et les ronrons montent sans clic.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot achete le producteur puis mesure, sans cliquer, que les ronrons augmentent et qu'un element 'panier_chatons' est apparu dans le DOM."
+   },
+   "destination": "s9-build",
+   "acteur": "PLAYER",
+   "loop_role": "UNLOCK",
+   "affordance": "acheter_producteur",
+   "observe": {
+    "hud": "production_sec",
+    "predicate": "increases",
+    "appears": "panier_chatons"
+   }
+  },
+  {
+   "id": "P07",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.hour_5",
+   "observation": "Apres les premiers achats, Cookie Clicker fixe des paliers de plus en plus couteux qui redirigent l'objectif.",
+   "claim": "Un objectif accompli doit etre immediatement remplace par un autre, textuellement different, sinon la progression parait finie.",
+   "enonce": "Une fois le premier producteur acquis, l'objectif affiche change pour viser un deuxieme producteur plus cher.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot lit que le texte du HUD 'objectif' apres le premier achat differe de celui affiche au depart."
+   },
+   "destination": "s5-wiremap",
+   "acteur": "PLAYER",
+   "loop_role": "NEXT_GOAL",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "id": "P08",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.hour_5",
+   "observation": "Cookie Clicker enchaine des ameliorations multiplicatives comme cible suivante une fois les batiments lances.",
+   "claim": "Le deuxieme objectif doit ouvrir une nature de but differente, ameliorer et pas seulement acheter plus, pour renouveler l'interet.",
+   "enonce": "Apres le deuxieme producteur, l'objectif affiche change encore pour viser une amelioration qui augmente le gain par caresse.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot lit un troisieme texte de HUD 'objectif', distinct des deux precedents."
+   },
+   "destination": "s5-wiremap",
+   "acteur": "PLAYER",
+   "loop_role": "NEXT_GOAL",
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "id": "P09",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].retention_answer",
+   "observation": "La retention de Cookie Clicker vient de la repetition du meme geste dans un etat economique qui a change d'echelle.",
+   "claim": "La boucle ne recommence vraiment que si les memes actions se rejouent dans le nouvel etat, pas par simple convention d'ecran.",
+   "enonce": "Dans l'etat enrichi, le joueur rejoue les memes gestes (caresser, laisser produire, encaisser, acheter) et la ressource repart a la hausse.",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "La sonde rejoue P02, P03, P04 et P06 dans l'etat post-achat et mesure une nouvelle progression des ronrons."
+   },
+   "destination": "s9-build",
+   "acteur": "SYSTEM",
+   "loop_role": "REPEAT",
+   "replay": [
+    "P02",
+    "P03",
+    "P04",
+    "P06"
+   ],
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   }
+  },
+  {
+   "id": "P10",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.endgame",
+   "observation": "L'endgame de Cookie Clicker repose sur un reset de prestige qui remet la ressource a zero contre un bonus permanent.",
+   "claim": "Le prestige n'est ressenti comme un choix fort que si la remise a zero se voit a l'ecran, pas seulement dans les coulisses.",
+   "enonce": "Le joueur peut declencher un renouveau de portee en cliquant la cible `renouveau_portee` ; les ronrons retombent visiblement a zero.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot clique renouveau_portee et mesure dans le DOM que le compteur ronrons retombe a zero."
+   },
+   "destination": "s9-build",
+   "acteur": "PLAYER",
+   "loop_role": "META_LOOP",
+   "affordance": "renouveau_portee",
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "resets"
+   }
+  },
+  {
+   "id": "P11",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.endgame",
+   "observation": "Apres une ascension, chaque cookie de Cookie Clicker rapporte davantage grace aux bonus permanents accumules.",
+   "claim": "L'avantage du prestige doit se prouver par un delta mesure superieur sur la meme action, jamais par un texte promettant un bonus.",
+   "enonce": "Apres un renouveau de portee, une meme caresse rapporte strictement plus de ronrons qu'avant le reset.",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "La sonde compare le gain d'une caresse (P02) avant et apres le renouveau et verifie qu'il est strictement superieur."
+   },
+   "destination": "s9-build",
+   "acteur": "SYSTEM",
+   "loop_role": "ADVANTAGE",
+   "replay_ref": "P02",
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases_more_than:P02"
+   }
+  },
+  {
+   "id": "P12",
+   "source": "EXPECTED",
+   "source_role": "prisme-produit",
+   "reference": "worldscan:games[0].loops.hour_5",
+   "observation": "Dans Cookie Clicker, chaque achat rencherit le suivant selon une courbe exponentielle visible sur le bouton.",
+   "claim": "Le cout affiche doit monter apres chaque achat, sinon le joueur ne percoit aucune rarete ni progression economique.",
+   "enonce": "Le cout affiche d'un producteur augmente visiblement a l'ecran apres chacun de ses achats.",
+   "expected_proof": {
+    "kind": "bot_action",
+    "statement": "Le bot achete deux fois le meme producteur et lit que le cout affiche du second achat est superieur au premier."
+   },
+   "destination": "s5-wiremap",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE"
+  },
+  {
+   "id": "P13",
+   "source": "ADDITIONS",
+   "source_role": "prisme-produit",
+   "reference": null,
+   "observation": "Le charter impose un tick deterministe et un RNG seede, sans Date.now dans la logique metier.",
+   "claim": "Un jeu rejouable a l'identique par hash est la condition pour qu'un bot prouve la solvabilite sans piloter d'horloge murale.",
+   "enonce": "A graine egale et suite d'actions egale, l'etat du jeu produit un hash identique reproductible hors navigateur.",
+   "expected_proof": {
+    "kind": "oracle",
+    "statement": "Deux executions de la logique .mjs avec meme graine et memes actions produisent le meme hash d'etat final."
+   },
+   "destination": "s4-archi",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE"
+  },
+  {
+   "id": "P14",
+   "source": "ADDITIONS",
+   "source_role": "prisme-produit",
+   "reference": null,
+   "observation": "La consigne Pierre remplace les cookies par des chatons, le reste du genre etant conserve.",
+   "claim": "L'attachement au theme felin doit passer par un chaton reellement affiche et reactif, pas par un simple libelle textuel 'chaton'.",
+   "enonce": "Un chaton dessine est visible a l'ecran des le chargement et constitue la cible cliquable centrale du jeu.",
+   "expected_proof": {
+    "kind": "visual",
+    "statement": "La sonde constate au chargement la presence a l'ecran d'un chaton cliquable identifiable."
+   },
+   "destination": "s9-build",
+   "acteur": "SYSTEM",
+   "loop_role": "NONE"
+  }
+ ]
+}

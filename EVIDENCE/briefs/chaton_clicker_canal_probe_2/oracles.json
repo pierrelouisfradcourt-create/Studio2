@@ -1,0 +1,6 @@
+{
+ "chaton_clicker_canal_probe_2": {
+  "cwd": "GAMES/chaton_clicker_canal_probe_2",
+  "command": ["node", "run-oracle.mjs"]
+ }
+}

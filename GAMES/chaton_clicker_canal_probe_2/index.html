@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaton Clicker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .hud-objectif {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .chaton {
+            font-size: 120px;
+            cursor: pointer;
+            margin: 20px auto;
+            display: inline-block;
+            transition: transform 0.1s;
+            user-select: none;
+        }
+
+        .chaton:hover { transform: scale(1.1); }
+
+        .chaton.caresse-feedback { animation: caresse 0.2s ease-out; }
+
+        @keyframes caresse {
+            0% { transform: scale(1.1) rotate(5deg); }
+            50% { transform: scale(1.15) rotate(-5deg); }
+            100% { transform: scale(1.05); }
+        }
+
+        .compteur {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .prestige {
+            font-size: 18px;
+            color: #764ba2;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .producteurs {
+            margin: 30px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .producteur-btn {
+            padding: 12px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .producteur-btn:hover:not(:disabled) { background: #764ba2; }
+
+        .producteur-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .panier {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        .renouveau-btn {
+            padding: 16px 24px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+
+        .renouveau-btn:hover:not(:disabled) { background: #ee5a52; }
+
+        .renouveau-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="game"></div>
+    <script type="module" src="main.mjs"></script>
+</body>
+</html>

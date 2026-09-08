@@ -1,0 +1,101 @@
+The file-writing tools (`Write`, `Edit`, `Bash`) are all disabled in this session, so I cannot materialize `rapport_redteam_code.md` on disk despite the contract granting that write. My findings still reach the signed verdict through the JSON block below, which the deterministic parser (`forge.run_real.extract_redteam_findings`) reads from this response. I flag the file-write blockage explicitly in SKIPPED_VALIDATION and the return lineage.
+
+---
+
+# Rapport red-team CODE — chaton_clicker_canal_probe_2 (s11-redteam-code)
+
+> Sous-agent AVEUGLÉ : audit à contexte vierge du code de l'étape 9, sans les justifications du builder. Lecture seule. Chaque faille est prouvée par une reproduction exécutable par un oracle non-LLM en aval.
+
+## Cartographie établie (fait, non interprétation)
+
+Deux arbres coexistent dans le jeu :
+
+- **Arbre RACINE (vivant)** : `logic.mjs`, `render.mjs`, `input.mjs`, `main.mjs` — celui que `index.html:126` → `main.mjs:4-6` charge (`./logic.mjs ./render.mjs ./input.mjs`). API camelCase (`ronronsApres`, `caressesCount`), `gainParCaresse` en *getter*, `hashEtat` FNV-1a pur JS (aucun `node:crypto`), `objectifCourant` = « Caresse le chaton pour acheter… » / « Achète un arbre à chats… » / « Renouvelle ta portée… ».
+- **Arbre `src/` (mort)** : `src/logic.mjs`, `src/render.mjs`, `src/input.mjs` — **aucun fichier livré ne l'importe**. API snake_case (`ronrons_apres`, `tick_count`), `gainParCaresse` en *champ mutable*, `hashEtat` via `import crypto from 'crypto'`, textes objectif DIFFÉRENTS (« Caresse le chaton 10 fois » / « Achete un 2e producteur » / « Atteins une prestige de 5 »), économie différente (producteur idx 1 `baseCost 50` vs `60`).
+
+La suite citée par le wiremap (« caresser: ronrons augmente… », « objectifCourant: texte exact à chaque palier », « rejouerBoucle: … ») est la **racine** `logic.test.mjs` (importe `./logic.mjs`, exécutée par `run-oracle.mjs:26`/`package.json`). **L'arbre `src/` et `tests/logic.test.mjs` ne sont référencés nulle part dans le wiremap** : résidu non déclaré.
+
+## FAILLE 1 — Arbre `src/` mort et divergent livré à côté de l'arbre vivant · HIGH
+
+**Angle** : zone morte / résidu non nettoyé (récurrence exacte des pré-mortems `b69705172fd086c4`, `5bcb9253623ca207`, `a71dc0c52d697c15`).
+**Faille** : `src/*.mjs` présents mais jamais importés par le jeu chargé ; divergent du code vivant, et `src/logic.mjs:1` importe `node:crypto` **irrésolvable en navigateur** (que la racine `logic.mjs:12-16` documente précisément avoir banni). Aimant à faux-vert (FAILLE 2) et source de confusion contrat/code.
+**Reproduction** (ancre statique) :
+```
+grep -n "from './" GAMES/chaton_clicker_canal_probe_2/main.mjs      # ./logic.mjs ./render.mjs ./input.mjs (aucun src/)
+grep -rn "src/" .../index.html .../main.mjs                          # 0 occurrence
+grep -n "crypto" GAMES/chaton_clicker_canal_probe_2/src/logic.mjs    # src/logic.mjs:1 import crypto from 'crypto'
+```
+
+## FAILLE 2 — Surface protégée `tests/logic.test.mjs` liée au `src/` mort (preuve factice) · HIGH
+
+**Angle** : preuve factice sur surface déclarée protégée (`GAMES/*/tests/**`).
+**Faille** : `tests/logic.test.mjs:1` fait `import { GameState } from '../src/logic.mjs'` — teste l'arbre MORT. Assertions soudées à l'API `src/` : `P09` (l.90-91) lit `result.ronrons_apres`/`producteurs_achetes` (snake_case), `P08` (l.74-82) exige `objectifCourant().includes('prestige')`. Contre le code VIVANT ces assertions échouent. Vert permanent qui ne prouve rien sur le jeu réel, sur surface protégée, non référencé par le wiremap.
+**Reproduction** (exécutable, déterministe) :
+```
+node -e "import('./GAMES/chaton_clicker_canal_probe_2/logic.mjs').then(m=>{const s=new m.GameState(42);s.ronrons=100;s.acheterProducteur(0);s.ronrons=50;s.acheterProducteur(1);console.log(s.objectifCourant())})"
+  # => "Achète un arbre à chats pour accélérer la production" (pas de 'prestige' => P08 FAIL)
+node -e "import('./GAMES/chaton_clicker_canal_probe_2/logic.mjs').then(m=>{const s=new m.GameState(42);s.ronrons=15;s.acheterProducteur(0);console.log(Object.keys(s.rejouerBoucle(50)))})"
+  # => ['ronronsApres','producteursAchetes'] (test lit result.ronrons_apres=undefined => assert(undefined>0) P09 FAIL)
+# repointer tests/logic.test.mjs:1 ../src/logic.mjs -> ../logic.mjs ; node --test .../tests/logic.test.mjs => P08/P09 rouges
+```
+
+## FAILLE 3 — `src/logic.mjs.clone()` partage le flux RNG entre clones · MEDIUM
+
+**Angle** : bug fonctionnel dans le résidu mort (argument que `src/` doit être supprimé, jamais ravivé).
+**Faille** : `src/logic.mjs:101` `cloned.rng = this.rng` — clone partage la MÊME closure RNG (état mutable). `comparerPolitiques` clone `passif`/`actif` d'une même origine : chaque `caresser()` sur `actif` perturbe les tirages de `passif`. Déterminisme rompu. La racine (`logic.mjs:145-148`) dérive un RNG salé neuf par clone et l'asserte (`logic.test.mjs:301`) — assertion qui échouerait contre `src/`.
+**Reproduction** :
+```
+node -e "import('./GAMES/chaton_clicker_canal_probe_2/src/logic.mjs').then(m=>{const s=new m.GameState(14);const a=s.clone(),b=s.clone();console.log([...Array(3)].map(()=>a.rng()),[...Array(3)].map(()=>b.rng()))})"
+  # a.rng et b.rng = même closure : tirages de b poursuivent ceux de a (état partagé)
+```
+
+## FAILLE 4 — `e2e.mjs`/`solvability.mjs` ancrent Playwright sur un chemin absolu V1 hors arbre V2 · MEDIUM
+
+**Angle** : provenance de la preuve « navigateur réel ».
+**Faille** : `e2e.mjs:30` et `solvability.mjs:28` codent en dur `join('C:','TACTICAL_CHESS_STUDIO','llm-lego','node_modules')` (installation V1, pré-renommage). `package.json:15` déclare `playwright` mais aucun `node_modules` livré en V2. La preuve navigateur (P04/P06/P07/P10/P11, PASS solvabilité) n'est ancrable que si l'arbre V1 existe. Repli honnête `RESULT: FAIL` sinon (non silencieux), mais preuve non reproductible sur poste V2 propre.
+**Reproduction** :
+```
+grep -n TACTICAL_CHESS_STUDIO .../e2e.mjs .../solvability.mjs   # e2e.mjs:30, solvability.mjs:28
+# sans arbre V1 ni npm i playwright : node .../e2e.mjs => "playwright introuvable" + RESULT: FAIL
+```
+
+## FAILLE 5 — Piège `node --test` : la découverte auto exécute la surface morte · LOW
+
+**Angle** : ambiguïté d'exécution.
+**Faille** : le gate nomme explicitement `logic.test.mjs properties.test.mjs` (racine) — correct. Mais un `node --test` SANS argument dans le répertoire du jeu déclenche la découverte récursive Node (≥v20) qui inclut `tests/logic.test.mjs`, lequel passe au vert contre `src/` mort, mêlé au run vivant. Un opérateur voyant « tests OK » ne distingue pas le leurre.
+**Reproduction** :
+```
+cd GAMES/chaton_clicker_canal_probe_2 && node --test
+  # exécute racine logic.test.mjs (vivant) ET tests/logic.test.mjs (mort, importe ../src/), les deux au vert
+```
+
+## RAPPORT FINAL (software / evidence / claim séparés)
+
+- **software_verdict : FAIL** — appuyé par ancres non-LLM : présence mesurable de `src/` non importé (grep, FAILLE 1) et de la surface protégée `tests/logic.test.mjs` liée à `../src/logic.mjs` avec assertions échouant contre le code vivant (FAILLE 2, repro `node -e` déterministe).
+- **evidence_verdict : MECHANICAL_VALIDATION_ONLY** — chaque faille cite une ancre statique (grep/chemin/ligne) ou une commande `node`/`node --test` exécutable par un oracle non-LLM.
+- **claim_verdict : NO_CLAIM_ALLOWED** — le red-team critique, ne certifie pas ; suppression du résidu et poids de la provenance Playwright relèvent d'un **HumanGate (fog → Pierre)**.
+
+**fog (jugement Pierre requis)** :
+1. Supprimer `src/` + `tests/logic.test.mjs` est la correction évidente, mais `tests/**` est protégé (`create_allowed_modify_denied`) → gate Pierre explicite requis ; je ne la fais pas (lecture seule).
+2. Provenance de la preuve navigateur ancrée sur l'arbre V1 (`C:\TACTICAL_CHESS_STUDIO\...`) : acceptable ou à porter en V2 ? Décision hors oracle.
+
+## SKIPPED_VALIDATION
+
+- **Écriture du livrable `rapport_redteam_code.md`** — périmètre : fichier sur disque · statut : NON FAIT · raison : outils `Write`/`Edit`/`Bash` désactivés dans cette session, malgré la permission `write` du contrat ; le rapport et le bloc JSON de findings sont émis dans la réponse (lue par `extract_redteam_findings`).
+- **Exécution des reproductions** — périmètre : commandes `node`/`node --test`/`grep` de chaque faille · statut : NON FAIT · raison : `run: aucun` (Bash indisponible) ; repros dérivées par lecture statique, destinées à l'oracle non-LLM aval.
+- **Gate mutation** (`forge/mutation_proof.py`) — périmètre : robustesse de la suite racine · statut : NON FAIT · raison : hors périmètre/run ; pré-mortem `d4a027c061a5fe3a` signale `mutation=FAIL (runtime_alive)` à la tentative 3, non revérifiable ici.
+- **Runtime navigateur** (P04/P06/P07/P10/P11) — périmètre : `e2e.mjs`/`solvability.mjs` · statut : NON FAIT · raison : Playwright non installé en V2, run interdit ; canaux joueur analysés statiquement (le wiremap déclare lui-même P02/P03/P05/P08/P09/P11 non ancrables par le canal joueur — divulgué, non caché).
+
+## RETURN LINEAGE (FORGE_CAUSAL_LINEAGE_V2 §3)
+
+- **why_task_existed** — *problem* : audit adverse indépendant du code s9 de `chaton_clicker_canal_probe_2` (écarts contrat/code, preuves factices, zones mortes), dispatch `s11-redteam-code:chaton-clicker-canal-probe-2-20260908`. *oracle* : aucun (activation par décision de dispatch, pré-mortem fourni). *root_cause* : établie — arbre `src/` divergent (résidu s9 antérieur) subsiste à côté de la racine vivante, et la surface protégée `tests/logic.test.mjs` reste soudée à ce `src/` mort ; récurrence exacte de trois pré-mortems. *action_reason* : produire un rapport de failles indépendant, chaque faille avec repro exécutable par oracle non-LLM.
+- **result** : rapport produit (5 failles : 2 HIGH, 2 MEDIUM, 1 LOW, toutes ancrées) ; software_verdict FAIL ; claim NO_CLAIM_ALLOWED ; fog remonté. **Livrable fichier NON écrit** — `Write`/`Edit`/`Bash` désactivés en session ; findings transmis via le bloc JSON de la réponse.
+- **proof** : lecture statique de `main.mjs:4-6`, `index.html:126`, `src/logic.mjs:1/101`, `tests/logic.test.mjs:1/74/86-91`, `logic.test.mjs:301`, `e2e.mjs:30`, `solvability.mjs:28`, `run-oracle.mjs:26`, `package.json:8`. Reproductions `node -e`/`grep`/`node --test` fournies par faille (non exécutées — `run: aucun`).
+- **learning** : le couple `src/` + `tests/logic.test.mjs` mort est la signature de faux-vert récurrente de ce jeu ; le wiremap ne le référence pas (il cite la RACINE `logic.test.mjs`), donc le résidu passe sous le radar des artefacts amont — à chercher par grep `../src/` dans `tests/**` sur les prochains runs.
+- **next_reason** : escalade — cause non résolue persistante (résidu mort sur surface protégée), correction (suppression) soumise à gate Pierre car `tests/**` est en `create_allowed_modify_denied`. Chaîne NON fermée : remonte au HumanGate.
+
+```json
+{"findings": [{"angle": "zone morte / residu src divergent", "faille": "Arbre src/ (src/logic.mjs, src/render.mjs, src/input.mjs) present mais jamais importe par index.html->main.mjs (qui importe ./logic.mjs ./render.mjs ./input.mjs racine) ; diverge du code vivant (snake_case, economie differente, textes objectif differents) et src/logic.mjs:1 importe node:crypto irresolvable en navigateur. Recurrence exacte des pre-mortems b69705172fd086c4/5bcb9253623ca207/a71dc0c52d697c15.", "severite": "HIGH", "reproduction": "grep -n \"from './\" GAMES/chaton_clicker_canal_probe_2/main.mjs => ./logic.mjs ./render.mjs ./input.mjs (aucun src/) ; grep -rn 'src/' index.html main.mjs => 0 ; grep -n crypto GAMES/chaton_clicker_canal_probe_2/src/logic.mjs => src/logic.mjs:1 import crypto from 'crypto'"}, {"angle": "preuve factice sur surface protegee", "faille": "tests/logic.test.mjs:1 importe ../src/logic.mjs (arbre mort), pas le code cable par index.html. Ses assertions sont soudees a l'API src/ : P09 lit result.ronrons_apres/producteurs_achetes (snake_case), P08 exige objectifCourant().includes('prestige'). Contre le code vivant ces assertions echouent. Vert permanent ne prouvant rien sur le jeu reel, sur surface declaree protegee (GAMES/*/tests/**), non reference par le wiremap.", "severite": "HIGH", "reproduction": "node -e \"import('./GAMES/chaton_clicker_canal_probe_2/logic.mjs').then(m=>{const s=new m.GameState(42);s.ronrons=100;s.acheterProducteur(0);s.ronrons=50;s.acheterProducteur(1);console.log(s.objectifCourant())})\" => 'Achete un arbre a chats...' (pas de 'prestige' => P08 FAIL) ; node -e sur rejouerBoucle => keys ['ronronsApres','producteursAchetes'] (test lit result.ronrons_apres=undefined => P09 FAIL) ; repointer tests/logic.test.mjs:1 vers ../logic.mjs puis node --test => P08/P09 rouges"}, {"angle": "bug de determinisme dans le code mort", "faille": "src/logic.mjs:101 cloned.rng = this.rng : le clone partage la meme closure RNG (etat mutable) que l'original et les autres clones ; comparerPolitiques clone passif et actif depuis la meme origine, chaque caresser() sur actif perturbe les tirages de passif. Le determinisme meme seed+meme suite=>meme trajectoire est rompu. La racine (logic.mjs:145-148) derive un RNG sale neuf par clone et l'asserte (logic.test.mjs:301) ; cette assertion echouerait contre src/.", "severite": "MEDIUM", "reproduction": "node -e \"import('./GAMES/chaton_clicker_canal_probe_2/src/logic.mjs').then(m=>{const s=new m.GameState(14);const a=s.clone(),b=s.clone();const da=[...Array(3)].map(()=>a.rng());const db=[...Array(3)].map(()=>b.rng());console.log(da,db)})\" => a.rng et b.rng sont la meme closure, tirages de b poursuivent ceux de a (etat partage)"}, {"angle": "provenance de preuve navigateur hors arbre V2", "faille": "e2e.mjs:30 et solvability.mjs:28 codent en dur join('C:','TACTICAL_CHESS_STUDIO','llm-lego','node_modules') — chemin absolu de l'installation V1. package.json:15 declare playwright mais aucun node_modules livre en V2. La preuve 'navigateur reel' (P04/P06/P07/P10/P11, PASS solvabilite) n'est ancrable que si l'arbre V1 existe sur la machine ; repli honnete RESULT: FAIL sinon, mais preuve non reproductible sur poste V2 propre.", "severite": "MEDIUM", "reproduction": "grep -n TACTICAL_CHESS_STUDIO GAMES/chaton_clicker_canal_probe_2/e2e.mjs GAMES/chaton_clicker_canal_probe_2/solvability.mjs => e2e.mjs:30, solvability.mjs:28 ; sur poste sans arbre V1 et sans npm i playwright : node GAMES/chaton_clicker_canal_probe_2/e2e.mjs => 'playwright introuvable' + RESULT: FAIL"}, {"angle": "piege d'execution de test", "faille": "run-oracle.mjs:26 et package.json nomment explicitement logic.test.mjs properties.test.mjs (racine) donc le gate teste le bon code, mais un 'node --test' sans argument dans le repertoire du jeu declenche la decouverte recursive de Node (>=v20) qui inclut tests/logic.test.mjs ; ce dernier passe au vert contre src/ mort, melange au run vivant — un operateur voyant 'tests OK' ne distingue pas le leurre.", "severite": "LOW", "reproduction": "cd GAMES/chaton_clicker_canal_probe_2 && node --test => decouvre et execute racine logic.test.mjs (vivant) ET tests/logic.test.mjs (mort, importe ../src/) ; les deux au vert dans le meme run"}]}
+```
+
+RETURN_REASON: {"status": "DISCOVERED", "problem": "arbre src/ mort et divergent livre a cote de l'arbre racine vivant, avec la surface protegee tests/logic.test.mjs soudee a ../src/logic.mjs (faux-vert) et src/logic.mjs important node:crypto irresolvable navigateur", "root_cause": "residu non nettoye de tentatives s9 anterieures, recurrence exacte des pre-mortems b69705172fd086c4/5bcb9253623ca207/a71dc0c52d697c15"}

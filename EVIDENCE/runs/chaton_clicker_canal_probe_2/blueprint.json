@@ -1,0 +1,115 @@
+{
+ "modules": [
+  "logic",
+  "render",
+  "input",
+  "main"
+ ],
+ "deps_interdites": [
+  [
+   "logic",
+   "render"
+  ],
+  [
+   "logic",
+   "input"
+  ],
+  [
+   "render",
+   "input"
+  ],
+  [
+   "input",
+   "render"
+  ],
+  [
+   "logic",
+   "main"
+  ],
+  [
+   "render",
+   "main"
+  ],
+  [
+   "input",
+   "main"
+  ]
+ ],
+ "ownership": {
+  "logic": "Économie et progression déterministes, DOM-agnostiques : état, RNG seedé, tick déterministe, caresse, production passive, coût, amélioration, objectif, prestige, hash d'état.",
+  "render": "Projection lecture seule de l'état de logic vers le DOM ; aucune mutation d'état, aucun binding d'entrée.",
+  "input": "Traduction des affordances DOM (caresser_chaton, acheter_producteur, renouveau_portee) en actions de logic ; aucune logique métier, aucun rendu.",
+  "main": "Racine de composition : instancie l'état seedé, câble render+input, pilote la boucle de tick déterministe, expose window.__game ; puits (rien ne l'importe)."
+ },
+ "responsabilites": [
+  {
+   "module": "logic",
+   "responsabilite": "Cœur métier déterministe et DOM-agnostique : état seedé, tick déterministe sans horloge murale, incrément par caresse, production passive des producteurs, coût croissant, effet d'amélioration, progression d'objectif, reset de prestige, et hash d'état reproductible hors navigateur.",
+   "couvre": [
+    "f_caresse",
+    "f_producteur",
+    "f_cout",
+    "f_arbitrage",
+    "f_objectif",
+    "f_prestige",
+    "f_determinisme"
+   ],
+   "dependances": [],
+   "preuve_attendue": {
+    "kind": "oracle",
+    "statement": "Deux exécutions de logic.mjs à graine et suite d'actions égales produisent le même hash d'état final, et une sonde à deux politiques (oisif vs actif) montre la métrique ronrons diverger — sans jamais toucher au DOM."
+   }
+  },
+  {
+   "module": "render",
+   "responsabilite": "Projection lecture seule de l'état de logic vers le DOM : chaton cliquable au chargement, compteur de ronrons, bouton d'achat actif/inactif, coût affiché croissant, panier_chatons, label objectif et reset de prestige visibles. Ne mute jamais l'état et ne lie aucune entrée.",
+   "couvre": [
+    "f_avatar_felin",
+    "f_caresse",
+    "f_producteur",
+    "f_cout",
+    "f_objectif"
+   ],
+   "dependances": [
+    "logic"
+   ],
+   "preuve_attendue": {
+    "kind": "visual",
+    "statement": "La sonde capture au chargement le chaton cliquable, puis après action le rendu à jour dans le DOM (compteur, état du bouton, coût, panier, label objectif)."
+   }
+  },
+  {
+   "module": "input",
+   "responsabilite": "Câblage des affordances DOM du joueur (caresser_chaton, acheter_producteur, renouveau_portee) vers les actions de logic, à la souris uniquement. N'embarque aucune logique de jeu et ne fait aucun rendu.",
+   "couvre": [
+    "f_caresse",
+    "f_producteur",
+    "f_prestige"
+   ],
+   "dependances": [
+    "logic"
+   ],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Depuis index.html, le bot clique caresser_chaton, acheter_producteur puis renouveau_portee et l'action logique correspondante est déclenchée à chaque fois."
+   }
+  },
+  {
+   "module": "main",
+   "responsabilite": "Racine de composition chargée par index.html : instancie l'état de logic avec la graine, câble render et input, démarre la boucle de tick déterministe (pas de Date.now) et expose window.__game. Seul module connaissant render et input ; puits que nul module n'importe.",
+   "couvre": [
+    "f_producteur",
+    "f_determinisme"
+   ],
+   "dependances": [
+    "logic",
+    "render",
+    "input"
+   ],
+   "preuve_attendue": {
+    "kind": "bot_action",
+    "statement": "Au chargement d'index.html, window.__game est exposé et la boucle de tick fait monter les ronrons sans clic après achat d'un producteur, de façon reproductible à graine égale."
+   }
+  }
+ ]
+}

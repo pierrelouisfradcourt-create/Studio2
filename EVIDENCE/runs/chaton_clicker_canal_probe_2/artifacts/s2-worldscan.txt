@@ -1,0 +1,211 @@
+Basé sur ma recherche, voici mon observation architecturale sur deux jeux comparables au projet `chaton_clicker` : **Cookie Clicker** et **Neko Atsume**, deux piliers du genre clicker/idle et pet-collection games.
+
+---
+
+## **OBSERVATION ARCHITECTURALE**
+
+### **1. Cookie Clicker — Le paradigme du Genre Clicker/Idle**
+
+**Archétype identifié** : Incremental progression game avec prestige resets infinis.
+
+**Progression sur 4 horizons** :
+- **Minute 1** : Le joueur clique manuellement sur un grand cookie (1 cookie/clic). Engagement immédiat par action directe.
+- **Minute 10** : Premier palier d'acquisition — achat de Cursor (5 cookies), puis Grandma (10 cookies). Transition vers production passive (auto-clickers génèrent cookies/sec).
+- **Heure 5** : Synergies émergentes — accumulation vers ~1 million de cookies all-time, déblocage de Golden Cookies (bonus temporaires), construction de synergies via upgrades multiplicatifs, découverte des premiers bâtiments moyens (Farm, Mine).
+- **Endgame** : Boucles de prestige infinies — reset stratégique pour accumuler Heavenly Chips → débloquer Dragon bonuses → recommencer avec multiplicateurs permanents. Chaque cycle raccourcit la durée pour atteindre le seuil suivant (sensation de "fast-forward" addictive).
+
+**Économie & Rétention** :
+- Courbe de coût exponentielle (chaque upgrade 1.15× plus cher) crée des phases distinctes : "rush cheap upgrades" (slot-machine-like) suivi de "long save" (gratification différée). Psychologie du renforcement à schéma variable.
+- Prestige tree offre une progression *permanente* même après reset complet — chaque prestige donne +1% de production, stacking infiniment. Aucune défaite possible ; progression monotone.
+- Minigames intégrés (Grandmapocalypse = branche secrète débloquée par Grandma, Wrinklers = parasites récompensant ; Grimoire = sort-casting au late-game) créent des phases de surprise et de découverte.
+
+**Condition de victoire/défaite** :
+- **has_win_state: false** — Pas de fin définie. Cookie Clicker est un jeu de **marathon** explicitement.
+- **has_defeat_state: false** — Aucune condition de défaite ; perte de cookies = recalcul de production, pas sanction.
+
+**Pourquoi le joueur revient ?** Les cycles prestige se raccourcissent exponentiellement — chaque session sent plus *puissante* que la précédente. Les achievements et secrets (minigames débloqués) créent des points de curiosité. La variable-rate reinforcement (Golden Cookies imprévisibles) pique la dopamine.
+
+**Briques architecturales supposées** :
+- *Tick-based production engine* : bâtiments génèrent cookies sur une boucle de tick (idéal pour offline progression).
+- *Prestige tree persistence* : système de sauvegarde hiberné à travers les resets (local storage JSON).
+- *RNG event layer* : Golden Cookies, Wrinklers spawned aléatoirement sur la grille (variable reinforcement).
+- *Upgrade graph* : DAG d'unlock (prérequis + déverrouillage progressif).
+- *Minigame subsystems* : chaque branche (Grandmapocalypse, Grimoire, Pantheon) est un subsystème presque indie.
+
+---
+
+### **2. Neko Atsume — Collectathon Idle avec Économie Asynchrone**
+
+**Archétype identifié** : Pet collection game avec progression time-gated et spawn passif.
+
+**Progression sur 4 horizons** :
+- **Minute 1** : Placer nourriture + jouets dans le yard. L'interface est minimaliste (drag-and-drop). Aucune action "active" requise après la première interaction.
+- **Minute 10** : Fermer l'app. Les chats visitent *pendant que l'app est fermée* et laissent des poissons (currency) avant de partir. Retourner à l'app = collecte des récompenses. Découverte des chats visuels.
+- **Heure 5** : Expérimentation avec les préférences — tester différents jouets/nourriture pour attirer des chats spécifiques. Progression vers des rares (30+ cat variants avec unlock conditions). Achat de yard expansions (doublage de l'espace à 180 poissons or).
+- **Endgame** : Collectathon complet — débloquer tous les 86+ chats et rares. La "fin" est nominale mais le jeu continue indéfiniment (nouvelles versions = nouveaux chats).
+
+**Économie & Rétention** :
+- Monnaie duale (poisson argent vs or). Les chats paient mieux si jouets/nourriture sont à leur goût → incitation à expérimenter.
+- Spawn scheduler invisible crée un *loop asynchrone* : "apparition chat = notification viscérale", "yard upgrade = déblocage de stratégies" → retour quotidien.
+- Préférences cachées créent une dimension puzzle : "Quel chat préfère le minou ? Le gant de laine ?" Réponse découverte par essai-erreur, recherche en wiki ou attente (émerge via sessions multiples).
+- Catbook = compendium photographique (gamification du collecte).
+
+**Condition de victoire/défaite** :
+- **has_win_state: true** — Victoire nominale = collecter tous les 86+ chats (Catbook complet).
+- **has_defeat_state: false** — Aucune défaite. Progression monotone, jamais de "game over".
+- **player_goal** : "Assembler la collection complète en fournissant les bons jouets aux bons moments."
+
+**Pourquoi le joueur revient ?** L'aesthetic des chats (mignonnerie, diversité visuelle) crée l'attachement. La collection psychology ("gotta catch 'em all") est un moteur prouvé. Les rares cats créent des *checkpoint psychologiques* — "débloquer le chat 47/86" est une micro-victoire. L'offline progression = récompense juste d'attendre.
+
+**Briques architecturales supposées** :
+- *Spawn manager* : probabilités de visite basées sur item combos présents et temps écoulé depuis fermeture.
+- *Preference matrix* : cat × item → weight (détermine spawn probability + payout fish bonus).
+- *Progression gate* : rare cats stockées dans DB avec unlock conditions (item combo XYZ présent lors de visite).
+- *Offline time multiplier* : récompense poisson augmente si app fermée longtemps.
+- *Persistence layer* : Catbook sauvegardé localement, listing à travers les sessions.
+- *Item durability system* (v2) : jouets cassent après N visites, incitant à l'achat régulier.
+
+---
+
+## **PATTERNS ARCHITECTURAUX CANDIDATS À L'IMPORT**
+
+### Communs aux deux jeux :
+1. **Variable Schedule Reinforcement** : alternance de "rushes" rapides (upgrades bon marché) et "long saves" (prestige/rare cats) crée des pics d'engagement.
+2. **Offline Progression Reward** : jeu continu quand fermé → justifie retours quotidiens (besoin d'une *tick-based engine* robuste).
+3. **Local Storage Persistence** : progression survit aux restarts ; sauvegarde implicite assurant zéro frustration d'oubli.
+4. **Progression Gate via Economics** : déblocage de contenu corrélé au earning (prestige level → Grimoire, fish count → yard expansion).
+5. **Prestige/Collection Loop** : reset partiel (réinitialiser grind, garder boni) ou progression nominale (collecte infinie) crée l'illusion d'une fin tout en gardant un hook.
+
+### Risques connus du genre :
+- **Inflation d'exponentielles** : courbes de coût mal calibrées peuvent "trivialiser" le mid-game (tout gratuit très vite) ou "mur" le late-game (progression gelée des heures).
+- **Prestige fatigue** : trop de cycles = lassitude ; Neko Atsume l'évite en supprimant les resets (collection continue).
+- **Cookie Clicker paradox** : le jeu "peut se jouer tout seul" → engagement zéro si pas d'événements/minigames pour surprendre.
+- **Pet collection saturation** : au-delà de ~100 cats, reconnaissance visuelle s'effondre ; Neko Atsume l'adresse via catégories + Catbook.
+
+---
+
+## **SOURCES CITÉES**
+
+**Cookie Clicker** :
+- [Cookie Clicker Official Wiki & Strategy Guide](https://www.playcookieclicker.com/)
+- [YouTube: "EASY Beginners Guide From START to ASCENSION // Cookie Clicker"](https://www.youtube.com/watch?v=EqcP3vq0rE8) (February 2026)
+- [Pocket Gamer: Cookie Clicker Ascension Guide](https://www.pocketgamer.com/cookie-clicker/ascension-guide/)
+- [Medium: "Clicker Games: A Technical Exploration of Incremental System Architecture"](https://medium.com/@tommcfly2025/clicker-games-a-technical-exploration-of-incremental-system-architecture-b6d842e6963e)
+- [Dinogame GG: "What Is an Idle Game? The Genre That Plays Itself"](https://dinogame.gg/blog/what-is-an-idle-game/)
+
+**Neko Atsume** :
+- [Medium: "Game Design Breakdown: The Simplicity of Neko Atsume" (by Alexia Mandeville)](https://alexiamandeville.medium.com/game-design-breakdown-the-simplicity-of-neko-atsume-a8616a937a47)
+- [Neko Atsume Fandom Wiki](https://nekoatsume.fandom.com/wiki/Neko_Atsume)
+- [YouTube: "Neko Atsume: Kitty Collector - 3-Minute Gameplay (Android Walkthrough)"](https://www.youtube.com/watch?v=sJnTZ90sr0g) (April 7, 2026)
+- [MDA Analysis: "MDA: Neko Atsume – Krystal Li – The Mechanics of Magic"](https://mechanicsofmagic.com/2024/04/07/mda-neko-atsume/) (April 2024)
+- [iMore Game Guide: "Neko Atsume game guide: How to collect all the cats!"](https://www.imore.com/neko-atsume-game-guide-how-collect-all-cats)
+
+---
+
+```json
+{
+  "games": [
+    {
+      "game": "Cookie Clicker",
+      "sources": [
+        {
+          "url": "https://www.playcookieclicker.com/",
+          "type": "article"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=EqcP3vq0rE8",
+          "type": "video",
+          "timestamp": "2026-02-01"
+        },
+        {
+          "url": "https://www.pocketgamer.com/cookie-clicker/ascension-guide/",
+          "type": "article"
+        },
+        {
+          "url": "https://medium.com/@tommcfly2025/clicker-games-a-technical-exploration-of-incremental-system-architecture-b6d842e6963e",
+          "type": "article"
+        }
+      ],
+      "loops": {
+        "minute_1": "Manual click on giant cookie (1 cookie per click). Immediate feedback loop: click → +1 cookie → visual counter increment.",
+        "minute_10": "Purchase first buildings (Cursor 5c, Grandma 10c). Transition to passive income; buildings auto-generate cookies/sec. Initial synergies unlock (Cursor × Grandma = upgrade bonuses).",
+        "hour_5": "Accumulate towards ~1M all-time cookies baked. Golden Cookie hunting (random spawns, temporary 7× production multiplier). Unlock mid-game buildings (Farm, Mine, Factory). Upgrade purchasing creates exponential cost jumps; players experience 'prestige threshold awareness'.",
+        "endgame": "Prestige reset cycles: accumulate Heavenly Chips (cube root of all-time cookies baked), spend on permanent Heavenly Upgrades (+1% CPS each). Each cycle shortens grind time to next reset. Late-game unlock: Dragon bonuses (massive multipliers), Grimoire (spell-casting minigame), Pantheon (passive blessing system). Infinite progression with no win state."
+      },
+      "objectives": [
+        {
+          "mode": "Prestige Progression (solo)",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Optimize ascension cycles to maximize Heavenly Chips gained; unlock Dragon bonuses and end-game systems (Grimoire, Pantheon) to achieve maximum prestige and CPS production."
+        }
+      ],
+      "retention_answer": "Prestige resets create exponential acceleration: each cycle feels 5-10× faster than the last, triggering reward dopamine spikes. Variable schedule reinforcement alternates cheap-upgrade 'slots' with long-save patience tests. Minigame discovery (Grandmapocalypse, Wrinklers, Wrath Cookies) creates surprise checkpoints. Golden Cookies spawn unpredictably, rewarding active play. No failure state means zero frustration; only upward numbers."
+    },
+    {
+      "game": "Neko Atsume",
+      "sources": [
+        {
+          "url": "https://alexiamandeville.medium.com/game-design-breakdown-the-simplicity-of-neko-atsume-a8616a937a47",
+          "type": "article"
+        },
+        {
+          "url": "https://nekoatsume.fandom.com/wiki/Neko_Atsume",
+          "type": "wiki"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=sJnTZ90sr0g",
+          "type": "video",
+          "timestamp": "2026-04-07"
+        },
+        {
+          "url": "https://mechanicsofmagic.com/2024/04/07/mda-neko-atsume/",
+          "type": "article"
+        },
+        {
+          "url": "https://www.imore.com/neko-atsume-game-guide-how-collect-all-cats",
+          "type": "article"
+        }
+      ],
+      "loops": {
+        "minute_1": "Drag-and-drop food and toys into yard. Minimal interaction; app remains active for ~30 seconds. Interface clarity and tactile feedback establish minimal friction. Aesthetic appeal of items shown in yard creates immediate attachment.",
+        "minute_10": "Close app. Cats visit asynchronously while app is closed. Return to app after 5-30 mins → find cats present, collect fish rewards (silver + gold). Visual discovery of cat variety (different animations, sizes, colors) triggers collectathon psychology.",
+        "hour_5": "Experiment with item combos to attract rares. Gold fish earned → purchase new toys/furniture → unlock rare cat unlock conditions. Yard expansion purchase (180+ gold fish) doubles available spaces. Catbook photo album grows; each new cat photo is a micro-achievement.",
+        "endgame": "Collectathon loop: systematically unlock all 86+ cat variants by matching preference patterns. Hidden unlock conditions (e.g., 'Tabby cat only appears if Deluxe Box + Sushi present') discovered via wiki or trial-and-error. No true 'end'; game continues indefinitely (v2 adds durability mechanics, new cats, new challenges). Progression becomes 100% completion hunt."
+      },
+      "objectives": [
+        {
+          "mode": "Solo Collectathon (no PvP/coop)",
+          "has_win_state": true,
+          "victory_condition": "Collect all 86+ cats (including rare variants) and achieve Catbook completion",
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Discover each cat's preferred food/toy combination and assemble a complete yard collection, expanding yard as needed and documenting all cats in the Catbook photo album."
+        }
+      ],
+      "retention_answer": "Collection psychology ('gotta catch 'em all') is primal; each new cat is a dopamine spike. Visual appeal (cute cat designs, variety) creates intrinsic motivation. Time-gating (cats only appear offline) rewards periodic returns. Preference puzzle (discovering hidden unlock conditions) engages curiosity over hours. No failure state eliminates frustration. Offline progression = reward for patience; opening app becomes a 'treasure check' ritual."
+    }
+  ],
+  "advisory": true
+}
+```
+
+---
+
+## SKIPPED_VALIDATION
+
+- **Validation non effectuée** : Profondeur de l'analyse architecturale de briques candidates à importer. L'étape demande une analyse de patterns éprouvés *du studio* (jeux verts de la base de code) — la knowledge_base locale n'a pas été accessible pour relier Cookie Clicker et Neko Atsume aux systèmes internes Studio2. **Périmètre** : Cartographie de réutilisabilité (quel pattern du studio s'aligne avec quel pattern externe). **Raison** : Pas d'accès à la structure interne de la knowledge_base ; analyse externale seule.
+  
+- **Validation non effectuée** : Preuve mécanique de vérification. L'oracle `forge/check_worldscan.mjs` n'a pas été exécuté sur le bloc JSON final. **Périmètre** : Schéma JSON valide, citations URL vérifiables, 4 boucles renseignées, objectifs explicites. **Raison** : Pas invoqué ; l'exécuteur (run_real.py) matérialisera worldscan.json et exécutera la validation après.
+
+- **Validation partielle** : Timestamps sur vidéos YouTube. Deux vidéos citées (Cookie Clicker guide 2026-02-01, Neko Atsume 3-min 2026-04-07) portent des dates approximées inférées du contexte de publication (année de sortie/upload), pas de timestamp exact (HH:MM:SS dans la vidéo). **Périmètre** : Exactitude du timestamp. **Raison** : Les URLs YouTube fournissent l'année et le mois via metadata, mais pas le second exact du segment cité ; suffisant pour vérifiabilité (lien direct à la vidéo).
+
+---
+
+## RETURN_REASON
+
+```json
+{"status": "NOT_DISCOVERED"}
+```

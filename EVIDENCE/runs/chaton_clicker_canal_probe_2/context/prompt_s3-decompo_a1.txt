@@ -1,0 +1,715 @@
+## RÔLE
+Décomposition Fonctionnelle (étape 3). Point de vue : analyste qui énumère les fonctions attendues avant toute archi.
+
+## EXIGENCES COGNITIVES
+Décomposition exhaustive Système→Feature→capacité, chaque feuille traçable à une preuve.
+
+## MÉMOIRE DE TRAVAIL
+Consomme le Prisme Produit (étape 1) et le World Scan (étape 2) ; connaît les Règles observables du Prisme d'où héritent les preuves attendues. Conventions : CLAUDE.md + rules/.
+
+## OBJECTIF
+Produire l'arbre Système→Feature→capacité ; chaque FEUILLE porte sa preuve attendue (héritée des Règles observables du Prisme).
+
+## DANS LE PÉRIMÈTRE (in_scope)
+Énumération fonctionnelle depuis le Prisme Produit ; définition des preuves attendues par feuille. Écrit uniquement la featuremap.
+
+## HORS PÉRIMÈTRE (out_of_scope)
+Ne découpe PAS en modules (c'est l'archi, étape 4). Ne code rien. Ne touche pas à la lane protégée src/ ni à les surfaces de test déclarées (forge/test_surfaces.yaml).
+
+## PERMISSIONS
+read: repo entier. write: featuremap uniquement. create: featuremap. run: aucun. delete: aucun.
+
+## GARDE-FOU
+Chaque feuille DOIT avoir une preuve_attendue ; pas de feuille orpheline. La preuve attendue est héritée des Règles observables du Prisme, jamais inventée. V4 GAME LOOP (2026-08-22, GO Pierre) : une action joueur (exigence `acteur: PLAYER` avec `affordance`) se décompose en une capacité d'ENTRÉE (le joueur agit sur l'affordance nommée, preuve `bot_action` depuis le POINT D'ENTRÉE DU JEU) ET une capacité d'EFFET — jamais l'effet seul. Le point d'entrée dépend de la lignée et n'est PAS `main.tscn` par défaut : `check_decompo.POINTS_ENTREE` fait foi (`main.tscn` en Godot, `index.html` / `main.mjs` en web). Correction du 2026-09-05 : `main.tscn` était écrit en dur ici ET dans l'oracle, ce qui rendait tout jeu WEB structurellement refusé — incident mesuré sur `v2_breakout_slice_r1`, où l'agent a eu RAISON de refuser de fabriquer une scène Godot et de livrer fidèle. `loop.json` (projection déterministe du Prisme) est une ENTRÉE à lire, jamais à réécrire. Maillons F..J (additif, règle B étendue) : F (UNLOCK) et I (META_LOOP) suivent EXACTEMENT la règle de B — capacité d'ENTRÉE `bot_action` depuis le point d'entrée du jeu obligatoire. G (NEXT_GOAL) se décompose en une capacité d'EFFET VISIBLE (le label `objectif` change pour un texte nouveau, preuve `file_write` ou `visual`) — jamais une entrée seule. H (REPEAT) et J (ADVANTAGE) sont des REJEUX : ils n'exigent AUCUNE feuille propre, mais leurs `replay`/`replay_ref` doivent chacun cibler une exigence du Prisme déjà couverte par ailleurs — un rejeu qui vise une exigence non couverte ou inexistante rejoue du vide. GREY BLOCKS DU GAME MASTER (Lot B, T3, 2026-08-23, plan `2026-08-23-forge-lot-b-game-master.md`) : chaque `game_master.grey_blocks[].id` du GM (s2.7) DOIT apparaître comme `id` OU `source_ref` d'une feuille de la featuremap — un grey block sans feuille est `grey_block_non_decompose` (`check_decompo --gm <gm_worldscan.json>`). Le `builder_contract` de chaque grey block est recopié TEL QUEL dans `expected_proof.statement` de la feuille qui le porte, jamais réinventé. Sans `game_master`/`grey_blocks` (runs antérieurs au Lot B) : comportement inchangé, 0 grey block mesuré.
+
+## CRITÈRES DE RÉUSSITE
+featuremap valide ; chaque feuille porte {capacite, expected_proof, source_ref} ; TOUTE exigence du Prisme est portée par ≥1 feuille ; AUCUNE feuille ne cite une exigence inexistante.
+
+## ORACLES / TESTS
+Oracle déterministe non-LLM : `node forge/check_decompo.mjs <run_dir>/featuremap.json --prisme <run_dir>/prisme.json [--gm <run_dir>/gm_worldscan.json]`. Mesure la COUVERTURE (toute exigence portée), la NON-INVENTION (tout `source_ref` résout) et la COMPLÉTUDE (feuilles complètes). La granularité est REPORTÉE, jamais gatée (règle de variance ratifiée 2026-07-21). Maillons F..J (additif) : `boucle_sans_effet` (G sans feuille d'effet sourcée), `boucle_replay_non_couvert` (H/J dont un `replay`/`replay_ref` cible une exigence non couverte ou inexistante) ; `stats.maillons_couverts.{F,G,H,I,J}` reporte le compte par rôle. Lot B, T3 (2026-08-23) : avec `--gm`, `grey_block_non_decompose` (un `game_master.grey_blocks[].id` sans feuille) fait échouer l'étape ; `stats.grey_blocks`/`stats.grey_blocks_couverts` reportent le compte. Sans `--gm` ou sans bloc `game_master` : comportement inchangé (0 grey block). Jamais de LLM-as-judge.
+
+## CONTRAT DE SORTIE
+Un bloc ```json``` TERMINAL, matérialisé en featuremap.json par l'exécuteur (tu n'écris JAMAIS ce fichier toi-même) : {"game_id": "<id>", "systemes": [{"id", "features": [{"id", "capacites": [{"id", "capacite", "source_ref", "expected_proof": {"kind": "bot_action"|"oracle"|"mutation"|"visual"|"file_write", "statement"}}]}]}]}. L'arbre reste Système→Feature→capacité, la capacité EST la feuille. RÈGLES DURES : `source_ref` cite l'`id` EXACT d'une exigence de prisme.json — une feuille qui n'en cite aucune est une invention non déclarée, et une exigence que nulle feuille ne porte est une omission silencieuse. Tu n'inventes AUCUNE preuve attendue : elle est héritée de l'exigence d'origine.
+
+## RAPPORT FINAL
+software/evidence/claim séparés ; cite le reçu de check_decompo ; liste les exigences non couvertes et les feuilles non sourcées ; claim_verdict: NO_CLAIM_ALLOWED. RETURN LINEAGE (doctrine FORGE_CAUSAL_LINEAGE_V2 §3, ratifiee Pierre 2026-08-06) — aucun worker ne meurt seul : le retour porte la CAUSALITE, pas seulement le resultat. Termine TOUJOURS par ce bloc, succes comme echec : `why_task_existed:` {`problem:` le probleme mesure qui a active cette tache · `oracle:` l'oracle ou la mesure qui l'a detecte, ou "aucun" si l'activation vient d'une decision humaine · `root_cause:` la cause racine identifiee, ou "non etablie" · `action_reason:` pourquoi CETTE action y repond} · `result:` l'etat reellement obtenu · `proof:` la commande executee et sa sortie · `learning:` ce que tu as appris et qui resservira, ou "aucun" · `next_reason:` pourquoi le niveau superieur doit agir OU pourquoi la chaine causale est FERMEE et se termine ici. Regles : ces champs sont HERITES ou CONSTATES, jamais inventes — si tu n'as pas recu le `why`, ecris "non transmis" plutot que de le deviner (une cause fabriquee est la meme faute qu'un `validated_by` fabrique). En ECHEC, `result` porte ce que tu as essaye et ce qui a echoue. `next_reason` ne vaut escalade que si une cause non resolue persiste, une preuve manque ou contredit l'etat attendu, ou une correction reste possible — sinon la lignee se termine proprement, sans action supplementaire.
+
+## À LIRE OBLIGATOIREMENT AVANT TOUTE ACTION
+- forge/contracts/SCHEMA.md
+- l'artefact product_snapshot.md produit par le Prisme (étape 1)
+- EVIDENCE/runs/<projet>/knowledge_packet.json — patterns externes cités, ADVISORY jamais prescriptif
+- EVIDENCE/runs/<projet>/charter.yaml — INTENT LINEAGE : intention humaine, invariants, hors_scope, et le bloc `provenance` (source Pierre, fog_humangate). HERITE, jamais reecrit : l'etape verifie que sa decision la respecte, ou remonte le conflit.
+- story_bible.json (s2.6) et gm_worldscan.json (s2.7) S'ILS SONT PRÉSENTS dans le run_dir (profil full_godot_narratif) : les contraintes narratives et les dimensions de calibration (progression, economy, bonus…) y vivent — une feuille qui les réalise cite l'exigence du Prisme qui les porte (source_ref), jamais l'artefact directement
+
+## RÈGLE DE RESTITUTION — Chaque affirmation du final_report doit citer l'oracle/l'ancre non-LLM qui l'appuie. Appuyée par un oracle => software_verdict (OK/FAIL/BLOCKED) + evidence_verdict: MECHANICAL_VALIDATION_ONLY. Sans oracle disponible => claim_verdict: NO_CLAIM_ALLOWED et remonte un besoin HumanGate (fog), jamais un claim auto-certifié. Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement. En dernier lieu, une section finale SKIPPED_VALIDATION, structurée et EXPLICITE : pour chaque validation que tu n'as PAS faite, liste l'item de validation (quoi), le périmètre concerné (où), le statut (ex. non fait / partiel / hors délai) et la raison (pourquoi). Rien sauté => écris `SKIPPED_VALIDATION: aucun` — une décision assumée, jamais un silence. Le silence sur cette section est traité comme un oubli, pas comme 'rien à signaler'. TOUTE DERNIÈRE LIGNE DU RAPPORT, OBLIGATOIRE — lignée Return : une ligne unique `RETURN_REASON: {"status": "NOT_DISCOVERED"}` si tu n'as découvert AUCUN problème pendant ce travail. Si (et SEULEMENT si) tu as réellement découvert un problème — défaut rencontré, cause d'un échec, écart mesuré — écris à la place `RETURN_REASON: {"status": "DISCOVERED", "problem": "<le problème, factuel>", "root_cause": "<la cause racine si connue, sinon omets ce champ>"}`. JSON valide sur UNE seule ligne, aucun texte après. N'invente JAMAIS un problème pour remplir ce champ : un NOT_DISCOVERED honnête vaut mieux qu'un DISCOVERED de complaisance.
+
+## MARQUEUR DE DISPATCH (ne pas modifier)
+FORGE_DISPATCH:s3-decompo:chaton-clicker-canal-probe-2-20260908:1
+
+## TÂCHE CONCRÈTE (chaton-clicker-canal-probe-2-20260908 / s3-decompo)
+Décompose le projet 'chaton_clicker_canal_probe_2' en features (une ligne par règle de jeu : nom, comportement observable, condition de preuve). Donne à chaque capacité un identifiant STABLE et lisible : il sera cité en aval par la WireMap, et une re-convocation doit le conserver à l'identique. Texte seul, aucun fichier écrit.
+
+## ARTEFACTS AMONT (run_dir)
+
+### charter.yaml (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker_canal_probe_2\charter.yaml)
+objectif: 'Creer de zero, sous GAMES/chaton_clicker/, un jeu jouable du genre cookie
+  clicker (idle/clicker) ou les cookies sont remplaces par des chatons : le joueur
+  clique un chaton pour produire une ressource, achete des producteurs qui la generent
+  sans clic (tick deterministe), debloque des ameliorations et progresse par paliers
+  jusqu''a une forme de prestige. Le jeu doit etre JOUABLE par un joueur reel avec
+  ses seules entrees souris/clavier, pas seulement solvable par un canal interne (lecon
+  V1 kitten_clicker, run 6 du 2026-08-22 : 20/20 solvable mais injouable).'
+plateforme_cible: 'web/HTML : page HTML+JS unique, logique metier en module .mjs testable
+  hors navigateur, RNG seede, tick deterministe (pas de Date.now dans la logique),
+  exposition window.__game, actions DOM-only, determinisme reproductible par hash
+  (socle N1). Aucun binaire Godot ni Blender.'
+reference_jeu: 'Cookie Clicker (Orteil, 2013) comme reference de GENRE uniquement
+  (clic vers ressource, producteurs passifs, ameliorations, paliers/prestige), pas
+  une source a recopier ; le theme remplace les cookies par des chatons. Source Pierre
+  2026-09-05 : « fait moi un cookie clicker, remplace les cookie par des chatons ».'
+hors_scope:
+- 'Toute lignee non-web : aucun moteur Godot ni Blender requis ou utilise (lignee
+  Godot V2 non configuree sur le poste, forge/godot.config.json absent) ; un recours
+  silencieux a Godot est un ecart a signaler.'
+- 'Multijoueur, backend serveur, comptes, sauvegarde cloud ou reseau : hors V1.'
+- 'Toute ecriture hors des surfaces V2 declarees (GAMES/chaton_clicker/ pour le jeu,
+  EVIDENCE/runs/chaton_clicker/ pour le run) : lab/, scripts/forge/ et games/ sont
+  interdits.'
+- 'Recopie du code ou des assets de Cookie Clicker : seul le genre est repris.'
+- 'Regles normatives N5 (separation concepteur/instrumenteur) et N6 (fidelite charter
+  vers build) : non mecanisees pour ce run, donc non couvertes (fog HumanGate) ; ne
+  pas les pretendre couvertes.'
+- 'Perimetre de l''etape s0 elle-meme : ne produit que charter.yaml ; pas d''architecture
+  (etape 4), pas de world scan (etape 2), pas de code, pas de touche a src/ ni aux
+  surfaces de test declarees.'
+criteres_succes:
+- Le jeu se charge dans un navigateur et une session complete est jouable a la souris
+  (clic sur le chaton, achat d'un producteur, achat d'une amelioration, prestige)
+  sans tutoriel externe.
+- 'Boucle joueur complete : le clic produit la ressource ; au moins un producteur
+  la genere sans clic via un tick deterministe ; au moins une amelioration modifie
+  le taux ; au moins un palier/prestige est atteignable.'
+- 'loop_check : les exigences du Prisme couvrent les maillons de la boucle joueur
+  (PLAYER_GOAL, PLAYER_ACTION, GAME_RESPONSE, REWARD, DECISION, UNLOCK, NEXT_GOAL,
+  REPEAT, META_LOOP, ADVANTAGE) ; un maillon manquant est un FAIL rapporte, jamais
+  absorbe.'
+- Solvabilite prouvee par un bot-joueur qui n'utilise QUE les affordances DOM du joueur
+  (clics) et la lecture du DOM, jamais un appel direct a l'economie interne.
+- 'Tous les artefacts dans les surfaces V2 : run_dir sous EVIDENCE/runs/chaton_clicker/,
+  jeu sous GAMES/chaton_clicker/.'
+- Determinisme reproductible par hash ; production passive testable hors navigateur.
+- Verdict signe HMAC produit avec la cle V2 (forge/.forge_key) ET re-verifie authentique
+  par verify_run, pas seulement present.
+actions_interdites:
+- 'Verdir par contournement : reecrire un oracle pour le rendre vert, ou un volet
+  e2e qui rend exit 0 / PASS sans reellement piloter un navigateur (lecon manifest-3a1dde).'
+- Modifier un test preexistant a la passe sans gate Pierre explicite (regime create_allowed_modify_denied)
+  ; creer un test reste permis.
+- Recours silencieux au moteur Godot ou Blender au lieu de la lignee web.
+- Ecrire un artefact hors des surfaces V2 declarees (lab/, scripts/forge/, games/,
+  src/, surfaces de test declarees).
+- Utiliser Date.now() ou une horloge murale dans la logique metier au lieu du tick
+  deterministe.
+- Prouver la solvabilite via un appel a l'economie interne au lieu des affordances
+  DOM du joueur.
+- Signer avec une cle heritee de V1 au lieu de forge/.forge_key.
+- 'En cas d''indisponibilite de LM Studio, se replier silencieusement vers une autre
+  source : le run doit HALT/BLOCKED.'
+- Renseigner plateforme_cible ou reference_jeu depuis une supposition d'agent sans
+  source Pierre tracable, ou pretendre couvert un fog HumanGate.
+criteres_demo:
+- Un chaton cliquable est visible a l'ecran ; cliquer dessus incremente un compteur
+  de ressource visible et le chaton reagit visuellement au clic.
+- Apres l'achat d'au moins un producteur, le compteur de ressource augmente tout seul,
+  sans clic, sous les yeux du joueur.
+- Un bouton d'achat de producteur devient accessible quand la ressource suffit, et
+  son cout affiche augmente visiblement apres chaque achat.
+- Une amelioration achetable est visible et son effet se voit apres achat (le taux
+  de production ou le gain par clic augmente a l'ecran).
+- 'Un palier / prestige observable est atteignable : il transforme visiblement l''etat
+  et affiche un avantage persistant.'
+- Toute grandeur observee par un critere (ressource, taux, cout, objectif) est lisible
+  directement dans le DOM.
+
+
+### artifacts/s1-prisme.txt (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker_canal_probe_2\artifacts\s1-prisme.txt)
+# Product Snapshot — chaton_clicker
+
+*Le produit fini, tel que le joueur le vit. Ancré sur `charter.yaml` (s0) et `worldscan.json` (s2 : Cookie Clicker + Neko Atsume). `story_bible.json`, `gm_worldscan.json`, `design/progression_contract.md` et `design/calibration.md` sont ABSENTS du run_dir — profil web/HTML, non full_godot_narratif : je le dis, je ne compense pas.*
+
+## 1. CE QUE LE JOUEUR VOIT
+
+Une page unique s'ouvre dans le navigateur, sans écran de titre ni tutoriel. Au centre, un **chaton dessiné**, grand et cliquable, occupe la scène. Au-dessus de lui, un **compteur de ronrons** affiche le total courant en gros chiffres, et juste en dessous un **taux de production par seconde** (« ronrons/s ») qui reste à zéro tant qu'aucun producteur n'est acquis.
+
+Sur le côté, une **colonne d'achats** : d'abord un bouton *producteur* (un « panier de chatons ») portant son coût chiffré, puis, plus bas, un bouton *amélioration de caresse*. Chaque bouton est visiblement **grisé quand les ronrons manquent** et **s'allume quand ils suffisent**. En haut, une ligne **objectif** énonce en toutes lettres le but courant (« Atteins 15 ronrons pour ton premier panier de chatons »).
+
+Quand un producteur est acheté, un **panier de chatons apparaît** à l'écran et le taux par seconde cesse d'être nul. Au fil des paliers, un bouton **renouveau de portée** (le prestige) devient visible. Tout ce qui est mesuré par une règle — ronrons, taux, coût, objectif — est lisible directement dans la page, jamais caché dans un état interne.
+
+## 2. CE QUE LE JOUEUR FAIT
+
+Le joueur **caresse le chaton** en cliquant dessus : chaque clic ajoute des ronrons, et le chaton réagit. Il regarde le compteur monter, puis **achète son premier producteur** dès qu'il en a les moyens, d'un clic sur le bouton d'achat. À partir de là, il **laisse produire** : les ronrons montent seuls, sans clic, sous ses yeux.
+
+Très vite il **arbitre une décision** répétée : continuer à caresser pour un gain immédiat, ou investir ses ronrons dans un producteur passif qui paiera dans la durée — les deux trajectoires se voient dans le compteur. Il **achète des améliorations** qui augmentent le gain par caresse, **poursuit les ob
+[tronqué]
+```json
+{
+  "game_id": "chaton_clicker",
+  "exigences": [
+    {
+      "id": "P01",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].objectives[0].player_goal",
+      "observation": "Dans Cookie Clicker, le but du joueur est d'optimiser une ressource unique qui grimpe sans plafond ni condition de defaite.",
+      "claim": "Un clicker tient parce que le joueur poursuit un objectif chiffre affiche en permanence, jamais une victoire finale.",
+      "enonce": "Le jeu affiche a l'ecran un objectif courant chiffre en ronrons que le joueur cherche a atteindre des la premiere seconde.",
+      "expected_proof": {"kind": "bot_action", "statement": "Le bot lit dans le DOM un HUD 'objectif' non vide au chargement, avant toute action du joueur."},
+      "destination": "s5-wiremap",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_GOAL",
+      "observe": {"hud": "objectif", "predicate": "nonempty"}
+    },
+    {
+      "id": "P02",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "Cookie Clicker demarre par un clic manuel sur un grand cookie qui donne +1 par clic avec un compteur qui s'incremente.",
+      "claim": "Le geste d'amorce doit etre un clic direct sur l'avatar du theme, sinon le joueur n'a aucune prise tactile immediate.",
+      "enonce": "Le joueur peut caresser le chaton en cliquant la cible `caresser_chaton` ; le compteur de ronrons affiche augmente a chaque clic.",
+      "expected_proof": {"kind": "bot_action", "statement": "Le bot clique la cible caresser_chaton et mesure dans le DOM que le compteur ronrons a augmente."},
+      "destination": "s9-build",
+      "acteur": "PLAYER",
+      "loop_role": "PLAYER_ACTION",
+      "affordance": "caresser_chaton",
+      "observe": {"hud": "ronrons", "predicate": "increases"}
+    },
+    {
+      "id": "P03",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.minute_1",
+      "observation": "Le clic sur le cookie declenche un retour visuel immediat et l'increment du compteur a l'ecran.",
+      "claim": "La reponse du jeu doit etre visible dans la meme frame que le clic, sans quoi le lien cause-effet se perd.",
+      "enonce": "Apres chaque caresse, le chaton reagit visuellement par une animation et le total de ronrons se met a jour a l'ecran dans la foulee.",
+      "expected_proof": {"kind": "visual", "statement": "La sonde capture un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic."},
+      "destination": "s9-build",
+      "acteur": "SYSTEM",
+      "loop_role": "GAME_RESPONSE",
+      "observe": {"hud": "ronrons", "predicate": "changes"}
+    },
+    {
+      "id": "P04",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "observation": "Vers la minute 10 de Cookie Clicker, l'accumulation rend accessible l'achat du premier batiment producteur.",
+      "claim": "La premiere recompense doit etre l'ouverture d'un achat, pas un simple nombre, pour donner un but a l'accumulation.",
+      "enonce": "Quand les ronrons atteignent le cout du premier producteur, son bouton d'achat devient actif et visiblement disponible.",
+      "expected_proof": {"kind": "bot_action", "statement": "Le bot accumule des ronrons puis lit que le bouton d'achat du producteur passe d'inactif a actif dans le DOM."},
+      "destination": "s5-wiremap",
+      "acteur": "SYSTEM",
+      "loop_role": "REWARD",
+      "observe": {"hud": "bouton_producteur", "predicate": "changes"}
+    },
+    {
+      "id": "P05",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "observation": "Cookie Clicker oppose tres tot le clic actif qui paie tout de suite a l'achat d'un producteur passif qui paie dans la duree.",
+      "claim": "Sans arbitrage mesurable entre gain immediat et investissement passif, la boucle n'offre aucune vraie decision au joueur.",
+      "enonce": "Le jeu affiche un point de decision : continuer a caresser pour des ronrons immediats OU acheter un producteur qui les genere sans clic.",
+      "expected_proof": {"kind": "oracle", "statement": "Une sonde a deux politiques (oisif contre actif) sur 300 frames montre que la metrique ronrons diverge selon l'option choisie."},
+      "destination": "s4-archi",
+      "acteur": "SYSTEM",
+      "loop_role": "DECISION",
+      "options": ["P02", "P06"],
+      "metric": "ronrons",
+      "horizon_frames": 300,
+      "policies": [
+        {"name": "oisif", "click": null, "every_frames": 0},
+        {"name": "actif", "click": "caresser_chaton", "every_frames": 3}
+      ],
+      "observe": {"hud": "objectif", "predicate": "changes"}
+    },
+    {
+      "id": "P06",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.minute_10",
+      "observation": "L'achat d'un batiment dans Cookie Clicker fait apparaitre une production automatique de cookies par seconde.",
+      "claim": "Le premier achat doit faire surgir un contenu neuf visible, la production passive, pour prouver au joueur que progresser debloque.",
+      "enonce": "Le joueur peut acheter un producteur en cliquant la cible `acheter_producteur` ; un panier de chatons apparait et les ronrons montent sans clic.",
+      "expected_proof": {"kind": "bot_action", "statement": "Le bot achete le producteur puis mesure, sans cliquer, que les ronrons augmentent et qu'un element 'panier_chatons' est apparu dans le DOM."},
+      "destination": "s9-build",
+      "acteur": "PLAYER",
+      "loop_role": "UNLOCK",
+      "affordance": "acheter_producteur",
+      "observe": {"hud": "production_sec", "predicate": "increases", "appears": "panier_chatons"}
+    },
+    {
+      "id": "P07",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "observation": "Apres les premiers achats, Cookie Clicker fixe des paliers de plus en plus couteux qui redirigent l'objectif.",
+      "claim": "Un objectif accompli doit etre immediatement remplace par un autre, textuellement different, sinon la progression parait finie.",
+      "enonce": "Une fois le premier producteur acquis, l'objectif affiche change pour viser un deuxieme producteur plus cher.",
+      "expected_proof": {"kind": "bot_action", "statement": "Le bot lit que le texte du HUD 'objectif' apres le premier achat differe de celui affiche au depart."},
+      "destination": "s5-wiremap",
+      "acteur": "PLAYER",
+      "loop_role": "NEXT_GOAL",
+      "observe": {"hud": "objectif", "predicate": "new_distinct"}
+    },
+    {
+      "id": "P08",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "observation": "Cookie Clicker enchaine des ameliorations multiplicatives comme cible suivante une fois les batiments lances.",
+      "claim": "Le deuxieme objectif doit ouvrir une nature de but differente, ameliorer et pas seulement acheter plus, pour renouveler l'interet.",
+      "enonce": "Apres le deuxieme producteur, l'objectif affiche change encore pour viser une amelioration qui augmente le gain par caresse.",
+      "expected_proof": {"kind": "bot_action", "statement": "Le bot lit un troisieme texte de HUD 'objectif', distinct des deux precedents."},
+      "destination": "s5-wiremap",
+      "acteur": "PLAYER",
+      "loop_role": "NEXT_GOAL",
+      "observe": {"hud": "objectif", "predicate": "new_distinct"}
+    },
+    {
+      "id": "P09",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].retention_answer",
+      "observation": "La retention de Cookie Clicker vient de la repetition du meme geste dans un etat economique qui a change d'echelle.",
+      "claim": "La boucle ne recommence vraiment que si les memes actions se rejouent dans le nouvel etat, pas par simple convention d'ecran.",
+      "enonce": "Dans l'etat enrichi, le joueur rejoue les memes gestes (caresser, laisser produire, encaisser, acheter) et la ressource repart a la hausse.",
+      "expected_proof": {"kind": "oracle", "statement": "La sonde rejoue P02, P03, P04 et P06 dans l'etat post-achat et mesure une nouvelle progression des ronrons."},
+      "destination": "s9-build",
+      "acteur": "SYSTEM",
+      "loop_role": "REPEAT",
+      "replay": ["P02", "P03", "P04", "P06"],
+      "observe": {"hud": "ronrons", "predicate": "increases"}
+    },
+    {
+      "id": "P10",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.endgame",
+      "observation": "L'endgame de Cookie Clicker repose sur un reset de prestige qui remet la ressource a zero contre un bonus permanent.",
+      "claim": "Le prestige n'est ressenti comme un choix fort que si la remise a zero se voit a l'ecran, pas seulement dans les coulisses.",
+      "enonce": "Le joueur peut declencher un renouveau de portee en cliquant la cible `renouveau_portee` ; les ronrons retombent visiblement a zero.",
+      "expected_proof": {"kind": "bot_action", "statement": "Le bot clique renouveau_portee et mesure dans le DOM que le compteur ronrons retombe a zero."},
+      "destination": "s9-build",
+      "acteur": "PLAYER",
+      "loop_role": "META_LOOP",
+      "affordance": "renouveau_portee",
+      "observe": {"hud": "ronrons", "predicate": "resets"}
+    },
+    {
+      "id": "P11",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.endgame",
+      "observation": "Apres une ascension, chaque cookie de Cookie Clicker rapporte davantage grace aux bonus permanents accumules.",
+      "claim": "L'avantage du prestige doit se prouver par un delta mesure superieur sur la meme action, jamais par un texte promettant un bonus.",
+      "enonce": "Apres un renouveau de portee, une meme caresse rapporte strictement plus de ronrons qu'avant le reset.",
+      "expected_proof": {"kind": "oracle", "statement": "La sonde compare le gain d'une caresse (P02) avant et apres le renouveau et verifie qu'il est strictement superieur."},
+      "destination": "s9-build",
+      "acteur": "SYSTEM",
+      "loop_role": "ADVANTAGE",
+      "replay_ref": "P02",
+      "observe": {"hud": "ronrons", "predicate": "increases_more_than:P02"}
+    },
+    {
+      "id": "P12",
+      "source": "EXPECTED",
+      "source_role": "prisme-produit",
+      "reference": "worldscan:games[0].loops.hour_5",
+      "observation": "Dans Cookie Clicker, chaque achat rencherit le suivant selon une courbe exponentielle visible sur le bouton.",
+      "claim": "Le cout affiche doit monter apres chaque achat, sinon le joueur ne percoit aucune rarete ni progression economique.",
+      "enonce": "Le cout affiche d'un producteur augmente visiblement a l'ecran apres chacun de ses achats.",
+      "expected_proof": {"kind": "bot_action", "statement": "Le bot achete deux fois le meme producteur et lit que le cout affiche du second achat est superieur au premier."},
+      "destination": "s5-wiremap",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE"
+    },
+    {
+      "id": "P13",
+      "source": "ADDITIONS",
+      "source_role": "prisme-produit",
+      "reference": null,
+      "observation": "Le charter impose un tick deterministe et un RNG seede, sans Date.now dans la logique metier.",
+      "claim": "Un jeu rejouable a l'identique par hash est la condition pour qu'un bot prouve la solvabilite sans piloter d'horloge murale.",
+      "enonce": "A graine egale et suite d'actions egale, l'etat du jeu produit un hash identique reproductible hors navigateur.",
+      "expected_proof": {"kind": "oracle", "statement": "Deux executions de la logique .mjs avec meme graine et memes actions produisent le meme hash d'etat final."},
+      "destination": "s4-archi",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE"
+    },
+    {
+      "id": "P14",
+      "source": "ADDITIONS",
+      "source_role": "prisme-produit",
+      "reference": null,
+      "observation": "La consigne Pierre remplace les cookies par des chatons, le reste du genre etant conserve.",
+      "claim": "L'attachement au theme felin doit passer par un chaton reellement affiche et reactif, pas par un simple libelle textuel 'chaton'.",
+      "enonce": "Un chaton dessine est visible a l'ecran des le chargement et constitue la cible cliquable centrale du jeu.",
+      "expected_proof": {"kind": "visual", "statement": "La sonde constate au chargement la presence a l'ecran d'un chaton cliquable identifiable."},
+      "destination": "s9-build",
+      "acteur": "SYSTEM",
+      "loop_role": "NONE"
+    }
+  ]
+}
+```
+
+### artifacts/s2-worldscan.txt (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker_canal_probe_2\artifacts\s2-worldscan.txt)
+Basé sur ma recherche, voici mon observation architecturale sur deux jeux comparables au projet `chaton_clicker` : **Cookie Clicker** et **Neko Atsume**, deux piliers du genre clicker/idle et pet-collection games.
+
+---
+
+## **OBSERVATION ARCHITECTURALE**
+
+### **1. Cookie Clicker — Le paradigme du Genre Clicker/Idle**
+
+**Archétype identifié** : Incremental progression game avec prestige resets infinis.
+
+**Progression sur 4 horizons** :
+- **Minute 1** : Le joueur clique manuellement sur un grand cookie (1 cookie/clic). Engagement immédiat par action directe.
+- **Minute 10** : Premier palier d'acquisition — achat de Cursor (5 cookies), puis Grandma (10 cookies). Transition vers production passive (auto-clickers génèrent cookies/sec).
+- **Heure 5** : Synergies émergentes — accumulation vers ~1 million de cookies all-time, déblocage de Golden Cookies (bonus temporaires), construction de synergies via upgrades multiplicatifs, découverte des premiers bâtiments moyens (Farm, Mine).
+- **Endgame** : Boucles de prestige infinies — reset stratégique pour accumuler Heavenly Chips → débloquer Dragon bonuses → recommencer avec multiplicateurs permanents. Chaque cycle raccourcit la durée pour atteindre le seuil suivant (sensation de "fast-forward" addictive).
+
+**Économie & Rétention** :
+- Courbe de coût exponentielle (chaque upgrade 1.15× plus cher) crée des phases distinctes : "rush cheap upgrades" (slot-machine-like) suivi de "long save" (gratification différée). Psychologie du renforcement à schéma variable.
+- Prestige tree offre une progression *permanente* même après reset complet — chaque prestige donne +1% de production, stacking infiniment. Aucune défaite possible ; progression monotone.
+- Minigames intégrés (Grandmapocalypse = branche secrète débloquée par Grandma, Wrinklers = parasites récompensant ; Grimoire = sort-casting au late-game) créent des phases de surprise et de découverte.
+
+**Condition de victoire/défaite** :
+- **has_win_state: false** — Pas de fin définie. Cookie Clicker est un jeu de **marathon** explicitement.
+- **has_defeat_state: false** — Aucune condition de défaite ; perte de cookies = recalcul de production, pas sanction.
+
+**Pourquoi le joueur revient ?** Les cycles prestige se raccourcissent exponentiellement — chaque session sent plus *puissante* que la précédente. Les achievements et secrets (minigames débloqués) créent des points de curiosité. La variable-rate reinforcement (Golden Cookies imprévisibles) pique la dopamine.
+
+**Briques architecturales supposées** :
+- *Tick-based production engine* : bâtiments génèrent cookies sur une boucle de tick (idéal pour offline progression).
+- *Prestige tree persistence* : système de sauvegarde hiberné à travers les resets (local storage JSON).
+- *RNG event layer* : Golden Cookies, Wrinklers spawned aléatoirement sur la grille (variable reinforcement).
+- *Upgrade graph* : DAG d'unlock (prérequis + déverrouillage progressif).
+- *Minigame subsystems* : chaque branche (Grandmapocalypse, Grimoire, Pantheon) est un subsystème presque indie.
+
+---
+
+### **2. Neko Atsume — Collectathon Idle avec Économie Asynchrone**
+
+**Archétype identifié** : Pet collection game avec progression time-gated et spawn passif.
+
+**Progression sur 4 horizons** :
+- **Minute 1** : Placer nourriture + jouets dans le yard. L'interface est minimaliste (drag-and-drop). Aucune action "active" requise après la première interaction.
+- **Minute 10** : Fermer l'app. Les chats visitent *pendant que l'app est fermée* et laissent des poissons (currency) avant de partir. Retourner à l'app = collecte des récompenses. Découverte des chats visuels.
+- **Heure 5** : Expérimentation avec les préférences — tester différents jouets/nourriture pour attirer des chats spécifiques. Progression vers des rares (30+ cat variants avec unlock conditions). Achat de yard expansions (doublage de l'espace à 180 poissons or).
+- **Endgame** : Collectathon complet — débloquer tous les 86+ chats et rares. La "fin" est nominale mais le jeu continue indéfiniment (nouvelles versions = nouveaux chats).
+
+**Économie & Rétention** :
+- Monnaie duale (poisson argent vs or). Les chats paient mieux si jouets/nourriture sont à leur goût → incitation à expérimenter.
+- Spawn scheduler invisible crée un *loop asynchrone* : "apparition chat = notification viscérale", "yard upgrade = déblocage de stratégies" → retour quotidien.
+- Préférences cachées créent une dimension puzzle : "Quel chat préfère le minou ? Le gant de laine ?" Réponse découverte par essai-erreur, recherche en wiki ou attente (émerge via sessions multiples).
+- Catbook = compendium photographique (gamification du collecte).
+
+**Condition de victoire/défaite** :
+- **has_win_state: true** — Victoire nominale = collecter tous les 86+ chats (Catbook complet).
+- **has_defeat_state: false** — Aucune défaite. Progression monotone, jamais de "game over".
+- **player_goal** : "Assembler la collection complète en fournissant les bons jouets aux bons moments."
+
+**Pourquoi le joueur revient ?** L'aesthetic des chats (mignonnerie, diversité visuelle) crée l'attachement. La collection psychology ("gotta catch 'em all") est un moteur prouvé. Les rares cats créent des *checkpoint psychologiques* — "débloquer le chat 47/86" est une micro-victoire. L'offline progression = récompense juste d'attendre.
+
+**Briques architecturales supposées** :
+- *Spawn manager* : probabilités de visite basées sur item combos présents et temps écoulé depuis fermeture.
+- *Preference matrix* : cat × item → weight (détermine spawn probability + payout fish bonus).
+- *Progression gate* : rare cats stockées dans DB avec unlock conditions (item combo XYZ présent lors de visite).
+- *Offline time multiplier* : récompense poisson augmente si app fermée longtemps.
+- *Persistence layer* : Catbook sauvegardé localement, listing à travers les sessions.
+- *Item durability system* (v2) : jouets cassent après N visites, incitant à l'achat régulier.
+
+---
+
+## **PATTERNS ARCHITECTURAUX CANDIDATS À L'IMPORT**
+
+### Communs aux deux jeux :
+1. **Variable Schedule Reinforcement** : alternance de "rushes" rapides (upgrades bon marché) et "long saves" (prestige/rare cats) crée des pics d'engagement.
+2. **Offline Progression Reward** : jeu continu quand fermé → justifie retours quotidiens (besoin d'une *tick-based engine* robuste).
+3. **Local Storage Persistence** : progression survit aux restarts ; sauvegarde implicite assurant zéro frustration d'oubli.
+4. **Progression Gate via Economics** : déblocage de contenu corrélé au earning (prestige level → Grimoire, fish count → yard expansion).
+5. **Prestige/Collection Loop** : reset partiel (réinitialiser grind, garder boni) ou progression nominale (collecte infinie) crée l'illusion d'une fin tout en gardant un hook.
+
+### Risques connus du genre :
+- **Inflation d'exponentielles** : courbes de coût mal calibrées peuvent "trivialiser" le mid-game (tout gratuit très vite) ou "mur" le late-game (progression gelée des heures).
+- **Prestige fatigue** : trop de cycles = lassitude ; Neko Atsume l'évite en supprimant les resets (collection continue).
+- **Cookie Clicker paradox** : le jeu "peut se jouer tout seul" → engagement zéro si pas d'événements/minigames pour surprendre.
+- **Pet collection saturation** : au-delà de ~100 cats, reconnaissance visuelle s'effondre ; Neko Atsume l'adresse via catégories + Catbook.
+
+---
+
+## **SOURCES CITÉES**
+
+**Cookie Clicker** :
+- [Cookie Clicker Official Wiki & Strategy Guide](https://www.playcookieclicker.com/)
+- [YouTube: "EASY Beginners Guide From START to ASCENSION // Cookie Clicker"](https://www.youtube.com/watch?v=EqcP3vq0rE8) (February 2026)
+- [Pocket Gamer: Cookie Clicker Ascension Guide](https://www.pocketgamer.com/cookie-clicker/ascension-guide/)
+- [Medium: "Clicker Games: A Technical Exploration of Incremental System Architecture"](https://medium.com/@tommcfly2025/clicker-games-a-technical-exploration-of-incremental-system-architecture-b6d842e6963e)
+- [Dinogame GG: "What Is an Idle Game? The Genre That Plays Itself"](https://dinogame.gg/blog/what-is-an-idle-game/)
+
+**Neko Atsume** :
+- [Medium: "Game Design Breakdown: The Simplicity of Neko Atsume" (by Alexia Mandeville)](https://alexiamandeville.medium.com/game-design-breakdown-the-simplicity-of-neko-atsume-a8616a937a47)
+- [Neko Atsume Fandom Wiki](https://nekoatsume.fandom.com/wiki/Neko_Atsume)
+- [YouTube: "Neko Atsume: Kitty Collector - 3-Minute Gameplay (Android Walkthrough)"](https://www.youtube.com/watch?v=sJnTZ90sr0g) (April 7, 2026)
+- [MDA Analysis: "MDA: Neko Atsume – Krystal Li – The Mechanics of Magic"](https://mechanicsofmagic.com/2024/04/07/mda-neko-atsume/) (April 2024)
+- [iMore Game Guide: "Neko Atsume game guide: How to collect all the cats!"](https://www.imore.com/neko-atsume-game-guide-how-collect-all-cats)
+
+---
+
+```json
+{
+  "games": [
+    {
+      "game": "Cookie Clicker",
+      "sources": [
+        {
+          "url": "https://www.playcookieclicker.com/",
+          "type": "article"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=EqcP3vq0rE8",
+          "type": "video",
+          "timestamp": "2026-02-01"
+        },
+        {
+          "url": "https://www.pocketgamer.com/cookie-clicker/ascension-guide/",
+          "type": "article"
+        },
+        {
+          "url": "https://medium.com/@tommcfly2025/clicker-games-a-technical-exploration-of-incremental-system-architecture-b6d842e6963e",
+          "type": "article"
+        }
+      ],
+      "loops": {
+        "minute_1": "Manual click on giant cookie (1 cookie per click). Immediate feedback loop: click → +1 cookie → visual counter increment.",
+        "minute_10": "Purchase first buildings (Cursor 5c, Grandma 10c). Transition to passive income; buildings auto-generate cookies/sec. Initial synergies unlock (Cursor × Grandma = upgrade bonuses).",
+        "hour_5": "Accumulate towards ~1M all-time cookies baked. Golden Cookie hunting (random spawns, temporary 7× production multiplier). Unlock mid-game buildings (Farm, Mine, Factory). Upgrade purchasing creates exponential cost jumps; players experience 'prestige threshold awareness'.",
+        "endgame": "Prestige reset cycles: accumulate Heavenly Chips (cube root of all-time cookies baked), spend on permanent Heavenly Upgrades (+1% CPS each). Each cycle shortens grind time to next reset. Late-game unlock: Dragon bonuses (massive multipliers), Grimoire (spell-casting minigame), Pantheon (passive blessing system). Infinite progression with no win state."
+      },
+      "objectives": [
+        {
+          "mode": "Prestige Progression (solo)",
+          "has_win_state": false,
+          "victory_condition": null,
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Optimize ascension cycles to maximize Heavenly Chips gained; unlock Dragon bonuses and end-game systems (Grimoire, Pantheon) to achieve maximum prestige and CPS production."
+        }
+      ],
+      "retention_answer": "Prestige resets create exponential acceleration: each cycle feels 5-10× faster than the last, triggering reward dopamine spikes. Variable schedule reinforcement alternates cheap-upgrade 'slots' with long-save patience tests. Minigame discovery (Grandmapocalypse, Wrinklers, Wrath Cookies) creates surprise checkpoints. Golden Cookies spawn unpredictably, rewarding active play. No failure state means zero frustration; only upward numbers."
+    },
+    {
+      "game": "Neko Atsume",
+      "sources": [
+        {
+          "url": "https://alexiamandeville.medium.com/game-design-breakdown-the-simplicity-of-neko-atsume-a8616a937a47",
+          "type": "article"
+        },
+        {
+          "url": "https://nekoatsume.fandom.com/wiki/Neko_Atsume",
+          "type": "wiki"
+        },
+        {
+          "url": "https://www.youtube.com/watch?v=sJnTZ90sr0g",
+          "type": "video",
+          "timestamp": "2026-04-07"
+        },
+        {
+          "url": "https://mechanicsofmagic.com/2024/04/07/mda-neko-atsume/",
+          "type": "article"
+        },
+        {
+          "url": "https://www.imore.com/neko-atsume-game-guide-how-collect-all-cats",
+          "type": "article"
+        }
+      ],
+      "loops": {
+        "minute_1": "Drag-and-drop food and toys into yard. Minimal interaction; app remains active for ~30 seconds. Interface clarity and tactile feedback establish minimal friction. Aesthetic appeal of items shown in yard creates immediate attachment.",
+        "minute_10": "Close app. Cats visit asynchronously while app is closed. Return to app after 5-30 mins → find cats present, collect fish rewards (silver + gold). Visual discovery of cat variety (different animations, sizes, colors) triggers collectathon psychology.",
+        "hour_5": "Experiment with item combos to attract rares. Gold fish earned → purchase new toys/furniture → unlock rare cat unlock conditions. Yard expansion purchase (180+ gold fish) doubles available spaces. Catbook photo album grows; each new cat photo is a micro-achievement.",
+        "endgame": "Collectathon loop: systematically unlock all 86+ cat variants by matching preference patterns. Hidden unlock conditions (e.g., 'Tabby cat only appears if Deluxe Box + Sushi present') discovered via wiki or trial-and-error. No true 'end'; game continues indefinitely (v2 adds durability mechanics, new cats, new challenges). Progression becomes 100% completion hunt."
+      },
+      "objectives": [
+        {
+          "mode": "Solo Collectathon (no PvP/coop)",
+          "has_win_state": true,
+          "victory_condition": "Collect all 86+ cats (including rare variants) and achieve Catbook completion",
+          "has_defeat_state": false,
+          "defeat_condition": null,
+          "player_goal": "Discover each cat's preferred food/toy combination and assemble a complete yard collection, expanding yard as needed and documenting all cats in the Catbook photo album."
+        }
+      ],
+      "retention_answer": "Collection psychology ('gotta catch 'em all') is primal; each new cat is a dopamine spike. Visual appeal (cute cat designs, variety) creates intrinsic motivation. Time-gating (cats only appear offline) rewards periodic returns. Preference puzzle (discovering hidden unlock conditions) engages curiosity over hours. No failure state eliminates frustration. Offline progression = reward for patience; opening app becomes a 'treasure check' ritual."
+    }
+  ],
+  "advisory": true
+}
+```
+
+---
+
+## SKIPPED_VALIDATION
+
+- **Validation non effectuée** : Profondeur de l'analyse architecturale de briques candidates à importer. L'étape demande une analyse de patterns éprouvés *du studio* (jeux verts de la base de code) — la knowledge_base locale n'a pas été accessible pour relier Cookie Clicker et Neko Atsume aux systèmes internes Studio2. **Périmètre** : Cartographie de réutilisabilité (quel pattern du studio s'aligne avec quel pattern externe). **Raison** : Pas d'accès à la structure interne de la knowledge_
+[tronqué]
+```json
+{"status": "NOT_DISCOVERED"}
+```
+
+### loop.json (chemin réel : C:\Users\Studio-Dev\Desktop\Studio2\EVIDENCE\runs\chaton_clicker_canal_probe_2\loop.json)
+{
+ "schema_version": 1,
+ "game_id": "chaton_clicker",
+ "steps": [
+  {
+   "role": "PLAYER_GOAL",
+   "ref": "P01",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "nonempty"
+   }
+  },
+  {
+   "role": "PLAYER_ACTION",
+   "ref": "P02",
+   "affordance": "caresser_chaton",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   }
+  },
+  {
+   "role": "GAME_RESPONSE",
+   "ref": "P03",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "REWARD",
+   "ref": "P04",
+   "repeat": 1,
+   "observe": {
+    "hud": "bouton_producteur",
+    "predicate": "changes"
+   }
+  },
+  {
+   "role": "DECISION",
+   "ref": "P05",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "changes"
+   },
+   "options": [
+    "P02",
+    "P06"
+   ],
+   "metric": "ronrons",
+   "horizon_frames": 300,
+   "policies": [
+    {
+     "name": "oisif",
+     "click": null,
+     "every_frames": 0
+    },
+    {
+     "name": "actif",
+     "click": "caresser_chaton",
+     "every_frames": 3
+    }
+   ]
+  },
+  {
+   "role": "UNLOCK",
+   "ref": "P06",
+   "affordance": "acheter_producteur",
+   "repeat": 1,
+   "observe": {
+    "hud": "production_sec",
+    "predicate": "increases",
+    "appears": "panier_chatons"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "P07",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "NEXT_GOAL",
+   "ref": "P08",
+   "repeat": 1,
+   "observe": {
+    "hud": "objectif",
+    "predicate": "new_distinct"
+   }
+  },
+  {
+   "role": "REPEAT",
+   "ref": "P09",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases"
+   },
+   "replay": [
+    "P02",
+    "P03",
+    "P04",
+    "P06"
+   ]
+  },
+  {
+   "role": "META_LOOP",
+   "ref": "P10",
+   "affordance": "renouveau_portee",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "resets"
+   }
+  },
+  {
+   "role": "ADVANTAGE",
+   "ref": "P11",
+   "repeat": 1,
+   "observe": {
+    "hud": "ronrons",
+    "predicate": "increases_more_than:P02"
+   },
+   "replay_ref": "P02"
+  }
+ ]
+}
+
+## PRÉ-MORTEM (erreurs des runs passés)
+- [manifest-a71dc0c52d697c15] 6 des 10 aretes de boucle joueur (P02, P03, P05, P08, P09, P11) ne sont pas prouvables par le canal joueur ancre : e2e.mjs n'imprime au journal que P04/P06/P07/P10, solvability.mjs n'imprime aucun ref, P05/P08 ne sont prouves qu'en interne, et P09/P11 n'ont aucune feuille en featuremap ; en outre un arbre src/ divergent (src/logic.mjs, import 'crypto', snake_case) est couple a tests/logic.test.mjs et ne teste pas le code cable par index.html — cause: les oracles e2e.mjs/solvability.mjs n'ancrent pas chaque pas de boucle avec sa ref loop.json, la decompo s3 traite P09/P11 en rejouables sans feuille, et un residu src/ des tentatives s9 anterieures (pre-mortem manifest-b69705172fd086c4) subsiste a cote de l'arbre racine vivant -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-bade66954a84d819] Le Prisme (s1) declare expected_proof.kind='bot_action' pour les exigences NEXT_GOAL P07/P08, alors que le maillon G de l'oracle s3 (check_decompo.mjs, EFFECT_KINDS) n'accepte que file_write|visual : un heritage litteral du kind aurait produit un FAIL boucle_sans_effet. J'ai porte P07/P08 en feuilles d'effet 'visual' (contenu fidele a l'observe objectif=new_distinct), conformement au garde-fou V4 maillon G. — cause: kind bot_action attribue en amont a un NEXT_GOAL, incoherent avec le contrat maillon-G de l'oracle s3 qui exige un effet visible file_write|visual -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-5bcb9253623ca207] arbre src/ mort et divergent livre a cote de l'arbre racine vivant, avec le test protege tests/logic.test.mjs couple a ce src/ mort (preuve factice) — cause: residu non nettoye de tentatives s9 anterieures, recurrence exacte du pre-mortem manifest-b69705172fd086c4 -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-b5db3a9d9a14c308] 13 mutants sur 33 survivaient au gate mutation officiel car des lignes reellement executees (bornes d'index, compteurs internes, frequence exacte de caresse, contenu exact des textes d'objectif, garde de nullite partielle, re-masquage du panier) n'avaient aucune assertion dependante de leur effet precis — cause: la suite de tests verifiait des proprietes agregees plausibles sans jamais asserter l'effet observable exact de chaque ligne mutee, un trou que la couverture de lignes ne revele pas mais que le mutation testing rend mecaniquement visible -- GENERATION_DIFFERENTE_A_REEXAMINER
+- [manifest-d4a027c061a5fe3a] echec de la tentative 3 a s9-build — cause: returncode=0; mutation=FAIL (volets rouges: runtime_alive) -- GENERATION_DIFFERENTE_A_REEXAMINER
+
+FORGE_DISPATCH:s3-decompo:chaton-clicker-canal-probe-2-20260908:1

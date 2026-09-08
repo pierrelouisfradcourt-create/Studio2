@@ -1,0 +1,200 @@
+{
+ "game_id": "chaton_clicker",
+ "systemes": [
+  {
+   "id": "s_clic_ressource",
+   "features": [
+    {
+     "id": "f_caresse",
+     "capacites": [
+      {
+       "id": "cap_caresser_entree",
+       "capacite": "Le joueur caresse le chaton en cliquant l'affordance caresser_chaton depuis le point d'entree du jeu.",
+       "source_ref": "P02",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible caresser_chaton."
+       }
+      },
+      {
+       "id": "cap_caresser_effet",
+       "capacite": "Chaque caresse incremente le compteur de ronrons affiche.",
+       "source_ref": "P02",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Dans la page index.html, apres le clic sur caresser_chaton, le bot mesure dans le DOM que le compteur ronrons a augmente."
+       }
+      },
+      {
+       "id": "cap_reponse_caresse",
+       "capacite": "Le chaton et le compteur reagissent visuellement dans la foulee de la caresse.",
+       "source_ref": "P03",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "La sonde capture un changement d'etat visuel du chaton et du compteur ronrons juste apres un clic."
+       }
+      }
+     ]
+    },
+    {
+     "id": "f_avatar_felin",
+     "capacites": [
+      {
+       "id": "cap_chaton_visible",
+       "capacite": "Un chaton dessine, cliquable, est present a l'ecran des le chargement.",
+       "source_ref": "P14",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "La sonde constate au chargement la presence a l'ecran d'un chaton cliquable identifiable."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s_economie",
+   "features": [
+    {
+     "id": "f_producteur",
+     "capacites": [
+      {
+       "id": "cap_recompense_bouton_producteur",
+       "capacite": "L'accumulation de ronrons rend le bouton d'achat du producteur actif et disponible.",
+       "source_ref": "P04",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Le bot accumule des ronrons puis lit que le bouton d'achat du producteur passe d'inactif a actif dans le DOM."
+       }
+      },
+      {
+       "id": "cap_acheter_producteur_entree",
+       "capacite": "Le joueur achete un producteur en cliquant l'affordance acheter_producteur depuis le point d'entree du jeu.",
+       "source_ref": "P06",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible acheter_producteur."
+       }
+      },
+      {
+       "id": "cap_acheter_producteur_effet",
+       "capacite": "Apres l'achat, un panier de chatons apparait et les ronrons montent sans clic (production passive).",
+       "source_ref": "P06",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Dans la page index.html, apres l'achat et sans cliquer, le bot mesure que les ronrons augmentent et qu'un element 'panier_chatons' est apparu dans le DOM."
+       }
+      }
+     ]
+    },
+    {
+     "id": "f_cout",
+     "capacites": [
+      {
+       "id": "cap_cout_croissant",
+       "capacite": "Le cout affiche d'un producteur augmente visiblement apres chacun de ses achats.",
+       "source_ref": "P12",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Le bot achete deux fois le meme producteur et lit que le cout affiche du second achat est superieur au premier."
+       }
+      }
+     ]
+    },
+    {
+     "id": "f_arbitrage",
+     "capacites": [
+      {
+       "id": "cap_decision_clic_vs_producteur",
+       "capacite": "Le jeu offre un arbitrage mesurable : caresser pour un gain immediat ou investir dans un producteur passif.",
+       "source_ref": "P05",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Une sonde a deux politiques (oisif contre actif) sur 300 frames montre que la metrique ronrons diverge selon l'option choisie."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s_progression",
+   "features": [
+    {
+     "id": "f_objectif",
+     "capacites": [
+      {
+       "id": "cap_objectif_initial",
+       "capacite": "Un objectif courant chiffre en ronrons est affiche des le chargement, avant toute action.",
+       "source_ref": "P01",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Le bot lit dans le DOM un HUD 'objectif' non vide au chargement, avant toute action du joueur."
+       }
+      },
+      {
+       "id": "cap_objectif_second",
+       "capacite": "Apres le premier achat, le label objectif change pour un texte nouveau visant un deuxieme producteur.",
+       "source_ref": "P07",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Le label 'objectif' affiche, apres le premier achat, un texte nouveau visant un deuxieme producteur, distinct du texte affiche au depart."
+       }
+      },
+      {
+       "id": "cap_objectif_amelioration",
+       "capacite": "Apres le deuxieme producteur, le label objectif change encore pour viser une amelioration.",
+       "source_ref": "P08",
+       "expected_proof": {
+        "kind": "visual",
+        "statement": "Le label 'objectif' affiche, apres le deuxieme producteur, un troisieme texte visant une amelioration, distinct des deux precedents."
+       }
+      }
+     ]
+    },
+    {
+     "id": "f_prestige",
+     "capacites": [
+      {
+       "id": "cap_renouveau_entree",
+       "capacite": "Le joueur declenche un renouveau de portee (prestige) en cliquant l'affordance renouveau_portee depuis le point d'entree du jeu.",
+       "source_ref": "P10",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Depuis le point d'entree du jeu (index.html), le bot clique la cible renouveau_portee."
+       }
+      },
+      {
+       "id": "cap_renouveau_effet_reset",
+       "capacite": "Le renouveau de portee fait retomber visiblement le compteur de ronrons a zero.",
+       "source_ref": "P10",
+       "expected_proof": {
+        "kind": "bot_action",
+        "statement": "Dans la page index.html, apres le clic sur renouveau_portee, le bot mesure dans le DOM que le compteur ronrons retombe a zero."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s_socle",
+   "features": [
+    {
+     "id": "f_determinisme",
+     "capacites": [
+      {
+       "id": "cap_hash_deterministe",
+       "capacite": "A graine egale et suite d'actions egale, la logique produit un hash d'etat identique, reproductible hors navigateur.",
+       "source_ref": "P13",
+       "expected_proof": {
+        "kind": "oracle",
+        "statement": "Deux executions de la logique .mjs avec meme graine et memes actions produisent le meme hash d'etat final."
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

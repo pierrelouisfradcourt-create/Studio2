@@ -1,0 +1,1 @@
+{"claim_verdict": "NO_CLAIM_ALLOWED", "etape": "s9-build", "git_head": "c4b38ba17e35f6bbe8e2c31e88561890225d9868", "hmac": "5db0d2721b0f5ec16c8bbd04fb0c878c9e970a9449a09c05a3858d640656a9bb", "kind": "return", "reason": {"status": "NOT_TRANSMITTED"}, "run_id": "chaton-clicker-canal-probe-2-20260908", "schema": "forge.context_manifest.v1", "ts": 1788853123.100448}
