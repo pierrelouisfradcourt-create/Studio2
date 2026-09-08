@@ -346,8 +346,16 @@ def test_full_greenfield_offline_verdict_ok(tmp_path, offline, monkeypatch):
     # R3 : deps_interdites OBLIGATOIRE et NON VIDE (un blueprint sans paire est
     # rejeté par l'exécuteur avant écriture) — paire inerte pour ce src minimal.
     blueprint = {"modules": ["main"], "deps_interdites": [["logique", "rendu"]]}
+    # GO Pierre 2026-09-08 (join_check-surfacing) : `couvre` ajouté — absent depuis
+    # l'origine de ce fixture, le champ a été introduit au schéma WireMap après
+    # l'écriture de ce test. Sans lui, check_wiremap_join classait cette ligne en
+    # régime EMPTY_FORM (forme_satisfaite=False), désormais visible dans
+    # humangate_flags (_join_facts) — la carte doit donc réellement citer la
+    # capacité qu'elle couvre, comme featuremap.cap.boot (source_ref=ex.boot) le
+    # documente déjà juste en dessous.
     wiremap = {"features": [{"feature": "R1 boot", "fonction": "boot",
-                             "fichiers": ["main.py"], "preuve": "test_boot"}]}
+                             "fichiers": ["main.py"], "preuve": "test_boot",
+                             "couvre": ["cap.boot"]}]}
     # s2-worldscan (réparation 2026-08-03, invariant « un agent de connaissance ne
     # doit jamais posséder l'état qu'il décrit ») : plus de droit d'écriture, un
     # bloc ```json``` terminal est désormais matérialisé par l'exécuteur en

@@ -4726,7 +4726,7 @@ class ForgeDriver:
             self.project, self.run_id, code_r, archi_r, wire_r, reviewer,
             redteam_ran=ran, redteam_findings=findings, redteam_blocked=blocked,
             extra_advisory=(self._prisme_facts(state) + self._observable_facts(state)
-                           + self._player_loop_facts(state)),
+                           + self._player_loop_facts(state) + self._join_facts(state)),
             standard=std_r,
             git_head=current_git_head(), nonce=new_nonce(), ts=time.time(),
             key_file=self.key_file,
@@ -5265,6 +5265,47 @@ class ForgeDriver:
                 "canal-de-preuve (exécution) : " + "; ".join(preuve_execution.get("raisons", ())))
         return tuple(facts)
 
+    def _join_facts(self, state: dict) -> tuple[str, ...]:
+        """Chantier join_check-surfacing (GO Pierre 2026-09-08) — même architecture
+        que `_prisme_facts`/`_observable_facts`/`_player_loop_facts` : OBJECTION
+        SIGNÉE via `extra_advisory`, jamais dans `software_verdict`.
+
+        `forge.run_real.check_wiremap_join` (ADVISORY, câblé à `s5-wiremap` depuis
+        le 2026-09-02, J-1) mesure déjà si la WireMap couvre réellement le plan (5
+        régimes : NOT_APPLICABLE/EMPTY_FORM/VOID/PARTIAL/JOINED, `forme_satisfaite`
+        séparée de la jointure elle-même) — mais son reçu restait invisible dans
+        `humangate_flags` : mesuré, il avait détecté `lignes_sans_couvre: 2`
+        (exactement R12/R15, cf. chantier couvre-REJEU) dès le tout premier run
+        `chaton_clicker`, sans qu'aucun humain ne le voie sans lire `state.json` à
+        la main. Préfère le reçu APRÈS réparation (`join_check_apres_reparation`)
+        s'il existe — l'état le plus à jour que le driver connaisse, même logique
+        que `_run_wiremap_oracle` pour `join_check`/`join_check_apres_reparation`.
+
+        `NOT_MEASURED` (outil injoignable) ou un run sans `join_check` du tout
+        (antérieur au 2026-09-02, ou étape absente du profil) ne déclenchent rien —
+        une mesure absente n'est ni une objection ni un satisfecit."""
+        d = state.get("steps", {}).get("s5-wiremap", {}).get("detail", {})
+        if not isinstance(d, dict):
+            return ()
+        jc = d.get("join_check_apres_reparation") or d.get("join_check")
+        if not isinstance(jc, dict):
+            return ()
+        if jc.get("status") == "NOT_MEASURED" or jc.get("regime") == "NOT_MEASURED":
+            return ()
+        regime = jc.get("regime")
+        forme_ok = jc.get("forme_satisfaite", True)
+        if regime in ("JOINED", "NOT_APPLICABLE") and forme_ok:
+            return ()
+        return (
+            f"join_check (WireMap ↔ featuremap) : régime {regime!r}"
+            + ("" if forme_ok else ", forme non satisfaite (au moins une ligne sans "
+                                   "'couvre' non vide)")
+            + f" — capacités couvertes {jc.get('capacites_couvertes')}/{jc.get('capacites')}, "
+              f"lignes_sans_couvre={jc.get('lignes_sans_couvre')}, "
+              f"couverture_fantome={jc.get('couverture_fantome')} (advisory, jamais un "
+              "juge du code ; gate dur = décision HumanGate non prise)",
+        )
+
     # --- escalade (boucle fermée EN CODE, mêmes bornes que forge.escalate) ----
 
     def _builder_step(self) -> str | None:
@@ -5615,7 +5656,7 @@ class ForgeDriver:
                 self.project, self.run_id, code_r, archi_r, wire_r, reviewer,
                 redteam_ran=ran, redteam_findings=findings, redteam_blocked=blocked,
                 extra_advisory=(self._prisme_facts(state) + self._observable_facts(state)
-                               + self._player_loop_facts(state)),
+                               + self._player_loop_facts(state) + self._join_facts(state)),
                 standard=std_r,
                 git_head=current_git_head(), nonce=new_nonce(), ts=time.time(),
                 key_file=self.key_file, scope="PARTIAL",
