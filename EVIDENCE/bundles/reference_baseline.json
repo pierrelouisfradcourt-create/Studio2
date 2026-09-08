@@ -1,5 +1,5 @@
 {
- "combined_sha256": "73c90183774d1f23bcffc74055eb39187cd92b6d10e5cbfffcf069ebef953405",
+ "combined_sha256": "bae0fd4574c9564a66c3ee000824cfc95e7c7de02b6b9d8d9a85776297fcc56d",
  "complete": true,
  "config_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\forge\\reference_protected.yaml",
  "file_count": 543,
@@ -256,7 +256,7 @@
   "forge/root_problems.json": "9f4df51d07dba60d3c5ed45d7f13aa7c54806eb0fae2a57708d1b3fb493faf2c",
   "forge/run_identity.py": "37e020ba90f1d36f62538886ca25a99ca92e61481d04ee30f4d026cb7c252b71",
   "forge/run_identity.schema.json": "e4f44637c3640fbefd055528113d6e0c8e83f271d3ccb4648e09d726c4f59b2e",
-  "forge/run_real.py": "7270c5bbd52542317f3cbbf6d84a116d2754c3fa21002dcb63e27caaf8224bf4",
+  "forge/run_real.py": "2c087b7229afbd3a3226180b81176cac5b70ce2ed894c34cbe830fa31d385915",
   "forge/runtime.py": "536d4aea11d302d6b9bdb75d04bd7fe55659b049cce90e793bb40a3bbee1a060",
   "forge/runtime_inventory_oracle.py": "22bf29e637de5b36614fa98feb992525043b560628fee0eaef8eb346220979d9",
   "forge/search_usage.mjs": "9d2142d4ca6fa2c3d87035ff3e4ceb979a116842ac1e17f662e6b9e34c417328",
@@ -548,14 +548,14 @@
   "forge/wiremap_nav.mjs": "5f0eb2ff6e02f113e0255020637b2214180c0078da809d21ac67413133fa95c1",
   "forge/wiremap_nav.test.mjs": "4ad84b6596d1f3dacaf90749bc3fb63ae756c99415f06ff8d90d6af6788b0b5e"
  },
- "git_head": "5e17c92e6f071cbbd9a8e6b9da6a68b52cc83c32",
+ "git_head": "698112206e5b6e2ed0a97374dc8a2f914dc5659a",
  "protected": [
   "GAMES/pong/**",
   "forge/**",
   "control_plane/registry.py",
   ".claude/hooks/**"
  ],
- "recorded_at": "2026-09-07T18:50:06.698Z",
+ "recorded_at": "2026-09-08T06:32:41.163Z",
  "schema": "forge.reference_guard.baseline.v1",
  "unreadable": []
 }
