@@ -1888,11 +1888,18 @@ def check_wiremap_canal(wiremap: dict) -> dict:
     return {"passed": not raisons, "raisons": raisons}
 
 
-def _loop_role_by_ref(loop_json: dict) -> dict:
-    """{ref: role} depuis `loop_json['steps']` — jamais d'exception sur une entrée
-    malformée (ref/role absents ou mal typés = entrée ignorée, pas une erreur ici ;
-    la forme de loop.json est de la responsabilité de `loop_spec.mjs::checkLoopSpec`,
-    pas de ce module)."""
+def _loop_steps_by_ref(loop_json: dict) -> dict:
+    """{ref: step (dict complet)} depuis `loop_json['steps']` — jamais d'exception
+    sur une entrée malformée (ref absent/mal typé = entrée ignorée, pas une erreur
+    ici ; la forme de loop.json est de la responsabilité de
+    `loop_spec.mjs::checkLoopSpec`, pas de ce module).
+
+    Remplace l'ancien `_loop_role_by_ref` (chantier couvre-REJEU, GO Pierre
+    2026-09-08) : un rôle REJEU (REPEAT/ADVANTAGE) a besoin de bien plus que son
+    `role` — il lui faut `replay`/`replay_ref` (cf. `_replayed_refs`), portés par
+    le MÊME step. Fonction privée, aucun appelant externe (driver.py n'appelle que
+    les fonctions publiques check_wiremap_canal/check_player_loop_coverage/
+    check_player_loop_proof) : renommage sans rétro-compatibilité à préserver."""
     out: dict = {}
     steps = loop_json.get("steps") if isinstance(loop_json, dict) else None
     if not isinstance(steps, list):
@@ -1901,10 +1908,38 @@ def _loop_role_by_ref(loop_json: dict) -> dict:
         if not isinstance(step, dict):
             continue
         ref = step.get("ref")
-        role = step.get("role")
-        if isinstance(ref, str) and ref.strip() and isinstance(role, str):
-            out[ref] = role
+        if isinstance(ref, str) and ref.strip():
+            out[ref] = step
     return out
+
+
+# Rôles REJEU (Gameplay Contract, lettres H/J) : REPEAT et ADVANTAGE ne portent
+# JAMAIS de capacité propre — `forge/contracts/s3-decompo.yaml` (gardeFou) les
+# exempte explicitement (« n'exigent AUCUNE feuille propre »), satisfaits par
+# `replay`/`replay_ref` ciblant une exigence DÉJÀ couverte ailleurs. Décision
+# Pierre 2026-09-08 (option a, plan docs/superpowers/plans/2026-09-08-couvre-
+# rejeu-s3-s5-harmonisation.md) : ne JAMAIS créer de capacité artificielle pour
+# ces deux rôles — `check_player_loop_coverage` doit donc résoudre leur
+# couverture par HÉRITAGE (les refs rejoués sont-ils eux-mêmes couverts ?),
+# jamais par une recherche `source_ref == ref` qui ne peut structurellement
+# jamais aboutir pour ces deux rôles.
+REJEU_ROLES = frozenset({"REPEAT", "ADVANTAGE"})
+
+
+def _replayed_refs(step: dict) -> list:
+    """Refs REJOUÉS par un pas REPEAT (`replay`, liste de refs) ou ADVANTAGE
+    (`replay_ref`, un seul ref). Jamais d'exception sur un type inattendu — une
+    entrée malformée rend `[]` (rejeu sans cible, traité comme un manque par
+    l'appelant), jamais une erreur."""
+    if not isinstance(step, dict):
+        return []
+    replay = step.get("replay")
+    if isinstance(replay, list):
+        return [r for r in replay if isinstance(r, str) and r.strip()]
+    replay_ref = step.get("replay_ref")
+    if isinstance(replay_ref, str) and replay_ref.strip():
+        return [replay_ref]
+    return []
 
 
 def _capacity_source_ref_by_id(featuremap: dict) -> dict:
@@ -1949,9 +1984,31 @@ def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict)
     - `PASS` : chaque rôle joueur référencé est couvert par au moins une ligne au
       canal adéquat.
 
-    Retourne {passed: bool|None, status, roles_manquants: [...], raisons: [...]}.
-    `passed` vaut `None` sous `NOT_MEASURED` — jamais un booléen qui prétendrait
-    trancher une mesure qui n'a pas eu lieu."""
+    RÉVISÉ (chantier couvre-REJEU, GO Pierre 2026-09-08, plan docs/superpowers/
+    plans/2026-09-08-couvre-rejeu-s3-s5-harmonisation.md) : les rôles REJEU
+    (`REJEU_ROLES` = REPEAT/ADVANTAGE) ne cherchent plus une capacité
+    `source_ref == ref` — par construction du gardeFou `s3-decompo.yaml`, une
+    telle capacité n'existe JAMAIS pour ces deux rôles (invariant 2 du plan :
+    `s3-decompo.yaml` reste inchangé, aucune capacité artificielle n'est créée
+    pour compenser). Leur couverture s'HÉRITE : un rôle REJEU est `PASS` ssi
+    CHAQUE ref que son `replay`/`replay_ref` cible est LUI-MÊME déjà `PASS` en
+    `PLAYER_LOOP`/`META_LOOP` — un rejeu ne peut pas prouver ce qu'il rejoue si
+    ce qu'il rejoue n'est pas prouvé. Calculé en deux passes : rôles NORMAUX
+    d'abord (pour connaître leur statut), rôles REJEU ensuite (pour hériter).
+
+    Ajout additif (même GO) : `couvre_non_resolu` — toute chaîne citée dans
+    `couvre`, sur N'IMPORTE QUELLE ligne, qui ne résout à AUCUNE capacité réelle
+    de featuremap.json est rapportée nommément. C'est la détection mécanique de
+    l'anomalie mesurée sur R12/R15 (`couvre: ['rejouerBoucle']`,
+    `['gainParCaresse']` — des noms de méthode, jamais des ids `cap_*`),
+    reproduite à l'identique sur 3 runs indépendants. Contribue à `status`/
+    `passed` (une référence non résolue est aussi grave qu'un rôle manquant :
+    aucune trace fiable n'existe entre la carte et le plan).
+
+    Retourne {passed: bool|None, status, roles_manquants: [...],
+    couvre_non_resolu: [...], raisons: [...]}. `passed` vaut `None` sous
+    `NOT_MEASURED` — jamais un booléen qui prétendrait trancher une mesure qui
+    n'a pas eu lieu."""
     features = wiremap.get("features") if isinstance(wiremap, dict) else None
     if not isinstance(features, list):
         features = []
@@ -1959,14 +2016,21 @@ def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict)
     any_canal = any(isinstance(f, dict) and "canal" in f for f in features)
     if not any_canal:
         return {"passed": None, "status": "NOT_MEASURED", "roles_manquants": [],
+                "couvre_non_resolu": [],
                 "raisons": ["aucune ligne WireMap ne porte le champ 'canal' — run "
                            "antérieur au chantier canal-de-preuve, non rétro-jugé"]}
 
-    role_by_ref = _loop_role_by_ref(loop_json)
+    steps_by_ref = _loop_steps_by_ref(loop_json)
+    role_by_ref = {ref: s.get("role") for ref, s in steps_by_ref.items()
+                  if isinstance(s.get("role"), str)}
     source_ref_by_cap = _capacity_source_ref_by_id(featuremap)
+    capacites_reelles = set(source_ref_by_cap.keys())
 
     # {capacite_id: {canaux observés à travers TOUTES les lignes qui la couvrent}}
+    # + collecte, en marge, des références `couvre` qui ne résolvent à AUCUNE
+    # capacité réelle (couvre_non_resolu ci-dessous) — même parcours, un seul coût.
     canals_by_cap: dict[str, set] = {}
+    couvre_non_resolu: list[str] = []
     for feat in features:
         if not isinstance(feat, dict):
             continue
@@ -1974,27 +2038,39 @@ def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict)
         values = canal if isinstance(canal, list) else ([canal] if canal else [])
         couvre = feat.get("couvre")
         couvre_ids = couvre if isinstance(couvre, list) else ([couvre] if couvre else [])
+        name = feat.get("feature", "?")
         for cid in couvre_ids:
-            if isinstance(cid, str):
-                canals_by_cap.setdefault(cid, set()).update(
-                    v for v in values if isinstance(v, str))
+            if not isinstance(cid, str):
+                continue
+            canals_by_cap.setdefault(cid, set()).update(
+                v for v in values if isinstance(v, str))
+            if cid.strip() and cid not in capacites_reelles:
+                couvre_non_resolu.append(
+                    f"{name} : couvre cite {cid!r}, qui ne résout aucune capacité "
+                    "réelle de featuremap.json (ni un id cap_*, ni un rôle rejeu "
+                    "correctement résolu) — jamais un nom de fonction ni une phrase")
 
-    raisons: list[str] = []
+    raisons: list[str] = list(couvre_non_resolu)
     roles_manquants: list[str] = []
+    couvert_by_ref: dict[str, bool] = {}
+
+    # Passe 1 — rôles NORMAUX (hors REJEU) : inchangé fonctionnellement.
     # Un rôle peut être porté par PLUSIEURS refs (ex. NEXT_GOAL apparaît 2 fois,
     # P07 et P08 sur chaton_clicker) — chaque ref est jugée séparément : un rôle à
     # N occurrences dans loop.json exige N preuves distinctes, pas une seule.
     for ref, role in sorted(role_by_ref.items()):
-        if role not in PLAYER_LOOP_ROLES:
+        if role not in PLAYER_LOOP_ROLES or role in REJEU_ROLES:
             continue
         required_canal = "META_LOOP" if role == "META_LOOP" else "PLAYER_LOOP"
         cap_ids = [cid for cid, sref in source_ref_by_cap.items() if sref == ref]
         if not cap_ids:
+            couvert_by_ref[ref] = False
             roles_manquants.append(ref)
             raisons.append(f"{ref} (rôle {role}) : aucune capacité de featuremap "
                            "ne le cite en source_ref — traçabilité rompue")
             continue
         couvert = any(required_canal in canals_by_cap.get(cid, set()) for cid in cap_ids)
+        couvert_by_ref[ref] = couvert
         if not couvert:
             roles_manquants.append(ref)
             canaux_vus = sorted({c for cid in cap_ids for c in canals_by_cap.get(cid, set())})
@@ -2002,8 +2078,29 @@ def check_player_loop_coverage(wiremap: dict, featuremap: dict, loop_json: dict)
                 f"{ref} (rôle {role}) : couvert uniquement par {canaux_vus or ['<aucun>']}"
                 f" — {required_canal} requis, WHITE_BOX/PLAYER_INPUT seuls ne suffisent jamais")
 
-    return {"passed": not roles_manquants, "status": "FAIL" if roles_manquants else "PASS",
-            "roles_manquants": roles_manquants, "raisons": raisons}
+    # Passe 2 — rôles REJEU (REPEAT/ADVANTAGE) : couverture HÉRITÉE des refs
+    # rejoués, jamais recherchée via source_ref == ref (structurellement absent).
+    for ref, role in sorted(role_by_ref.items()):
+        if role not in REJEU_ROLES:
+            continue
+        cibles = _replayed_refs(steps_by_ref.get(ref, {}))
+        if not cibles:
+            roles_manquants.append(ref)
+            raisons.append(f"{ref} (rôle {role}) : aucun 'replay'/'replay_ref' "
+                           "déclaré dans loop.json — rejeu sans cible")
+            continue
+        cibles_non_couvertes = [c for c in cibles if not couvert_by_ref.get(c, False)]
+        if cibles_non_couvertes:
+            roles_manquants.append(ref)
+            raisons.append(
+                f"{ref} (rôle {role}) : rejoue {cibles}, dont {cibles_non_couvertes} "
+                "non couvert(s) en PLAYER_LOOP/META_LOOP — un rejeu n'hérite pas "
+                "d'une preuve qui n'existe pas")
+
+    return {"passed": not (roles_manquants or couvre_non_resolu),
+            "status": "FAIL" if (roles_manquants or couvre_non_resolu) else "PASS",
+            "roles_manquants": roles_manquants,
+            "couvre_non_resolu": couvre_non_resolu, "raisons": raisons}
 
 
 def check_player_loop_proof(wiremap: dict, oracle_log_text: str) -> dict:

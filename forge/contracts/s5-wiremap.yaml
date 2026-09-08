@@ -98,6 +98,17 @@ output_contract: >-
   NON VIDE, citant l'`id` EXACT d'une capacité (feuille) de featuremap.json. Sans
   ce champ, le delta attendu-vs-réel n'est calculable par personne : une carte qui
   ne dit pas ce qu'elle réalise ne se confronte à aucun plan.
+  EXCEPTION RÔLES REJEU (REPEAT/ADVANTAGE de loop.json, GO Pierre 2026-09-08,
+  option a — `s3-decompo.yaml` reste inchangé, aucune capacité artificielle
+  n'est créée pour ces deux rôles) : pour une ligne qui documente un rôle REJEU
+  (`replay`/`replay_ref` non vide dans loop.json), `couvre` cite l'id (ou les
+  ids) `cap_*` RÉEL(S) de la/des exigence(s) que `replay`/`replay_ref` cible(nt)
+  — jamais un id inventé, jamais un nom de méthode/fonction, jamais une phrase.
+  Exemple mesuré (chaton_clicker) : le rôle REPEAT rejoue [P02,P03,P04,P06] ->
+  `couvre` cite les capacités réelles dont le `source_ref` ∈ {P02,P03,P04,P06}
+  (ex. `cap_caresser_entree`, `cap_caresser_effet`, …), jamais `rejouerBoucle`
+  (nom de méthode — rejeté, mesuré sur 3 runs indépendants). Cette exception ne
+  dispense JAMAIS de la règle générale pour toute ligne NON-REJEU.
 
 # --- 9. Capacités (Important — `aucun` autorisé, jamais absent) ---
 skill: aucun
