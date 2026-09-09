@@ -9,6 +9,15 @@
       "-q"
     ]
   },
+  "content_additive": {
+    "cwd": ".",
+    "command": [
+      ".venv/Scripts/python.exe",
+      "-m",
+      "forge.content_additive",
+      "GAMES"
+    ]
+  },
   "leviathan": {
     "cwd": "GAMES/leviathan",
     "command": [
