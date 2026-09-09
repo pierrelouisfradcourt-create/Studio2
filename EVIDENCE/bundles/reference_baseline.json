@@ -1,5 +1,5 @@
 {
- "combined_sha256": "269d5bf2397511ecdad8b6241066a1736e6bbbbfbae6ccd0ea9482480a7aa3a2",
+ "combined_sha256": "81e607098d5e2b0f592a6179d9213b13f62d80bec13eb75688501778bdb55ff3",
  "complete": true,
  "config_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\forge\\reference_protected.yaml",
  "file_count": 550,
@@ -126,7 +126,7 @@
   "forge/compare_artifacts.test.mjs": "3ec9f57f966c903496dafe31a86a25a205b2cf921686b8cc1302e18ed7cc0ae3",
   "forge/component_design.py": "30de7bddba6faccd0cbb3902b810f5d73b7a4e01297bd01dbe99fcb5c19f9458",
   "forge/consumption.py": "7b55ca820d3595c16b98f5ed3033ce8fab85123bfcb29552243c692075922d40",
-  "forge/content_additive.py": "7229cf38b58a6ed92092c3c82fb5d614ff1de21c8a8ef115d0ef9d781775ef64",
+  "forge/content_additive.py": "61076aafe1d62dd90f724e1ce0ac834f7d870e4a317d61ae10d6a691a08715fb",
   "forge/context_check.mjs": "1da416bc29912eac11658b0b7dda8272e1a6e9b3a3c5e3b7caac09adb75190ff",
   "forge/context_check.test.mjs": "d5c65156ffb80327380dd75ee65aede29d59f661af53ac81710599dd98cdd827",
   "forge/context_manifest.py": "6371cdcf869290dba1bee8b0df98376f0a3e56cb109a76771b9408e16f3af1bb",
@@ -335,7 +335,7 @@
   "forge/tests/test_component_design.py": "2a7f6c684cd0536fdf9b9dca39157ae1e052d82c006049b76d3f8c3bd041e4df",
   "forge/tests/test_consumption.py": "eba9ea6f82cdd54324dbeb8e9eaefc66bf8d0eb7e65fe7701fda439af67c414e",
   "forge/tests/test_consumption_evidence_layer.py": "c3823bec4a89e2bd15aa2edbfd7b42bab2cfee01dbc69669f2df850f90899684",
-  "forge/tests/test_content_additive.py": "b3dd2edb214daa751554d624fd258953f42001d812c791e94134357068ea7071",
+  "forge/tests/test_content_additive.py": "d5c5a51fe9fb86df68201ba00d6a570271e9d58f30554b485885cc2ef3abcbfb",
   "forge/tests/test_context_manifest.py": "60420a1ff180387b01c3d17822e4ab1d7a756555901f2fcd807aa1757c93c7f1",
   "forge/tests/test_context_manifest_p4_p7_execution_fields.py": "f5243458af4409ceecad71fa16de92b026be5f1c5c9f857574822b69028d333d",
   "forge/tests/test_contract.py": "e5ac7e42115616d4091af8debe2c867f9c1409c46b786cca37851de83de0bbc9",
@@ -555,14 +555,14 @@
   "forge/wiremap_nav.mjs": "5f0eb2ff6e02f113e0255020637b2214180c0078da809d21ac67413133fa95c1",
   "forge/wiremap_nav.test.mjs": "4ad84b6596d1f3dacaf90749bc3fb63ae756c99415f06ff8d90d6af6788b0b5e"
  },
- "git_head": "b8181a9e3ce2cf50667fdc7ad37d299ca6cd014d",
+ "git_head": "8c30161410f50886cbb43fdc4d028c7dc483bc4c",
  "protected": [
   "GAMES/pong/**",
   "forge/**",
   "control_plane/registry.py",
   ".claude/hooks/**"
  ],
- "recorded_at": "2026-09-09T18:59:34.071Z",
+ "recorded_at": "2026-09-09T20:02:45.251Z",
  "schema": "forge.reference_guard.baseline.v1",
  "unreadable": []
 }
