@@ -1,8 +1,8 @@
 {
- "combined_sha256": "7393c2875efceae2a412056d60923a807cc512a102b11061b90e8bbd5f3be54e",
+ "combined_sha256": "0182852ca26efbda2290b0802dadf23583bd05d71759e93bd960513c40747409",
  "complete": true,
  "config_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\forge\\reference_protected.yaml",
- "file_count": 548,
+ "file_count": 550,
  "files": {
   ".claude/hooks/agent_authority_allowlist_v0.json": "177387ee901b90ce6ba82b3bec0bf146dd6bc3d5c6907ccf52be489610075d7e",
   ".claude/hooks/posttool_forge_executed.py": "703d1d76b2cebe3ae98e7f84fcbb81b7b99e0fd35e5ad3496e9ef2508b2a3d88",
@@ -273,6 +273,7 @@
   "forge/standard/core_requirements.yaml": "af8fdf3a246f1b43842fb7660b3ff4654f315309f3285b4b1067ba440edb5643",
   "forge/standard/factory_capabilities.yaml": "b931423ed3cd30656db01fc91863fce42db19cfddb0df41dc3d989064d6730f0",
   "forge/standard/repo_map.yaml": "0a80fa46a457ace2aa05187b072a491d13f2117b78aebca3d638aae6e21ffe63",
+  "forge/standard/target_capabilities.yaml": "d7d64115a48a871107acd64c85c6c2473b4fdb45b800d7d4b2c9dbc1b4781463",
   "forge/standard_oracles.py": "203890ffc9e3a5fcc59cf5daade92e076082146624013d79355127c9ea3766f8",
   "forge/static_oracles.py": "b3ff23623ac09c6c6f3423ef727c5a856db6926f2d58796000db885b25ee8cdf",
   "forge/studio_expectations.json": "ba37a5a12e81d1ae72d83b7e987312c67809d6269cc6c3af68f55e81b287fda1",
@@ -522,6 +523,7 @@
   "forge/tests/test_static_oracles.py": "cebe057a3657f81441521fd85d3eca3d42a6bd88bf4f75a8dd7fe83fe21605e2",
   "forge/tests/test_studio_link.py": "9fc290e0b4395401746127d2031538108037eb4ef888214be436557b136c8c30",
   "forge/tests/test_studio_link_cli.py": "8c9f67f8d29854ff59b96ea12965ca0317931ca5eaf534d23ddebea8585797f8",
+  "forge/tests/test_target_capabilities.py": "07a7cdf77a00a1273160b88e91f2b970854fc6abef2250e60002ced4901d24ed",
   "forge/tests/test_tetris_solvability_budget.py": "527b037cc56bfb90e142d2e531d2d9507a6db3eb4317169f7f6ed0289fc3de25",
   "forge/tests/test_tool_observability_capture.py": "2d7fc5d6109b224e797c0bd26978ca510dd4b01bfb1d2c5bcf95a79d55497641",
   "forge/tests/test_tool_observability_cli.py": "b7828ac5de111f99e06db5d49eafc3608333d85d17d1be896484e59d25533501",
@@ -553,14 +555,14 @@
   "forge/wiremap_nav.mjs": "5f0eb2ff6e02f113e0255020637b2214180c0078da809d21ac67413133fa95c1",
   "forge/wiremap_nav.test.mjs": "4ad84b6596d1f3dacaf90749bc3fb63ae756c99415f06ff8d90d6af6788b0b5e"
  },
- "git_head": "4f6b7d483dedeffd5cf517a602c7a7f945a96bbc",
+ "git_head": "88b195abfa1b253d6ee6ab22153002bb9e774c3b",
  "protected": [
   "GAMES/pong/**",
   "forge/**",
   "control_plane/registry.py",
   ".claude/hooks/**"
  ],
- "recorded_at": "2026-09-09T17:09:48.019Z",
+ "recorded_at": "2026-09-09T18:45:21.432Z",
  "schema": "forge.reference_guard.baseline.v1",
  "unreadable": []
 }
