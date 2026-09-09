@@ -1,5 +1,5 @@
 {
- "combined_sha256": "e5ec5a932796f578cc772939beb79d82db481c17762bd939131eea18268c761d",
+ "combined_sha256": "55018ccf2a59ecb18dab1357adaa126adc90c931244b62a20ece283b69600eb8",
  "complete": true,
  "config_path": "C:\\Users\\Studio-Dev\\Desktop\\Studio2\\forge\\reference_protected.yaml",
  "file_count": 546,
@@ -165,8 +165,8 @@
   "forge/cross_field_quality.mjs": "0a297d5e8043ccb91f9b46bfb25a548b962e80815e5209d639679fef1d975d38",
   "forge/cross_field_quality.test.mjs": "8734d737f72e4e363d48e54d1abf035b0fe0ab38d5883978b1a39bf3fa04b71d",
   "forge/declaration_readers.mjs": "3634daa46514493a19fea8b50a4e6248097f958c41247d8915dd018a1710da26",
-  "forge/declaration_readers.test.mjs": "f1e3a23c101d8dff28304e5444d8650814d3f5932de0a128d2475ee0aa410ef2",
-  "forge/declaration_watchlist.json": "77d6c46aa803ea3db8cc09485363c6460dc62fde38389fd07e47062a490082e1",
+  "forge/declaration_readers.test.mjs": "0894a57baeca242d6cdd0373ba7ed1b08a01bcce94c3253a99331ee0d3c935bd",
+  "forge/declaration_watchlist.json": "617f66adbea45c7d9f90dfd2e7f7471ea1694002bd8343c0e2c8b40ecd5d967f",
   "forge/director.py": "737dcab16c9e9b7b3bc8e0d2d06449a1dc83d696f9ddec12f49fe34c09c02e1e",
   "forge/dispatch.py": "5687cccca3907e788bd281a3dc67c58d3952fee7f0e84bea329e0281d0ff5315",
   "forge/driver.py": "f96df415333901f817094188bc55f2ad80e3c41f002a3c05e1e45438f2433996",
@@ -182,8 +182,8 @@
   "forge/genome_generation.yaml": "b241ff65f6fecc31fc09edc807685adcc641070e94660833fb612545976da487",
   "forge/git_guard.py": "a4a67d0af75a2aa557ed3e1b6a1b8fe15acc2713971745975c5012fab8680ba5",
   "forge/godot.config.example.json": "ecba262e75d8cdce83b1cdf91e434b131ff4b783f11027b4a3bf6ceba683df5a",
-  "forge/godot_bin.mjs": "9d6cd9ec77ace2fc6f288661f6f438b395c8c628bcfa68b9f2d64e670b32722d",
-  "forge/godot_bin.test.mjs": "116853d9d9f1fdfba4149b434184e2e35ef35c22c5a0b490c19f73a580066ffe",
+  "forge/godot_bin.mjs": "be84d9ad6b1f24b84eedd18aef7f151cbb7c997416d508969ea1954669744f49",
+  "forge/godot_bin.test.mjs": "8272b70e9b585b7ebc4106af43309f3ab449869166131ab10e07348bc5bd2730",
   "forge/godot_oracle.mjs": "bfc0cf59724b75b888e099fd6025c6d95ac8a67539f4ea8b68868fe539070545",
   "forge/godot_oracle.test.mjs": "4c415d649f303ae626ccd8c972719e6fa161c1a481c95f24bc653675cd073dbd",
   "forge/godot_oracle_summary.test.mjs": "8bd39984403e07d4f13a4acea0f8388a7172468901385f7eaad1b204ca9399bd",
@@ -264,7 +264,7 @@
   "forge/search_usage_godot_runner.test.mjs": "1cedc6a2344ceb68591da8eb10fee7c75edea5f6ac11af1de44f5305a073aaee",
   "forge/skipped_validation.py": "cd2588cc1eabd5442d5db30f79ac9202632e4b2614383e8d2f8f3c044893998c",
   "forge/solvability_budget_audit.py": "ce46cf50e564da567420b705e03e8f073f70bfc8385566e958f7e8c874e80d8e",
-  "forge/solvability_godot.mjs": "55d0998da842726dacde9368d02fe5ba383f0e88148e9530de60ecad25cd94e0",
+  "forge/solvability_godot.mjs": "31efc0b3718fdf4784a78ded4b31a354ea71582f08062d4b64e893a3c0074cc3",
   "forge/solvability_godot.test.mjs": "ab2bd2d91e5480fb78234b706dc3eb285dcbfeb7bf2215f194922432631d7d1f",
   "forge/solvability_total_timeout.test.mjs": "a70d7c6bac561d906c8b17aee721ef3781859cacc38a8df03b61853ee7ab2fdd",
   "forge/standard/SCHEMA.md": "05e78ea57363703a5613316c53cff03c592e32534071d34470f4448ecbac52fe",
@@ -276,7 +276,7 @@
   "forge/static_oracles.py": "b3ff23623ac09c6c6f3423ef727c5a856db6926f2d58796000db885b25ee8cdf",
   "forge/studio_expectations.json": "ba37a5a12e81d1ae72d83b7e987312c67809d6269cc6c3af68f55e81b287fda1",
   "forge/studio_link.py": "2b9b77fc371e0b2055d181b1c4c9c4036f914fd1b76a291ca78a242364f81b6c",
-  "forge/studio_selfaudit.mjs": "69ee8a9bd039edb0a7d2b79b17f7c2eece1a1c2cacb061c47409a486f544fc69",
+  "forge/studio_selfaudit.mjs": "b2579864af72cb2c9a86fdd67a259f6c19aa6d41935447087abc3132077f161b",
   "forge/studio_selfaudit.test.mjs": "786b50dae69f0e990c675471368231c21a6e9ef9f6f5091284760ab57a3a00b4",
   "forge/studio_selfaudit_divergences.test.mjs": "138cd27f01551ae8d7359a7231ea9dec7e02a62b7bd9ea903b1de204b9ed9321",
   "forge/studio_selfaudit_injection.test.mjs": "6fa7138f6d5b5052a2386315566fe287ee88154528d08487750684df70e2306e",
@@ -551,14 +551,14 @@
   "forge/wiremap_nav.mjs": "5f0eb2ff6e02f113e0255020637b2214180c0078da809d21ac67413133fa95c1",
   "forge/wiremap_nav.test.mjs": "4ad84b6596d1f3dacaf90749bc3fb63ae756c99415f06ff8d90d6af6788b0b5e"
  },
- "git_head": "d3f8af5852f7be35b0fdcfc9e1c7828be513ef43",
+ "git_head": "504bc6f3b5418f854ce12b680cd95d6e6ecb9bf5",
  "protected": [
   "GAMES/pong/**",
   "forge/**",
   "control_plane/registry.py",
   ".claude/hooks/**"
  ],
- "recorded_at": "2026-09-08T20:58:35.615Z",
+ "recorded_at": "2026-09-09T16:22:55.993Z",
  "schema": "forge.reference_guard.baseline.v1",
  "unreadable": []
 }
