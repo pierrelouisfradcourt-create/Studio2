@@ -55,6 +55,14 @@ var effraye_restant: int = 0
 var rang_capture: int = 0
 var rng_etat: int = 0
 var statut: int = Statut.EN_COURS
+# --- Portee de zone (ligne world.scope_declaration) ---
+# La ZONE COURANTE et CE QUE LES ZONES QUITTEES SE RAPPELLENT. Declares ici, et ici
+# seulement, pour que l'arrivee d'un monde multi-zone soit une extension de la forme de
+# l'etat et non sa reconstruction. Une partie mono-zone laisse les deux a leur defaut :
+# aucune regle existante ne les lit, aucune ne change de comportement.
+# La PARTITION des portees est declaree dans world_state, jamais redecrite ici.
+var zone: String = ""              # identifiant de la zone courante, "" si aucune
+var memoire_zones: Dictionary = {} # zone -> ce que cette zone se rappelle
 
 
 # Construction initiale COMPLETE et reproductible a partir d'une CARTE et d'une graine.
@@ -138,6 +146,8 @@ func clone() -> Object:
 	c.rang_capture = rang_capture
 	c.rng_etat = rng_etat
 	c.statut = statut
+	c.zone = zone
+	c.memoire_zones = memoire_zones.duplicate(true)
 	return c
 
 
@@ -172,7 +182,9 @@ func egal_profond(autre: Object) -> bool:
 		and effraye_restant == autre.effraye_restant
 		and rang_capture == autre.rang_capture
 		and rng_etat == autre.rng_etat
-		and statut == autre.statut)
+		and statut == autre.statut
+		and zone == autre.zone
+		and memoire_zones == autre.memoire_zones)
 
 
 # Validation STRUCTURELLE (ligne core.error_handling). Aucune I/O, aucune exception :

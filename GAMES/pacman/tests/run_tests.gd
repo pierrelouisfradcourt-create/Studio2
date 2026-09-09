@@ -108,7 +108,7 @@ class Harness extends RefCounted:
 #                       lecture separe MODE et DASH).
 # Aucune assertion n'a ete affaiblie ; aucune n'a ete supprimee. Le total passe de 2612 a
 # 2740. VALEUR MESUREE d'une execution, jamais anticipee.
-const EXPECTED_ASSERTS := 2740
+const EXPECTED_ASSERTS := 2765
 
 const DOSSIERS: Array = [
 	["res://07_TESTS/unit", ".test.gd"],
