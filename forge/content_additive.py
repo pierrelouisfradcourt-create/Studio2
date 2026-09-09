@@ -47,11 +47,31 @@ COUCHE_LOGIQUE = "05_SYSTEMS"
 COUCHE_RUNTIME = "06_RUNTIME"
 COUCHES_TEST = ("07_TESTS", "tests")
 
+# Vocabulaire FERMÉ des NIVEAUX de sévérité. Les six propriétés ne sont pas de même nature,
+# et les confondre sous un verdict unique rendait l'oracle inutilisable comme gate : il
+# aurait bloqué bomberman_3d pour une raison qui ne menace pas son cœur.
+#
+#   INVARIANT  la LOGIQUE PURE ne nomme aucun contenu (P4, P5). Sa violation coûte le CŒUR :
+#              tout module pur devrait alors être rouvert. C'est la seule frontière dont la
+#              rupture n'est pas rattrapable à bas prix.
+#   HYGIENE    forme du point de passage (P1, P2, P3). Sa violation coûte UN FICHIER
+#              D'ADAPTATEUR. Mesure du 2026-09-09 : bomberman_3d échoue P2 et tient P4/P5 —
+#              ajouter une quatrième arène lui coûte l'édition de content_provider.gd, pas
+#              une reconstruction. Luanti fait de même avec ses 28 alias `mapgen_*` en dur,
+#              et tient : le couplage y est énuméré et vérifié au chargement.
+#   INTEGRITE  accord catalogue ↔ disque (P6). Ne parle pas d'architecture mais de
+#              CORRECTION DU CONTENU — autre axe, autre question, autre décision.
+INVARIANT = "INVARIANT"
+HYGIENE = "HYGIENE"
+INTEGRITE = "INTEGRITE"
+NIVEAUX = (INVARIANT, HYGIENE, INTEGRITE)
+
 # Vocabulaire FERMÉ des verdicts.
 CONFORME = "CONFORME"
+RESERVES = "RESERVES"
 NON_CONFORME = "NON_CONFORME"
 SANS_OBJET = "SANS_OBJET"
-VERDICTS = (CONFORME, NON_CONFORME, SANS_OBJET)
+VERDICTS = (CONFORME, RESERVES, NON_CONFORME, SANS_OBJET)
 
 
 def code_seul(texte: str) -> str:
@@ -85,6 +105,7 @@ class Constat:
     """
 
     nom: str
+    niveau: str
     tenue: bool
     detail: str
     fautifs: list[str] = field(default_factory=list)
@@ -141,6 +162,7 @@ def analyser(jeu: Path) -> Rapport:
     # P1 — un SEUL point de passage entre la donnée inerte et le reste du jeu.
     rap.constats.append(Constat(
         nom="P1 point de passage unique",
+        niveau=HYGIENE,
         tenue=len(prov) == 1,
         detail=f"{len(prov)} fichier(s) de code lisent la racine de contenu",
         fautifs=[_rel(p, jeu) for p in prov],
@@ -155,6 +177,7 @@ def analyser(jeu: Path) -> Rapport:
             p2.append(f"{_rel(p, jeu)} cite {', '.join(cites)}")
     rap.constats.append(Constat(
         nom="P2 fournisseur ne nomme aucun contenu",
+        niveau=HYGIENE,
         tenue=not p2,
         detail="aucune unité citée" if not p2 else f"{len(p2)} fournisseur(s) citent du contenu",
         fautifs=p2,
@@ -165,6 +188,7 @@ def analyser(jeu: Path) -> Rapport:
     p3 = [_rel(p, jeu) for p in prov if "match " in code_seul(_lire(p))]
     rap.constats.append(Constat(
         nom="P3 aucun aiguillage par nom",
+        niveau=HYGIENE,
         tenue=not p3,
         detail="aucun `match` dans le fournisseur" if not p3 else "aiguillage présent",
         fautifs=p3,
@@ -184,6 +208,7 @@ def analyser(jeu: Path) -> Rapport:
                 fautifs.append(f"{_rel(f, jeu)} cite {', '.join(cites)}")
         rap.constats.append(Constat(
             nom=nom,
+            niveau=INVARIANT,
             tenue=not fautifs,
             detail=f"{racine.name} propre" if not fautifs else f"{len(fautifs)} fichier(s) fautifs",
             fautifs=fautifs,
@@ -221,6 +246,7 @@ def analyser(jeu: Path) -> Rapport:
     fantomes = [d for d in declarees if d not in unites]
     rap.constats.append(Constat(
         nom="P6 catalogue et disque s'accordent",
+        niveau=INTEGRITE,
         tenue=lisible and not manquantes and not fantomes,
         detail=("aucun catalogue ne déclare les unités" if not lisible
                 else f"{len(set(declarees))}/{len(unites)} unité(s) déclarée(s)"),
@@ -228,8 +254,14 @@ def analyser(jeu: Path) -> Rapport:
                  + [f"déclarée mais absente du disque : {d}" for d in fantomes]),
     ))
 
-    if any(not c.tenue for c in rap.constats):
+    # VERDICT GRADUÉ. Un échec d'INVARIANT est bloquant ; le reste est une RÉSERVE — dite,
+    # jamais tue. La graduation retire de la SÉVÉRITÉ, jamais de la MESURE : les six
+    # propriétés sont toujours évaluées et tout échec reste imprimé avec ses fautifs.
+    echecs = [c for c in rap.constats if not c.tenue]
+    if any(c.niveau == INVARIANT for c in echecs):
         rap.verdict = NON_CONFORME
+    elif echecs:
+        rap.verdict = RESERVES
     return rap
 
 
@@ -254,13 +286,22 @@ def _imprimer(rapports: list[Rapport]) -> None:
         for c in r.constats:
             if c.tenue:
                 continue
-            print(f"    ÉCHEC {c.nom} — {c.detail}")
+            # Le NIVEAU est imprimé avec l'échec : sans lui, une réserve d'hygiène et une
+            # rupture d'invariant se liraient pareil, ce qui est exactement le défaut que
+            # la graduation corrige.
+            print(f"    ÉCHEC [{c.niveau}] {c.nom} — {c.detail}")
             for f in c.fautifs:
                 print(f"          {f}")
     applicables = [r for r in rapports if r.verdict != SANS_OBJET]
     conformes = [r for r in applicables if r.verdict == CONFORME]
-    print(f"\nBILAN : {len(conformes)} conforme(s) / {len(applicables)} applicable(s) / "
+    reserves = [r for r in applicables if r.verdict == RESERVES]
+    bloquants = [r for r in applicables if r.verdict == NON_CONFORME]
+    print(f"\nBILAN : {len(conformes)} conforme(s) / {len(reserves)} avec réserve(s) / "
+          f"{len(bloquants)} non conforme(s) / {len(applicables)} applicable(s) / "
           f"{len(rapports) - len(applicables)} sans objet")
+    if reserves and not bloquants:
+        print("Aucun INVARIANT rompu. Les réserves sont d'HYGIENE ou d'INTEGRITE : "
+              "coût borné, pas une menace pour le cœur. `--strict` les rend bloquantes.")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -271,12 +312,25 @@ def _build_parser() -> argparse.ArgumentParser:
                         help="dossier contenant les projets Godot (défaut : GAMES)")
     parser.add_argument("--json", action="store_true",
                         help="sortie machine au lieu du rapport lisible")
+    parser.add_argument("--strict", action="store_true",
+                        help="promeut HYGIENE et INTEGRITE au rang bloquant "
+                             "(la graduation redevient un verdict unique)")
     return parser
 
 
 def main(argv: "list[str] | None" = None) -> int:
     """Contrat des CLI forge : `_harden_streams()` en premier, jamais de trace nue,
-    toujours un int. 0 si tout applicable est conforme, 1 sinon, 2 si rien à mesurer."""
+    toujours un int.
+
+    Codes de retour, GRADUÉS depuis le 2026-09-09 :
+      0  aucun INVARIANT rompu — des réserves d'HYGIENE ou d'INTEGRITE peuvent subsister,
+         elles sont imprimées avec leurs fautifs ;
+      1  au moins un INVARIANT rompu (ou, sous `--strict`, n'importe quelle propriété) ;
+      2  aucun projet à mesurer.
+
+    `--strict` existe pour que la graduation reste une POLITIQUE et non une perte : la
+    mesure des six propriétés est identique dans les deux modes, seule la sévérité change.
+    """
     _harden_streams()
     args = _build_parser().parse_args(argv)
     racine = Path(args.racine)
@@ -290,15 +344,18 @@ def main(argv: "list[str] | None" = None) -> int:
             "racine": racine.as_posix(),
             "projets": [{
                 "jeu": r.jeu, "verdict": r.verdict, "unites": r.unites, "motif": r.motif,
-                "constats": [{"nom": c.nom, "tenue": c.tenue, "detail": c.detail,
-                              "fautifs": c.fautifs} for c in r.constats],
+                "constats": [{"nom": c.nom, "niveau": c.niveau, "tenue": c.tenue,
+                              "detail": c.detail, "fautifs": c.fautifs} for c in r.constats],
             } for r in rapports],
+            "strict": bool(args.strict),
         }, ensure_ascii=False, indent=2))
     else:
         _imprimer(rapports)
 
     applicables = [r for r in rapports if r.verdict != SANS_OBJET]
-    return 0 if all(r.verdict == CONFORME for r in applicables) else 1
+    if args.strict:
+        return 0 if all(r.verdict == CONFORME for r in applicables) else 1
+    return 0 if all(r.verdict != NON_CONFORME for r in applicables) else 1
 
 
 if __name__ == "__main__":

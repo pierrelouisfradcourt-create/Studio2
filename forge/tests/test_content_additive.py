@@ -76,7 +76,9 @@ def test_p1_deux_points_de_passage(jeu: Path) -> None:
     _ecrire(jeu / "06_RUNTIME/adapters/lecteur_bis.gd",
             'extends RefCounted\nconst C := "res://03_WORLD/levels/"\n')
     r = _verdict(jeu)
-    assert r.verdict == ca.NON_CONFORME
+    # P1 est de niveau HYGIENE depuis la graduation du 2026-09-09 : sa violation coute un
+    # fichier d'adaptateur, pas le coeur. Le verdict est donc RESERVES, pas NON_CONFORME.
+    assert r.verdict == ca.RESERVES
     echecs = [c for c in r.constats if not c.tenue]
     assert [c.nom for c in echecs] == ["P1 point de passage unique"]
     assert any("lecteur_bis.gd" in f for f in echecs[0].fautifs)
@@ -160,14 +162,71 @@ def test_racine_sans_projet_godot_rend_2(tmp_path: Path) -> None:
     assert ca.main([str(tmp_path)]) == 2
 
 
-def test_cli_rend_1_quand_un_applicable_echoue(jeu: Path, tmp_path: Path) -> None:
-    with (jeu / PROVIDER).open("a", encoding="utf-8") as f:
-        f.write('const REPLI := "zone_a"\n')
+def test_cli_rend_0_quand_tout_applicable_est_conforme(jeu: Path, tmp_path: Path) -> None:
+    assert ca.main([str(tmp_path)]) == 0
+
+
+# --- la graduation : trois niveaux, deux severites ------------------------------------
+
+def test_niveaux_dans_le_vocabulaire_ferme(jeu: Path) -> None:
+    for c in _verdict(jeu).constats:
+        assert c.niveau in ca.NIVEAUX, f"{c.nom} porte un niveau inconnu : {c.niveau}"
+
+
+def test_p4_et_p5_sont_les_seuls_invariants(jeu: Path) -> None:
+    """La DECISION du 2026-09-09, rendue durable : seule la purete de la logique est un
+    invariant. Si quelqu'un promeut une propriete d'hygiene au rang bloquant, ou l'inverse,
+    ce test le dit — sinon la graduation deriverait en silence."""
+    par_niveau: dict[str, list[str]] = {}
+    for c in _verdict(jeu).constats:
+        par_niveau.setdefault(c.niveau, []).append(c.nom[:2])
+    assert sorted(par_niveau[ca.INVARIANT]) == ["P4", "P5"]
+    assert sorted(par_niveau[ca.HYGIENE]) == ["P1", "P2", "P3"]
+    assert par_niveau[ca.INTEGRITE] == ["P6"]
+
+
+def test_invariant_rompu_est_bloquant(jeu: Path, tmp_path: Path) -> None:
+    """P4 : la logique pure nomme une unite. C'est le coeur qui est atteint -> exit 1."""
+    with (jeu / "05_SYSTEMS/regle/regle.gd").open("a", encoding="utf-8") as f:
+        f.write('const SPECIALE := "zone_b"\n')
+    assert _verdict(jeu).verdict == ca.NON_CONFORME
     assert ca.main([str(tmp_path)]) == 1
 
 
-def test_cli_rend_0_quand_tout_applicable_est_conforme(jeu: Path, tmp_path: Path) -> None:
+def test_hygiene_seule_ne_bloque_pas(jeu: Path, tmp_path: Path) -> None:
+    """P2 : le fournisseur nomme une unite. Cout borne a un fichier d'adaptateur -> exit 0.
+    C'est le cas mesure de bomberman_3d, et la raison d'etre de la graduation."""
+    with (jeu / PROVIDER).open("a", encoding="utf-8") as f:
+        f.write('const REPLI := "zone_a"\n')
+    assert _verdict(jeu).verdict == ca.RESERVES
     assert ca.main([str(tmp_path)]) == 0
+
+
+def test_integrite_seule_ne_bloque_pas(jeu: Path, tmp_path: Path) -> None:
+    """P6 parle de correction du CONTENU, pas d'architecture : autre axe, autre decision."""
+    _ecrire(jeu / "03_WORLD/levels/zone_orpheline/level.json", json.dumps({"plan": []}))
+    assert _verdict(jeu).verdict == ca.RESERVES
+    assert ca.main([str(tmp_path)]) == 0
+
+
+def test_strict_promeut_les_reserves(jeu: Path, tmp_path: Path) -> None:
+    """`--strict` rend la graduation POLITIQUE et non definitive : meme mesure, autre seuil."""
+    with (jeu / PROVIDER).open("a", encoding="utf-8") as f:
+        f.write('const REPLI := "zone_a"\n')
+    assert ca.main([str(tmp_path)]) == 0
+    assert ca.main([str(tmp_path), "--strict"]) == 1
+
+
+def test_la_graduation_ne_retire_rien_a_la_mesure(jeu: Path) -> None:
+    """LE POINT QUI COMPTE : graduer retire de la SEVERITE, jamais de la MESURE. Les six
+    proprietes restent evaluees et tout echec garde ses fautifs nommes."""
+    with (jeu / PROVIDER).open("a", encoding="utf-8") as f:
+        f.write('const REPLI := "zone_a"\n')
+    r = _verdict(jeu)
+    assert len(r.constats) == 6, "une propriete a cesse d'etre mesuree"
+    echec = next(c for c in r.constats if not c.tenue)
+    assert echec.fautifs, "un echec sans fautif nomme n'est pas diagnosticable"
+    assert "zone_a" in echec.fautifs[0]
 
 
 def test_depot_reel_chaque_projet_recoit_un_verdict_du_vocabulaire() -> None:
