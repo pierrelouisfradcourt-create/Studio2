@@ -386,7 +386,9 @@ test('runDeclarationAudit : deterministe (deux passes identiques)', () => {
 });
 
 test('manifeste REEL du repo : chargeable et bien forme', () => {
-  const repoRoot = new URL('../..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+  // V2 : forge/ est a la racine du depot, donc un seul niveau a remonter. En V1 ce
+  // fichier vivait sous scripts/forge/, d'ou l'ancien '../..'.
+  const repoRoot = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
   const wl = loadWatchlist(repoRoot);
   assert.ok(Array.isArray(wl.declarations) && wl.declarations.length > 0);
   for (const d of wl.declarations) {
@@ -466,14 +468,65 @@ test('declaration_doc (entrees schemas/* et matrices .md) : lecteur -> zero cons
   assert.deepEqual(b.other_mentions.map((m) => m.path), ['lab/agent_policy/strike_rules.json']);
 });
 
-test('manifeste REEL : chaque cible EXISTE, kind connu, toute exclusion de lecteur motivee', () => {
-  const repoRoot = new URL('../..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
+// Une cible absente n'est pas toujours une derive. L'audit du 2026-09-09 a mesure que 17
+// des 20 cibles etaient absentes SANS avoir jamais existe en V2 : le manifeste avait ete
+// importe de V1 sans etre re-instruit, et l'ancienne assertion « chaque cible EXISTE »
+// s'arretait sur la PREMIERE, masquant les seize autres. Le statut declare desormais
+// LAQUELLE des absences on regarde ; le test exige la presence quand elle est due, et la
+// tolere seulement quand elle est constatee et motivee.
+test('manifeste REEL : statut connu, absence qualifiee, kind connu, toute exclusion de lecteur motivee', () => {
+  // V2 : forge/ est a la racine du depot, donc un seul niveau a remonter. En V1 ce
+  // fichier vivait sous scripts/forge/, d'ou l'ancien '../..'.
+  const repoRoot = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
   const wl = loadWatchlist(repoRoot);
   const KINDS = ['agent_md', 'policy_json', 'declaration_doc'];
+  const STATUTS = ['surveillee', 'equivalent_v2', 'abandonnee_v1', 'attendue_non_emise'];
+  const CONFIANCES = ['forte', 'jugement', 'faible'];
   assert.ok(wl.declarations.length >= 18, 'la passe d\'extension 2026-07-19 porte le manifeste a 18 entrees');
   for (const d of wl.declarations) {
     assert.ok(KINDS.includes(d.kind), `kind inconnu (retomberait en silence sur « lecteur seul ») : ${d.id}/${d.kind}`);
-    assert.ok(existsSync(join(repoRoot, d.path || d.dir)), `cible fantome : ${d.id} -> ${d.path || d.dir}`);
+    assert.ok(STATUTS.includes(d.statut),
+      `statut inconnu ou absent — une absence NON QUALIFIEE retomberait en silence : ${d.id}/${d.statut}`);
+
+    const cible = d.path || d.dir;
+    const presente = existsSync(join(repoRoot, cible));
+
+    // SURVEILLEE : la cible est due. Son absence est une derive, et on la nomme.
+    if (d.statut === 'surveillee') {
+      assert.ok(presente, `cible fantome : ${d.id} -> ${cible}`);
+    }
+
+    // EQUIVALENT_V2 : la cible V1 est CONSERVEE comme trace mais ne doit pas exister ; sa
+    // reapparition perimerait le statut sans que personne ne le voie.
+    if (d.statut === 'equivalent_v2') {
+      assert.ok(!presente, `statut perime : ${d.id} est declare equivalent_v2 mais ${cible} EXISTE`);
+      const eq = d.equivalent_v2 || {};
+      assert.ok(eq.ref, `equivalence sans reference V2 : ${d.id}`);
+      assert.ok(CONFIANCES.includes(eq.confiance),
+        `confiance absente ou hors vocabulaire (${CONFIANCES.join('|')}) : ${d.id} -> ${eq.confiance}`);
+      assert.ok((eq.constat || '').length > 30, `equivalence NON motivee : ${d.id}`);
+    }
+
+    // ABANDONNEE_V1 : marquee, jamais supprimee — sinon la trace de l'abandon disparait
+    // avec l'entree. Le constat date est ce qui distingue un abandon d'un oubli.
+    if (d.statut === 'abandonnee_v1') {
+      assert.ok(!presente, `statut perime : ${d.id} est declare abandonne mais ${cible} EXISTE`);
+      const ab = d.abandon || {};
+      assert.ok((ab.constat || '').length > 30, `abandon NON motive : ${d.id}`);
+      assert.ok(ab.date, `abandon sans date — un abandon non date est indistinguable d'un oubli : ${d.id}`);
+    }
+
+    // ATTENDUE_NON_EMISE : l'absence EST la mesure. On n'exige donc ni presence ni absence
+    // de l'artefact — mais les producteurs declares, eux, doivent exister, faute de quoi
+    // l'attente ne serait plus fondee sur rien.
+    if (d.statut === 'attendue_non_emise') {
+      assert.ok(Array.isArray(d.produite_par) && d.produite_par.length > 0,
+        `artefact attendu sans producteur declare : ${d.id}`);
+      for (const p of d.produite_par) {
+        assert.ok(existsSync(join(repoRoot, p)), `producteur fantome : ${d.id} -> ${p}`);
+      }
+    }
+
     if (d.kind === 'policy_json') assert.ok(Array.isArray(d.field_scopes), `field_scopes requis : ${d.id}`);
     for (const nr of d.non_reader_mentions || []) {
       assert.ok(nr.path, `exclusion sans chemin : ${d.id}`);
