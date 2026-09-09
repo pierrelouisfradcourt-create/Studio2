@@ -1,0 +1,280 @@
+# REGISTRE CIBLE — vocabulaire des DOMAINES que l'architecture doit savoir accueillir.
+#
+# Troisieme jumeau de `capabilities.yaml`, gouvernance SEPAREE, sur le precedent exact de
+# `factory_capabilities.yaml` (ratifie 2026-08-10) : quand une preoccupation d'une AUTRE
+# NATURE doit etre nommee, on lui donne son espace de noms plutot que d'amender la doctrine
+# du registre produit.
+#
+# POURQUOI UN TROISIEME REGISTRE, ET PAS UN CHAMP DE PLUS.
+# `capabilities.yaml` pose en toutes lettres : « Ce n'est pas un vocabulaire universel ecrit
+# d'avance : il demarre avec ce dont le premier jeu a besoin et grandit d'un jeu a l'autre. »
+# Ses 38 identifiants le confirment — `play.paddle`, `game.gravity`, `game.line_clear` : du
+# DESCRIPTIF ASCENDANT, recolte jeu apres jeu. Y inscrire un domaine que personne n'a encore
+# construit violerait cette doctrine ratifiee.
+#
+# Or l'architecture cible est PRESCRIPTIVE et DESCENDANTE : elle doit dire ou une capacite
+# future APPARTIENDRA, et sous quelle interface, AVANT qu'elle existe — sans quoi son arrivee
+# casse le coeur au lieu de l'etendre. Les deux besoins sont legitimes et incompatibles dans
+# un meme fichier. D'ou :
+#
+#     game.* / play.* / input.* / render.* / audio.*   ->  capabilities.yaml    (construit)
+#     probe.* / proof.* / solvability.* / factory.*    ->  factory_capabilities (usine)
+#     target.*                                         ->  CE FICHIER           (cible)
+#
+# GRANULARITE — ce qui empeche la redondance avec `capabilities.yaml` : ce fichier declare des
+# DOMAINES, l'autre des IDENTIFIANTS. Quand un domaine est reellement construit dans un jeu,
+# ce sont des identifiants CONCRETS qui entrent dans `capabilities.yaml` ; l'entree cible
+# reste, passe a `etat: ACTIF`, et NOMME le jeu qui a demontre le mecanisme. Un domaine ACTIF
+# ici n'est donc pas un doublon : c'est la preuve que l'architecture sait deja l'accueillir.
+#
+# DEUX ETATS SEULEMENT, et c'est deliberè.
+#   PREVU : l'architecture reconnait ce domaine, la decision d'ACTIVATION n'est pas prise.
+#   ACTIF : le mecanisme est demontre par au moins un jeu (champ `demontre_par` obligatoire).
+# SUSPENDU et SUPPRIME n'ont PAS leur place ici : ils qualifient une capacite POUR UN JEU
+# DONNE, pas pour l'architecture. Ils vivent deja dans la wiremap du jeu, sur son vocabulaire
+# ferme d'etats de ligne (`DEFERRED` pour suspendu — `until` + `decider` obligatoires ;
+# `NOT_APPLICABLE` avec `reason` pour supprime ; `discarded[]` pour une proposition ecartee).
+# Voir forge/standard/SCHEMA.md section 3.
+#
+# CE QUE CE FICHIER N'AUTORISE PAS. Declarer un domaine n'est PAS le construire, et ne cree
+# aucun dossier. Le piege mesure sur bomberman_3d — memes dossiers que pacman, propriete
+# inverse — dit que l'arborescence ne constitue jamais la frontiere. Un dossier vide serait
+# pire qu'une absence : l'apparence de la frontiere sans la contrainte.
+#
+# `classe` — cout d'ACTIVATION mesure lors de l'audit d'architecture cible du 2026-09-09 :
+#   A  activation locale, aucune reconstruction
+#   B  extension d'une interface deja prevue
+#   C  modification d'un coeur existant (ajout, pas deplacement)
+#   D  reconstruction / deplacement architectural  -> signal de mauvaise cible
+
+schema_version: 1
+
+namespaces:
+  - "target."
+
+target_capabilities:
+
+  # ---------- CONTENU : mecanismes DEMONTRES ----------
+
+  - id: target.content.catalogue
+    statement: "Declarer les unites de contenu et leur ordre dans une donnee inerte, jamais dans du code."
+    etat: ACTIF
+    demontre_par: "GAMES/pacman/03_WORLD/rules/level_catalog/catalog.json"
+    emplacement_cible: "03_WORLD/rules/"
+    oracle: "forge.content_additive P6 — catalogue et disque s'accordent"
+
+  - id: target.content.single_passage
+    statement: "Un SEUL point de passage lit la donnee et la remet en argument a la logique pure."
+    etat: ACTIF
+    demontre_par: "GAMES/pacman/06_RUNTIME/adapters/content_provider/content_provider.gd"
+    emplacement_cible: "06_RUNTIME/adapters/content_provider/"
+    oracle: "forge.content_additive P1/P2/P3 — passage unique, aucune unite nommee, aucun aiguillage"
+
+  - id: target.content.validation
+    statement: "Rendre un verdict motive sur un contenu avant qu'il entre en jeu, refus par valeur de retour."
+    etat: ACTIF
+    demontre_par: "GAMES/pacman/05_SYSTEMS/map_validator/map_validator.gd"
+    emplacement_cible: "05_SYSTEMS/<domaine>_validator/"
+    oracle: "vocabulaire ferme de motifs de refus, un test par motif"
+
+  # ---------- ETAT ET MONDE ----------
+
+  - id: target.state.scope
+    statement: "Partitionner l'etat en portees GLOBALE / ZONE / SESSION, et declarer ce qui traverse quoi."
+    etat: ACTIF
+    demontre_par: "GAMES/pacman/05_SYSTEMS/world_state/world_state.gd"
+    emplacement_cible: "05_SYSTEMS/world_state/"
+    oracle: "partition disjointe et couvrant exactement level_progression"
+
+  - id: target.world.zone_unique
+    statement: "Porter la topologie jouable d'une zone comme une donnee remise en argument."
+    etat: ACTIF
+    demontre_par: "GAMES/pacman/05_SYSTEMS/maze/maze.gd"
+    emplacement_cible: "05_SYSTEMS/<topologie>/"
+    oracle: "solvabilite : un bot doit gagner, un bot nul doit perdre"
+
+  - id: target.world.multi_zone
+    statement: "Tenir plusieurs zones dont chacune SE SOUVIENT de son etat apres qu'on l'a quittee."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/world_state/ (portee ZONE deja declaree)"
+    oracle: "quitter puis revenir dans une zone retrouve son etat ; le global ne bouge pas"
+    note: >-
+      Classe RAMENEE de D a B le 2026-09-09 par target.state.scope : la forme de l'etat porte
+      desormais `memoire_zones`. Sans cette declaration prealable, l'activation aurait touche
+      game_loop, game_state et chaque regle lisant l'etat — le SEUL D identifie par l'audit.
+
+  - id: target.world.transition
+    statement: "Basculer d'une zone a l'autre en declarant ce qui traverse et ce qui repart."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/transition/"
+    oracle: "la declaration `traverse` / `repart` couvre l'etat sans zone grise"
+
+  - id: target.world.camera
+    statement: "Cadrer la vue sur l'etat sans jamais l'ecrire."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "06_RUNTIME/adapters/camera/"
+    oracle: "l'etat est strictement egal avant et apres un mouvement de camera"
+
+  # ---------- ACTEURS ----------
+
+  - id: target.actors.npc
+    statement: "Definir un acteur non hostile par une donnee, et porter son etat dans l'etat de partie."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "03_WORLD/actors/ + 05_SYSTEMS/actors/"
+    oracle: "tout acteur declare se resout ; un acteur inexistant ne resout rien et ne leve pas"
+
+  - id: target.actors.behaviour
+    statement: "Faire decider un acteur par une machine a etats declaree, pas par du code par acteur."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/behaviour/"
+    oracle: "tout etat declare est atteignable ; aucune transition vers un etat inconnu"
+
+  # ---------- INTERACTION ----------
+
+  - id: target.interaction.verb
+    statement: "Exprimer « le joueur agit sur X » par un verbe du vocabulaire ferme, cible et condition."
+    etat: PREVU
+    classe: C
+    emplacement_cible: "05_SYSTEMS/interaction/"
+    oracle: "aucun verbe hors vocabulaire ; toute cible declaree existe"
+    note: >-
+      AUCUN PRECEDENT dans les 7 jeux : c'est la primitive manquante du chemin micro-Zelda.
+      A ecrire AVANT toute quete ou tout dialogue, sinon chacun inventera le sien.
+
+  - id: target.interaction.trigger
+    statement: "Declencher un evenement quand une condition declaree devient vraie."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/triggers/"
+    oracle: "tout declencheur se resout ; s'appuie sur game.events, n'en cree pas un second canal"
+
+  - id: target.interaction.dialogue
+    statement: "Porter un arbre de dialogue en donnee et son avancement dans l'etat."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "03_WORLD/dialogue/ + 05_SYSTEMS/dialogue/"
+    oracle: "tout noeud est atteignable ; aucun renvoi vers un noeud absent"
+
+  - id: target.interaction.quest
+    statement: "Tenir l'etat d'une quete, de son declencheur a sa recompense."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "03_WORLD/quests/ + 05_SYSTEMS/quests/"
+    oracle: "toute quete declaree est completable ; aucun drapeau orphelin"
+
+  # ---------- OBJETS ET ECONOMIE ----------
+
+  - id: target.items.item
+    statement: "Definir un objet par une donnee, referencee par identifiant depuis le contenu."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "03_WORLD/items/"
+    oracle: "integrite referentielle : tout objet cite existe, tout objet declare est atteignable"
+
+  - id: target.items.inventory
+    statement: "Detenir ce que le joueur porte, avec une capacite declaree."
+    etat: PREVU
+    classe: C
+    emplacement_cible: "05_SYSTEMS/inventory/"
+    oracle: "invariants de quantite ; aucune quantite negative, aucun depassement silencieux"
+    note: "Classe C : ajoute un champ a la forme de l'etat, comme la portee de zone."
+
+  - id: target.items.economy
+    statement: "Declarer des prix et des echanges en donnee."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "05_SYSTEMS/economy/"
+    oracle: "aucun prix negatif ; tout bien echangeable existe"
+
+  - id: target.items.crafting
+    statement: "Declarer une recette comme donnee, jamais comme code."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "03_WORLD/recipes/"
+    oracle: "tout ingredient d'une recette existe ; tout produit existe"
+
+  # ---------- COMBAT ----------
+
+  - id: target.combat.formula
+    statement: "Resoudre une attaque par une formule declaree et bornee."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/combat/"
+    oracle: "bornes respectees sur tout le domaine d'entree ; aucun degat negatif"
+
+  - id: target.combat.status
+    statement: "Tenir les etats alteres et leurs interactions par une matrice declaree."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/status/"
+    oracle: "la matrice d'interaction est TOTALE — aucune paire non declaree"
+
+  # ---------- PROGRESSION ----------
+
+  - id: target.progression.objectives
+    statement: "Declarer les objectifs d'un jeu et constater leur accomplissement."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/objectives/"
+    oracle: "tout objectif declare est atteignable par le bot de solvabilite"
+
+  - id: target.progression.experience
+    statement: "Porter une courbe de progression declaree."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "05_SYSTEMS/progression/"
+    oracle: "courbe monotone ; aucun palier inatteignable"
+
+  - id: target.progression.unlocks
+    statement: "Ouvrir une capacite quand une condition declaree est remplie."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/unlocks/"
+    oracle: "aucun blocage definitif : toute condition reste satisfiable"
+
+  # ---------- PERSISTANCE ----------
+
+  - id: target.persistence.rule_and_store
+    statement: "Separer la REGLE de persistance (pure) de son I/O (adaptateur, seule ecriture disque)."
+    etat: ACTIF
+    demontre_par: "GAMES/snake/05_SYSTEMS/best_score/ + GAMES/snake/06_RUNTIME/adapters/best_score_store/"
+    emplacement_cible: "05_SYSTEMS/<regle>/ + 06_RUNTIME/adapters/<regle>_store/"
+    oracle: "la regle est pure et testable sans disque ; un fichier illisible est traite comme absent"
+
+  - id: target.persistence.save
+    statement: "Sauver et recharger l'etat persistant d'une partie."
+    etat: PREVU
+    classe: C
+    emplacement_cible: "05_SYSTEMS/save/ + 06_RUNTIME/adapters/save_store/"
+    oracle: "sauver puis charger rend un etat STRICTEMENT egal (identite mesuree, pas supposee)"
+    note: >-
+      La regle pure et l'adaptateur existent en embryon (target.persistence.rule_and_store) ;
+      ce qui manque est la FORME de l'etat persistant, d'ou la classe C.
+
+  - id: target.persistence.migration
+    statement: "Charger une sauvegarde ecrite par une version anterieure."
+    etat: PREVU
+    classe: B
+    emplacement_cible: "05_SYSTEMS/save/ (version declaree dans la donnee)"
+    oracle: "une sauvegarde de version N-1 se charge ; une version inconnue est REFUSEE, pas devinee"
+
+  # ---------- PRESENTATION ----------
+
+  - id: target.presentation.animation
+    statement: "Animer la presentation a partir de l'etat, sans jamais l'ecrire."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "06_RUNTIME/adapters/anim/"
+    oracle: "l'etat est strictement egal avant et apres une animation"
+
+  - id: target.presentation.effects
+    statement: "Produire un effet visuel a partir d'un signal de jeu, jamais d'une decision propre."
+    etat: PREVU
+    classe: A
+    emplacement_cible: "06_RUNTIME/adapters/effects/"
+    oracle: "aucun effet ne decide d'un etat ; tout effet suit un signal declare"
