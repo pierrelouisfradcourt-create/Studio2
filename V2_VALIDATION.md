@@ -35,6 +35,31 @@ declaration_watchlist.json     lu par : declaration_readers.mjs, et lui seul
 est conservé (règle : conservation jusqu'à preuve d'inutilité) — mais il est **orphelin**, et c'est
 écrit ici plutôt que découvert plus tard.
 
+> **RATIFIÉ PIERRE — 2026-09-09.**
+>
+> Écrite le 2026-09-02, cette décision ne portait **aucune marque de ratification propre**, à la
+> différence d'`ETAPE9_MIGRATION_SURFACES.md` (« Correspondance ratifiée Pierre le 2026-09-02 »),
+> qui classait au même moment `lab/agent_policy` en `UNKNOWN — à trancher`. L'écart a été relevé
+> par le micro-audit du 2026-09-09 et tranché ici plutôt que laissé en suspens.
+>
+> Ce que l'audit a mesuré, et qui fonde la ratification : les 14 artefacts de la famille
+> **existaient bien en V1** (vérifié sur `C:\TACTICAL_CHESS_STUDIO`) ; leurs lecteurs de code
+> étaient `autopilot.py`, `scripts/studioV2/agent_pr_operator.py` et
+> `scripts/identify_critical_surfaces.py`, **tous exclus de V2 avec la lane STUDIO gelée**
+> (`RECONSTRUCTION_AUDIT.md` l.34 et l.110) ; le seul lecteur survivant est le capteur, orphelin
+> comme dit ci-dessus. L'abandon n'a donc supprimé aucune fonction active.
+>
+> **PORTÉE EXACTE, à ne pas élargir.** Cette ratification couvre `lab/agent_policy/` et lui seul —
+> ses 5 artefacts, soit `strike-rules` (`abandonnee_v1`) et les 4 entrées `equivalent_v2`
+> `tool-permission-matrix`, `autonomy-levels`, `forbidden-surfaces`, `freeze-rules` de
+> `forge/declaration_watchlist.json`. Elle NE couvre PAS :
+> - les **6 schémas** de `schemas/`, exclus par `RECONSTRUCTION_AUDIT.md` l.113 — document qui
+>   porte `claim_verdict: NO_CLAIM_ALLOWED` : décision écrite et datée, mais non ratifiée ;
+> - `docs/control-plane/AUTHORITY_MATRIX.md` et `ESCALATION_MATRIX_V0.md`, **jamais nommés par
+>   aucune décision** — couverts seulement par l'exclusion en masse de `docs/`. Leur intention
+>   reste **non démontrable**, et le rester est le constat honnête. Fait mesuré à leur décharge :
+>   ils avaient **0 lecteur de code même en V1**.
+
 ## B · `lab/workflow_lab` — **fermé : hors périmètre, avec une nuance**
 
 Les 5 références se répartissent en deux natures :
