@@ -6,7 +6,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(HERE, '../..');
+const REPO_ROOT = resolve(HERE, '..');
 const DEFAULT_CONFIG = resolve(HERE, 'godot.config.json');
 
 const HOWTO =

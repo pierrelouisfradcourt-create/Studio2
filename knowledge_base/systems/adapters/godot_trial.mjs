@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveGodotBin } from '../../../scripts/forge/godot_bin.mjs';
+import { resolveGodotBin } from '../../../forge/godot_bin.mjs';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const PREFIX = 'FORGE_TRIAL ';

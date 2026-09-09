@@ -39,7 +39,7 @@ const CONTRACT_SYNC_ANCESTOR_LEVELS = 5;
  * @returns {{doc_claims:Array, connectors:object}}
  */
 export function loadExpectations(repoRoot) {
-  const p = join(repoRoot, 'scripts', 'forge', 'studio_expectations.json');
+  const p = join(repoRoot, 'forge', 'studio_expectations.json');
   return JSON.parse(readFileSync(p, 'utf-8'));
 }
 

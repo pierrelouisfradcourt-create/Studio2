@@ -14,7 +14,7 @@
 //
 // Vocabulaire de verdict : OK / FAIL / BLOCKED uniquement.
 import { pathToFileURL } from 'node:url';
-import { makeGodotRunTrial } from '../../knowledge_base/systems/adapters/godot_trial.mjs';
+import { makeGodotRunTrial } from '../knowledge_base/systems/adapters/godot_trial.mjs';
 
 // Exportes (pas seulement des constantes de module) : godot_oracle.mjs les reuse
 // comme valeurs de repli EXPLICITES quand un jeu ne declare pas de budget de

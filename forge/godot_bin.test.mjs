@@ -61,8 +61,9 @@ test('aucune source de configuration -> erreur qui explique quoi faire', () => {
 });
 
 test('chemin relatif dans GODOT_BIN est resolu par rapport a la racine du depot', () => {
-  // HERE = forge/, donc repoRoot = forge/../../ = TACTICAL_CHESS_STUDIO/
-  const repoRoot = resolve(HERE, '../..');
+  // HERE = forge/, donc repoRoot = forge/.. = la racine du depot (V2 : forge/ est a la
+  // racine ; en V1 il vivait sous scripts/forge/, d'ou l'ancien '../..').
+  const repoRoot = resolve(HERE, '..');
   // Utiliser un chemin relatif qui pointe vers un fichier qui existe (godot_bin.mjs lui-même)
   const relativePath = 'forge/godot_bin.mjs';
   const expectedAbsolute = resolve(repoRoot, relativePath);
