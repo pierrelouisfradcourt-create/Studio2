@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bastion — TCG tactique sur plateau</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      background: #0b0e11;
+      color: #eceff1;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    #gameCanvas {
+      border: 2px solid #37474f;
+      background: #101418;
+      display: block;
+      max-width: 100%;
+    }
+    #controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button {
+      padding: 10px 18px;
+      font-size: 15px;
+      background: #263238;
+      color: #fff;
+      border: 1px solid #455a64;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background: #37474f; }
+    #endTurn { background: #2e7d32; border-color: #43a047; }
+    #endTurn:hover { background: #388e3c; }
+    #objectif { margin: 10px 0 4px; font-size: 14px; }
+    #help { margin: 0; font-size: 13px; color: #90a4ae; }
+    #log {
+      list-style: none;
+      padding: 8px 12px;
+      margin: 10px 0 0;
+      width: 940px;
+      max-width: 100%;
+      box-sizing: border-box;
+      background: #151a20;
+      font-size: 12px;
+      color: #b0bec5;
+      max-height: 170px;
+      overflow-y: auto;
+    }
+    #log li { padding: 1px 0; }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 10;
+    }
+    #overlay.hidden { display: none; }
+    #overlayContent { text-align: center; }
+    #overlayText { font-size: 48px; font-weight: bold; margin-bottom: 32px; }
+    #restart {
+      padding: 14px 28px;
+      font-size: 18px;
+      background: #2196f3;
+      border: none;
+    }
+    #restart:hover { background: #1976d2; }
+  </style>
+</head>
+<body>
+  <h1>Bastion — TCG tactique</h1>
+  <canvas id="gameCanvas" width="960" height="720"></canvas>
+  <div id="controls">
+    <button id="endTurn" type="button">Fin de tour (E)</button>
+    <button id="ability" type="button">Capacité du héros (A)</button>
+    <button id="unequip" type="button">Rendre l'équipement (U)</button>
+    <button id="cancel" type="button">Annuler (Échap)</button>
+  </div>
+  <p id="objectif"></p>
+  <p id="help">Cliquez une unité pour la déplacer / attaquer, une carte puis sa cible pour la jouer. Détruisez la tour ennemie.</p>
+  <ul id="log"></ul>
+
+  <div id="overlay" class="hidden">
+    <div id="overlayContent">
+      <div id="overlayText"></div>
+      <button id="restart" type="button">Rejouer</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.mjs"></script>
+</body>
+</html>
