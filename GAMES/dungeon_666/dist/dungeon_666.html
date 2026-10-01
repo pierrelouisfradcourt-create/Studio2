@@ -548,6 +548,36 @@ const SALVAGE_SOULS = { commun: 1, magique: 3, rare: 8, legendaire: 20 };
 
 return { UPGRADES, SALVAGE_SOULS };
 })();
+// ---- src/sim/foe_data.mjs
+__mod["src/sim/foe_data.mjs"] = (() => {
+// DONNÉES des archétypes d'ennemis AJOUTÉS (tuning), fusionnées dans tuning.enemies par
+// config.mjs, et leur place dans les vagues (ROSTER de room.mjs).
+//
+// EXTRA_ENEMIES : { kind: { name, radius, hp, speed, mass, damage, …, gold: [lo, hi] } }
+// EXTRA_ROSTER  : [{ kind, cost, minIndex, weight }] — coût en budget de vague, index minimal
+//                 dans la 1re section (les sections suivantes ont tout le bestiaire), poids.
+// EXTRA_ELITE_KINDS : archétypes pouvant recevoir un modificateur d'élite.
+
+const EXTRA_ENEMIES = {};
+const EXTRA_ROSTER = [];
+const EXTRA_ELITE_KINDS = [];
+
+return { EXTRA_ENEMIES, EXTRA_ROSTER, EXTRA_ELITE_KINDS };
+})();
+// ---- src/sim/boss_data.mjs
+__mod["src/sim/boss_data.mjs"] = (() => {
+// DONNÉES des modèles de Gardien AJOUTÉS (tuning), fusionnées dans tuning.boss par config.mjs.
+// Chaque entrée suit la forme de tuning.boss.gardien (Charon) : name, radius, hp, speed, mass,
+// damage, hitstopCap, phase2At, phase3At, transition, reinforcements, phaseHealOrb, restBetween,
+// restMultByPhase, speedMultByPhase, puis les paramètres de SES patterns.
+//
+// GUARDIAN_ROTATION : ordre des modèles sur les 37 sections (section 1 = premier de la liste).
+
+const EXTRA_BOSSES = {};
+const GUARDIAN_ROTATION = ['gardien'];
+
+return { EXTRA_BOSSES, GUARDIAN_ROTATION };
+})();
 // ---- src/sim/config.mjs
 __mod["src/sim/config.mjs"] = (() => {
 // TUNING — tous les nombres du jeu, au même endroit. Aucune règle de la simulation ne porte
@@ -558,6 +588,8 @@ __mod["src/sim/config.mjs"] = (() => {
 // Temps en secondes, angles en degrés dans ce fichier (convertis à l'usage), simulation à 60 Hz.
 const { WEAPONS, SKILLS, GADGETS, SUPERS, CLASSES } = __mod["src/sim/kits.mjs"];
 const { UPGRADES, SALVAGE_SOULS } = __mod["src/sim/town_data.mjs"];
+const { EXTRA_ENEMIES } = __mod["src/sim/foe_data.mjs"];
+const { EXTRA_BOSSES, GUARDIAN_ROTATION } = __mod["src/sim/boss_data.mjs"];
 
 const SIM_HZ = 60;
 const DT = 1 / SIM_HZ;
@@ -663,6 +695,7 @@ const DEFAULT_TUNING = {
       triggerRange: 70, windup: 0.6, blastRadius: 90, blastHurtsEnemies: true,
       gold: [1, 2],
     },
+    ...EXTRA_ENEMIES, // archétypes ajoutés (foe_data.mjs)
   },
   elite: {
     hpMult: 1.8, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
@@ -693,6 +726,7 @@ const DEFAULT_TUNING = {
       speedMultByPhase: [1, 1.05, 1.15], // … et plus de vitesse ; les télégraphes, eux, ne raccourcissent JAMAIS
       secondChargeWindup: 0.6, // phase 3 : seconde charge enchaînée (télégraphe propre ≥ 0,5 s)
     },
+    ...EXTRA_BOSSES, // modèles de Gardien ajoutés (boss_data.mjs)
   },
 
   combat: {
@@ -740,7 +774,7 @@ const DEFAULT_TUNING = {
   // Budget de menace d'une vague : (base + perIndex × index) × densité de l'étage.
   encounter: { baseBudget: 5, perIndex: 0.45, lastWaveMult: 1.2, strayEliteChance: 0.15 },
   // Rotation des Gardiens sur les 37 sections (le 1er de la liste garde la section 1).
-  guardians: { rotation: ['gardien'] },
+  guardians: { rotation: GUARDIAN_ROTATION },
 
   // PROGRESSION PERMANENTE (profil) : Âmes gagnées pendant la descente, jamais perdues.
   progression: {
@@ -2454,6 +2488,16 @@ const CHARON = {
 
 return { slam, charge, ring, summon, CHARON };
 })();
+// ---- src/sim/boss_models.mjs
+__mod["src/sim/boss_models.mjs"] = (() => {
+// Registre des MODÈLES de Gardien ajoutés (un fichier par modèle : src/sim/boss_<modèle>.mjs).
+// Chaque modèle : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn(game, e, d, dt, speed)},
+// rest?(game, e, d, dt, speed) }. La clé = kind de l'ennemi = clé de tuning.boss (boss_data.mjs).
+
+const EXTRA_BOSS_MODELS = {};
+
+return { EXTRA_BOSS_MODELS };
+})();
 // ---- src/sim/boss.mjs
 __mod["src/sim/boss.mjs"] = (() => {
 // MOTEUR DES GARDIENS (boss de fin de section, tous les 18 étages).
@@ -2467,11 +2511,13 @@ const { spawnPickup } = __mod["src/sim/combat.mjs"];
 const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
 const { bossDef, toPlayer, setState } = __mod["src/sim/boss_common.mjs"];
 const { CHARON } = __mod["src/sim/boss_charon.mjs"];
+const { EXTRA_BOSS_MODELS } = __mod["src/sim/boss_models.mjs"];
 
 // Registre des modèles de Gardien : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn},
 // rest?(game, e, d, dt, speed) }. La clé est le `kind` de l'ennemi (= clé de tuning.boss).
 const BOSS_MODELS = {
   gardien: CHARON,
+  ...EXTRA_BOSS_MODELS,
 };
 
 function modelOf(e) {
@@ -3228,6 +3274,7 @@ const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
 const { floorScaling } = __mod["src/sim/floors.mjs"];
 const { buildNav } = __mod["src/sim/nav.mjs"];
 const { pointBlocked } = __mod["src/sim/physics.mjs"];
+const { EXTRA_ROSTER, EXTRA_ELITE_KINDS } = __mod["src/sim/foe_data.mjs"];
 
 // Dispositions d'obstacles, en fractions de la salle (cx, cy, w, h en unités).
 // Le bas-centre (entrée) et le haut (portes) restent toujours dégagés.
@@ -3249,6 +3296,7 @@ const ROSTER = [
   { kind: 'archer', cost: 1.5, minIndex: 1, weight: 3 },
   { kind: 'charger', cost: 2, minIndex: 1, weight: 2 }, // dès l'étage 1 : premier vrai professeur de dash
   { kind: 'brute', cost: 3, minIndex: 3, weight: 2 },
+  ...EXTRA_ROSTER, // archétypes ajoutés (foe_data.mjs)
 ];
 const ELITE_MODS = ['rapide', 'blinde', 'ardent'];
 
@@ -3351,7 +3399,7 @@ function planWaves(game, info, elite) {
   }
   if (elite) {
     // Salle d'élite : un champion (modificateur façon Diablo) dans la dernière vague.
-    const kinds = ['brute', 'charger', 'imp', 'archer'];
+    const kinds = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS];
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, kinds), elite: pick(game.rng.gen, ELITE_MODS) });
   } else if (info.floor > 2 && rand(game.rng.gen) < enc.strayEliteChance) {
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, ['imp', 'archer']), elite: pick(game.rng.gen, ELITE_MODS) });
@@ -6272,6 +6320,35 @@ function drawTexts(ctx, fx) {
 
 return { createFx, addText, setBanner, handleFxEvents, updateFx, clearFx, drawParticles, drawEffects, drawTexts };
 })();
+// ---- src/render/art_foes.mjs
+__mod["src/render/art_foes.mjs"] = (() => {
+// Dessin des archétypes d'ennemis ajoutés (voir art.mjs pour la signature).
+const FOE_ART = {};
+const FOE_BODY = {};
+
+return { FOE_ART, FOE_BODY };
+})();
+// ---- src/render/art_bosses.mjs
+__mod["src/render/art_bosses.mjs"] = (() => {
+// Dessin des Gardiens ajoutés (voir art.mjs pour la signature). Charon (`gardien`) reste dans render.mjs.
+const BOSS_ART = {};
+const BOSS_BODY = {};
+
+return { BOSS_ART, BOSS_BODY };
+})();
+// ---- src/render/art.mjs
+__mod["src/render/art.mjs"] = (() => {
+// Registre du DESSIN des archétypes d'ennemis et des Gardiens ajoutés (un module par famille :
+// art_foes.mjs, art_bosses.mjs). Signature : (ctx, r, face, body, e, time), contexte déjà centré
+// sur l'ennemi et tourné/écrasé comme les autres. Couleurs de corps : EXTRA_BODY[kind].
+const { FOE_ART, FOE_BODY } = __mod["src/render/art_foes.mjs"];
+const { BOSS_ART, BOSS_BODY } = __mod["src/render/art_bosses.mjs"];
+
+const EXTRA_ART = { ...FOE_ART, ...BOSS_ART };
+const EXTRA_BODY = { ...FOE_BODY, ...BOSS_BODY };
+
+return { EXTRA_ART, EXTRA_BODY };
+})();
 // ---- src/render/render.mjs
 __mod["src/render/render.mjs"] = (() => {
 // Rendu du monde (espace salle) sur canvas 2D. Lecture seule de la simulation.
@@ -6284,6 +6361,7 @@ const { hazardProgress } = __mod["src/sim/projectiles.mjs"];
 const { FAMILIES } = __mod["src/sim/boons.mjs"];
 const { ITEM_RARITIES } = __mod["src/sim/loot.mjs"];
 const { REWARD_LABELS } = __mod["src/sim/run.mjs"];
+const { EXTRA_ART, EXTRA_BODY } = __mod["src/render/art.mjs"];
 const { computeAim } = __mod["src/sim/aim.mjs"];
 
 const TAU = Math.PI * 2;
@@ -6895,8 +6973,8 @@ function drawEnemy(ctx, e, game, time) {
       ctx.rotate(-a);
     }
   }
-  const body = e.flash > 0 ? PAL.enemyFlash : ENEMY_BODY[e.kind] ?? PAL.imp;
-  KIND_DRAW[e.kind]?.(ctx, r, face, body, e, time);
+  const body = e.flash > 0 ? PAL.enemyFlash : ENEMY_BODY[e.kind] ?? EXTRA_BODY[e.kind] ?? PAL.imp;
+  (KIND_DRAW[e.kind] ?? EXTRA_ART[e.kind] ?? KIND_DRAW.imp)(ctx, r, face, body, e, time);
   ctx.restore();
   ctx.globalAlpha = 1;
   if (e.chill > 0) {
@@ -8668,6 +8746,9 @@ const ROUTES = table({
 const SILENT_EVENTS = Object.freeze([
   'spawn', 'attackStart', 'castStart', 'cancel', 'dashEnd', 'projectileEnd', 'hazard', 'choiceClose', 'wave',
   'immune', // boss en transition de phase : retour visuel seulement
+  'souls', // Âmes d'un élite : le son de mort de l'élite suffit
+  'stash', // objet rangé au coffre : le clic du menu suffit
+  'returnTown', // fin du run : la Ville (DOM) prend le relais
 ]);
 
 /** Vibration (ms) demandée par une entrée annotée ; 0 = aucune. */

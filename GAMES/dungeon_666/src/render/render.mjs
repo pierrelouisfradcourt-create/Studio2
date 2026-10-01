@@ -9,6 +9,7 @@ import { hazardProgress } from '../sim/projectiles.mjs';
 import { FAMILIES } from '../sim/boons.mjs';
 import { ITEM_RARITIES } from '../sim/loot.mjs';
 import { REWARD_LABELS } from '../sim/run.mjs';
+import { EXTRA_ART, EXTRA_BODY } from './art.mjs';
 import { computeAim } from '../sim/aim.mjs';
 
 const TAU = Math.PI * 2;
@@ -620,8 +621,8 @@ function drawEnemy(ctx, e, game, time) {
       ctx.rotate(-a);
     }
   }
-  const body = e.flash > 0 ? PAL.enemyFlash : ENEMY_BODY[e.kind] ?? PAL.imp;
-  KIND_DRAW[e.kind]?.(ctx, r, face, body, e, time);
+  const body = e.flash > 0 ? PAL.enemyFlash : ENEMY_BODY[e.kind] ?? EXTRA_BODY[e.kind] ?? PAL.imp;
+  (KIND_DRAW[e.kind] ?? EXTRA_ART[e.kind] ?? KIND_DRAW.imp)(ctx, r, face, body, e, time);
   ctx.restore();
   ctx.globalAlpha = 1;
   if (e.chill > 0) {

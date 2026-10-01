@@ -29,8 +29,8 @@ import { POLICIES, resolveChoice, cloneMemory } from './bots.mjs';
 const GAME_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULTS = {
   seeds: 20,
-  floors: 6,
-  minutes: 12,
+  floors: 18, // une section complète (Gardien compris)
+  minutes: 30,
   json: null, // JSON brut (~500 Ko) : seulement sur demande (--json), jamais versionné par défaut
   md: 'reports/playtest.md',
   policies: Object.keys(POLICIES),

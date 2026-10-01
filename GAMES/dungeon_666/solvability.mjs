@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Solvabilité (convention du studio : forge/contracts/s9-build.yaml) — un bot JOUE et GAGNE.
 // « Gagner », dans un jeu de 666 étages, c'est ici battre la section 1 : vaincre le premier
-// Gardien (étage 6) et atteindre le checkpoint de l'étage 7.
+// Gardien (étage 18, tuning.floors.sectionLength) et atteindre le checkpoint de l'étage 19.
 //
 // Le bot `skilled` (tools/bots.mjs) ne lit que ce que voit un joueur (télégraphes, zones,
 // projectiles), avec un temps de réaction de 0,15 s ; il ne lit jamais le RNG.
@@ -15,11 +15,12 @@
 // Usage : node solvability.mjs [graines=20]
 
 import { runEpisode } from './tools/playtest.mjs';
+import { DEFAULT_TUNING } from './src/sim/config.mjs';
 
 const SEEDS = Number.parseInt(process.argv[2] ?? '20', 10);
 const FIRST_SEED = 1;
-const SECTION_FLOORS = 6;
-const MAX_MINUTES = 12;
+const SECTION_FLOORS = DEFAULT_TUNING.floors.sectionLength;
+const MAX_MINUTES = 30; // une section de 18 étages : ~12-15 min de jeu pour le bot
 const MIN_CLEAR_RATE = 0.9;
 const MIN_DASH_VALUE = 2;
 

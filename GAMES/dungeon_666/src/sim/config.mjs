@@ -7,6 +7,8 @@
 
 import { WEAPONS, SKILLS, GADGETS, SUPERS, CLASSES } from './kits.mjs';
 import { UPGRADES, SALVAGE_SOULS } from './town_data.mjs';
+import { EXTRA_ENEMIES } from './foe_data.mjs';
+import { EXTRA_BOSSES, GUARDIAN_ROTATION } from './boss_data.mjs';
 
 export const SIM_HZ = 60;
 export const DT = 1 / SIM_HZ;
@@ -112,6 +114,7 @@ export const DEFAULT_TUNING = {
       triggerRange: 70, windup: 0.6, blastRadius: 90, blastHurtsEnemies: true,
       gold: [1, 2],
     },
+    ...EXTRA_ENEMIES, // archétypes ajoutés (foe_data.mjs)
   },
   elite: {
     hpMult: 1.8, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
@@ -142,6 +145,7 @@ export const DEFAULT_TUNING = {
       speedMultByPhase: [1, 1.05, 1.15], // … et plus de vitesse ; les télégraphes, eux, ne raccourcissent JAMAIS
       secondChargeWindup: 0.6, // phase 3 : seconde charge enchaînée (télégraphe propre ≥ 0,5 s)
     },
+    ...EXTRA_BOSSES, // modèles de Gardien ajoutés (boss_data.mjs)
   },
 
   combat: {
@@ -189,7 +193,7 @@ export const DEFAULT_TUNING = {
   // Budget de menace d'une vague : (base + perIndex × index) × densité de l'étage.
   encounter: { baseBudget: 5, perIndex: 0.45, lastWaveMult: 1.2, strayEliteChance: 0.15 },
   // Rotation des Gardiens sur les 37 sections (le 1er de la liste garde la section 1).
-  guardians: { rotation: ['gardien'] },
+  guardians: { rotation: GUARDIAN_ROTATION },
 
   // PROGRESSION PERMANENTE (profil) : Âmes gagnées pendant la descente, jamais perdues.
   progression: {

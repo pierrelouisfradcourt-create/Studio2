@@ -11,6 +11,7 @@ import { queueSpawn, findSpawnPoint } from './spawns.mjs';
 import { floorScaling } from './floors.mjs';
 import { buildNav } from './nav.mjs';
 import { pointBlocked } from './physics.mjs';
+import { EXTRA_ROSTER, EXTRA_ELITE_KINDS } from './foe_data.mjs';
 
 // Dispositions d'obstacles, en fractions de la salle (cx, cy, w, h en unités).
 // Le bas-centre (entrée) et le haut (portes) restent toujours dégagés.
@@ -32,6 +33,7 @@ const ROSTER = [
   { kind: 'archer', cost: 1.5, minIndex: 1, weight: 3 },
   { kind: 'charger', cost: 2, minIndex: 1, weight: 2 }, // dès l'étage 1 : premier vrai professeur de dash
   { kind: 'brute', cost: 3, minIndex: 3, weight: 2 },
+  ...EXTRA_ROSTER, // archétypes ajoutés (foe_data.mjs)
 ];
 const ELITE_MODS = ['rapide', 'blinde', 'ardent'];
 
@@ -134,7 +136,7 @@ function planWaves(game, info, elite) {
   }
   if (elite) {
     // Salle d'élite : un champion (modificateur façon Diablo) dans la dernière vague.
-    const kinds = ['brute', 'charger', 'imp', 'archer'];
+    const kinds = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS];
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, kinds), elite: pick(game.rng.gen, ELITE_MODS) });
   } else if (info.floor > 2 && rand(game.rng.gen) < enc.strayEliteChance) {
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, ['imp', 'archer']), elite: pick(game.rng.gen, ELITE_MODS) });

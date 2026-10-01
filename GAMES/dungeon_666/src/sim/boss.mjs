@@ -10,11 +10,13 @@ import { spawnPickup } from './combat.mjs';
 import { queueSpawn, findSpawnPoint } from './spawns.mjs';
 import { bossDef, toPlayer, setState } from './boss_common.mjs';
 import { CHARON } from './boss_charon.mjs';
+import { EXTRA_BOSS_MODELS } from './boss_models.mjs';
 
 // Registre des modèles de Gardien : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn},
 // rest?(game, e, d, dt, speed) }. La clé est le `kind` de l'ennemi (= clé de tuning.boss).
 export const BOSS_MODELS = {
   gardien: CHARON,
+  ...EXTRA_BOSS_MODELS,
 };
 
 function modelOf(e) {
