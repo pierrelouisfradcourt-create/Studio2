@@ -1,0 +1,93 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://jeu/ville/carte.gd" id="1"]
+
+[node name="Carte" type="PanelContainer"]
+size_flags_horizontal = 3
+mouse_filter = 1
+theme_type_variation = &"Carte"
+script = ExtResource("1")
+
+[node name="Colonne" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Bandeau" type="Panel" parent="Colonne"]
+custom_minimum_size = Vector2(0, 3)
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Bandeau"
+
+[node name="Marge" type="MarginContainer" parent="Colonne"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Contenu" type="VBoxContainer" parent="Colonne/Marge"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Tete" type="HBoxContainer" parent="Colonne/Marge/Contenu"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Surtitre" type="Label" parent="Colonne/Marge/Contenu/Tete"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"Surtitre"
+text = "Sur-titre"
+autowrap_mode = 3
+uppercase = true
+
+[node name="Badge" type="Label" parent="Colonne/Marge/Contenu/Tete"]
+layout_mode = 2
+size_flags_vertical = 0
+theme_type_variation = &"Badge"
+text = "Équipé"
+horizontal_alignment = 2
+uppercase = true
+
+[node name="Titre" type="Label" parent="Colonne/Marge/Contenu"]
+layout_mode = 2
+theme_type_variation = &"TitreCarte"
+text = "Titre"
+autowrap_mode = 3
+
+[node name="Sous" type="Label" parent="Colonne/Marge/Contenu"]
+layout_mode = 2
+theme_type_variation = &"Sous"
+text = "Sous-titre"
+autowrap_mode = 3
+
+[node name="Lignes" type="VBoxContainer" parent="Colonne/Marge/Contenu"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Ressort" type="Control" parent="Colonne/Marge/Contenu"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Refus" type="Label" parent="Colonne/Marge/Contenu"]
+layout_mode = 2
+theme_type_variation = &"Refus"
+text = "Refus"
+autowrap_mode = 3
+
+[node name="Pied" type="HBoxContainer" parent="Colonne/Marge/Contenu"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Prix" type="Label" parent="Colonne/Marge/Contenu/Pied"]
+layout_mode = 2
+theme_type_variation = &"Prix"
+text = "◆ 0"
+
+[node name="Boutons" type="HFlowContainer" parent="Colonne/Marge/Contenu/Pied"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 6

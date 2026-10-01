@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://jeu/ecrans/victoire.gd" id="1"]
+
+[node name="Victoire" type="VBoxContainer"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+script = ExtResource("1")
+
+[node name="Titre" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Logo"
+text = "LE TRÔNE EST VIDE"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Accroche" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Ville" type="Button" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"BoutonPrincipal"
+text = "Retour à la Ville"

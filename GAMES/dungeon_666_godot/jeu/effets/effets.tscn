@@ -1,0 +1,32 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://jeu/effets/effets.gd" id="1"]
+[ext_resource type="Script" path="res://jeu/effets/formes.gd" id="2"]
+[ext_resource type="Script" path="res://jeu/effets/particules.gd" id="3"]
+[ext_resource type="Script" path="res://jeu/effets/textes.gd" id="4"]
+[ext_resource type="Script" path="res://jeu/effets/ecran.gd" id="5"]
+
+[node name="Effets" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Formes" type="Node2D" parent="."]
+script = ExtResource("2")
+
+[node name="Particules" type="Node2D" parent="."]
+script = ExtResource("3")
+
+[node name="Textes" type="Node2D" parent="."]
+script = ExtResource("4")
+
+[node name="Ecran" type="CanvasLayer" parent="."]
+
+[node name="Flash" type="Control" parent="Ecran"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5")

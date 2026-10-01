@@ -1,0 +1,223 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://jeu/ville/ville.gd" id="1"]
+[ext_resource type="Script" path="res://jeu/ville/doigt.gd" id="2"]
+[ext_resource type="PackedScene" path="res://jeu/ville/onglet_portail.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://jeu/ville/onglet_classe.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://jeu/ville/onglet_armurerie.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://jeu/ville/onglet_coffre.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://jeu/ville/onglet_grimoire.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://jeu/ville/onglet_sanctuaire.tscn" id="8"]
+[ext_resource type="PackedScene" path="res://jeu/ville/onglet_labo.tscn" id="9"]
+
+[sub_resource type="ButtonGroup" id="groupe"]
+
+[node name="Ville" type="CanvasLayer"]
+script = ExtResource("1")
+
+[node name="Racine" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 960.0
+offset_bottom = 540.0
+
+[node name="Fond" type="ColorRect" parent="Racine"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Marges" type="MarginContainer" parent="Racine"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Cadre" type="PanelContainer" parent="Racine/Marges"]
+layout_mode = 2
+theme_type_variation = &"Cadre"
+
+[node name="Colonne" type="VBoxContainer" parent="Racine/Marges/Cadre"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Entete" type="HFlowContainer" parent="Racine/Marges/Cadre/Colonne"]
+layout_mode = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 4
+
+[node name="Titres" type="VBoxContainer" parent="Racine/Marges/Cadre/Colonne/Entete"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="Surtitre" type="Label" parent="Racine/Marges/Cadre/Colonne/Entete/Titres"]
+layout_mode = 2
+theme_type_variation = &"Surtitre"
+text = "Dité · la cité des damnés"
+uppercase = true
+
+[node name="Titre" type="Label" parent="Racine/Marges/Cadre/Colonne/Entete/Titres"]
+layout_mode = 2
+theme_type_variation = &"TitreVille"
+text = "Ville de Dité"
+
+[node name="Bourse" type="HBoxContainer" parent="Racine/Marges/Cadre/Colonne/Entete"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 14
+
+[node name="Ames" type="Label" parent="Racine/Marges/Cadre/Colonne/Entete/Bourse"]
+layout_mode = 2
+theme_type_variation = &"Ames"
+text = "◆ 0 Âmes"
+
+[node name="Or" type="Label" parent="Racine/Marges/Cadre/Colonne/Entete/Bourse"]
+layout_mode = 2
+theme_type_variation = &"Or"
+text = "● 0 or"
+
+[node name="Classe" type="Label" parent="Racine/Marges/Cadre/Colonne/Entete/Bourse"]
+layout_mode = 2
+theme_type_variation = &"Note"
+text = "Classe · record étage 1"
+
+[node name="Retour" type="Button" parent="Racine/Marges/Cadre/Colonne/Entete"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"BoutonDiscret"
+text = "‹ Titre"
+
+[node name="Onglets" type="HFlowContainer" parent="Racine/Marges/Cadre/Colonne"]
+layout_mode = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="Portail" type="Button" parent="Racine/Marges/Cadre/Colonne/Onglets"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"Onglet"
+toggle_mode = true
+button_group = SubResource("groupe")
+text = "Portail"
+
+[node name="Classe" type="Button" parent="Racine/Marges/Cadre/Colonne/Onglets"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"Onglet"
+toggle_mode = true
+button_group = SubResource("groupe")
+text = "Classe"
+
+[node name="Armurerie" type="Button" parent="Racine/Marges/Cadre/Colonne/Onglets"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"Onglet"
+toggle_mode = true
+button_group = SubResource("groupe")
+text = "Armurerie"
+
+[node name="Coffre" type="Button" parent="Racine/Marges/Cadre/Colonne/Onglets"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"Onglet"
+toggle_mode = true
+button_group = SubResource("groupe")
+text = "Coffre"
+
+[node name="Grimoire" type="Button" parent="Racine/Marges/Cadre/Colonne/Onglets"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"Onglet"
+toggle_mode = true
+button_group = SubResource("groupe")
+text = "Grimoire"
+
+[node name="Sanctuaire" type="Button" parent="Racine/Marges/Cadre/Colonne/Onglets"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"Onglet"
+toggle_mode = true
+button_group = SubResource("groupe")
+text = "Sanctuaire"
+
+[node name="Labo" type="Button" parent="Racine/Marges/Cadre/Colonne/Onglets"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"Onglet"
+toggle_mode = true
+button_group = SubResource("groupe")
+text = "Labo du feel"
+
+[node name="Corps" type="ScrollContainer" parent="Racine/Marges/Cadre/Colonne"]
+layout_mode = 2
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 0
+
+[node name="Pages" type="MarginContainer" parent="Racine/Marges/Cadre/Colonne/Corps"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="Portail" parent="Racine/Marges/Cadre/Colonne/Corps/Pages" instance=ExtResource("3")]
+layout_mode = 2
+
+[node name="Classe" parent="Racine/Marges/Cadre/Colonne/Corps/Pages" instance=ExtResource("4")]
+visible = false
+layout_mode = 2
+
+[node name="Armurerie" parent="Racine/Marges/Cadre/Colonne/Corps/Pages" instance=ExtResource("5")]
+visible = false
+layout_mode = 2
+
+[node name="Coffre" parent="Racine/Marges/Cadre/Colonne/Corps/Pages" instance=ExtResource("6")]
+visible = false
+layout_mode = 2
+
+[node name="Grimoire" parent="Racine/Marges/Cadre/Colonne/Corps/Pages" instance=ExtResource("7")]
+visible = false
+layout_mode = 2
+
+[node name="Sanctuaire" parent="Racine/Marges/Cadre/Colonne/Corps/Pages" instance=ExtResource("8")]
+visible = false
+layout_mode = 2
+
+[node name="Labo" parent="Racine/Marges/Cadre/Colonne/Corps/Pages" instance=ExtResource("9")]
+visible = false
+layout_mode = 2
+
+[node name="Pied" type="Label" parent="Racine/Marges/Cadre/Colonne"]
+layout_mode = 2
+theme_type_variation = &"Sous"
+text = "PERMANENT — tout ce qui s'achète ou se choisit ici survit à la mort. Les bénédictions du donjon, elles, meurent avec la descente."
+autowrap_mode = 3
+
+[node name="Garde" type="Control" parent="Racine"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Armement" type="Timer" parent="Racine"]
+wait_time = 0.35
+one_shot = true
+
+[node name="Doigt" type="Node" parent="Racine" node_paths=PackedStringArray("defilement")]
+script = ExtResource("2")
+defilement = NodePath("../Marges/Cadre/Colonne/Corps")

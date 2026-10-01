@@ -1,0 +1,6 @@
+.godot/
+parite/essai/
+# Générés par `node tools/export_godot.mjs` (GAMES/dungeon_666) : 27 Mo, reproductibles.
+parite/traces/
+parite/traces_denses/
+parite/vecteurs/

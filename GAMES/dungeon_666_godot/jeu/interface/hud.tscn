@@ -1,0 +1,404 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://jeu/interface/hud.gd" id="1"]
+[ext_resource type="Script" path="res://jeu/interface/jauge.gd" id="2"]
+[ext_resource type="Script" path="res://jeu/interface/benedictions.gd" id="3"]
+[ext_resource type="Script" path="res://jeu/interface/fil_etages.gd" id="4"]
+[ext_resource type="Script" path="res://jeu/interface/gardien.gd" id="5"]
+[ext_resource type="Script" path="res://jeu/interface/losange.gd" id="6"]
+[ext_resource type="Script" path="res://jeu/interface/bouton_pause.gd" id="7"]
+[ext_resource type="Script" path="res://jeu/interface/banniere.gd" id="8"]
+[ext_resource type="Script" path="res://jeu/interface/commande.gd" id="9"]
+[ext_resource type="Script" path="res://jeu/interface/tactile.gd" id="10"]
+[ext_resource type="Script" path="res://jeu/interface/danger.gd" id="11"]
+[ext_resource type="Script" path="res://jeu/interface/fleches.gd" id="12"]
+
+[node name="Hud" type="CanvasLayer"]
+script = ExtResource("1")
+
+[node name="Racine" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="BandeHaute" type="TextureRect" parent="Racine"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 96.0
+grow_horizontal = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 0
+
+[node name="Danger" type="TextureRect" parent="Racine"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 0
+script = ExtResource("11")
+
+[node name="Fleches" type="Control" parent="Racine"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("12")
+
+[node name="Tactile" type="Control" parent="Racine"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("10")
+
+[node name="Attaque" type="Control" parent="Racine/Tactile"]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("9")
+id = "attack"
+rayon = 48.0
+
+[node name="Dash" type="Control" parent="Racine/Tactile"]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("9")
+id = "dash"
+rayon = 40.0
+
+[node name="Competence" type="Control" parent="Racine/Tactile"]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("9")
+id = "skill"
+rayon = 33.0
+
+[node name="Super" type="Control" parent="Racine/Tactile"]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("9")
+id = "super"
+rayon = 35.0
+
+[node name="Gadget" type="Control" parent="Racine/Tactile"]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("9")
+id = "gadget"
+rayon = 27.0
+
+[node name="Marges" type="MarginContainer" parent="Racine"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Zone" type="Control" parent="Racine/Marges"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Gauche" type="VBoxContainer" parent="Racine/Marges/Zone"]
+layout_mode = 1
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Vie" type="Control" parent="Racine/Marges/Zone/Gauche"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 18)
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+script = ExtResource("2")
+
+[node name="VieNombre" type="Label" parent="Racine/Marges/Zone/Gauche/Vie"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "100 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Benedictions" type="Control" parent="Racine/Marges/Zone/Gauche"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("3")
+
+[node name="Centre" type="VBoxContainer" parent="Racine/Marges/Zone"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/separation = 1
+
+[node name="Etage" type="Label" parent="Racine/Marges/Zone/Centre"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ÉTAGE 1 / 666"
+horizontal_alignment = 1
+
+[node name="Fil" type="Control" parent="Racine/Marges/Zone/Centre"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("4")
+
+[node name="Cercle" type="Label" parent="Racine/Marges/Zone/Centre"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Limbes"
+horizontal_alignment = 1
+
+[node name="Gardien" type="VBoxContainer" parent="Racine/Marges/Zone/Centre"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+theme_override_constants/separation = 3
+script = ExtResource("5")
+
+[node name="Nom" type="Label" parent="Racine/Marges/Zone/Centre/Gardien"]
+layout_mode = 2
+text = "Gardien"
+horizontal_alignment = 1
+
+[node name="Barre" type="Control" parent="Racine/Marges/Zone/Centre/Gardien"]
+custom_minimum_size = Vector2(420, 14)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("2")
+
+[node name="Droite" type="HBoxContainer" parent="Racine/Marges/Zone"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Bourse" type="VBoxContainer" parent="Racine/Marges/Zone/Droite"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Or" type="HBoxContainer" parent="Racine/Marges/Zone/Droite/Bourse"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 2
+
+[node name="OrMontant" type="Label" parent="Racine/Marges/Zone/Droite/Bourse/Or"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+horizontal_alignment = 2
+
+[node name="OrPiece" type="Control" parent="Racine/Marges/Zone/Droite/Bourse/Or"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("6")
+
+[node name="Ames" type="HBoxContainer" parent="Racine/Marges/Zone/Droite/Bourse"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="AmesGemme" type="Control" parent="Racine/Marges/Zone/Droite/Bourse/Ames"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("6")
+
+[node name="AmesMontant" type="Label" parent="Racine/Marges/Zone/Droite/Bourse/Ames"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+horizontal_alignment = 2
+
+[node name="Pause" type="Button" parent="Racine/Marges/Zone/Droite"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+size_flags_vertical = 0
+focus_mode = 0
+tooltip_text = "Pause"
+script = ExtResource("7")
+
+[node name="Banniere" type="VBoxContainer" parent="Racine/Marges/Zone"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.2
+anchor_right = 0.5
+anchor_bottom = 0.2
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+script = ExtResource("8")
+
+[node name="Titre" type="Label" parent="Racine/Marges/Zone/Banniere"]
+layout_mode = 2
+text = "ÉTAGE 1"
+horizontal_alignment = 1
+
+[node name="Sous" type="Label" parent="Racine/Marges/Zone/Banniere"]
+layout_mode = 2
+text = "Limbes · section 1"
+horizontal_alignment = 1
+
+[node name="Bas" type="VBoxContainer" parent="Racine/Marges/Zone"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Indice" type="Label" parent="Racine/Marges/Zone/Bas"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Choisissez une porte"
+horizontal_alignment = 1
+
+[node name="Bureau" type="HBoxContainer" parent="Racine/Marges/Zone/Bas"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Attaque" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="CmdAttaque" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Attaque"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("9")
+id = "attack"
+rayon = 22.0
+
+[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Attaque"]
+layout_mode = 2
+text = "Clic G"
+horizontal_alignment = 1
+
+[node name="Dash" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="CmdDash" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Dash"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("9")
+id = "dash"
+rayon = 22.0
+
+[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Dash"]
+layout_mode = 2
+text = "Espace"
+horizontal_alignment = 1
+
+[node name="Competence" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="CmdCompetence" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Competence"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("9")
+id = "skill"
+rayon = 22.0
+
+[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Competence"]
+layout_mode = 2
+text = "Clic D"
+horizontal_alignment = 1
+
+[node name="Gadget" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="CmdGadget" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Gadget"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("9")
+id = "gadget"
+rayon = 22.0
+
+[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Gadget"]
+layout_mode = 2
+text = "E"
+horizontal_alignment = 1
+
+[node name="Super" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="CmdSuper" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Super"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("9")
+id = "super"
+rayon = 22.0
+
+[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Super"]
+layout_mode = 2
+text = "F"
+horizontal_alignment = 1

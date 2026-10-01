@@ -1,0 +1,47 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://jeu/ville/onglet_coffre.gd" id="1"]
+[ext_resource type="Script" path="res://jeu/ville/grille.gd" id="2"]
+
+[node name="Coffre" type="VBoxContainer"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+script = ExtResource("1")
+
+[node name="Note" type="Label" parent="."]
+layout_mode = 2
+theme_type_variation = &"Note"
+text = "Tout objet trouvé en donjon est conservé : équipé, ou rangé ici. Recycler rend des Âmes."
+autowrap_mode = 3
+
+[node name="TitrePorte" type="Label" parent="."]
+layout_mode = 2
+theme_type_variation = &"TitreSection"
+text = "Équipement porté"
+
+[node name="Porte" type="GridContainer" parent="."]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+script = ExtResource("2")
+largeur_mini = 250.0
+colonnes_max = 3
+
+[node name="TitreCoffre" type="Label" parent="."]
+layout_mode = 2
+theme_type_variation = &"TitreSection"
+text = "Coffre"
+
+[node name="Vide" type="Label" parent="."]
+layout_mode = 2
+theme_type_variation = &"Note"
+text = "Vide. Les trésors du donjon arrivent ici."
+autowrap_mode = 3
+
+[node name="Objets" type="GridContainer" parent="."]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+script = ExtResource("2")
+largeur_mini = 250.0
+colonnes_max = 4
