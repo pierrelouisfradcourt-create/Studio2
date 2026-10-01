@@ -348,7 +348,9 @@ function drawCircleDanger(ctx, x, y, r, progress, inner = 0) {
   ctx.globalAlpha = dangerAlpha(progress);
   ctx.fillStyle = PAL.dangerFillHot;
   ctx.beginPath();
-  ctx.arc(x, y, Math.max(0.1, r * Math.min(1, progress)), 0, TAU);
+  // Anneau : la jauge part du bord intérieur, le centre (sûr) n'est jamais peint en rouge vif.
+  ctx.arc(x, y, Math.max(0.1, inner + (r - inner) * Math.min(1, progress)), 0, TAU);
+  if (inner > 0) ctx.arc(x, y, inner, 0, TAU, true);
   ctx.fill();
   ctx.globalAlpha = 1;
   ctx.strokeStyle = PAL.danger;
@@ -356,6 +358,11 @@ function drawCircleDanger(ctx, x, y, r, progress, inner = 0) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, TAU);
   ctx.stroke();
+  if (inner > 0) {
+    ctx.beginPath();
+    ctx.arc(x, y, inner, 0, TAU);
+    ctx.stroke();
+  }
 }
 
 function drawTelegraphs(ctx, game) {
@@ -401,6 +408,10 @@ function drawTelegraphEdges(ctx, game) {
     else {
       ctx.moveTo(h.x + h.r, h.y);
       ctx.arc(h.x, h.y, h.r, 0, TAU);
+      if (h.shape === 'ring' && h.inner > 0) {
+        ctx.moveTo(h.x + h.inner, h.y);
+        ctx.arc(h.x, h.y, h.inner, 0, TAU);
+      }
     }
   }
   for (const e of game.enemies) {

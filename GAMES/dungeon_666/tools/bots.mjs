@@ -19,7 +19,7 @@
 
 import { DT, emptyInput, applyCommand } from '../src/sim/game.mjs';
 import { hazardProgress } from '../src/sim/projectiles.mjs';
-import { pointSegDist2, dist2, clamp } from '../src/core/math.mjs';
+import { pointSegDist2, dist2, clamp, angleDiff } from '../src/core/math.mjs';
 
 // ---------------------------------------------------------------- constantes de jeu du bot
 
@@ -43,6 +43,7 @@ const SAFETY_MARGIN = 4; // u ajoutées au rayon du héros dans les tests de zon
 const MOVER_PAD = 8; // u : portée de contact d'un ennemi lancé (ruée, charge)
 const PROJECTILE_PAD = 3; // u de marge autour des projectiles
 const FAST_MOVER_SPEED = 350; // u/s : au-delà, un ennemi « fonce » (ruée, charge)
+const TELEPORT_SPEED = 2500; // u/s : au-delà, ce n'est pas une course mais une téléportation (vue comme telle)
 const PROJECTILE_ALERT_PAD = 60; // u : préfiltre des projectiles qui passeront près
 const WALL_COMFORT = 70; // u : finir un mouvement près d'un mur est pénalisé
 const WALL_PENALTY = 0.35;
@@ -68,6 +69,7 @@ const SUPER_CROWD = 2;
 const SUPER_LOW_HP = 0.4;
 const SUPER_REACH_PAD = 20;
 const LANCE_BOSS_WEIGHT = 3; // un boss aligné vaut trois ennemis pour la Lance
+const SHIELD_PENALTY = 600; // u : un Gardien enchaîné (bouclier visible) passe après ses geôliers
 
 const PICKUP_WINDOW = 5; // s passées à ramasser l'or après le combat
 const SPAWN_WAIT_DIST = 160; // u : on attend la vague à cette distance des cercles d'invocation
@@ -366,10 +368,32 @@ function lineThreat(game, e, tele, tI, r) {
   return zone((x, y) => segDepth(x, y, e.x, e.y, ex, ey, hw), tI - ZONE_SLACK, tI + span);
 }
 
+/**
+ * Secteur « de zone » (tele.area, ex. le fouet de Minos) : le corps ne bouge pas, tout le
+ * secteur dessiné frappe d'un coup à la fin de la jauge — on lit son arc et sa brèche.
+ */
+function sectorThreat(e, tele, tI, r) {
+  const half = tele.arc / 2;
+  const reach = tele.range + r;
+  const test = (x, y) => {
+    const dx = x - e.x;
+    const dy = y - e.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d >= reach) return 0;
+    if (d > r && half < Math.PI) {
+      const slack = Math.asin(clamp(r / d, 0, 1));
+      if (Math.abs(angleDiff(tele.angle, Math.atan2(dy, dx))) > half + slack) return 0;
+    }
+    return 1 - d / reach;
+  };
+  return zone(test, tI - ZONE_SLACK, tI + FRAME_SPAN);
+}
+
 function teleThreat(game, mem, e, r) {
   const tele = e.tele;
   const tI = teleRemaining(game, mem, e);
   if (tI > HORIZON || game.time - mem.tele.get(e.id).t0 < REACTION_TIME) return null;
+  if (tele.shape === 'cone' && tele.area) return sectorThreat(e, tele, tI, r);
   if (tele.shape === 'cone') return lungeThreat(e, tele, tI, r);
   if (tele.shape === 'line') return lineThreat(game, e, tele, tI, r);
   // Cercle : celui du possédé (explosion) et ceux du boss (anneau de projectiles qui naît dans
@@ -379,8 +403,11 @@ function teleThreat(game, mem, e, r) {
 }
 
 function moverThreat(mem, e, r) {
+  // Un corps EN L'AIR (bond, ombre détachée) ne blesse pas : seul son cercle d'atterrissage compte.
+  if (e.airborne) return null;
   const m = mem.motion.get(e.id);
   if (!m || m.vx * m.vx + m.vy * m.vy < FAST_MOVER_SPEED * FAST_MOVER_SPEED) return null;
+  if (m.vx * m.vx + m.vy * m.vy > TELEPORT_SPEED * TELEPORT_SPEED) return null; // il a disparu / réapparu
   return { type: 'mover', x: e.x, y: e.y, vx: m.vx, vy: m.vy, rad: e.r + r + MOVER_PAD };
 }
 
@@ -624,6 +651,7 @@ function pickTarget(game, mem, enemies) {
     if (e.kind === 'archer') score -= ARCHER_BONUS;
     if (e.kind === 'exploder' && !e.tele) score -= EXPLODER_BONUS;
     if (isWindingDanger(e)) score += AVOID_PENALTY;
+    if (e.shielded) score += SHIELD_PENALTY;
     if (e.id === mem.targetId) score -= STICKY_BONUS;
     if (score < bestScore) {
       bestScore = score;
@@ -688,6 +716,11 @@ function engageIntent(game, mem, enemies, opts) {
   const target = pickTarget(game, mem, enemies);
   const intent = { mx: 0, my: 0, attack: false, skill: null, gadget: false, superP: false };
   const d = distTo(p, target);
+  // Gardien dissous (il va réapparaître) : on ne court pas après une silhouette, on lit le sol.
+  if (target.hidden) {
+    abilityIntent(game, mem, enemies, intent, opts);
+    return intent;
+  }
   if (isWindingDanger(target)) {
     // Recul face à une brute qui arme son coup ou un possédé qui gonfle.
     if (d < RETREAT_DIST + target.r) {

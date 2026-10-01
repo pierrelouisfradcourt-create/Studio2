@@ -95,8 +95,11 @@ function drawTopCenter(ctx, game, w, safe) {
   if (boss) {
     // Combat de Gardien : bande haute réduite (titre + barre portant le nom), l'arène reste visible.
     const bw = Math.min(420, w * 0.5);
-    bar(ctx, cx - bw / 2, y + 14, bw, 14, boss.hp / boss.maxHp, boss.phase === 1 ? '#c0304a' : '#ff4a1a');
-    text(ctx, game.tuning.boss[boss.kind].name, cx, y + 21, 10, PAL.bossTrim, 'center', 800);
+    // Gardien enchaîné (bouclier tenu par ses serviteurs) : barre violette, consigne explicite.
+    const barColor = boss.shielded ? PAL.summon : boss.phase === 1 ? '#c0304a' : '#ff4a1a';
+    bar(ctx, cx - bw / 2, y + 14, bw, 14, boss.hp / boss.maxHp, barColor);
+    const name = game.tuning.boss[boss.kind].name;
+    text(ctx, boss.shielded ? `${name} — ENCHAÎNÉ : abats ses geôliers` : name, cx, y + 21, 10, PAL.bossTrim, 'center', 800);
     return;
   }
   // Six pastilles = la section ; la dernière est le Gardien.
