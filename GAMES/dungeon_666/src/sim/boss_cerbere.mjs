@@ -2,24 +2,25 @@
 // Bête RAPIDE qui ne laisse pas respirer : au repos elle RÔDE en cercle autour du héros au lieu de
 // marcher sur lui, et attaque par séries de trois (trois têtes). Patterns, tous télégraphiés :
 //   bond      — bonds annoncés par le CERCLE D'ATTERRISSAGE posé sous le héros (1 / 2 / 3 bonds
-//               selon la phase) ; en phase 3, le dernier atterrissage libère une onde (anneau) :
-//               rester dans le cercle qui vient de frapper, ou dasher à travers. Après la série,
-//               il est ESSOUFFLÉ : immobile, point faible exposé — la fenêtre de punition.
+//               selon la phase) ; dès la phase 2 (bond.shockFromPhase), le dernier atterrissage
+//               libère une onde (anneau) : rester dans le cercle qui vient de frapper, ou caler
+//               les i-frames d'un dash sur l'onde. Après la série, il est ESSOUFFLÉ : immobile,
+//               point faible exposé — la fenêtre de punition.
 //   souffle   — les trois têtes crachent l'une après l'autre trois jets de flammes en éventail
-//               (lignes) ; son DOS est sûr. Deux salves, ordre inversé, dès la phase 2.
-//   morsures  — trois ruées (cônes) enchaînées, chacune re-visée ; la dernière le laisse exposé.
+//               (bandes qui partent de son centre) ; son DOS est sûr. Deux salves, ordre inversé,
+//               dès la phase 2.
+//   morsures  — trois ruées enchaînées, chacune re-visée et annoncée par un cône ; une ruée ne
+//               mord QUE dans son cône dessiné (corps du héros compris). La dernière l'expose.
 //   hurlement — (phase 3, frénésie) un cercle de flammes se referme autour du héros, avec une
 //               brèche, puis Cerbère bondit en son centre : sortir par la brèche, ou dasher.
 
 import { rand } from '../core/rng.mjs';
-import { dist2, clamp, TAU } from '../core/math.mjs';
+import { dist2, clamp, inSector, TAU } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
 import { damagePlayer } from './combat.mjs';
 import { toPlayer, toRest, setSub, holdStill, bossHazard, exposedRecovery, roomPoint } from './boss_common.mjs';
 
 const DEG = Math.PI / 180;
-const BITE_HIT_PAD = 8; // u ajoutés au contact pendant une ruée (même règle que le diablotin)
-const BITE_TELE_PAD = 14; // u : le cône dessiné couvre la ruée + le contact
 const LEAP_STATES = new Set(['bond', 'hurlement']);
 
 /** Cri d'attaque : le son porte le timbre du Gardien (recipes.mjs, ENEMY_ATTACK.cerbere). */
@@ -127,8 +128,9 @@ export function souffle(game, e, d) {
 
 // ---------------------------------------------------------------- morsures
 
+/** Portée du cône dessiné : la course de la ruée + le corps + la marge (morsures.telePad). */
 function biteRange(e, m) {
-  return m.strikeSpeed * m.strikeTime + e.r + BITE_TELE_PAD;
+  return m.strikeSpeed * m.strikeTime + e.r + m.telePad;
 }
 
 export function morsures(game, e, d, dt, speed) {
@@ -166,15 +168,21 @@ export function morsures(game, e, d, dt, speed) {
         e.tele = null;
         e.hitPlayer = false;
         e.atkId = newId(game);
+        // Origine du cône dessiné : la ruée ne mordra que dedans.
+        e.biteX = e.x;
+        e.biteY = e.y;
         setSub(e, 'strike');
         bark(game, e);
       }
       break;
     }
-    case 'strike':
+    case 'strike': {
       e.vx = e.dirX * m.strikeSpeed;
       e.vy = e.dirY * m.strikeSpeed;
-      if (!e.hitPlayer && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + BITE_HIT_PAD) ** 2) {
+      // Contact de la gueule (morsures.hitPad) ET corps du héros dans le cône annoncé : la ruée
+      // ne déborde jamais du télégraphe (près de l'apex, le contact seul dépasserait du cône).
+      const inCone = inSector(p.x, p.y, e.biteX, e.biteY, biteRange(e, m), Math.atan2(e.dirY, e.dirX), m.arcDeg * DEG, p.r);
+      if (!e.hitPlayer && inCone && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + m.hitPad) ** 2) {
         e.hitPlayer = true;
         damagePlayer(game, m.damage * e.dmgScale, { kind: 'cerbereBite', id: e.atkId, x: e.x, y: e.y });
       }
@@ -183,6 +191,7 @@ export function morsures(game, e, d, dt, speed) {
         setSub(e, 'gap');
       }
       break;
+    }
     default: // 'gap' : souffle court entre deux morsures
       holdStill(e);
       if (e.subT >= m.recover) setSub(e, 'windup');
@@ -246,7 +255,8 @@ function tick(game, e) {
   }
 }
 
-// Bonds et morsures d'emblée ; le souffle en phase 2 ; la frénésie (hurlement) en phase 3.
+// Bonds, morsures et souffle d'emblée (le souffle double sa salve dès la phase 2) ; la frénésie
+// (hurlement) s'ajoute en phase 3.
 export const CERBERE = {
   byPhase: { 1: ['bond', 'morsures', 'souffle'], 2: ['bond', 'morsures', 'souffle'], 3: ['bond', 'morsures', 'souffle', 'hurlement'] },
   patterns: { bond, souffle, morsures, hurlement },

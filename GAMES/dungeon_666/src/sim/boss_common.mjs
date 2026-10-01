@@ -23,6 +23,7 @@ export function toPlayer(game, e) {
 }
 
 export function setState(e, s) {
+  endExposure(e);
   e.state = s;
   e.stateTime = 0;
   e.patternStep = 0;
@@ -61,10 +62,36 @@ export function bossHazard(game, e, h) {
   return spawnHazard(game, { sourceId: e.id, hitsPlayer: true, hitsEnemies: false, ...h, damage: h.damage * e.dmgScale });
 }
 
-/** Point faible exposé : dégâts reçus majorés de `mult` pendant `duration` s (statut e.vuln). */
+/**
+ * Point faible exposé : dégâts reçus majorés de `mult` pendant `duration` s. Statut PROPRE
+ * (e.exposed / e.exposedMult : appliqué par combat.damageEnemy, décompté par le moteur, éteint
+ * dès que le pattern s'achève — setState), distinct de la vulnérabilité générique des
+ * bénédictions et gadgets (e.vuln / e.vulnMult, ex. Charme fatal). Les deux majorations se
+ * cumulent sans que l'une prolonge l'autre, et seul e.exposed fait dessiner le point faible.
+ */
 export function expose(e, duration, mult) {
-  e.vuln = Math.max(e.vuln, duration);
-  e.vulnMult = Math.max(e.vulnMult, mult);
+  e.exposed = Math.max(e.exposed ?? 0, duration);
+  e.exposedMult = Math.max(e.exposedMult ?? 0, mult);
+  holdVulnFlag(e);
+}
+
+/**
+ * Le statut générique « vulnérable » (e.vuln > 0) reste vrai pendant toute l'exposition, mais
+ * SANS majoration propre : s'il était retombé, on le relève avec vulnMult = 0 ; une
+ * vulnérabilité de bénédiction en cours n'est ni prolongée ni modifiée.
+ */
+export function holdVulnFlag(e) {
+  if (!(e.exposed > 0) || e.vuln > 0) return;
+  e.vuln = e.exposed;
+  e.vulnMult = 0;
+}
+
+/** Fin d'exposition (pattern terminé ou interrompu) : rien ne survit à la fenêtre de punition. */
+function endExposure(e) {
+  if (!(e.exposed > 0) && !e.exposedMult) return;
+  e.exposed = 0;
+  e.exposedMult = 0;
+  if (!(e.vulnMult > 0)) e.vuln = 0; // drapeau levé par l'exposition seule
 }
 
 /**

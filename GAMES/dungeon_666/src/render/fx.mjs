@@ -4,6 +4,7 @@
 
 import { PAL } from './palette.mjs';
 import { addTrauma, zoomKick, kick } from './camera.mjs';
+import { pointBandDist2 } from '../core/math.mjs';
 
 const MAX_PARTICLES = 700;
 const MAX_TEXTS = 48;
@@ -26,7 +27,7 @@ const P = {
 };
 
 export function createFx() {
-  return { texts: [], effects: [], quality: 1, shakeScale: 1, healAcc: 0, healT: 0, banner: null, hurtFlash: 0, flash: 0, ghosts: [], landT: 0, swingT: 0, swingAngle: 0 };
+  return { texts: [], effects: [], quality: 1, shakeScale: 1, healAcc: 0, healT: 0, banner: null, hurtFlash: 0, flash: 0, ghosts: [], landT: 0, swingT: 0, swingAngle: 0, hazardTrauma: 0 };
 }
 
 function spawnParticle(fx, x, y, vx, vy, life, size, color, drag = 4, streak = 0) {
@@ -92,8 +93,41 @@ const BANNER_CUT = 0.3; // s de fondu restantes quand le combat démarre
 
 const ENEMY_COLORS = { imp: PAL.imp, archer: PAL.archer, brute: PAL.brute, charger: PAL.charger, exploder: PAL.exploder, gardien: PAL.boss };
 
+// Tremblement des ZONES qui frappent (les Gardiens en font frapper beaucoup à la fois : bandes,
+// damier, ondes, braises). Une zone secoue pleinement près du héros, de moins en moins loin de
+// lui ; toutes zones confondues, un lot d'événements ne secoue pas plus qu'une zone (un balayage
+// de 12 bandes = une secousse) ; les braises qui pulsent (terrain) ne secouent pas. Un coup
+// REÇU garde sa propre secousse (playerHurt) : la menace qui compte se sent toujours.
+const HAZARD_TRAUMA = 0.28;
+const HAZARD_TRAUMA_BATCH_CAP = 0.28;
+const HAZARD_NEAR = 90; // u entre le héros et le bord de la zone : secousse pleine en deçà
+const HAZARD_FAR = 480; // u : secousse minimale au-delà
+const HAZARD_FAR_MULT = 0.2;
+const HAZARD_TRAUMA_BY_KIND = { sinBlast: 0.06, colosseEmber: 0 };
+const HAZARD_PARTICLES_BY_KIND = { colosseEmber: 0.25 }; // fraction des particules d'impact
+
+/** Distance du héros au bord de la zone qui frappe (0 dedans ; un anneau compte comme un disque). */
+function hazardGap(ev, game) {
+  const p = game?.player;
+  if (!p) return 0;
+  if (ev.shape === 'line') return Math.sqrt(pointBandDist2(p.x, p.y, ev.x, ev.y, ev.angle, ev.length, ev.width));
+  return Math.max(0, Math.hypot(p.x - ev.x, p.y - ev.y) - (ev.r ?? 0));
+}
+
+function hazardTrauma(fx, ev, game) {
+  const base = HAZARD_TRAUMA_BY_KIND[ev.kind] ?? HAZARD_TRAUMA;
+  if (base <= 0) return 0;
+  const k = Math.min(1, Math.max(0, (hazardGap(ev, game) - HAZARD_NEAR) / (HAZARD_FAR - HAZARD_NEAR)));
+  const want = base * (1 - k * (1 - HAZARD_FAR_MULT));
+  const add = Math.min(want, HAZARD_TRAUMA_BATCH_CAP - fx.hazardTrauma);
+  if (add <= 0) return 0;
+  fx.hazardTrauma += add;
+  return add;
+}
+
 /** Traduit les événements de l'image en effets. `cam` reçoit le tremblement. */
 export function handleFxEvents(fx, cam, events, game) {
+  fx.hazardTrauma = 0;
   for (const ev of events) {
     const h = HANDLERS[ev.type];
     if (h) h(fx, cam, ev, game);
@@ -179,16 +213,18 @@ const HANDLERS = {
     addTrauma(cam, 1);
     zoomKick(cam, 0.12);
   },
-  hazardFire(fx, cam, ev) {
+  hazardFire(fx, cam, ev, game) {
     if (ev.shape === 'line') {
       addEffect(fx, { type: 'streak', x: ev.x, y: ev.y, angle: ev.angle, length: ev.length, width: ev.width, life: 0.25, max: 0.25, color: PAL.danger });
     } else {
       addEffect(fx, { type: 'shock', x: ev.x, y: ev.y, r: ev.r, life: 0.32, max: 0.32, color: ev.kind === 'sinBlast' ? '#ff8ae0' : '#ff6a3a' });
       if (ev.kind === 'bossSlam') zoomKick(cam, 0.02);
-      burst(fx, ev.x, ev.y, 16, ev.r * 3, 0.5, 4, '#4a3036', { drag: 4 });
-      burst(fx, ev.x, ev.y, 10, ev.r * 4, 0.35, 2.5, PAL.lava, { drag: 5, streak: 1 });
+      const n = HAZARD_PARTICLES_BY_KIND[ev.kind] ?? 1;
+      burst(fx, ev.x, ev.y, Math.round(16 * n), ev.r * 3, 0.5, 4, '#4a3036', { drag: 4 });
+      burst(fx, ev.x, ev.y, Math.round(10 * n), ev.r * 4, 0.35, 2.5, PAL.lava, { drag: 5, streak: 1 });
     }
-    addTrauma(cam, ev.kind === 'sinBlast' ? 0.06 : 0.28);
+    const trauma = hazardTrauma(fx, ev, game);
+    if (trauma > 0) addTrauma(cam, trauma);
   },
   explode(fx, cam, ev) {
     if (ev.hero) {

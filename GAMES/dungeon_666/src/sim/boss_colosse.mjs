@@ -7,8 +7,10 @@
 //              l'autre : entrer dans l'onde déjà passée (vers lui !) ou dasher à travers.
 //   eboulis  — rochers télégraphiés autour du héros (l'un tombe sur lui) ; dès la phase 2, chaque
 //              rocher laisse une BRAISE qui pulse (cercle rejoué, durée bornée) : l'arène rétrécit.
-//   geoliers — (phase 2+) il appelle ses geôliers (archers) ; tant qu'ils vivent, ses chaînes le
-//              rendent INVULNÉRABLE (bouclier visible, borné dans le temps) : les adds d'abord.
+//   geoliers — (phase 2+, UNE fois par phase : geoliers.callsPerPhase) il appelle ses geôliers
+//              (archers) ; tant qu'ils vivent, ses chaînes le rendent INVULNÉRABLE (bouclier
+//              visible, borné dans le temps) : les adds d'abord.
+// Changement de phase : les braises s'éteignent avec les autres zones (crochet onPhase).
 
 import { rand } from '../core/rng.mjs';
 import { clamp, TAU } from '../core/math.mjs';
@@ -147,6 +149,8 @@ export function geoliers(game, e, d, dt) {
     }
     e.shieldT = g.shieldMax;
     e.shielded = true;
+    if (!e.jailerCalls) e.jailerCalls = {};
+    e.jailerCalls[e.phase] = (e.jailerCalls[e.phase] ?? 0) + 1;
     emit(game, 'bossSummon', { id: e.id, x: e.x, y: e.y });
     emit(game, 'bossShield', { id: e.id, x: e.x, y: e.y, up: true });
     setSub(e, 'done');
@@ -173,10 +177,21 @@ function tick(game, e, d, dt) {
   tickPools(game, e, d.eboulis);
 }
 
-/** Pas de nouvel appel tant que des serviteurs vivent ou que le bouclier tient. */
+/**
+ * Geôliers : au plus `callsPerPhase` appels par phase (sans quoi le bouclier se recyclerait dès
+ * la chute des archers et le Colosse deviendrait un sac à PV), et jamais tant que des serviteurs
+ * vivent ou que le bouclier tient.
+ */
 function available(game, e, d, name) {
   if (name !== 'geoliers') return true;
-  return d.geoliers.countByPhase[e.phase - 1] > 0 && !e.shielded && summonedAlive(game) === 0;
+  const g = d.geoliers;
+  const calls = e.jailerCalls?.[e.phase] ?? 0;
+  return g.countByPhase[e.phase - 1] > 0 && calls < g.callsPerPhase && !e.shielded && summonedAlive(game) === 0;
+}
+
+/** Changement de phase : les braises s'éteignent (les zones viennent d'être effacées par le moteur). */
+function onPhase(game, e) {
+  e.pools = [];
 }
 
 // Poing, séisme et éboulis d'emblée ; les geôliers (et les braises) à partir de la phase 2.
@@ -185,4 +200,5 @@ export const COLOSSE = {
   patterns: { poing, seisme, eboulis, geoliers },
   tick,
   available,
+  onPhase,
 };

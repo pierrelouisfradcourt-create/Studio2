@@ -19,7 +19,7 @@
 
 import { DT, emptyInput, applyCommand } from '../src/sim/game.mjs';
 import { hazardProgress, lingerLeft } from '../src/sim/projectiles.mjs';
-import { pointSegDist2, dist2, clamp, angleDiff } from '../src/core/math.mjs';
+import { pointSegDist2, pointBandDist2, dist2, clamp, angleDiff } from '../src/core/math.mjs';
 
 // ---------------------------------------------------------------- constantes de jeu du bot
 
@@ -40,6 +40,7 @@ const LUNGE_TIME = 0.15; // s : durée d'une ruée de diablotin (vue à l'écran
 const CHARGE_SPAN = 0.5; // s pendant lesquels une charge en ligne reste dangereuse
 const ARROW_SPAN = 0.6; // s pendant lesquels une ligne d'archer reste dangereuse
 const SAFETY_MARGIN = 4; // u ajoutées au rayon du héros dans les tests de zone
+const EDGE_DEPTH = 0.02; // profondeur minimale d'un contact au bout d'une bande (jamais 0 = « dehors »)
 const MOVER_PAD = 8; // u : portée de contact d'un ennemi lancé (ruée, charge)
 const PROJECTILE_PAD = 3; // u de marge autour des projectiles
 const FAST_MOVER_SPEED = 350; // u/s : au-delà, un ennemi « fonce » (ruée, charge)
@@ -330,6 +331,20 @@ function segDepth(x, y, ax, ay, bx, by, hw) {
 }
 
 /**
+ * Profondeur (0..1) d'un corps de rayon r dans une zone 'line' : le RECTANGLE dessiné (même
+ * géométrie que projectiles.mjs inHazard). Dedans, 1 au milieu de la bande, ~0 à son bord.
+ */
+function bandDepth(x, y, h, r) {
+  const d2 = pointBandDist2(x, y, h.x, h.y, h.angle, h.length, h.width);
+  if (d2 >= r * r && d2 > 0) return 0;
+  const c = Math.cos(h.angle);
+  const s = Math.sin(h.angle);
+  const v = Math.abs(-(x - h.x) * s + (y - h.y) * c);
+  const hw = h.width / 2 + r;
+  return Math.max(EDGE_DEPTH, 1 - v / hw);
+}
+
+/**
  * Temps restant d'une zone, lu sur ce que montre l'écran : sa jauge (hazardProgress, celle
  * que dessine le rendu) et le temps écoulé depuis son apparition. Jauge linéaire : la règle
  * de trois donne le temps restant sans lire la durée cachée du télégraphe.
@@ -348,9 +363,8 @@ function hazardTest(h, r) {
       return d < h.r + r && d > h.inner - r ? 1 - Math.abs(d - (h.r + h.inner) / 2) / ((h.r - h.inner) / 2 + r) : 0;
     };
   }
-  const ex = h.x + Math.cos(h.angle) * h.length;
-  const ey = h.y + Math.sin(h.angle) * h.length;
-  return (x, y) => segDepth(x, y, h.x, h.y, ex, ey, h.width / 2 + r);
+  // Bande 'line' : le RECTANGLE dessiné (et touché par la sim), pas une capsule.
+  return (x, y) => bandDepth(x, y, h, r);
 }
 
 /** Flaque persistante : le danger est le TEMPS passé dedans entre t0 et t1 (pas un coup unique). */
