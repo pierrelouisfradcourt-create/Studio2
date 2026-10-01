@@ -224,6 +224,19 @@ const ENEMY_ATTACK = {
     osc('sine', 280, 900, adsr(0.08, 0.1, 0.8, 0.1, 0.15), 0.15, { glide: 0.35 }),
     osc('triangle', 560, 1800, adsr(0.08, 0.1, 0.8, 0.1, 0.15), 0.06, { glide: 0.35 }),
   ],
+  // Gardiens ajoutés (champ `enemy` de enemyAttack) : un timbre par modèle.
+  cerbere: [ // aboiement rauque : bruit grave + carré qui chute
+    hiss('bandpass', 700, 260, 2.5, perc(0.01, 0.22), 0.7),
+    osc('square', 210, 120, perc(0.01, 0.2), 0.3, { filter: { type: 'lowpass', freq: 900 } }),
+  ],
+  minos: [ // coup de marteau du Juge : cloche sombre
+    ...bell(NOTE.G2, BELL_PARTIALS, 0, 0.6, 0.35),
+    hiss('bandpass', 1500, null, 2, perc(0.001, 0.04), 0.2),
+  ],
+  colosse: [ // grondement d'effort : très grave, saturé
+    osc('sawtooth', 55, 42, adsr(0.06, 0.12, 0.7, 0.2, 0.3), 0.55, { drive: true, filter: { type: 'lowpass', freq: 380 } }),
+    hiss('lowpass', 300, null, 0.8, perc(0.06, 0.45), 0.4),
+  ],
   default: [osc('square', 500, 700, perc(0.005, 0.06), 0.1, { filter: { type: 'lowpass', freq: 1500 } })],
 };
 
@@ -243,6 +256,19 @@ const HAZARD_STYLE = {
   fireBlast: { pitch: 1, gain: 1, fire: true },
   sinBlast: { pitch: 1.3, gain: 0.6, fire: true },
   exploder: { pitch: 1, gain: 1, fire: true },
+  // Gardiens ajoutés : nombreuses zones à la fois, donc plus discrètes une à une (le mixage
+  // de sfx.mjs regroupe les impacts d'une même image).
+  cerbereLand: { pitch: 0.85, gain: 1, fire: false },
+  cerbereShock: { pitch: 0.95, gain: 0.8, fire: false },
+  cerbereFlame: { pitch: 1.15, gain: 0.7, fire: true },
+  cerbereFire: { pitch: 1.2, gain: 0.6, fire: true },
+  minosSentence: { pitch: 1.3, gain: 0.55, fire: false },
+  minosTile: { pitch: 1.4, gain: 0.5, fire: false },
+  minosSeal: { pitch: 0.9, gain: 0.9, fire: false },
+  colosseFist: { pitch: 0.7, gain: 1.2, fire: false },
+  colosseQuake: { pitch: 0.65, gain: 0.9, fire: false },
+  colosseRock: { pitch: 0.8, gain: 0.8, fire: false },
+  colosseEmber: { pitch: 1.3, gain: 0.35, fire: true },
 };
 
 const HAZARD_CANCEL = [

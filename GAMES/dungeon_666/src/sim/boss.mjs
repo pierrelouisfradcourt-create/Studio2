@@ -13,7 +13,11 @@ import { CHARON } from './boss_charon.mjs';
 import { EXTRA_BOSS_MODELS } from './boss_models.mjs';
 
 // Registre des modèles de Gardien : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn},
-// rest?(game, e, d, dt, speed) }. La clé est le `kind` de l'ennemi (= clé de tuning.boss).
+// rest?(game, e, d, dt, speed), tick?(game, e, d, dt), available?(game, e, d, nom) }.
+// La clé est le `kind` de l'ennemi (= clé de tuning.boss).
+//   tick      — appelé à chaque pas, quel que soit le pattern (zones persistantes, bouclier) ;
+//   available — filtre les patterns utilisables maintenant (ex. pas de nouveaux renforts tant que
+//               les précédents vivent). Un modèle sans ces crochets (Charon) n'en voit aucun effet.
 export const BOSS_MODELS = {
   gardien: CHARON,
   ...EXTRA_BOSS_MODELS,
@@ -24,7 +28,13 @@ function modelOf(e) {
 }
 
 function nextPattern(game, e) {
-  const list = modelOf(e).byPhase[e.phase];
+  const model = modelOf(e);
+  let list = model.byPhase[e.phase];
+  if (model.available) {
+    const d = bossDef(game, e);
+    const usable = list.filter((name) => model.available(game, e, d, name));
+    if (usable.length) list = usable;
+  }
   let choice = pick(game.rng.ai, list);
   // Jamais deux fois de suite le même pattern.
   for (let i = 0; i < 4 && choice === e.pattern; i++) choice = pick(game.rng.ai, list);
@@ -54,6 +64,7 @@ export function updateBoss(game, e, dt) {
   const d = bossDef(game, e);
   const model = modelOf(e);
   e.invuln = Math.max(0, (e.invuln ?? 0) - dt);
+  if (model.tick) model.tick(game, e, d, dt);
   const threshold = e.phase === 1 ? d.phase2At : e.phase === 2 ? d.phase3At : -1;
   if (threshold > 0 && e.hp <= e.maxHp * threshold) {
     enterPhase(game, e, d);

@@ -62,6 +62,9 @@ function table(entries) {
   return Object.freeze(Object.assign(Object.create(null), entries));
 }
 
+// Cris d'attaque des Gardiens (champ `enemy` de enemyAttack) : prioritaires sur les sbires.
+const BOSS_ATTACK_VOICES = new Set(['boss', 'bossRing', 'cerbere', 'minos', 'colosse']);
+
 /**
  * Sons : voices = voix simultanées max, perFrame = sons max par image (le reste du groupe
  * renforce leur gain), priority = ordre de passage (et accès à la réserve de voix vitales),
@@ -86,7 +89,7 @@ const SOUNDS = table({
   superReady: { voices: 1, perFrame: 1, priority: 8, gain: 0.45 },
   playerHurt: { voices: 2, perFrame: 1, priority: 10, gain: 0.75, weight: (e) => finite(e.ev.amount, 0) },
   playerDeath: { voices: 1, perFrame: 1, priority: 10, gain: 0.85 },
-  enemyAttack: { voices: 3, perFrame: 2, priority: 4, gain: 0.3, weight: (e) => (e.ev.enemy === 'boss' || e.ev.enemy === 'bossRing' ? 1 : 0) },
+  enemyAttack: { voices: 3, perFrame: 2, priority: 4, gain: 0.3, weight: (e) => (BOSS_ATTACK_VOICES.has(e.ev.enemy) ? 1 : 0) },
   boom: { voices: 3, perFrame: 2, priority: 6, gain: 0.6, weight: (e) => finite(e.ev.r, 0) },
   hazardCancel: { voices: 2, perFrame: 1, priority: 3, gain: 0.5 },
   slam: { voices: 3, perFrame: 2, priority: 6, gain: 0.6, weight: (e) => (e.ev.boss ? 1 : 0) },
@@ -142,6 +145,7 @@ export const SILENT_EVENTS = Object.freeze([
   'souls', // Âmes d'un élite : le son de mort de l'élite suffit
   'stash', // objet rangé au coffre : le clic du menu suffit
   'returnTown', // fin du run : la Ville (DOM) prend le relais
+  'bossShield', // chaînes du Colosse levées / brisées : retour visuel (chaînes, barre de vie)
 ]);
 
 /** Vibration (ms) demandée par une entrée annotée ; 0 = aucune. */
