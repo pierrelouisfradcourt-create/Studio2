@@ -12,6 +12,8 @@
 // Fonctions PURES sur des objets JSON (aucun DOM) : la Ville (src/ui/town.mjs) appelle ces
 // opérations, main.mjs sauvegarde le résultat. Chaque opération rend { ok, reason? }.
 
+import { floorInfo } from './floors.mjs';
+
 export const PROFILE_SCHEMA = 3;
 export const STASH_MAX = 24;
 export const EQUIP_SLOTS = ['arme', 'armure', 'talisman'];
@@ -67,7 +69,9 @@ export function sanitizeProfile(raw, tuning) {
   if (!isObj(raw)) return def;
   const total = tuning.floors.total;
   const out = def;
-  const cps = Array.isArray(raw.checkpoints) ? raw.checkpoints.filter((f) => intIn(f, 1, total)) : [];
+  // Un checkpoint est le 1er étage d'une section (l'étage qui suit un Gardien). Ceux d'avant la
+  // V2 (Gardien tous les 6 étages : 7, 13…) ne sont plus des points de reprise et sont écartés.
+  const cps = Array.isArray(raw.checkpoints) ? raw.checkpoints.filter((f) => intIn(f, 1, total) && floorInfo(tuning, f).indexInSection === 1) : [];
   out.checkpoints = [...new Set([1, ...cps])].sort((a, b) => a - b);
   out.bestFloor = intIn(raw.bestFloor, 1, total) ? raw.bestFloor : 1;
   out.souls = Number.isFinite(raw.souls) && raw.souls >= 0 ? Math.floor(raw.souls) : 0;
@@ -80,6 +84,7 @@ export function sanitizeProfile(raw, tuning) {
     gadgets: Object.keys(tuning.gadgets),
   };
   for (const k of Object.keys(known)) out.unlocked[k] = [...new Set([...def.unlocked[k], ...idList(u[k], known[k])])];
+  for (const id of out.unlocked.classes) grantStarterKit(out, tuning, id);
   if (isObj(raw.upgrades)) {
     for (const [id, lv] of Object.entries(raw.upgrades)) {
       const up = tuning.town?.upgrades?.[id];
@@ -164,11 +169,25 @@ export function unlock(profile, tuning, kind, id) {
   if (profile.souls < cost) return { ok: false, reason: 'Âmes insuffisantes' };
   profile.souls -= cost;
   profile.unlocked[kind].push(id);
+  if (kind === 'classes') grantStarterKit(profile, tuning, id);
   if (kind === 'weapons') {
     // Une arme débloquée est forgée aussitôt en exemplaire commun, rangé au coffre.
     stashPush(profile, starterWeapon(tuning, id));
   }
   return { ok: true };
+}
+
+/**
+ * Kit de départ d'une classe (1re arme, 1re compétence, 1er gadget) : possédé dès que la classe
+ * l'est. Sans cela, la classe choisie équipait une compétence encore « à débloquer » au Grimoire.
+ */
+function grantStarterKit(profile, tuning, classId) {
+  const c = tuning.classes[classId];
+  if (!c) return;
+  for (const [kind, list] of [['weapons', c.weapons], ['skills', c.skills], ['gadgets', c.gadgets]]) {
+    const id = list?.[0];
+    if (id && !profile.unlocked[kind].includes(id)) profile.unlocked[kind].push(id);
+  }
 }
 
 /** Exemplaire commun d'un type d'arme (sans affixe), pour la Forge et le départ. */

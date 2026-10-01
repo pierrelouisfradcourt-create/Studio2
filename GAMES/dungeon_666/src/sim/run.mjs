@@ -349,7 +349,13 @@ function rollShop(game) {
 
 export function applyCommand(game, cmd) {
   if (cmd.type === 'respawn') return respawn(game, cmd.floor);
-  if (cmd.type === 'returnToTown') return returnToTown(game);
+  if (cmd.type === 'returnToTown') {
+    // Depuis l'écran de mort (Charon a déjà pris sa part), ou au portail ouvert après un Gardien.
+    // Jamais en plein combat : quitter un run en cours, c'est « abandon » (taxé comme une mort).
+    const portal = game.mode === 'play' && game.room.doors.some((d) => d.reward === 'town' && d.open);
+    if (game.mode !== 'dead' && !portal) return false;
+    return returnToTown(game);
+  }
   if (cmd.type === 'abandon') {
     // Abandonner = mourir : Charon prend sa part, le temporaire est perdu, retour en Ville.
     if (game.mode !== 'play' && game.mode !== 'choice') return false;

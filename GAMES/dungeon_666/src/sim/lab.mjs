@@ -19,6 +19,7 @@
 export const LAB_AXES = {
   dashStrike: {
     label: 'D5 · Frappe de dash',
+    reference: 'fin', // = valeurs d'origine de config.mjs
     options: {
       fin: { label: 'Fin du dash', text: 'Attaquer dans le dernier 45 % du dash ou juste après.', set: { 'dash.strikeCancelFrom': 0.45, 'dash.strikeWindow': 0.3 } },
       toutDash: { label: 'Tout le dash', text: 'Attaquer à n\'importe quel moment du dash le coupe en frappe.', set: { 'dash.strikeCancelFrom': 1, 'dash.strikeWindow': 0.3 } },
@@ -27,6 +28,7 @@ export const LAB_AXES = {
   },
   hitstop: {
     label: 'D8 · Gel d\'impact',
+    reference: 'global',
     options: {
       global: { label: 'Global', text: 'Toute la scène se fige à l\'impact.', set: { hitstopMode: 'global' } },
       local: { label: 'Local', text: 'Seuls le héros et ses cibles se figent ; le reste continue.', set: { hitstopMode: 'local' } },
@@ -34,6 +36,7 @@ export const LAB_AXES = {
   },
   comboMobility: {
     label: 'D9 · Mobilité du combo',
+    reference: 'mobile',
     options: {
       ancre: { label: 'Ancré', text: '20 % de vitesse, annulations tardives.', set: { 'player.attackMoveMult': 0.2, 'player.cancelMult': 1.6 } },
       mobile: { label: 'Mobile', text: '50 % de vitesse, annulations de référence.', set: { 'player.attackMoveMult': 0.5, 'player.cancelMult': 1 } },
@@ -50,11 +53,15 @@ function setPath(obj, path, value) {
   o[last] = value;
 }
 
-/** Applique les variantes choisies (tuning.lab) au tuning de la partie. Idempotent. */
+/**
+ * Applique les variantes choisies (tuning.lab) au tuning de la partie. Idempotent. Un axe absent
+ * ou une variante inconnue retombe sur la RÉFÉRENCE de l'axe (jamais sur la 1re option listée :
+ * pour D9, ce serait « Ancré », pas les valeurs d'origine).
+ */
 export function applyLab(tuning) {
   for (const [axis, def] of Object.entries(LAB_AXES)) {
     const choice = tuning.lab?.[axis];
-    const opt = def.options[choice] ?? def.options[Object.keys(def.options)[0]];
+    const opt = def.options[choice] ?? def.options[def.reference];
     for (const [path, v] of Object.entries(opt.set)) setPath(tuning, path, v);
   }
   return tuning;
@@ -63,11 +70,15 @@ export function applyLab(tuning) {
 /** Change une variante en cours de partie (pause → Labo) ; rend false si inconnue. */
 export function setLab(tuning, axis, choice) {
   if (!LAB_AXES[axis]?.options[choice]) return false;
+  if (!tuning.lab || typeof tuning.lab !== 'object') tuning.lab = {};
   tuning.lab[axis] = choice;
   applyLab(tuning);
   return true;
 }
 
 export function labSummary(tuning) {
-  return Object.entries(LAB_AXES).map(([axis, def]) => ({ axis, label: def.label, choice: tuning.lab[axis], choiceLabel: def.options[tuning.lab[axis]]?.label ?? '?' }));
+  return Object.entries(LAB_AXES).map(([axis, def]) => {
+    const choice = def.options[tuning.lab?.[axis]] ? tuning.lab[axis] : def.reference;
+    return { axis, label: def.label, choice, choiceLabel: def.options[choice].label };
+  });
 }

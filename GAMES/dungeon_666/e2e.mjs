@@ -2,8 +2,13 @@
 // E2E — navigateur RÉEL (Chromium/Playwright), conforme à forge/contracts/PLAYABLE_CONTRACT.md :
 // téléphone émulé en paysage avec de VRAIS doigts tactiles (CDP, multi-touch), puis bureau
 // avec de vraies touches clavier et de vrais clics. On observe window.__game / __d666.
-// Les raccourcis de test (__game_debug.hit, __d666.killAll/teleport) ne servent qu'à atteindre
-// vite les écrans de fin de salle et de mort : jamais à prouver qu'un geste marche.
+// Les raccourcis de test (__game_debug.hit, __d666.killAll/teleport/start/giveSouls) ne servent
+// qu'à atteindre vite un état (fin de salle, mort, Gardien, Âmes) : jamais à prouver qu'un geste
+// marche — chaque écran, onglet et bouton est ensuite actionné par un vrai doigt ou un vrai clic.
+//
+// Flux V2 : titre → « Entrer dans Dité » (#enter-town) → onglets de la Ville → « Descendre »
+// (#depart) → combat → mort → récapitulatif → « Repartir » (#restart) ou « Retour à la Ville »
+// (#to-town) ; Sanctuaire (achat en Âmes), Labo du feel depuis la pause, portail du Gardien.
 //
 // Usage : node e2e.mjs        (HEADED=1 pour voir ; SHOTS=dossier pour les captures)
 // Sortie : une ligne PASS/FAIL par vérification, code 1 si une seule échoue.
@@ -36,7 +41,10 @@ function watchErrors(page) {
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
   page.on('console', (m) => {
     // Les polices Google sont optionnelles (hors ligne, proxy) : leur échec n'est pas un bug.
-    if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)|ERR_CERT|net::ERR_/.test(m.text())) errors.push(m.text());
+    // « Ignored attempt to cancel a touchstart… » est un AVIS d'intervention de Chrome (toucher
+    // reçu pendant que le fil principal est occupé : l'écouteur devient passif), pas une erreur
+    // JavaScript du jeu ; l'effet du geste concerné est vérifié à part (ex. la pause s'ouvre).
+    if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)|ERR_CERT|net::ERR_|Ignored attempt to cancel a touch(start|move)/.test(m.text())) errors.push(m.text());
   });
   return errors;
 }
@@ -57,6 +65,44 @@ async function shot(page, name) {
   await page.screenshot({ path: join(SHOTS, `${name}.png`) });
 }
 
+/** Vrai tap au centre de l'élément (doigt `id`). Rend false si l'élément est absent. */
+async function tapEl(page, touch, selector, id, holdMs = 60) {
+  // Le panneau défile (paysage de 390 px de haut) : on amène l'élément à l'écran, comme le pouce.
+  await page.locator(selector).first().scrollIntoViewIfNeeded({ timeout: 2000 }).catch(() => {});
+  const box = await page.locator(selector).first().boundingBox({ timeout: 2000 }).catch(() => null);
+  if (!box) return false;
+  await touch.tap(id, box.x + box.width / 2, box.y + box.height / 2, holdMs);
+  return true;
+}
+
+const TOWN_TABS = ['classe', 'armurerie', 'equipement', 'grimoire', 'sanctuaire', 'labo', 'portail'];
+
+const appState = (page) => page.evaluate(() => {
+  const a = window.__d666.app;
+  let saved = null;
+  try {
+    saved = JSON.parse(localStorage.getItem('dungeon666.meta.v1'));
+  } catch {
+    saved = null;
+  }
+  let settings = null;
+  try {
+    settings = JSON.parse(localStorage.getItem('dungeon666.settings.v1'));
+  } catch {
+    settings = null;
+  }
+  return {
+    screen: a.screen, paused: a.paused, tab: a.townTab, hasGame: !!a.game,
+    souls: a.profile.souls, upgrades: { ...a.profile.upgrades }, checkpoints: [...a.profile.checkpoints],
+    lab: { ...a.settings.lab }, saved, settings,
+    tabs: [...document.querySelectorAll('#overlay [data-tab]')].map((b) => b.dataset.tab),
+    activeTab: document.querySelector('#overlay [data-tab].on')?.dataset.tab ?? null,
+    depart: document.querySelector('#depart')?.textContent ?? null,
+    departCard: document.querySelector('#depart')?.closest('.card')?.textContent ?? null,
+    overlay: document.querySelector('#overlay')?.textContent ?? '',
+  };
+});
+
 async function phoneRun(browser, base) {
   const ctx = await browser.newContext(PHONE);
   const page = await ctx.newPage();
@@ -66,12 +112,27 @@ async function phoneRun(browser, base) {
   const touch = await createTouch(page);
   await shot(page, '01_titre_paysage');
 
-  // Démarrage par un VRAI tap sur le bouton du titre.
-  const start = await page.locator('button.btn.primary').boundingBox();
-  await touch.tap(9, start.x + start.width / 2, start.y + start.height / 2);
+  // Titre → Ville par un VRAI tap sur « Entrer dans Dité ».
+  await tapEl(page, touch, '#enter-town', 9);
+  await page.waitForTimeout(300);
+  let a = await appState(page);
+  check('titre → « Entrer dans Dité » ouvre la Ville (onglets, bouton « Descendre »)', a.screen === 'town' && TOWN_TABS.every((t) => a.tabs.includes(t)) && !!a.depart, `onglets : ${a.tabs.join(', ')}`);
+  // Chaque onglet de la Ville s'ouvre au doigt.
+  const opened = [];
+  for (const [i, tab] of TOWN_TABS.entries()) {
+    await tapEl(page, touch, `#overlay [data-tab="${tab}"]`, 20 + i);
+    await page.waitForTimeout(120);
+    a = await appState(page);
+    if (a.activeTab === tab && a.tab === tab) opened.push(tab);
+    if (tab === 'classe') await shot(page, '01b_ville_classe');
+  }
+  check('Ville : chaque onglet (Classe, Armurerie, Coffre, Grimoire, Sanctuaire, Labo, Portail) s\'ouvre au doigt', opened.length === TOWN_TABS.length, `ouverts : ${opened.join(', ')}`);
+  await shot(page, '01c_ville_portail');
+  // « Descendre » (#depart) lance la descente depuis le dernier checkpoint.
+  await tapEl(page, touch, '#depart', 9);
   await page.waitForTimeout(700);
   let s = await state(page);
-  check('le tap sur « Descendre » lance la partie à l\'étage 1', s?.mode === 'play' && s.floor === 1);
+  check('le tap sur « Descendre » (#depart) lance la partie à l\'étage 1', s?.mode === 'play' && s.floor === 1);
 
   // Pouce posé IMMOBILE au bord bas-gauche (là où il repose) : le héros ne doit pas bouger.
   const still0 = await state(page);
@@ -168,12 +229,22 @@ async function phoneRun(browser, base) {
   await page.waitForTimeout(2600);
   s = await state(page);
   check('mort : écran de mort après l\'agonie', s.mode === 'dead');
+  a = await appState(page);
+  check('mort : le récapitulatif dit ce qui est perdu (temporaire) et gardé (permanent)', /Perdu · temporaire/.test(a.overlay) && /Gardé · permanent/.test(a.overlay) && !!(await page.locator('#restart').count()) && !!(await page.locator('#to-town').count()));
   await shot(page, '06_mort');
   const again = await page.locator('.panel button.primary').boundingBox();
   await touch.tap(7, again.x + again.width / 2, again.y + again.height / 2);
   await page.waitForTimeout(600);
   s = await state(page);
-  check('reprise au checkpoint : nouvelle partie, PV pleins', s.mode === 'play' && s.hp > 0 && s.floor === 1);
+  check('« Repartir » (#restart) : reprise au checkpoint, PV pleins', s.mode === 'play' && s.hp > 0 && s.floor === 1);
+  // Seconde mort : « Retour à la Ville » (#to-town) termine le run.
+  await page.evaluate(() => window.__d666.hurt(99999));
+  await page.waitForTimeout(2600);
+  await page.waitForFunction(() => !document.querySelector('#overlay.arming'), null, { timeout: 3000 }).catch(() => {});
+  await tapEl(page, touch, '#to-town', 13);
+  await page.waitForTimeout(400);
+  a = await appState(page);
+  check('« Retour à la Ville » (#to-town) depuis l\'écran de mort : la Ville, sans partie en cours', a.screen === 'town' && !a.hasGame && !!a.depart);
 
   const fps = await page.evaluate(() => window.__d666.fps());
   check('aucune erreur JavaScript (paysage tactile)', errors.length === 0, errors.slice(0, 3).join(' | '));
@@ -316,6 +387,98 @@ async function mashRun(browser, base) {
   await ctx.close();
 }
 
+/**
+ * La boucle V2 au doigt : Âmes (crochet de test) → achat au Sanctuaire → descente plus solide →
+ * pause → Labo du feel (variante changée en pleine partie) → Gardien vaincu → portail de la
+ * Ville → le checkpoint 19 est le nouveau point de départ.
+ */
+async function loopRun(browser, base) {
+  const ctx = await browser.newContext(PHONE);
+  const page = await ctx.newPage();
+  const errors = watchErrors(page);
+  await page.goto(`${base}/?seed=77&tune=0`);
+  await page.waitForTimeout(600);
+  const touch = await createTouch(page);
+  await tapEl(page, touch, '#enter-town', 1);
+  await page.waitForTimeout(250);
+
+  // Sanctuaire : des Âmes offertes, puis un VRAI tap sur « Améliorer » de la Vitalité.
+  await page.evaluate(() => window.__d666.giveSouls(100));
+  await page.waitForTimeout(150); // la Ville se redessine avec les Âmes reçues
+  await tapEl(page, touch, '#overlay [data-tab="sanctuaire"]', 2);
+  await page.waitForTimeout(200);
+  const before = await appState(page);
+  const buy = page.locator('#overlay .card', { hasText: 'Vitalité' }).locator('button');
+  const label = (await buy.textContent().catch(() => '')) ?? '';
+  const price = Number((label.match(/◆\s*(\d+)/) ?? [])[1] ?? Number.NaN);
+  await tapEl(page, touch, '#overlay .card:has-text("Vitalité") button', 3);
+  await page.waitForTimeout(250);
+  let a = await appState(page);
+  check('Sanctuaire : Vitalité achetée au doigt avec des Âmes (prix payé, niveau 1, profil sauvegardé)',
+    before.souls === 100 && a.upgrades.vitalite === 1 && a.souls === before.souls - price && a.saved?.upgrades?.vitalite === 1 && a.saved?.souls === a.souls,
+    `Âmes ${before.souls} → ${a.souls}, prix ${price}, niveau ${a.upgrades.vitalite}`);
+  await shot(page, '10_sanctuaire');
+
+  // Descente : la Vitalité compte (permanent).
+  await tapEl(page, touch, '#overlay [data-tab="portail"]', 4);
+  await page.waitForTimeout(150);
+  await tapEl(page, touch, '#depart', 5);
+  await page.waitForTimeout(600);
+  const hp = await page.evaluate(() => {
+    const g = window.__d666.game;
+    return { bonus: g.player.stats.maxHpBonus, per: g.tuning.town.upgrades.vitalite.perLevel, hp: g.player.hp, max: g.player.maxHp, mode: g.mode };
+  });
+  check('descente suivante : la Vitalité achetée en Ville donne ses PV max', hp.mode === 'play' && hp.bonus >= hp.per && hp.hp === hp.max, `bonus ${hp.bonus}, PV ${hp.hp}/${hp.max}`);
+
+  // Pause (bouton du HUD) → Labo du feel → gel LOCAL, en pleine partie.
+  const vw = PHONE.viewport.width;
+  await touch.tap(6, vw - 32, 26);
+  await page.waitForTimeout(250);
+  a = await appState(page);
+  const paused = a.paused;
+  await tapEl(page, touch, '#overlay button:has-text("Labo du feel")', 7);
+  await page.waitForTimeout(200);
+  await tapEl(page, touch, '#overlay [data-lab="hitstop:local"]', 8);
+  await page.waitForTimeout(200);
+  await shot(page, '11_labo_pause');
+  const lab = await page.evaluate(() => ({ mode: window.__d666.game.tuning.hitstopMode, choice: window.__d666.game.tuning.lab.hitstop }));
+  a = await appState(page);
+  check('pause → Labo du feel : la variante D8 « Local » s\'applique à la partie en cours et est retenue',
+    paused && lab.mode === 'local' && lab.choice === 'local' && a.lab.hitstop === 'local' && a.settings?.lab?.hitstop === 'local',
+    `pause=${paused}, partie=${lab.mode}, réglages=${a.settings?.lab?.hitstop}`);
+  await tapEl(page, touch, '#overlay button:has-text("Retour")', 9);
+  await page.waitForTimeout(150);
+  await tapEl(page, touch, '#overlay button:has-text("Reprendre")', 10);
+  await page.waitForTimeout(250);
+  a = await appState(page);
+  check('labo fermé, « Reprendre » : la partie repart', a.screen === 'game' && !a.paused && (await state(page)).mode === 'play');
+
+  // Gardien (crochet : étage 18, Gardien abattu d'office), puis portail de la Ville au doigt… de pied.
+  await page.evaluate(() => window.__d666.start(18));
+  await page.waitForTimeout(500);
+  const boss = await page.evaluate(() => window.__d666.game.enemies.some((e) => e.boss));
+  await page.evaluate(() => window.__d666.killAll());
+  await page.waitForTimeout(1800);
+  let s = await state(page);
+  const rewards = await page.evaluate(() => window.__d666.game.room.doors.map((d) => d.reward));
+  check('Gardien de l\'étage 18 vaincu : checkpoint 19 ouvert, portes [suite, Ville]', boss && s.cleared && rewards.length === 2 && rewards[1] === 'town' && (await appState(page)).checkpoints.includes(19), `portes : ${rewards.join(', ')}`);
+  await shot(page, '12_portail_gardien');
+  await page.evaluate(([x, y]) => window.__d666.teleport(x, y + 20), [s.doors[1].x, s.doors[1].y]);
+  await page.waitForTimeout(500);
+  a = await appState(page);
+  check('portail du Gardien : retour en Ville, checkpoint 19 sauvegardé, « Descendre » part de l\'étage 19',
+    a.screen === 'town' && !a.hasGame && a.saved?.checkpoints?.includes(19) && /Étage 19/.test(a.departCard ?? ''),
+    `écran ${a.screen}, carte : ${(a.departCard ?? '').slice(0, 60)}`);
+  await shot(page, '13_ville_apres_gardien');
+  await tapEl(page, touch, '#depart', 11);
+  await page.waitForTimeout(600);
+  s = await state(page);
+  const boons = await page.evaluate(() => window.__d666.game?.run.boons.length ?? -1);
+  check('nouvelle descente depuis le checkpoint 19 : aucune bénédiction (le temporaire est reparti de zéro)', s?.mode === 'play' && s.floor === 19 && boons === 0, `étage ${s?.floor}`);
+  check('aucune erreur JavaScript (boucle Ville → Gardien → Ville)', errors.length === 0, errors.slice(0, 3).join(' | '));
+  await ctx.close();
+}
+
 async function main() {
   await mkdir(SHOTS, { recursive: true });
   const server = await startServer(PORT);
@@ -324,6 +487,7 @@ async function main() {
   const base = `http://localhost:${PORT}`;
   try {
     await phoneRun(browser, base);
+    await loopRun(browser, base);
     await mashRun(browser, base);
     await portraitRun(browser, base);
     await desktopRun(browser, base);
