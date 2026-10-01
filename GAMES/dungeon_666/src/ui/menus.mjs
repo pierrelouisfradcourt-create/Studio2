@@ -3,6 +3,15 @@
 // AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.
 
 const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Lance', passive: 'Passif', super: 'Super' };
+const ARM_MS = 350; // un panneau ne répond qu'après ce délai : jamais de choix « à l'aveugle »
+const REFIRE_MS = 300; // anti double déclenchement (pointerup puis click)
+
+// Instant d'ouverture du panneau courant (armement), partagé par tous ses boutons.
+const arming = { shownAt: 0, noDelay: false };
+
+function armed() {
+  return arming.noDelay || performance.now() - arming.shownAt >= ARM_MS;
+}
 
 function el(tag, cls, text) {
   const n = document.createElement(tag);
@@ -11,14 +20,45 @@ function el(tag, cls, text) {
   return n;
 }
 
+/**
+ * Activation robuste au doigt : au POINTERUP du même doigt que le pointerdown, à l'intérieur
+ * de l'élément. Chromium/Android n'émettent pas `click` pour un 2e doigt (le pouce gauche
+ * resté sur le joystick) ; `click` ne sert plus qu'au clavier (detail === 0).
+ */
+function onActivate(node, fn) {
+  let pid = null;
+  let last = 0;
+  const fire = () => {
+    const now = performance.now();
+    if (node.disabled || now - last < REFIRE_MS) return;
+    last = now;
+    fn();
+  };
+  node.addEventListener('pointerdown', (ev) => {
+    pid = armed() ? ev.pointerId : null;
+  });
+  node.addEventListener('pointerup', (ev) => {
+    if (pid === null || pid !== ev.pointerId) return;
+    pid = null;
+    const r = node.getBoundingClientRect();
+    if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return;
+    ev.preventDefault();
+    fire();
+  });
+  node.addEventListener('pointercancel', () => {
+    pid = null;
+  });
+  node.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (ev.detail === 0 && armed()) fire();
+  });
+}
+
 function button(label, cls, onClick, disabled = false) {
   const b = el('button', `btn ${cls ?? ''}`, label);
   b.type = 'button';
   b.disabled = disabled;
-  b.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    if (!b.disabled) onClick();
-  });
+  onActivate(b, onClick);
   return b;
 }
 
@@ -50,6 +90,7 @@ export function createUI(root, handlers) {
   panel.hidden = true;
   root.appendChild(panel);
   let shownKey = '';
+  let shownKind = '';
 
   function show(builder, key) {
     if (key === shownKey) return;
@@ -58,6 +99,15 @@ export function createUI(root, handlers) {
     builder(panel);
     panel.hidden = false;
     panel.classList.remove('hidden');
+    // Armement : l'écran titre et les rafraîchissements du marchand répondent tout de suite.
+    const refresh = key.startsWith('choice:shop') && shownKind === 'shop';
+    shownKind = key.split(':')[1] ?? key;
+    arming.noDelay = key.startsWith('title') || key.startsWith('pause') || key === 'tuning' || refresh;
+    arming.shownAt = performance.now();
+    if (!arming.noDelay) {
+      panel.classList.add('arming');
+      setTimeout(() => panel.classList.remove('arming'), ARM_MS);
+    }
     const first = panel.querySelector('button:not([disabled])');
     if (first && !handlers.isTouch()) first.focus({ preventScroll: true });
   }
@@ -65,6 +115,7 @@ export function createUI(root, handlers) {
   function hide() {
     if (!shownKey) return;
     shownKey = '';
+    shownKind = '';
     panel.hidden = true;
     panel.classList.add('hidden');
     panel.replaceChildren();
@@ -105,7 +156,7 @@ export function createUI(root, handlers) {
       card.appendChild(el('div', 'card-kicker', `${o.duo ? 'DUO · ' : ''}${SLOT_LABELS[o.slot] ?? o.slot} · ${o.rarityName}${o.level > 1 ? ` · niv. ${o.level}` : ''}`));
       card.appendChild(el('div', 'card-title', o.name));
       card.appendChild(el('div', 'card-text', o.text));
-      card.addEventListener('click', () => handlers.command({ type: 'choose', index: i }));
+      onActivate(card, () => handlers.command({ type: 'choose', index: i }));
       list.appendChild(card);
     });
     p.appendChild(list);
@@ -163,10 +214,17 @@ export function createUI(root, handlers) {
     p.appendChild(el('p', 'lede', `Étage ${game.run.floor} · ${t.kills} démons abattus · ${t.dodges} esquives au dash`));
     p.appendChild(el('p', 'dim', 'Vous reprenez au checkpoint avec le build que vous aviez en battant son Gardien. Votre équipement vous suit toujours.'));
     const col = el('div', 'col');
+    const retry = handlers.canRetryBoss(game);
+    if (retry) {
+      const b = button(`Réessayer le Gardien · étage ${game.run.floor}`, 'primary', () => handlers.command({ type: 'retryBoss' }));
+      b.id = 'restart';
+      col.appendChild(b);
+    }
     const cps = game.meta.checkpoints.slice().sort((a, b) => b - a).slice(0, 4);
     cps.forEach((f, i) => {
-      const b = button(`Reprendre · étage ${f}`, i === 0 ? 'primary' : '', () => handlers.command({ type: 'respawn', floor: f }));
-      if (i === 0) b.id = 'restart';
+      const first = i === 0 && !retry;
+      const b = button(`Reprendre · étage ${f}`, first ? 'primary' : '', () => handlers.command({ type: 'respawn', floor: f }));
+      if (first) b.id = 'restart';
       col.appendChild(b);
     });
     p.appendChild(col);

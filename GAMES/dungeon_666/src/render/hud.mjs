@@ -282,13 +282,16 @@ function drawTouchControls(ctx, game, touch, time) {
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
     ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 2;
+    // Dessin recalé loin des bords ; le bouton garde l'écart réel doigt/origine.
+    const bx = s.drawX ?? s.baseX;
+    const by = s.drawY ?? s.baseY;
     ctx.beginPath();
-    ctx.arc(s.baseX, s.baseY, 58, 0, TAU);
+    ctx.arc(bx, by, 58, 0, TAU);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
     ctx.beginPath();
-    ctx.arc(s.knobX, s.knobY, 26, 0, TAU);
+    ctx.arc(bx + (s.knobX - s.baseX), by + (s.knobY - s.baseY), 26, 0, TAU);
     ctx.fill();
   }
   for (const b of touch.buttons) drawButton(ctx, b, abilityState(game, b.id), time);
@@ -380,16 +383,46 @@ function drawBanner(ctx, fx, w, h) {
   ctx.globalAlpha = 1;
 }
 
+// Calques pré-rendus (vignette rouge, bande haute) : recréés seulement au redimensionnement,
+// jamais un dégradé plein écran par image (téléphones modestes, moments tendus).
+const layers = { key: '', vignette: null, top: null };
+
+function layerCanvas(w, h) {
+  const c = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(Math.max(1, w), Math.max(1, h)) : Object.assign(document.createElement('canvas'), { width: w, height: h });
+  return c;
+}
+
+function ensureLayers(w, h, safeTop) {
+  const key = `${w}x${h}:${safeTop}`;
+  if (layers.key === key) return;
+  layers.key = key;
+  const v = layerCanvas(w, h);
+  const vg = v.getContext('2d');
+  const g = vg.createRadialGradient(w / 2, h / 2, Math.max(w, h) * 0.38, w / 2, h / 2, Math.max(w, h) * 0.62);
+  g.addColorStop(0, 'rgba(255,0,0,0)');
+  g.addColorStop(1, 'rgba(200,0,0,1)');
+  vg.fillStyle = g;
+  vg.fillRect(0, 0, w, h);
+  layers.vignette = v;
+  const th = Math.round(90 + safeTop);
+  const t = layerCanvas(w, th);
+  const tg = t.getContext('2d');
+  const lg = tg.createLinearGradient(0, 0, 0, th);
+  lg.addColorStop(0, 'rgba(5, 2, 4, 0.55)');
+  lg.addColorStop(1, 'rgba(5, 2, 4, 0)');
+  tg.fillStyle = lg;
+  tg.fillRect(0, 0, w, th);
+  layers.top = t;
+}
+
 function drawVignettes(ctx, game, fx, w, h, time) {
   const p = game.player;
   const low = p.hp / p.maxHp < 0.3 && p.state !== 'dead';
   const intensity = Math.max(fx.hurtFlash * 0.45, low ? 0.22 + 0.1 * Math.sin(time * 5) : 0);
   if (intensity > 0.01) {
-    const g = ctx.createRadialGradient(w / 2, h / 2, Math.max(w, h) * 0.38, w / 2, h / 2, Math.max(w, h) * 0.62);
-    g.addColorStop(0, 'rgba(255,0,0,0)');
-    g.addColorStop(1, `rgba(200,0,0,${intensity})`);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = Math.min(1, intensity);
+    ctx.drawImage(layers.vignette, 0, 0, w, h);
+    ctx.globalAlpha = 1;
   }
   if (fx.flash > 0) {
     ctx.fillStyle = `rgba(255, 240, 220, ${fx.flash * 0.25})`;
@@ -404,16 +437,13 @@ function drawHints(ctx, game, w, h, safe, usingTouch) {
   }
 }
 
-/** Dessine tout le HUD. `vignette` : image pré-rendue de l'assombrissement des bords. */
+/** Dessine tout le HUD (calques de vignette et de bande haute pré-rendus). */
 export function drawHud(ctx, game, fx, cam, touch, view, time, dt = 1 / 60) {
   const { w, h, safe } = view;
   updateGhost(game.player, dt);
+  ensureLayers(w, h, safe.top);
   // Dégradé sombre derrière la bande haute du HUD : le texte reste lisible sur tout fond.
-  const top = ctx.createLinearGradient(0, 0, 0, 90 + safe.top);
-  top.addColorStop(0, 'rgba(5, 2, 4, 0.55)');
-  top.addColorStop(1, 'rgba(5, 2, 4, 0)');
-  ctx.fillStyle = top;
-  ctx.fillRect(0, 0, w, 90 + safe.top);
+  ctx.drawImage(layers.top, 0, 0);
   drawVignettes(ctx, game, fx, w, h, time);
   drawOffscreen(ctx, game, cam, w, h);
   drawOccluded(ctx, game, cam, touch, w, h);

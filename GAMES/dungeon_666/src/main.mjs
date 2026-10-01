@@ -4,6 +4,7 @@
 // Paramètres d'URL (playtest) : ?seed=123  ?floor=6  ?god=1  ?autostart=1  ?tune=0
 
 import { createGame, stepGame, applyCommand, DT } from './sim/game.mjs';
+import { canRetryBoss } from './sim/run.mjs';
 import { DEFAULT_TUNING } from './sim/config.mjs';
 import { createInput } from './input/input.mjs';
 import { createCamera, fitCamera, updateCamera, applyCamera, worldToScreen, resetCamera } from './render/camera.mjs';
@@ -13,11 +14,18 @@ import { drawHud, pauseButtonRect } from './render/hud.mjs';
 import { createAudio } from './audio/sfx.mjs';
 import { createUI } from './ui/menus.mjs';
 import { buildTuningPanel, loadTuningOverrides, applyOverrides } from './ui/tuning.mjs';
+import { recordPrev, applyInterp, restoreInterp } from './render/interp.mjs';
 
 const MAX_STEPS_PER_FRAME = 5;
 const MAX_DPR = 2;
-const FPS_LOW = 48;
-const FPS_WINDOW = 2; // s d'observation avant de baisser la qualité
+// Qualité adaptative sur le COÛT réel d'une image (sim + rendu), pas sur la cadence : un
+// téléphone bridé à 30 Hz par l'OS n'est pas « lent », baisser la définition n'y gagnerait rien.
+const WORK_HIGH_MS = 11; // ~70 % d'une image à 60 Hz
+const WORK_LOW_MS = 5;
+const DEGRADE_AFTER = 2; // s de surcharge avant de baisser d'un cran
+const UPGRADE_AFTER = 10; // s de marge avant de remonter d'un cran
+const QUALITY_MIN = 0.6;
+const QUALITY_STEP = 0.2;
 const META_KEY = 'dungeon666.meta.v1';
 const SETTINGS_KEY = 'dungeon666.settings.v1';
 const SLOWMO = {
@@ -40,6 +48,41 @@ function load(key, fallback) {
   }
 }
 
+const META_SCHEMA = 2; // à incrémenter quand la forme des objets sauvegardés change
+const SLOTS = ['arme', 'armure', 'talisman'];
+
+function isItem(it) {
+  return !!it && typeof it === 'object' && SLOTS.includes(it.slot) && Array.isArray(it.affixes) && typeof it.name === 'string';
+}
+
+/**
+ * Méta validée champ par champ : une sauvegarde ancienne ou corrompue retombe sur des défauts
+ * au lieu de bloquer le jeu (la forme des objets évolue pendant le prototype).
+ */
+function sanitizeMeta(m) {
+  const cps = Array.isArray(m.checkpoints) ? m.checkpoints.filter((f) => Number.isInteger(f) && f >= 1 && f <= 666) : [];
+  if (!cps.includes(1)) cps.unshift(1);
+  const sameSchema = m.schema === META_SCHEMA;
+  let items = null;
+  if (sameSchema && m.items && typeof m.items === 'object') {
+    items = {};
+    for (const s of SLOTS) items[s] = isItem(m.items[s]) && m.items[s].slot === s ? m.items[s] : null;
+  }
+  const snapshots = {};
+  if (sameSchema && m.snapshots && typeof m.snapshots === 'object') {
+    for (const [f, snap] of Object.entries(m.snapshots)) {
+      if (snap && Array.isArray(snap.boons) && Number.isFinite(snap.gold)) snapshots[f] = snap;
+    }
+  }
+  return {
+    schema: META_SCHEMA,
+    checkpoints: [...new Set(cps)].sort((a, b) => a - b),
+    bestFloor: Number.isInteger(m.bestFloor) && m.bestFloor >= 1 ? m.bestFloor : 1,
+    items,
+    snapshots,
+  };
+}
+
 function save(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -58,7 +101,7 @@ const safeProbe = document.getElementById('safe');
 const app = {
   screen: 'title', // title | game | tuning
   paused: false,
-  meta: load(META_KEY, { checkpoints: [1], bestFloor: 1, items: null, snapshots: {} }),
+  meta: sanitizeMeta(load(META_KEY, { checkpoints: [1], bestFloor: 1, items: null, snapshots: {} })),
   settings: load(SETTINGS_KEY, { sound: true, haptics: true, shake: 1 }),
   game: null,
   view: { w: 1, h: 1, dpr: 1, safe: { top: 0, right: 0, bottom: 0, left: 0 } },
@@ -103,6 +146,7 @@ async function enterImmersive() {
 
 const ui = createUI(uiRoot, {
   isTouch: () => input.usingTouch || matchMedia('(pointer: coarse)').matches,
+  canRetryBoss: (g) => canRetryBoss(g),
   start: (floor, sandbox = false) => {
     enterImmersive();
     startRun(floor, sandbox);
@@ -147,8 +191,21 @@ function startRun(floor, sandbox = false) {
   const startFloor = params.has('floor') ? Number(params.get('floor')) : floor;
   const meta = { checkpoints: app.meta.checkpoints, bestFloor: app.meta.bestFloor, snapshots: app.meta.snapshots ?? {} };
   const tune = params.get('tune') === '0' ? {} : loadTuningOverrides();
-  app.game = createGame({ seed, startFloor: sandbox ? 1 : startFloor, meta, godMode: params.get('god') === '1', items: app.meta.items ?? undefined, sandbox });
+  const opts = { seed, startFloor: sandbox ? 1 : startFloor, meta, godMode: params.get('god') === '1', items: app.meta.items ?? undefined, sandbox };
+  try {
+    app.game = createGame(opts);
+  } catch {
+    // Équipement sauvegardé illisible : on repart avec l'équipement de départ plutôt que de bloquer.
+    app.meta.items = null;
+    save(META_KEY, app.meta);
+    app.game = createGame({ ...opts, items: undefined });
+  }
   applyOverrides(app.game.tuning, tune);
+  // Réglages partageables par lien : ?t.player.speed=320&t.dash.distance=190
+  for (const [k, v] of params) {
+    if (!k.startsWith('t.') || !Number.isFinite(Number(v))) continue;
+    applyOverrides(app.game.tuning, { [k.slice(2)]: Number(v) });
+  }
   app.screen = 'game';
   app.paused = false;
   clearFx(fx);
@@ -161,7 +218,7 @@ function startRun(floor, sandbox = false) {
 function persistMeta() {
   const g = app.game;
   if (!g) return;
-  app.meta = { checkpoints: g.meta.checkpoints.slice(), bestFloor: g.meta.bestFloor, items: g.run.items, snapshots: g.meta.snapshots };
+  app.meta = { schema: META_SCHEMA, checkpoints: g.meta.checkpoints.slice(), bestFloor: g.meta.bestFloor, items: g.run.items, snapshots: g.meta.snapshots };
   save(META_KEY, app.meta);
 }
 
@@ -255,11 +312,12 @@ let last = performance.now();
 let lastDt = 1 / 60;
 let acc = 0;
 let time = 0;
-const fpsMeter = { frames: 0, t: 0, low: 0, fps: 60 };
+const fpsMeter = { frames: 0, t: 0, fps: 60, work: 0, over: 0, under: 0 };
 const playerScreen = { x: 0, y: 0 };
 
 function frame(now) {
   requestAnimationFrame(frame);
+  const workStart = performance.now();
   const realDt = Math.min(0.1, (now - last) / 1000);
   last = now;
   lastDt = realDt;
@@ -268,7 +326,6 @@ function frame(now) {
   const g = app.game;
   if (input.consumePause() && app.screen === 'game' && g && g.mode === 'play') app.paused = !app.paused;
 
-  let simSteps = 0;
   if (app.screen === 'game' && g && !app.paused && g.mode === 'play') {
     app.slowmo.t -= realDt;
     const scale = app.slowmo.t > 0 ? app.slowmo.scale : 1;
@@ -277,13 +334,13 @@ function frame(now) {
     while (acc >= DT && steps < MAX_STEPS_PER_FRAME) {
       worldToScreen(camera, app.view.w, app.view.h, g.player.x, g.player.y, playerScreen);
       const pilot = window.__d666.autopilot;
+      recordPrev(g);
       stepGame(g, pilot ? pilot(g) : input.frame(playerScreen));
       acc -= DT;
       steps++;
       if (g.mode !== 'play') break;
     }
     if (steps === MAX_STEPS_PER_FRAME) acc = 0;
-    simSteps = steps;
   } else {
     input.frame(null); // vide les fronts accumulés pendant un menu
     acc = 0;
@@ -292,18 +349,21 @@ function frame(now) {
       afterCommand();
     }
   }
-  if (g) {
-    flushEvents();
-    if (g.mode === 'play' || g.mode === 'dead') {
-      // En jeu, la caméra avance au rythme des pas de simulation (60 Hz) : sur un écran
-      // 120 Hz, héros et décor bougent ensemble, sans tremblotement relatif.
-      const camDt = g.mode === 'play' && !app.paused ? simSteps * DT : realDt;
-      if (camDt > 0) updateCamera(camera, g, camDt);
+  if (g) flushEvents();
+  // Positions interpolées le temps de la caméra, des effets et du dessin, puis rétablies.
+  const alpha = g && g.mode === 'play' && !app.paused ? Math.min(1, acc / DT) : 1;
+  if (g) applyInterp(g, alpha);
+  try {
+    if (g && (g.mode === 'play' || g.mode === 'dead')) {
+      updateCamera(camera, g, realDt);
       updateFx(fx, realDt, g);
     }
+    render();
+  } finally {
+    if (g) restoreInterp();
   }
-  render();
   ui.sync(app.screen === 'game' ? g : null, app);
+  adaptQuality(performance.now() - workStart, realDt);
 }
 
 function measureFps(dt) {
@@ -313,13 +373,24 @@ function measureFps(dt) {
   fpsMeter.fps = fpsMeter.frames / fpsMeter.t;
   fpsMeter.frames = 0;
   fpsMeter.t = 0;
-  // Qualité adaptative : si le téléphone peine, on réduit la définition et les particules.
-  if (app.screen === 'game' && fpsMeter.fps < FPS_LOW) fpsMeter.low += 0.5;
-  else fpsMeter.low = 0;
-  if (fpsMeter.low >= FPS_WINDOW && app.quality > 0.6) {
-    app.quality = Math.max(0.6, app.quality - 0.2);
+}
+
+/** Baisse (ou remonte) la définition selon le coût mesuré des images, en jeu seulement. */
+function adaptQuality(workMs, dt) {
+  const g = app.game;
+  if (app.screen !== 'game' || app.paused || !g || g.mode !== 'play') return;
+  fpsMeter.work += (workMs - fpsMeter.work) * 0.1; // moyenne glissante
+  fpsMeter.over = fpsMeter.work > WORK_HIGH_MS ? fpsMeter.over + dt : 0;
+  fpsMeter.under = fpsMeter.work < WORK_LOW_MS ? fpsMeter.under + dt : 0;
+  if (fpsMeter.over >= DEGRADE_AFTER && app.quality > QUALITY_MIN) {
+    app.quality = Math.max(QUALITY_MIN, app.quality - QUALITY_STEP);
     fx.quality = Math.max(0.4, fx.quality - 0.3);
-    fpsMeter.low = 0;
+    fpsMeter.over = 0;
+    resize();
+  } else if (fpsMeter.under >= UPGRADE_AFTER && app.quality < 1) {
+    app.quality = Math.min(1, app.quality + QUALITY_STEP);
+    fx.quality = Math.min(1, fx.quality + 0.3);
+    fpsMeter.under = 0;
     resize();
   }
 }
@@ -387,6 +458,7 @@ window.__d666 = {
   },
   start: (floor = 1) => startRun(floor),
   fps: () => fpsMeter.fps,
+  workMs: () => fpsMeter.work,
   // Pilote automatique (playtest/captures) : (game) => InputFrame ; null = joueur humain.
   autopilot: null,
   autopilotChoice: null,

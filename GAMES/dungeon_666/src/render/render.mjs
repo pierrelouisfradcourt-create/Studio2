@@ -13,12 +13,30 @@ import { computeAim } from '../sim/aim.mjs';
 
 const TAU = Math.PI * 2;
 const TILE = 88;
+// Échelles VISUELLES (les hitbox de la sim ne changent pas) : sur un téléphone, le héros et
+// les projectiles ennemis doivent se lire au premier coup d'œil (critique « fun » n°3).
+const HERO_VISUAL = 1.18;
+const ENEMY_SHOT_VISUAL = 1.3;
 const WALL_OVERDRAW = 1200; // u de mur peints autour de la salle (la caméra peut déborder)
 const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
 // ------------------------------------------------------------------ textures mises en cache
 
-const cache = { tiles: new Map(), glows: new Map(), deco: null, decoRoom: null };
+const cache = { tiles: new Map(), glows: new Map(), grads: new Map(), deco: null, decoRoom: null };
+
+/** Dégradé vertical transparent -> couleur, mis en cache (portes, colonnes de butin). */
+function verticalGradient(ctx, y0, y1, color) {
+  const key = `${y0}|${y1}|${color}`;
+  let g = cache.grads.get(key);
+  if (!g) {
+    g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, color);
+    if (cache.grads.size > 64) cache.grads.clear();
+    cache.grads.set(key, g);
+  }
+  return g;
+}
 
 function makeCanvas(w, h) {
   if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);
@@ -181,11 +199,8 @@ function drawDoor(ctx, d, time) {
   ctx.fill();
   if (d.open) {
     drawGlow(ctx, cx, d.h - 10, 90, color, 0.35 + 0.1 * Math.sin(time * 4));
-    const g = ctx.createLinearGradient(0, d.y, 0, d.y + d.h);
-    g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(1, color);
     ctx.globalAlpha = 0.45 + 0.1 * Math.sin(time * 3);
-    ctx.fillStyle = g;
+    ctx.fillStyle = verticalGradient(ctx, d.y, d.y + d.h, color);
     archPath();
     ctx.fill();
     ctx.globalAlpha = 1;
@@ -422,11 +437,8 @@ function drawInteract(ctx, game, time) {
     // Colonne de lumière façon Diablo, plus haute pour les raretés élevées.
     const idx = ITEM_RARITIES.indexOf(rar);
     const h = 60 + idx * 50;
-    const grad = ctx.createLinearGradient(0, it.y - h, 0, it.y);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, color);
     ctx.globalAlpha = 0.35 + 0.1 * Math.sin(time * 4);
-    ctx.fillStyle = grad;
+    ctx.fillStyle = verticalGradient(ctx, it.y - h, it.y, color);
     ctx.fillRect(it.x - 10, it.y - h, 20, h);
     ctx.globalAlpha = 1;
     drawGlow(ctx, it.x, it.y, 40, color, 0.5);
@@ -712,11 +724,12 @@ function drawEnemyHp(ctx, e, r) {
 
 function drawPlayer(ctx, game, fx, time) {
   const p = game.player;
+  const pr = p.r * HERO_VISUAL;
   for (const g of fx.ghosts) {
     ctx.globalAlpha = (g.life / g.max) * 0.45;
     ctx.fillStyle = PAL.heroCape;
     ctx.beginPath();
-    ctx.arc(g.x, g.y, p.r * 0.95, 0, TAU);
+    ctx.arc(g.x, g.y, p.r * HERO_VISUAL * 0.95, 0, TAU);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
@@ -725,7 +738,7 @@ function drawPlayer(ctx, game, fx, time) {
   } else if (p.iframes > 0 && p.state !== 'dash' && p.hurtFlash <= 0 && Math.floor(time * 15) % 2 === 0) {
     ctx.globalAlpha = 0.4;
   }
-  drawShadow(ctx, p.x, p.y, p.r);
+  drawShadow(ctx, p.x, p.y, pr);
   drawGlow(ctx, p.x, p.y, 60, PAL.heroGlow, 0.9);
   if (p.state === 'super') drawGlow(ctx, p.x, p.y, 150, PAL.superBar, 0.4 + 0.2 * Math.sin(time * 18));
   ctx.save();
@@ -733,11 +746,11 @@ function drawPlayer(ctx, game, fx, time) {
   const f = p.facing;
   const speed = Math.hypot(p.vx, p.vy);
   // Cape qui flotte à l'opposé du mouvement.
-  const capeLen = p.r * (1.1 + Math.min(1, speed / 400) * 0.8);
+  const capeLen = pr * (1.1 + Math.min(1, speed / 400) * 0.8);
   ctx.fillStyle = PAL.heroCape;
   ctx.beginPath();
-  ctx.moveTo(Math.cos(f + 1.9) * p.r * 0.9, Math.sin(f + 1.9) * p.r * 0.9);
-  ctx.quadraticCurveTo(Math.cos(f + Math.PI) * capeLen * 1.3 + Math.sin(time * 12) * 3, Math.sin(f + Math.PI) * capeLen * 1.3, Math.cos(f - 1.9) * p.r * 0.9, Math.sin(f - 1.9) * p.r * 0.9);
+  ctx.moveTo(Math.cos(f + 1.9) * pr * 0.9, Math.sin(f + 1.9) * pr * 0.9);
+  ctx.quadraticCurveTo(Math.cos(f + Math.PI) * capeLen * 1.3 + Math.sin(time * 12) * 3, Math.sin(f + Math.PI) * capeLen * 1.3, Math.cos(f - 1.9) * pr * 0.9, Math.sin(f - 1.9) * pr * 0.9);
   ctx.closePath();
   ctx.fill();
   // Étirement (dash, frappe) et écrasement (sortie de dash), aire conservée.
@@ -760,21 +773,21 @@ function drawPlayer(ctx, game, fx, time) {
   ctx.strokeStyle = '#0d2a36';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(0, 0, p.r, 0, TAU);
+  ctx.arc(0, 0, pr, 0, TAU);
   ctx.fill();
   ctx.stroke();
   // Visière orientée.
   ctx.fillStyle = '#0d2a36';
   ctx.beginPath();
-  ctx.arc(Math.cos(f) * p.r * 0.35, Math.sin(f) * p.r * 0.35, p.r * 0.42, f - 1.2, f + 1.2);
+  ctx.arc(Math.cos(f) * pr * 0.35, Math.sin(f) * pr * 0.35, pr * 0.42, f - 1.2, f + 1.2);
   ctx.closePath();
   ctx.fill();
-  drawBlade(ctx, p);
+  drawBlade(ctx, p, pr);
   ctx.restore();
   ctx.globalAlpha = 1;
 }
 
-function drawBlade(ctx, p) {
+function drawBlade(ctx, p, pr) {
   let a = p.facing + 0.9;
   if (p.state === 'attack' && p.attack) {
     const at = p.attack;
@@ -789,8 +802,8 @@ function drawBlade(ctx, p) {
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(Math.cos(a) * p.r * 0.8, Math.sin(a) * p.r * 0.8);
-  ctx.lineTo(Math.cos(a) * p.r * 2.3, Math.sin(a) * p.r * 2.3);
+  ctx.moveTo(Math.cos(a) * pr * 0.8, Math.sin(a) * pr * 0.8);
+  ctx.lineTo(Math.cos(a) * pr * 2.3, Math.sin(a) * pr * 2.3);
   ctx.stroke();
 }
 
@@ -812,23 +825,25 @@ function drawProjectiles(ctx, game) {
       ctx.fill();
       ctx.restore();
     } else if (pr.kind === 'bossOrb') {
-      drawGlow(ctx, pr.x, pr.y, pr.r * 3, PAL.bossOrb, 0.55);
+      const vr = pr.r * ENEMY_SHOT_VISUAL;
+      drawGlow(ctx, pr.x, pr.y, vr * 3, PAL.bossOrb, 0.55);
       ctx.fillStyle = PAL.bossOrb;
       ctx.strokeStyle = '#2a0018';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(pr.x, pr.y, pr.r, 0, TAU);
+      ctx.arc(pr.x, pr.y, vr, 0, TAU);
       ctx.fill();
       ctx.stroke();
       // Cœur blanc : un projectile ennemi se lit sur n'importe quel fond.
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(pr.x, pr.y, pr.r * 0.45, 0, TAU);
+      ctx.arc(pr.x, pr.y, vr * 0.45, 0, TAU);
       ctx.fill();
     } else {
       ctx.save();
       ctx.translate(pr.x, pr.y);
       ctx.rotate(a);
+      ctx.scale(ENEMY_SHOT_VISUAL, ENEMY_SHOT_VISUAL);
       ctx.strokeStyle = PAL.enemyOutline;
       ctx.lineWidth = 6;
       ctx.beginPath();

@@ -122,6 +122,9 @@ export function enterFloor(game, floor, door) {
   emit(game, 'floorEnter', { floor: info.floor, circle: info.circle, circleName: info.circleName, section: info.section, indexInSection: info.indexInSection, kind: plan.kind, reward: plan.reward, isBoss: info.isBoss });
 
   if (plan.kind === 'boss') {
+    // Instantané d'entrée : mourir face au Gardien permet de le réessayer aussitôt,
+    // sans rejouer toute la section (sessions courtes).
+    game.run.bossEntry = { floor: info.floor, boons: game.run.boons.map((b) => ({ ...b })), gold: game.run.gold };
     spawnBoss(game);
   } else if (plan.kind === 'combat' || plan.kind === 'elite') {
     launchNextWave(game);
@@ -299,6 +302,7 @@ function rollShop(game) {
 
 export function applyCommand(game, cmd) {
   if (cmd.type === 'respawn') return respawn(game, cmd.floor);
+  if (cmd.type === 'retryBoss') return retryBoss(game);
   if (game.mode !== 'choice' || !game.choice) return false;
   const it = game.room.interact;
   const ch = game.choice;
@@ -419,6 +423,39 @@ function closeChoice(game) {
 
 // ---------------------------------------------------------------- mort et reprise
 
+/** Vrai si la mort a eu lieu face à un Gardien dont on a l'instantané d'entrée. */
+export function canRetryBoss(game) {
+  return game.mode === 'dead' && !!game.run.bossEntry && game.info?.isBoss && game.run.bossEntry.floor === game.run.floor;
+}
+
+function revive(game) {
+  const p = game.player;
+  const t = game.tuning;
+  recomputeStats(game);
+  p.hp = p.maxHp;
+  p.superCharge = t.super.startCharge ?? 0;
+  p.dashCharges = t.dash.charges + p.stats.dashChargesBonus;
+  p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
+  p.skillCd = 0;
+  p.iframes = 1.0;
+  p.state = 'free';
+  game.mode = 'play';
+  game.choice = null;
+  game.deathT = 0;
+}
+
+/** Réessayer le Gardien : retour à l'entrée de sa salle avec le build qu'on avait en y entrant. */
+export function retryBoss(game) {
+  if (!canRetryBoss(game)) return false;
+  const entry = game.run.bossEntry;
+  game.run.boons = entry.boons.map((b) => ({ ...b }));
+  game.run.gold = entry.gold;
+  revive(game);
+  emit(game, 'respawn', { floor: entry.floor, boss: true });
+  enterFloor(game, entry.floor, null);
+  return true;
+}
+
 export function respawn(game, floor) {
   if (game.mode !== 'dead') return false;
   const cps = game.meta.checkpoints;
@@ -432,17 +469,7 @@ export function respawn(game, floor) {
     run.boons = [];
     run.gold = Math.floor(run.gold * game.tuning.economy.deathGoldKeep);
   }
-  const p = game.player;
-  recomputeStats(game);
-  p.hp = p.maxHp;
-  p.superCharge = 0;
-  p.dashCharges = game.tuning.dash.charges + p.stats.dashChargesBonus;
-  p.skillCd = 0;
-  p.iframes = 1.0;
-  p.state = 'free';
-  game.mode = 'play';
-  game.choice = null;
-  game.deathT = 0;
+  revive(game);
   emit(game, 'respawn', { floor: target });
   enterFloor(game, target, { reward: 'boon', family: randomFamily(game) });
   return true;

@@ -15,7 +15,9 @@ export const DEFAULT_TUNING = {
     speed: 300, // u/s
     accelTime: 0.083, // s pour atteindre la vitesse max depuis l'arrêt (5 images)
     decelTime: 0.05, // s pour s'arrêter (3 images) : l'arrêt net fait la nervosité
-    attackMoveMult: 0.2, // vitesse résiduelle pendant une attaque
+    // Vitesse pendant une attaque. Sur tactile on MAINTIENT l'attaque : à 0,2 le héros devenait
+    // plus lent qu'un diablotin (critique « fun ») — 0,5 garde le combo mobile.
+    attackMoveMult: 0.5,
     hurtIframes: 0.6, // invulnérabilité après un coup reçu
     hurtHitstop: 0.083, // gel global quand le héros est touché : il DOIT le sentir
     inputBuffer: 0.15, // une action pressée trop tôt reste en mémoire
@@ -35,7 +37,7 @@ export const DEFAULT_TUNING = {
     iframes: 0.18, // depuis le début du dash (dépasse sa fin d'une image : marge tactile)
     charges: 2,
     recharge: 0.9, // s par charge, rechargées l'une après l'autre
-    strikeWindow: 0.2, // une attaque lancée dans cette fenêtre après un dash = frappe de dash
+    strikeWindow: 0.3, // une attaque lancée dans cette fenêtre après un dash = frappe de dash (le pouce doit avoir le temps)
     strikeCancelFrom: 0.45, // attaquer quand il reste < 45 % du dash le coupe en frappe de dash
     cancelsHitstop: true, // presser dash pendant un gel d'impact l'interrompt (réactivité)
     // Esquive parfaite (un coup évité grâce aux i-frames) : récompense immédiate.
@@ -59,7 +61,7 @@ export const DEFAULT_TUNING = {
   // Gadget (charges, façon Brawl Stars) : Nova de cendres — onde qui repousse et étourdit.
   gadget: { chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 20, knockback: 900, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4 },
   // Super : Colère — se remplit en infligeant des dégâts ; tourbillon invulnérable.
-  super: { chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1 },
+  super: { startCharge: 0.4, chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1 },
 
   enemies: {
     imp: {
@@ -90,12 +92,12 @@ export const DEFAULT_TUNING = {
     },
   },
   elite: {
-    hpMult: 3.0, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
+    hpMult: 2.4, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
     // Modificateurs façon champions Diablo : un seul par élite dans le prototype.
     mods: {
       // Les télégraphes ne sont JAMAIS raccourcis (équité) : « rapide » accélère le déplacement.
       rapide: { speedMult: 1.45, windupMult: 1 },
-      blinde: { damageTakenMult: 0.6, knockbackMult: 0.25 },
+      blinde: { damageTakenMult: 0.7, knockbackMult: 0.25 },
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
     },
   },

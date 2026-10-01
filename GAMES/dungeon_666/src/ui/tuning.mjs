@@ -4,7 +4,7 @@
 
 export const TUNABLES = [
   { path: 'player.speed', label: 'Vitesse de course', min: 180, max: 460, step: 10 },
-  { path: 'player.accelTime', label: 'Temps d\'accélération (s)', min: 0, max: 0.2, step: 0.01 },
+  { path: 'player.accelTime', label: 'Temps d\'accélération (s)', min: 0, max: 0.2, step: 0.001 },
   { path: 'dash.distance', label: 'Distance du dash', min: 80, max: 300, step: 5 },
   { path: 'dash.duration', label: 'Durée du dash (s)', min: 0.08, max: 0.3, step: 0.01 },
   { path: 'dash.iframes', label: 'Invulnérabilité du dash (s)', min: 0, max: 0.4, step: 0.01 },
@@ -35,10 +35,16 @@ function setPath(obj, path, value) {
   target[last] = value;
 }
 
+/** Ne garde que des paires {chemin connu: nombre fini} : un stockage corrompu ne casse rien. */
 export function loadTuningOverrides() {
   try {
-    const raw = localStorage.getItem(STORE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY) ?? '{}');
+    if (!raw || typeof raw !== 'object') return {};
+    const out = {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (TUNABLES.some((t) => t.path === k) && Number.isFinite(v)) out[k] = v;
+    }
+    return out;
   } catch {
     return {};
   }
@@ -54,6 +60,7 @@ function saveOverrides(o) {
 
 /** Applique des surcharges {path: value} sur un objet tuning. */
 export function applyOverrides(tuning, overrides) {
+  if (!overrides || typeof overrides !== 'object') return;
   for (const [path, v] of Object.entries(overrides)) {
     if (getPath(tuning, path) === undefined) continue;
     setPath(tuning, path, v);
@@ -85,7 +92,7 @@ export function buildTuningPanel(p, { getTuning, defaults, onClose }) {
     const cur = getPath(getTuning(), t.path);
     input.value = String(cur);
     val.textContent = String(cur);
-    const isDefault = () => Number(input.value) === getPath(defaults, t.path);
+    const isDefault = () => Math.abs(Number(input.value) - getPath(defaults, t.path)) < t.step / 2;
     row.classList.toggle('changed', !isDefault());
     input.addEventListener('input', () => {
       const v = Number(input.value);
@@ -120,14 +127,18 @@ export function buildTuningPanel(p, { getTuning, defaults, onClose }) {
   reset.className = 'btn';
   reset.textContent = 'Valeurs par défaut';
   reset.addEventListener('click', () => {
+    // Valeurs EXACTES des défauts, sans passer par le pas du curseur ni réécrire de surcharge.
+    for (const key of Object.keys(overrides)) delete overrides[key];
     saveOverrides({});
     for (const t of TUNABLES) {
-      applyOverrides(getTuning(), { [t.path]: getPath(defaults, t.path) });
+      const v = getPath(defaults, t.path);
+      applyOverrides(getTuning(), { [t.path]: v });
       const input = p.querySelector(`#tune-${t.path.replace(/\./g, '-')}`);
-      if (input) {
-        input.value = String(getPath(defaults, t.path));
-        input.dispatchEvent(new Event('input'));
-      }
+      if (!input) continue;
+      input.value = String(v);
+      input.closest('label')?.classList.remove('changed');
+      const out = input.closest('label')?.querySelector('output');
+      if (out) out.textContent = String(v);
     }
   });
   const close = document.createElement('button');

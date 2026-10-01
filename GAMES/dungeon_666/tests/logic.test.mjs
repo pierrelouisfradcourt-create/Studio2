@@ -465,3 +465,23 @@ test('Gardien vaincu : ses impacts en attente et ses orbes en vol ne blessent pl
   assert.ok(g.player.hp >= hp0, `PV ${hp0} -> ${g.player.hp}`);
   assert.equal(g.hazards.filter((h) => h.hitsPlayer && !h.done).length, 0);
 });
+
+test('réessayer le Gardien : retour à l\'entrée de sa salle avec le build d\'entrée', () => {
+  const g = sandbox();
+  addBoon(g.run, { id: BOONS[0].id, rarity: 'commun' });
+  g.run.gold = 42;
+  enterFloor(g, 6, null);
+  assert.equal(g.info.isBoss, true);
+  addBoon(g.run, { id: BOONS[4].id, rarity: 'commun' });
+  g.run.gold = 3;
+  damagePlayer(g, 99999, { kind: 'test', id: 66 });
+  steps(g, ticks(2));
+  assert.equal(g.mode, 'dead');
+  assert.equal(applyCommand(g, { type: 'retryBoss' }), true);
+  assert.equal(g.mode, 'play');
+  assert.equal(g.run.floor, 6);
+  assert.ok(g.enemies.some((e) => e.boss), 'le Gardien est de retour');
+  assert.deepEqual(g.run.boons.map((b) => b.id), [BOONS[0].id]);
+  assert.equal(g.run.gold, 42);
+  assert.equal(g.player.hp, g.player.maxHp);
+});

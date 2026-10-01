@@ -29,19 +29,19 @@ export const BOONS = [
   // Colère — brûlure
   { id: 'lame_ardente', family: 'colere', slot: 'attack', name: 'Lame ardente', text: 'Vos coups enflamment : {v} dégâts/s pendant 3 s.', value: 6, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'burn', duration: 3, chance: 1 } },
   { id: 'pas_de_braise', family: 'colere', slot: 'dash', name: 'Pas de braise', text: 'Votre dash explose : {v} dégâts autour de vous.', value: 12, proc: { on: 'dash', effect: 'nova', radius: 80 } },
-  { id: 'furie', family: 'colere', slot: 'passive', name: 'Furie', text: '+{v} % de dégâts.', value: 12, pct: true, stat: 'damageMult' },
+  { id: 'furie', family: 'colere', slot: 'passive', name: 'Furie', text: '+{v} % de dégâts.', value: 20, pct: true, stat: 'damageMult' },
   // Paresse — engourdissement
   { id: 'torpeur', family: 'paresse', slot: 'attack', name: 'Torpeur', text: 'Vos coups ralentissent de {v} % pendant 2 s.', value: 30, pct: true, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'chill', duration: 2, chance: 1 } },
   { id: 'brume_lente', family: 'paresse', slot: 'dash', name: 'Brume lente', text: 'Votre dash gèle : {v} dégâts et ralentit.', value: 8, proc: { on: 'dash', effect: 'nova', radius: 90, chill: 2 } },
-  { id: 'sommeil', family: 'paresse', slot: 'passive', name: 'Sommeil de plomb', text: 'Recharge du dash −{v} %.', value: 15, pct: true, stat: 'dashRechargeMult', negative: true },
+  { id: 'sommeil', family: 'paresse', slot: 'passive', name: 'Sommeil de plomb', text: 'Recharge du dash −{v} %.', value: 25, pct: true, stat: 'dashRechargeMult', negative: true },
   // Avarice — or et critiques
   { id: 'main_avide', family: 'avarice', slot: 'attack', name: 'Main avide', text: '{v} % de chances qu\'un coup rapporte 1 or.', value: 20, pct: true, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'gold', valueFixed: 1 } },
-  { id: 'fortune', family: 'avarice', slot: 'passive', name: 'Fortune', text: '+{v} % de chances de critique.', value: 6, pct: true, stat: 'critChance' },
+  { id: 'fortune', family: 'avarice', slot: 'passive', name: 'Fortune', text: '+{v} % de chances de critique.', value: 10, pct: true, stat: 'critChance' },
   { id: 'dime', family: 'avarice', slot: 'passive', name: 'Dîme', text: '+{v} % d\'or trouvé.', value: 35, pct: true, stat: 'goldFindMult' },
   // Gourmandise — soin
   { id: 'festin', family: 'gourmandise', slot: 'passive', name: 'Festin', text: 'Chaque ennemi tué rend {v} PV.', value: 2, proc: { on: 'kill', effect: 'heal' } },
-  { id: 'voracite', family: 'gourmandise', slot: 'passive', name: 'Voracité', text: '+{v} PV max.', value: 20, stat: 'maxHpBonus' },
-  { id: 'sang_devore', family: 'gourmandise', slot: 'attack', name: 'Sang dévoré', text: 'Vol de vie : {v} % des dégâts infligés.', value: 4, pct: true, stat: 'lifesteal' },
+  { id: 'voracite', family: 'gourmandise', slot: 'passive', name: 'Voracité', text: '+{v} PV max.', value: 30, stat: 'maxHpBonus' },
+  { id: 'sang_devore', family: 'gourmandise', slot: 'attack', name: 'Sang dévoré', text: 'Vol de vie : {v} % des dégâts infligés.', value: 5, pct: true, stat: 'lifesteal' },
   // Luxure — Super et vulnérabilité
   { id: 'extase', family: 'luxure', slot: 'passive', name: 'Extase', text: 'Le Super se charge {v} % plus vite.', value: 30, pct: true, stat: 'superChargeMult' },
   { id: 'charme', family: 'luxure', slot: 'skill', name: 'Charme fatal', text: 'La Lance rend vulnérable : +{v} % de dégâts subis, 4 s.', value: 30, pct: true, proc: { on: 'hit', sources: ['skill'], effect: 'vuln', duration: 4, chance: 1 } },

@@ -79,7 +79,7 @@ export function createPlayer(tuning, x, y) {
     castDirX: 0,
     castDirY: -1,
     gadgetCharges: tuning.gadget.chargesPerSection,
-    superCharge: 0,
+    superCharge: tuning.super.startCharge ?? 0,
     superT: 0,
     superTick: 0,
     buffer: { action: null, t: 0, aimX: 0, aimY: 0 },

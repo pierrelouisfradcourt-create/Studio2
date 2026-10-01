@@ -274,7 +274,8 @@ function updateAttack(game, dt) {
     }
   }
   if (a.phase === 'recovery' && a.t >= a.dur.recovery) {
-    p.comboIndex = a.strike ? 0 : (a.index + 1) % t.combo.length;
+    // La frappe de dash compte comme le coup 1 : on enchaîne directement sur le coup 2.
+    p.comboIndex = a.strike ? 1 : (a.index + 1) % t.combo.length;
     p.comboTimer = 0;
     p.attack = null;
     p.state = 'free';

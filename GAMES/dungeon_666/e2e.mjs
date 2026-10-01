@@ -73,6 +73,15 @@ async function phoneRun(browser, base) {
   let s = await state(page);
   check('le tap sur « Descendre » lance la partie à l\'étage 1', s?.mode === 'play' && s.floor === 1);
 
+  // Pouce posé IMMOBILE au bord bas-gauche (là où il repose) : le héros ne doit pas bouger.
+  const still0 = await state(page);
+  await touch.down(11, 40, 370);
+  await page.waitForTimeout(400);
+  const still1 = await state(page);
+  await touch.up(11);
+  check('pouce immobile au bord : aucun déplacement fantôme', Math.hypot(still1.x - still0.x, still1.y - still0.y) < 2, `Δ=${Math.hypot(still1.x - still0.x, still1.y - still0.y).toFixed(1)} u`);
+  s = await state(page);
+
   // Joystick flottant : pouce gauche, glissé vers la droite.
   const x0 = s.x;
   await touch.down(1, 160, 250);
@@ -123,19 +132,28 @@ async function phoneRun(browser, base) {
   await page.waitForTimeout(900);
   s = await state(page);
   check('salle nettoyée : une récompense apparaît', s.cleared && !!s.interact);
+  // Le pouce gauche reste posé sur le joystick pendant tout le menu (cas réel).
+  await touch.down(12, 120, 300);
   await page.evaluate(([x, y]) => window.__d666.teleport(x, y), [s.interact.x, s.interact.y]);
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(60);
   const card = page.locator('.panel button').first();
   const visible = await card.isVisible().catch(() => false);
   check('menu de récompense affiché', visible);
-  await shot(page, '04_menu_recompense');
   if (visible) {
+    // Tap immédiat (dash martelé) : le panneau est encore désarmé, rien n'est choisi.
+    const bb0 = await card.boundingBox();
+    await touch.tap(6, bb0.x + bb0.width / 2, bb0.y + bb0.height / 2, 30);
+    await page.waitForTimeout(80);
+    check('menu tout juste ouvert : un tap réflexe ne choisit rien', (await state(page)).mode === 'choice');
+    await page.waitForTimeout(400);
+    await shot(page, '04_menu_recompense');
     const bb = await card.boundingBox();
     await touch.tap(6, bb.x + bb.width / 2, bb.y + bb.height / 2);
     await page.waitForTimeout(400);
   }
+  await touch.up(12);
   s = await state(page);
-  check('choix validé au doigt : retour au jeu, portes ouvertes', s.mode === 'play' && s.doors.length > 0 && s.doors.every((d) => d.open));
+  check('choix validé au doigt (autre pouce posé) : retour au jeu, portes ouvertes', s.mode === 'play' && s.doors.length > 0 && s.doors.every((d) => d.open));
   await page.evaluate(([x, y]) => window.__d666.teleport(x, y + 20), [s.doors[0].x, s.doors[0].y]);
   await page.waitForTimeout(400);
   s = await state(page);
@@ -171,6 +189,14 @@ async function portraitRun(browser, base) {
   await touch.tap(1, 200, 600);
   await page.waitForTimeout(300);
   await shot(page, '07_portrait');
+  // Pouce gauche dans le coin bas-gauche du portrait : il marche, il ne dashe pas.
+  const p0 = await state(page);
+  await touch.down(3, 150, 720);
+  await touch.move(3, 150, 660);
+  await page.waitForTimeout(400);
+  await touch.up(3);
+  const p1 = await state(page);
+  check('portrait : le pouce gauche pilote le joystick (pas de dash parasite)', p1.dashes === p0.dashes && Math.hypot(p1.x - p0.x, p1.y - p0.y) > 30, `dash +${p1.dashes - p0.dashes}`);
   const s = await state(page);
   const inside = await page.evaluate(() => {
     const vw = innerWidth;
@@ -201,6 +227,20 @@ async function desktopRun(browser, base) {
   await page.mouse.up();
   const s2 = await state(page);
   check('souris : clic gauche maintenu = attaques', s2.attacks >= 2);
+  // Clic droit PENDANT le clic gauche maintenu : la Lance part, et rien ne reste « collé ».
+  await page.waitForTimeout(4200); // recharge de la Lance
+  const k1 = (await state(page)).skills;
+  await page.mouse.down({ button: 'left' });
+  await page.waitForTimeout(150);
+  await page.mouse.down({ button: 'right' });
+  await page.waitForTimeout(100);
+  await page.mouse.up({ button: 'left' });
+  await page.mouse.up({ button: 'right' });
+  await page.waitForTimeout(300);
+  const a1 = (await state(page)).attacks;
+  await page.waitForTimeout(700);
+  const after = await state(page);
+  check('souris : clic droit pendant le gauche = Lance ; boutons relâchés = plus d\'attaque', after.skills === k1 + 1 && after.attacks - a1 <= 1, `lances +${after.skills - k1}, attaques après relâche +${after.attacks - a1}`);
   await shot(page, '08_bureau');
   // Fin de partie forcée, puis VRAI clic sur #restart (vocabulaire du PLAYABLE_CONTRACT).
   await page.evaluate(() => window.__game_debug.hit());

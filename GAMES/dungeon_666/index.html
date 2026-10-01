@@ -120,6 +120,9 @@
   .btn:disabled { opacity: 0.4; cursor: default; }
   .btn:focus-visible, .card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .btn:active:not(:disabled) { transform: scale(0.97); }
+  /* Panneau tout juste ouvert : désarmé un instant (pas de choix à l'aveugle en plein combat). */
+  .panel.arming .btn, .panel.arming .card { opacity: 0.5; }
+  .panel .btn, .panel .card { transition: opacity 0.15s ease-out; }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
   .cards.two { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   .card {

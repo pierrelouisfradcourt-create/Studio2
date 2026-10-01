@@ -120,6 +120,9 @@
   .btn:disabled { opacity: 0.4; cursor: default; }
   .btn:focus-visible, .card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .btn:active:not(:disabled) { transform: scale(0.97); }
+  /* Panneau tout juste ouvert : désarmé un instant (pas de choix à l'aveugle en plein combat). */
+  .panel.arming .btn, .panel.arming .card { opacity: 0.5; }
+  .panel .btn, .panel .card { transition: opacity 0.15s ease-out; }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
   .cards.two { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   .card {
@@ -441,7 +444,9 @@ const DEFAULT_TUNING = {
     speed: 300, // u/s
     accelTime: 0.083, // s pour atteindre la vitesse max depuis l'arrêt (5 images)
     decelTime: 0.05, // s pour s'arrêter (3 images) : l'arrêt net fait la nervosité
-    attackMoveMult: 0.2, // vitesse résiduelle pendant une attaque
+    // Vitesse pendant une attaque. Sur tactile on MAINTIENT l'attaque : à 0,2 le héros devenait
+    // plus lent qu'un diablotin (critique « fun ») — 0,5 garde le combo mobile.
+    attackMoveMult: 0.5,
     hurtIframes: 0.6, // invulnérabilité après un coup reçu
     hurtHitstop: 0.083, // gel global quand le héros est touché : il DOIT le sentir
     inputBuffer: 0.15, // une action pressée trop tôt reste en mémoire
@@ -461,7 +466,7 @@ const DEFAULT_TUNING = {
     iframes: 0.18, // depuis le début du dash (dépasse sa fin d'une image : marge tactile)
     charges: 2,
     recharge: 0.9, // s par charge, rechargées l'une après l'autre
-    strikeWindow: 0.2, // une attaque lancée dans cette fenêtre après un dash = frappe de dash
+    strikeWindow: 0.3, // une attaque lancée dans cette fenêtre après un dash = frappe de dash (le pouce doit avoir le temps)
     strikeCancelFrom: 0.45, // attaquer quand il reste < 45 % du dash le coupe en frappe de dash
     cancelsHitstop: true, // presser dash pendant un gel d'impact l'interrompt (réactivité)
     // Esquive parfaite (un coup évité grâce aux i-frames) : récompense immédiate.
@@ -485,7 +490,7 @@ const DEFAULT_TUNING = {
   // Gadget (charges, façon Brawl Stars) : Nova de cendres — onde qui repousse et étourdit.
   gadget: { chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 20, knockback: 900, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4 },
   // Super : Colère — se remplit en infligeant des dégâts ; tourbillon invulnérable.
-  super: { chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1 },
+  super: { startCharge: 0.4, chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1 },
 
   enemies: {
     imp: {
@@ -516,12 +521,12 @@ const DEFAULT_TUNING = {
     },
   },
   elite: {
-    hpMult: 3.0, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
+    hpMult: 2.4, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
     // Modificateurs façon champions Diablo : un seul par élite dans le prototype.
     mods: {
       // Les télégraphes ne sont JAMAIS raccourcis (équité) : « rapide » accélère le déplacement.
       rapide: { speedMult: 1.45, windupMult: 1 },
-      blinde: { damageTakenMult: 0.6, knockbackMult: 0.25 },
+      blinde: { damageTakenMult: 0.7, knockbackMult: 0.25 },
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
     },
   },
@@ -690,7 +695,7 @@ function createPlayer(tuning, x, y) {
     castDirX: 0,
     castDirY: -1,
     gadgetCharges: tuning.gadget.chargesPerSection,
-    superCharge: 0,
+    superCharge: tuning.super.startCharge ?? 0,
     superT: 0,
     superTick: 0,
     buffer: { action: null, t: 0, aimX: 0, aimY: 0 },
@@ -1639,7 +1644,8 @@ function updateAttack(game, dt) {
     }
   }
   if (a.phase === 'recovery' && a.t >= a.dur.recovery) {
-    p.comboIndex = a.strike ? 0 : (a.index + 1) % t.combo.length;
+    // La frappe de dash compte comme le coup 1 : on enchaîne directement sur le coup 2.
+    p.comboIndex = a.strike ? 1 : (a.index + 1) % t.combo.length;
     p.comboTimer = 0;
     p.attack = null;
     p.state = 'free';
@@ -2883,7 +2889,7 @@ const ROSTER = [
   { kind: 'imp', cost: 1, minIndex: 1, weight: 5 },
   { kind: 'exploder', cost: 1, minIndex: 1, weight: 2 },
   { kind: 'archer', cost: 1.5, minIndex: 1, weight: 3 },
-  { kind: 'charger', cost: 2, minIndex: 2, weight: 2 },
+  { kind: 'charger', cost: 2, minIndex: 1, weight: 2 }, // dès l'étage 1 : premier vrai professeur de dash
   { kind: 'brute', cost: 3, minIndex: 3, weight: 2 },
 ];
 const ELITE_MODS = ['rapide', 'blinde', 'ardent'];
@@ -3116,19 +3122,19 @@ const BOONS = [
   // Colère — brûlure
   { id: 'lame_ardente', family: 'colere', slot: 'attack', name: 'Lame ardente', text: 'Vos coups enflamment : {v} dégâts/s pendant 3 s.', value: 6, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'burn', duration: 3, chance: 1 } },
   { id: 'pas_de_braise', family: 'colere', slot: 'dash', name: 'Pas de braise', text: 'Votre dash explose : {v} dégâts autour de vous.', value: 12, proc: { on: 'dash', effect: 'nova', radius: 80 } },
-  { id: 'furie', family: 'colere', slot: 'passive', name: 'Furie', text: '+{v} % de dégâts.', value: 12, pct: true, stat: 'damageMult' },
+  { id: 'furie', family: 'colere', slot: 'passive', name: 'Furie', text: '+{v} % de dégâts.', value: 20, pct: true, stat: 'damageMult' },
   // Paresse — engourdissement
   { id: 'torpeur', family: 'paresse', slot: 'attack', name: 'Torpeur', text: 'Vos coups ralentissent de {v} % pendant 2 s.', value: 30, pct: true, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'chill', duration: 2, chance: 1 } },
   { id: 'brume_lente', family: 'paresse', slot: 'dash', name: 'Brume lente', text: 'Votre dash gèle : {v} dégâts et ralentit.', value: 8, proc: { on: 'dash', effect: 'nova', radius: 90, chill: 2 } },
-  { id: 'sommeil', family: 'paresse', slot: 'passive', name: 'Sommeil de plomb', text: 'Recharge du dash −{v} %.', value: 15, pct: true, stat: 'dashRechargeMult', negative: true },
+  { id: 'sommeil', family: 'paresse', slot: 'passive', name: 'Sommeil de plomb', text: 'Recharge du dash −{v} %.', value: 25, pct: true, stat: 'dashRechargeMult', negative: true },
   // Avarice — or et critiques
   { id: 'main_avide', family: 'avarice', slot: 'attack', name: 'Main avide', text: '{v} % de chances qu\'un coup rapporte 1 or.', value: 20, pct: true, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'gold', valueFixed: 1 } },
-  { id: 'fortune', family: 'avarice', slot: 'passive', name: 'Fortune', text: '+{v} % de chances de critique.', value: 6, pct: true, stat: 'critChance' },
+  { id: 'fortune', family: 'avarice', slot: 'passive', name: 'Fortune', text: '+{v} % de chances de critique.', value: 10, pct: true, stat: 'critChance' },
   { id: 'dime', family: 'avarice', slot: 'passive', name: 'Dîme', text: '+{v} % d\'or trouvé.', value: 35, pct: true, stat: 'goldFindMult' },
   // Gourmandise — soin
   { id: 'festin', family: 'gourmandise', slot: 'passive', name: 'Festin', text: 'Chaque ennemi tué rend {v} PV.', value: 2, proc: { on: 'kill', effect: 'heal' } },
-  { id: 'voracite', family: 'gourmandise', slot: 'passive', name: 'Voracité', text: '+{v} PV max.', value: 20, stat: 'maxHpBonus' },
-  { id: 'sang_devore', family: 'gourmandise', slot: 'attack', name: 'Sang dévoré', text: 'Vol de vie : {v} % des dégâts infligés.', value: 4, pct: true, stat: 'lifesteal' },
+  { id: 'voracite', family: 'gourmandise', slot: 'passive', name: 'Voracité', text: '+{v} PV max.', value: 30, stat: 'maxHpBonus' },
+  { id: 'sang_devore', family: 'gourmandise', slot: 'attack', name: 'Sang dévoré', text: 'Vol de vie : {v} % des dégâts infligés.', value: 5, pct: true, stat: 'lifesteal' },
   // Luxure — Super et vulnérabilité
   { id: 'extase', family: 'luxure', slot: 'passive', name: 'Extase', text: 'Le Super se charge {v} % plus vite.', value: 30, pct: true, stat: 'superChargeMult' },
   { id: 'charme', family: 'luxure', slot: 'skill', name: 'Charme fatal', text: 'La Lance rend vulnérable : +{v} % de dégâts subis, 4 s.', value: 30, pct: true, proc: { on: 'hit', sources: ['skill'], effect: 'vuln', duration: 4, chance: 1 } },
@@ -3600,6 +3606,9 @@ function enterFloor(game, floor, door) {
   emit(game, 'floorEnter', { floor: info.floor, circle: info.circle, circleName: info.circleName, section: info.section, indexInSection: info.indexInSection, kind: plan.kind, reward: plan.reward, isBoss: info.isBoss });
 
   if (plan.kind === 'boss') {
+    // Instantané d'entrée : mourir face au Gardien permet de le réessayer aussitôt,
+    // sans rejouer toute la section (sessions courtes).
+    game.run.bossEntry = { floor: info.floor, boons: game.run.boons.map((b) => ({ ...b })), gold: game.run.gold };
     spawnBoss(game);
   } else if (plan.kind === 'combat' || plan.kind === 'elite') {
     launchNextWave(game);
@@ -3777,6 +3786,7 @@ function rollShop(game) {
 
 function applyCommand(game, cmd) {
   if (cmd.type === 'respawn') return respawn(game, cmd.floor);
+  if (cmd.type === 'retryBoss') return retryBoss(game);
   if (game.mode !== 'choice' || !game.choice) return false;
   const it = game.room.interact;
   const ch = game.choice;
@@ -3897,6 +3907,39 @@ function closeChoice(game) {
 
 // ---------------------------------------------------------------- mort et reprise
 
+/** Vrai si la mort a eu lieu face à un Gardien dont on a l'instantané d'entrée. */
+function canRetryBoss(game) {
+  return game.mode === 'dead' && !!game.run.bossEntry && game.info?.isBoss && game.run.bossEntry.floor === game.run.floor;
+}
+
+function revive(game) {
+  const p = game.player;
+  const t = game.tuning;
+  recomputeStats(game);
+  p.hp = p.maxHp;
+  p.superCharge = t.super.startCharge ?? 0;
+  p.dashCharges = t.dash.charges + p.stats.dashChargesBonus;
+  p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
+  p.skillCd = 0;
+  p.iframes = 1.0;
+  p.state = 'free';
+  game.mode = 'play';
+  game.choice = null;
+  game.deathT = 0;
+}
+
+/** Réessayer le Gardien : retour à l'entrée de sa salle avec le build qu'on avait en y entrant. */
+function retryBoss(game) {
+  if (!canRetryBoss(game)) return false;
+  const entry = game.run.bossEntry;
+  game.run.boons = entry.boons.map((b) => ({ ...b }));
+  game.run.gold = entry.gold;
+  revive(game);
+  emit(game, 'respawn', { floor: entry.floor, boss: true });
+  enterFloor(game, entry.floor, null);
+  return true;
+}
+
 function respawn(game, floor) {
   if (game.mode !== 'dead') return false;
   const cps = game.meta.checkpoints;
@@ -3910,23 +3953,13 @@ function respawn(game, floor) {
     run.boons = [];
     run.gold = Math.floor(run.gold * game.tuning.economy.deathGoldKeep);
   }
-  const p = game.player;
-  recomputeStats(game);
-  p.hp = p.maxHp;
-  p.superCharge = 0;
-  p.dashCharges = game.tuning.dash.charges + p.stats.dashChargesBonus;
-  p.skillCd = 0;
-  p.iframes = 1.0;
-  p.state = 'free';
-  game.mode = 'play';
-  game.choice = null;
-  game.deathT = 0;
+  revive(game);
   emit(game, 'respawn', { floor: target });
   enterFloor(game, target, { reward: 'boon', family: randomFamily(game) });
   return true;
 }
 
-return { DOOR_WEIGHTS, REWARD_LABELS, EVENTS, createRun, planFor, enterFloor, onRoomClear, openInteract, describeBoon, describeItem, applyCommand, respawn };
+return { DOOR_WEIGHTS, REWARD_LABELS, EVENTS, createRun, planFor, enterFloor, onRoomClear, openInteract, describeBoon, describeItem, applyCommand, canRetryBoss, retryBoss, respawn };
 })();
 // ---- src/sim/game.mjs
 __mod["src/sim/game.mjs"] = (() => {
@@ -4168,6 +4201,12 @@ const BUTTONS = [
 ];
 const ATTACK_MARGIN_X = 118;
 const ATTACK_MARGIN_Y = 112;
+// Portrait (toléré) : l'éventail monte au-dessus de l'attaque pour laisser la place au pouce gauche.
+const PORTRAIT_FAN = { dash: [250, 100], skill: [215, 110], super: [285, 112], gadget: [322, 84] };
+const PORTRAIT_MARGIN_X = 95;
+const PORTRAIT_MARGIN_Y = 115;
+const TOUCH_SLOP = 1.35; // zone de toucher = rayon dessiné × 1,35 (tolérance du pouce)
+const ZONE_GAP = 8; // px entre la zone joystick et la zone de toucher du bouton le plus à gauche
 
 const KEY_MOVE = {
   KeyW: [0, -1], ArrowUp: [0, -1], KeyS: [0, 1], ArrowDown: [0, 1],
@@ -4183,6 +4222,7 @@ function createInput(target, { onGesture } = {}) {
     usingTouch: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches,
     width: 1,
     height: 1,
+    moveZoneX: 0,
     safe: { top: 0, right: 0, bottom: 0, left: 0 },
     keys: new Set(),
     mouse: { x: 0, y: 0, down: false, right: false, lastMove: -1e9, inside: false },
@@ -4201,13 +4241,18 @@ function createInput(target, { onGesture } = {}) {
     st.width = width;
     st.height = height;
     if (safe) st.safe = safe;
-    const ax = width - ATTACK_MARGIN_X - st.safe.right;
-    const ay = height - ATTACK_MARGIN_Y - st.safe.bottom;
+    const portrait = height > width;
+    const ax = width - (portrait ? PORTRAIT_MARGIN_X : ATTACK_MARGIN_X) - st.safe.right;
+    const ay = height - (portrait ? PORTRAIT_MARGIN_Y : ATTACK_MARGIN_Y) - st.safe.bottom;
     for (const b of st.buttons) {
-      const a = (b.angle * Math.PI) / 180;
-      b.x = ax + Math.cos(a) * b.dist;
-      b.y = ay + Math.sin(a) * b.dist;
+      const [angle, dist] = portrait && PORTRAIT_FAN[b.id] ? PORTRAIT_FAN[b.id] : [b.angle, b.dist];
+      const a = (angle * Math.PI) / 180;
+      b.x = ax + Math.cos(a) * dist;
+      b.y = ay + Math.sin(a) * dist;
     }
+    // La zone joystick s'arrête avant la zone de toucher du bouton le plus à gauche.
+    const leftmost = Math.min(...st.buttons.map((b) => b.x - b.r * TOUCH_SLOP));
+    st.moveZoneX = Math.min(width * MOVE_ZONE, leftmost - ZONE_GAP);
   }
 
   function buttonAt(x, y) {
@@ -4216,7 +4261,7 @@ function createInput(target, { onGesture } = {}) {
     for (const b of st.buttons) {
       const d = Math.hypot(x - b.x, y - b.y);
       // Zone de toucher plus large que le dessin (tolérance du pouce).
-      if (d < b.r * 1.35 && d < bestD) {
+      if (d < b.r * TOUCH_SLOP && d < bestD) {
         best = b;
         bestD = d;
       }
@@ -4243,7 +4288,7 @@ function createInput(target, { onGesture } = {}) {
     const y = ev.clientY;
     let b = buttonAt(x, y);
     // Un toucher dans la moitié droite hors de tout bouton = attaque, visée depuis ce point.
-    if (!b && x >= st.width * MOVE_ZONE && st.buttons[0].pointer === null) b = st.buttons[0];
+    if (!b && x >= st.moveZoneX && st.buttons[0].pointer === null) b = st.buttons[0];
     if (b && !b.pointer) {
       b.pointer = ev.pointerId;
       b.ox = b.id === 'attack' && buttonAt(x, y) !== b ? x : b.x;
@@ -4251,16 +4296,18 @@ function createInput(target, { onGesture } = {}) {
       b.dx = 0;
       b.dy = 0;
       b.dragging = false;
+      b.wasManual = false;
       if (b.id === 'attack') press('attack');
       else if (b.id !== 'skill') press(b.id);
       return;
     }
-    if (x < st.width * MOVE_ZONE && st.stick.id === null) {
+    if (x < st.moveZoneX && st.stick.id === null) {
       const s = st.stick;
       s.id = ev.pointerId;
-      // Le joystick naît sous le pouce, mais jamais collé au bord.
-      s.baseX = Math.max(STICK_RADIUS + 12 + st.safe.left, Math.min(x, st.width * MOVE_ZONE - STICK_RADIUS));
-      s.baseY = Math.max(STICK_RADIUS + 12, Math.min(y, st.height - STICK_RADIUS - 12 - st.safe.bottom));
+      // Origine LOGIQUE = le point de contact : un pouce posé sans bouger ne fait jamais
+      // courir le héros, même collé au bord. Seul le DESSIN est recalé loin des bords.
+      s.baseX = x;
+      s.baseY = y;
       updateStick(x, y);
     }
   }
@@ -4279,6 +4326,8 @@ function createInput(target, { onGesture } = {}) {
     }
     s.knobX = s.baseX + dx;
     s.knobY = s.baseY + dy;
+    s.drawX = Math.max(STICK_RADIUS + 12 + st.safe.left, Math.min(s.baseX, st.moveZoneX - STICK_RADIUS));
+    s.drawY = Math.max(STICK_RADIUS + 12, Math.min(s.baseY, st.height - STICK_RADIUS - 12 - st.safe.bottom));
     const n = Math.min(1, Math.hypot(dx, dy) / STICK_RADIUS);
     const mag = n < STICK_DEAD ? 0 : Math.min(1, (n - STICK_DEAD) / (STICK_FULL - STICK_DEAD));
     const l = Math.hypot(dx, dy) || 1;
@@ -4342,18 +4391,26 @@ function createInput(target, { onGesture } = {}) {
 
   // ------------------------------------------------------------ souris et clavier
 
-  function onMouseDown(ev) {
-    st.usingTouch = false;
-    st.mouse.lastMove = performance.now();
-    if (ev.button === 0) {
-      st.mouse.down = true;
-      press('attack');
-    } else if (ev.button === 2) {
-      st.mouse.right = true;
+  // Un 2e bouton enfoncé/relâché pendant qu'un autre est tenu n'émet qu'un pointermove
+  // (spec Pointer Events) : l'état des boutons se lit dans le masque `ev.buttons`.
+  function syncMouseButtons(ev) {
+    const b = ev.buttons | 0;
+    const was = st.mouse.mask | 0;
+    if (b & 1 && !(was & 1)) press('attack');
+    if (b & 2 && !(was & 2)) {
       st.skillAim.x = 0;
       st.skillAim.y = 0;
       press('skill');
     }
+    st.mouse.down = !!(b & 1);
+    st.mouse.right = !!(b & 2);
+    st.mouse.mask = b;
+  }
+
+  function onMouseDown(ev) {
+    st.usingTouch = false;
+    st.mouse.lastMove = performance.now();
+    syncMouseButtons(ev);
   }
 
   function onMouseMove(ev) {
@@ -4361,11 +4418,11 @@ function createInput(target, { onGesture } = {}) {
     st.mouse.y = ev.clientY;
     st.mouse.lastMove = performance.now();
     st.mouse.inside = true;
+    syncMouseButtons(ev);
   }
 
   function onMouseUp(ev) {
-    if (ev.button === 0) st.mouse.down = false;
-    if (ev.button === 2) st.mouse.right = false;
+    syncMouseButtons(ev);
   }
 
   function onKeyDown(ev) {
@@ -4375,6 +4432,8 @@ function createInput(target, { onGesture } = {}) {
       press('pause');
       return;
     }
+    // Dans un panneau (menus, curseurs de réglage) le clavier garde son rôle natif.
+    if (ev.target instanceof Element && ev.target.closest('#ui')) return;
     if (KEY_MOVE[ev.code] || KEY_ACTION[ev.code]) ev.preventDefault();
     if (ev.repeat) return;
     st.usingTouch = false;
@@ -4390,12 +4449,17 @@ function createInput(target, { onGesture } = {}) {
   function onBlur() {
     st.keys.clear();
     st.mouse.down = false;
+    st.mouse.right = false;
+    st.mouse.mask = 0;
     st.stick.id = null;
     st.stick.x = 0;
     st.stick.y = 0;
     for (const b of st.buttons) {
       b.pointer = null;
       b.dragging = false;
+      b.wasManual = false;
+      b.dx = 0;
+      b.dy = 0;
     }
   }
 
@@ -5267,12 +5331,30 @@ const { computeAim } = __mod["src/sim/aim.mjs"];
 
 const TAU = Math.PI * 2;
 const TILE = 88;
+// Échelles VISUELLES (les hitbox de la sim ne changent pas) : sur un téléphone, le héros et
+// les projectiles ennemis doivent se lire au premier coup d'œil (critique « fun » n°3).
+const HERO_VISUAL = 1.18;
+const ENEMY_SHOT_VISUAL = 1.3;
 const WALL_OVERDRAW = 1200; // u de mur peints autour de la salle (la caméra peut déborder)
 const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
 // ------------------------------------------------------------------ textures mises en cache
 
-const cache = { tiles: new Map(), glows: new Map(), deco: null, decoRoom: null };
+const cache = { tiles: new Map(), glows: new Map(), grads: new Map(), deco: null, decoRoom: null };
+
+/** Dégradé vertical transparent -> couleur, mis en cache (portes, colonnes de butin). */
+function verticalGradient(ctx, y0, y1, color) {
+  const key = `${y0}|${y1}|${color}`;
+  let g = cache.grads.get(key);
+  if (!g) {
+    g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, color);
+    if (cache.grads.size > 64) cache.grads.clear();
+    cache.grads.set(key, g);
+  }
+  return g;
+}
 
 function makeCanvas(w, h) {
   if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);
@@ -5435,11 +5517,8 @@ function drawDoor(ctx, d, time) {
   ctx.fill();
   if (d.open) {
     drawGlow(ctx, cx, d.h - 10, 90, color, 0.35 + 0.1 * Math.sin(time * 4));
-    const g = ctx.createLinearGradient(0, d.y, 0, d.y + d.h);
-    g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(1, color);
     ctx.globalAlpha = 0.45 + 0.1 * Math.sin(time * 3);
-    ctx.fillStyle = g;
+    ctx.fillStyle = verticalGradient(ctx, d.y, d.y + d.h, color);
     archPath();
     ctx.fill();
     ctx.globalAlpha = 1;
@@ -5676,11 +5755,8 @@ function drawInteract(ctx, game, time) {
     // Colonne de lumière façon Diablo, plus haute pour les raretés élevées.
     const idx = ITEM_RARITIES.indexOf(rar);
     const h = 60 + idx * 50;
-    const grad = ctx.createLinearGradient(0, it.y - h, 0, it.y);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, color);
     ctx.globalAlpha = 0.35 + 0.1 * Math.sin(time * 4);
-    ctx.fillStyle = grad;
+    ctx.fillStyle = verticalGradient(ctx, it.y - h, it.y, color);
     ctx.fillRect(it.x - 10, it.y - h, 20, h);
     ctx.globalAlpha = 1;
     drawGlow(ctx, it.x, it.y, 40, color, 0.5);
@@ -5966,11 +6042,12 @@ function drawEnemyHp(ctx, e, r) {
 
 function drawPlayer(ctx, game, fx, time) {
   const p = game.player;
+  const pr = p.r * HERO_VISUAL;
   for (const g of fx.ghosts) {
     ctx.globalAlpha = (g.life / g.max) * 0.45;
     ctx.fillStyle = PAL.heroCape;
     ctx.beginPath();
-    ctx.arc(g.x, g.y, p.r * 0.95, 0, TAU);
+    ctx.arc(g.x, g.y, p.r * HERO_VISUAL * 0.95, 0, TAU);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
@@ -5979,7 +6056,7 @@ function drawPlayer(ctx, game, fx, time) {
   } else if (p.iframes > 0 && p.state !== 'dash' && p.hurtFlash <= 0 && Math.floor(time * 15) % 2 === 0) {
     ctx.globalAlpha = 0.4;
   }
-  drawShadow(ctx, p.x, p.y, p.r);
+  drawShadow(ctx, p.x, p.y, pr);
   drawGlow(ctx, p.x, p.y, 60, PAL.heroGlow, 0.9);
   if (p.state === 'super') drawGlow(ctx, p.x, p.y, 150, PAL.superBar, 0.4 + 0.2 * Math.sin(time * 18));
   ctx.save();
@@ -5987,11 +6064,11 @@ function drawPlayer(ctx, game, fx, time) {
   const f = p.facing;
   const speed = Math.hypot(p.vx, p.vy);
   // Cape qui flotte à l'opposé du mouvement.
-  const capeLen = p.r * (1.1 + Math.min(1, speed / 400) * 0.8);
+  const capeLen = pr * (1.1 + Math.min(1, speed / 400) * 0.8);
   ctx.fillStyle = PAL.heroCape;
   ctx.beginPath();
-  ctx.moveTo(Math.cos(f + 1.9) * p.r * 0.9, Math.sin(f + 1.9) * p.r * 0.9);
-  ctx.quadraticCurveTo(Math.cos(f + Math.PI) * capeLen * 1.3 + Math.sin(time * 12) * 3, Math.sin(f + Math.PI) * capeLen * 1.3, Math.cos(f - 1.9) * p.r * 0.9, Math.sin(f - 1.9) * p.r * 0.9);
+  ctx.moveTo(Math.cos(f + 1.9) * pr * 0.9, Math.sin(f + 1.9) * pr * 0.9);
+  ctx.quadraticCurveTo(Math.cos(f + Math.PI) * capeLen * 1.3 + Math.sin(time * 12) * 3, Math.sin(f + Math.PI) * capeLen * 1.3, Math.cos(f - 1.9) * pr * 0.9, Math.sin(f - 1.9) * pr * 0.9);
   ctx.closePath();
   ctx.fill();
   // Étirement (dash, frappe) et écrasement (sortie de dash), aire conservée.
@@ -6014,21 +6091,21 @@ function drawPlayer(ctx, game, fx, time) {
   ctx.strokeStyle = '#0d2a36';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(0, 0, p.r, 0, TAU);
+  ctx.arc(0, 0, pr, 0, TAU);
   ctx.fill();
   ctx.stroke();
   // Visière orientée.
   ctx.fillStyle = '#0d2a36';
   ctx.beginPath();
-  ctx.arc(Math.cos(f) * p.r * 0.35, Math.sin(f) * p.r * 0.35, p.r * 0.42, f - 1.2, f + 1.2);
+  ctx.arc(Math.cos(f) * pr * 0.35, Math.sin(f) * pr * 0.35, pr * 0.42, f - 1.2, f + 1.2);
   ctx.closePath();
   ctx.fill();
-  drawBlade(ctx, p);
+  drawBlade(ctx, p, pr);
   ctx.restore();
   ctx.globalAlpha = 1;
 }
 
-function drawBlade(ctx, p) {
+function drawBlade(ctx, p, pr) {
   let a = p.facing + 0.9;
   if (p.state === 'attack' && p.attack) {
     const at = p.attack;
@@ -6043,8 +6120,8 @@ function drawBlade(ctx, p) {
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(Math.cos(a) * p.r * 0.8, Math.sin(a) * p.r * 0.8);
-  ctx.lineTo(Math.cos(a) * p.r * 2.3, Math.sin(a) * p.r * 2.3);
+  ctx.moveTo(Math.cos(a) * pr * 0.8, Math.sin(a) * pr * 0.8);
+  ctx.lineTo(Math.cos(a) * pr * 2.3, Math.sin(a) * pr * 2.3);
   ctx.stroke();
 }
 
@@ -6066,23 +6143,25 @@ function drawProjectiles(ctx, game) {
       ctx.fill();
       ctx.restore();
     } else if (pr.kind === 'bossOrb') {
-      drawGlow(ctx, pr.x, pr.y, pr.r * 3, PAL.bossOrb, 0.55);
+      const vr = pr.r * ENEMY_SHOT_VISUAL;
+      drawGlow(ctx, pr.x, pr.y, vr * 3, PAL.bossOrb, 0.55);
       ctx.fillStyle = PAL.bossOrb;
       ctx.strokeStyle = '#2a0018';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(pr.x, pr.y, pr.r, 0, TAU);
+      ctx.arc(pr.x, pr.y, vr, 0, TAU);
       ctx.fill();
       ctx.stroke();
       // Cœur blanc : un projectile ennemi se lit sur n'importe quel fond.
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(pr.x, pr.y, pr.r * 0.45, 0, TAU);
+      ctx.arc(pr.x, pr.y, vr * 0.45, 0, TAU);
       ctx.fill();
     } else {
       ctx.save();
       ctx.translate(pr.x, pr.y);
       ctx.rotate(a);
+      ctx.scale(ENEMY_SHOT_VISUAL, ENEMY_SHOT_VISUAL);
       ctx.strokeStyle = PAL.enemyOutline;
       ctx.lineWidth = 6;
       ctx.beginPath();
@@ -6445,13 +6524,16 @@ function drawTouchControls(ctx, game, touch, time) {
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
     ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 2;
+    // Dessin recalé loin des bords ; le bouton garde l'écart réel doigt/origine.
+    const bx = s.drawX ?? s.baseX;
+    const by = s.drawY ?? s.baseY;
     ctx.beginPath();
-    ctx.arc(s.baseX, s.baseY, 58, 0, TAU);
+    ctx.arc(bx, by, 58, 0, TAU);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
     ctx.beginPath();
-    ctx.arc(s.knobX, s.knobY, 26, 0, TAU);
+    ctx.arc(bx + (s.knobX - s.baseX), by + (s.knobY - s.baseY), 26, 0, TAU);
     ctx.fill();
   }
   for (const b of touch.buttons) drawButton(ctx, b, abilityState(game, b.id), time);
@@ -6543,16 +6625,46 @@ function drawBanner(ctx, fx, w, h) {
   ctx.globalAlpha = 1;
 }
 
+// Calques pré-rendus (vignette rouge, bande haute) : recréés seulement au redimensionnement,
+// jamais un dégradé plein écran par image (téléphones modestes, moments tendus).
+const layers = { key: '', vignette: null, top: null };
+
+function layerCanvas(w, h) {
+  const c = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(Math.max(1, w), Math.max(1, h)) : Object.assign(document.createElement('canvas'), { width: w, height: h });
+  return c;
+}
+
+function ensureLayers(w, h, safeTop) {
+  const key = `${w}x${h}:${safeTop}`;
+  if (layers.key === key) return;
+  layers.key = key;
+  const v = layerCanvas(w, h);
+  const vg = v.getContext('2d');
+  const g = vg.createRadialGradient(w / 2, h / 2, Math.max(w, h) * 0.38, w / 2, h / 2, Math.max(w, h) * 0.62);
+  g.addColorStop(0, 'rgba(255,0,0,0)');
+  g.addColorStop(1, 'rgba(200,0,0,1)');
+  vg.fillStyle = g;
+  vg.fillRect(0, 0, w, h);
+  layers.vignette = v;
+  const th = Math.round(90 + safeTop);
+  const t = layerCanvas(w, th);
+  const tg = t.getContext('2d');
+  const lg = tg.createLinearGradient(0, 0, 0, th);
+  lg.addColorStop(0, 'rgba(5, 2, 4, 0.55)');
+  lg.addColorStop(1, 'rgba(5, 2, 4, 0)');
+  tg.fillStyle = lg;
+  tg.fillRect(0, 0, w, th);
+  layers.top = t;
+}
+
 function drawVignettes(ctx, game, fx, w, h, time) {
   const p = game.player;
   const low = p.hp / p.maxHp < 0.3 && p.state !== 'dead';
   const intensity = Math.max(fx.hurtFlash * 0.45, low ? 0.22 + 0.1 * Math.sin(time * 5) : 0);
   if (intensity > 0.01) {
-    const g = ctx.createRadialGradient(w / 2, h / 2, Math.max(w, h) * 0.38, w / 2, h / 2, Math.max(w, h) * 0.62);
-    g.addColorStop(0, 'rgba(255,0,0,0)');
-    g.addColorStop(1, `rgba(200,0,0,${intensity})`);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = Math.min(1, intensity);
+    ctx.drawImage(layers.vignette, 0, 0, w, h);
+    ctx.globalAlpha = 1;
   }
   if (fx.flash > 0) {
     ctx.fillStyle = `rgba(255, 240, 220, ${fx.flash * 0.25})`;
@@ -6567,16 +6679,13 @@ function drawHints(ctx, game, w, h, safe, usingTouch) {
   }
 }
 
-/** Dessine tout le HUD. `vignette` : image pré-rendue de l'assombrissement des bords. */
+/** Dessine tout le HUD (calques de vignette et de bande haute pré-rendus). */
 function drawHud(ctx, game, fx, cam, touch, view, time, dt = 1 / 60) {
   const { w, h, safe } = view;
   updateGhost(game.player, dt);
+  ensureLayers(w, h, safe.top);
   // Dégradé sombre derrière la bande haute du HUD : le texte reste lisible sur tout fond.
-  const top = ctx.createLinearGradient(0, 0, 0, 90 + safe.top);
-  top.addColorStop(0, 'rgba(5, 2, 4, 0.55)');
-  top.addColorStop(1, 'rgba(5, 2, 4, 0)');
-  ctx.fillStyle = top;
-  ctx.fillRect(0, 0, w, 90 + safe.top);
+  ctx.drawImage(layers.top, 0, 0);
   drawVignettes(ctx, game, fx, w, h, time);
   drawOffscreen(ctx, game, cam, w, h);
   drawOccluded(ctx, game, cam, touch, w, h);
@@ -7868,6 +7977,15 @@ __mod["src/ui/menus.mjs"] = (() => {
 // AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.
 
 const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Lance', passive: 'Passif', super: 'Super' };
+const ARM_MS = 350; // un panneau ne répond qu'après ce délai : jamais de choix « à l'aveugle »
+const REFIRE_MS = 300; // anti double déclenchement (pointerup puis click)
+
+// Instant d'ouverture du panneau courant (armement), partagé par tous ses boutons.
+const arming = { shownAt: 0, noDelay: false };
+
+function armed() {
+  return arming.noDelay || performance.now() - arming.shownAt >= ARM_MS;
+}
 
 function el(tag, cls, text) {
   const n = document.createElement(tag);
@@ -7876,14 +7994,45 @@ function el(tag, cls, text) {
   return n;
 }
 
+/**
+ * Activation robuste au doigt : au POINTERUP du même doigt que le pointerdown, à l'intérieur
+ * de l'élément. Chromium/Android n'émettent pas `click` pour un 2e doigt (le pouce gauche
+ * resté sur le joystick) ; `click` ne sert plus qu'au clavier (detail === 0).
+ */
+function onActivate(node, fn) {
+  let pid = null;
+  let last = 0;
+  const fire = () => {
+    const now = performance.now();
+    if (node.disabled || now - last < REFIRE_MS) return;
+    last = now;
+    fn();
+  };
+  node.addEventListener('pointerdown', (ev) => {
+    pid = armed() ? ev.pointerId : null;
+  });
+  node.addEventListener('pointerup', (ev) => {
+    if (pid === null || pid !== ev.pointerId) return;
+    pid = null;
+    const r = node.getBoundingClientRect();
+    if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return;
+    ev.preventDefault();
+    fire();
+  });
+  node.addEventListener('pointercancel', () => {
+    pid = null;
+  });
+  node.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (ev.detail === 0 && armed()) fire();
+  });
+}
+
 function button(label, cls, onClick, disabled = false) {
   const b = el('button', `btn ${cls ?? ''}`, label);
   b.type = 'button';
   b.disabled = disabled;
-  b.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    if (!b.disabled) onClick();
-  });
+  onActivate(b, onClick);
   return b;
 }
 
@@ -7915,6 +8064,7 @@ function createUI(root, handlers) {
   panel.hidden = true;
   root.appendChild(panel);
   let shownKey = '';
+  let shownKind = '';
 
   function show(builder, key) {
     if (key === shownKey) return;
@@ -7923,6 +8073,15 @@ function createUI(root, handlers) {
     builder(panel);
     panel.hidden = false;
     panel.classList.remove('hidden');
+    // Armement : l'écran titre et les rafraîchissements du marchand répondent tout de suite.
+    const refresh = key.startsWith('choice:shop') && shownKind === 'shop';
+    shownKind = key.split(':')[1] ?? key;
+    arming.noDelay = key.startsWith('title') || key.startsWith('pause') || key === 'tuning' || refresh;
+    arming.shownAt = performance.now();
+    if (!arming.noDelay) {
+      panel.classList.add('arming');
+      setTimeout(() => panel.classList.remove('arming'), ARM_MS);
+    }
     const first = panel.querySelector('button:not([disabled])');
     if (first && !handlers.isTouch()) first.focus({ preventScroll: true });
   }
@@ -7930,6 +8089,7 @@ function createUI(root, handlers) {
   function hide() {
     if (!shownKey) return;
     shownKey = '';
+    shownKind = '';
     panel.hidden = true;
     panel.classList.add('hidden');
     panel.replaceChildren();
@@ -7970,7 +8130,7 @@ function createUI(root, handlers) {
       card.appendChild(el('div', 'card-kicker', `${o.duo ? 'DUO · ' : ''}${SLOT_LABELS[o.slot] ?? o.slot} · ${o.rarityName}${o.level > 1 ? ` · niv. ${o.level}` : ''}`));
       card.appendChild(el('div', 'card-title', o.name));
       card.appendChild(el('div', 'card-text', o.text));
-      card.addEventListener('click', () => handlers.command({ type: 'choose', index: i }));
+      onActivate(card, () => handlers.command({ type: 'choose', index: i }));
       list.appendChild(card);
     });
     p.appendChild(list);
@@ -8028,10 +8188,17 @@ function createUI(root, handlers) {
     p.appendChild(el('p', 'lede', `Étage ${game.run.floor} · ${t.kills} démons abattus · ${t.dodges} esquives au dash`));
     p.appendChild(el('p', 'dim', 'Vous reprenez au checkpoint avec le build que vous aviez en battant son Gardien. Votre équipement vous suit toujours.'));
     const col = el('div', 'col');
+    const retry = handlers.canRetryBoss(game);
+    if (retry) {
+      const b = button(`Réessayer le Gardien · étage ${game.run.floor}`, 'primary', () => handlers.command({ type: 'retryBoss' }));
+      b.id = 'restart';
+      col.appendChild(b);
+    }
     const cps = game.meta.checkpoints.slice().sort((a, b) => b - a).slice(0, 4);
     cps.forEach((f, i) => {
-      const b = button(`Reprendre · étage ${f}`, i === 0 ? 'primary' : '', () => handlers.command({ type: 'respawn', floor: f }));
-      if (i === 0) b.id = 'restart';
+      const first = i === 0 && !retry;
+      const b = button(`Reprendre · étage ${f}`, first ? 'primary' : '', () => handlers.command({ type: 'respawn', floor: f }));
+      if (first) b.id = 'restart';
       col.appendChild(b);
     });
     p.appendChild(col);
@@ -8088,7 +8255,7 @@ __mod["src/ui/tuning.mjs"] = (() => {
 
 const TUNABLES = [
   { path: 'player.speed', label: 'Vitesse de course', min: 180, max: 460, step: 10 },
-  { path: 'player.accelTime', label: 'Temps d\'accélération (s)', min: 0, max: 0.2, step: 0.01 },
+  { path: 'player.accelTime', label: 'Temps d\'accélération (s)', min: 0, max: 0.2, step: 0.001 },
   { path: 'dash.distance', label: 'Distance du dash', min: 80, max: 300, step: 5 },
   { path: 'dash.duration', label: 'Durée du dash (s)', min: 0.08, max: 0.3, step: 0.01 },
   { path: 'dash.iframes', label: 'Invulnérabilité du dash (s)', min: 0, max: 0.4, step: 0.01 },
@@ -8119,10 +8286,16 @@ function setPath(obj, path, value) {
   target[last] = value;
 }
 
+/** Ne garde que des paires {chemin connu: nombre fini} : un stockage corrompu ne casse rien. */
 function loadTuningOverrides() {
   try {
-    const raw = localStorage.getItem(STORE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY) ?? '{}');
+    if (!raw || typeof raw !== 'object') return {};
+    const out = {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (TUNABLES.some((t) => t.path === k) && Number.isFinite(v)) out[k] = v;
+    }
+    return out;
   } catch {
     return {};
   }
@@ -8138,6 +8311,7 @@ function saveOverrides(o) {
 
 /** Applique des surcharges {path: value} sur un objet tuning. */
 function applyOverrides(tuning, overrides) {
+  if (!overrides || typeof overrides !== 'object') return;
   for (const [path, v] of Object.entries(overrides)) {
     if (getPath(tuning, path) === undefined) continue;
     setPath(tuning, path, v);
@@ -8169,7 +8343,7 @@ function buildTuningPanel(p, { getTuning, defaults, onClose }) {
     const cur = getPath(getTuning(), t.path);
     input.value = String(cur);
     val.textContent = String(cur);
-    const isDefault = () => Number(input.value) === getPath(defaults, t.path);
+    const isDefault = () => Math.abs(Number(input.value) - getPath(defaults, t.path)) < t.step / 2;
     row.classList.toggle('changed', !isDefault());
     input.addEventListener('input', () => {
       const v = Number(input.value);
@@ -8204,14 +8378,18 @@ function buildTuningPanel(p, { getTuning, defaults, onClose }) {
   reset.className = 'btn';
   reset.textContent = 'Valeurs par défaut';
   reset.addEventListener('click', () => {
+    // Valeurs EXACTES des défauts, sans passer par le pas du curseur ni réécrire de surcharge.
+    for (const key of Object.keys(overrides)) delete overrides[key];
     saveOverrides({});
     for (const t of TUNABLES) {
-      applyOverrides(getTuning(), { [t.path]: getPath(defaults, t.path) });
+      const v = getPath(defaults, t.path);
+      applyOverrides(getTuning(), { [t.path]: v });
       const input = p.querySelector(`#tune-${t.path.replace(/\./g, '-')}`);
-      if (input) {
-        input.value = String(getPath(defaults, t.path));
-        input.dispatchEvent(new Event('input'));
-      }
+      if (!input) continue;
+      input.value = String(v);
+      input.closest('label')?.classList.remove('changed');
+      const out = input.closest('label')?.querySelector('output');
+      if (out) out.textContent = String(v);
     }
   });
   const close = document.createElement('button');
@@ -8225,6 +8403,64 @@ function buildTuningPanel(p, { getTuning, defaults, onClose }) {
 
 return { TUNABLES, loadTuningOverrides, applyOverrides, buildTuningPanel };
 })();
+// ---- src/render/interp.mjs
+__mod["src/render/interp.mjs"] = (() => {
+// Interpolation de rendu : la simulation avance par pas fixes de 1/60 s, l'écran peut tourner à
+// 90, 120 ou 144 Hz. On dessine chaque entité entre sa position avant et après le dernier pas
+// (alpha = reste de l'accumulateur / DT) : le mouvement reste fluide à toute fréquence.
+//
+// La sim n'est JAMAIS modifiée durablement : applyInterp() remplace x/y le temps du dessin,
+// restoreInterp() les rétablit avant le pas suivant (appelés dans un try/finally par main).
+
+const JUMP = 150; // u : au-delà (téléportation, changement de salle), pas d'interpolation
+
+function lists(game) {
+  return [game.enemies, game.projectiles, game.pickups];
+}
+
+/** À appeler juste AVANT chaque stepGame : mémorise la position de départ du pas. */
+function recordPrev(game) {
+  const p = game.player;
+  p.px = p.x;
+  p.py = p.y;
+  for (const arr of lists(game)) {
+    for (const e of arr) {
+      e.px = e.x;
+      e.py = e.y;
+    }
+  }
+}
+
+const touched = [];
+
+function lerpInto(e, alpha) {
+  if (e.px === undefined) return;
+  const dx = e.x - e.px;
+  const dy = e.y - e.py;
+  if (dx * dx + dy * dy > JUMP * JUMP) return;
+  e.cx = e.x;
+  e.cy = e.y;
+  e.x = e.px + dx * alpha;
+  e.y = e.py + dy * alpha;
+  touched.push(e);
+}
+
+function applyInterp(game, alpha) {
+  touched.length = 0;
+  lerpInto(game.player, alpha);
+  for (const arr of lists(game)) for (const e of arr) lerpInto(e, alpha);
+}
+
+function restoreInterp() {
+  for (const e of touched) {
+    e.x = e.cx;
+    e.y = e.cy;
+  }
+  touched.length = 0;
+}
+
+return { recordPrev, applyInterp, restoreInterp };
+})();
 // ---- src/main.mjs
 __mod["src/main.mjs"] = (() => {
 // Point d'entrée navigateur : boucle à pas fixe (60 Hz) découplée de l'affichage, câblage
@@ -8232,6 +8468,7 @@ __mod["src/main.mjs"] = (() => {
 //
 // Paramètres d'URL (playtest) : ?seed=123  ?floor=6  ?god=1  ?autostart=1  ?tune=0
 const { createGame, stepGame, applyCommand, DT } = __mod["src/sim/game.mjs"];
+const { canRetryBoss } = __mod["src/sim/run.mjs"];
 const { DEFAULT_TUNING } = __mod["src/sim/config.mjs"];
 const { createInput } = __mod["src/input/input.mjs"];
 const { createCamera, fitCamera, updateCamera, applyCamera, worldToScreen, resetCamera } = __mod["src/render/camera.mjs"];
@@ -8241,11 +8478,18 @@ const { drawHud, pauseButtonRect } = __mod["src/render/hud.mjs"];
 const { createAudio } = __mod["src/audio/sfx.mjs"];
 const { createUI } = __mod["src/ui/menus.mjs"];
 const { buildTuningPanel, loadTuningOverrides, applyOverrides } = __mod["src/ui/tuning.mjs"];
+const { recordPrev, applyInterp, restoreInterp } = __mod["src/render/interp.mjs"];
 
 const MAX_STEPS_PER_FRAME = 5;
 const MAX_DPR = 2;
-const FPS_LOW = 48;
-const FPS_WINDOW = 2; // s d'observation avant de baisser la qualité
+// Qualité adaptative sur le COÛT réel d'une image (sim + rendu), pas sur la cadence : un
+// téléphone bridé à 30 Hz par l'OS n'est pas « lent », baisser la définition n'y gagnerait rien.
+const WORK_HIGH_MS = 11; // ~70 % d'une image à 60 Hz
+const WORK_LOW_MS = 5;
+const DEGRADE_AFTER = 2; // s de surcharge avant de baisser d'un cran
+const UPGRADE_AFTER = 10; // s de marge avant de remonter d'un cran
+const QUALITY_MIN = 0.6;
+const QUALITY_STEP = 0.2;
 const META_KEY = 'dungeon666.meta.v1';
 const SETTINGS_KEY = 'dungeon666.settings.v1';
 const SLOWMO = {
@@ -8268,6 +8512,41 @@ function load(key, fallback) {
   }
 }
 
+const META_SCHEMA = 2; // à incrémenter quand la forme des objets sauvegardés change
+const SLOTS = ['arme', 'armure', 'talisman'];
+
+function isItem(it) {
+  return !!it && typeof it === 'object' && SLOTS.includes(it.slot) && Array.isArray(it.affixes) && typeof it.name === 'string';
+}
+
+/**
+ * Méta validée champ par champ : une sauvegarde ancienne ou corrompue retombe sur des défauts
+ * au lieu de bloquer le jeu (la forme des objets évolue pendant le prototype).
+ */
+function sanitizeMeta(m) {
+  const cps = Array.isArray(m.checkpoints) ? m.checkpoints.filter((f) => Number.isInteger(f) && f >= 1 && f <= 666) : [];
+  if (!cps.includes(1)) cps.unshift(1);
+  const sameSchema = m.schema === META_SCHEMA;
+  let items = null;
+  if (sameSchema && m.items && typeof m.items === 'object') {
+    items = {};
+    for (const s of SLOTS) items[s] = isItem(m.items[s]) && m.items[s].slot === s ? m.items[s] : null;
+  }
+  const snapshots = {};
+  if (sameSchema && m.snapshots && typeof m.snapshots === 'object') {
+    for (const [f, snap] of Object.entries(m.snapshots)) {
+      if (snap && Array.isArray(snap.boons) && Number.isFinite(snap.gold)) snapshots[f] = snap;
+    }
+  }
+  return {
+    schema: META_SCHEMA,
+    checkpoints: [...new Set(cps)].sort((a, b) => a - b),
+    bestFloor: Number.isInteger(m.bestFloor) && m.bestFloor >= 1 ? m.bestFloor : 1,
+    items,
+    snapshots,
+  };
+}
+
 function save(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -8286,7 +8565,7 @@ const safeProbe = document.getElementById('safe');
 const app = {
   screen: 'title', // title | game | tuning
   paused: false,
-  meta: load(META_KEY, { checkpoints: [1], bestFloor: 1, items: null, snapshots: {} }),
+  meta: sanitizeMeta(load(META_KEY, { checkpoints: [1], bestFloor: 1, items: null, snapshots: {} })),
   settings: load(SETTINGS_KEY, { sound: true, haptics: true, shake: 1 }),
   game: null,
   view: { w: 1, h: 1, dpr: 1, safe: { top: 0, right: 0, bottom: 0, left: 0 } },
@@ -8331,6 +8610,7 @@ async function enterImmersive() {
 
 const ui = createUI(uiRoot, {
   isTouch: () => input.usingTouch || matchMedia('(pointer: coarse)').matches,
+  canRetryBoss: (g) => canRetryBoss(g),
   start: (floor, sandbox = false) => {
     enterImmersive();
     startRun(floor, sandbox);
@@ -8375,8 +8655,21 @@ function startRun(floor, sandbox = false) {
   const startFloor = params.has('floor') ? Number(params.get('floor')) : floor;
   const meta = { checkpoints: app.meta.checkpoints, bestFloor: app.meta.bestFloor, snapshots: app.meta.snapshots ?? {} };
   const tune = params.get('tune') === '0' ? {} : loadTuningOverrides();
-  app.game = createGame({ seed, startFloor: sandbox ? 1 : startFloor, meta, godMode: params.get('god') === '1', items: app.meta.items ?? undefined, sandbox });
+  const opts = { seed, startFloor: sandbox ? 1 : startFloor, meta, godMode: params.get('god') === '1', items: app.meta.items ?? undefined, sandbox };
+  try {
+    app.game = createGame(opts);
+  } catch {
+    // Équipement sauvegardé illisible : on repart avec l'équipement de départ plutôt que de bloquer.
+    app.meta.items = null;
+    save(META_KEY, app.meta);
+    app.game = createGame({ ...opts, items: undefined });
+  }
   applyOverrides(app.game.tuning, tune);
+  // Réglages partageables par lien : ?t.player.speed=320&t.dash.distance=190
+  for (const [k, v] of params) {
+    if (!k.startsWith('t.') || !Number.isFinite(Number(v))) continue;
+    applyOverrides(app.game.tuning, { [k.slice(2)]: Number(v) });
+  }
   app.screen = 'game';
   app.paused = false;
   clearFx(fx);
@@ -8389,7 +8682,7 @@ function startRun(floor, sandbox = false) {
 function persistMeta() {
   const g = app.game;
   if (!g) return;
-  app.meta = { checkpoints: g.meta.checkpoints.slice(), bestFloor: g.meta.bestFloor, items: g.run.items, snapshots: g.meta.snapshots };
+  app.meta = { schema: META_SCHEMA, checkpoints: g.meta.checkpoints.slice(), bestFloor: g.meta.bestFloor, items: g.run.items, snapshots: g.meta.snapshots };
   save(META_KEY, app.meta);
 }
 
@@ -8483,11 +8776,12 @@ let last = performance.now();
 let lastDt = 1 / 60;
 let acc = 0;
 let time = 0;
-const fpsMeter = { frames: 0, t: 0, low: 0, fps: 60 };
+const fpsMeter = { frames: 0, t: 0, fps: 60, work: 0, over: 0, under: 0 };
 const playerScreen = { x: 0, y: 0 };
 
 function frame(now) {
   requestAnimationFrame(frame);
+  const workStart = performance.now();
   const realDt = Math.min(0.1, (now - last) / 1000);
   last = now;
   lastDt = realDt;
@@ -8496,7 +8790,6 @@ function frame(now) {
   const g = app.game;
   if (input.consumePause() && app.screen === 'game' && g && g.mode === 'play') app.paused = !app.paused;
 
-  let simSteps = 0;
   if (app.screen === 'game' && g && !app.paused && g.mode === 'play') {
     app.slowmo.t -= realDt;
     const scale = app.slowmo.t > 0 ? app.slowmo.scale : 1;
@@ -8505,13 +8798,13 @@ function frame(now) {
     while (acc >= DT && steps < MAX_STEPS_PER_FRAME) {
       worldToScreen(camera, app.view.w, app.view.h, g.player.x, g.player.y, playerScreen);
       const pilot = window.__d666.autopilot;
+      recordPrev(g);
       stepGame(g, pilot ? pilot(g) : input.frame(playerScreen));
       acc -= DT;
       steps++;
       if (g.mode !== 'play') break;
     }
     if (steps === MAX_STEPS_PER_FRAME) acc = 0;
-    simSteps = steps;
   } else {
     input.frame(null); // vide les fronts accumulés pendant un menu
     acc = 0;
@@ -8520,18 +8813,21 @@ function frame(now) {
       afterCommand();
     }
   }
-  if (g) {
-    flushEvents();
-    if (g.mode === 'play' || g.mode === 'dead') {
-      // En jeu, la caméra avance au rythme des pas de simulation (60 Hz) : sur un écran
-      // 120 Hz, héros et décor bougent ensemble, sans tremblotement relatif.
-      const camDt = g.mode === 'play' && !app.paused ? simSteps * DT : realDt;
-      if (camDt > 0) updateCamera(camera, g, camDt);
+  if (g) flushEvents();
+  // Positions interpolées le temps de la caméra, des effets et du dessin, puis rétablies.
+  const alpha = g && g.mode === 'play' && !app.paused ? Math.min(1, acc / DT) : 1;
+  if (g) applyInterp(g, alpha);
+  try {
+    if (g && (g.mode === 'play' || g.mode === 'dead')) {
+      updateCamera(camera, g, realDt);
       updateFx(fx, realDt, g);
     }
+    render();
+  } finally {
+    if (g) restoreInterp();
   }
-  render();
   ui.sync(app.screen === 'game' ? g : null, app);
+  adaptQuality(performance.now() - workStart, realDt);
 }
 
 function measureFps(dt) {
@@ -8541,13 +8837,24 @@ function measureFps(dt) {
   fpsMeter.fps = fpsMeter.frames / fpsMeter.t;
   fpsMeter.frames = 0;
   fpsMeter.t = 0;
-  // Qualité adaptative : si le téléphone peine, on réduit la définition et les particules.
-  if (app.screen === 'game' && fpsMeter.fps < FPS_LOW) fpsMeter.low += 0.5;
-  else fpsMeter.low = 0;
-  if (fpsMeter.low >= FPS_WINDOW && app.quality > 0.6) {
-    app.quality = Math.max(0.6, app.quality - 0.2);
+}
+
+/** Baisse (ou remonte) la définition selon le coût mesuré des images, en jeu seulement. */
+function adaptQuality(workMs, dt) {
+  const g = app.game;
+  if (app.screen !== 'game' || app.paused || !g || g.mode !== 'play') return;
+  fpsMeter.work += (workMs - fpsMeter.work) * 0.1; // moyenne glissante
+  fpsMeter.over = fpsMeter.work > WORK_HIGH_MS ? fpsMeter.over + dt : 0;
+  fpsMeter.under = fpsMeter.work < WORK_LOW_MS ? fpsMeter.under + dt : 0;
+  if (fpsMeter.over >= DEGRADE_AFTER && app.quality > QUALITY_MIN) {
+    app.quality = Math.max(QUALITY_MIN, app.quality - QUALITY_STEP);
     fx.quality = Math.max(0.4, fx.quality - 0.3);
-    fpsMeter.low = 0;
+    fpsMeter.over = 0;
+    resize();
+  } else if (fpsMeter.under >= UPGRADE_AFTER && app.quality < 1) {
+    app.quality = Math.min(1, app.quality + QUALITY_STEP);
+    fx.quality = Math.min(1, fx.quality + 0.3);
+    fpsMeter.under = 0;
     resize();
   }
 }
@@ -8615,6 +8922,7 @@ window.__d666 = {
   },
   start: (floor = 1) => startRun(floor),
   fps: () => fpsMeter.fps,
+  workMs: () => fpsMeter.work,
   // Pilote automatique (playtest/captures) : (game) => InputFrame ; null = joueur humain.
   autopilot: null,
   autopilotChoice: null,

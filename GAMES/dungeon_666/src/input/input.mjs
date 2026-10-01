@@ -27,6 +27,12 @@ const BUTTONS = [
 ];
 const ATTACK_MARGIN_X = 118;
 const ATTACK_MARGIN_Y = 112;
+// Portrait (toléré) : l'éventail monte au-dessus de l'attaque pour laisser la place au pouce gauche.
+const PORTRAIT_FAN = { dash: [250, 100], skill: [215, 110], super: [285, 112], gadget: [322, 84] };
+const PORTRAIT_MARGIN_X = 95;
+const PORTRAIT_MARGIN_Y = 115;
+const TOUCH_SLOP = 1.35; // zone de toucher = rayon dessiné × 1,35 (tolérance du pouce)
+const ZONE_GAP = 8; // px entre la zone joystick et la zone de toucher du bouton le plus à gauche
 
 const KEY_MOVE = {
   KeyW: [0, -1], ArrowUp: [0, -1], KeyS: [0, 1], ArrowDown: [0, 1],
@@ -42,6 +48,7 @@ export function createInput(target, { onGesture } = {}) {
     usingTouch: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches,
     width: 1,
     height: 1,
+    moveZoneX: 0,
     safe: { top: 0, right: 0, bottom: 0, left: 0 },
     keys: new Set(),
     mouse: { x: 0, y: 0, down: false, right: false, lastMove: -1e9, inside: false },
@@ -60,13 +67,18 @@ export function createInput(target, { onGesture } = {}) {
     st.width = width;
     st.height = height;
     if (safe) st.safe = safe;
-    const ax = width - ATTACK_MARGIN_X - st.safe.right;
-    const ay = height - ATTACK_MARGIN_Y - st.safe.bottom;
+    const portrait = height > width;
+    const ax = width - (portrait ? PORTRAIT_MARGIN_X : ATTACK_MARGIN_X) - st.safe.right;
+    const ay = height - (portrait ? PORTRAIT_MARGIN_Y : ATTACK_MARGIN_Y) - st.safe.bottom;
     for (const b of st.buttons) {
-      const a = (b.angle * Math.PI) / 180;
-      b.x = ax + Math.cos(a) * b.dist;
-      b.y = ay + Math.sin(a) * b.dist;
+      const [angle, dist] = portrait && PORTRAIT_FAN[b.id] ? PORTRAIT_FAN[b.id] : [b.angle, b.dist];
+      const a = (angle * Math.PI) / 180;
+      b.x = ax + Math.cos(a) * dist;
+      b.y = ay + Math.sin(a) * dist;
     }
+    // La zone joystick s'arrête avant la zone de toucher du bouton le plus à gauche.
+    const leftmost = Math.min(...st.buttons.map((b) => b.x - b.r * TOUCH_SLOP));
+    st.moveZoneX = Math.min(width * MOVE_ZONE, leftmost - ZONE_GAP);
   }
 
   function buttonAt(x, y) {
@@ -75,7 +87,7 @@ export function createInput(target, { onGesture } = {}) {
     for (const b of st.buttons) {
       const d = Math.hypot(x - b.x, y - b.y);
       // Zone de toucher plus large que le dessin (tolérance du pouce).
-      if (d < b.r * 1.35 && d < bestD) {
+      if (d < b.r * TOUCH_SLOP && d < bestD) {
         best = b;
         bestD = d;
       }
@@ -102,7 +114,7 @@ export function createInput(target, { onGesture } = {}) {
     const y = ev.clientY;
     let b = buttonAt(x, y);
     // Un toucher dans la moitié droite hors de tout bouton = attaque, visée depuis ce point.
-    if (!b && x >= st.width * MOVE_ZONE && st.buttons[0].pointer === null) b = st.buttons[0];
+    if (!b && x >= st.moveZoneX && st.buttons[0].pointer === null) b = st.buttons[0];
     if (b && !b.pointer) {
       b.pointer = ev.pointerId;
       b.ox = b.id === 'attack' && buttonAt(x, y) !== b ? x : b.x;
@@ -110,16 +122,18 @@ export function createInput(target, { onGesture } = {}) {
       b.dx = 0;
       b.dy = 0;
       b.dragging = false;
+      b.wasManual = false;
       if (b.id === 'attack') press('attack');
       else if (b.id !== 'skill') press(b.id);
       return;
     }
-    if (x < st.width * MOVE_ZONE && st.stick.id === null) {
+    if (x < st.moveZoneX && st.stick.id === null) {
       const s = st.stick;
       s.id = ev.pointerId;
-      // Le joystick naît sous le pouce, mais jamais collé au bord.
-      s.baseX = Math.max(STICK_RADIUS + 12 + st.safe.left, Math.min(x, st.width * MOVE_ZONE - STICK_RADIUS));
-      s.baseY = Math.max(STICK_RADIUS + 12, Math.min(y, st.height - STICK_RADIUS - 12 - st.safe.bottom));
+      // Origine LOGIQUE = le point de contact : un pouce posé sans bouger ne fait jamais
+      // courir le héros, même collé au bord. Seul le DESSIN est recalé loin des bords.
+      s.baseX = x;
+      s.baseY = y;
       updateStick(x, y);
     }
   }
@@ -138,6 +152,8 @@ export function createInput(target, { onGesture } = {}) {
     }
     s.knobX = s.baseX + dx;
     s.knobY = s.baseY + dy;
+    s.drawX = Math.max(STICK_RADIUS + 12 + st.safe.left, Math.min(s.baseX, st.moveZoneX - STICK_RADIUS));
+    s.drawY = Math.max(STICK_RADIUS + 12, Math.min(s.baseY, st.height - STICK_RADIUS - 12 - st.safe.bottom));
     const n = Math.min(1, Math.hypot(dx, dy) / STICK_RADIUS);
     const mag = n < STICK_DEAD ? 0 : Math.min(1, (n - STICK_DEAD) / (STICK_FULL - STICK_DEAD));
     const l = Math.hypot(dx, dy) || 1;
@@ -201,18 +217,26 @@ export function createInput(target, { onGesture } = {}) {
 
   // ------------------------------------------------------------ souris et clavier
 
-  function onMouseDown(ev) {
-    st.usingTouch = false;
-    st.mouse.lastMove = performance.now();
-    if (ev.button === 0) {
-      st.mouse.down = true;
-      press('attack');
-    } else if (ev.button === 2) {
-      st.mouse.right = true;
+  // Un 2e bouton enfoncé/relâché pendant qu'un autre est tenu n'émet qu'un pointermove
+  // (spec Pointer Events) : l'état des boutons se lit dans le masque `ev.buttons`.
+  function syncMouseButtons(ev) {
+    const b = ev.buttons | 0;
+    const was = st.mouse.mask | 0;
+    if (b & 1 && !(was & 1)) press('attack');
+    if (b & 2 && !(was & 2)) {
       st.skillAim.x = 0;
       st.skillAim.y = 0;
       press('skill');
     }
+    st.mouse.down = !!(b & 1);
+    st.mouse.right = !!(b & 2);
+    st.mouse.mask = b;
+  }
+
+  function onMouseDown(ev) {
+    st.usingTouch = false;
+    st.mouse.lastMove = performance.now();
+    syncMouseButtons(ev);
   }
 
   function onMouseMove(ev) {
@@ -220,11 +244,11 @@ export function createInput(target, { onGesture } = {}) {
     st.mouse.y = ev.clientY;
     st.mouse.lastMove = performance.now();
     st.mouse.inside = true;
+    syncMouseButtons(ev);
   }
 
   function onMouseUp(ev) {
-    if (ev.button === 0) st.mouse.down = false;
-    if (ev.button === 2) st.mouse.right = false;
+    syncMouseButtons(ev);
   }
 
   function onKeyDown(ev) {
@@ -234,6 +258,8 @@ export function createInput(target, { onGesture } = {}) {
       press('pause');
       return;
     }
+    // Dans un panneau (menus, curseurs de réglage) le clavier garde son rôle natif.
+    if (ev.target instanceof Element && ev.target.closest('#ui')) return;
     if (KEY_MOVE[ev.code] || KEY_ACTION[ev.code]) ev.preventDefault();
     if (ev.repeat) return;
     st.usingTouch = false;
@@ -249,12 +275,17 @@ export function createInput(target, { onGesture } = {}) {
   function onBlur() {
     st.keys.clear();
     st.mouse.down = false;
+    st.mouse.right = false;
+    st.mouse.mask = 0;
     st.stick.id = null;
     st.stick.x = 0;
     st.stick.y = 0;
     for (const b of st.buttons) {
       b.pointer = null;
       b.dragging = false;
+      b.wasManual = false;
+      b.dx = 0;
+      b.dy = 0;
     }
   }
 

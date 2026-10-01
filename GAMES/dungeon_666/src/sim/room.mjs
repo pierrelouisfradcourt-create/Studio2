@@ -30,7 +30,7 @@ const ROSTER = [
   { kind: 'imp', cost: 1, minIndex: 1, weight: 5 },
   { kind: 'exploder', cost: 1, minIndex: 1, weight: 2 },
   { kind: 'archer', cost: 1.5, minIndex: 1, weight: 3 },
-  { kind: 'charger', cost: 2, minIndex: 2, weight: 2 },
+  { kind: 'charger', cost: 2, minIndex: 1, weight: 2 }, // dès l'étage 1 : premier vrai professeur de dash
   { kind: 'brute', cost: 3, minIndex: 3, weight: 2 },
 ];
 const ELITE_MODS = ['rapide', 'blinde', 'ardent'];
