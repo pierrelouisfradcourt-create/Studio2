@@ -224,7 +224,8 @@ const AI = {
     switch (e.state) {
       case 'chase': {
         const reach = def.attackRange + p.r;
-        if (tp.d < reach && e.cooldown <= 0 && activeAttackers(game) < game.tuning.combat.maxAttackers) {
+        const canStrike = e.cooldown <= 0 && activeAttackers(game) < game.tuning.combat.maxAttackers;
+        if (tp.d < reach && canStrike) {
           setState(e, 'windup');
           e.dirX = tp.dx;
           e.dirY = tp.dy;
@@ -232,8 +233,10 @@ const AI = {
           e.atkId = newId(game);
           break;
         }
-        // Sans jeton : on encercle à distance au lieu de s'empiler sur le héros.
-        const ring = tp.d < reach * 1.6 ? reach * 1.25 : 0;
+        // Sans jeton (ou en recharge) : on encercle à distance au lieu de s'empiler sur le héros.
+        // Avec le droit de frapper, on fonce : sinon l'anneau (85 u) restait hors de portée (68 u)
+        // et un diablotin n'attaquait plus jamais un héros immobile.
+        const ring = !canStrike && tp.d < reach * 1.6 ? reach * 1.25 : 0;
         const tx = p.x + Math.cos(e.flank) * ring;
         const ty = p.y + Math.sin(e.flank) * ring;
         steer(game, e, tx, ty, speedOf(game, e, def));

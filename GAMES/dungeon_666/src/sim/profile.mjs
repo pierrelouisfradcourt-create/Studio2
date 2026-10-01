@@ -41,6 +41,27 @@ export function createProfile(tuning) {
   };
 }
 
+/** Profil neuf avec le kit gratuit de la classe de départ. */
+export function newProfile(tuning) {
+  const p = createProfile(tuning);
+  grantClassStarters(p, tuning, p.loadout.classId);
+  return p;
+}
+
+/**
+ * Le kit GRATUIT d'une classe (entrées de coût 0 : arme, compétence et gadget de départ) est
+ * acquis avec la classe ; sinon le Grimoire afficherait « Débloquer · ◆ 0 ».
+ */
+export function grantClassStarters(profile, tuning, classId) {
+  const c = tuning.classes[classId];
+  if (!c) return;
+  for (const [kind, ids] of [['weapons', c.weapons], ['skills', c.skills], ['gadgets', c.gadgets]]) {
+    for (const id of ids) {
+      if (tuning[kind][id] && (tuning[kind][id].cost ?? 0) === 0 && !profile.unlocked[kind].includes(id)) profile.unlocked[kind].push(id);
+    }
+  }
+}
+
 function startingKit(tuning) {
   const classId = Object.keys(tuning.classes)[0];
   const c = tuning.classes[classId];
@@ -80,6 +101,7 @@ export function sanitizeProfile(raw, tuning) {
     gadgets: Object.keys(tuning.gadgets),
   };
   for (const k of Object.keys(known)) out.unlocked[k] = [...new Set([...def.unlocked[k], ...idList(u[k], known[k])])];
+  for (const c of out.unlocked.classes) grantClassStarters(out, tuning, c);
   if (isObj(raw.upgrades)) {
     for (const [id, lv] of Object.entries(raw.upgrades)) {
       const up = tuning.town?.upgrades?.[id];
@@ -164,6 +186,7 @@ export function unlock(profile, tuning, kind, id) {
   if (profile.souls < cost) return { ok: false, reason: 'Âmes insuffisantes' };
   profile.souls -= cost;
   profile.unlocked[kind].push(id);
+  if (kind === 'classes') grantClassStarters(profile, tuning, id);
   if (kind === 'weapons') {
     // Une arme débloquée est forgée aussitôt en exemplaire commun, rangé au coffre.
     stashPush(profile, starterWeapon(tuning, id));

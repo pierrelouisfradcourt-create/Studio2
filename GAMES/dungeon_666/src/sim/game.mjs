@@ -20,7 +20,7 @@ import { recomputeStats } from './stats.mjs';
 import { moveCircle } from './physics.mjs';
 import { healPlayer } from './combat.mjs';
 import { starterItems } from './loot.mjs';
-import { createProfile, sanitizeProfile } from './profile.mjs';
+import { newProfile, sanitizeProfile } from './profile.mjs';
 import { resolveKit } from './loadout.mjs';
 import { applyLab } from './lab.mjs';
 
@@ -47,7 +47,7 @@ export function createGame(options = {}) {
   const seed = (options.seed ?? 1) >>> 0;
   const tuning = createTuning(options.tuning);
   applyLab(tuning);
-  const meta = options.meta ? sanitizeProfile(structuredClone(options.meta), tuning) : createProfile(tuning);
+  const meta = options.meta ? sanitizeProfile(structuredClone(options.meta), tuning) : newProfile(tuning);
   const game = {
     seed,
     tuning,

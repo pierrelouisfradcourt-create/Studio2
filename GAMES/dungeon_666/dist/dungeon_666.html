@@ -5402,7 +5402,8 @@ const AI = {
     switch (e.state) {
       case 'chase': {
         const reach = def.attackRange + p.r;
-        if (tp.d < reach && e.cooldown <= 0 && activeAttackers(game) < game.tuning.combat.maxAttackers) {
+        const canStrike = e.cooldown <= 0 && activeAttackers(game) < game.tuning.combat.maxAttackers;
+        if (tp.d < reach && canStrike) {
           setState(e, 'windup');
           e.dirX = tp.dx;
           e.dirY = tp.dy;
@@ -5410,8 +5411,10 @@ const AI = {
           e.atkId = newId(game);
           break;
         }
-        // Sans jeton : on encercle à distance au lieu de s'empiler sur le héros.
-        const ring = tp.d < reach * 1.6 ? reach * 1.25 : 0;
+        // Sans jeton (ou en recharge) : on encercle à distance au lieu de s'empiler sur le héros.
+        // Avec le droit de frapper, on fonce : sinon l'anneau (85 u) restait hors de portée (68 u)
+        // et un diablotin n'attaquait plus jamais un héros immobile.
+        const ring = !canStrike && tp.d < reach * 1.6 ? reach * 1.25 : 0;
         const tx = p.x + Math.cos(e.flank) * ring;
         const ty = p.y + Math.sin(e.flank) * ring;
         steer(game, e, tx, ty, speedOf(game, e, def));
@@ -6437,6 +6440,27 @@ function createProfile(tuning) {
   };
 }
 
+/** Profil neuf avec le kit gratuit de la classe de départ. */
+function newProfile(tuning) {
+  const p = createProfile(tuning);
+  grantClassStarters(p, tuning, p.loadout.classId);
+  return p;
+}
+
+/**
+ * Le kit GRATUIT d'une classe (entrées de coût 0 : arme, compétence et gadget de départ) est
+ * acquis avec la classe ; sinon le Grimoire afficherait « Débloquer · ◆ 0 ».
+ */
+function grantClassStarters(profile, tuning, classId) {
+  const c = tuning.classes[classId];
+  if (!c) return;
+  for (const [kind, ids] of [['weapons', c.weapons], ['skills', c.skills], ['gadgets', c.gadgets]]) {
+    for (const id of ids) {
+      if (tuning[kind][id] && (tuning[kind][id].cost ?? 0) === 0 && !profile.unlocked[kind].includes(id)) profile.unlocked[kind].push(id);
+    }
+  }
+}
+
 function startingKit(tuning) {
   const classId = Object.keys(tuning.classes)[0];
   const c = tuning.classes[classId];
@@ -6476,6 +6500,7 @@ function sanitizeProfile(raw, tuning) {
     gadgets: Object.keys(tuning.gadgets),
   };
   for (const k of Object.keys(known)) out.unlocked[k] = [...new Set([...def.unlocked[k], ...idList(u[k], known[k])])];
+  for (const c of out.unlocked.classes) grantClassStarters(out, tuning, c);
   if (isObj(raw.upgrades)) {
     for (const [id, lv] of Object.entries(raw.upgrades)) {
       const up = tuning.town?.upgrades?.[id];
@@ -6560,6 +6585,7 @@ function unlock(profile, tuning, kind, id) {
   if (profile.souls < cost) return { ok: false, reason: 'Âmes insuffisantes' };
   profile.souls -= cost;
   profile.unlocked[kind].push(id);
+  if (kind === 'classes') grantClassStarters(profile, tuning, id);
   if (kind === 'weapons') {
     // Une arme débloquée est forgée aussitôt en exemplaire commun, rangé au coffre.
     stashPush(profile, starterWeapon(tuning, id));
@@ -6660,7 +6686,7 @@ function stashLoot(profile, item) {
   stashPush(profile, item);
 }
 
-return { PROFILE_SCHEMA, STASH_MAX, EQUIP_SLOTS, createProfile, isItem, sanitizeProfile, ensureUid, fixLoadout, unlockCost, unlock, starterWeapon, upgradeCost, buyUpgrade, selectClass, selectSkill, selectGadget, equipFromStash, salvageFromStash, salvageSouls, stashLoot };
+return { PROFILE_SCHEMA, STASH_MAX, EQUIP_SLOTS, createProfile, newProfile, grantClassStarters, isItem, sanitizeProfile, ensureUid, fixLoadout, unlockCost, unlock, starterWeapon, upgradeCost, buyUpgrade, selectClass, selectSkill, selectGadget, equipFromStash, salvageFromStash, salvageSouls, stashLoot };
 })();
 // ---- src/sim/sections.mjs
 __mod["src/sim/sections.mjs"] = (() => {
@@ -7712,7 +7738,7 @@ const { recomputeStats } = __mod["src/sim/stats.mjs"];
 const { moveCircle } = __mod["src/sim/physics.mjs"];
 const { healPlayer } = __mod["src/sim/combat.mjs"];
 const { starterItems } = __mod["src/sim/loot.mjs"];
-const { createProfile, sanitizeProfile } = __mod["src/sim/profile.mjs"];
+const { newProfile, sanitizeProfile } = __mod["src/sim/profile.mjs"];
 const { resolveKit } = __mod["src/sim/loadout.mjs"];
 const { applyLab } = __mod["src/sim/lab.mjs"];
 
@@ -7739,7 +7765,7 @@ function createGame(options = {}) {
   const seed = (options.seed ?? 1) >>> 0;
   const tuning = createTuning(options.tuning);
   applyLab(tuning);
-  const meta = options.meta ? sanitizeProfile(structuredClone(options.meta), tuning) : createProfile(tuning);
+  const meta = options.meta ? sanitizeProfile(structuredClone(options.meta), tuning) : newProfile(tuning);
   const game = {
     seed,
     tuning,
