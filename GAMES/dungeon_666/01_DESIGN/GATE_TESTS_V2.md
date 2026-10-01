@@ -1,6 +1,13 @@
-# Gate Pierre demandée : tests existants contredits par la spec V2
+# Gate Pierre : tests existants contredits par la spec V2
 
-`statut : EN ATTENTE DE GATE` · rien de ce qui suit n'est appliqué.
+`statut : GATE ACCORDÉE ET APPLIQUÉE` — Pierre, 2026-10-01 : « je te donne tout les human gate pour avancer ».
+
+**Appliqué** (même jour) : les 12 réécritures du tableau ci-dessous et les 3 tests creux de la section suivante.
+Chaque modification porte en commentaire la mention de la gate. Le test « réessayer le Gardien » est
+**remplacé** par sa forme V2 (entraînement contre le Gardien), pas supprimé. Ensuite, la suite existante
+passe entièrement (78/78).
+
+Ce qui suit est la demande telle que présentée avant la gate, conservée comme trace.
 
 ## Pourquoi cette demande
 
@@ -38,6 +45,6 @@ Ce sont des tests creux. Je les signale, je ne les modifie pas.
 - `properties_strict` · « (m) chaque disposition (boss compris)… » : il échantillonne l'étage 6 sous le nom « boss », mais ce n'est plus une salle de boss. Proposition : `BOSS_FLOOR = 18`.
 - `logic` · « checkpoint : battre le Gardien de l'étage 6 ouvre la reprise à l'étage 7 » : il passe, car la fonction est pure (`bossFloor + 1`), mais 6 n'est plus un étage de Gardien. Proposition : 18 → 19.
 
-## Ce que je te demande
+## Ce qui était demandé
 
-Un « oui » ou un « non » par ligne (ou un « oui » global) pour appliquer ces réécritures dans les fichiers protégés. Sans gate, ils restent tels quels et en échec, et le rapport de fin de passe les classe `BLOCKED`.
+Un « oui » ou un « non » par ligne, ou un « oui » global. Réponse : oui global (gate accordée le 2026-10-01).

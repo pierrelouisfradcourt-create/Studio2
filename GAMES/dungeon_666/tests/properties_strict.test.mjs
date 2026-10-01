@@ -35,17 +35,18 @@ const HASH_SEED = 1;
 const HASH_SEARCH_STEPS = 600;
 const CLOCK_STEPS = 3000;
 const SECTION_SEEDS = [1, 2, 3, 4];
-const SECTION_FLOORS = 6;
-const SECTION_TICK_CAP = 12 * 60 * 60; // 12 min de sim
-const RANDOM_START_FLOORS = [2, 3, 4, 5, 6];
+// Gate Pierre 2026-10-01 (spec V2) : section de 18 étages, Gardien au 18e.
+const SECTION_FLOORS = 18;
+const SECTION_TICK_CAP = 30 * 60 * 60; // 30 min de sim
+const RANDOM_START_FLOORS = [2, 3, 9, 17, 18]; // combat, mi-section, antichambre, Gardien
 const RANDOM_SEEDS = [1, 2, 3];
 const RANDOM_STEPS = 2000;
 const MIN_OBSTACLE_LAYOUTS = 3; // dispositions à obstacles réellement exercées avec des ennemis
 const PLAYABILITY_SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const PLAYABILITY_MINUTES = 12;
+const PLAYABILITY_MINUTES = 30;
 const LAYOUT_SEED_LIMIT = 300;
 const LAYOUT_FLOOR = 2;
-const BOSS_FLOOR = 6;
+const BOSS_FLOOR = 18;
 // Miroir de LAYOUTS (combat) et de BOSS_LAYOUT dans src/sim/room.mjs : une disposition ajoutée
 // là-bas doit l'être ici pour être couverte.
 const EXPECTED_LAYOUTS = ['open', 'pillars', 'center', 'lanes', 'bastions', 'scatter', 'boss'];
@@ -309,7 +310,7 @@ test('(k) invariants stricts (cercles entiers, murs, obstacles, PV) — sections
   assert.ok(cover.heals > 0, 'couverture : un soin doit avoir eu lieu (le plafond des PV est-il testé ?)');
 });
 
-test('(k bis) invariants stricts — entrées aléatoires, départ dans chaque type de salle (étages 2 à 6)', () => {
+test('(k bis) invariants stricts — entrées aléatoires, départ dans chaque type de salle (combat, mi-section, antichambre, Gardien)', () => {
   const cover = newCover();
   for (const startFloor of RANDOM_START_FLOORS) {
     for (const seed of RANDOM_SEEDS) {

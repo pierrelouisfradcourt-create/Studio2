@@ -24,8 +24,8 @@ const MAX_CHOICE_ROUNDS = 8;
 const CHOICE_PAUSE_STEPS = 120;
 const CHOICE_SEARCH_STEPS = 20000;
 const PLAYABILITY_SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const SECTION_FLOORS = 6;
-const SECTION_MINUTES = 12;
+const SECTION_FLOORS = 18; // gate Pierre 2026-10-01 (spec V2) : section de 18 étages
+const SECTION_MINUTES = 30;
 const PROBE_DAMAGE = 30; // dégâts du projectile témoin (test d'i-frames)
 const IFRAME_PROBE_STEPS = 240;
 const REACH_SAMPLES = 32;
@@ -273,7 +273,7 @@ test("(d) en mode 'choice', stepGame ne fait pas avancer le temps", () => {
 
 // ---------------------------------------------------------------- (e) jouabilité
 
-test('(e) oracle de jouabilité : le bot skilled bat la section 1 (étage 7) sur au moins une graine', () => {
+test('(e) oracle de jouabilité : le bot skilled bat la section 1 (étage 19) sur au moins une graine', () => {
   const outcomes = [];
   for (const seed of PLAYABILITY_SEEDS) {
     const r = runEpisode('skilled', seed, { floors: SECTION_FLOORS, minutes: SECTION_MINUTES });

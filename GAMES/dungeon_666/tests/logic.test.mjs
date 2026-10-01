@@ -299,22 +299,24 @@ test('wall slam : un ennemi projeté contre un mur est étourdi et blessé', () 
 
 // ---------------------------------------------------------------- structure des 666 étages
 
-test('666 étages : 111 sections de 6, Gardien au 6e étage de chaque section', () => {
+// Gate Pierre 2026-10-01 (spec V2 : « Tous les 18 étages : Gardien ») — voir 01_DESIGN/GATE_TESTS_V2.md.
+test('666 étages : 37 sections de 18, Gardien au 18e étage de chaque section', () => {
   const g = sandbox();
   const t = g.tuning;
   let bosses = 0;
   for (let f = 1; f <= 666; f++) if (floorInfo(t, f).isBoss) bosses++;
-  assert.equal(bosses, 111);
-  assert.equal(floorInfo(t, 6).isBoss, true);
-  assert.equal(floorInfo(t, 7).indexInSection, 1);
+  assert.equal(bosses, 37);
+  assert.equal(floorInfo(t, 17).isBoss, false);
+  assert.equal(floorInfo(t, 18).isBoss, true);
+  assert.equal(floorInfo(t, 19).indexInSection, 1);
   assert.equal(floorInfo(t, 666).isFinal, true);
   assert.equal(floorInfo(t, 1).circleName, t.floors.circleNames[0]);
   assert.equal(floorInfo(t, 648).circle, 9);
   assert.equal(floorInfo(t, 649).inFinale, true);
 });
 
-test('checkpoint : battre le Gardien de l\'étage 6 ouvre la reprise à l\'étage 7', () => {
-  assert.equal(checkpointAfterBoss(sandbox().tuning, 6), 7);
+test('checkpoint : battre le Gardien de l\'étage 18 ouvre la reprise à l\'étage 19', () => {
+  assert.equal(checkpointAfterBoss(sandbox().tuning, 18), 19);
 });
 
 test('difficulté : croissante et finie jusqu\'à 666', () => {
@@ -417,42 +419,44 @@ test('salle nettoyée : récompense posée, portes fermées tant qu\'elle n\'est
   assert.ok(g.room.doors.every((d) => d.open));
 });
 
-test('portes : l\'étage 5 mène au Gardien, l\'antichambre propose marchand ou autel', () => {
+test('portes : l\'étage 17 mène au Gardien, l\'antichambre propose marchand ou autel', () => {
   const g = sandbox();
-  enterFloor(g, 4, { reward: 'gold' });
+  enterFloor(g, 16, { reward: 'gold' });
   g.room.plan = { kind: 'combat', reward: 'gold' };
   onRoomClear(g);
   assert.deepEqual(g.room.doors.map((d) => d.reward).sort(), ['event', 'shop']);
-  enterFloor(g, 5, { reward: 'shop' });
+  enterFloor(g, 17, { reward: 'shop' });
   assert.deepEqual(g.room.doors.map((d) => d.reward), ['boss']);
 });
 
-test('checkpoint : vaincre un Gardien fige le build ; mourir ensuite le restaure', () => {
+// Gate Pierre 2026-10-01 (spec V2 : « reset des bonus temporaires », « ne pas figer le build ») :
+// la règle s'inverse — le checkpoint s'ouvre, mais la mort vide toujours le build temporaire.
+test('checkpoint : vaincre un Gardien ouvre la reprise ; mourir ensuite vide le build temporaire, garde le permanent', () => {
   const g = sandbox();
-  enterFloor(g, 6, null);
+  enterFloor(g, 18, null);
   g.spawns.length = 0;
   g.enemies.length = 0;
   addBoon(g.run, { id: BOONS[0].id, rarity: 'rare' });
+  const arme = g.run.items.arme;
   g.run.gold = 80;
   g.room.plan = { kind: 'boss', reward: 'boss' };
   g.room.kind = 'boss';
   onRoomClear(g);
-  assert.ok(g.meta.checkpoints.includes(7));
-  // Après le checkpoint, le build change, puis le héros meurt.
+  assert.ok(g.meta.checkpoints.includes(19));
+  // Après le checkpoint, le build continue de grandir, puis le héros meurt.
   addBoon(g.run, { id: BOONS[3].id, rarity: 'commun' });
-  g.run.gold = 5;
   damagePlayer(g, 99999, { kind: 'test', id: 31 });
   steps(g, ticks(2));
   assert.equal(g.mode, 'dead');
-  applyCommand(g, { type: 'respawn', floor: 7 });
-  assert.deepEqual(g.run.boons.map((b) => b.id), [BOONS[0].id]);
-  // Or : jamais plus que ce qu'on a (règle anti-exploit, revue de la sim) — min(80, 5).
-  assert.equal(g.run.gold, 5);
-  assert.equal(g.run.floor, 7);
+  applyCommand(g, { type: 'respawn', floor: 19 });
+  assert.deepEqual(g.run.boons, [], 'le temporaire repart de zéro');
+  assert.equal(g.run.items.arme, arme, 'l\'équipement (permanent) est conservé');
+  assert.equal(g.run.gold, Math.floor(80 * g.tuning.economy.deathGoldKeep), 'Charon prélève sa part');
+  assert.equal(g.run.floor, 19);
 });
 
 test('Gardien vaincu : ses impacts en attente et ses orbes en vol ne blessent plus', () => {
-  const g = createGame({ seed: 1, startFloor: 6 });
+  const g = createGame({ seed: 1, startFloor: 18 });
   g.events.length = 0;
   let boss = g.enemies.find((e) => e.boss);
   for (let i = 0; i < 1200 && !g.hazards.some((h) => h.hitsPlayer); i++) stepGame(g, input());
@@ -467,24 +471,25 @@ test('Gardien vaincu : ses impacts en attente et ses orbes en vol ne blessent pl
   assert.equal(g.hazards.filter((h) => h.hitsPlayer && !h.done).length, 0);
 });
 
-test('réessayer le Gardien : retour à l\'entrée de sa salle avec le build d\'entrée', () => {
-  const g = sandbox();
-  addBoon(g.run, { id: BOONS[0].id, rarity: 'commun' });
-  g.run.gold = 42;
-  enterFloor(g, 6, null);
+// Gate Pierre 2026-10-01 : « Réessayer le Gardien » gardait le build temporaire (contraire à la V2) ;
+// on répète un Gardien en ENTRAÎNEMENT (Ville), sans build, sans récompense ni risque.
+test('entraînement : mourir face au Gardien le relance aussitôt, sans build ni récompense', () => {
+  const g = createGame({ seed: 2, startFloor: 18, practice: true });
   assert.equal(g.info.isBoss, true);
-  addBoon(g.run, { id: BOONS[4].id, rarity: 'commun' });
-  g.run.gold = 3;
+  addBoon(g.run, { id: BOONS[0].id, rarity: 'commun' });
+  const souls = g.meta.souls;
+  const cps = g.meta.checkpoints.slice();
   damagePlayer(g, 99999, { kind: 'test', id: 66 });
   steps(g, ticks(2));
   assert.equal(g.mode, 'dead');
-  assert.equal(applyCommand(g, { type: 'retryBoss' }), true);
+  assert.equal(applyCommand(g, { type: 'respawn' }), true);
   assert.equal(g.mode, 'play');
-  assert.equal(g.run.floor, 6);
-  assert.ok(g.enemies.some((e) => e.boss), 'le Gardien est de retour');
-  assert.deepEqual(g.run.boons.map((b) => b.id), [BOONS[0].id]);
-  assert.equal(g.run.gold, 42);
+  assert.equal(g.run.floor, 18);
+  assert.ok(g.enemies.some((e) => e.boss) || g.spawns.length > 0, 'le Gardien est de retour');
+  assert.deepEqual(g.run.boons, []);
   assert.equal(g.player.hp, g.player.maxHp);
+  assert.equal(g.meta.souls, souls);
+  assert.deepEqual(g.meta.checkpoints, cps);
 });
 
 test('tampon : un dash à vide ou un Super pas prêt n\'avalent pas la frappe suivante', () => {
@@ -519,9 +524,12 @@ test('esquive parfaite : deux projectiles superposés pendant un dash = exacteme
   assert.equal(g.telemetry.dodges, 2);
 });
 
-test('relance de l\'appli au checkpoint : même build que la reprise après une mort', () => {
-  const meta = { checkpoints: [1, 7], bestFloor: 7, snapshots: { 7: { boons: [{ id: BOONS[0].id, rarity: 'rare', level: 1 }], gold: 120 } } };
-  const g = createGame({ seed: 4, startFloor: 7, meta });
-  assert.deepEqual(g.run.boons.map((b) => b.id), [BOONS[0].id]);
-  assert.equal(g.run.gold, 120);
+// Gate Pierre 2026-10-01 : les instantanés de build (ancienne sauvegarde) sont abandonnés.
+test('relance de l\'appli au checkpoint : aucune bénédiction, même équipement permanent', () => {
+  const meta = { checkpoints: [1, 19], bestFloor: 19, snapshots: { 19: { boons: [{ id: BOONS[0].id, rarity: 'rare', level: 1 }], gold: 120 } } };
+  const g = createGame({ seed: 4, startFloor: 19, meta });
+  assert.equal(g.run.floor, 19);
+  assert.deepEqual(g.run.boons, []);
+  assert.equal(g.run.gold, 0);
+  assert.ok(g.run.items.arme && g.run.items.armure, 'équipement présent');
 });

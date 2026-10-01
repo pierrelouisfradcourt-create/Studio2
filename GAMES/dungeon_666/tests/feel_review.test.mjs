@@ -74,7 +74,7 @@ test('tampon : une Lance tapée au début du finisher part pendant sa récupéra
 
 /** Gardien seul, en début de pattern donné. */
 function bossIn(pattern, phase = 1) {
-  const g = createGame({ seed: 3, startFloor: 6 });
+  const g = createGame({ seed: 3, startFloor: 18 }); // gate Pierre 2026-10-01 : Gardien tous les 18 étages
   g.spawns.length = 0;
   for (let i = 0; i < 200 && !g.enemies.some((e) => e.boss && !(e.spawnT > 0)); i++) stepGame(g, input());
   const boss = g.enemies.find((e) => e.boss);
