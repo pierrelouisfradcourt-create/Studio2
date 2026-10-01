@@ -1,6 +1,6 @@
 # Playtest automatique — Dungeon 666
 
-Généré par `node tools/playtest.mjs` le 2026-10-01T08:34:50.960Z. Graines 1 à 20, objectif : étage 7 (section 1 battue, boss au 6e), limite 12 min de temps simulé par run, arrêt à la première mort. Durée d'exécution : 10.9 s.
+Généré par `node tools/playtest.mjs` le 2026-10-01T08:54:51.264Z. Graines 1 à 20, objectif : étage 7 (section 1 battue, boss au 6e), limite 12 min de temps simulé par run, arrêt à la première mort. Durée d'exécution : 10.8 s.
 
 Politiques : **skilled** (lit les télégraphes, dashe au dernier moment), **noDash** (même jeu sans dash ni gadget), **masher** (fonce et tape, dash aléatoire, ne lit rien).
 
@@ -8,13 +8,13 @@ Politiques : **skilled** (lit les télégraphes, dashe au dernier moment), **noD
 
 | Politique | Section battue | Section (hors blocages) | Morts | Blocages | Étage moyen | Dégâts / salle | Dégâts / min de combat | Coups reçus / min de combat | Esquives / min | Dash / min | Actions / min |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| skilled | 95 % | 95 % | 5 % | 0 | 6.95 | 9.1 | 23.0 | 1.56 | 0.96 | 30.4 | 122.4 |
-| noDash | 5 % | 5 % | 95 % | 0 | 5.95 | 30.6 | 106.7 | 6.77 | 0.00 | 0.0 | 95.2 |
-| masher | 0 % | 0 % | 100 % | 0 | 5.20 | 34.4 | 188.1 | 10.04 | 0.14 | 9.2 | 195.6 |
+| skilled | 100 % | 100 % | 0 % | 0 | 7.00 | 12.3 | 30.2 | 2.01 | 1.04 | 33.3 | 114.6 |
+| noDash | 30 % | 30 % | 70 % | 0 | 6.30 | 29.2 | 92.0 | 5.42 | 0.00 | 0.0 | 93.9 |
+| masher | 0 % | 0 % | 100 % | 0 | 3.85 | 30.9 | 161.6 | 9.70 | 0.16 | 9.4 | 160.3 |
 
 Valeurs agrégées sur toutes les salles de combat jouées (étage <= 6) : total des dégâts / nombre de salles, et / minutes de combat (de l'entrée au nettoyage, ou à la mort ; gel d'impact exclu). « Esquives » = coups absorbés par les i-frames d'un dash (télémétrie de la sim).
 
-**Valeur du dash** = dégâts subis par salle (noDash) / (skilled) = **3.36** ; par minute de combat = **4.64**. noDash n'a ni dash ni gadget : le ratio mesure le couple dash + gadget, pas le dash seul. Par salle, les morts de noDash plafonnent ses dégâts (PV max) : le ratio par minute est le plus robuste.
+**Valeur du dash** = dégâts subis par salle (noDash) / (skilled) = **2.36** ; par minute de combat = **3.05**. noDash n'a ni dash ni gadget : le ratio mesure le couple dash + gadget, pas le dash seul. Par salle, les morts de noDash plafonnent ses dégâts (PV max) : le ratio par minute est le plus robuste.
 
 ## Audit des dash (contrefactuel)
 
@@ -22,7 +22,7 @@ Chaque dash du bot skilled est rejoué 1 s depuis un clone de la partie : avec l
 
 | Dash audités | Décisifs (seul le futur sans dash est touché) | Nuisibles (le dash fait prendre un coup) | Coup inévitable (touché dans les deux cas) | Sans effet (aucun coup dans les deux cas) | Décisifs / min de combat |
 |---|---|---|---|---|---|
-| 1630 | 456 (28 %) | 18 | 25 | 1131 | 11.50 |
+| 1781 | 420 (24 %) | 17 | 18 | 1326 | 10.28 |
 
 Lecture : « Dash / min » compte aussi les dash de confort ; seuls les dash décisifs prouvent que le dash sauve des coups.
 
@@ -30,9 +30,9 @@ Lecture : « Dash / min » compte aussi les dash de confort ; seuls les dash dé
 
 | Politique | Causes de mort |
 |---|---|
-| skilled | bossOrb ×1 |
-| noDash | bossSlam ×10, bossCharge ×8, arrow ×1 |
-| masher | bossSlam ×9, brute ×5, charger ×2, bossCharge ×2, bossOrb ×2 |
+| skilled | aucune |
+| noDash | bossOrb ×8, bossSlam ×4, bossCharge ×2 |
+| masher | brute ×13, charger ×4, bossSlam ×2, arrow ×1 |
 
 ## Blocages (salle nettoyée, aucune sortie possible pendant 30 s)
 
@@ -42,137 +42,137 @@ Aucun blocage.
 
 | Ennemi | skilled (moy / méd / p90, n) | noDash (moy / méd / p90, n) | masher (moy / méd / p90, n) |
 |---|---|---|---|
-| archer | 4.40 / 4.10 / 8.22 (364) | 4.64 / 4.60 / 8.07 (361) | 2.46 / 2.33 / 4.40 (313) |
-| brute | 9.05 / 8.68 / 13.32 (103) | 7.46 / 7.34 / 12.36 (102) | 3.21 / 3.23 / 5.05 (91) |
-| charger | 5.22 / 4.72 / 8.44 (150) | 4.31 / 3.97 / 7.62 (137) | 2.47 / 2.33 / 4.28 (137) |
-| exploder | 1.94 / 1.78 / 3.43 (170) | 2.16 / 2.12 / 3.95 (140) | 1.63 / 1.53 / 2.87 (230) |
-| gardien | 42.29 / 40.68 / 58.38 (19) | 35.33 / 35.33 / 35.33 (1) | — |
-| imp | 3.21 / 3.02 / 5.75 (703) | 3.02 / 2.94 / 5.20 (650) | 2.07 / 1.98 / 3.60 (636) |
+| archer | 4.77 / 4.59 / 8.85 (368) | 4.17 / 4.12 / 7.47 (328) | 2.95 / 2.93 / 4.82 (241) |
+| brute | 8.65 / 8.42 / 13.40 (84) | 7.17 / 6.95 / 11.47 (91) | 3.87 / 3.95 / 5.67 (43) |
+| charger | 5.32 / 4.72 / 9.14 (176) | 4.80 / 4.50 / 7.83 (191) | 3.02 / 2.92 / 4.94 (132) |
+| exploder | 2.06 / 1.80 / 3.84 (230) | 1.98 / 1.95 / 3.58 (183) | 1.77 / 1.82 / 3.16 (199) |
+| gardien | 47.42 / 44.58 / 64.76 (20) | 34.13 / 32.40 / 43.48 (6) | — |
+| imp | 2.90 / 2.72 / 5.36 (785) | 2.83 / 2.72 / 4.92 (704) | 2.23 / 2.05 / 3.85 (491) |
 
 ## Distribution — skilled
 
 | Mesure | Moyenne | Médiane | p10 | p90 |
 |---|---|---|---|---|
-| Étage atteint | 6.95 | 7.00 | 7.00 | 7.00 |
-| Dégâts subis / salle de combat (par run) | 9.11 | 8.40 | 4.78 | 13.04 |
-| Coups reçus / min | 1.17 | 1.12 | 0.69 | 1.76 |
-| Esquives (dash) / min | 0.96 | 0.93 | 0.40 | 1.45 |
-| Dash / min | 30.44 | 30.26 | 27.24 | 34.33 |
-| Actions / min | 122.45 | 122.64 | 117.11 | 126.18 |
-| Coups pour tuer (mêlée / kills) | 2.93 | 2.99 | 2.55 | 3.16 |
-| Durée du boss (s) | 42.29 | 40.68 | 29.01 | 58.38 |
-| Durée du run (s) | 159.61 | 160.30 | 137.31 | 175.18 |
-| Compétences (Lance) | 30.70 | 31.00 | 24.90 | 35.30 |
-| Gadgets | 3.55 | 4.00 | 3.00 | 4.00 |
-| Supers | 4.45 | 4.00 | 4.00 | 5.00 |
-| Wall slams | 8.50 | 8.00 | 4.90 | 12.20 |
-| Déviations | 52.40 | 53.50 | 28.50 | 79.10 |
-| Événements de sim / min | 758.37 | 760.22 | 688.72 | 817.17 |
-| Durée d'une salle de combat (s, toutes salles) | 19.10 | 20.27 | 9.52 | 26.87 |
+| Étage atteint | 7.00 | 7.00 | 7.00 | 7.00 |
+| Dégâts subis / salle de combat (par run) | 12.34 | 12.80 | 4.44 | 18.42 |
+| Coups reçus / min | 1.54 | 1.56 | 0.70 | 2.29 |
+| Esquives (dash) / min | 1.04 | 1.08 | 0.41 | 1.64 |
+| Dash / min | 33.32 | 33.64 | 29.56 | 36.44 |
+| Actions / min | 114.61 | 115.14 | 110.18 | 120.38 |
+| Coups pour tuer (mêlée / kills) | 2.26 | 2.25 | 1.93 | 2.65 |
+| Durée du boss (s) | 47.42 | 44.58 | 36.12 | 64.76 |
+| Durée du run (s) | 159.37 | 159.82 | 142.00 | 185.95 |
+| Compétences (Lance) | 31.35 | 31.00 | 26.90 | 36.10 |
+| Gadgets | 3.65 | 3.00 | 3.00 | 5.00 |
+| Supers | 4.60 | 5.00 | 4.00 | 5.10 |
+| Wall slams | 7.25 | 7.00 | 4.00 | 10.10 |
+| Déviations | 65.30 | 62.00 | 34.60 | 100.60 |
+| Événements de sim / min | 768.11 | 747.62 | 691.81 | 844.48 |
+| Durée d'une salle de combat (s, toutes salles) | 18.77 | 18.57 | 10.59 | 27.29 |
 
 ## Distribution — noDash
 
 | Mesure | Moyenne | Médiane | p10 | p90 |
 |---|---|---|---|---|
-| Étage atteint | 5.95 | 6.00 | 6.00 | 6.00 |
-| Dégâts subis / salle de combat (par run) | 30.53 | 29.50 | 21.04 | 36.90 |
-| Coups reçus / min | 4.91 | 4.43 | 3.51 | 6.76 |
+| Étage atteint | 6.30 | 6.00 | 6.00 | 7.00 |
+| Dégâts subis / salle de combat (par run) | 29.18 | 29.80 | 19.34 | 37.82 |
+| Coups reçus / min | 3.93 | 3.65 | 3.10 | 5.07 |
 | Esquives (dash) / min | 0.00 | 0.00 | 0.00 | 0.00 |
 | Dash / min | 0.00 | 0.00 | 0.00 | 0.00 |
-| Actions / min | 95.19 | 96.19 | 83.04 | 106.08 |
-| Coups pour tuer (mêlée / kills) | 2.60 | 2.60 | 2.08 | 3.06 |
-| Durée du boss (s) | 35.33 | 35.33 | 35.33 | 35.33 |
-| Durée du run (s) | 117.60 | 118.06 | 101.52 | 133.03 |
-| Compétences (Lance) | 21.15 | 21.00 | 18.70 | 24.10 |
+| Actions / min | 93.91 | 95.64 | 84.80 | 102.77 |
+| Coups pour tuer (mêlée / kills) | 2.58 | 2.68 | 2.17 | 2.94 |
+| Durée du boss (s) | 34.13 | 32.40 | 26.52 | 43.48 |
+| Durée du run (s) | 131.30 | 132.68 | 116.20 | 146.86 |
+| Compétences (Lance) | 24.25 | 24.00 | 20.00 | 27.30 |
 | Gadgets | 0.00 | 0.00 | 0.00 | 0.00 |
-| Supers | 3.10 | 3.00 | 2.00 | 5.00 |
-| Wall slams | 4.05 | 4.00 | 1.90 | 7.00 |
-| Déviations | 31.40 | 27.00 | 6.00 | 57.10 |
-| Événements de sim / min | 659.59 | 660.46 | 586.01 | 731.93 |
-| Durée d'une salle de combat (s, toutes salles) | 17.41 | 18.13 | 9.22 | 23.84 |
+| Supers | 3.75 | 4.00 | 3.00 | 5.00 |
+| Wall slams | 5.45 | 5.50 | 3.00 | 8.00 |
+| Déviations | 62.20 | 64.00 | 42.30 | 81.30 |
+| Événements de sim / min | 667.91 | 667.71 | 596.63 | 737.25 |
+| Durée d'une salle de combat (s, toutes salles) | 16.87 | 18.45 | 8.82 | 22.25 |
 
 ## Distribution — masher
 
 | Mesure | Moyenne | Médiane | p10 | p90 |
 |---|---|---|---|---|
-| Étage atteint | 5.20 | 6.00 | 3.90 | 6.00 |
-| Dégâts subis / salle de combat (par run) | 34.19 | 35.03 | 26.15 | 40.64 |
-| Coups reçus / min | 5.73 | 5.48 | 4.68 | 6.65 |
-| Esquives (dash) / min | 0.14 | 0.00 | 0.00 | 0.65 |
-| Dash / min | 9.22 | 9.41 | 4.96 | 12.82 |
-| Actions / min | 195.61 | 196.76 | 188.89 | 203.20 |
-| Coups pour tuer (mêlée / kills) | 3.00 | 2.96 | 2.55 | 3.47 |
+| Étage atteint | 3.85 | 4.00 | 3.00 | 4.20 |
+| Dégâts subis / salle de combat (par run) | 31.34 | 30.20 | 26.85 | 37.67 |
+| Coups reçus / min | 6.36 | 5.98 | 4.97 | 8.03 |
+| Esquives (dash) / min | 0.16 | 0.00 | 0.00 | 0.68 |
+| Dash / min | 9.44 | 9.32 | 4.99 | 13.49 |
+| Actions / min | 160.26 | 160.10 | 149.20 | 172.17 |
+| Coups pour tuer (mêlée / kills) | 2.28 | 2.30 | 1.98 | 2.59 |
 | Durée du boss (s) | — | — | — | — |
-| Durée du run (s) | 88.78 | 94.88 | 72.41 | 103.23 |
+| Durée du run (s) | 67.22 | 67.14 | 52.67 | 80.73 |
 | Compétences (Lance) | 0.00 | 0.00 | 0.00 | 0.00 |
 | Gadgets | 0.00 | 0.00 | 0.00 | 0.00 |
 | Supers | 0.00 | 0.00 | 0.00 | 0.00 |
-| Wall slams | 0.80 | 0.50 | 0.00 | 2.10 |
-| Déviations | 19.25 | 10.50 | 6.00 | 35.30 |
-| Événements de sim / min | 831.08 | 831.61 | 788.37 | 873.88 |
-| Durée d'une salle de combat (s, toutes salles) | 11.07 | 12.13 | 6.45 | 14.37 |
+| Wall slams | 1.20 | 1.00 | 0.00 | 3.00 |
+| Déviations | 6.85 | 6.00 | 1.00 | 15.10 |
+| Événements de sim / min | 737.37 | 732.99 | 684.32 | 797.21 |
+| Durée d'une salle de combat (s, toutes salles) | 11.73 | 12.75 | 7.34 | 15.73 |
 
 ## Détail des runs
 
 | Politique | Graine | Issue | Étage | Durée (s) | Dégâts / salle | Esquives | Boss (s) |
 |---|---|---|---|---|---|---|---|
-| skilled | 1 | section | 7 | 157 | 17.0 | 4 | 37.2 |
-| skilled | 2 | section | 7 | 174 | 12.0 | 3 | 58.3 |
-| skilled | 3 | section | 7 | 175 | 5.6 | 2 | 45.1 |
-| skilled | 4 | section | 7 | 137 | 9.0 | 3 | 28.7 |
-| skilled | 5 | dead | 6 | 158 | 22.0 | 3 | — |
-| skilled | 6 | section | 7 | 148 | 6.0 | 1 | 25.2 |
-| skilled | 7 | section | 7 | 167 | 5.6 | 4 | 55.8 |
-| skilled | 8 | section | 7 | 146 | 6.0 | 2 | 30.5 |
-| skilled | 9 | section | 7 | 136 | 9.0 | 3 | 29.1 |
-| skilled | 10 | section | 7 | 164 | 8.4 | 1 | 40.7 |
-| skilled | 11 | section | 7 | 171 | 2.8 | 4 | 58.9 |
-| skilled | 12 | section | 7 | 180 | 4.6 | 2 | 62.1 |
-| skilled | 13 | section | 7 | 167 | 12.0 | 3 | 47.5 |
-| skilled | 14 | section | 7 | 155 | 7.8 | 2 | 38.9 |
-| skilled | 15 | section | 7 | 159 | 8.4 | 1 | 41.8 |
-| skilled | 16 | section | 7 | 186 | 12.6 | 5 | 57.8 |
-| skilled | 17 | section | 7 | 137 | 12.0 | 1 | 31.5 |
-| skilled | 18 | section | 7 | 162 | 7.6 | 2 | 44.4 |
-| skilled | 19 | section | 7 | 173 | 9.0 | 2 | 40.1 |
-| skilled | 20 | section | 7 | 142 | 4.8 | 3 | 30.3 |
-| noDash | 1 | dead | 6 | 124 | 31.6 | 0 | — |
-| noDash | 2 | dead | 6 | 107 | 45.0 | 0 | — |
-| noDash | 3 | dead | 6 | 130 | 32.4 | 0 | — |
-| noDash | 4 | dead | 6 | 109 | 36.0 | 0 | — |
-| noDash | 5 | dead | 6 | 130 | 35.6 | 0 | — |
-| noDash | 6 | dead | 6 | 120 | 35.4 | 0 | — |
-| noDash | 7 | dead | 6 | 109 | 16.0 | 0 | — |
-| noDash | 8 | dead | 6 | 102 | 28.2 | 0 | — |
-| noDash | 9 | dead | 6 | 133 | 28.6 | 0 | — |
-| noDash | 10 | section | 7 | 141 | 57.6 | 0 | 35.3 |
-| noDash | 11 | dead | 6 | 115 | 29.4 | 0 | — |
-| noDash | 12 | dead | 6 | 111 | 21.6 | 0 | — |
-| noDash | 13 | dead | 4 | 85 | 26.8 | 0 | — |
-| noDash | 14 | dead | 6 | 113 | 34.6 | 0 | — |
-| noDash | 15 | dead | 6 | 134 | 32.2 | 0 | — |
-| noDash | 16 | dead | 6 | 130 | 26.6 | 0 | — |
-| noDash | 17 | dead | 6 | 95 | 15.6 | 0 | — |
-| noDash | 18 | dead | 6 | 130 | 29.6 | 0 | — |
-| noDash | 19 | dead | 6 | 118 | 23.6 | 0 | — |
-| noDash | 20 | dead | 6 | 118 | 24.2 | 0 | — |
-| masher | 1 | dead | 4 | 77 | 26.3 | 1 | — |
-| masher | 2 | dead | 6 | 95 | 33.4 | 0 | — |
-| masher | 3 | dead | 3 | 47 | 38.7 | 0 | — |
-| masher | 4 | dead | 4 | 78 | 27.5 | 1 | — |
-| masher | 5 | dead | 6 | 103 | 42.8 | 0 | — |
-| masher | 6 | dead | 6 | 94 | 39.4 | 0 | — |
-| masher | 7 | dead | 4 | 84 | 33.0 | 0 | — |
-| masher | 8 | dead | 6 | 103 | 38.0 | 0 | — |
-| masher | 9 | dead | 4 | 79 | 28.0 | 0 | — |
-| masher | 10 | dead | 6 | 99 | 47.0 | 0 | — |
-| masher | 11 | dead | 6 | 97 | 30.6 | 0 | — |
-| masher | 12 | dead | 6 | 89 | 18.4 | 0 | — |
-| masher | 13 | dead | 6 | 94 | 39.2 | 1 | — |
-| masher | 14 | dead | 3 | 55 | 36.7 | 0 | — |
-| masher | 15 | dead | 6 | 106 | 39.2 | 1 | — |
-| masher | 16 | dead | 6 | 101 | 29.6 | 0 | — |
-| masher | 17 | dead | 6 | 97 | 40.4 | 0 | — |
-| masher | 18 | dead | 6 | 100 | 37.6 | 0 | — |
-| masher | 19 | dead | 6 | 102 | 32.8 | 0 | — |
-| masher | 20 | dead | 4 | 74 | 25.3 | 0 | — |
+| skilled | 1 | section | 7 | 165 | 11.2 | 3 | 44.4 |
+| skilled | 2 | section | 7 | 149 | 15.0 | 4 | 46.0 |
+| skilled | 3 | section | 7 | 191 | 12.0 | 7 | 78.5 |
+| skilled | 4 | section | 7 | 145 | 14.0 | 1 | 36.6 |
+| skilled | 5 | section | 7 | 157 | 3.0 | 4 | 46.4 |
+| skilled | 6 | section | 7 | 137 | 15.0 | 2 | 31.3 |
+| skilled | 7 | section | 7 | 160 | 22.2 | 2 | 44.2 |
+| skilled | 8 | section | 7 | 160 | 13.6 | 3 | 44.3 |
+| skilled | 9 | section | 7 | 126 | 6.0 | 0 | 22.3 |
+| skilled | 10 | section | 7 | 162 | 8.0 | 3 | 54.1 |
+| skilled | 11 | section | 7 | 160 | 18.0 | 5 | 43.5 |
+| skilled | 12 | section | 7 | 167 | 16.0 | 2 | 54.3 |
+| skilled | 13 | section | 7 | 164 | 9.0 | 4 | 44.8 |
+| skilled | 14 | section | 7 | 147 | 9.0 | 2 | 48.6 |
+| skilled | 15 | section | 7 | 164 | 3.0 | 1 | 39.1 |
+| skilled | 16 | section | 7 | 143 | 15.0 | 1 | 41.9 |
+| skilled | 17 | section | 7 | 188 | 16.2 | 4 | 64.7 |
+| skilled | 18 | section | 7 | 186 | 24.0 | 3 | 65.3 |
+| skilled | 19 | section | 7 | 167 | 12.0 | 3 | 59.7 |
+| skilled | 20 | section | 7 | 153 | 4.6 | 3 | 38.5 |
+| noDash | 1 | dead | 6 | 132 | 34.4 | 0 | — |
+| noDash | 2 | dead | 6 | 124 | 23.0 | 0 | — |
+| noDash | 3 | section | 7 | 134 | 19.6 | 0 | 26.3 |
+| noDash | 4 | dead | 6 | 125 | 37.8 | 0 | — |
+| noDash | 5 | dead | 6 | 138 | 36.6 | 0 | — |
+| noDash | 6 | dead | 6 | 115 | 21.8 | 0 | — |
+| noDash | 7 | section | 7 | 146 | 34.8 | 0 | 37.8 |
+| noDash | 8 | section | 7 | 139 | 28.8 | 0 | 35.4 |
+| noDash | 9 | section | 7 | 135 | 26.0 | 0 | 29.4 |
+| noDash | 10 | dead | 6 | 116 | 23.6 | 0 | — |
+| noDash | 11 | dead | 6 | 152 | 37.2 | 0 | — |
+| noDash | 12 | dead | 6 | 132 | 38.0 | 0 | — |
+| noDash | 13 | dead | 6 | 133 | 25.0 | 0 | — |
+| noDash | 14 | dead | 6 | 122 | 30.8 | 0 | — |
+| noDash | 15 | dead | 6 | 127 | 32.8 | 0 | — |
+| noDash | 16 | dead | 6 | 109 | 17.0 | 0 | — |
+| noDash | 17 | dead | 6 | 121 | 35.8 | 0 | — |
+| noDash | 18 | dead | 6 | 143 | 42.2 | 0 | — |
+| noDash | 19 | section | 7 | 133 | 24.4 | 0 | 26.7 |
+| noDash | 20 | section | 7 | 151 | 14.0 | 0 | 49.2 |
+| masher | 1 | dead | 3 | 59 | 34.0 | 0 | — |
+| masher | 2 | dead | 4 | 63 | 25.0 | 0 | — |
+| masher | 3 | dead | 3 | 53 | 37.7 | 0 | — |
+| masher | 4 | dead | 3 | 53 | 37.7 | 0 | — |
+| masher | 5 | dead | 4 | 71 | 29.8 | 1 | — |
+| masher | 6 | dead | 4 | 75 | 29.0 | 0 | — |
+| masher | 7 | dead | 4 | 71 | 30.0 | 0 | — |
+| masher | 8 | dead | 4 | 74 | 27.0 | 2 | — |
+| masher | 9 | dead | 4 | 62 | 27.8 | 0 | — |
+| masher | 10 | dead | 4 | 70 | 28.3 | 0 | — |
+| masher | 11 | dead | 3 | 53 | 34.7 | 0 | — |
+| masher | 12 | dead | 3 | 58 | 39.7 | 0 | — |
+| masher | 13 | dead | 4 | 80 | 28.0 | 0 | — |
+| masher | 14 | dead | 3 | 50 | 37.0 | 0 | — |
+| masher | 15 | dead | 4 | 72 | 30.5 | 0 | — |
+| masher | 16 | dead | 4 | 64 | 28.0 | 0 | — |
+| masher | 17 | dead | 6 | 91 | 33.4 | 1 | — |
+| masher | 18 | dead | 3 | 54 | 33.7 | 0 | — |
+| masher | 19 | dead | 4 | 77 | 25.5 | 0 | — |
+| masher | 20 | dead | 6 | 96 | 30.4 | 0 | — |

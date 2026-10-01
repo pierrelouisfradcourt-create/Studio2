@@ -31,7 +31,7 @@ Aucune dépendance : Node 18+ suffit pour le serveur et les tests. Playwright ne
 | Pause, réglages | bouton ⏸ en haut à droite | Échap / P | Start |
 
 **Ce qui fait le combat :**
-- **Le dash d'abord.** Le dash annule la fin de n'importe quelle attaque et interrompt le gel d'impact. Une attaque en fin de dash coupe la ruée en **frappe de dash**.
+- **Le dash d'abord.** Le dash annule la fin de n'importe quelle attaque et interrompt le gel d'impact. Une attaque en fin de dash coupe la ruée en **frappe de dash**. Enchaîner les coups demande de jouer une partie de leur récupération (30 % pour les coups 1-2, 60 % après le 3ᵉ) : le dash reste la sortie la plus rapide.
 - **L'esquive parfaite paie.** Un coup évité grâce au dash remplit la jauge de Super et accélère la recharge du dash.
 - **Rien ne fait mal sans prévenir.** Il n'y a aucun dégât de contact : chaque attaque ennemie est annoncée par une zone rouge qui se remplit.
 - **L'environnement est une arme.** Un ennemi projeté contre un mur est sonné. Le Bélier qui rate sa charge contre un mur reste sonné longtemps : c'est le moment de punir.
@@ -47,8 +47,11 @@ En jeu : **pause → Réglages du feel**. Ce panneau règle en direct la vitesse
 
 ## Structure des 666 étages
 
-Section de 6 étages, le 6ᵉ est un **Gardien**. Le vaincre ouvre un **checkpoint** : à la mort,
-on repart au début de la section suivante, avec son **équipement** mais sans ses **bénédictions**.
+Section de 6 étages, le 6ᵉ est un **Gardien**. Le vaincre ouvre un **checkpoint** et fige le build
+du moment (bénédictions + or). À la mort, on repart du dernier checkpoint avec ce build figé et
+tout son **équipement** : on ne perd que la section en cours (l'or ne remonte jamais au-dessus de
+celui qu'on avait en mourant). Mort face au Gardien : **« Réessayer le Gardien »** relance
+directement le combat, avec le build qu'on avait en entrant dans sa salle.
 9 Cercles de 72 étages (Limbes → Trahison), puis la finale de 18 étages, « Le Trône ».
 Après chaque salle, deux portes annoncent la récompense de la suivante : bénédiction (les 7
 péchés capitaux), trésor, or, élite, soin. Le 5ᵉ étage propose un marchand ou un autel.
