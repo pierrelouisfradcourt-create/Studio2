@@ -89,7 +89,9 @@ const HEAL_DOOR_HP = 0.5;
 const ELITE_DOOR_HP = 0.75;
 
 // Préférences de porte (bonus additif, + un bruit déterministe pour varier les runs).
-const DOOR_PREFS = { boon: 3, loot: 2.5, event: 2, elite: 1.6, gold: 1.2, heal: 0.6, shop: 1.5, boss: 10 };
+// Le portail « Ville » (après un Gardien) termine le run : le bot descend toujours (sinon la
+// partie passe en mode 'town' et l'épisode de playtest ne progresse plus).
+const DOOR_PREFS = { boon: 3, loot: 2.5, event: 2, elite: 1.6, gold: 1.2, heal: 0.6, shop: 1.5, boss: 10, town: -100 };
 const DOOR_NOISE = 1.2;
 const DOOR_URGENT_HEAL = 4; // blessé : la porte de soin passe devant tout
 const DOOR_URGENT_SHOP = 2;

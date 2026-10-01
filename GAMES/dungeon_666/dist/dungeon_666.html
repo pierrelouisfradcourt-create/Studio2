@@ -757,22 +757,71 @@ const DEFAULT_TUNING = {
     circleLength: 72,
     circleNames: ['Limbes', 'Luxure', 'Gourmandise', 'Avarice', 'Colère', 'Hérésie', 'Violence', 'Fraude', 'Trahison'],
     finaleName: 'L\'Abîme',
-    // Scaling (spec §5.5) : L = niveau d'objet, B = saturation du build, C = dérive, D = dégâts.
-    itemGrowth: 0.05, buildCap: 2, buildScale: 100, driftAt666: 0.5, dmgCurve: 0.6, dmgScale: 150,
+    // Scaling (floors.mjs floorScaling) : L = niveau d'objet ; Bp = progression permanente ;
+    // Bs = build temporaire depuis le checkpoint (dents de scie : 1 en début de section) ;
+    // C = dérive ; H·D = dégâts (part des PV d'un héros équipé à niveau) ; densité des vagues.
+    // Calés pour que la section 1 garde les valeurs d'avant (PV ×2,46 et dégâts ×1,97 au Gardien).
+    itemGrowth: 0.05,
+    permBuildCap: 0.35, permBuildScale: 150,
+    sectionBuildCap: 0.265,
+    driftAt666: 0.5,
+    dmgCurve: 0.85, dmgScale: 33,
+    densityCurve: 0.6, densityScale: 150,
+    // Début de section ABORDABLE (tests/v2_floors.test.mjs) : face au seul équipement permanent,
+    // temps pour tuer et part des PV par coup au plus ces multiples de l'étage 1.
+    sectionStartMax: { toughness: 2.2, lethality: 2 },
   },
 
-  // PLAN D'UNE SECTION (18 étages), composé à partir de types d'étages réutilisables.
-  // Les portes de sortie annoncent la récompense de l'étage suivant (façon Hades) ; certains
-  // index de la section imposent leurs portes.
+  // PLAN D'UNE SECTION (18 étages), composé à partir de types d'étages réutilisables
+  // (sections.mjs sectionPlan). Les portes de sortie annoncent la récompense de l'étage suivant
+  // (façon Hades) ; certains index de la section imposent leurs portes.
   section: {
-    fixedDoors: { 9: ['shop', 'event'], 17: ['shop', 'event'] }, // mi-section et antichambre du Gardien
+    // Rythme : emplacement de chaque index 1..18. Combat court (1 vague), normal (2), assaut (3),
+    // halte (portes imposées tirées dans `halte`), antichambre (portes `antichambre`), Gardien.
+    // La section 1 joue toujours le premier rythme ; les suivantes en tirent un (graine).
+    rhythms: [
+      ['court', 'court', 'normal', 'normal', 'court', 'normal', 'normal', 'assaut', 'halte', 'court', 'normal', 'normal', 'normal', 'assaut', 'normal', 'assaut', 'antichambre', 'gardien'],
+      ['court', 'normal', 'court', 'normal', 'normal', 'normal', 'court', 'assaut', 'halte', 'normal', 'court', 'normal', 'assaut', 'normal', 'court', 'assaut', 'antichambre', 'gardien'],
+      ['court', 'court', 'normal', 'court', 'normal', 'normal', 'assaut', 'normal', 'halte', 'court', 'normal', 'normal', 'normal', 'assaut', 'court', 'assaut', 'antichambre', 'gardien'],
+    ],
+    paces: {
+      court: { waves: 1, budgetMult: 1.1 },
+      normal: { waves: 2, budgetMult: 1 },
+      assaut: { waves: 3, budgetMult: 0.95 },
+    },
+    calmPace: 'court', // une halte ou une antichambre jouée en combat (reprise, départ à cet étage)
     eliteAt: [6, 12], // une des deux portes mène forcément à une épreuve d'élite
+    halte: { doors: 2, pool: { shop: 3, event: 3, rest: 2, treasure: 2 } }, // portes distinctes tirées par section
+    antichambre: ['shop', 'rest'], // avant le Gardien : marchand ou fontaine de repos
+    treasure: { from: 3, to: 15 }, // une porte de chambre forte garantie à un index de cet intervalle
+    // Poids des portes tirées (multipliés par le thème du Cercle, tuning.circles[].doors).
+    doorWeights: { boon: 40, loot: 24, gold: 14, elite: 12, heal: 10, treasure: 2, rest: 0 },
     gadgetRefillEvery: 6, // charges de gadget rendues aux étages 1, 7 et 13 de la section
-    // Vagues par étage selon l'index dans la section (1..17) : courtes au début, assauts à la fin.
-    waves: [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3],
+    sandbox: { floor: 4, eliteChance: 0.35 }, // arène d'essai : vagues d'un étage de début de section
+    // Session mobile visée : une section en 10-14 min au plus. Estimation à partir du bot
+    // (tests/v2_floors.test.mjs) : temps de sim × humanPace + menus × menuSeconds.
+    session: { maxMinutes: 14, humanPace: 1.5, menuSeconds: 6 },
   },
-  // Budget de menace d'une vague : (base + perIndex × index) × densité de l'étage.
-  encounter: { baseBudget: 5, perIndex: 0.45, lastWaveMult: 1.2, strayEliteChance: 0.15 },
+  // Budget de menace d'une vague : (base + perIndex × index) × rythme × thème × densité de l'étage.
+  // costRef : coût de référence du biais de coût des thèmes (poids × (coût / costRef)^costBias).
+  // strayEliteFrom : premier étage où un élite égaré peut se glisser dans un combat ordinaire.
+  encounter: { baseBudget: 5, perIndex: 0.45, lastWaveMult: 1.2, strayEliteChance: 0.15, strayEliteFrom: 3, costRef: 1.5 },
+  // THÈMES des Cercles (index = Cercle − 1, le 10e = finale). Jamais de nom d'archétype : le
+  // bestiaire est pondéré par COÛT (costBias > 0 : lourds ; < 0 : nuées) et `featured`
+  // archétypes tirés par section dans tout le bestiaire présent sont multipliés par featuredMult.
+  // layouts : dispositions permises et poids ; doors : multiplicateurs des poids de portes.
+  circles: [
+    { id: 'limbes', costBias: 0, featured: 0, featuredMult: 1, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1 }, doors: {} },
+    { id: 'luxure', costBias: -0.5, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 2, pillars: 1, center: 1, lanes: 1, bastions: 0.5, scatter: 2, ring: 2 }, doors: { boon: 1.2 } },
+    { id: 'gourmandise', costBias: -0.3, featured: 1, featuredMult: 2, budgetMult: 1.05, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 2, lanes: 1, bastions: 1, scatter: 1, cross: 2 }, doors: { heal: 1.5 } },
+    { id: 'avarice', costBias: 0, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 2, scatter: 1, alcoves: 2 }, doors: { gold: 1.6, treasure: 3 } },
+    { id: 'colere', costBias: 0.6, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 2, pillars: 1, center: 1, lanes: 2, bastions: 1, scatter: 1, cross: 1, ring: 1 }, doors: { elite: 1.3 } },
+    { id: 'heresie', costBias: 0.2, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 1, pillars: 2, center: 1, lanes: 1, bastions: 1, scatter: 1, ring: 1, alcoves: 2 }, doors: { loot: 1.2 } },
+    { id: 'violence', costBias: 0.8, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 2, ring: 1 }, doors: { elite: 1.5 } },
+    { id: 'fraude', costBias: 0, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 2, ring: 2, alcoves: 2 }, doors: { loot: 1.3, treasure: 2 } },
+    { id: 'trahison', costBias: 0.4, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1 }, doors: { elite: 1.6 } },
+    { id: 'abime', costBias: 0.3, featured: 3, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1 }, doors: {} },
+  ],
   // Rotation des Gardiens sur les 37 sections (le 1er de la liste garde la section 1).
   guardians: { rotation: GUARDIAN_ROTATION },
 
@@ -786,6 +835,10 @@ const DEFAULT_TUNING = {
   economy: {
     goldPerRoom: [8, 14], shopHealPrice: 40, shopBoonPrice: 70, shopItemPrice: [60, 140],
     deathGoldKeep: 0.5,
+    // Salles calmes (calm_rooms.mjs). Chambre forte : un choix parmi objet, bourse, relique.
+    treasure: { gold: [45, 70], rarityBonus: 2, minRarity: 'magique', goldPickups: 8 },
+    // Fontaine de repos : un choix parmi boire (soin), méditer (+1 niveau), fioles (pouvoirs).
+    rest: { heal: 0.5, superCharge: 0.5 },
   },
 
   loot: {
@@ -2179,8 +2232,9 @@ return { maxDashCharges, canDash, readInput, updatePlayer, useGadget };
 __mod["src/sim/floors.mjs"] = (() => {
 // Structure des 666 étages — fonctions pures sur le numéro d'étage (1..666). Aucun étage n'est
 // écrit à la main : chaque étage est COMPOSÉ à la volée à partir de briques réutilisables
-// (plan de section → type d'étage et portes, run.mjs ; disposition et vagues, room.mjs ;
-// archétypes et élites, enemies.mjs ; Gardien de la section, ci-dessous et bosses).
+// (plan de section, sections.mjs : type d'étage, portes, vagues, budget, dispositions, thème du
+// Cercle ; salle, room.mjs : dispositions et vagues ; archétypes et élites, enemies.mjs ;
+// Gardien de la section, ci-dessous et bosses ; salles calmes, calm_rooms.mjs).
 //
 //   section  = 18 étages (tuning.floors.sectionLength) ; le 18e est un GARDIEN : le battre
 //              ouvre un checkpoint et un point de téléportation (l'étage suivant).
@@ -2190,8 +2244,8 @@ __mod["src/sim/floors.mjs"] = (() => {
 function floorInfo(tuning, floor) {
   const f = tuning.floors;
   const n = Math.max(1, Math.min(f.total, Math.floor(floor)));
-  const section = Math.ceil(n / f.sectionLength); // 1..111
-  const indexInSection = n - (section - 1) * f.sectionLength; // 1..6
+  const section = Math.ceil(n / f.sectionLength); // 1..37
+  const indexInSection = n - (section - 1) * f.sectionLength; // 1..18
   const circleCount = f.circleNames.length;
   const inFinale = n > circleCount * f.circleLength;
   const circle = inFinale ? circleCount + 1 : Math.ceil(n / f.circleLength); // 1..10
@@ -2218,21 +2272,56 @@ function checkpointAfterBoss(tuning, bossFloor) {
 }
 
 /**
- * Multiplicateurs de difficulté de l'étage, définis jusqu'à 666 (spec §5.5) :
- *   L = 1 + 0,05·(f−1)            niveau d'objet (les armes trouvées suivent la même pente)
- *   B = 1 + 2·(1 − e^(−(f−1)/100)) saturation du build
- *   C = 1 + 0,5·(f−1)/665          dérive de difficulté
- *   D = 1 + 0,6·(1 − e^(−(f−1)/150))
- *   PV = L·B·C · dégâts = L·D · densité = D. Les télégraphes, eux, ne changent jamais.
+ * Multiplicateurs de difficulté de l'étage, définis jusqu'à 666 (k = étage − 1, i = index dans
+ * la section 1..18). Le jeu sépare le PERMANENT (classe, équipement, Ville) du TEMPORAIRE
+ * (bénédictions, effacées à chaque mort, la reprise se faisant au début d'une section) ; la
+ * difficulté suit la même séparation :
+ *   L  = 1 + itemGrowth·k                          niveau d'objet (l'équipement trouvé suit la même pente)
+ *   Bp = 1 + permBuildCap·(1 − e^(−k/permBuildScale))  ce que la progression PERMANENTE apporte en plus
+ *                                                  du niveau (raretés, affixes, Sanctuaire)
+ *   Bs = 1 + sectionBuildCap·(i − 1)/(longueur − 1)    build TEMPORAIRE réuni depuis le checkpoint :
+ *                                                  1 au début de chaque section, maximal au Gardien
+ *   C  = 1 + driftAt666·k/665                       dérive de difficulté
+ *   H  = (PV innés + armure·L)/(PV innés + armure)  PV d'un héros équipé à niveau (armure, même pente)
+ *   D  = 1 + dmgCurve·(1 − e^(−k/dmgScale))         part des PV que pèse un coup, en plus
+ *   PV ennemis = L·Bp·Bs·C · dégâts = H·D · densité = 1 + densityCurve·(1 − e^(−k/densityScale)).
+ * Les PV montent donc en dents de scie : ils croissent dans une section (jusqu'au Gardien), le
+ * début de section redescend au niveau de ce qu'un héros SANS bénédiction peut affronter, et
+ * chaque début de section reste plus dur que le précédent. Les télégraphes ne changent jamais.
  */
 function floorScaling(tuning, floor) {
   const f = tuning.floors;
-  const k = Math.max(0, floor - 1);
+  const n = Math.max(1, Math.min(f.total, Math.floor(floor)));
+  const k = n - 1;
+  const index = k % f.sectionLength; // 0..17
   const L = 1 + f.itemGrowth * k;
-  const B = 1 + f.buildCap * (1 - Math.exp(-k / f.buildScale));
-  const C = 1 + (f.driftAt666 * k) / (f.total - 1);
+  const Bp = 1 + f.permBuildCap * (1 - Math.exp(-k / f.permBuildScale));
+  const Bs = 1 + (f.sectionBuildCap * index) / Math.max(1, f.sectionLength - 1);
+  const C = 1 + (f.driftAt666 * k) / Math.max(1, f.total - 1);
+  const H = playerHpGrowth(tuning, L);
   const D = 1 + f.dmgCurve * (1 - Math.exp(-k / f.dmgScale));
-  return { hp: L * B * C, damage: L * D, density: D };
+  const density = 1 + f.densityCurve * (1 - Math.exp(-k / f.densityScale));
+  return { hp: L * Bp * Bs * C, damage: H * D, density, level: L, permBuild: Bp, sectionBuild: Bs, drift: C, hpGrowth: H, lethality: D };
+}
+
+/** PV d'un héros équipé d'une armure de niveau L, relatifs au niveau 1 (PV innés + armure). */
+function playerHpGrowth(tuning, L) {
+  const innate = tuning.player?.innateHp ?? 0;
+  const armor = tuning.armorBase ?? 1;
+  return (innate + armor * L) / (innate + armor);
+}
+
+/**
+ * Difficulté au DÉBUT de la section (checkpoint), face à un héros qui n'a que son PERMANENT :
+ * équipement trouvé jusqu'au Gardien précédent (niveau d'objet = étage − 1), aucune bénédiction.
+ *   toughness = PV ennemis ÷ dégâts de l'arme portée (temps pour tuer, relatif à l'étage 1)
+ *   lethality = dégâts ennemis ÷ PV du héros équipé (part des PV par coup, relative à l'étage 1)
+ */
+function sectionStartDifficulty(tuning, section) {
+  const { first } = sectionBounds(tuning, section);
+  const s = floorScaling(tuning, first);
+  const gear = floorScaling(tuning, Math.max(1, first - 1));
+  return { floor: first, toughness: s.hp / gear.level, lethality: s.damage / gear.hpGrowth };
 }
 
 /**
@@ -2252,7 +2341,7 @@ function sectionBounds(tuning, section) {
   return { first: (section - 1) * len + 1, guardian: last, checkpoint: checkpointAfterBoss(tuning, last) };
 }
 
-return { floorInfo, checkpointAfterBoss, floorScaling, guardianFor, sectionBounds };
+return { floorInfo, checkpointAfterBoss, floorScaling, playerHpGrowth, sectionStartDifficulty, guardianFor, sectionBounds };
 })();
 // ---- src/sim/spawns.mjs
 __mod["src/sim/spawns.mjs"] = (() => {
@@ -3278,6 +3367,9 @@ const { EXTRA_ROSTER, EXTRA_ELITE_KINDS } = __mod["src/sim/foe_data.mjs"];
 
 // Dispositions d'obstacles, en fractions de la salle (cx, cy, w, h en unités).
 // Le bas-centre (entrée) et le haut (portes) restent toujours dégagés.
+// BRIQUES réutilisables : le plan de section (sections.mjs) dit lesquelles un étage peut tirer
+// et avec quel poids (thème du Cercle). Les six premières sont celles de tous les Cercles ;
+// `cross`, `ring` et `alcoves` n'apparaissent que plus bas (tuning.circles).
 const LAYOUTS = {
   open: [],
   pillars: [[0.27, 0.36, 70, 70], [0.73, 0.36, 70, 70], [0.27, 0.66, 70, 70], [0.73, 0.66, 70, 70]],
@@ -3285,32 +3377,51 @@ const LAYOUTS = {
   lanes: [[0.3, 0.42, 260, 44], [0.7, 0.58, 260, 44]],
   bastions: [[0.18, 0.5, 60, 220], [0.82, 0.5, 60, 220], [0.5, 0.36, 120, 50]],
   scatter: [[0.22, 0.3, 60, 60], [0.5, 0.55, 80, 80], [0.78, 0.3, 60, 60], [0.35, 0.72, 50, 50], [0.65, 0.72, 50, 50]],
+  // Croix : quatre bras autour du centre, des passages de 130 u entre eux.
+  cross: [[0.5, 0.5, 44, 220], [0.33, 0.5, 170, 44], [0.67, 0.5, 170, 44]],
+  // Anneau : huit piliers sur un cercle de 240 u autour du centre (arène dans l'arène).
+  ring: [
+    [0.6714, 0.5114, 56, 56], [0.6214, 0.7045, 56, 56], [0.5, 0.7841, 56, 56], [0.3786, 0.7045, 56, 56],
+    [0.3286, 0.5114, 56, 56], [0.3786, 0.3182, 56, 56], [0.5, 0.2386, 56, 56], [0.6214, 0.3182, 56, 56],
+  ],
+  // Alcôves : des éperons collés aux murs latéraux découpent des niches, un bloc au centre.
+  alcoves: [[0.0886, 0.36, 200, 40], [0.9114, 0.36, 200, 40], [0.0886, 0.68, 200, 40], [0.9114, 0.68, 200, 40], [0.5, 0.42, 110, 60]],
 };
-const COMBAT_LAYOUTS = ['open', 'pillars', 'center', 'lanes', 'bastions', 'scatter'];
+/** Identifiants des dispositions connues (le plan de section ne tire que parmi elles). */
+const LAYOUT_IDS = Object.freeze(Object.keys(LAYOUTS));
+/** Les six dispositions de combat d'origine (toujours tirables ; repli sans plan). */
+const COMBAT_LAYOUTS = Object.freeze(['open', 'pillars', 'center', 'lanes', 'bastions', 'scatter']);
 const BOSS_LAYOUT = [[0.15, 0.25, 64, 64], [0.85, 0.25, 64, 64], [0.15, 0.78, 64, 64], [0.85, 0.78, 64, 64]];
 
 // Coût en « budget de vague » de chaque archétype, et étage d'apparition minimal (dans la section).
-const ROSTER = [
+// Le plan de section (sections.mjs) en dérive le bestiaire PONDÉRÉ de chaque étage.
+const ROSTER = Object.freeze([
   { kind: 'imp', cost: 1, minIndex: 1, weight: 5 },
   { kind: 'exploder', cost: 1, minIndex: 1, weight: 2 },
   { kind: 'archer', cost: 1.5, minIndex: 1, weight: 3 },
   { kind: 'charger', cost: 2, minIndex: 1, weight: 2 }, // dès l'étage 1 : premier vrai professeur de dash
   { kind: 'brute', cost: 3, minIndex: 3, weight: 2 },
   ...EXTRA_ROSTER, // archétypes ajoutés (foe_data.mjs)
-];
+]);
 const ELITE_MODS = ['rapide', 'blinde', 'ardent'];
 
 const DOOR_W = 120;
 const DOOR_H = 40;
 
+/**
+ * Salle d'un étage, COMPOSÉE à partir du plan (run.mjs → sections.mjs composeFloor) :
+ * plan.kind dit le type (combat | elite | boss | shop | event | treasure | rest), plan.layouts
+ * les dispositions permises et leurs poids, plan.waves / budget / roster le contenu des vagues.
+ * Les salles calmes (marchand, autel, trésor, repos) restent dégagées.
+ */
 function buildRoom(game, info, plan) {
   const t = game.tuning.room;
   const room = {
     w: t.width,
     h: t.height,
     pad: t.wallPad,
-    kind: plan.kind, // combat | elite | shop | event | boss
-    reward: plan.reward, // boon | loot | gold | heal | shop | event | boss
+    kind: plan.kind, // combat | elite | shop | event | treasure | rest | boss
+    reward: plan.reward, // boon | loot | gold | heal | shop | event | treasure | rest | boss
     layout: 'open',
     obstacles: [],
     waves: [],
@@ -3319,7 +3430,7 @@ function buildRoom(game, info, plan) {
     clearedAt: 0,
     enteredAt: game.time,
     doors: [],
-    interact: null, // objet à toucher : récompense, marchand, autel
+    interact: null, // objet à toucher : récompense, marchand, autel, coffre, fontaine
     theme: info.circle,
   };
   let rects = [];
@@ -3327,7 +3438,7 @@ function buildRoom(game, info, plan) {
     rects = BOSS_LAYOUT;
     room.layout = 'boss';
   } else if (plan.kind === 'combat' || plan.kind === 'elite') {
-    room.layout = info.floor === 1 ? 'open' : pick(game.rng.gen, COMBAT_LAYOUTS);
+    room.layout = pickLayout(game, info, plan.layouts);
     rects = LAYOUTS[room.layout];
   }
   for (const [fx, fy, w, h] of rects) {
@@ -3335,9 +3446,18 @@ function buildRoom(game, info, plan) {
     const cy = fy * room.h;
     room.obstacles.push({ x0: cx - w / 2, y0: cy - h / 2, x1: cx + w / 2, y1: cy + h / 2 });
   }
-  if (plan.kind === 'combat' || plan.kind === 'elite') room.waves = planWaves(game, info, plan.kind === 'elite');
+  if (plan.kind === 'combat' || plan.kind === 'elite') room.waves = planWaves(game, info, plan);
   room.nav = buildNav(room);
   return room;
+}
+
+/** Disposition tirée parmi celles du plan ([{id, weight}]) ; une seule = aucun tirage. */
+function pickLayout(game, info, layouts) {
+  const known = (layouts ?? []).filter((l) => LAYOUTS[l.id] && l.weight > 0);
+  if (known.length === 1) return known[0].id;
+  if (known.length > 1) return weightedPick(game.rng.gen, known, (l) => l.weight).id;
+  // Repli sans plan (ancien comportement) : salle ouverte au tout premier étage.
+  return info.floor === 1 ? 'open' : pick(game.rng.gen, COMBAT_LAYOUTS);
 }
 
 const REWARD_CLEARANCE = 60; // u libres autour d'une récompense (le héros doit pouvoir la toucher)
@@ -3366,24 +3486,32 @@ function playerStart(room) {
   return { x: room.w / 2, y: room.h - room.pad - 70 };
 }
 
-/** Arène d'essai : quand les vagues sont épuisées, on en replanifie (combat sans fin). */
+/**
+ * Arène d'essai : quand les vagues sont épuisées, on en replanifie (combat sans fin), d'après
+ * le plan d'arène préparé par run.mjs (room.refill : un étage de combat de début de section).
+ */
 function refillSandboxWaves(game) {
   const room = game.room;
-  room.waves = planWaves(game, { ...game.info, indexInSection: 4, floor: Math.max(3, game.info.floor) }, rand(game.rng.gen) < 0.35);
+  const sb = game.tuning.section.sandbox;
+  const base = room.refill ?? room.plan ?? {};
+  const elite = rand(game.rng.gen) < sb.eliteChance;
+  room.waves = planWaves(game, { ...game.info, floor: base.floor ?? sb.floor }, { ...base, elite });
   room.waveIndex = -1;
   launchNextWave(game);
 }
 
-function planWaves(game, info, elite) {
+/**
+ * Vagues d'un étage de combat, d'après le plan composé : `waves` vagues de `budget` points de
+ * menace (la dernière × lastWaveMult), tirées dans le bestiaire pondéré `roster` du plan
+ * ([{kind, cost, weight}] — thème du Cercle compris). Salle d'élite : un champion en dernière
+ * vague ; ailleurs, un élite égaré avec la probabilité `strayEliteChance` du plan.
+ */
+function planWaves(game, info, plan) {
   const t = game.tuning;
-  const scale = floorScaling(t, info.floor);
-  const idx = info.indexInSection;
-  // Plan de section : étages courts au début, assauts avant le Gardien (tuning.section.waves).
-  const waveCount = t.section.waves[Math.min(idx, t.section.waves.length) - 1] ?? 2;
   const enc = t.encounter;
-  const budget = (enc.baseBudget + enc.perIndex * idx) * scale.density;
-  // Les archétypes entrent progressivement dans la 1re section ; ensuite tous sont là.
-  const pool = ROSTER.filter((r) => r.minIndex <= (info.section > 1 ? t.floors.sectionLength : idx) && t.enemies[r.kind]);
+  const waveCount = plan.waves ?? t.section.paces[t.section.calmPace].waves;
+  const budget = plan.budget ?? (enc.baseBudget + enc.perIndex * info.indexInSection) * floorScaling(t, info.floor).density;
+  const pool = (plan.roster ?? ROSTER).filter((r) => t.enemies[r.kind] && r.weight > 0);
   const waves = [];
   for (let w = 0; w < waveCount; w++) {
     let b = budget * (w === waveCount - 1 ? enc.lastWaveMult : 1);
@@ -3397,11 +3525,12 @@ function planWaves(game, info, elite) {
     }
     waves.push(wave);
   }
-  if (elite) {
+  const stray = plan.strayEliteChance ?? (info.floor >= enc.strayEliteFrom ? enc.strayEliteChance : 0);
+  if (plan.elite) {
     // Salle d'élite : un champion (modificateur façon Diablo) dans la dernière vague.
-    const kinds = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS];
+    const kinds = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS].filter((k) => t.enemies[k]);
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, kinds), elite: pick(game.rng.gen, ELITE_MODS) });
-  } else if (info.floor > 2 && rand(game.rng.gen) < enc.strayEliteChance) {
+  } else if (stray > 0 && rand(game.rng.gen) < stray) {
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, ['imp', 'archer']), elite: pick(game.rng.gen, ELITE_MODS) });
   }
   return waves;
@@ -3420,7 +3549,7 @@ function launchNextWave(game) {
   return true;
 }
 
-/** Gardien de la section (modèle tiré de la rotation, floors.guardianFor). */
+/** Gardien de la section (modèle du plan : rotation floors.guardianFor). */
 function spawnBoss(game, kind = 'gardien') {
   const room = game.room;
   createEnemy(game, kind, room.w / 2, room.h * 0.35, { boss: true, spawnT: 1.2 });
@@ -3498,7 +3627,7 @@ function randomGold(game) {
   return randInt(game.rng.gen, lo, hi);
 }
 
-return { buildRoom, rewardSpot, playerStart, refillSandboxWaves, launchNextWave, spawnBoss, updateSpawns, updateWaves, makeDoors, doorTouched, randomGold };
+return { LAYOUT_IDS, COMBAT_LAYOUTS, ROSTER, buildRoom, rewardSpot, playerStart, refillSandboxWaves, launchNextWave, spawnBoss, updateSpawns, updateWaves, makeDoors, doorTouched, randomGold };
 })();
 // ---- src/sim/boons.mjs
 __mod["src/sim/boons.mjs"] = (() => {
@@ -4235,6 +4364,354 @@ function stashLoot(profile, item) {
 
 return { PROFILE_SCHEMA, STASH_MAX, EQUIP_SLOTS, createProfile, isItem, sanitizeProfile, ensureUid, fixLoadout, unlockCost, unlock, starterWeapon, upgradeCost, buyUpgrade, selectClass, selectSkill, selectGadget, equipFromStash, salvageFromStash, salvageSouls, stashLoot };
 })();
+// ---- src/sim/sections.mjs
+__mod["src/sim/sections.mjs"] = (() => {
+// PLAN DE SECTION — aucun des 666 étages n'est écrit à la main. Une section (18 étages) est
+// décrite par une fonction PURE et déterministe de (tuning, graine, numéro de section), qui
+// assemble des BRIQUES réutilisables :
+//   - le RYTHME (tuning.section.rhythms) : l'emplacement de chaque index — combat court (1 vague),
+//     normal (2) ou assaut (3), halte, antichambre du Gardien, Gardien ;
+//   - les PORTES : imposées (halte, antichambre, Gardien) ou tirées (tuning.section.doorWeights ×
+//     thème du Cercle), avec une épreuve d'élite et une chambre forte GARANTIES dans la section ;
+//   - le COMBAT : vagues, budget de menace, dispositions permises (room.mjs), bestiaire pondéré
+//     (ROSTER de room.mjs + archétypes ajoutés par foe_data.mjs) ;
+//   - le THÈME du Cercle (tuning.circles) : pondérations du bestiaire par COÛT, jamais par nom
+//     (un archétype ajouté entre dans le tirage sans être nommé), archétypes « vedettes » tirés
+//     par section, dispositions et portes favorites ;
+//   - le GARDIEN de la section (floors.guardianFor).
+// Le run (run.mjs) COMPOSE ensuite chaque étage : plan de l'index + porte choisie (composeFloor).
+//
+// Graine : celle de la partie. Le plan a son propre flux (hashSeed) : le calculer ne consomme
+// jamais les flux de la partie, et la même partie revoit le même plan après une mort.
+const { createRng, hashSeed, rand, weightedPick, shuffle } = __mod["src/core/rng.mjs"];
+const { floorInfo, floorScaling, guardianFor, sectionBounds } = __mod["src/sim/floors.mjs"];
+const { ROSTER, LAYOUT_IDS } = __mod["src/sim/room.mjs"];
+
+const PLAN_SALT = 0x5ec7;
+
+/** Type d'étage qu'ouvre chaque récompense de porte (le reste : combat qui rend cette récompense). */
+const FLOOR_TYPE_OF_REWARD = Object.freeze({
+  elite: 'elite',
+  shop: 'shop',
+  event: 'event',
+  treasure: 'treasure',
+  rest: 'rest',
+  boss: 'boss',
+});
+
+/** Récompense d'une salle de combat (porte « boon », « loot », « gold », « heal »). */
+const COMBAT_REWARDS = ['boon', 'loot', 'gold', 'heal'];
+
+const NEUTRAL_THEME = { id: 'neutre', costBias: 0, featured: 0, featuredMult: 1, budgetMult: 1, strayEliteMult: 1, layouts: null, doors: {} };
+
+function sectionCount(tuning) {
+  return Math.ceil(tuning.floors.total / tuning.floors.sectionLength);
+}
+
+/** Thème du Cercle `circle` (1..10) : données de tuning.circles complétées par le thème neutre. */
+function circleTheme(tuning, circle) {
+  const list = tuning.circles ?? [];
+  const c = list.length ? list[Math.min(list.length, Math.max(1, circle)) - 1] : null;
+  return { ...NEUTRAL_THEME, ...c, circle };
+}
+
+/**
+ * Plan complet de la section `section` (1..37) : 18 entrées (index 1..18), chacune décrivant
+ * l'emplacement, le rythme, les portes qui y MÈNENT, et la composition d'un combat à cet index.
+ */
+function sectionPlan(tuning, seed, section) {
+  const sec = tuning.section;
+  const len = tuning.floors.sectionLength;
+  const s = Math.max(1, Math.min(sectionCount(tuning), Math.floor(section)));
+  const rng = createRng(hashSeed(seed >>> 0, PLAN_SALT, s));
+  const bounds = sectionBounds(tuning, s);
+  const head = floorInfo(tuning, bounds.first);
+  const theme = circleTheme(tuning, head.circle);
+  // Tirages du plan, toujours dans le même ordre (déterminisme).
+  const rhythmId = s === 1 || sec.rhythms.length === 1 ? 0 : Math.floor(rand(rng) * sec.rhythms.length);
+  const rhythm = sec.rhythms[rhythmId];
+  const featured = drawFeatured(rng, tuning, theme);
+  const halteDoors = drawDistinct(rng, sec.halte.pool, sec.halte.doors);
+  const treasureAt = drawTreasureIndex(rng, sec, rhythm);
+  const guardian = guardianFor(tuning, s);
+  const doorWeights = doorWeightsFor(tuning, theme);
+  const floors = [];
+  for (let index = 1; index <= len; index++) {
+    const floor = bounds.first + index - 1;
+    const slot = index === len ? 'gardien' : rhythm[index - 1];
+    floors.push(planEntry(tuning, { s, index, floor, slot, theme, featured, halteDoors, treasureAt, guardian, doorWeights }));
+  }
+  return {
+    section: s,
+    first: bounds.first,
+    guardianFloor: bounds.guardian,
+    checkpoint: bounds.checkpoint,
+    circle: head.circle,
+    circleName: head.circleName,
+    theme: { id: theme.id, circle: head.circle, name: head.circleName, costBias: theme.costBias, featured, featuredMult: theme.featuredMult },
+    rhythmId,
+    guardian,
+    treasureAt,
+    floors,
+  };
+}
+
+function planEntry(tuning, ctx) {
+  const { s, index, floor, slot, theme, featured, halteDoors, treasureAt, guardian, doorWeights } = ctx;
+  const sec = tuning.section;
+  const enc = tuning.encounter;
+  const paceName = sec.paces[slot] ? slot : sec.calmPace;
+  const pace = sec.paces[paceName];
+  let doors = null;
+  if (slot === 'gardien') doors = ['boss'];
+  else if (slot === 'halte') doors = halteDoors.slice();
+  else if (slot === 'antichambre') doors = sec.antichambre.slice();
+  let guarantee = null;
+  if (!doors && sec.eliteAt.includes(index)) guarantee = 'elite';
+  else if (!doors && index === treasureAt) guarantee = 'treasure';
+  const offers = doors ?? [...new Set([...doorWeights.filter((d) => d.weight > 0).map((d) => d.reward), ...(guarantee ? [guarantee] : [])])];
+  const scale = floorScaling(tuning, floor);
+  return {
+    index,
+    floor,
+    slot, // court | normal | assaut | halte | antichambre | gardien
+    pace: paceName, // rythme d'un combat joué à cet index
+    doors, // portes IMPOSÉES qui mènent à cet étage (sinon tirées)
+    guarantee, // récompense garantie parmi les portes tirées (élite, chambre forte)
+    doorWeights: doors ? null : doorWeights,
+    offers, // récompenses possibles des portes qui mènent ici
+    types: [...new Set(offers.map((r) => FLOOR_TYPE_OF_REWARD[r] ?? 'combat'))], // types d'étage possibles
+    waves: pace.waves,
+    budget: (enc.baseBudget + enc.perIndex * index) * pace.budgetMult * theme.budgetMult * scale.density,
+    layouts: layoutsFor(tuning, theme, floor),
+    roster: rosterFor(tuning, theme, featured, s, index),
+    strayEliteChance: floor >= enc.strayEliteFrom ? enc.strayEliteChance * theme.strayEliteMult : 0,
+    guardian: slot === 'gardien' ? guardian : null,
+  };
+}
+
+/** Entrée du plan pour l'étage `floor` (1..666). */
+function floorSlot(tuning, seed, floor) {
+  const info = floorInfo(tuning, floor);
+  return sectionPlan(tuning, seed, info.section).floors[info.indexInSection - 1];
+}
+
+/**
+ * COMPOSE l'étage `floor` à partir de son entrée de plan et de la porte qui y mène : c'est le
+ * plan de salle que buildRoom (room.mjs) et enterFloor (run.mjs) consomment. Fonction pure.
+ *   kind   : combat | elite | boss | shop | event | treasure | rest
+ *   reward : récompense de fin de salle (combat : celle de la porte ; élite : butin)
+ */
+function composeFloor(tuning, seed, floor, door) {
+  const info = floorInfo(tuning, floor);
+  const entry = sectionPlan(tuning, seed, info.section).floors[info.indexInSection - 1];
+  const asked = info.isBoss ? 'boss' : door?.reward ?? 'boon';
+  const kind = FLOOR_TYPE_OF_REWARD[asked] ?? 'combat';
+  const reward = kind === 'elite' ? 'loot' : kind === 'combat' ? (COMBAT_REWARDS.includes(asked) ? asked : 'boon') : kind;
+  return {
+    kind,
+    reward,
+    family: door?.family,
+    elite: kind === 'elite',
+    floor: info.floor,
+    section: info.section,
+    index: entry.index,
+    slot: entry.slot,
+    pace: entry.pace,
+    waves: entry.waves,
+    budget: entry.budget,
+    layouts: entry.layouts,
+    roster: entry.roster,
+    strayEliteChance: entry.strayEliteChance,
+    guardian: kind === 'boss' ? guardianFor(tuning, info.section) : null,
+    theme: circleTheme(tuning, info.circle).id,
+  };
+}
+
+// ---------------------------------------------------------------- briques du plan
+
+/** Dispositions permises à l'étage : le tout premier étage est ouvert (apprentissage). */
+function layoutsFor(tuning, theme, floor) {
+  if (floor === 1) return [{ id: 'open', weight: 1 }];
+  const table = theme.layouts ?? Object.fromEntries(LAYOUT_IDS.map((id) => [id, 1]));
+  return Object.entries(table).filter(([id, w]) => LAYOUT_IDS.includes(id) && w > 0).map(([id, weight]) => ({ id, weight }));
+}
+
+/**
+ * Bestiaire pondéré de l'étage : dans la 1re section, les archétypes entrent progressivement
+ * (minIndex) ; ensuite tous sont là. Poids × (coût / costRef)^costBias × vedette.
+ */
+function rosterFor(tuning, theme, featured, section, index) {
+  const reach = section > 1 ? tuning.floors.sectionLength : index;
+  const ref = tuning.encounter.costRef;
+  return ROSTER.filter((r) => r.minIndex <= reach && tuning.enemies[r.kind]).map((r) => ({
+    kind: r.kind,
+    cost: r.cost,
+    weight: r.weight * Math.pow(r.cost / ref, theme.costBias) * (featured.includes(r.kind) ? theme.featuredMult : 1),
+  }));
+}
+
+/** Archétypes vedettes de la section : tirés dans TOUT le bestiaire présent (aucun nom codé). */
+function drawFeatured(rng, tuning, theme) {
+  const kinds = [...new Set(ROSTER.filter((r) => tuning.enemies[r.kind]).map((r) => r.kind))];
+  return shuffle(rng, kinds).slice(0, Math.max(0, theme.featured));
+}
+
+/** Poids des portes tirées : base × multiplicateur du thème. */
+function doorWeightsFor(tuning, theme) {
+  return Object.entries(tuning.section.doorWeights).map(([reward, w]) => ({ reward, weight: w * (theme.doors?.[reward] ?? 1) }));
+}
+
+/** `n` récompenses distinctes tirées dans un tableau de poids {récompense: poids}. */
+function drawDistinct(rng, pool, n) {
+  const left = Object.entries(pool).filter(([, w]) => w > 0).map(([reward, weight]) => ({ reward, weight }));
+  const out = [];
+  while (out.length < n && left.length) {
+    const it = weightedPick(rng, left, (d) => d.weight);
+    out.push(it.reward);
+    left.splice(left.indexOf(it), 1);
+  }
+  return out;
+}
+
+/** Index où une porte de chambre forte est garantie : un combat tiré, hors élites imposées. */
+function drawTreasureIndex(rng, sec, rhythm) {
+  const { from, to } = sec.treasure;
+  const ok = (i) => sec.paces[rhythm[i - 1]] && !sec.eliteAt.includes(i);
+  const candidates = [];
+  for (let i = from; i <= to; i++) if (ok(i)) candidates.push(i);
+  return candidates.length ? candidates[Math.floor(rand(rng) * candidates.length)] : null;
+}
+
+return { FLOOR_TYPE_OF_REWARD, sectionCount, circleTheme, sectionPlan, floorSlot, composeFloor };
+})();
+// ---- src/sim/calm_rooms.mjs
+__mod["src/sim/calm_rooms.mjs"] = (() => {
+// SALLES CALMES réutilisables (sans combat), placées par le plan de section (sections.mjs) :
+//   treasure — « Chambre forte » : un coffre scellé, UN choix parmi trois trésors annoncés
+//              (un objet d'équipement, une bourse, une relique = bénédiction) ;
+//   rest     — « Fontaine du Léthé » : UN choix parmi trois grâces (boire : soin ; méditer : une
+//              bénédiction possédée gagne un niveau ; fioles : gadget et Super rechargés).
+// Le contenu est tiré à l'ENTRÉE dans la salle (le panneau l'annonce, rien de caché). L'objet
+// rejoint l'équipement PERMANENT comme tout butin ; or, bénédiction, soin et niveaux restent
+// TEMPORAIRES (la mort les reprend, comme le reste du run).
+//
+// Contrat avec run.mjs : setupCalmRoom à l'entrée, describeCalm pour le panneau (mode 'choice'),
+// applyCalm(index) rend 'close' (choix fait), 'replaced' (l'objet d'interaction est remplacé par
+// un butin ou une bénédiction à toucher) ou false (choix refusé).
+const { randInt } = __mod["src/core/rng.mjs"];
+const { emit } = __mod["src/sim/state.mjs"];
+const { healPlayer, spawnPickup } = __mod["src/sim/combat.mjs"];
+const { generateItem, rollRarity, ITEM_RARITIES, SLOT_NAMES } = __mod["src/sim/loot.mjs"];
+const { FAMILIES, randomFamily, addBoon, boonDef } = __mod["src/sim/boons.mjs"];
+const { recomputeStats } = __mod["src/sim/stats.mjs"];
+
+const CALM_KINDS = Object.freeze(['treasure', 'rest']);
+
+const TREASURE_COLOR = '#ffb43c';
+const REST_COLOR = '#6dd8ff';
+const PERCENT = 100;
+
+/** Tire le contenu de l'objet d'interaction `it` d'une salle calme (à l'entrée dans la salle). */
+function setupCalmRoom(game, it) {
+  if (it.kind !== 'treasure') return;
+  const tr = game.tuning.economy.treasure;
+  const minRank = ITEM_RARITIES.findIndex((r) => r.id === tr.minRarity);
+  const rolled = rollRarity(game, tr.rarityBonus);
+  const rank = Math.max(minRank, ITEM_RARITIES.findIndex((r) => r.id === rolled));
+  it.item = generateItem(game, { rarity: ITEM_RARITIES[rank].id });
+  it.gold = Math.round(randInt(game.rng.gen, tr.gold[0], tr.gold[1]) * game.player.stats.goldFindMult);
+  it.family = randomFamily(game);
+}
+
+function gadgetMax(game) {
+  return game.tuning.gadget.chargesPerSection + game.player.stats.gadgetChargesBonus;
+}
+
+/** Bénédiction que la méditation approfondit : la moins avancée (la première à égalité). */
+function meditationTarget(game) {
+  let best = null;
+  for (const b of game.run.boons) if (!best || b.level < best.level) best = b;
+  return best;
+}
+
+function treasureOptions(game, it) {
+  const rar = ITEM_RARITIES.find((r) => r.id === it.item.rarity);
+  const fam = FAMILIES[it.family];
+  return [
+    { id: 'objet', kicker: `Objet · ${rar.name} · ${SLOT_NAMES[it.item.slot]}`, label: it.item.name, text: 'Équipement PERMANENT : il rejoint votre équipement ou le coffre de la Ville.', color: rar.color, disabled: false },
+    { id: 'bourse', kicker: 'Bourse', label: `+${it.gold} or`, text: 'L\'or suit le héros ; Charon en prend sa part à chaque mort.', color: '#ffd23c', disabled: false },
+    { id: 'relique', kicker: `Relique · ${fam.name}`, label: 'Bénédiction', text: 'Un don du péché, TEMPORAIRE : perdu à la mort.', color: fam.color, disabled: false },
+  ];
+}
+
+function restOptions(game) {
+  const p = game.player;
+  const r = game.tuning.economy.rest;
+  const heal = Math.round(p.maxHp * r.heal);
+  const target = meditationTarget(game);
+  const name = target ? boonDef(target.id)?.name ?? target.id : null;
+  const full = p.gadgetCharges >= gadgetMax(game) && p.superCharge >= 1;
+  return [
+    { id: 'boire', kicker: 'Soin', label: `Boire · +${heal} PV`, text: `Rend ${Math.round(r.heal * PERCENT)} % des PV.`, color: '#6dff8a', disabled: false }, // jamais grisé : un choix reste toujours possible
+    { id: 'mediter', kicker: 'Amélioration · temporaire', label: target ? `Méditer · ${name} niv. ${target.level + 1}` : 'Méditer', text: target ? 'Votre bénédiction la moins avancée gagne un niveau.' : 'Aucune bénédiction à approfondir.', color: '#b98cff', disabled: !target },
+    { id: 'fioles', kicker: 'Pouvoirs', label: 'Remplir les fioles', text: `Charges de gadget pleines, jauge de Super +${Math.round(r.superCharge * PERCENT)} %.`, color: REST_COLOR, disabled: full },
+  ];
+}
+
+/** Panneau de choix (game.choice) de l'objet d'interaction `it`. */
+function describeCalm(game, it) {
+  if (it.kind === 'treasure') {
+    return { kind: 'treasure', title: 'Chambre forte', text: 'Un coffre scellé. Un seul de ses trois trésors vous suivra.', color: TREASURE_COLOR, options: treasureOptions(game, it) };
+  }
+  if (it.kind === 'rest') {
+    return { kind: 'rest', title: 'Fontaine du Léthé', text: 'L\'eau efface la fatigue. Elle n\'accorde qu\'une grâce.', color: REST_COLOR, options: restOptions(game) };
+  }
+  return null;
+}
+
+/** Applique l'option `index` du panneau de l'objet `it`. */
+function applyCalm(game, it, index) {
+  const ch = describeCalm(game, it);
+  const opt = ch?.options[index];
+  if (!opt || opt.disabled) return false;
+  const p = game.player;
+  const room = game.room;
+  switch (opt.id) {
+    case 'objet':
+      room.interact = { kind: 'loot', x: it.x, y: it.y, r: 30, used: false, item: it.item };
+      return 'replaced';
+    case 'relique':
+      room.interact = { kind: 'boon', x: it.x, y: it.y, r: 30, used: false, family: it.family };
+      return 'replaced';
+    case 'bourse': {
+      const n = game.tuning.economy.treasure.goldPickups;
+      const each = Math.max(1, Math.round(it.gold / n));
+      for (let i = 0; i < n; i++) spawnPickup(game, 'gold', it.x, it.y, each);
+      return 'close';
+    }
+    case 'boire':
+      healPlayer(game, p.maxHp * game.tuning.economy.rest.heal, true);
+      return 'close';
+    case 'mediter': {
+      const target = meditationTarget(game);
+      addBoon(game.run, { id: target.id, rarity: target.rarity });
+      recomputeStats(game);
+      emit(game, 'boonGain', { id: target.id, rarity: target.rarity });
+      return 'close';
+    }
+    case 'fioles':
+      p.gadgetCharges = Math.max(p.gadgetCharges, gadgetMax(game));
+      p.superCharge = Math.min(1, p.superCharge + game.tuning.economy.rest.superCharge);
+      emit(game, 'gadgetCharge', { x: p.x, y: p.y, charges: p.gadgetCharges });
+      return 'close';
+    default:
+      return false;
+  }
+}
+
+return { CALM_KINDS, setupCalmRoom, describeCalm, applyCalm };
+})();
 // ---- src/sim/run.mjs
 __mod["src/sim/run.mjs"] = (() => {
 // Le run : descente étage par étage, portes à récompense, choix (bénédiction, butin,
@@ -4259,14 +4736,8 @@ const { generateItem, rollRarity, salvageValue, affixText, baseText, LEGENDARY_P
 const { recomputeStats } = __mod["src/sim/stats.mjs"];
 const { stashLoot } = __mod["src/sim/profile.mjs"];
 const { guardianFor } = __mod["src/sim/floors.mjs"];
-
-const DOOR_WEIGHTS = [
-  { reward: 'boon', weight: 40 },
-  { reward: 'loot', weight: 24 },
-  { reward: 'gold', weight: 14 },
-  { reward: 'elite', weight: 12 },
-  { reward: 'heal', weight: 10 },
-];
+const { composeFloor, floorSlot } = __mod["src/sim/sections.mjs"];
+const { CALM_KINDS, setupCalmRoom, describeCalm, applyCalm } = __mod["src/sim/calm_rooms.mjs"];
 
 const REWARD_LABELS = {
   boon: 'Bénédiction',
@@ -4276,6 +4747,8 @@ const REWARD_LABELS = {
   heal: 'Soin',
   shop: 'Marchand',
   event: 'Autel',
+  treasure: 'Chambre forte',
+  rest: 'Repos',
   boss: 'Gardien',
   town: 'Ville',
 };
@@ -4332,20 +4805,18 @@ function syncPurse(game) {
   game.meta.gold = game.run.gold;
 }
 
-/** Plan de la salle d'un étage à partir de la récompense annoncée sur la porte choisie. */
-function planFor(info, door) {
-  if (info.isBoss) return { kind: 'boss', reward: 'boss' };
-  const reward = door?.reward ?? 'boon';
-  if (reward === 'elite') return { kind: 'elite', reward: 'loot', family: door?.family, elite: true };
-  if (reward === 'shop') return { kind: 'shop', reward: 'shop' };
-  if (reward === 'event') return { kind: 'event', reward: 'event' };
-  return { kind: 'combat', reward, family: door?.family };
+/**
+ * Plan de la salle d'un étage : l'entrée du PLAN DE SECTION (sections.mjs : rythme, vagues,
+ * budget, dispositions, bestiaire du Cercle, Gardien) composée avec la porte choisie.
+ */
+function planFor(game, info, door) {
+  return composeFloor(game.tuning, game.seed, info.floor, door);
 }
 
 function enterFloor(game, floor, door) {
   const t = game.tuning;
   const info = floorInfo(t, floor);
-  const plan = planFor(info, door);
+  const plan = planFor(game, info, door);
   game.run.floor = info.floor;
   game.meta.bestFloor = Math.max(game.meta.bestFloor, info.floor);
   syncPurse(game);
@@ -4372,10 +4843,12 @@ function enterFloor(game, floor, door) {
     p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
   }
   game.run.roomsThisRun++;
-  emit(game, 'floorEnter', { floor: info.floor, circle: info.circle, circleName: info.circleName, section: info.section, indexInSection: info.indexInSection, kind: plan.kind, reward: plan.reward, isBoss: info.isBoss });
+  emit(game, 'floorEnter', { floor: info.floor, circle: info.circle, circleName: info.circleName, section: info.section, indexInSection: info.indexInSection, kind: plan.kind, reward: plan.reward, pace: plan.pace, isBoss: info.isBoss });
+  // Arène d'essai : les vagues sans fin suivent le plan d'un étage de début de section.
+  if (game.sandbox) game.room.refill = composeFloor(t, game.seed, t.section.sandbox.floor, { reward: 'boon' });
 
   if (plan.kind === 'boss') {
-    spawnBoss(game, guardianFor(t, info.section));
+    spawnBoss(game, plan.guardian ?? guardianFor(t, info.section));
   } else if (plan.kind === 'combat' || plan.kind === 'elite') {
     launchNextWave(game);
   } else {
@@ -4385,6 +4858,7 @@ function enterFloor(game, floor, door) {
     game.room.interact = { kind: plan.kind, x: spot.x, y: spot.y, r: 34, used: false };
     if (plan.kind === 'shop') game.room.interact.offers = rollShop(game);
     if (plan.kind === 'event') game.room.interact.event = pick(game.rng.gen, EVENTS).id;
+    if (CALM_KINDS.includes(plan.kind)) setupCalmRoom(game, game.room.interact);
     prepareDoors(game, true);
   }
 }
@@ -4464,27 +4938,25 @@ function onRoomClear(game) {
 }
 
 /**
- * Portes de sortie, composées par le PLAN DE SECTION (tuning.section) : Gardien au 18e étage,
- * portes imposées à mi-section et dans l'antichambre, épreuve d'élite garantie à certains
- * index, sinon deux récompenses tirées au hasard. Après un Gardien : « section suivante » ou
- * « Ville » (téléportation, fin du run).
+ * Portes de sortie, composées par le PLAN DE SECTION (sections.mjs) de l'étage suivant : portes
+ * imposées (Gardien au 18e, halte, antichambre), sinon deux récompenses tirées selon les poids
+ * du Cercle, avec la récompense garantie de l'index (épreuve d'élite, chambre forte). Après un
+ * Gardien : « section suivante » ou « Ville » (téléportation, fin du run).
  */
 function prepareDoors(game, openNow) {
   const t = game.tuning;
-  const next = floorInfo(t, game.run.floor + 1);
-  const fixed = t.section.fixedDoors[next.indexInSection];
+  const next = floorSlot(t, game.seed, game.run.floor + 1);
   let rewards;
-  if (next.isBoss) {
-    rewards = [{ reward: 'boss' }];
-  } else if (fixed) {
-    rewards = fixed.map((reward) => ({ reward }));
+  if (next.doors) {
+    rewards = next.doors.map((reward) => ({ reward }));
   } else {
-    const first = weightedPick(game.rng.gen, DOOR_WEIGHTS, (d) => d.weight).reward;
+    const weights = next.doorWeights;
+    const first = weightedPick(game.rng.gen, weights, (d) => d.weight).reward;
     let second = first;
     let guard = 0;
-    while (second === first && guard++ < 20) second = weightedPick(game.rng.gen, DOOR_WEIGHTS, (d) => d.weight).reward;
+    while (second === first && guard++ < 20) second = weightedPick(game.rng.gen, weights, (d) => d.weight).reward;
     rewards = [{ reward: first }, { reward: second }];
-    if (t.section.eliteAt.includes(next.indexInSection) && first !== 'elite' && second !== 'elite') rewards[1] = { reward: 'elite' };
+    if (next.guarantee && first !== next.guarantee && second !== next.guarantee) rewards[1] = { reward: next.guarantee };
   }
   if (game.room.kind === 'boss' && !game.sandbox) rewards = [rewards[0], { reward: 'town' }];
   for (const r of rewards) if (r.reward === 'boon') r.family = randomFamily(game);
@@ -4520,6 +4992,8 @@ function openInteract(game) {
     const gadgetFull = p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
     const unusable = (o) => !!(o.cost && run.gold < o.cost) || (o.effect === 'gadget1' && gadgetFull);
     choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: o.label, disabled: unusable(o) })) };
+  } else if (CALM_KINDS.includes(it.kind)) {
+    choice = describeCalm(game, it); // chambre forte, fontaine de repos (calm_rooms.mjs)
   }
   if (!choice) return;
   game.mode = 'choice';
@@ -4652,6 +5126,17 @@ function applyCommand(game, cmd) {
     emit(game, 'buy', { kind: offer.kind });
     openShopRefresh(game);
     return true;
+  }
+  if (CALM_KINDS.includes(ch.kind) && cmd.type === 'choose') {
+    const res = applyCalm(game, it, cmd.index);
+    if (!res) return false;
+    if (res === 'replaced') {
+      // Objet ou relique choisi : il attend d'être touché, les portes attendent ce choix-là.
+      game.mode = 'play';
+      game.choice = null;
+      return true;
+    }
+    return closeChoice(game);
   }
   if (ch.kind === 'event' && cmd.type === 'choose') {
     const ev = EVENTS.find((e) => e.id === it.event);
@@ -4825,7 +5310,7 @@ function returnToTown(game) {
   return true;
 }
 
-return { DOOR_WEIGHTS, REWARD_LABELS, EVENTS, createRun, syncPurse, planFor, enterFloor, onRoomClear, openInteract, describeBoon, canWield, describeItem, applyCommand, onDeath, lastCheckpoint, respawn, returnToTown };
+return { REWARD_LABELS, EVENTS, createRun, syncPurse, planFor, enterFloor, onRoomClear, openInteract, describeBoon, canWield, describeItem, applyCommand, onDeath, lastCheckpoint, respawn, returnToTown };
 })();
 // ---- src/sim/lab.mjs
 __mod["src/sim/lab.mjs"] = (() => {
@@ -6372,6 +6857,8 @@ const HERO_VISUAL = 1.18;
 const ENEMY_SHOT_VISUAL = 1.3;
 const WALL_OVERDRAW = 1200; // u de mur peints autour de la salle (la caméra peut déborder)
 const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+// Salles calmes du plan de section (calm_rooms.mjs) : couleur de leur porte et de leur objet.
+const CALM_COLORS = { treasure: '#ffb43c', rest: '#6dd8ff' };
 
 // ------------------------------------------------------------------ textures mises en cache
 
@@ -6536,7 +7023,7 @@ function drawWalls(ctx, room, tint, time) {
 }
 
 function drawDoor(ctx, d, time) {
-  const color = d.reward === 'boon' && d.family ? FAMILIES[d.family].color : REWARD_COLORS[d.reward] ?? '#ffffff';
+  const color = d.reward === 'boon' && d.family ? FAMILIES[d.family].color : REWARD_COLORS[d.reward] ?? CALM_COLORS[d.reward] ?? '#ffffff';
   const cx = d.x + d.w / 2;
   // Arche : fond noir, voûte arrondie en haut.
   const archPath = () => {
@@ -6623,6 +7110,20 @@ function drawRewardIcon(ctx, reward, x, y, r, color, time) {
       // Portail : anneau (téléportation vers la Ville).
       ctx.arc(0, 0, r, 0, TAU);
       ctx.arc(0, 0, r * 0.55, 0, TAU, true);
+      break;
+    case 'treasure':
+      // Coffre : caisse et couvercle bombé.
+      ctx.rect(-r, -r * 0.2, r * 2, r);
+      ctx.moveTo(-r, -r * 0.2);
+      ctx.quadraticCurveTo(0, -r * 1.3, r, -r * 0.2);
+      ctx.closePath();
+      break;
+    case 'rest':
+      // Goutte d'eau (fontaine).
+      ctx.moveTo(0, -r * 1.2);
+      ctx.quadraticCurveTo(r, 0, r * 0.7, r * 0.45);
+      ctx.arc(0, r * 0.2, r * 0.75, 0.35, Math.PI - 0.35);
+      ctx.quadraticCurveTo(-r, 0, 0, -r * 1.2);
       break;
     default:
       ctx.rect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6);
@@ -6880,6 +7381,14 @@ function drawInteract(ctx, game, time) {
     ctx.lineWidth = 2;
     ctx.strokeRect(it.x - 30, it.y - 14, 60, 28);
     drawGlow(ctx, it.x, it.y - 10, 60, color, 0.35 + 0.15 * Math.sin(time * 3));
+  } else if (it.kind === 'treasure') {
+    color = CALM_COLORS.treasure;
+    label = 'Chambre forte';
+    drawChest(ctx, it.x, it.y, color, time);
+  } else if (it.kind === 'rest') {
+    color = CALM_COLORS.rest;
+    label = 'Fontaine du Léthé';
+    drawFountain(ctx, it.x, it.y, color, time);
   }
   ctx.font = `700 14px ${FONT}`;
   ctx.textAlign = 'center';
@@ -6889,6 +7398,69 @@ function drawInteract(ctx, game, time) {
   ctx.strokeText(label, it.x, it.y + 40);
   ctx.fillStyle = color;
   ctx.fillText(label, it.x, it.y + 40);
+}
+
+/** Coffre scellé de la chambre forte : caisse, couvercle, ferrures et sceau qui pulse. */
+function drawChest(ctx, x, y, color, time) {
+  drawGlow(ctx, x, y - 6, 70, color, 0.3 + 0.1 * Math.sin(time * 2.5));
+  ctx.fillStyle = PAL.shadow;
+  ctx.fillRect(x - 30, y + 12, 64, 10);
+  ctx.fillStyle = '#4a2a1a';
+  ctx.fillRect(x - 32, y - 8, 64, 26);
+  ctx.beginPath();
+  ctx.moveTo(x - 32, y - 8);
+  ctx.quadraticCurveTo(x, y - 34, x + 32, y - 8);
+  ctx.closePath();
+  ctx.fillStyle = '#5e3620';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(x - 32, y - 8, 64, 26);
+  ctx.beginPath();
+  ctx.moveTo(x - 32, y - 8);
+  ctx.quadraticCurveTo(x, y - 34, x + 32, y - 8);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 6, y - 12, 12, 14);
+  ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 4);
+  ctx.fillStyle = '#fff4c0';
+  ctx.fillRect(x - 2, y - 8, 4, 6);
+  ctx.globalAlpha = 1;
+}
+
+/** Fontaine du repos : vasque de pierre, eau claire qui ondule (jamais rouge : rien ne blesse). */
+function drawFountain(ctx, x, y, color, time) {
+  drawGlow(ctx, x, y - 4, 80, color, 0.3 + 0.1 * Math.sin(time * 2));
+  ctx.fillStyle = PAL.shadow;
+  ctx.beginPath();
+  ctx.ellipse(x + 4, y + 16, 40, 12, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#3a3440';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 4, 38, 18, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.75;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 2, 30, 12, 0, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = '#e8fbff';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 2; i++) {
+    const k = (time * 0.8 + i * 0.5) % 1;
+    ctx.globalAlpha = 1 - k;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 2, 6 + 22 * k, 2 + 9 * k, 0, 0, TAU);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#5a5262';
+  ctx.fillRect(x - 5, y - 26, 10, 26);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y - 28, 5 + Math.sin(time * 5), 0, TAU);
+  ctx.fill();
 }
 
 function drawItemGlyph(ctx, slot, x, y, color) {
@@ -9445,8 +10017,9 @@ return { TOWN_TABS, buildTown, buildLabControls };
 })();
 // ---- src/ui/menus.mjs
 __mod["src/ui/menus.mjs"] = (() => {
-// Menus DOM par-dessus le canvas : écran titre, choix (bénédiction, butin, marchand, autel),
-// mort et reprise au checkpoint, pause et réglages, panneau de tuning du feel.
+// Menus DOM par-dessus le canvas : écran titre, choix (bénédiction, butin, marchand, autel,
+// chambre forte, fontaine de repos), mort et reprise au checkpoint, pause et réglages,
+// panneau de tuning du feel.
 // AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.
 const { el, button, onActivate, itemCard, arming, armed, ARM_MS, ARM_CHOICE_MS } = __mod["src/ui/dom.mjs"];
 const { buildTown, buildLabControls } = __mod["src/ui/town.mjs"];
@@ -9595,6 +10168,32 @@ function createUI(root, handlers) {
     p.appendChild(col);
   }
 
+  /**
+   * Salles calmes du plan de section (chambre forte, fontaine de repos) : trois cartes, une
+   * seule à prendre. Le panneau annonce tout (objet, somme, famille, bénédiction approfondie).
+   */
+  function buildCalm(p, ch) {
+    p.className = 'panel choice';
+    const h = el('h2', '', ch.title);
+    h.style.color = ch.color;
+    p.appendChild(h);
+    p.appendChild(el('p', 'lede', ch.text));
+    const list = el('div', 'cards');
+    ch.options.forEach((o, i) => {
+      const card = el('button', 'card calm');
+      card.type = 'button';
+      card.disabled = !!o.disabled;
+      if (o.disabled) card.style.opacity = '0.45';
+      card.style.setProperty('--accent', o.color ?? ch.color);
+      card.appendChild(el('div', 'card-kicker', o.kicker));
+      card.appendChild(el('div', 'card-title', o.label));
+      card.appendChild(el('div', 'card-text', o.text));
+      onActivate(card, () => handlers.command({ type: 'choose', index: i }));
+      list.appendChild(card);
+    });
+    p.appendChild(list);
+  }
+
   function buildDeath(p, game) {
     p.className = 'panel death';
     p.appendChild(el('h1', 'logo red', 'VOUS ÊTES MORT'));
@@ -9678,7 +10277,7 @@ function createUI(root, handlers) {
     if (game.mode === 'choice' && game.choice) {
       const ch = game.choice;
       const key = `choice:${ch.kind}:${game.room.interact?.x}:${game.run.gold}:${ch.offers?.map((o) => o.sold).join()}:${game.tick}`;
-      const builders = { boon: buildBoon, loot: buildLoot, shop: buildShop, event: buildEvent };
+      const builders = { boon: buildBoon, loot: buildLoot, shop: buildShop, event: buildEvent, treasure: buildCalm, rest: buildCalm };
       return show((p) => builders[ch.kind](p, ch), ch.kind === 'shop' ? key : `choice:${ch.kind}:${game.tick}`);
     }
     if (game.mode === 'dead') return show((p) => buildDeath(p, game), `dead:${game.tick}`);

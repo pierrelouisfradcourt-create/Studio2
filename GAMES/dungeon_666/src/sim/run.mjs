@@ -21,14 +21,8 @@ import { generateItem, rollRarity, salvageValue, affixText, baseText, LEGENDARY_
 import { recomputeStats } from './stats.mjs';
 import { stashLoot } from './profile.mjs';
 import { guardianFor } from './floors.mjs';
-
-export const DOOR_WEIGHTS = [
-  { reward: 'boon', weight: 40 },
-  { reward: 'loot', weight: 24 },
-  { reward: 'gold', weight: 14 },
-  { reward: 'elite', weight: 12 },
-  { reward: 'heal', weight: 10 },
-];
+import { composeFloor, floorSlot } from './sections.mjs';
+import { CALM_KINDS, setupCalmRoom, describeCalm, applyCalm } from './calm_rooms.mjs';
 
 export const REWARD_LABELS = {
   boon: 'Bénédiction',
@@ -38,6 +32,8 @@ export const REWARD_LABELS = {
   heal: 'Soin',
   shop: 'Marchand',
   event: 'Autel',
+  treasure: 'Chambre forte',
+  rest: 'Repos',
   boss: 'Gardien',
   town: 'Ville',
 };
@@ -94,20 +90,18 @@ export function syncPurse(game) {
   game.meta.gold = game.run.gold;
 }
 
-/** Plan de la salle d'un étage à partir de la récompense annoncée sur la porte choisie. */
-export function planFor(info, door) {
-  if (info.isBoss) return { kind: 'boss', reward: 'boss' };
-  const reward = door?.reward ?? 'boon';
-  if (reward === 'elite') return { kind: 'elite', reward: 'loot', family: door?.family, elite: true };
-  if (reward === 'shop') return { kind: 'shop', reward: 'shop' };
-  if (reward === 'event') return { kind: 'event', reward: 'event' };
-  return { kind: 'combat', reward, family: door?.family };
+/**
+ * Plan de la salle d'un étage : l'entrée du PLAN DE SECTION (sections.mjs : rythme, vagues,
+ * budget, dispositions, bestiaire du Cercle, Gardien) composée avec la porte choisie.
+ */
+export function planFor(game, info, door) {
+  return composeFloor(game.tuning, game.seed, info.floor, door);
 }
 
 export function enterFloor(game, floor, door) {
   const t = game.tuning;
   const info = floorInfo(t, floor);
-  const plan = planFor(info, door);
+  const plan = planFor(game, info, door);
   game.run.floor = info.floor;
   game.meta.bestFloor = Math.max(game.meta.bestFloor, info.floor);
   syncPurse(game);
@@ -134,10 +128,12 @@ export function enterFloor(game, floor, door) {
     p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
   }
   game.run.roomsThisRun++;
-  emit(game, 'floorEnter', { floor: info.floor, circle: info.circle, circleName: info.circleName, section: info.section, indexInSection: info.indexInSection, kind: plan.kind, reward: plan.reward, isBoss: info.isBoss });
+  emit(game, 'floorEnter', { floor: info.floor, circle: info.circle, circleName: info.circleName, section: info.section, indexInSection: info.indexInSection, kind: plan.kind, reward: plan.reward, pace: plan.pace, isBoss: info.isBoss });
+  // Arène d'essai : les vagues sans fin suivent le plan d'un étage de début de section.
+  if (game.sandbox) game.room.refill = composeFloor(t, game.seed, t.section.sandbox.floor, { reward: 'boon' });
 
   if (plan.kind === 'boss') {
-    spawnBoss(game, guardianFor(t, info.section));
+    spawnBoss(game, plan.guardian ?? guardianFor(t, info.section));
   } else if (plan.kind === 'combat' || plan.kind === 'elite') {
     launchNextWave(game);
   } else {
@@ -147,6 +143,7 @@ export function enterFloor(game, floor, door) {
     game.room.interact = { kind: plan.kind, x: spot.x, y: spot.y, r: 34, used: false };
     if (plan.kind === 'shop') game.room.interact.offers = rollShop(game);
     if (plan.kind === 'event') game.room.interact.event = pick(game.rng.gen, EVENTS).id;
+    if (CALM_KINDS.includes(plan.kind)) setupCalmRoom(game, game.room.interact);
     prepareDoors(game, true);
   }
 }
@@ -226,27 +223,25 @@ export function onRoomClear(game) {
 }
 
 /**
- * Portes de sortie, composées par le PLAN DE SECTION (tuning.section) : Gardien au 18e étage,
- * portes imposées à mi-section et dans l'antichambre, épreuve d'élite garantie à certains
- * index, sinon deux récompenses tirées au hasard. Après un Gardien : « section suivante » ou
- * « Ville » (téléportation, fin du run).
+ * Portes de sortie, composées par le PLAN DE SECTION (sections.mjs) de l'étage suivant : portes
+ * imposées (Gardien au 18e, halte, antichambre), sinon deux récompenses tirées selon les poids
+ * du Cercle, avec la récompense garantie de l'index (épreuve d'élite, chambre forte). Après un
+ * Gardien : « section suivante » ou « Ville » (téléportation, fin du run).
  */
 function prepareDoors(game, openNow) {
   const t = game.tuning;
-  const next = floorInfo(t, game.run.floor + 1);
-  const fixed = t.section.fixedDoors[next.indexInSection];
+  const next = floorSlot(t, game.seed, game.run.floor + 1);
   let rewards;
-  if (next.isBoss) {
-    rewards = [{ reward: 'boss' }];
-  } else if (fixed) {
-    rewards = fixed.map((reward) => ({ reward }));
+  if (next.doors) {
+    rewards = next.doors.map((reward) => ({ reward }));
   } else {
-    const first = weightedPick(game.rng.gen, DOOR_WEIGHTS, (d) => d.weight).reward;
+    const weights = next.doorWeights;
+    const first = weightedPick(game.rng.gen, weights, (d) => d.weight).reward;
     let second = first;
     let guard = 0;
-    while (second === first && guard++ < 20) second = weightedPick(game.rng.gen, DOOR_WEIGHTS, (d) => d.weight).reward;
+    while (second === first && guard++ < 20) second = weightedPick(game.rng.gen, weights, (d) => d.weight).reward;
     rewards = [{ reward: first }, { reward: second }];
-    if (t.section.eliteAt.includes(next.indexInSection) && first !== 'elite' && second !== 'elite') rewards[1] = { reward: 'elite' };
+    if (next.guarantee && first !== next.guarantee && second !== next.guarantee) rewards[1] = { reward: next.guarantee };
   }
   if (game.room.kind === 'boss' && !game.sandbox) rewards = [rewards[0], { reward: 'town' }];
   for (const r of rewards) if (r.reward === 'boon') r.family = randomFamily(game);
@@ -282,6 +277,8 @@ export function openInteract(game) {
     const gadgetFull = p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
     const unusable = (o) => !!(o.cost && run.gold < o.cost) || (o.effect === 'gadget1' && gadgetFull);
     choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: o.label, disabled: unusable(o) })) };
+  } else if (CALM_KINDS.includes(it.kind)) {
+    choice = describeCalm(game, it); // chambre forte, fontaine de repos (calm_rooms.mjs)
   }
   if (!choice) return;
   game.mode = 'choice';
@@ -414,6 +411,17 @@ export function applyCommand(game, cmd) {
     emit(game, 'buy', { kind: offer.kind });
     openShopRefresh(game);
     return true;
+  }
+  if (CALM_KINDS.includes(ch.kind) && cmd.type === 'choose') {
+    const res = applyCalm(game, it, cmd.index);
+    if (!res) return false;
+    if (res === 'replaced') {
+      // Objet ou relique choisi : il attend d'être touché, les portes attendent ce choix-là.
+      game.mode = 'play';
+      game.choice = null;
+      return true;
+    }
+    return closeChoice(game);
   }
   if (ch.kind === 'event' && cmd.type === 'choose') {
     const ev = EVENTS.find((e) => e.id === it.event);
