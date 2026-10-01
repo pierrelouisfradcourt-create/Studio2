@@ -449,3 +449,19 @@ test('checkpoint : vaincre un Gardien fige le build ; mourir ensuite le restaure
   assert.equal(g.run.gold, 80);
   assert.equal(g.run.floor, 7);
 });
+
+test('Gardien vaincu : ses impacts en attente et ses orbes en vol ne blessent plus', () => {
+  const g = createGame({ seed: 1, startFloor: 6 });
+  g.events.length = 0;
+  let boss = g.enemies.find((e) => e.boss);
+  for (let i = 0; i < 1200 && !g.hazards.some((h) => h.hitsPlayer); i++) stepGame(g, input());
+  assert.ok(g.hazards.some((h) => h.hitsPlayer), 'le Gardien a lancé une attaque');
+  spawnProjectile(g, { owner: 'enemy', kind: 'bossOrb', x: g.player.x + 200, y: g.player.y, vx: -300, vy: 0, r: 9, damage: 12, range: 900 });
+  boss = g.enemies.find((e) => e.boss);
+  boss.hp = 0;
+  boss.dead = true;
+  const hp0 = g.player.hp;
+  steps(g, 120);
+  assert.ok(g.player.hp >= hp0, `PV ${hp0} -> ${g.player.hp}`);
+  assert.equal(g.hazards.filter((h) => h.hitsPlayer && !h.done).length, 0);
+});

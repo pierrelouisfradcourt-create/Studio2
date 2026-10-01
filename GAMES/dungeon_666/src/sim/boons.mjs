@@ -3,7 +3,7 @@
 // combat.mjs interprète. Emplacements exclusifs (attack, dash, skill) : une nouvelle
 // bénédiction du même emplacement remplace l'ancienne. Les passifs s'empilent.
 //
-// Rareté : commun ×1, rare ×1.5, épique ×2 sur les valeurs.
+// Rareté : commun ×1, rare ×1,4, épique ×1,8 sur les valeurs.
 
 import { rand, shuffle, weightedPick } from '../core/rng.mjs';
 
@@ -19,8 +19,8 @@ export const FAMILIES = {
 
 export const RARITIES = [
   { id: 'commun', name: 'Commun', mult: 1, weight: 70 },
-  { id: 'rare', name: 'Rare', mult: 1.5, weight: 24 },
-  { id: 'epique', name: 'Épique', mult: 2, weight: 6 },
+  { id: 'rare', name: 'Rare', mult: 1.4, weight: 24 },
+  { id: 'epique', name: 'Épique', mult: 1.8, weight: 6 },
 ];
 
 // value : valeur de base (multipliée par la rareté). Les textes utilisent {v} (valeur

@@ -456,12 +456,12 @@ const DEFAULT_TUNING = {
   hitstopBank: { max: 0.22, refill: 0.22 },
   killHitstop: { elite: 0.1, boss: 0.2, lastEnemy: 0.13 },
   dash: {
-    distance: 170,
+    distance: 165,
     duration: 0.15,
-    iframes: 0.2, // depuis le début du dash (dépasse légèrement sa fin : marge d'esquive)
+    iframes: 0.18, // depuis le début du dash (dépasse sa fin d'une image : marge tactile)
     charges: 2,
     recharge: 0.9, // s par charge, rechargées l'une après l'autre
-    strikeWindow: 0.25, // une attaque lancée dans cette fenêtre après un dash = frappe de dash
+    strikeWindow: 0.2, // une attaque lancée dans cette fenêtre après un dash = frappe de dash
     strikeCancelFrom: 0.45, // attaquer quand il reste < 45 % du dash le coupe en frappe de dash
     cancelsHitstop: true, // presser dash pendant un gel d'impact l'interrompt (réactivité)
     // Esquive parfaite (un coup évité grâce aux i-frames) : récompense immédiate.
@@ -477,18 +477,19 @@ const DEFAULT_TUNING = {
   comboResetTime: 0.32, // au-delà, le prochain coup repart du coup 1
   dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.22 },
   wallSlam: { minSpeed: 380, damage: 8, stun: 0.45, hitstop: 0.05 },
-  autoAim: { range: 300, coneDeg: 80, movePreference: 0.35 },
+  // Visée assistée : la mêlée ne se tourne que vers ce qu'elle peut atteindre ; la Lance voit loin.
+  autoAim: { range: 160, skillRange: 520, coneDeg: 80, movePreference: 0.35 },
 
   // Compétence : Lance infernale — projectile perforant, visée glissée ou auto.
-  skill: { cooldown: 4.0, damage: 30, speed: 900, radius: 12, range: 540, pierce: 99, knockback: 300, hitstop: 0.05, castTime: 0.08 },
+  skill: { cooldown: 4.0, damage: 30, speed: 900, radius: 12, range: 540, pierce: 3, knockback: 300, hitstop: 0.05, castTime: 0.08 },
   // Gadget (charges, façon Brawl Stars) : Nova de cendres — onde qui repousse et étourdit.
-  gadget: { chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 12, knockback: 700, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4 },
+  gadget: { chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 20, knockback: 900, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4 },
   // Super : Colère — se remplit en infligeant des dégâts ; tourbillon invulnérable.
   super: { chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1 },
 
   enemies: {
     imp: {
-      name: 'Diablotin', radius: 13, hp: 28, speed: 150, mass: 1, damage: 8,
+      name: 'Diablotin', radius: 13, hp: 22, speed: 150, mass: 1, damage: 8,
       attackRange: 52, windup: 0.42, strikeTime: 0.14, strikeSpeed: 520, recover: 0.65, cooldown: 0.9,
       gold: [1, 3],
     },
@@ -500,46 +501,52 @@ const DEFAULT_TUNING = {
     },
     brute: {
       name: 'Brute', radius: 26, hp: 95, speed: 92, mass: 4, damage: 18,
-      attackRange: 120, windup: 0.85, slamRadius: 120, recover: 1.0, cooldown: 1.2,
+      attackRange: 110, windup: 0.7, slamRadius: 105, recover: 0.95, cooldown: 1.2,
       gold: [3, 6],
     },
     charger: {
-      name: 'Bélier', radius: 18, hp: 42, speed: 115, mass: 2, damage: 14,
-      attackRange: 420, windup: 0.7, chargeSpeed: 760, chargeMaxTime: 0.75, wallStun: 1.4, recover: 0.6, cooldown: 1.6,
+      name: 'Bélier', radius: 18, hp: 52, speed: 115, mass: 2, damage: 14,
+      attackRange: 420, windup: 0.7, chargeSpeed: 720, chargeMaxTime: 0.75, wallStun: 1.4, recover: 0.6, cooldown: 1.6,
       gold: [2, 4],
     },
     exploder: {
-      name: 'Possédé', radius: 12, hp: 12, speed: 225, mass: 0.7, damage: 16,
+      name: 'Possédé', radius: 12, hp: 10, speed: 210, mass: 0.7, damage: 16,
       triggerRange: 70, windup: 0.6, blastRadius: 90, blastHurtsEnemies: true,
       gold: [1, 2],
     },
   },
   elite: {
-    hpMult: 2.6, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
+    hpMult: 3.0, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
     // Modificateurs façon champions Diablo : un seul par élite dans le prototype.
     mods: {
-      rapide: { speedMult: 1.45, windupMult: 0.8 },
+      // Les télégraphes ne sont JAMAIS raccourcis (équité) : « rapide » accélère le déplacement.
+      rapide: { speedMult: 1.45, windupMult: 1 },
       blinde: { damageTakenMult: 0.6, knockbackMult: 0.25 },
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
     },
   },
   boss: {
     gardien: {
-      name: 'Le Gardien du Seuil', radius: 40, hp: 1900, speed: 105, mass: 12, damage: 20,
-      phase2At: 0.5,
+      name: 'Charon, le Passeur', radius: 40, hp: 1700, speed: 105, mass: 12, damage: 20,
+      phase2At: 0.66,
+      phase3At: 0.33,
+      transition: 1.5, // s d'invulnérabilité au changement de phase (rugissement, projectiles effacés)
+      reinforcements: { 2: ['imp', 'imp', 'imp', 'imp'], 3: ['archer', 'archer', 'exploder', 'exploder'] },
+      phaseHealOrb: 15,
       slam: { windup: 0.75, radius: 120, count: 3, interval: 0.45, damage: 20 },
       charge: { windup: 0.8, speed: 820, maxTime: 1.0, damage: 22, wallStun: 1.6, width: 70 },
       ring: { windup: 0.7, bullets: 18, gapCount: 3, speed: 260, radius: 9, damage: 12, waves: 2, waveInterval: 0.5 },
       summon: { windup: 0.9, count: 3, kind: 'imp' },
       restBetween: [0.6, 1.1],
-      phase2SpeedMult: 1.2,
-      phase2WindupMult: 0.85,
+      restMultByPhase: [1, 0.8, 0.6], // pauses plus courtes à chaque phase…
+      speedMultByPhase: [1, 1.05, 1.15], // … et plus de vitesse ; les télégraphes, eux, ne raccourcissent JAMAIS
+      secondChargeWindup: 0.6, // phase 3 : seconde charge enchaînée (télégraphe propre ≥ 0,5 s)
     },
   },
 
   combat: {
     critChance: 0.05, critMult: 1.75,
-    enemyFriction: 9, // décroissance exponentielle du knockback (1/s)
+    enemyFriction: 11, // décroissance exponentielle du knockback (1/s)
     enemySeparation: 0.6, // force de séparation entre ennemis
     maxAttackers: 2, // ennemis de mêlée autorisés à lancer une attaque en même temps (lisibilité)
     maxShooters: 2, // archers autorisés à viser en même temps
@@ -549,7 +556,7 @@ const DEFAULT_TUNING = {
   room: {
     width: 1400, height: 880,
     wallPad: 24,
-    spawnWarn: 0.8, // cercle d'invocation visible avant l'apparition
+    spawnWarn: 0.75, // cercle d'invocation visible avant l'apparition
     spawnMinPlayerDist: 220,
     pickupMagnetRange: 120, pickupMagnetSpeed: 700,
     healOrbAmount: 12,
@@ -562,12 +569,13 @@ const DEFAULT_TUNING = {
     sectionLength: 6,
     circleLength: 72,
     circleNames: ['Limbes', 'Luxure', 'Gourmandise', 'Avarice', 'Colère', 'Hérésie', 'Violence', 'Fraude', 'Trahison'],
-    finaleName: 'Le Trône',
-    hpGrowth: 0.085, dmgGrowth: 0.045, densityGrowth: 0.02,
+    finaleName: 'L\'Abîme',
+    // Scaling (spec §5.5) : L = niveau d'objet, B = saturation du build, C = dérive, D = dégâts.
+    itemGrowth: 0.05, buildCap: 2, buildScale: 100, driftAt666: 0.5, dmgCurve: 0.6, dmgScale: 150,
   },
 
   economy: {
-    goldPerRoom: [8, 14], shopHealPrice: 30, shopBoonPrice: 70, shopItemPrice: [60, 140],
+    goldPerRoom: [8, 14], shopHealPrice: 40, shopBoonPrice: 70, shopItemPrice: [60, 140],
     deathGoldKeep: 0.5,
   },
 
@@ -823,9 +831,10 @@ const out = { x: 0, y: -1, targetId: 0, targetDist: 0 };
  * Rend un objet PARTAGÉ {x, y, targetId, targetDist} : direction unitaire de visée.
  * `manualX/manualY` : visée explicite (0, 0 = aucune).
  */
-function computeAim(game, manualX, manualY) {
+function computeAim(game, manualX, manualY, range) {
   const p = game.player;
   const a = game.tuning.autoAim;
+  const maxRange = range ?? a.range;
   out.targetId = 0;
   out.targetDist = 0;
   const ml = Math.sqrt(manualX * manualX + manualY * manualY);
@@ -855,7 +864,7 @@ function computeAim(game, manualX, manualY) {
     const dx = e.x - p.x;
     const dy = e.y - p.y;
     const d = Math.sqrt(dx * dx + dy * dy);
-    const reach = a.range + e.r;
+    const reach = maxRange + e.r;
     if (d > reach) continue;
     // Jamais à travers un pilier : on ne vise que ce qu'on peut atteindre.
     if (!lineOfSight(game.room, p.x, p.y, e.x, e.y)) continue;
@@ -928,6 +937,11 @@ function isPlayerSource(kind) {
  */
 function damageEnemy(game, e, src) {
   if (e.dead || e.spawnT > 0) return 0;
+  if (e.invuln > 0) {
+    // Boss en transition de phase : le coup est vu, mais ne porte pas.
+    if (src.kind === 'melee' || src.kind === 'strike' || src.kind === 'skill') emit(game, 'immune', { x: e.x, y: e.y });
+    return 0;
+  }
   const t = game.tuning;
   const p = game.player;
   const st = p.stats;
@@ -1760,7 +1774,7 @@ function startCast(game, aimX, aimY) {
   const s = game.tuning.skill;
   const mx = aimX || p.manualAimX;
   const my = aimY || p.manualAimY;
-  const aim = computeAim(game, mx, my);
+  const aim = computeAim(game, mx, my, game.tuning.autoAim.skillRange);
   if (p.state === 'attack') emit(game, 'cancel', { from: 'attack' });
   p.attack = null;
   p.castDirX = aim.x;
@@ -1920,15 +1934,22 @@ function checkpointAfterBoss(tuning, bossFloor) {
   return Math.min(tuning.floors.total, bossFloor + 1);
 }
 
-/** Multiplicateurs de difficulté de l'étage (croissance linéaire, définie jusqu'à 666). */
+/**
+ * Multiplicateurs de difficulté de l'étage, définis jusqu'à 666 (spec §5.5) :
+ *   L = 1 + 0,05·(f−1)            niveau d'objet (les armes trouvées suivent la même pente)
+ *   B = 1 + 2·(1 − e^(−(f−1)/100)) saturation du build
+ *   C = 1 + 0,5·(f−1)/665          dérive de difficulté
+ *   D = 1 + 0,6·(1 − e^(−(f−1)/150))
+ *   PV = L·B·C · dégâts = L·D · densité = D. Les télégraphes, eux, ne changent jamais.
+ */
 function floorScaling(tuning, floor) {
   const f = tuning.floors;
   const k = Math.max(0, floor - 1);
-  return {
-    hp: 1 + f.hpGrowth * k,
-    damage: 1 + f.dmgGrowth * k,
-    density: 1 + f.densityGrowth * k,
-  };
+  const L = 1 + f.itemGrowth * k;
+  const B = 1 + f.buildCap * (1 - Math.exp(-k / f.buildScale));
+  const C = 1 + (f.driftAt666 * k) / (f.total - 1);
+  const D = 1 + f.dmgCurve * (1 - Math.exp(-k / f.dmgScale));
+  return { hp: L * B * C, damage: L * D, density: D };
 }
 
 return { floorInfo, checkpointAfterBoss, floorScaling };
@@ -1984,29 +2005,31 @@ return { queueSpawn, findSpawnPoint };
 })();
 // ---- src/sim/boss.mjs
 __mod["src/sim/boss.mjs"] = (() => {
-// Boss de fin de section : « Le Gardien du Seuil ». Patterns enchaînés, chacun télégraphié :
+// Boss de fin de section : « Charon, le Passeur » (premier Gardien, à l'entrée des Limbes).
+// Patterns enchaînés, chacun télégraphié :
 //   slam   — trois impacts circulaires successifs, posés là où se trouve le héros
 //   charge — ligne télégraphiée puis ruée ; s'il percute un mur, il reste sonné (punition)
 //   ring   — anneaux de projectiles avec des brèches : lire, se placer, dasher à travers
 //   summon — (phase 2) invoque des diablotins via des cercles d'invocation
-// Phase 2 à 50 % de PV : plus rapide, télégraphes plus courts, invocations.
+// Trois phases (66 % et 33 % de PV) : plus de patterns et moins de pauses, jamais de
+// télégraphe raccourci. Chaque transition : invulnérable 1,5 s, projectiles effacés, renforts.
 const { rand, randRange, pick } = __mod["src/core/rng.mjs"];
 const { dist2 } = __mod["src/core/math.mjs"];
 const { emit } = __mod["src/sim/state.mjs"];
 const { moveCircle } = __mod["src/sim/physics.mjs"];
-const { damagePlayer, spawnHazard } = __mod["src/sim/combat.mjs"];
+const { damagePlayer, spawnHazard, spawnPickup } = __mod["src/sim/combat.mjs"];
 const { spawnProjectile } = __mod["src/sim/projectiles.mjs"];
 const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
 
-const PHASE1 = ['slam', 'charge', 'ring'];
-const PHASE2 = ['slam', 'charge', 'ring', 'summon'];
+// Patterns disponibles par phase : la charge arrive en phase 2, les invocations en phase 3.
+const PATTERNS = { 1: ['slam', 'ring'], 2: ['slam', 'ring', 'charge'], 3: ['slam', 'ring', 'charge', 'summon'] };
 
 function def(game, e) {
   return game.tuning.boss[e.kind];
 }
 
-function wmult(game, e) {
-  return e.phase === 2 ? def(game, e).phase2WindupMult : 1;
+function wmult() {
+  return 1; // les télégraphes du boss ne raccourcissent jamais (équité, spec §4.1)
 }
 
 function toPlayer(game, e) {
@@ -2025,28 +2048,51 @@ function setState(e, s) {
 }
 
 function nextPattern(game, e) {
-  const list = e.phase === 2 ? PHASE2 : PHASE1;
+  const list = PATTERNS[e.phase];
   let choice = pick(game.rng.ai, list);
-  if (choice === e.pattern) choice = pick(game.rng.ai, list); // évite (sans interdire) la répétition
+  // Jamais deux fois de suite le même pattern.
+  for (let i = 0; i < 4 && choice === e.pattern; i++) choice = pick(game.rng.ai, list);
   e.pattern = choice;
+  e.secondCharge = false;
   setState(e, choice);
+}
+
+/** Changement de phase : invulnérable un instant, projectiles effacés, renforts, orbe de soin. */
+function enterPhase(game, e, d) {
+  e.phase++;
+  e.tele = null;
+  e.invuln = d.transition;
+  for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
+  for (const h of game.hazards) if (h.hitsPlayer) h.done = true;
+  for (const kind of d.reinforcements[e.phase] ?? []) {
+    const pt = findSpawnPoint(game, 14, 180, { x: e.x, y: e.y, minR: e.r + 60, maxR: e.r + 260 });
+    if (pt) queueSpawn(game, kind, pt.x, pt.y, { summoned: true });
+  }
+  spawnPickup(game, 'heal', e.x, e.y + e.r + 30, d.phaseHealOrb);
+  emit(game, 'bossPhase', { id: e.id, x: e.x, y: e.y, phase: e.phase });
+  setState(e, 'roar');
+  e.restFor = d.transition;
 }
 
 function updateBoss(game, e, dt) {
   const d = def(game, e);
-  if (e.phase === 1 && e.hp <= e.maxHp * d.phase2At) {
-    e.phase = 2;
-    e.tele = null;
-    emit(game, 'bossPhase', { id: e.id, x: e.x, y: e.y, phase: 2 });
-    setState(e, 'rest');
-    e.restFor = 0.9;
+  e.invuln = Math.max(0, (e.invuln ?? 0) - dt);
+  const threshold = e.phase === 1 ? d.phase2At : e.phase === 2 ? d.phase3At : -1;
+  if (threshold > 0 && e.hp <= e.maxHp * threshold) {
+    enterPhase(game, e, d);
     return;
   }
-  const speed = d.speed * (e.phase === 2 ? d.phase2SpeedMult : 1);
+  const speed = d.speed * d.speedMultByPhase[e.phase - 1];
   switch (e.state) {
+    case 'roar':
+      if (e.stateTime >= e.restFor) {
+        e.restFor = undefined;
+        nextPattern(game, e);
+      }
+      break;
     case 'chase':
     case 'rest': {
-      if (e.restFor === undefined) e.restFor = randRange(game.rng.ai, d.restBetween[0], d.restBetween[1]);
+      if (e.restFor === undefined) e.restFor = randRange(game.rng.ai, d.restBetween[0], d.restBetween[1]) * d.restMultByPhase[e.phase - 1];
       const tp = toPlayer(game, e);
       if (tp.d > 160) {
         e.vx = tp.dx * speed;
@@ -2091,11 +2137,11 @@ function slam(game, e, d, dt, speed) {
   e.vy = tp.dy * speed * 0.5;
   if (e.patternStep < s.count && e.patternT <= 0) {
     spawnHazard(game, {
-      shape: 'circle', x: p.x, y: p.y, r: s.radius, delay: s.windup * wmult(game, e),
+      shape: 'circle', x: p.x, y: p.y, r: s.radius, delay: s.windup * wmult(),
       damage: s.damage * e.dmgScale, kind: 'bossSlam', sourceId: 0,
     });
     e.patternStep++;
-    e.patternT = s.interval * wmult(game, e);
+    e.patternT = s.interval * wmult();
   }
   if (e.patternStep >= s.count && e.stateTime >= s.interval * s.count + s.windup) toRest(game, e);
 }
@@ -2103,7 +2149,7 @@ function slam(game, e, d, dt, speed) {
 function charge(game, e, d, dt) {
   const c = d.charge;
   const p = game.player;
-  const windup = c.windup * wmult(game, e);
+  const windup = e.secondCharge ? d.secondChargeWindup : c.windup * wmult();
   if (e.patternStep === 0) {
     if (e.stateTime < windup * 0.7) {
       const tp = toPlayer(game, e);
@@ -2134,13 +2180,19 @@ function charge(game, e, d, dt) {
     game.telemetry.wallSlams++;
     emit(game, 'chargerWall', { id: e.id, x: e.x, y: e.y, boss: true });
   } else if (e.patternT >= c.maxTime) {
+    if (e.phase === 3 && !e.secondCharge) {
+      // Phase 3 : seconde traversée enchaînée, avec son propre télégraphe.
+      e.secondCharge = true;
+      setState(e, 'charge');
+      return;
+    }
     toRest(game, e);
   }
 }
 
 function ring(game, e, d, dt) {
   const r = d.ring;
-  const windup = r.windup * wmult(game, e);
+  const windup = r.windup * wmult();
   if (e.patternStep === 0) {
     e.tele = { shape: 'circle', r: 90, progress: e.stateTime / windup };
     if (e.stateTime >= windup) {
@@ -2151,7 +2203,7 @@ function ring(game, e, d, dt) {
     return;
   }
   e.patternT -= dt;
-  const waves = r.waves + (e.phase === 2 ? 1 : 0);
+  const waves = r.waves + (e.phase - 1);
   if (e.patternStep <= waves && e.patternT <= 0) {
     // Brèches contiguës à un angle aléatoire : il y a toujours un couloir sûr.
     const n = r.bullets;
@@ -2984,6 +3036,14 @@ function updateWaves(game) {
       for (const e of game.enemies) if (!e.dead) e.dead = true;
       game.spawns.length = 0;
     }
+    // ... et ses attaques en cours aussi : aucun coup ne part d'un Gardien mort.
+    for (const h of game.hazards) {
+      if (!h.done && h.hitsPlayer) {
+        h.done = true;
+        emit(game, 'hazardCancel', { id: h.id, x: h.x, y: h.y });
+      }
+    }
+    for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
     return true;
   }
   // Vague suivante quand il ne reste presque plus personne : rythme continu.
@@ -3031,7 +3091,7 @@ __mod["src/sim/boons.mjs"] = (() => {
 // combat.mjs interprète. Emplacements exclusifs (attack, dash, skill) : une nouvelle
 // bénédiction du même emplacement remplace l'ancienne. Les passifs s'empilent.
 //
-// Rareté : commun ×1, rare ×1.5, épique ×2 sur les valeurs.
+// Rareté : commun ×1, rare ×1,4, épique ×1,8 sur les valeurs.
 const { rand, shuffle, weightedPick } = __mod["src/core/rng.mjs"];
 
 const FAMILIES = {
@@ -3046,8 +3106,8 @@ const FAMILIES = {
 
 const RARITIES = [
   { id: 'commun', name: 'Commun', mult: 1, weight: 70 },
-  { id: 'rare', name: 'Rare', mult: 1.5, weight: 24 },
-  { id: 'epique', name: 'Épique', mult: 2, weight: 6 },
+  { id: 'rare', name: 'Rare', mult: 1.4, weight: 24 },
+  { id: 'epique', name: 'Épique', mult: 1.8, weight: 6 },
 ];
 
 // value : valeur de base (multipliée par la rareté). Les textes utilisent {v} (valeur
@@ -3169,12 +3229,12 @@ const { newId } = __mod["src/sim/state.mjs"];
 
 // baseMult : multiplicateur de la valeur de base (dégâts d'arme, PV d'armure) par rareté.
 const ITEM_RARITIES = [
-  { id: 'commun', name: 'Commun', color: '#d8d4cc', affixes: 1, baseMult: 1 },
+  { id: 'commun', name: 'Commun', color: '#d8d4cc', affixes: 0, baseMult: 1 }, // blanc Diablo : la base seule
   { id: 'magique', name: 'Magique', color: '#5a8cff', affixes: 2, baseMult: 1.08 },
   { id: 'rare', name: 'Rare', color: '#ffd23c', affixes: 3, baseMult: 1.16 },
   { id: 'legendaire', name: 'Légendaire', color: '#ff8a1e', affixes: 3, baseMult: 1.25 },
 ];
-const ITEM_LEVEL_GROWTH = 0.05; // valeur de base +5 % par étage (niveau d'objet = étage)
+
 
 const SLOTS = ['arme', 'armure', 'talisman'];
 const SLOT_NAMES = { arme: 'Arme', armure: 'Armure', talisman: 'Talisman' };
@@ -3278,7 +3338,8 @@ function generateItem(game, { slot, rarity, floor } = {}) {
 }
 
 function baseValues(game, slot, level, mult) {
-  const growth = 1 + ITEM_LEVEL_GROWTH * (level - 1);
+  // Même pente que le niveau d'objet du scaling (floors.itemGrowth) : l'équipement suit la descente.
+  const growth = 1 + game.tuning.floors.itemGrowth * (level - 1);
   if (slot === 'arme') return { damage: Math.round(game.tuning.weaponBase * growth * mult * 10) / 10 };
   if (slot === 'armure') return { hp: Math.round(game.tuning.armorBase * growth * mult) };
   return {};
@@ -3653,7 +3714,10 @@ function openInteract(game) {
     choice = { kind: 'shop', gold: run.gold, offers: it.offers.map((o) => ({ ...o, item: o.item ? describeItem(o.item) : null, equipped: o.item ? describeItem(run.items[o.item.slot]) : null })) };
   } else if (it.kind === 'event') {
     const ev = EVENTS.find((e) => e.id === it.event);
-    choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: o.label, disabled: !!(o.cost && run.gold < o.cost) })) };
+    const p = game.player;
+    const gadgetFull = p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
+    const unusable = (o) => !!(o.cost && run.gold < o.cost) || (o.effect === 'gadget1' && gadgetFull);
+    choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: o.label, disabled: unusable(o) })) };
   }
   if (!choice) return;
   game.mode = 'choice';
@@ -3759,7 +3823,7 @@ function applyCommand(game, cmd) {
     const ev = EVENTS.find((e) => e.id === it.event);
     const opt = ev.options[cmd.index];
     if (!opt) return false;
-    if (opt.cost && run.gold < opt.cost) return false;
+    if (ch.options[cmd.index]?.disabled) return false;
     if (applyEvent(game, opt)) {
       // Le coffre maudit a posé un butin à ramasser : les portes attendent ce choix-là.
       game.mode = 'play';
@@ -4949,6 +5013,10 @@ const HANDLERS = {
   },
   boonGain(fx) {
     fx.flash = 0.35;
+  },
+  immune(fx, cam, ev) {
+    if (fx.texts.some((t) => t.text === 'INVULNÉRABLE' && t.life > 0.4)) return;
+    addText(fx, ev.x, ev.y - 50, 'INVULNÉRABLE', '#c9c9d6', 13, 0.6);
   },
 };
 
@@ -7429,6 +7497,7 @@ const ROUTES = table({
  */
 const SILENT_EVENTS = Object.freeze([
   'spawn', 'attackStart', 'castStart', 'cancel', 'dashEnd', 'projectileEnd', 'hazard', 'choiceClose', 'wave',
+  'immune', // boss en transition de phase : retour visuel seulement
 ]);
 
 /** Vibration (ms) demandée par une entrée annotée ; 0 = aucune. */

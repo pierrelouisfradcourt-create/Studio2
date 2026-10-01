@@ -7,12 +7,12 @@ import { newId } from './state.mjs';
 
 // baseMult : multiplicateur de la valeur de base (dégâts d'arme, PV d'armure) par rareté.
 export const ITEM_RARITIES = [
-  { id: 'commun', name: 'Commun', color: '#d8d4cc', affixes: 1, baseMult: 1 },
+  { id: 'commun', name: 'Commun', color: '#d8d4cc', affixes: 0, baseMult: 1 }, // blanc Diablo : la base seule
   { id: 'magique', name: 'Magique', color: '#5a8cff', affixes: 2, baseMult: 1.08 },
   { id: 'rare', name: 'Rare', color: '#ffd23c', affixes: 3, baseMult: 1.16 },
   { id: 'legendaire', name: 'Légendaire', color: '#ff8a1e', affixes: 3, baseMult: 1.25 },
 ];
-const ITEM_LEVEL_GROWTH = 0.05; // valeur de base +5 % par étage (niveau d'objet = étage)
+
 
 export const SLOTS = ['arme', 'armure', 'talisman'];
 export const SLOT_NAMES = { arme: 'Arme', armure: 'Armure', talisman: 'Talisman' };
@@ -116,7 +116,8 @@ export function generateItem(game, { slot, rarity, floor } = {}) {
 }
 
 function baseValues(game, slot, level, mult) {
-  const growth = 1 + ITEM_LEVEL_GROWTH * (level - 1);
+  // Même pente que le niveau d'objet du scaling (floors.itemGrowth) : l'équipement suit la descente.
+  const growth = 1 + game.tuning.floors.itemGrowth * (level - 1);
   if (slot === 'arme') return { damage: Math.round(game.tuning.weaponBase * growth * mult * 10) / 10 };
   if (slot === 'armure') return { hp: Math.round(game.tuning.armorBase * growth * mult) };
   return {};

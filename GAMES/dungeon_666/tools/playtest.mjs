@@ -31,7 +31,7 @@ const DEFAULTS = {
   seeds: 20,
   floors: 6,
   minutes: 12,
-  json: 'reports/playtest.json',
+  json: null, // JSON brut (~500 Ko) : seulement sur demande (--json), jamais versionné par défaut
   md: 'reports/playtest.md',
   policies: Object.keys(POLICIES),
   dashAudit: true,
@@ -555,7 +555,7 @@ function main() {
     return;
   }
   const report = runPlaytest(opts);
-  const files = [writeOut(opts.json, JSON.stringify(report, null, 2)), writeOut(opts.md, renderMarkdown(report))];
+  const files = [opts.json ? writeOut(opts.json, JSON.stringify(report, null, 2)) : null, writeOut(opts.md, renderMarkdown(report))].filter(Boolean);
   printSummary(report, files);
 }
 

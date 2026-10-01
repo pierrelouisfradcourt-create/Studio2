@@ -138,6 +138,7 @@ const ROUTES = table({
  */
 export const SILENT_EVENTS = Object.freeze([
   'spawn', 'attackStart', 'castStart', 'cancel', 'dashEnd', 'projectileEnd', 'hazard', 'choiceClose', 'wave',
+  'immune', // boss en transition de phase : retour visuel seulement
 ]);
 
 /** Vibration (ms) demandée par une entrée annotée ; 0 = aucune. */

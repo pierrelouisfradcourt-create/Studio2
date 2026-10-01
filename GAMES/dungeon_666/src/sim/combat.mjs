@@ -36,6 +36,11 @@ export function isPlayerSource(kind) {
  */
 export function damageEnemy(game, e, src) {
   if (e.dead || e.spawnT > 0) return 0;
+  if (e.invuln > 0) {
+    // Boss en transition de phase : le coup est vu, mais ne porte pas.
+    if (src.kind === 'melee' || src.kind === 'strike' || src.kind === 'skill') emit(game, 'immune', { x: e.x, y: e.y });
+    return 0;
+  }
   const t = game.tuning;
   const p = game.player;
   const st = p.stats;

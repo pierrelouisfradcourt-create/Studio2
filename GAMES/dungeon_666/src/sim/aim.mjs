@@ -16,9 +16,10 @@ const out = { x: 0, y: -1, targetId: 0, targetDist: 0 };
  * Rend un objet PARTAGÉ {x, y, targetId, targetDist} : direction unitaire de visée.
  * `manualX/manualY` : visée explicite (0, 0 = aucune).
  */
-export function computeAim(game, manualX, manualY) {
+export function computeAim(game, manualX, manualY, range) {
   const p = game.player;
   const a = game.tuning.autoAim;
+  const maxRange = range ?? a.range;
   out.targetId = 0;
   out.targetDist = 0;
   const ml = Math.sqrt(manualX * manualX + manualY * manualY);
@@ -48,7 +49,7 @@ export function computeAim(game, manualX, manualY) {
     const dx = e.x - p.x;
     const dy = e.y - p.y;
     const d = Math.sqrt(dx * dx + dy * dy);
-    const reach = a.range + e.r;
+    const reach = maxRange + e.r;
     if (d > reach) continue;
     // Jamais à travers un pilier : on ne vise que ce qu'on peut atteindre.
     if (!lineOfSight(game.room, p.x, p.y, e.x, e.y)) continue;

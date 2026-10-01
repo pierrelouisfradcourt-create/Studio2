@@ -409,7 +409,7 @@ function startCast(game, aimX, aimY) {
   const s = game.tuning.skill;
   const mx = aimX || p.manualAimX;
   const my = aimY || p.manualAimY;
-  const aim = computeAim(game, mx, my);
+  const aim = computeAim(game, mx, my, game.tuning.autoAim.skillRange);
   if (p.state === 'attack') emit(game, 'cancel', { from: 'attack' });
   p.attack = null;
   p.castDirX = aim.x;

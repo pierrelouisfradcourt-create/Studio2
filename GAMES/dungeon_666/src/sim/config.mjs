@@ -30,12 +30,12 @@ export const DEFAULT_TUNING = {
   hitstopBank: { max: 0.22, refill: 0.22 },
   killHitstop: { elite: 0.1, boss: 0.2, lastEnemy: 0.13 },
   dash: {
-    distance: 170,
+    distance: 165,
     duration: 0.15,
-    iframes: 0.2, // depuis le début du dash (dépasse légèrement sa fin : marge d'esquive)
+    iframes: 0.18, // depuis le début du dash (dépasse sa fin d'une image : marge tactile)
     charges: 2,
     recharge: 0.9, // s par charge, rechargées l'une après l'autre
-    strikeWindow: 0.25, // une attaque lancée dans cette fenêtre après un dash = frappe de dash
+    strikeWindow: 0.2, // une attaque lancée dans cette fenêtre après un dash = frappe de dash
     strikeCancelFrom: 0.45, // attaquer quand il reste < 45 % du dash le coupe en frappe de dash
     cancelsHitstop: true, // presser dash pendant un gel d'impact l'interrompt (réactivité)
     // Esquive parfaite (un coup évité grâce aux i-frames) : récompense immédiate.
@@ -51,18 +51,19 @@ export const DEFAULT_TUNING = {
   comboResetTime: 0.32, // au-delà, le prochain coup repart du coup 1
   dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.22 },
   wallSlam: { minSpeed: 380, damage: 8, stun: 0.45, hitstop: 0.05 },
-  autoAim: { range: 300, coneDeg: 80, movePreference: 0.35 },
+  // Visée assistée : la mêlée ne se tourne que vers ce qu'elle peut atteindre ; la Lance voit loin.
+  autoAim: { range: 160, skillRange: 520, coneDeg: 80, movePreference: 0.35 },
 
   // Compétence : Lance infernale — projectile perforant, visée glissée ou auto.
-  skill: { cooldown: 4.0, damage: 30, speed: 900, radius: 12, range: 540, pierce: 99, knockback: 300, hitstop: 0.05, castTime: 0.08 },
+  skill: { cooldown: 4.0, damage: 30, speed: 900, radius: 12, range: 540, pierce: 3, knockback: 300, hitstop: 0.05, castTime: 0.08 },
   // Gadget (charges, façon Brawl Stars) : Nova de cendres — onde qui repousse et étourdit.
-  gadget: { chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 12, knockback: 700, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4 },
+  gadget: { chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 20, knockback: 900, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4 },
   // Super : Colère — se remplit en infligeant des dégâts ; tourbillon invulnérable.
   super: { chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1 },
 
   enemies: {
     imp: {
-      name: 'Diablotin', radius: 13, hp: 28, speed: 150, mass: 1, damage: 8,
+      name: 'Diablotin', radius: 13, hp: 22, speed: 150, mass: 1, damage: 8,
       attackRange: 52, windup: 0.42, strikeTime: 0.14, strikeSpeed: 520, recover: 0.65, cooldown: 0.9,
       gold: [1, 3],
     },
@@ -74,46 +75,52 @@ export const DEFAULT_TUNING = {
     },
     brute: {
       name: 'Brute', radius: 26, hp: 95, speed: 92, mass: 4, damage: 18,
-      attackRange: 120, windup: 0.85, slamRadius: 120, recover: 1.0, cooldown: 1.2,
+      attackRange: 110, windup: 0.7, slamRadius: 105, recover: 0.95, cooldown: 1.2,
       gold: [3, 6],
     },
     charger: {
-      name: 'Bélier', radius: 18, hp: 42, speed: 115, mass: 2, damage: 14,
-      attackRange: 420, windup: 0.7, chargeSpeed: 760, chargeMaxTime: 0.75, wallStun: 1.4, recover: 0.6, cooldown: 1.6,
+      name: 'Bélier', radius: 18, hp: 52, speed: 115, mass: 2, damage: 14,
+      attackRange: 420, windup: 0.7, chargeSpeed: 720, chargeMaxTime: 0.75, wallStun: 1.4, recover: 0.6, cooldown: 1.6,
       gold: [2, 4],
     },
     exploder: {
-      name: 'Possédé', radius: 12, hp: 12, speed: 225, mass: 0.7, damage: 16,
+      name: 'Possédé', radius: 12, hp: 10, speed: 210, mass: 0.7, damage: 16,
       triggerRange: 70, windup: 0.6, blastRadius: 90, blastHurtsEnemies: true,
       gold: [1, 2],
     },
   },
   elite: {
-    hpMult: 2.6, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
+    hpMult: 3.0, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
     // Modificateurs façon champions Diablo : un seul par élite dans le prototype.
     mods: {
-      rapide: { speedMult: 1.45, windupMult: 0.8 },
+      // Les télégraphes ne sont JAMAIS raccourcis (équité) : « rapide » accélère le déplacement.
+      rapide: { speedMult: 1.45, windupMult: 1 },
       blinde: { damageTakenMult: 0.6, knockbackMult: 0.25 },
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
     },
   },
   boss: {
     gardien: {
-      name: 'Le Gardien du Seuil', radius: 40, hp: 1900, speed: 105, mass: 12, damage: 20,
-      phase2At: 0.5,
+      name: 'Charon, le Passeur', radius: 40, hp: 1700, speed: 105, mass: 12, damage: 20,
+      phase2At: 0.66,
+      phase3At: 0.33,
+      transition: 1.5, // s d'invulnérabilité au changement de phase (rugissement, projectiles effacés)
+      reinforcements: { 2: ['imp', 'imp', 'imp', 'imp'], 3: ['archer', 'archer', 'exploder', 'exploder'] },
+      phaseHealOrb: 15,
       slam: { windup: 0.75, radius: 120, count: 3, interval: 0.45, damage: 20 },
       charge: { windup: 0.8, speed: 820, maxTime: 1.0, damage: 22, wallStun: 1.6, width: 70 },
       ring: { windup: 0.7, bullets: 18, gapCount: 3, speed: 260, radius: 9, damage: 12, waves: 2, waveInterval: 0.5 },
       summon: { windup: 0.9, count: 3, kind: 'imp' },
       restBetween: [0.6, 1.1],
-      phase2SpeedMult: 1.2,
-      phase2WindupMult: 0.85,
+      restMultByPhase: [1, 0.8, 0.6], // pauses plus courtes à chaque phase…
+      speedMultByPhase: [1, 1.05, 1.15], // … et plus de vitesse ; les télégraphes, eux, ne raccourcissent JAMAIS
+      secondChargeWindup: 0.6, // phase 3 : seconde charge enchaînée (télégraphe propre ≥ 0,5 s)
     },
   },
 
   combat: {
     critChance: 0.05, critMult: 1.75,
-    enemyFriction: 9, // décroissance exponentielle du knockback (1/s)
+    enemyFriction: 11, // décroissance exponentielle du knockback (1/s)
     enemySeparation: 0.6, // force de séparation entre ennemis
     maxAttackers: 2, // ennemis de mêlée autorisés à lancer une attaque en même temps (lisibilité)
     maxShooters: 2, // archers autorisés à viser en même temps
@@ -123,7 +130,7 @@ export const DEFAULT_TUNING = {
   room: {
     width: 1400, height: 880,
     wallPad: 24,
-    spawnWarn: 0.8, // cercle d'invocation visible avant l'apparition
+    spawnWarn: 0.75, // cercle d'invocation visible avant l'apparition
     spawnMinPlayerDist: 220,
     pickupMagnetRange: 120, pickupMagnetSpeed: 700,
     healOrbAmount: 12,
@@ -136,12 +143,13 @@ export const DEFAULT_TUNING = {
     sectionLength: 6,
     circleLength: 72,
     circleNames: ['Limbes', 'Luxure', 'Gourmandise', 'Avarice', 'Colère', 'Hérésie', 'Violence', 'Fraude', 'Trahison'],
-    finaleName: 'Le Trône',
-    hpGrowth: 0.085, dmgGrowth: 0.045, densityGrowth: 0.02,
+    finaleName: 'L\'Abîme',
+    // Scaling (spec §5.5) : L = niveau d'objet, B = saturation du build, C = dérive, D = dégâts.
+    itemGrowth: 0.05, buildCap: 2, buildScale: 100, driftAt666: 0.5, dmgCurve: 0.6, dmgScale: 150,
   },
 
   economy: {
-    goldPerRoom: [8, 14], shopHealPrice: 30, shopBoonPrice: 70, shopItemPrice: [60, 140],
+    goldPerRoom: [8, 14], shopHealPrice: 40, shopBoonPrice: 70, shopItemPrice: [60, 140],
     deathGoldKeep: 0.5,
   },
 

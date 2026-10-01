@@ -183,6 +183,14 @@ export function updateWaves(game) {
       for (const e of game.enemies) if (!e.dead) e.dead = true;
       game.spawns.length = 0;
     }
+    // ... et ses attaques en cours aussi : aucun coup ne part d'un Gardien mort.
+    for (const h of game.hazards) {
+      if (!h.done && h.hitsPlayer) {
+        h.done = true;
+        emit(game, 'hazardCancel', { id: h.id, x: h.x, y: h.y });
+      }
+    }
+    for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
     return true;
   }
   // Vague suivante quand il ne reste presque plus personne : rythme continu.

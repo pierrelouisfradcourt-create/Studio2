@@ -236,7 +236,10 @@ export function openInteract(game) {
     choice = { kind: 'shop', gold: run.gold, offers: it.offers.map((o) => ({ ...o, item: o.item ? describeItem(o.item) : null, equipped: o.item ? describeItem(run.items[o.item.slot]) : null })) };
   } else if (it.kind === 'event') {
     const ev = EVENTS.find((e) => e.id === it.event);
-    choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: o.label, disabled: !!(o.cost && run.gold < o.cost) })) };
+    const p = game.player;
+    const gadgetFull = p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
+    const unusable = (o) => !!(o.cost && run.gold < o.cost) || (o.effect === 'gadget1' && gadgetFull);
+    choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: o.label, disabled: unusable(o) })) };
   }
   if (!choice) return;
   game.mode = 'choice';
@@ -342,7 +345,7 @@ export function applyCommand(game, cmd) {
     const ev = EVENTS.find((e) => e.id === it.event);
     const opt = ev.options[cmd.index];
     if (!opt) return false;
-    if (opt.cost && run.gold < opt.cost) return false;
+    if (ch.options[cmd.index]?.disabled) return false;
     if (applyEvent(game, opt)) {
       // Le coffre maudit a posé un butin à ramasser : les portes attendent ce choix-là.
       game.mode = 'play';

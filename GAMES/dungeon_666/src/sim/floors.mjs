@@ -34,13 +34,20 @@ export function checkpointAfterBoss(tuning, bossFloor) {
   return Math.min(tuning.floors.total, bossFloor + 1);
 }
 
-/** Multiplicateurs de difficulté de l'étage (croissance linéaire, définie jusqu'à 666). */
+/**
+ * Multiplicateurs de difficulté de l'étage, définis jusqu'à 666 (spec §5.5) :
+ *   L = 1 + 0,05·(f−1)            niveau d'objet (les armes trouvées suivent la même pente)
+ *   B = 1 + 2·(1 − e^(−(f−1)/100)) saturation du build
+ *   C = 1 + 0,5·(f−1)/665          dérive de difficulté
+ *   D = 1 + 0,6·(1 − e^(−(f−1)/150))
+ *   PV = L·B·C · dégâts = L·D · densité = D. Les télégraphes, eux, ne changent jamais.
+ */
 export function floorScaling(tuning, floor) {
   const f = tuning.floors;
   const k = Math.max(0, floor - 1);
-  return {
-    hp: 1 + f.hpGrowth * k,
-    damage: 1 + f.dmgGrowth * k,
-    density: 1 + f.densityGrowth * k,
-  };
+  const L = 1 + f.itemGrowth * k;
+  const B = 1 + f.buildCap * (1 - Math.exp(-k / f.buildScale));
+  const C = 1 + (f.driftAt666 * k) / (f.total - 1);
+  const D = 1 + f.dmgCurve * (1 - Math.exp(-k / f.dmgScale));
+  return { hp: L * B * C, damage: L * D, density: D };
 }

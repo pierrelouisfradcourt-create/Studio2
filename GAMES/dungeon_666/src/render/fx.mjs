@@ -229,6 +229,10 @@ const HANDLERS = {
   boonGain(fx) {
     fx.flash = 0.35;
   },
+  immune(fx, cam, ev) {
+    if (fx.texts.some((t) => t.text === 'INVULNÉRABLE' && t.life > 0.4)) return;
+    addText(fx, ev.x, ev.y - 50, 'INVULNÉRABLE', '#c9c9d6', 13, 0.6);
+  },
 };
 
 export function updateFx(fx, dt, game) {
