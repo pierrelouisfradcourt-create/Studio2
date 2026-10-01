@@ -4,6 +4,21 @@ extends RefCounted
 ## Résolution des dégâts — UN SEUL chemin pour toucher un ennemi (damage_enemy) et UN SEUL
 ## pour toucher le héros (damage_player). Les bénédictions n'exécutent pas de code : elles
 ## déclarent des « procs » (données) que ce module interprète. Pas d'import circulaire.
+##
+## VOCABULAIRE DES PROCS (bénédictions de boons, pouvoirs légendaires de loot) :
+##   on     — quand : 'hit' (un coup du héros porte ; `sources` = sortes de coups concernées),
+##            'kill' (un ennemi meurt), 'dash' (une charge de dash est dépensée), 'dodge' (esquive
+##            parfaite), 'wallSlam' (un ennemi est projeté contre un mur), 'super' (le Super est
+##            lancé), 'roomClear' (la salle est nettoyée), 'overheal' (un soin dépasse les PV max),
+##            'passive' (lu à chaque calcul de dégâts).
+##   when   — condition facultative, lue dans le contexte du déclencheur : 'finisher' (dernier coup
+##            du combo), 'untouched' (salle nettoyée sans blessure).
+##   chance — probabilité (flux rng.combat ; 1 = aucun tirage).
+##   effect — sur la CIBLE : burn | chill | vuln | chain | stun | blast | cull | gold ;
+##            sur le HÉROS : heal | surge | superCharge | dashCharge | gadgetCharge | gold (sans cible) ;
+##            AUTOUR du héros : nova (dégâts, gel facultatif) | around (`apply` = effet de cible) ;
+##            passifs : execute | fullHpBonus | goldPower | streakBonus | stunnedCrit.
+## Aucun effet ne connaît l'identifiant de la bénédiction qui le déclare.
 
 # Sources de dégâts du héros qui déclenchent les procs « au toucher ».
 const PROC_SOURCES := ["melee", "strike", "skill", "gadget", "super"]
@@ -13,7 +28,8 @@ const ARMOR_CAP := 0.6
 const HIT_FLASH := 0.1 # s : éclat d'un ennemi touché
 const HURT_FLASH := 0.35 # s : éclat du héros touché
 const BOSS_KNOCKBACK_MULT := 0.15
-const KILL_BLAST_DELAY := 0.12 # s : télégraphe de l'explosion d'un proc « blast »
+const PROC_BLAST_DELAY := 0.12 # s : télégraphe d'une explosion déclenchée par un proc « blast »
+const NOVA_CHILL_MULT := 0.5 # ralentissement posé par une déflagration qui gèle
 const PICKUP_SPEED_MIN := 80.0
 const PICKUP_SPEED_SPAN := 120.0
 const GOLD_RADIUS := 6.0
@@ -83,10 +99,20 @@ static func _scaled_amount(game: Dictionary, e: Dictionary, src: Dictionary) -> 
 				amount *= 1.0 + pr.value
 			if effect == "fullHpBonus" and p.hp >= p.maxHp:
 				amount *= 1.0 + pr.value
+			# Bourse pleine : par tranche de `per` or portée, `cap` tranches au plus.
+			if effect == "goldPower":
+				amount *= 1.0 + pr.value * minf(pr.cap, floorf(game.run.gold / pr.per))
+			# Salles nettoyées d'affilée sans blessure (run.streak, remis à zéro par un coup reçu).
+			if effect == "streakBonus":
+				amount *= 1.0 + pr.value * minf(pr.cap, D6Js.nz(game.run.get("streak"), 0.0))
+		# Élan passager du héros (effet « surge ») : dégâts en plus tant qu'il dure.
+		if _num(p, "surge") > 0.0:
+			amount *= 1.0 + p.surgeMult
 		if kind == "super":
 			amount *= D6Js.nz(st.get("superDamageMult"), 1.0)
 	if e.get("eliteMod") == "blinde":
 		amount *= t.elite.mods.blinde.damageTakenMult
+	amount *= D6FoeDefense.ward_mult(game, e) # sous l'aura d'un Porte-étendard debout (foe_defense)
 	if e.stun > 0.0:
 		amount *= t.combat.stunDamageTakenMult
 	if e.vuln > 0.0:
@@ -94,6 +120,17 @@ static func _scaled_amount(game: Dictionary, e: Dictionary, src: Dictionary) -> 
 	if _num(e, "exposed") > 0.0:
 		amount *= 1.0 + _or_nan(e.get("exposedMult")) # point faible d'un Gardien (boss_common.expose)
 	return amount
+
+## Chances de critique en plus contre une cible sonnée (proc passif « stunnedCrit »), lues AVANT
+## que ce coup ne sonne lui-même. (Dans damageEnemy : critBonus, même boucle que les dégâts.)
+static func _crit_bonus(game: Dictionary, e: Dictionary, src: Dictionary) -> float:
+	var kind = src.get("kind")
+	var bonus := 0.0
+	if is_player_source(kind) and kind != "wall":
+		for pr in game.player.procs:
+			if pr.get("effect") == "stunnedCrit" and e.stun > 0.0:
+				bonus += pr.value
+	return bonus
 
 ## Knockback, étourdissement, gel d'impact : les effets physiques d'un coup qui a porté.
 static func _apply_impact(game: Dictionary, e: Dictionary, src: Dictionary) -> void:
@@ -142,24 +179,37 @@ static func _charge_super(game: Dictionary, kind, amount: float, hp_before: floa
 		if before < 1.0 and p.superCharge >= 1.0:
 			D6State.emit(game, "superReady")
 
+# Début de damageEnemy : le coup est-il arrêté avant tout calcul (immunité, pavois) ? Il est alors
+# VU (événement), mais ne porte pas.
+static func _hit_stopped(game: Dictionary, e: Dictionary, src: Dictionary, kind) -> bool:
+	if _num(e, "invuln") > 0.0:
+		# Boss en transition de phase : le coup est vu, mais ne porte pas.
+		if kind == "melee" or kind == "strike" or kind == "skill":
+			D6State.emit(game, "immune", {"x": e.x, "y": e.y})
+		return true
+	if D6FoeDefense.front_blocked(game, e, src):
+		# Porte-pavois frappé de face : le coup sonne sur le pavois (même signal qu'une parade :
+		# étincelles et tintement, au point de contact) et ne porte pas — ni dégât, ni recul, ni étourdissement.
+		D6State.emit(game, "deflect", {"x": e.x + D6Trig.cos(e.face) * e.r, "y": e.y + D6Trig.sin(e.face) * e.r, "guard": true})
+		return true
+	return false
+
 ## Inflige des dégâts à un ennemi. `src` : {kind, amount, dirX, dirY, knockback, hitstop,
 ## canCrit, stun}. Rend les dégâts réellement infligés.
 static func damage_enemy(game: Dictionary, e: Dictionary, src: Dictionary) -> float:
 	if e.dead or e.spawnT > 0.0:
 		return 0.0
 	var kind = src.get("kind")
-	if _num(e, "invuln") > 0.0:
-		# Boss en transition de phase : le coup est vu, mais ne porte pas.
-		if kind == "melee" or kind == "strike" or kind == "skill":
-			D6State.emit(game, "immune", {"x": e.x, "y": e.y})
+	if _hit_stopped(game, e, src, kind):
 		return 0.0
 	var t: Dictionary = game.tuning
 	var st: Dictionary = game.player.stats
 	var amount := _scaled_amount(game, e, src)
+	var crit_bonus := _crit_bonus(game, e, src)
 
 	var crit := false
 	if D6Js.truthy(src.get("canCrit")):
-		var chance: float = t.combat.critChance + st.critChance
+		var chance: float = t.combat.critChance + st.critChance + crit_bonus
 		if D6Rng.rand(game.rng.combat) < chance:
 			crit = true
 			amount *= t.combat.critMult + st.critMult
@@ -200,36 +250,157 @@ static func _apply_hit_procs(game: Dictionary, e: Dictionary, src: Dictionary) -
 	for pr in p.procs:
 		if pr.get("on") != "hit" or not pr.sources.has(src.get("kind")):
 			continue
+		var cond = pr.get("when")
+		if D6Js.truthy(cond) and not D6Js.truthy(src.get(cond)):
+			continue
 		var chance = pr.get("chance")
 		if chance != null and chance < 1.0 and D6Rng.rand(game.rng.combat) >= chance:
 			continue
-		match pr.get("effect"):
-			"burn":
-				e.burn = maxf(e.burn, pr.duration)
-				e.burnDps = maxf(e.burnDps, pr.value)
-			"chill":
-				e.chill = maxf(e.chill, pr.duration)
-				# Borné : un ennemi ralenti reste un ennemi qui avance (jamais de vitesse négative).
-				var cur = e.get("chillMult")
-				if not D6Js.truthy(cur):
-					cur = 1.0
-				e.chillMult = minf(cur, maxf(game.tuning.combat.minChillMult, 1.0 - pr.value))
-			"vuln":
-				e.vuln = maxf(e.vuln, pr.duration)
-				e.vulnMult = maxf(e.vulnMult, pr.value)
-			"chain":
-				_chain_lightning(game, e, pr)
-			"gold":
-				if D6Js.truthy(e.get("summoned")):
-					continue # invocations : ni or ni Âmes (pas de ferme tant que l'invocateur vit)
-				game.run.gold += pr.value
-				D6State.emit(game, "gold", {"x": e.x, "y": e.y, "amount": pr.value})
-			_:
-				pass
+		_apply_proc(game, pr, e, src)
+
+## Déclenche les procs du moment `on` (tout sauf 'hit' et 'passive'). `target` : l'ennemi
+## concerné s'il y en a un (tué, projeté) ; `ctx` : contexte du déclencheur (conditions `when`,
+## quantité `amount` des effets « par unité »).
+static func fire_procs(game: Dictionary, moment, target = null, ctx = null) -> void:
+	var p: Dictionary = game.player
+	for pr in p.procs:
+		if pr.get("on") != moment:
+			continue
+		var cond = pr.get("when")
+		if D6Js.truthy(cond) and not (ctx is Dictionary and D6Js.truthy(ctx.get(cond))):
+			continue
+		var chance = pr.get("chance")
+		if chance != null and chance < 1.0 and D6Rng.rand(game.rng.combat) >= chance:
+			continue
+		_apply_proc(game, pr, target, ctx)
+
+## Applique l'effet d'un proc déclenché : sur le héros, autour de lui, ou sur la cible `e`.
+static func _apply_proc(game: Dictionary, pr: Dictionary, e, ctx) -> void:
+	var p: Dictionary = game.player
+	match pr.get("effect"):
+		"heal":
+			heal_player(game, pr.value, true)
+		"surge":
+			p.surge = maxf(p.surge, pr.duration)
+			p.surgeMult = maxf(p.surgeMult, pr.value)
+		"superCharge":
+			if p.state == "super":
+				return # jamais pendant le Super : il ne se recharge pas lui-même
+			var before: float = p.superCharge
+			var unit := 1.0
+			if D6Js.truthy(pr.get("perUnit")):
+				unit = D6Js.nz(ctx.get("amount"), 0.0) if ctx is Dictionary else 0.0
+			p.superCharge = minf(1.0, p.superCharge + pr.value * unit)
+			if before < 1.0 and p.superCharge >= 1.0:
+				D6State.emit(game, "superReady")
+		"dashCharge":
+			var max_dash: float = game.tuning.dash.charges + p.stats.dashChargesBonus
+			if p.dashCharges >= max_dash:
+				return
+			p.dashCharges = minf(max_dash, p.dashCharges + pr.value)
+			D6State.emit(game, "dashReady", {"charges": p.dashCharges})
+		"gadgetCharge":
+			var max_gadget: float = game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus
+			if p.gadgetCharges >= max_gadget:
+				return
+			p.gadgetCharges = minf(max_gadget, p.gadgetCharges + pr.value)
+			D6State.emit(game, "gadgetCharge", {"x": p.x, "y": p.y, "charges": p.gadgetCharges})
+		"nova":
+			_hero_nova(game, pr)
+		"around":
+			_around_hero(game, pr)
+		_:
+			_apply_target_effect(game, pr.get("effect"), pr, e, ctx)
+
+## Effet posé sur un ennemi. `src` : le coup qui l'a déclenché (garde contre le ré-étourdissement).
+static func _apply_target_effect(game: Dictionary, effect, pr: Dictionary, e, src) -> void:
+	var p: Dictionary = game.player
+	if effect == "chain":
+		_chain_lightning(game, e if e != null else p, pr) # sans cible : l'éclair part du héros
+		return
+	if effect == "gold":
+		if e != null and D6Js.truthy(e.get("summoned")):
+			return # invocations : ni or ni Âmes (pas de ferme tant que l'invocateur vit)
+		var at: Dictionary = e if e != null else p
+		var amount := D6Js.jround(pr.value)
+		game.run.gold += amount
+		D6State.emit(game, "gold", {"x": at.x, "y": at.y, "amount": amount})
+		return
+	if e == null:
+		return
+	match effect:
+		"burn":
+			e.burn = maxf(e.burn, pr.duration)
+			e.burnDps = maxf(e.burnDps, pr.value)
+		"chill":
+			e.chill = maxf(e.chill, pr.duration)
+			# Borné : un ennemi ralenti reste un ennemi qui avance (jamais de vitesse négative).
+			var cur = e.get("chillMult")
+			if not D6Js.truthy(cur):
+				cur = 1.0
+			e.chillMult = minf(cur, maxf(game.tuning.combat.minChillMult, 1.0 - pr.value))
+		"vuln":
+			e.vuln = maxf(e.vuln, pr.duration)
+			e.vulnMult = maxf(e.vulnMult, pr.value)
+		"stun":
+			# Mêmes règles que damageEnemy : jamais un Gardien, et la garde tient contre un coup d'arme.
+			if D6Js.truthy(e.get("boss")) or e.dead:
+				return
+			if _num(e, "guard") > 0.0 and src is Dictionary and game.tuning.combat.stunGuardSources.has(src.get("kind")):
+				return
+			e.stun = maxf(e.stun, pr.value)
+			e.tele = null
+			e.state = "stunned"
+			e.stateTime = 0.0
+		"blast":
+			spawn_hazard(game, {
+				"shape": "circle", "x": e.x, "y": e.y, "r": pr.radius, "delay": PROC_BLAST_DELAY, "damage": pr.value,
+				"hitsPlayer": false, "hitsEnemies": true, "kind": "sinBlast", "sourceId": 0.0,
+			})
+		"cull":
+			# Achève un ennemi affaibli (jamais un Gardien) : la mort porte la marque de l'éclair.
+			if not D6Js.truthy(e.get("boss")) and not e.dead and e.hp / e.maxHp <= pr.value:
+				kill_enemy(game, e, {"kind": "chain"})
+		_:
+			pass
+
+## Déflagration autour du héros : dégâts à tout ennemi dans le rayon, gel facultatif (`chill` s).
+static func _hero_nova(game: Dictionary, pr: Dictionary) -> void:
+	var p: Dictionary = game.player
+	var enemies: Array = game.enemies
+	var i := 0
+	while i < enemies.size():
+		var e: Dictionary = enemies[i]
+		i += 1
+		if e.dead or e.spawnT > 0.0:
+			continue
+		var rr: float = pr.radius + e.r
+		if D6Geo.dist2(p.x, p.y, e.x, e.y) < rr * rr:
+			damage_enemy(game, e, {"kind": "blast", "amount": pr.value, "dirX": 0.0, "dirY": 0.0, "canCrit": false})
+			if D6Js.truthy(pr.get("chill")):
+				e.chill = maxf(e.chill, pr.chill)
+				var cur: float = e.chillMult if D6Js.truthy(e.get("chillMult")) else 1.0
+				e.chillMult = minf(cur, NOVA_CHILL_MULT)
+	D6State.emit(game, "dashNova", {"x": p.x, "y": p.y, "r": pr.radius})
+
+## Onde sans dégâts autour du héros : pose l'effet de cible `apply` sur tout ennemi dans le rayon.
+static func _around_hero(game: Dictionary, pr: Dictionary) -> void:
+	var p: Dictionary = game.player
+	var enemies: Array = game.enemies
+	var i := 0
+	while i < enemies.size():
+		var e: Dictionary = enemies[i]
+		i += 1
+		if e.dead or e.spawnT > 0.0:
+			continue
+		var rr: float = pr.radius + e.r
+		if D6Geo.dist2(p.x, p.y, e.x, e.y) < rr * rr:
+			_apply_target_effect(game, pr.get("apply"), pr, e, null)
+	D6State.emit(game, "dashNova", {"x": p.x, "y": p.y, "r": pr.radius})
 
 static func _chain_lightning(game: Dictionary, origin: Dictionary, pr: Dictionary) -> void:
 	var cur: Dictionary = origin
-	var hit: Array = [origin.id]
+	var hit: Array = [origin.get("id")] # le héros (éclair sans cible) n'a pas d'identifiant
 	var i := 0.0
 	while i < pr.bounces:
 		i += 1.0
@@ -299,17 +470,7 @@ static func _kill_rewards(game: Dictionary, e: Dictionary, elite: bool) -> void:
 ## Procs « à la mort d'un ennemi », soin et or par ennemi tué.
 static func _kill_procs(game: Dictionary, e: Dictionary) -> void:
 	var p: Dictionary = game.player
-	for pr in p.procs:
-		if pr.get("on") != "kill":
-			continue
-		var effect = pr.get("effect")
-		if effect == "heal":
-			heal_player(game, pr.value, true)
-		if effect == "blast":
-			spawn_hazard(game, {
-				"shape": "circle", "x": e.x, "y": e.y, "r": pr.radius, "delay": KILL_BLAST_DELAY, "damage": pr.value,
-				"hitsPlayer": false, "hitsEnemies": true, "kind": "sinBlast", "sourceId": 0.0,
-			})
+	fire_procs(game, "kill", e)
 	if _num(p.stats, "healOnKill") > 0.0:
 		heal_player(game, p.stats.healOnKill, true)
 	var extra_gold := _num(p.stats, "extraGoldOnKill")
@@ -345,6 +506,10 @@ static func heal_player(game: Dictionary, amount: float, show) -> void:
 	p.hp = minf(p.maxHp, p.hp + amount)
 	if D6Js.truthy(show) and p.hp - before >= 1.0:
 		D6State.emit(game, "heal", {"x": p.x, "y": p.y, "amount": D6Js.jround(p.hp - before)})
+	# Trop-plein : les PV soignés au-delà du maximum nourrissent les procs « overheal ».
+	var over: float = before + amount - p.maxHp
+	if over > 0.0 and p.get("procs") != null:
+		fire_procs(game, "overheal", null, {"amount": over})
 
 ## Coup reçu pendant les i-frames : esquivé — et compté comme tel s'il l'est grâce à un dash.
 static func _dodge(game: Dictionary, src: Dictionary) -> void:
@@ -361,6 +526,7 @@ static func _dodge(game: Dictionary, src: Dictionary) -> void:
 			D6State.emit(game, "superReady")
 		p.dashRecharge += d.perfectDodgeRefund
 		D6State.emit(game, "dodge", {"x": p.x, "y": p.y})
+		fire_procs(game, "dodge")
 
 ## Inflige des dégâts au héros. Rend true si le coup a porté. Pendant les i-frames, le coup
 ## est esquivé — et compté comme tel s'il était évité grâce à un dash.
@@ -379,6 +545,10 @@ static func damage_player(game: Dictionary, amount: float, src: Dictionary) -> b
 	p.iframes = t.player.hurtIframes
 	p.dodgeIframes = 0.0
 	p.hurtFlash = HURT_FLASH
+	# Une blessure : la salle n'est plus « sans une égratignure », la série sans blessure retombe.
+	if D6Js.truthy(game.get("room")):
+		game.room.hurt = true
+	game.run.streak = 0.0
 	force_hitstop(game, t.player.hurtHitstop)
 	var tel: Dictionary = game.telemetry
 	tel.damageTaken += dmg

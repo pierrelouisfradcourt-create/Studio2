@@ -11,7 +11,7 @@ extends VBoxContainer
 ## dans un conteneur ou un ScrollContainer. Aucune règle ici : la table décrit, l'app applique.
 
 const Axe = preload("res://jeu/ville/axe_labo.tscn")
-const Style = preload("res://jeu/ville/style_ville.gd")
+const Style = preload("res://jeu/theme/theme.gd")
 
 var _app: Node
 var _axes: Dictionary = {} # axe -> nœud AxeLabo

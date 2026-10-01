@@ -35,7 +35,7 @@ func _carte_checkpoint(etage: float, dernier: bool) -> void:
 		"accent": Style.accent("") if dernier else Style.accent("verrouille"),
 		"boutons": [{
 			"nom": "partir", "texte": "Descendre" if dernier else "Se téléporter",
-			"genre": "primaire" if dernier else "", "cle": "depart:%s" % D6Js.num_str(etage),
+			"genre": "principal" if dernier else "", "cle": "depart:%s" % D6Js.num_str(etage),
 		}],
 	})
 	carte.action.connect(_sur_depart.bind(etage))

@@ -1,0 +1,320 @@
+{
+  "type": "objet",
+  "requis": ["classes", "weapons", "skills", "gadgets", "supers", "DEFAULT_LOADOUT"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "classes": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": ["name", "text", "cost", "passive", "stats", "weapons", "skills", "gadgets", "super"],
+        "fermé": true,
+        "champs": {
+          "name": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "cost": { "type": "nombre", "min": 0 },
+          "passive": {
+            "type": "objet",
+            "requis": ["name", "text"],
+            "fermé": true,
+            "champs": { "name": { "type": "texte", "min": 1 }, "text": { "type": "texte", "min": 1 } }
+          },
+          "stats": { "type": "objet", "chaque": { "type": "nombre" } },
+          "weapons": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+          "skills": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+          "gadgets": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+          "super": { "type": "texte", "min": 1 }
+        }
+      }
+    },
+    "weapons": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": [
+          "name",
+          "kind",
+          "className",
+          "cost",
+          "text",
+          "starterName",
+          "bases",
+          "baseMult",
+          "combo",
+          "dashStrike"
+        ],
+        "fermé": true,
+        "champs": {
+          "name": { "type": "texte", "min": 1 },
+          "kind": { "type": "texte", "valeurs": ["melee", "ranged"] },
+          "className": { "type": "texte", "min": 1 },
+          "cost": { "type": "nombre", "min": 0 },
+          "icon": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "starterName": { "type": "texte", "min": 1 },
+          "bases": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+          "baseMult": { "type": "nombre", "min": 0.1 },
+          "moveMult": { "type": "nombre", "min": 0, "max": 2 },
+          "aimRange": { "type": "nombre", "min": 0 },
+          "combo": {
+            "type": "liste",
+            "min": 1,
+            "elements": {
+              "type": "objet",
+              "requis": [
+                "startup",
+                "active",
+                "recovery",
+                "range",
+                "arc",
+                "damage",
+                "knockback",
+                "lunge",
+                "hitstop",
+                "shake"
+              ],
+              "fermé": true,
+              "champs": {
+                "startup": { "type": "nombre", "min": 0 },
+                "active": { "type": "nombre", "min": 0.01 },
+                "recovery": { "type": "nombre", "min": 0 },
+                "range": { "type": "nombre", "min": 0 },
+                "arc": { "type": "nombre", "min": 0, "max": 360 },
+                "damage": { "type": "nombre", "min": 0 },
+                "knockback": { "type": "nombre", "min": 0 },
+                "lunge": { "type": "nombre" },
+                "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+                "shake": { "type": "nombre", "min": 0, "max": 2 },
+                "cancelFrom": { "type": "nombre", "min": 0, "max": 1 },
+                "stun": { "type": "nombre", "min": 0 },
+                "shot": {
+                  "type": "objet",
+                  "requis": ["kind", "speed", "radius", "pierce", "count"],
+                  "fermé": true,
+                  "champs": {
+                    "kind": { "type": "texte", "valeurs": ["arrow", "bolt"] },
+                    "speed": { "type": "nombre", "min": 1 },
+                    "radius": { "type": "nombre", "min": 1 },
+                    "pierce": { "type": "entier", "min": 0 },
+                    "count": { "type": "entier", "min": 1 },
+                    "heavy": { "type": "booleen" }
+                  }
+                }
+              }
+            }
+          },
+          "dashStrike": {
+            "type": "objet",
+            "requis": [
+              "startup",
+              "active",
+              "recovery",
+              "range",
+              "arc",
+              "damage",
+              "knockback",
+              "lunge",
+              "hitstop",
+              "shake"
+            ],
+            "fermé": true,
+            "champs": {
+              "startup": { "type": "nombre", "min": 0 },
+              "active": { "type": "nombre", "min": 0.01 },
+              "recovery": { "type": "nombre", "min": 0 },
+              "range": { "type": "nombre", "min": 0 },
+              "arc": { "type": "nombre", "min": 0, "max": 360 },
+              "damage": { "type": "nombre", "min": 0 },
+              "knockback": { "type": "nombre", "min": 0 },
+              "lunge": { "type": "nombre" },
+              "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+              "shake": { "type": "nombre", "min": 0, "max": 2 },
+              "cancelFrom": { "type": "nombre", "min": 0, "max": 1 },
+              "stun": { "type": "nombre", "min": 0 },
+              "shot": {
+                "type": "objet",
+                "requis": ["kind", "speed", "radius", "pierce", "count"],
+                "fermé": true,
+                "champs": {
+                  "kind": { "type": "texte", "valeurs": ["arrow", "bolt"] },
+                  "speed": { "type": "nombre", "min": 1 },
+                  "radius": { "type": "nombre", "min": 1 },
+                  "pierce": { "type": "entier", "min": 0 },
+                  "count": { "type": "entier", "min": 1 },
+                  "heavy": { "type": "booleen" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": [
+          "name",
+          "kind",
+          "text",
+          "cost",
+          "cooldown",
+          "castTime",
+          "damage",
+          "radius",
+          "range",
+          "knockback",
+          "hitstop"
+        ],
+        "fermé": true,
+        "champs": {
+          "name": { "type": "texte", "min": 1 },
+          "kind": { "type": "texte", "valeurs": ["lance", "chain", "bond", "brasier", "volee"] },
+          "icon": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "cost": { "type": "nombre", "min": 0 },
+          "cooldown": { "type": "nombre", "min": 0 },
+          "castTime": { "type": "nombre", "min": 0 },
+          "damage": { "type": "nombre", "min": 0 },
+          "speed": { "type": "nombre", "min": 1 },
+          "radius": { "type": "nombre", "min": 1 },
+          "range": { "type": "nombre", "min": 0 },
+          "minRange": { "type": "nombre", "min": 0 },
+          "pierce": { "type": "entier", "min": 0 },
+          "knockback": { "type": "nombre", "min": 0 },
+          "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+          "shake": { "type": "nombre", "min": 0, "max": 2 },
+          "stun": { "type": "nombre", "min": 0 },
+          "pullGap": { "type": "nombre", "min": 0 },
+          "pullMass": { "type": "nombre", "min": 0 },
+          "recoil": { "type": "nombre", "min": 0 },
+          "leapTime": { "type": "nombre", "min": 0.02 },
+          "iframesGrace": { "type": "nombre", "min": 0 },
+          "throwDist": { "type": "nombre", "min": 0 },
+          "flight": { "type": "nombre", "min": 0.02 },
+          "duration": { "type": "nombre", "min": 0 },
+          "tick": { "type": "nombre", "min": 0.02 },
+          "burnDps": { "type": "nombre", "min": 0 },
+          "burnRefresh": { "type": "nombre", "min": 0 },
+          "count": { "type": "entier", "min": 1 },
+          "spread": { "type": "nombre", "min": 0, "max": 360 }
+        }
+      }
+    },
+    "gadgets": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": [
+          "name",
+          "kind",
+          "text",
+          "cost",
+          "chargesPerSection",
+          "chargeOnEliteKill",
+          "radius",
+          "damage",
+          "knockback",
+          "hitstop"
+        ],
+        "fermé": true,
+        "champs": {
+          "name": { "type": "texte", "min": 1 },
+          "kind": { "type": "texte", "valeurs": ["nova", "bombe", "piege", "cri", "totem"] },
+          "icon": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "cost": { "type": "nombre", "min": 0 },
+          "chargesPerSection": { "type": "entier", "min": 1 },
+          "chargeOnEliteKill": { "type": "entier", "min": 0 },
+          "radius": { "type": "nombre", "min": 1 },
+          "blastRadius": { "type": "nombre", "min": 1 },
+          "damage": { "type": "nombre", "min": 0 },
+          "knockback": { "type": "nombre", "min": 0 },
+          "stun": { "type": "nombre", "min": 0 },
+          "iframes": { "type": "nombre", "min": 0 },
+          "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+          "shake": { "type": "nombre", "min": 0, "max": 2 },
+          "range": { "type": "nombre", "min": 0 },
+          "throwDist": { "type": "nombre", "min": 0 },
+          "flight": { "type": "nombre", "min": 0.02 },
+          "fuse": { "type": "nombre", "min": 0 },
+          "armTime": { "type": "nombre", "min": 0 },
+          "life": { "type": "nombre", "min": 0.02 },
+          "maxActive": { "type": "entier", "min": 1 },
+          "vuln": { "type": "nombre", "min": 0 },
+          "vulnMult": { "type": "nombre", "min": 0 },
+          "pulse": { "type": "nombre", "min": 0.02 },
+          "chill": { "type": "nombre", "min": 0 },
+          "chillMult": { "type": "nombre", "min": 0, "max": 1 }
+        }
+      }
+    },
+    "supers": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": ["name", "kind", "text", "startCharge", "chargeDamage", "duration", "speedMult", "radius"],
+        "fermé": true,
+        "champs": {
+          "name": { "type": "texte", "min": 1 },
+          "kind": { "type": "texte", "valeurs": ["colere", "sentence", "nuee"] },
+          "icon": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "startCharge": { "type": "nombre", "min": 0, "max": 1 },
+          "chargeDamage": { "type": "nombre", "min": 1 },
+          "duration": { "type": "nombre", "min": 0.02 },
+          "speedMult": { "type": "nombre", "min": 0 },
+          "radius": { "type": "nombre", "min": 1 },
+          "tickInterval": { "type": "nombre", "min": 0.02 },
+          "damagePerTick": { "type": "nombre", "min": 0 },
+          "knockback": { "type": "nombre", "min": 0 },
+          "shakePerTick": { "type": "nombre", "min": 0, "max": 2 },
+          "aimRange": { "type": "nombre", "min": 0 },
+          "interval": { "type": "nombre", "min": 0.02 },
+          "targets": { "type": "entier", "min": 1 },
+          "damage": { "type": "nombre", "min": 0 },
+          "speed": { "type": "nombre", "min": 1 },
+          "shotRadius": { "type": "nombre", "min": 1 },
+          "range": { "type": "nombre", "min": 0 },
+          "pierce": { "type": "entier", "min": 0 },
+          "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+          "strikes": {
+            "type": "liste",
+            "min": 1,
+            "elements": {
+              "type": "objet",
+              "requis": ["at", "range", "arc", "damage", "knockback", "hitstop", "shake"],
+              "fermé": true,
+              "champs": {
+                "at": { "type": "nombre", "min": 0 },
+                "range": { "type": "nombre", "min": 0 },
+                "arc": { "type": "nombre", "min": 0, "max": 360 },
+                "damage": { "type": "nombre", "min": 0 },
+                "knockback": { "type": "nombre", "min": 0 },
+                "stun": { "type": "nombre", "min": 0 },
+                "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+                "shake": { "type": "nombre", "min": 0, "max": 2 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "DEFAULT_LOADOUT": {
+      "type": "objet",
+      "requis": ["classId", "skillId", "gadgetId"],
+      "fermé": true,
+      "champs": {
+        "classId": { "type": "texte", "min": 1 },
+        "skillId": { "type": "texte", "min": 1 },
+        "gadgetId": { "type": "texte", "min": 1 }
+      }
+    }
+  }
+}

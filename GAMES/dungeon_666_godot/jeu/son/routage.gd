@@ -116,7 +116,7 @@ const RECETTE_PAR_CHAMP := {
 	"super": ["super", "super_", ["sentence", "nuee"], "super"],
 	"superTick": ["super", "super_coup_", ["sentence", "nuee"], "super_coup"],
 	"boonGain": ["rarity", "benediction_", ["commun", "rare", "epique"], "benediction_commun"],
-	"enemyAttack": ["enemy", "cri_", ["imp", "archer", "brute", "charger", "pyromancer", "necromancer", "summon", "boss", "bossRing", "cerbere", "minos", "colosse"], "cri_defaut"],
+	"enemyAttack": ["enemy", "cri_", ["imp", "archer", "brute", "charger", "pyromancer", "necromancer", "summon", "pavois", "stalker", "boss", "bossRing", "cerbere", "minos", "colosse"], "cri_defaut"],
 }
 ## Sons dont la recette (ou la superposition) se décide par plusieurs champs : voir `parties`.
 const RECETTES_COMPOSEES := {
@@ -138,6 +138,7 @@ const HAUTEUR_GARDIEN := 0.7
 const HAUTEUR_ENNEMI := {
 	"imp": 1.1, "archer": 1.05, "exploder": 1.15, "charger": 0.92, "brute": 0.8,
 	"gardien": HAUTEUR_GARDIEN, "boss": HAUTEUR_GARDIEN, "pyromancer": 1.08, "necromancer": 1.0,
+	"pavois": 0.86, "stalker": 1.12, "banner": 0.95, # lourd et cuirassé ; mince et vif ; porteur moyen
 }
 const CRIS_DE_GARDIEN := ["boss", "bossRing", "cerbere", "minos", "colosse"]
 const ARMES_LOURDES := ["arbalete"]
@@ -164,6 +165,7 @@ const STYLE_ZONE := {
 	"bombe": [0.85, 1.1, false], "piege": [1.4, 0.6, false], "bond": [0.7, 1.1, false],
 	"brasier": [1.2, 0.55, false],
 	"pyre": [1.2, 0.55, true], # cercle de la Pyromancienne qui s'embrase
+	"stalker": [1.25, 0.8, false], # frappe de lames du Traqueur : plus sèche et plus aiguë qu'une masse
 }
 ## Variantes rejouées autrement : [hauteur, gain] quand le champ nommé est vrai.
 const VARIANTE_FORTE := {

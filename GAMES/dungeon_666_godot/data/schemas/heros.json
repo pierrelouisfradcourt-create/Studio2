@@ -1,0 +1,160 @@
+{
+  "type": "objet",
+  "requis": [
+    "player",
+    "weaponBase",
+    "armorBase",
+    "hitstopBank",
+    "hitstopMode",
+    "killHitstop",
+    "dash",
+    "comboResetTime",
+    "comboCancelFrom",
+    "wallSlam",
+    "autoAim",
+    "combat"
+  ],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "player": {
+      "type": "objet",
+      "requis": [
+        "radius",
+        "maxHp",
+        "speed",
+        "accelTime",
+        "decelTime",
+        "attackMoveMult",
+        "hurtIframes",
+        "hurtHitstop",
+        "cancelMult",
+        "inputBuffer",
+        "attackBuffer",
+        "innateHp"
+      ],
+      "fermé": true,
+      "champs": {
+        "radius": { "type": "nombre", "min": 1 },
+        "maxHp": { "type": "nombre", "min": 1 },
+        "speed": { "type": "nombre", "min": 1 },
+        "accelTime": { "type": "nombre", "min": 0 },
+        "decelTime": { "type": "nombre", "min": 0 },
+        "attackMoveMult": { "type": "nombre", "min": 0, "max": 2 },
+        "hurtIframes": { "type": "nombre", "min": 0 },
+        "hurtHitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+        "cancelMult": { "type": "nombre", "min": 0 },
+        "inputBuffer": { "type": "nombre", "min": 0, "max": 1 },
+        "attackBuffer": { "type": "nombre", "min": 0, "max": 1 },
+        "innateHp": { "type": "nombre", "min": 0 }
+      }
+    },
+    "weaponBase": { "type": "nombre", "min": 0 },
+    "armorBase": { "type": "nombre", "min": 0 },
+    "hitstopBank": {
+      "type": "objet",
+      "requis": ["max", "refill"],
+      "fermé": true,
+      "champs": { "max": { "type": "nombre", "min": 0, "max": 1 }, "refill": { "type": "nombre", "min": 0 } }
+    },
+    "hitstopMode": { "type": "texte", "valeurs": ["global", "local"] },
+    "killHitstop": {
+      "type": "objet",
+      "requis": ["elite", "boss", "lastEnemy"],
+      "fermé": true,
+      "champs": {
+        "elite": { "type": "nombre", "min": 0, "max": 0.5 },
+        "boss": { "type": "nombre", "min": 0, "max": 0.5 },
+        "lastEnemy": { "type": "nombre", "min": 0, "max": 0.5 }
+      }
+    },
+    "dash": {
+      "type": "objet",
+      "requis": [
+        "distance",
+        "duration",
+        "iframes",
+        "charges",
+        "recharge",
+        "strikeWindow",
+        "strikeCancelFrom",
+        "cancelsHitstop",
+        "perfectDodgeSuper",
+        "perfectDodgeRefund"
+      ],
+      "fermé": true,
+      "champs": {
+        "distance": { "type": "nombre", "min": 1 },
+        "duration": { "type": "nombre", "min": 0.02 },
+        "iframes": { "type": "nombre", "min": 0 },
+        "charges": { "type": "entier", "min": 1 },
+        "recharge": { "type": "nombre", "min": 0 },
+        "strikeWindow": { "type": "nombre", "min": 0 },
+        "strikeCancelFrom": { "type": "nombre", "min": 0, "max": 1 },
+        "cancelsHitstop": { "type": "booleen" },
+        "perfectDodgeSuper": { "type": "nombre", "min": 0, "max": 1 },
+        "perfectDodgeRefund": { "type": "nombre", "min": 0, "max": 1 }
+      }
+    },
+    "comboResetTime": { "type": "nombre", "min": 0 },
+    "comboCancelFrom": {
+      "type": "objet",
+      "requis": ["hits", "strike"],
+      "fermé": true,
+      "champs": {
+        "hits": { "type": "liste", "min": 1, "elements": { "type": "nombre", "min": 0, "max": 1 } },
+        "strike": { "type": "nombre", "min": 0, "max": 1 }
+      }
+    },
+    "wallSlam": {
+      "type": "objet",
+      "requis": ["minSpeed", "damage", "stun", "hitstop"],
+      "fermé": true,
+      "champs": {
+        "minSpeed": { "type": "nombre", "min": 0 },
+        "damage": { "type": "nombre", "min": 0 },
+        "stun": { "type": "nombre", "min": 0 },
+        "hitstop": { "type": "nombre", "min": 0, "max": 0.5 }
+      }
+    },
+    "autoAim": {
+      "type": "objet",
+      "requis": ["range", "skillRange", "coneDeg", "movePreference"],
+      "fermé": true,
+      "champs": {
+        "range": { "type": "nombre", "min": 0 },
+        "skillRange": { "type": "nombre", "min": 0 },
+        "coneDeg": { "type": "nombre", "min": 0, "max": 360 },
+        "movePreference": { "type": "nombre", "min": 0, "max": 1 }
+      }
+    },
+    "combat": {
+      "type": "objet",
+      "requis": [
+        "critChance",
+        "critMult",
+        "enemyFriction",
+        "enemySeparation",
+        "maxAttackers",
+        "maxShooters",
+        "stunDamageTakenMult",
+        "stunGuard",
+        "stunGuardSources",
+        "minChillMult"
+      ],
+      "fermé": true,
+      "champs": {
+        "critChance": { "type": "nombre", "min": 0, "max": 1 },
+        "critMult": { "type": "nombre", "min": 1 },
+        "enemyFriction": { "type": "nombre", "min": 0 },
+        "enemySeparation": { "type": "nombre", "min": 0 },
+        "maxAttackers": { "type": "entier", "min": 1 },
+        "maxShooters": { "type": "entier", "min": 1 },
+        "stunDamageTakenMult": { "type": "nombre", "min": 1 },
+        "stunGuard": { "type": "nombre", "min": 0 },
+        "stunGuardSources": { "type": "liste", "elements": { "type": "texte", "min": 1 } },
+        "minChillMult": { "type": "nombre", "min": 0, "max": 1 }
+      }
+    }
+  }
+}

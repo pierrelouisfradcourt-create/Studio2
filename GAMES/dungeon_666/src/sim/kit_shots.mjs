@@ -22,7 +22,7 @@ const MUZZLE = 0.5; // × rayon du héros : point de départ d'un tir (à bout p
 export function spawnShot(game, s) {
   const shot = {
     id: newId(game), kind: 'arrow', traveled: 0, pierce: 0, hitIds: [], knockback: 0, hitstop: 0, shake: 0,
-    stun: 0, pull: null, heavy: false, dead: false, ...s,
+    stun: 0, pull: null, heavy: false, finisher: false, dead: false, ...s,
   };
   kitStore(game).shots.push(shot);
   return shot;
@@ -58,6 +58,7 @@ export function fireWeaponShots(game, a) {
       shake: def.shake,
       stun: def.stun ?? 0,
       heavy: !!sh.heavy || a.strike,
+      finisher: !!a.finisher,
     });
   }
 }
@@ -104,7 +105,7 @@ export function updateShots(game, dt) {
       s.hitIds.push(e.id);
       damageEnemy(game, e, {
         kind: s.source, amount: s.damage, dirX: s.vx / speed, dirY: s.vy / speed,
-        knockback: s.knockback, hitstop: s.hitstop, canCrit: true, shake: s.shake, stun: s.stun,
+        knockback: s.knockback, hitstop: s.hitstop, canCrit: true, shake: s.shake, stun: s.stun, finisher: s.finisher,
       });
       if (s.pull) hook(game, s, e);
       if (s.hitIds.length > s.pierce) {

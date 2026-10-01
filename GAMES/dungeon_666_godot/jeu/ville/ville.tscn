@@ -13,6 +13,7 @@
 [sub_resource type="ButtonGroup" id="groupe"]
 
 [node name="Ville" type="CanvasLayer"]
+layer = 20
 script = ExtResource("1")
 
 [node name="Racine" type="Control" parent="."]
@@ -61,13 +62,13 @@ theme_override_constants/separation = 0
 
 [node name="Surtitre" type="Label" parent="Racine/Marges/Cadre/Colonne/Entete/Titres"]
 layout_mode = 2
-theme_type_variation = &"Surtitre"
+theme_type_variation = &"SurTitre"
 text = "Dité · la cité des damnés"
 uppercase = true
 
 [node name="Titre" type="Label" parent="Racine/Marges/Cadre/Colonne/Entete/Titres"]
 layout_mode = 2
-theme_type_variation = &"TitreVille"
+theme_type_variation = &"TitreEcran"
 text = "Ville de Dité"
 
 [node name="Bourse" type="HBoxContainer" parent="Racine/Marges/Cadre/Colonne/Entete"]
@@ -87,7 +88,7 @@ text = "● 0 or"
 
 [node name="Classe" type="Label" parent="Racine/Marges/Cadre/Colonne/Entete/Bourse"]
 layout_mode = 2
-theme_type_variation = &"Note"
+theme_type_variation = &"TexteDoux"
 text = "Classe · record étage 1"
 
 [node name="Retour" type="Button" parent="Racine/Marges/Cadre/Colonne/Entete"]
@@ -201,7 +202,7 @@ layout_mode = 2
 
 [node name="Pied" type="Label" parent="Racine/Marges/Cadre/Colonne"]
 layout_mode = 2
-theme_type_variation = &"Sous"
+theme_type_variation = &"Petit"
 text = "PERMANENT — tout ce qui s'achète ou se choisit ici survit à la mort. Les bénédictions du donjon, elles, meurent avec la descente."
 autowrap_mode = 3
 

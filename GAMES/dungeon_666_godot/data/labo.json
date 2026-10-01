@@ -1,0 +1,64 @@
+{
+  "_note": "Le labo du feel : la variante active de chaque axe (lab) et ce que chaque variante règle (LAB_AXES ; « set » : chemin du réglage -> valeur).",
+  "lab": { "dashStrike": "fin", "hitstop": "global", "comboMobility": "mobile" },
+  "LAB_AXES": {
+    "dashStrike": {
+      "label": "D5 · Frappe de dash",
+      "reference": "fin",
+      "options": {
+        "fin": {
+          "label": "Fin du dash",
+          "text": "Attaquer dans le dernier 45 % du dash ou juste après.",
+          "set": { "dash.strikeCancelFrom": 0.45, "dash.strikeWindow": 0.3 }
+        },
+        "toutDash": {
+          "label": "Tout le dash",
+          "text": "Attaquer à n'importe quel moment du dash le coupe en frappe.",
+          "set": { "dash.strikeCancelFrom": 1, "dash.strikeWindow": 0.3 }
+        },
+        "apresDash": {
+          "label": "Après le dash",
+          "text": "Le dash va au bout ; une attaque juste après devient frappe.",
+          "set": { "dash.strikeCancelFrom": 0, "dash.strikeWindow": 0.3 }
+        }
+      }
+    },
+    "hitstop": {
+      "label": "D8 · Gel d'impact",
+      "reference": "global",
+      "options": {
+        "global": {
+          "label": "Global",
+          "text": "Toute la scène se fige à l'impact.",
+          "set": { "hitstopMode": "global" }
+        },
+        "local": {
+          "label": "Local",
+          "text": "Seuls le héros et ses cibles se figent ; le reste continue.",
+          "set": { "hitstopMode": "local" }
+        }
+      }
+    },
+    "comboMobility": {
+      "label": "D9 · Mobilité du combo",
+      "reference": "mobile",
+      "options": {
+        "ancre": {
+          "label": "Ancré",
+          "text": "20 % de vitesse, annulations tardives.",
+          "set": { "player.attackMoveMult": 0.2, "player.cancelMult": 1.6 }
+        },
+        "mobile": {
+          "label": "Mobile",
+          "text": "50 % de vitesse, annulations de référence.",
+          "set": { "player.attackMoveMult": 0.5, "player.cancelMult": 1 }
+        },
+        "fluide": {
+          "label": "Fluide",
+          "text": "75 % de vitesse, annulations très tôt.",
+          "set": { "player.attackMoveMult": 0.75, "player.cancelMult": 0.35 }
+        }
+      }
+    }
+  }
+}

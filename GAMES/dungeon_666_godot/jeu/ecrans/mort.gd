@@ -13,6 +13,7 @@ const LARGEUR := 760.0
 const TITRE_PART := 0.078 # clamp(30px, 6vw, 56px) du web, rapporté au panneau
 const TITRE_MIN := 30
 const TITRE_MAX := 56
+const TITRE_PART_HAUTEUR := 0.13 # sur un écran bas (téléphone en paysage), le titre cède la place
 const SEP := " · "
 const GARDE := "Classe, armes, équipement et coffre, compétences, améliorations de la Ville, checkpoints."
 
@@ -23,6 +24,8 @@ const GARDE := "Classe, armes, équipement et coffre, compétences, amélioratio
 @onready var _garde: PanelContainer = %Garde
 @onready var _repartir: Button = %Repartir
 @onready var _ville: Button = %Ville
+
+var _place_y := 1000.0
 
 func _ready() -> void:
 	resized.connect(_tailler_titre)
@@ -62,17 +65,24 @@ func _remplir_recap(r: Dictionary) -> void:
 	if not r.boonNames.is_empty():
 		lignes.append(SEP.join(r.boonNames))
 	lignes.append("Charon a prélevé %s or." % D6Js.num_str(r.goldLost))
-	_perdu.remplir({
-		"accent": Couleurs.UI.blood.lightened(0.15), "sur_titre": "Perdu · temporaire",
-		"titre": _compte(r.boonsLost, "bénédiction", "bénédictions"), "texte": "\n".join(lignes),
+	_perdu.decrire({
+		"accent": Couleurs.UI.blood.lightened(0.15), "surtitre": "Perdu · temporaire",
+		"titre": _compte(r.boonsLost, "bénédiction", "bénédictions"), "lignes": lignes,
 	})
-	_garde.remplir({
-		"accent": Couleurs.UI.cyan, "sur_titre": "Gardé · permanent",
-		"titre": "◆ %s Âmes (+%s)" % [D6Js.num_str(r.souls), D6Js.num_str(r.soulsEarned)], "texte": GARDE,
+	_garde.decrire({
+		"accent": Couleurs.UI.cyan, "surtitre": "Gardé · permanent",
+		"titre": "◆ %s Âmes (+%s)" % [D6Js.num_str(r.souls), D6Js.num_str(r.soulsEarned)], "lignes": [GARDE],
 	})
 
 static func _compte(n: float, singulier: String, pluriel: String) -> String:
 	return D6Js.num_str(n) + " " + (pluriel if n > 1.0 else singulier)
 
+## La place offerte au panneau (posée par Ecrans) : le titre s'y mesure.
+func tenir_dans(place: Vector2) -> void:
+	if not is_equal_approx(place.y, _place_y):
+		_place_y = place.y
+		_tailler_titre()
+
 func _tailler_titre() -> void:
-	_titre.add_theme_font_size_override("font_size", clampi(int(size.x * TITRE_PART), TITRE_MIN, TITRE_MAX))
+	var taille := minf(size.x * TITRE_PART, _place_y * TITRE_PART_HAUTEUR)
+	_titre.add_theme_font_size_override("font_size", clampi(int(taille), TITRE_MIN, TITRE_MAX))

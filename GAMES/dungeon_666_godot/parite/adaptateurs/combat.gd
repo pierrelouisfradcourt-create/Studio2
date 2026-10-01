@@ -60,6 +60,8 @@ static func _play(game: Dictionary, op: Array):
 			game.enemies[int(op[1])].stun = op[2]
 		"cleared":
 			game.room.cleared = true
+		"fireProcs":
+			D6Combat.fire_procs(game, op[1], game.enemies[int(op[2])] if op[2] != null else null, op[3])
 		_:
 			assert(false, "opération de scénario inconnue : %s" % str(op[0]))
 	return null

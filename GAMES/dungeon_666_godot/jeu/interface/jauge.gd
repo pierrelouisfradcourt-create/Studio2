@@ -9,8 +9,17 @@ const TENUE := 0.35 # s pendant lesquelles la vie perdue reste entière
 const VIDANGE := 1.2 # fraction de la barre vidée par seconde ensuite
 const CHOC := 0.25 # s de tressaillement du cadre
 const GONFLE := 2.0 # px ajoutés au cadre au moment du coup
+const ECLAT_COUP := 0.2 # part de blanc dans la barre au moment du coup (elle reste de SA couleur)
+const RELIEF := 0.16 # lumière sur la moitié haute de la barre, ombre sur le bas
+const LISERE := 3.0 # px entre le cadre et le liseré d'apparat
 
 var marques: Array = []
+## Liseré d'apparat autour du cadre (la barre du Gardien) ; transparent : aucun.
+var lisere := Color.TRANSPARENT:
+	set(v):
+		if v != lisere:
+			lisere = v
+			queue_redraw()
 
 var _frac := -1.0
 var _fantome := -1.0
@@ -56,11 +65,22 @@ func _draw() -> void:
 	var encre: Color = Couleurs.UI["void"]
 	draw_rect(cadre, Couleurs.PAL.hpBack)
 	_bande(cadre, _fantome, Color(Couleurs.PAL.hero, 0.8))
-	_bande(cadre, _frac, _couleur.lerp(Couleurs.PAL.hero, 0.6 * k))
+	_bande(cadre, _frac, _couleur.lerp(Couleurs.PAL.hero, ECLAT_COUP * k))
+	_relief(cadre)
 	for m in marques:
 		var x: float = cadre.position.x + cadre.size.x * float(m)
 		draw_line(Vector2(x, cadre.position.y), Vector2(x, cadre.end.y), Color(encre, 0.85), 2.0)
 	draw_rect(cadre, Color(encre, 0.8).lerp(Couleurs.PAL.hero, k), false, 2.0)
+	if lisere.a > 0.0:
+		draw_rect(cadre.grow(LISERE), Color(lisere, 0.7), false, 1.0)
+
+## Un peu de volume : la moitié haute de la vie restante accroche la lumière, le bas s'assombrit.
+func _relief(cadre: Rect2) -> void:
+	if _frac <= 0.0:
+		return
+	var plein := Vector2(cadre.size.x * _frac, cadre.size.y)
+	draw_rect(Rect2(cadre.position, Vector2(plein.x, plein.y * 0.4)), Color(1.0, 1.0, 1.0, RELIEF))
+	draw_rect(Rect2(cadre.position + Vector2(0.0, plein.y * 0.75), Vector2(plein.x, plein.y * 0.25)), Color(0.0, 0.0, 0.0, RELIEF))
 
 func _bande(cadre: Rect2, frac: float, col: Color) -> void:
 	if frac > 0.0:

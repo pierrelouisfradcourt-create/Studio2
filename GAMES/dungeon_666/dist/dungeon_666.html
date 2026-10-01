@@ -937,6 +937,9 @@ __mod["src/sim/foe_data.mjs"] = (() => {
 //   kamikaze       -> exploder (Possédé)
 //   ZONE           -> pyromancer (Pyromancienne, foe_pyromancer.mjs) — NOUVEAU
 //   INVOCATEUR     -> necromancer (Nécromancien, foe_necromancer.mjs) — NOUVEAU
+//   GARDE DE FACE  -> pavois (Porte-pavois, foe_pavois.mjs) — 2026-10-01 : on passe DERRIÈRE lui
+//   EMBUSCADE      -> stalker (Traqueur, foe_stalker.mjs) — 2026-10-01 : il resurgit dans le dos
+//   SOUTIEN        -> banner (Porte-étendard, foe_banner.mjs) — 2026-10-01 : il protège les autres
 //   ÉLITE          -> modificateurs façon champions Diablo (config.mjs elite.mods, foe_elites.mjs)
 //
 // Règles de lisibilité tenues par chaque archétype : aucun dégât de contact ; toute menace est
@@ -981,6 +984,54 @@ const EXTRA_ENEMIES = {
     summonMinR: 40, summonMaxR: 130, summonMinPlayerDist: 160,
     gold: [2, 5],
   },
+  // GARDE DE FACE : un pavois qui arrête, DE FACE, les coups d'arme et la compétence (guardSources)
+  // dans un arc de `guardArc` rad autour de `e.face`. Il pivote lentement vers le héros (turnRate) ;
+  // sa face est VERROUILLÉE pendant son coup (télégraphe + récupération). Contre-jeu : dasher
+  // derrière lui (de dos et de flanc, tout passe), ou le punir après son coup (pavois écarté
+  // pendant `recover`), ou l'étourdir (mur, gadget : pavois baissé). Nombres : PV et dégâts du
+  // Bélier (52 PV, 14), lenteur et masse entre le Bélier et la Brute, télégraphe entre le
+  // Diablotin (0,42 s) et la Brute (0,7 s), récupération de la Brute (0,95 s).
+  pavois: {
+    name: 'Porte-pavois', radius: 20, hp: 56, speed: 96, mass: 3, damage: 15,
+    attackRange: 70, // il arme son coup quand le héros est à moins de attackRange + rayon du héros, DEVANT lui
+    windup: 0.6, bashRange: 96, bashArc: 1.5, // coup de pavois : secteur de 86° devant lui, frappe d'un bloc
+    recover: 0.9, cooldown: 1.5,
+    turnRate: 2, // rad/s (115°/s) : un demi-tour lui prend 1,6 s — un dash le prend de vitesse
+    guardArc: 2.2, // rad (126°) de face où le pavois arrête les coups
+    guardSources: ['melee', 'strike', 'skill'], // gadget, Super, brûlure, éclairs et murs passent
+    gold: [3, 5],
+  },
+  // EMBUSCADE : rôde à distance, se dissout (fade, visible et vulnérable), disparaît (hiddenTime,
+  // intouchable), puis resurgit DANS LE DOS du héros et frappe en cercle autour de lui après un
+  // télégraphe rouge (slashWindup). Contre-jeu : lire la disparition, dasher hors du cercle (ou à
+  // travers : esquive parfaite), puis le punir pendant sa longue récupération ; le tuer ou
+  // l'étourdir pendant la dissolution ou le télégraphe annule le coup. Nombres : PV de la
+  // Pyromancienne (30 : un assassin fragile), vitesse du Diablotin (150), dégâts du Bélier (14),
+  // télégraphe 0,55 s (au-dessus du seuil de 0,4 s et du Diablotin 0,42 s).
+  stalker: {
+    name: 'Traqueur', radius: 14, hp: 30, speed: 150, mass: 1, damage: 14,
+    preferredDist: 250, fleeDist: 150, approachSlack: 50, strafeMult: 0.7, strafeFlip: 0.01,
+    stalkRange: 420, // il ne disparaît que s'il est à cette distance du héros au plus
+    fade: 0.35, hiddenTime: 0.5,
+    backDist: 62, // distance au héros du point de réapparition (dans son dos)
+    backAngles: [0, 0.7, -0.7, 1.4, -1.4, 3.14], // écarts essayés autour du dos si le point est dans un mur
+    slashWindup: 0.55, slashRadius: 82,
+    recover: 1, cooldown: 3.2, cooldownJitter: [0.85, 1.25],
+    gold: [2, 4],
+  },
+  // SOUTIEN : n'attaque jamais. Tant qu'il est debout (ni mort ni étourdi), les AUTRES ennemis à
+  // moins de `auraRadius` de lui ne prennent que `wardMult` des dégâts. Il suit la mêlée à distance
+  // et recule quand on le serre. Contre-jeu : traverser la mêlée (dash) pour le tuer d'abord, ou
+  // entraîner le combat hors de son aura. Nombres : PV entre l'Archer (20) et le Bélier (52),
+  // lenteur d'un porteur chargé (105 < Nécromancien 118), protection plus forte que l'élite
+  // blindé (×0,8) mais qui tombe avec lui.
+  banner: {
+    name: 'Porte-étendard', radius: 17, hp: 46, speed: 105, mass: 2.5, damage: 0,
+    preferredDist: 170, fleeDist: 120, approachSlack: 30, strafeMult: 0.4, strafeFlip: 0.01,
+    auraRadius: 260, // un allié au contact du héros reste couvert quand il se tient à 200 u
+    wardMult: 0.6, // dégâts subis par les alliés sous l'étendard
+    gold: [3, 5],
+  },
 };
 
 const EXTRA_ROSTER = [
@@ -988,9 +1039,17 @@ const EXTRA_ROSTER = [
   // l'invocateur à l'étage 8 (l'étage 9 est la halte marchand / autel).
   { kind: 'pyromancer', cost: 2, minIndex: 5, weight: 2 },
   { kind: 'necromancer', cost: 2.5, minIndex: 8, weight: 1.5 },
+  // Bestiaire du 2026-10-01, après la halte (étage 9) et un par un : le pavois à l'étage 10, le
+  // traqueur à l'étage 12, l'étendard à l'étage 14. Coûts : le pavois vaut un Nécromancien (2,5 :
+  // 56 PV dont la moitié des coups rebondit), le traqueur une Pyromancienne (2), l'étendard 2
+  // (il ne frappe pas, mais il allonge la vie de la vague). Poids modestes : ce sont des épices.
+  { kind: 'pavois', cost: 2.5, minIndex: 10, weight: 1.5 },
+  { kind: 'stalker', cost: 2, minIndex: 12, weight: 1.5 },
+  { kind: 'banner', cost: 2, minIndex: 14, weight: 1.2 },
 ];
 
-const EXTRA_ELITE_KINDS = ['pyromancer'];
+// Le Porte-étendard et le Nécromancien ne sont jamais champions (ils ne frappent pas).
+const EXTRA_ELITE_KINDS = ['pyromancer', 'pavois', 'stalker'];
 
 return { EXTRA_ENEMIES, EXTRA_ROSTER, EXTRA_ELITE_KINDS };
 })();
@@ -1237,7 +1296,8 @@ const DEFAULT_TUNING = {
     mods: {
       // Les télégraphes ne sont JAMAIS raccourcis (équité) : « rapide » accélère le déplacement.
       rapide: { speedMult: 1.45, windupMult: 1 },
-      blinde: { damageTakenMult: 0.8, knockbackMult: 0.25 }, // le recul ×0,25 fait son identité, pas un sac à PV
+      // Jamais sur le Porte-pavois : deux défenses empilées en feraient un sac à PV.
+      blinde: { damageTakenMult: 0.8, knockbackMult: 0.25, excludeKinds: ['pavois'] }, // le recul ×0,25 fait son identité, pas un sac à PV
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
       // Champions V2 (comportements : foe_elites.mjs). minIndex : index minimal dans la 1re
       // section (ensuite tous) ; excludeKinds : archétypes qui ne le reçoivent jamais.
@@ -1246,13 +1306,14 @@ const DEFAULT_TUNING = {
       vampirique: { minIndex: 6, leech: 2.5, flash: 0.6, excludeKinds: ['necromancer'] },
       // Bouclier : bulle d'immunité périodique, annoncée par un anneau doré (warn) — contre-jeu :
       // changer de cible ou se replacer pendant la bulle, frapper entre deux.
-      bouclier: { minIndex: 6, firstDelay: 2, every: 5, warn: 0.6, duration: 1.8 },
+      // Jamais sur le Porte-pavois (deux immunités) ni sur le Traqueur (il disparaît déjà).
+      bouclier: { minIndex: 6, firstDelay: 2, every: 5, warn: 0.6, duration: 1.8, excludeKinds: ['pavois', 'stalker'] },
       // Invocateur : canalise (alerte violette inoffensive) puis ouvre des cercles d'invocation ;
       // plafond d'invocations vivantes ; le tuer pendant la canalisation l'annule.
       invocateur: {
         minIndex: 10, firstDelay: 1.5, every: 7, retry: 0.5, channel: 1.2, channelRadius: 54,
         count: 2, maxMinions: 3, kind: 'imp', summonMinR: 40, summonMaxR: 120, summonMinPlayerDist: 150,
-        excludeKinds: ['necromancer'],
+        excludeKinds: ['necromancer', 'stalker'], // un Traqueur qui canalise en disparaissant ne se lit pas
       },
     },
   },
@@ -1368,17 +1429,19 @@ const DEFAULT_TUNING = {
   // bestiaire est pondéré par COÛT (costBias > 0 : lourds ; < 0 : nuées) et `featured`
   // archétypes tirés par section dans tout le bestiaire présent sont multipliés par featuredMult.
   // layouts : dispositions permises et poids ; doors : multiplicateurs des poids de portes.
+  // Dispositions du 2026-10-01 : colonnade (Luxure, Hérésie), goulet (Gourmandise, Violence),
+  // îlots (Avarice, Fraude), chicane (Colère, Violence, Fraude) ; toutes en Trahison et dans l'Abîme.
   circles: [
     { id: 'limbes', costBias: 0, featured: 0, featuredMult: 1, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1 }, doors: {} },
-    { id: 'luxure', costBias: -0.5, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 2, pillars: 1, center: 1, lanes: 1, bastions: 0.5, scatter: 2, ring: 2 }, doors: { boon: 1.2 } },
-    { id: 'gourmandise', costBias: -0.3, featured: 1, featuredMult: 2, budgetMult: 1.05, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 2, lanes: 1, bastions: 1, scatter: 1, cross: 2 }, doors: { heal: 1.5 } },
-    { id: 'avarice', costBias: 0, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 2, scatter: 1, alcoves: 2 }, doors: { gold: 1.6, treasure: 3 } },
-    { id: 'colere', costBias: 0.6, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 2, pillars: 1, center: 1, lanes: 2, bastions: 1, scatter: 1, cross: 1, ring: 1 }, doors: { elite: 1.3 } },
-    { id: 'heresie', costBias: 0.2, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 1, pillars: 2, center: 1, lanes: 1, bastions: 1, scatter: 1, ring: 1, alcoves: 2 }, doors: { loot: 1.2 } },
-    { id: 'violence', costBias: 0.8, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 2, ring: 1 }, doors: { elite: 1.5 } },
-    { id: 'fraude', costBias: 0, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 2, ring: 2, alcoves: 2 }, doors: { loot: 1.3, treasure: 2 } },
-    { id: 'trahison', costBias: 0.4, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1 }, doors: { elite: 1.6 } },
-    { id: 'abime', costBias: 0.3, featured: 3, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1 }, doors: {} },
+    { id: 'luxure', costBias: -0.5, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 2, pillars: 1, center: 1, lanes: 1, bastions: 0.5, scatter: 2, ring: 2, colonnade: 1 }, doors: { boon: 1.2 } },
+    { id: 'gourmandise', costBias: -0.3, featured: 1, featuredMult: 2, budgetMult: 1.05, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 2, lanes: 1, bastions: 1, scatter: 1, cross: 2, goulet: 2 }, doors: { heal: 1.5 } },
+    { id: 'avarice', costBias: 0, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 2, scatter: 1, alcoves: 2, ilots: 1 }, doors: { gold: 1.6, treasure: 3 } },
+    { id: 'colere', costBias: 0.6, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 2, pillars: 1, center: 1, lanes: 2, bastions: 1, scatter: 1, cross: 1, ring: 1, chicane: 1 }, doors: { elite: 1.3 } },
+    { id: 'heresie', costBias: 0.2, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 1, pillars: 2, center: 1, lanes: 1, bastions: 1, scatter: 1, ring: 1, alcoves: 2, colonnade: 2 }, doors: { loot: 1.2 } },
+    { id: 'violence', costBias: 0.8, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 2, ring: 1, goulet: 1, chicane: 1 }, doors: { elite: 1.5 } },
+    { id: 'fraude', costBias: 0, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 2, ring: 2, alcoves: 2, chicane: 2, ilots: 1 }, doors: { loot: 1.3, treasure: 2 } },
+    { id: 'trahison', costBias: 0.4, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1, colonnade: 1, chicane: 1, goulet: 1, ilots: 1 }, doors: { elite: 1.6 } },
+    { id: 'abime', costBias: 0.3, featured: 3, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1, colonnade: 1, chicane: 1, goulet: 1, ilots: 1 }, doors: {} },
   ],
   // Rotation des Gardiens sur les 37 sections (le 1er de la liste garde la section 1).
   guardians: { rotation: GUARDIAN_ROTATION },
@@ -1516,6 +1579,8 @@ function createPlayer(tuning, x, y) {
     superCharge: tuning.super.startCharge ?? 0,
     superT: 0,
     superTick: 0,
+    surge: 0, // élan passager (proc « surge ») : secondes restantes…
+    surgeMult: 0, // … et dégâts en plus tant qu'il dure
     buffer: { action: null, t: 0, aimX: 0, aimY: 0 },
     dodgedIds: [], // attaques déjà esquivées pendant le dash en cours
     lastTargetId: 0, // cible « collante » de la visée assistée
@@ -1720,21 +1785,104 @@ function computeAim(game, manualX, manualY, range) {
 
 return { computeAim };
 })();
+// ---- src/sim/foe_defense.mjs
+__mod["src/sim/foe_defense.mjs"] = (() => {
+// DÉFENSES d'archétypes lues par combat.damageEnemy (module feuille : n'importe rien de la sim,
+// pour que combat.mjs reste sans import circulaire). Données : tuning.enemies[kind] (foe_data.mjs).
+//
+//   PAVOIS (Porte-pavois) — tout archétype qui déclare `guardArc` : un coup d'arme ou de
+//     compétence (def.guardSources) qui arrive DE FACE, dans l'arc `guardArc` autour de `e.face`,
+//     ne porte pas. Le pavois est baissé quand son porteur est étourdi, et écarté pendant la
+//     récupération de son propre coup (état 'recover') : là, tout passe.
+//   ÉTENDARD (Porte-étendard) — tout archétype qui déclare `auraRadius` : les AUTRES ennemis
+//     (hors Gardiens, hors porte-étendards) à moins de `auraRadius` d'un porteur debout (ni mort,
+//     ni étourdi, ni en train d'apparaître) ne prennent que `wardMult` des dégâts.
+// Ce que l'écran doit montrer se lit avec les mêmes fonctions : guardUp (pavois levé ?) et
+// wardOf (qui protège cet ennemi ?).const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+
+const MIN_DIR = 1e-6; // en deçà, le coup n'a pas de direction (brûlure, éclair) : il n'est pas arrêté
+
+/** Le pavois de `e` est-il levé (porteur ni étourdi, ni en récupération de son coup) ? */
+function guardUp(game, e) {
+  if (e.boss) return false;
+  const def = game.tuning.enemies[e.kind];
+  if (!def || !(def.guardArc > 0) || e.face === undefined) return false;
+  return !(e.stun > 0) && e.state !== 'recover';
+}
+
+/**
+ * Le coup `src` ({kind, dirX, dirY} : direction du coup, de l'attaquant VERS la cible) est-il
+ * arrêté par le pavois de `e` ? Vrai s'il arrive de face, dans l'arc de garde.
+ */
+function frontBlocked(game, e, src) {
+  if (!guardUp(game, e)) return false;
+  const def = game.tuning.enemies[e.kind];
+  if (!def.guardSources.includes(src.kind)) return false;
+  const dx = src.dirX ?? 0;
+  const dy = src.dirY ?? 0;
+  const l = Math.sqrt(dx * dx + dy * dy);
+  if (l < MIN_DIR) return false;
+  // Le coup vient de la direction opposée à son élan : on la compare à la face du pavois.
+  const toward = -(dx * TRIG.cos(e.face) + dy * TRIG.sin(e.face)) / l;
+  return toward >= TRIG.cos(def.guardArc / 2);
+}
+
+/** Le porte-étendard debout qui couvre `e`, ou null (le premier trouvé : les auras ne se cumulent pas). */
+function wardOf(game, e) {
+  if (e.boss) return null;
+  const enemies = game.tuning.enemies;
+  if (enemies[e.kind]?.auraRadius > 0) return null; // un étendard n'en protège pas un autre
+  for (const o of game.enemies) {
+    if (o.dead || o.boss || o.spawnT > 0 || o.stun > 0) continue;
+    const r = enemies[o.kind]?.auraRadius ?? 0;
+    if (!(r > 0)) continue;
+    const dx = e.x - o.x;
+    const dy = e.y - o.y;
+    if (dx * dx + dy * dy < r * r) return o;
+  }
+  return null;
+}
+
+/** Part des dégâts que `e` subit (1 = tout ; `wardMult` sous un étendard). */
+function wardMult(game, e) {
+  const o = wardOf(game, e);
+  return o ? game.tuning.enemies[o.kind].wardMult : 1;
+}
+
+return { guardUp, frontBlocked, wardOf, wardMult };
+})();
 // ---- src/sim/combat.mjs
 __mod["src/sim/combat.mjs"] = (() => {
 // Résolution des dégâts — UN SEUL chemin pour toucher un ennemi (damageEnemy) et UN SEUL
 // pour toucher le héros (damagePlayer). Les bénédictions n'exécutent pas de code : elles
 // déclarent des « procs » (données) que ce module interprète. Pas d'import circulaire.
+//
+// VOCABULAIRE DES PROCS (bénédictions de boons.mjs, pouvoirs légendaires de loot.mjs) :
+//   on     — quand : 'hit' (un coup du héros porte ; `sources` = sortes de coups concernées),
+//            'kill' (un ennemi meurt), 'dash' (une charge de dash est dépensée), 'dodge' (esquive
+//            parfaite), 'wallSlam' (un ennemi est projeté contre un mur), 'super' (le Super est
+//            lancé), 'roomClear' (la salle est nettoyée), 'overheal' (un soin dépasse les PV max),
+//            'passive' (lu à chaque calcul de dégâts).
+//   when   — condition facultative, lue dans le contexte du déclencheur : 'finisher' (dernier coup
+//            du combo), 'untouched' (salle nettoyée sans blessure).
+//   chance — probabilité (flux rng.combat ; 1 = aucun tirage).
+//   effect — sur la CIBLE : burn | chill | vuln | chain | stun | blast | cull | gold ;
+//            sur le HÉROS : heal | surge | superCharge | dashCharge | gadgetCharge | gold (sans cible) ;
+//            AUTOUR du héros : nova (dégâts, gel facultatif) | around (`apply` = effet de cible) ;
+//            passifs : execute | fullHpBonus | goldPower | streakBonus | stunnedCrit.
+// Aucun effet ne connaît l'identifiant de la bénédiction qui le déclare.
 const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 const { rand } = __mod["src/core/rng.mjs"];
 const { dist2, clamp } = __mod["src/core/math.mjs"];
 const { emit, newId } = __mod["src/sim/state.mjs"];
+const { frontBlocked, wardMult } = __mod["src/sim/foe_defense.mjs"];
 
 // Sources de dégâts du héros qui déclenchent les procs « au toucher ».
 const PROC_SOURCES = new Set(['melee', 'strike', 'skill', 'gadget', 'super']);
 // Sources qui ne remplissent pas la jauge de Super (sinon le Super se recharge lui-même).
 const NO_SUPER_CHARGE = new Set(['super', 'burn', 'blast', 'chain']);
 const ARMOR_CAP = 0.6;
+const PROC_BLAST_DELAY = 0.12; // s : télégraphe d'une explosion déclenchée par un proc « blast »
 
 /**
  * Gel d'impact des coups du héros, puisé dans une réserve qui se recharge (anti-diaporama).
@@ -1780,10 +1928,17 @@ function damageEnemy(game, e, src) {
     if (src.kind === 'melee' || src.kind === 'strike' || src.kind === 'skill') emit(game, 'immune', { x: e.x, y: e.y });
     return 0;
   }
+  if (frontBlocked(game, e, src)) {
+    // Porte-pavois frappé de face : le coup sonne sur le pavois (même signal qu'une parade :
+    // étincelles et tintement, au point de contact) et ne porte pas — ni dégât, ni recul, ni étourdissement.
+    emit(game, 'deflect', { x: e.x + TRIG.cos(e.face) * e.r, y: e.y + TRIG.sin(e.face) * e.r, guard: true });
+    return 0;
+  }
   const t = game.tuning;
   const p = game.player;
   const st = p.stats;
   let amount = src.amount;
+  let critBonus = 0;
   if (isPlayerSource(src.kind) && src.kind !== 'wall') {
     amount *= st.damageMult * (st.weaponDamage / t.weaponBase);
     if (src.kind === 'skill') amount *= st.skillDamageMult;
@@ -1791,17 +1946,26 @@ function damageEnemy(game, e, src) {
     for (const pr of p.procs) {
       if (pr.effect === 'execute' && e.hp / e.maxHp <= pr.threshold && (!pr.needsBurnChill || (e.burn > 0 && e.chill > 0))) amount *= 1 + pr.value;
       if (pr.effect === 'fullHpBonus' && p.hp >= p.maxHp) amount *= 1 + pr.value;
+      // Bourse pleine : par tranche de `per` or portée, `cap` tranches au plus.
+      if (pr.effect === 'goldPower') amount *= 1 + pr.value * Math.min(pr.cap, Math.floor(game.run.gold / pr.per));
+      // Salles nettoyées d'affilée sans blessure (run.streak, remis à zéro par un coup reçu).
+      if (pr.effect === 'streakBonus') amount *= 1 + pr.value * Math.min(pr.cap, game.run.streak ?? 0);
+      // Cible sonnée : chances de critique en plus (lues AVANT que ce coup ne sonne lui-même).
+      if (pr.effect === 'stunnedCrit' && e.stun > 0) critBonus += pr.value;
     }
+    // Élan passager du héros (effet « surge ») : dégâts en plus tant qu'il dure.
+    if (p.surge > 0) amount *= 1 + p.surgeMult;
     if (src.kind === 'super') amount *= st.superDamageMult ?? 1;
   }
   if (e.eliteMod === 'blinde') amount *= t.elite.mods.blinde.damageTakenMult;
+  amount *= wardMult(game, e); // sous l'aura d'un Porte-étendard debout (foe_defense.mjs)
   if (e.stun > 0) amount *= t.combat.stunDamageTakenMult;
   if (e.vuln > 0) amount *= 1 + e.vulnMult;
   if (e.exposed > 0) amount *= 1 + e.exposedMult; // point faible d'un Gardien (boss_common.expose)
 
   let crit = false;
   if (src.canCrit) {
-    const chance = t.combat.critChance + st.critChance;
+    const chance = t.combat.critChance + st.critChance + critBonus;
     if (rand(game.rng.combat) < chance) {
       crit = true;
       amount *= t.combat.critMult + st.critMult;
@@ -1866,33 +2030,150 @@ function applyHitProcs(game, e, src) {
   const p = game.player;
   for (const pr of p.procs) {
     if (pr.on !== 'hit' || !pr.sources.includes(src.kind)) continue;
+    if (pr.when && !src[pr.when]) continue;
     if (pr.chance < 1 && rand(game.rng.combat) >= pr.chance) continue;
-    switch (pr.effect) {
-      case 'burn':
-        e.burn = Math.max(e.burn, pr.duration);
-        e.burnDps = Math.max(e.burnDps, pr.value);
-        break;
-      case 'chill':
-        e.chill = Math.max(e.chill, pr.duration);
-        // Borné : un ennemi ralenti reste un ennemi qui avance (jamais de vitesse négative).
-        e.chillMult = Math.min(e.chillMult || 1, Math.max(game.tuning.combat.minChillMult, 1 - pr.value));
-        break;
-      case 'vuln':
-        e.vuln = Math.max(e.vuln, pr.duration);
-        e.vulnMult = Math.max(e.vulnMult, pr.value);
-        break;
-      case 'chain':
-        chainLightning(game, e, pr);
-        break;
-      case 'gold':
-        if (e.summoned) break; // invocations : ni or ni Âmes (pas de ferme tant que l'invocateur vit)
-        game.run.gold += pr.value;
-        emit(game, 'gold', { x: e.x, y: e.y, amount: pr.value });
-        break;
-      default:
-        break;
+    applyProc(game, pr, e, src);
+  }
+}
+
+/**
+ * Déclenche les procs du moment `on` (tout sauf 'hit' et 'passive'). `target` : l'ennemi
+ * concerné s'il y en a un (tué, projeté) ; `ctx` : contexte du déclencheur (conditions `when`,
+ * quantité `amount` des effets « par unité »).
+ */
+function fireProcs(game, on, target = null, ctx = null) {
+  const p = game.player;
+  for (const pr of p.procs) {
+    if (pr.on !== on) continue;
+    if (pr.when && !(ctx && ctx[pr.when])) continue;
+    if (pr.chance < 1 && rand(game.rng.combat) >= pr.chance) continue;
+    applyProc(game, pr, target, ctx);
+  }
+}
+
+/** Applique l'effet d'un proc déclenché : sur le héros, autour de lui, ou sur la cible `e`. */
+function applyProc(game, pr, e, ctx) {
+  const p = game.player;
+  switch (pr.effect) {
+    case 'heal':
+      healPlayer(game, pr.value, true);
+      break;
+    case 'surge':
+      p.surge = Math.max(p.surge, pr.duration);
+      p.surgeMult = Math.max(p.surgeMult, pr.value);
+      break;
+    case 'superCharge': {
+      if (p.state === 'super') break; // jamais pendant le Super : il ne se recharge pas lui-même
+      const before = p.superCharge;
+      p.superCharge = Math.min(1, p.superCharge + pr.value * (pr.perUnit ? ctx?.amount ?? 0 : 1));
+      if (before < 1 && p.superCharge >= 1) emit(game, 'superReady');
+      break;
+    }
+    case 'dashCharge': {
+      const max = game.tuning.dash.charges + p.stats.dashChargesBonus;
+      if (p.dashCharges >= max) break;
+      p.dashCharges = Math.min(max, p.dashCharges + pr.value);
+      emit(game, 'dashReady', { charges: p.dashCharges });
+      break;
+    }
+    case 'gadgetCharge': {
+      const max = game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
+      if (p.gadgetCharges >= max) break;
+      p.gadgetCharges = Math.min(max, p.gadgetCharges + pr.value);
+      emit(game, 'gadgetCharge', { x: p.x, y: p.y, charges: p.gadgetCharges });
+      break;
+    }
+    case 'nova':
+      heroNova(game, pr);
+      break;
+    case 'around':
+      aroundHero(game, pr);
+      break;
+    default:
+      applyTargetEffect(game, pr.effect, pr, e, ctx);
+  }
+}
+
+/** Effet posé sur un ennemi. `src` : le coup qui l'a déclenché (garde contre le ré-étourdissement). */
+function applyTargetEffect(game, effect, pr, e, src) {
+  const p = game.player;
+  if (effect === 'chain') {
+    chainLightning(game, e ?? p, pr); // sans cible : l'éclair part du héros
+    return;
+  }
+  if (effect === 'gold') {
+    if (e?.summoned) return; // invocations : ni or ni Âmes (pas de ferme tant que l'invocateur vit)
+    const at = e ?? p;
+    const amount = Math.round(pr.value);
+    game.run.gold += amount;
+    emit(game, 'gold', { x: at.x, y: at.y, amount });
+    return;
+  }
+  if (!e) return;
+  switch (effect) {
+    case 'burn':
+      e.burn = Math.max(e.burn, pr.duration);
+      e.burnDps = Math.max(e.burnDps, pr.value);
+      break;
+    case 'chill':
+      e.chill = Math.max(e.chill, pr.duration);
+      // Borné : un ennemi ralenti reste un ennemi qui avance (jamais de vitesse négative).
+      e.chillMult = Math.min(e.chillMult || 1, Math.max(game.tuning.combat.minChillMult, 1 - pr.value));
+      break;
+    case 'vuln':
+      e.vuln = Math.max(e.vuln, pr.duration);
+      e.vulnMult = Math.max(e.vulnMult, pr.value);
+      break;
+    case 'stun':
+      // Mêmes règles que damageEnemy : jamais un Gardien, et la garde tient contre un coup d'arme.
+      if (e.boss || e.dead) break;
+      if (e.guard > 0 && src && game.tuning.combat.stunGuardSources.includes(src.kind)) break;
+      e.stun = Math.max(e.stun, pr.value);
+      e.tele = null;
+      e.state = 'stunned';
+      e.stateTime = 0;
+      break;
+    case 'blast':
+      spawnHazard(game, {
+        shape: 'circle', x: e.x, y: e.y, r: pr.radius, delay: PROC_BLAST_DELAY, damage: pr.value,
+        hitsPlayer: false, hitsEnemies: true, kind: 'sinBlast', sourceId: 0,
+      });
+      break;
+    case 'cull':
+      // Achève un ennemi affaibli (jamais un Gardien) : la mort porte la marque de l'éclair.
+      if (!e.boss && !e.dead && e.hp / e.maxHp <= pr.value) killEnemy(game, e, { kind: 'chain' });
+      break;
+    default:
+      break;
+  }
+}
+
+/** Déflagration autour du héros : dégâts à tout ennemi dans le rayon, gel facultatif (`chill` s). */
+function heroNova(game, pr) {
+  const p = game.player;
+  for (const e of game.enemies) {
+    if (e.dead || e.spawnT > 0) continue;
+    const rr = pr.radius + e.r;
+    if (dist2(p.x, p.y, e.x, e.y) < rr * rr) {
+      damageEnemy(game, e, { kind: 'blast', amount: pr.value, dirX: 0, dirY: 0, canCrit: false });
+      if (pr.chill) {
+        e.chill = Math.max(e.chill, pr.chill);
+        e.chillMult = Math.min(e.chillMult || 1, 0.5);
+      }
     }
   }
+  emit(game, 'dashNova', { x: p.x, y: p.y, r: pr.radius });
+}
+
+/** Onde sans dégâts autour du héros : pose l'effet de cible `apply` sur tout ennemi dans le rayon. */
+function aroundHero(game, pr) {
+  const p = game.player;
+  for (const e of game.enemies) {
+    if (e.dead || e.spawnT > 0) continue;
+    const rr = pr.radius + e.r;
+    if (dist2(p.x, p.y, e.x, e.y) < rr * rr) applyTargetEffect(game, pr.apply, pr, e, null);
+  }
+  emit(game, 'dashNova', { x: p.x, y: p.y, r: pr.radius });
 }
 
 function chainLightning(game, from, pr) {
@@ -1964,16 +2245,7 @@ function killEnemy(game, e, src) {
     });
   }
   const p = game.player;
-  for (const pr of p.procs) {
-    if (pr.on !== 'kill') continue;
-    if (pr.effect === 'heal') healPlayer(game, pr.value, true);
-    if (pr.effect === 'blast') {
-      spawnHazard(game, {
-        shape: 'circle', x: e.x, y: e.y, r: pr.radius, delay: 0.12, damage: pr.value,
-        hitsPlayer: false, hitsEnemies: true, kind: 'sinBlast', sourceId: 0,
-      });
-    }
-  }
+  fireProcs(game, 'kill', e);
   if (p.stats.healOnKill > 0) healPlayer(game, p.stats.healOnKill, true);
   if (p.stats.extraGoldOnKill > 0 && !e.summoned) {
     game.run.gold += p.stats.extraGoldOnKill;
@@ -1987,6 +2259,9 @@ function healPlayer(game, amount, show) {
   const before = p.hp;
   p.hp = Math.min(p.maxHp, p.hp + amount);
   if (show && p.hp - before >= 1) emit(game, 'heal', { x: p.x, y: p.y, amount: Math.round(p.hp - before) });
+  // Trop-plein : les PV soignés au-delà du maximum nourrissent les procs « overheal ».
+  const over = before + amount - p.maxHp;
+  if (over > 0 && p.procs) fireProcs(game, 'overheal', null, { amount: over });
 }
 
 /**
@@ -2008,6 +2283,7 @@ function damagePlayer(game, amount, src) {
       if (before < 1 && p.superCharge >= 1) emit(game, 'superReady');
       p.dashRecharge += d.perfectDodgeRefund;
       emit(game, 'dodge', { x: p.x, y: p.y });
+      fireProcs(game, 'dodge');
     }
     return false;
   }
@@ -2017,6 +2293,9 @@ function damagePlayer(game, amount, src) {
   p.iframes = t.player.hurtIframes;
   p.dodgeIframes = 0;
   p.hurtFlash = 0.35;
+  // Une blessure : la salle n'est plus « sans une égratignure », la série sans blessure retombe.
+  if (game.room) game.room.hurt = true;
+  game.run.streak = 0;
   forceHitstop(game, t.player.hurtHitstop);
   const tel = game.telemetry;
   tel.damageTaken += dmg;
@@ -2066,7 +2345,7 @@ function spawnHazard(game, h) {
   return hz;
 }
 
-return { applyHitstop, forceHitstop, isPlayerSource, damageEnemy, killEnemy, healPlayer, damagePlayer, spawnPickup, spawnHazard };
+return { applyHitstop, forceHitstop, isPlayerSource, damageEnemy, fireProcs, killEnemy, healPlayer, damagePlayer, spawnPickup, spawnHazard };
 })();
 // ---- src/sim/nav.mjs
 __mod["src/sim/nav.mjs"] = (() => {
@@ -2243,10 +2522,14 @@ function windupOf(game, e, base) {
   return e.eliteMod === 'rapide' ? base * game.tuning.elite.mods.rapide.windupMult : base;
 }
 
+// États où un ennemi de mêlée TIENT son jeton d'attaque. « fade » et « ambush » : le Traqueur
+// garde le sien de sa dissolution à sa frappe (foe_stalker.mjs), sinon il resurgirait en surnombre.
+const TOKEN_STATES = new Set(['windup', 'strike', 'charge', 'fade', 'ambush']);
+
 function activeAttackers(game) {
   let n = 0;
   for (const o of game.enemies) {
-    if (!o.dead && MELEE_KINDS.has(o.kind) && (o.state === 'windup' || o.state === 'strike' || o.state === 'charge')) n++;
+    if (!o.dead && MELEE_KINDS.has(o.kind) && TOKEN_STATES.has(o.state)) n++;
   }
   return n;
 }
@@ -2818,8 +3101,7 @@ __mod["src/sim/kit_shots.mjs"] = (() => {
 // game.projectiles (projectiles.mjs), à l'identique.
 //
 // shot : {id, kind, x, y, vx, vy, r, range, traveled, pierce, hitIds, damage, source,
-//         knockback, hitstop, shake, stun, pull?: {stopGap, mass}, heavy, dead}const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
-const { DEG } = __mod["src/sim/config.mjs"];const { pointSegDist2 } = __mod["src/core/math.mjs"];const { emit, newId } = __mod["src/sim/state.mjs"];const { damageEnemy } = __mod["src/sim/combat.mjs"];const { pointBlocked } = __mod["src/sim/physics.mjs"];const { compact } = __mod["src/sim/projectiles.mjs"];const { kitStore, pullToward } = __mod["src/sim/kit_common.mjs"];
+//         knockback, hitstop, shake, stun, pull?: {stopGap, mass}, heavy, dead}const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulationconst { DEG } = __mod["src/sim/config.mjs"];const { pointSegDist2 } = __mod["src/core/math.mjs"];const { emit, newId } = __mod["src/sim/state.mjs"];const { damageEnemy } = __mod["src/sim/combat.mjs"];const { pointBlocked } = __mod["src/sim/physics.mjs"];const { compact } = __mod["src/sim/projectiles.mjs"];const { kitStore, pullToward } = __mod["src/sim/kit_common.mjs"];
 
 const MUZZLE = 0.5; // × rayon du héros : point de départ d'un tir (à bout portant, ça touche)
 
@@ -2827,7 +3109,7 @@ const MUZZLE = 0.5; // × rayon du héros : point de départ d'un tir (à bout p
 function spawnShot(game, s) {
   const shot = {
     id: newId(game), kind: 'arrow', traveled: 0, pierce: 0, hitIds: [], knockback: 0, hitstop: 0, shake: 0,
-    stun: 0, pull: null, heavy: false, dead: false, ...s,
+    stun: 0, pull: null, heavy: false, finisher: false, dead: false, ...s,
   };
   kitStore(game).shots.push(shot);
   return shot;
@@ -2863,6 +3145,7 @@ function fireWeaponShots(game, a) {
       shake: def.shake,
       stun: def.stun ?? 0,
       heavy: !!sh.heavy || a.strike,
+      finisher: !!a.finisher,
     });
   }
 }
@@ -2909,7 +3192,7 @@ function updateShots(game, dt) {
       s.hitIds.push(e.id);
       damageEnemy(game, e, {
         kind: s.source, amount: s.damage, dirX: s.vx / speed, dirY: s.vy / speed,
-        knockback: s.knockback, hitstop: s.hitstop, canCrit: true, shake: s.shake, stun: s.stun,
+        knockback: s.knockback, hitstop: s.hitstop, canCrit: true, shake: s.shake, stun: s.stun, finisher: s.finisher,
       });
       if (s.pull) hook(game, s, e);
       if (s.hitIds.length > s.pierce) {
@@ -3333,8 +3616,7 @@ __mod["src/sim/player.mjs"] = (() => {
 //     aimX, aimY,              // visée manuelle (0, 0 = visée assistée)
 //     attack,                  // maintenu : enchaîne le combo
 //     attackPressed, dashPressed, skillPressed, gadgetPressed, superPressed,  // fronts
-//     skillAimX, skillAimY }   // visée de la compétence au relâcher (0, 0 = assistée)const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
-const { DEG } = __mod["src/sim/config.mjs"];const { inSector, dist2 } = __mod["src/core/math.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { computeAim } = __mod["src/sim/aim.mjs"];const { moveCircle } = __mod["src/sim/physics.mjs"];const { damageEnemy } = __mod["src/sim/combat.mjs"];const { spawnProjectile, destroyEnemyProjectilesInCircle } = __mod["src/sim/projectiles.mjs"];const { fireWeaponShots, updateShots } = __mod["src/sim/kit_shots.mjs"];const { updateZones } = __mod["src/sim/kit_zones.mjs"];const { beginKitSkill, updateLeap, releaseKitSkill } = __mod["src/sim/kit_skills.mjs"];const { useKitGadget } = __mod["src/sim/kit_gadgets.mjs"];const { startKitSuper, tickKitSuper } = __mod["src/sim/kit_supers.mjs"];
+//     skillAimX, skillAimY }   // visée de la compétence au relâcher (0, 0 = assistée)const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulationconst { DEG } = __mod["src/sim/config.mjs"];const { inSector, dist2 } = __mod["src/core/math.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { computeAim } = __mod["src/sim/aim.mjs"];const { moveCircle } = __mod["src/sim/physics.mjs"];const { damageEnemy, fireProcs } = __mod["src/sim/combat.mjs"];const { spawnProjectile, destroyEnemyProjectilesInCircle } = __mod["src/sim/projectiles.mjs"];const { fireWeaponShots, updateShots } = __mod["src/sim/kit_shots.mjs"];const { updateZones } = __mod["src/sim/kit_zones.mjs"];const { beginKitSkill, updateLeap, releaseKitSkill } = __mod["src/sim/kit_skills.mjs"];const { useKitGadget } = __mod["src/sim/kit_gadgets.mjs"];const { startKitSuper, tickKitSuper } = __mod["src/sim/kit_supers.mjs"];
 
 const PRIORITY = ['dash', 'super', 'skill', 'attack'];
 const DASH_CHAIN_FRACTION = 0.35; // on peut re-dasher quand il reste moins de 35 % du dash
@@ -3490,6 +3772,11 @@ function tickTimers(game, dt) {
   p.hurtFlash = Math.max(0, p.hurtFlash - dt);
   p.skillCd = Math.max(0, p.skillCd - dt);
   p.strikeWindow = Math.max(0, p.strikeWindow - dt);
+  // Élan passager (proc « surge ») : il s'éteint avec son bonus.
+  if (p.surge > 0) {
+    p.surge = Math.max(0, p.surge - dt);
+    if (p.surge <= 0) p.surgeMult = 0;
+  }
   if (p.state !== 'attack') p.comboTimer += dt;
   const maxC = maxDashCharges(game);
   if (p.dashCharges < maxC) {
@@ -3590,6 +3877,7 @@ function startAttack(game) {
     def,
     index,
     strike,
+    finisher: !strike && index === t.combo.length - 1, // dernier coup du combo (procs `when: 'finisher'`)
     phase: 'startup',
     t: 0,
     dur: phaseDurations(def, p.stats.attackSpeedMult),
@@ -3690,6 +3978,7 @@ function sweepHits(game, a) {
       canCrit: true,
       shake: def.shake,
       stun: def.stun, // coups lourds (hache, maillet) : étourdissement des ennemis ordinaires
+      finisher: a.finisher,
     });
   }
   // Parade : un coup détruit les projectiles ennemis qu'il balaie.
@@ -3734,25 +4023,7 @@ function startDash(game) {
   game.hitstop = 0;
   game.telemetry.dashes++;
   emit(game, 'dash', { x: p.x, y: p.y, dirX: dx, dirY: dy, charges: p.dashCharges });
-  for (const pr of p.procs) {
-    if (pr.on === 'dash' && pr.effect === 'nova') dashNova(game, pr);
-  }
-}
-
-function dashNova(game, pr) {
-  const p = game.player;
-  for (const e of game.enemies) {
-    if (e.dead || e.spawnT > 0) continue;
-    const rr = pr.radius + e.r;
-    if (dist2(p.x, p.y, e.x, e.y) < rr * rr) {
-      damageEnemy(game, e, { kind: 'blast', amount: pr.value, dirX: 0, dirY: 0, canCrit: false });
-      if (pr.chill) {
-        e.chill = Math.max(e.chill, pr.chill);
-        e.chillMult = Math.min(e.chillMult || 1, 0.5);
-      }
-    }
-  }
-  emit(game, 'dashNova', { x: p.x, y: p.y, r: pr.radius });
+  fireProcs(game, 'dash'); // une charge de dash dépensée (déflagration, éclair… : combat.mjs)
 }
 
 function updateDash(game, dt) {
@@ -3893,6 +4164,7 @@ function startSuper(game) {
   p.stateTime = 0;
   game.telemetry.superUses++;
   emit(game, 'super', { x: p.x, y: p.y, r: s.radius, super: s.kind });
+  fireProcs(game, 'super'); // Super lancé (soin, embrasement… : combat.mjs)
 }
 
 function updateSuper(game, dt) {
@@ -5333,14 +5605,211 @@ const NECROMANCER = { kind: 'necromancer', ai: necromancerAI };
 
 return { NECROMANCER };
 })();
+// ---- src/sim/foe_pavois.mjs
+__mod["src/sim/foe_pavois.mjs"] = (() => {
+// GARDE DE FACE — « Porte-pavois » (kind 'pavois'). Données : tuning.enemies.pavois (foe_data.mjs).
+//
+// Il porte un pavois tourné vers `e.face` (angle, rad). De FACE, dans l'arc `guardArc`, les coups
+// d'arme et la compétence ne portent pas (foe_defense.frontBlocked, lu par combat.damageEnemy) ;
+// de dos et de flanc, tout passe.
+//
+// Machine d'états :
+//   chase   — marche vers le héros et PIVOTE vers lui, lentement (turnRate rad/s) ; arme son coup
+//             quand le héros est à portée ET devant lui, si un jeton de mêlée est libre.
+//   windup  — face VERROUILLÉE ; télégraphe rouge en secteur (e.tele cone + area : tout le secteur
+//             frappe d'un bloc à la fin de la jauge). Passer dans son dos sort du secteur.
+//   recover — face toujours verrouillée, pavois ÉCARTÉ (foe_defense.guardUp est faux) : fenêtre de
+//             punition, de n'importe quel côté.
+// L'étourdir (mur, gadget, Super) baisse le pavois et annule le coup. Aucun dégât de contact.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulationconst { angleDiff, clamp, inSector } = __mod["src/core/math.mjs"];const { newId } = __mod["src/sim/state.mjs"];const { damagePlayer } = __mod["src/sim/combat.mjs"];const { emit, setState, toPlayer, steer, speedOf, windupOf, activeAttackers } = __mod["src/sim/ai_common.mjs"];
+
+/** Portée du coup de pavois (un champion, plus gros, frappe plus loin : comme la Brute). */
+function bashRange(game, e, def) {
+  return def.bashRange * (e.eliteMod ? game.tuning.elite.sizeMult : 1);
+}
+
+function chase(game, e, def, dt) {
+  const p = game.player;
+  const tp = toPlayer(game, e);
+  // Il pivote vers le héros, jamais plus vite que turnRate : un dash le prend de vitesse.
+  const want = TRIG.atan2(tp.dy, tp.dx);
+  const turn = def.turnRate * dt;
+  e.face += clamp(angleDiff(e.face, want), -turn, turn);
+  const facing = Math.abs(angleDiff(e.face, want)) <= def.bashArc / 2;
+  if (tp.d < def.attackRange + p.r && facing && e.cooldown <= 0 && activeAttackers(game) < game.tuning.combat.maxAttackers) {
+    setState(e, 'windup');
+    e.atkId = newId(game);
+    return;
+  }
+  steer(game, e, p.x, p.y, speedOf(game, e, def));
+}
+
+function windup(game, e, def) {
+  const p = game.player;
+  const w = windupOf(game, e, def.windup);
+  const range = bashRange(game, e, def);
+  e.tele = { shape: 'cone', area: true, angle: e.face, range, arc: def.bashArc, progress: e.stateTime / w };
+  if (e.stateTime < w) return;
+  e.tele = null;
+  emit(game, 'enemyAttack', { id: e.id, x: e.x, y: e.y, enemy: e.kind });
+  if (inSector(p.x, p.y, e.x, e.y, range, e.face, def.bashArc, p.r)) {
+    damagePlayer(game, def.damage * e.dmgScale, { kind: 'pavois', id: e.atkId, x: e.x, y: e.y });
+  }
+  setState(e, 'recover');
+}
+
+function pavoisAI(game, e, def, dt) {
+  if (e.face === undefined) {
+    // Première image : il fait face au héros.
+    const tp = toPlayer(game, e);
+    e.face = TRIG.atan2(tp.dy, tp.dx);
+  }
+  switch (e.state) {
+    case 'chase':
+      chase(game, e, def, dt);
+      break;
+    case 'windup':
+      windup(game, e, def);
+      break;
+    case 'recover':
+      if (e.stateTime >= def.recover) {
+        setState(e, 'chase');
+        e.cooldown = def.cooldown;
+      }
+      break;
+    default:
+      setState(e, 'chase');
+  }
+}
+
+const PAVOIS = { kind: 'pavois', ai: pavoisAI, melee: true };
+
+return { PAVOIS };
+})();
+// ---- src/sim/foe_stalker.mjs
+__mod["src/sim/foe_stalker.mjs"] = (() => {
+// EMBUSCADE — « Traqueur » (kind 'stalker'). Données : tuning.enemies.stalker (foe_data.mjs).
+//
+// Machine d'états :
+//   chase   — rôde à distance (keepDistance) ; quand sa recharge est finie, que le héros est à
+//             moins de `stalkRange` et qu'un jeton de mêlée est libre, il se dissout.
+//   fade    — immobile, il se dissout (`fade` s) : encore visible et VULNÉRABLE. Le tuer ou
+//             l'étourdir ici annule l'embuscade.
+//   ambush  — disparu `hiddenTime` s : e.hidden = true et e.spawnT > 0 (comme une apparition en
+//             attente : ni ciblable, ni touchable, son IA ne tourne pas). À la première image où il
+//             revient, il se pose DANS LE DOS du héros (à `backDist`, à l'opposé de player.facing ;
+//             si le point est dans un mur, on essaie les écarts `backAngles`), et sa frappe est
+//             télégraphiée : cercle rouge de `slashRadius` autour de lui pendant `slashWindup` s.
+//   windup  — il tient la pose pendant le télégraphe (zone liée à lui : le tuer ou l'étourdir
+//             l'annule, projectiles.mjs), puis la zone frappe.
+//   recover — longue récupération (fenêtre de punition), puis recharge et retour en chase.
+// Il garde son jeton de mêlée de la dissolution à la frappe (ai_common.activeAttackers).
+// Aucun dégât de contact : seul le cercle télégraphié blesse.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulationconst { randRange } = __mod["src/core/rng.mjs"];const { lineOfSight, pointBlocked } = __mod["src/sim/physics.mjs"];const { spawnHazard } = __mod["src/sim/combat.mjs"];const { emit, setState, toPlayer, speedOf, windupOf, activeAttackers, keepDistance } = __mod["src/sim/ai_common.mjs"];
+
+const CLEARANCE = 2; // u libres autour du corps au point de réapparition
+
+/** Point de réapparition : dans le dos du héros ; à défaut de place, sur son flanc ; sinon sur place. */
+function ambushPoint(game, e, def) {
+  const p = game.player;
+  for (const off of def.backAngles) {
+    const a = p.facing + Math.PI + off;
+    const x = p.x + TRIG.cos(a) * def.backDist;
+    const y = p.y + TRIG.sin(a) * def.backDist;
+    if (!pointBlocked(game.room, x, y, e.r + CLEARANCE)) return { x, y };
+  }
+  return { x: e.x, y: e.y };
+}
+
+/** Il resurgit et arme sa frappe : cercle rouge télégraphié autour de lui. */
+function reappear(game, e, def) {
+  const pt = ambushPoint(game, e, def);
+  e.x = pt.x;
+  e.y = pt.y;
+  e.kvx = 0;
+  e.kvy = 0;
+  e.hidden = false;
+  setState(e, 'windup');
+  spawnHazard(game, {
+    shape: 'circle', x: e.x, y: e.y, r: def.slashRadius * (e.eliteMod ? game.tuning.elite.sizeMult : 1),
+    delay: windupOf(game, e, def.slashWindup), damage: def.damage * e.dmgScale, kind: 'stalker', sourceId: e.id,
+  });
+  emit(game, 'enemyAttack', { id: e.id, x: e.x, y: e.y, enemy: e.kind });
+}
+
+function stalkerAI(game, e, def) {
+  const p = game.player;
+  switch (e.state) {
+    case 'chase': {
+      const tp = toPlayer(game, e);
+      if (e.cooldown <= 0 && tp.d < def.stalkRange && activeAttackers(game) < game.tuning.combat.maxAttackers) {
+        setState(e, 'fade');
+        break;
+      }
+      keepDistance(game, e, def, tp, lineOfSight(game.room, e.x, e.y, p.x, p.y), speedOf(game, e, def));
+      break;
+    }
+    case 'fade':
+      if (e.stateTime >= def.fade) {
+        setState(e, 'ambush');
+        e.hidden = true;
+        e.spawnT = def.hiddenTime; // disparu : enemies.mjs ne relance son IA qu'à son retour
+      }
+      break;
+    case 'ambush':
+      reappear(game, e, def);
+      break;
+    case 'windup':
+      if (e.stateTime >= windupOf(game, e, def.slashWindup)) setState(e, 'recover');
+      break;
+    case 'recover':
+      if (e.stateTime >= def.recover) {
+        setState(e, 'chase');
+        e.cooldown = def.cooldown * randRange(game.rng.ai, def.cooldownJitter[0], def.cooldownJitter[1]);
+      }
+      break;
+    default:
+      setState(e, 'chase');
+  }
+}
+
+const STALKER = { kind: 'stalker', ai: stalkerAI, melee: true };
+
+return { ambushPoint, STALKER };
+})();
+// ---- src/sim/foe_banner.mjs
+__mod["src/sim/foe_banner.mjs"] = (() => {
+// SOUTIEN — « Porte-étendard » (kind 'banner'). Données : tuning.enemies.banner (foe_data.mjs).
+//
+// Il n'attaque JAMAIS. Tant qu'il est debout (ni mort, ni étourdi), les autres ennemis à moins de
+// `auraRadius` de lui ne prennent que `wardMult` des dégâts (foe_defense.wardOf, lu par
+// combat.damageEnemy). L'aura se voit : alerte INOFFENSIVE permanente (e.tele harmless: true, de
+// rayon auraRadius) ; elle disparaît dès qu'il est étourdi (enemies.mjs efface e.tele), et la
+// protection avec elle.
+//
+// Un seul état, chase : il suit la mêlée à distance (keepDistance : se rapproche au-delà de
+// preferredDist + approachSlack, recule sous fleeDist, sinon tourne lentement autour du héros).
+// Contre-jeu : traverser la mêlée pour le tuer d'abord (dash), ou entraîner le combat hors de
+// l'aura — il est lent. Aucun dégât de contact, aucun dégât du tout.const { lineOfSight } = __mod["src/sim/physics.mjs"];const { setState, toPlayer, speedOf, keepDistance } = __mod["src/sim/ai_common.mjs"];
+
+function bannerAI(game, e, def) {
+  const p = game.player;
+  if (e.state !== 'chase') setState(e, 'chase');
+  e.tele = { shape: 'circle', r: def.auraRadius, progress: 1, harmless: true };
+  const tp = toPlayer(game, e);
+  keepDistance(game, e, def, tp, lineOfSight(game.room, e.x, e.y, p.x, p.y), speedOf(game, e, def));
+}
+
+const BANNER = { kind: 'banner', ai: bannerAI };
+
+return { BANNER };
+})();
 // ---- src/sim/foes.mjs
 __mod["src/sim/foes.mjs"] = (() => {
 // Registre des archétypes d'ennemis AJOUTÉS hors de enemies.mjs (un fichier par archétype :
 // src/sim/foe_<archétype>.mjs — src/sim reste À PLAT, un test protégé lit ce dossier sans récursion).
 // Chaque entrée : { kind, ai(game, e, def, dt), melee?: bool, shooter?: bool }.
-// Les données (PV, vitesses, télégraphes…) vivent dans tuning.enemies[kind] (config.mjs).const { PYROMANCER } = __mod["src/sim/foe_pyromancer.mjs"];const { NECROMANCER } = __mod["src/sim/foe_necromancer.mjs"];
+// Les données (PV, vitesses, télégraphes…) vivent dans tuning.enemies[kind] (config.mjs).const { PYROMANCER } = __mod["src/sim/foe_pyromancer.mjs"];const { NECROMANCER } = __mod["src/sim/foe_necromancer.mjs"];const { PAVOIS } = __mod["src/sim/foe_pavois.mjs"];const { STALKER } = __mod["src/sim/foe_stalker.mjs"];const { BANNER } = __mod["src/sim/foe_banner.mjs"];
 
-const EXTRA_FOES = [PYROMANCER, NECROMANCER];
+const EXTRA_FOES = [PYROMANCER, NECROMANCER, PAVOIS, STALKER, BANNER];
 
 return { EXTRA_FOES };
 })();
@@ -5356,7 +5825,7 @@ const { rand, randRange } = __mod["src/core/rng.mjs"];
 const { dist2 } = __mod["src/core/math.mjs"];
 const { emit, newId } = __mod["src/sim/state.mjs"];
 const { moveCircle, lineOfSight } = __mod["src/sim/physics.mjs"];
-const { damageEnemy, damagePlayer, spawnHazard } = __mod["src/sim/combat.mjs"];
+const { damageEnemy, damagePlayer, spawnHazard, fireProcs } = __mod["src/sim/combat.mjs"];
 const { spawnProjectile } = __mod["src/sim/projectiles.mjs"];
 const { floorScaling } = __mod["src/sim/floors.mjs"];
 const { updateBoss } = __mod["src/sim/boss.mjs"];
@@ -5446,7 +5915,9 @@ function updateEnemies(game, dt) {
     e.flash = Math.max(0, e.flash - dt);
     if (e.spawnT > 0) {
       e.spawnT -= dt;
-      continue;
+      // Un ennemi DISPARU (e.hidden : Traqueur) revient à l'image même où son délai s'achève : il
+      // n'existe jamais d'image où il serait invisible mais touchable.
+      if (!(e.hidden && e.spawnT <= 0)) continue;
     }
     tickStatuses(game, e, dt);
     if (e.dead) continue;
@@ -5512,6 +5983,7 @@ function integrate(game, e, dt) {
       game.telemetry.wallSlams++;
       emit(game, 'wallSlam', { id: e.id, x: e.x, y: e.y });
       damageEnemy(game, e, { kind: 'wall', amount: ws.damage, stun: ws.stun, hitstop: ws.hitstop, canCrit: false });
+      fireProcs(game, 'wallSlam', e); // l'environnement est une arme : procs « projeté contre un mur »
     } else {
       // Glissement le long du mur : on retire la composante normale du knockback.
       const vn = e.kvx * res.nx + e.kvy * res.ny;
@@ -5842,7 +6314,8 @@ const { pickEliteMod } = __mod["src/sim/foe_elites.mjs"];
 // Le bas-centre (entrée) et le haut (portes) restent toujours dégagés.
 // BRIQUES réutilisables : le plan de section (sections.mjs) dit lesquelles un étage peut tirer
 // et avec quel poids (thème du Cercle). Les six premières sont celles de tous les Cercles ;
-// `cross`, `ring` et `alcoves` n'apparaissent que plus bas (tuning.circles).
+// `cross`, `ring`, `alcoves`, puis `colonnade`, `chicane`, `goulet` et `ilots` n'apparaissent que
+// plus bas (tuning.circles).
 const LAYOUTS = {
   open: [],
   pillars: [[0.27, 0.36, 70, 70], [0.73, 0.36, 70, 70], [0.27, 0.66, 70, 70], [0.73, 0.66, 70, 70]],
@@ -5859,6 +6332,14 @@ const LAYOUTS = {
   ],
   // Alcôves : des éperons collés aux murs latéraux découpent des niches, un bloc au centre.
   alcoves: [[0.0886, 0.36, 200, 40], [0.9114, 0.36, 200, 40], [0.0886, 0.68, 200, 40], [0.9114, 0.68, 200, 40], [0.5, 0.42, 110, 60]],
+  // Colonnade : deux rangées de trois colonnes bordent une nef centrale (six murs où projeter).
+  colonnade: [[0.34, 0.27, 50, 50], [0.66, 0.27, 50, 50], [0.34, 0.5, 50, 50], [0.66, 0.5, 50, 50], [0.34, 0.73, 50, 50], [0.66, 0.73, 50, 50]],
+  // Chicane : deux longs murs décalés ; on traverse en S, les lignes de tir sont coupées.
+  chicane: [[0.38, 0.33, 520, 40], [0.62, 0.66, 520, 40]],
+  // Goulet : deux massifs collés aux murs latéraux étranglent la salle en un col de 470 u.
+  goulet: [[0.1743, 0.5, 440, 180], [0.8257, 0.5, 440, 180]],
+  // Îlots : deux gros blocs en diagonale, couverts épais autour desquels tourner.
+  ilots: [[0.3, 0.34, 220, 120], [0.7, 0.64, 220, 120]],
 };
 /** Identifiants des dispositions connues (le plan de section ne tire que parmi elles). */
 const LAYOUT_IDS = Object.freeze(Object.keys(LAYOUTS));
@@ -5905,6 +6386,7 @@ function buildRoom(game, info, plan) {
     enteredAt: game.time,
     doors: [],
     interact: null, // objet à toucher : récompense, marchand, autel, coffre, fontaine
+    hurt: false, // le héros a été blessé dans cette salle (procs « sans être touché »)
     theme: info.circle,
   };
   let rects = [];
@@ -6115,7 +6597,11 @@ __mod["src/sim/boons.mjs"] = (() => {
 // combat.mjs interprète. Emplacements exclusifs (attack, dash, skill) : une nouvelle
 // bénédiction du même emplacement remplace l'ancienne. Les passifs s'empilent.
 //
-// Rareté : commun ×1, rare ×1,4, épique ×1,8 sur les valeurs.const { rand, shuffle, weightedPick } = __mod["src/core/rng.mjs"];
+// Rareté : commun ×1, rare ×1,4, épique ×1,8 sur les valeurs.
+//
+// Contenu du 2026-10-01 : deux bénédictions de plus par famille, branchées sur les moments du
+// combat (esquive parfaite, dernier coup du combo, frappe de dash, mur, Super, salle sans
+// blessure) — vocabulaire des procs en tête de combat.mjs —, quatre duos, et les PACTES.const { rand, shuffle, weightedPick } = __mod["src/core/rng.mjs"];
 
 const FAMILIES = {
   colere: { name: 'Colère', color: '#ff5a3c' },
@@ -6140,30 +6626,44 @@ const BOONS = [
   { id: 'lame_ardente', family: 'colere', slot: 'attack', name: 'Lame ardente', text: 'Vos coups enflamment : {v} dégâts/s pendant 3 s.', value: 6, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'burn', duration: 3, chance: 1 } },
   { id: 'pas_de_braise', family: 'colere', slot: 'dash', name: 'Pas de braise', text: 'Votre dash explose : {v} dégâts autour de vous.', value: 12, proc: { on: 'dash', effect: 'nova', radius: 80 } },
   { id: 'furie', family: 'colere', slot: 'passive', name: 'Furie', text: '+{v} % de dégâts.', value: 20, pct: true, stat: 'damageMult' },
+  { id: 'represailles', family: 'colere', slot: 'passive', name: 'Représailles', text: 'Après une esquive parfaite : +{v} % de dégâts pendant 3 s.', value: 40, pct: true, proc: { on: 'dodge', effect: 'surge', duration: 3 } },
+  { id: 'coup_de_sang', family: 'colere', slot: 'attack', name: 'Coup de sang', text: 'Le dernier coup du combo fait exploser la cible : {v} dégâts autour d\'elle.', value: 12, proc: { on: 'hit', sources: ['melee'], when: 'finisher', effect: 'blast', radius: 70 } },
   // Paresse — engourdissement
   { id: 'torpeur', family: 'paresse', slot: 'attack', name: 'Torpeur', text: 'Vos coups ralentissent de {v} % pendant 2 s.', value: 30, pct: true, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'chill', duration: 2, chance: 1 } },
   { id: 'brume_lente', family: 'paresse', slot: 'dash', name: 'Brume lente', text: 'Votre dash gèle : {v} dégâts et ralentit.', value: 8, proc: { on: 'dash', effect: 'nova', radius: 90, chill: 2 } },
   { id: 'sommeil', family: 'paresse', slot: 'passive', name: 'Sommeil de plomb', text: 'Recharge du dash −{v} %.', value: 25, pct: true, stat: 'dashRechargeMult', negative: true },
+  { id: 'baillement', family: 'paresse', slot: 'passive', name: 'Bâillement', text: 'Une esquive parfaite engourdit les alentours : {v} dégâts, ennemis ralentis de 50 % pendant 3 s.', value: 8, proc: { on: 'dodge', effect: 'nova', radius: 150, chill: 3 } },
+  { id: 'mur_du_sommeil', family: 'paresse', slot: 'passive', name: 'Mur du sommeil', text: 'Un ennemi projeté contre un mur reste sonné {v} s.', value: 1.2, proc: { on: 'wallSlam', effect: 'stun' } },
   // Avarice — or et critiques
   { id: 'main_avide', family: 'avarice', slot: 'attack', name: 'Main avide', text: '{v} % de chances qu\'un coup rapporte 1 or.', value: 20, pct: true, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'gold', valueFixed: 1 } },
   { id: 'fortune', family: 'avarice', slot: 'passive', name: 'Fortune', text: '+{v} % de chances de critique.', value: 10, pct: true, stat: 'critChance' },
   { id: 'dime', family: 'avarice', slot: 'passive', name: 'Dîme', text: '+{v} % d\'or trouvé.', value: 35, pct: true, stat: 'goldFindMult' },
+  { id: 'prime_de_risque', family: 'avarice', slot: 'passive', name: 'Prime de risque', text: 'Salle nettoyée sans être touché : +{v} or.', value: 10, proc: { on: 'roomClear', when: 'untouched', effect: 'gold' } },
+  { id: 'tresor_de_guerre', family: 'avarice', slot: 'passive', name: 'Trésor de guerre', text: '+{v} % de dégâts par tranche de 25 or en bourse (5 tranches au plus).', value: 4, pct: true, proc: { on: 'passive', effect: 'goldPower', per: 25, cap: 5 } },
   // Gourmandise — soin
   { id: 'festin', family: 'gourmandise', slot: 'passive', name: 'Festin', text: 'Chaque ennemi tué rend {v} PV.', value: 2, proc: { on: 'kill', effect: 'heal' } },
   { id: 'voracite', family: 'gourmandise', slot: 'passive', name: 'Voracité', text: '+{v} PV max.', value: 30, stat: 'maxHpBonus' },
   { id: 'sang_devore', family: 'gourmandise', slot: 'attack', name: 'Sang dévoré', text: 'Vol de vie : {v} % des dégâts infligés.', value: 5, pct: true, stat: 'lifesteal' },
+  { id: 'bouchee_double', family: 'gourmandise', slot: 'attack', name: 'Bouchée double', text: 'Le dernier coup du combo rend {v} PV par ennemi touché.', value: 1.5, proc: { on: 'hit', sources: ['melee'], when: 'finisher', effect: 'heal' } },
+  { id: 'ripaille', family: 'gourmandise', slot: 'passive', name: 'Ripaille', text: 'Lancer votre Super rend {v} PV.', value: 15, proc: { on: 'super', effect: 'heal' } },
   // Luxure — Super et vulnérabilité
   { id: 'extase', family: 'luxure', slot: 'passive', name: 'Extase', text: 'Le Super se charge {v} % plus vite.', value: 30, pct: true, stat: 'superChargeMult' },
   { id: 'charme', family: 'luxure', slot: 'skill', name: 'Charme fatal', text: 'La Lance rend vulnérable : +{v} % de dégâts subis, 4 s.', value: 30, pct: true, proc: { on: 'hit', sources: ['skill'], effect: 'vuln', duration: 4, chance: 1 } },
   { id: 'envol', family: 'luxure', slot: 'passive', name: 'Envol', text: '+1 charge de dash.', value: 1, stat: 'dashChargesBonus', noScale: true, unique: true },
+  { id: 'baiser_vole', family: 'luxure', slot: 'dash', name: 'Baiser volé', text: 'Votre frappe de dash rend vulnérable : +{v} % de dégâts subis, 4 s.', value: 25, pct: true, proc: { on: 'hit', sources: ['strike'], effect: 'vuln', duration: 4 } },
+  { id: 'ivresse', family: 'luxure', slot: 'passive', name: 'Ivresse', text: 'Une esquive parfaite charge le Super de {v} % en plus.', value: 8, pct: true, proc: { on: 'dodge', effect: 'superCharge' } },
   // Envie — éclairs en chaîne
   { id: 'jalousie', family: 'envie', slot: 'attack', name: 'Jalousie', text: 'Vos coups ont 25 % de chances de lancer un éclair : {v} dégâts, 2 rebonds.', value: 10, proc: { on: 'hit', sources: ['melee', 'strike'], effect: 'chain', chance: 0.25, bounces: 2, range: 220 } },
   { id: 'convoitise', family: 'envie', slot: 'skill', name: 'Convoitise', text: 'La Lance déclenche un éclair : {v} dégâts, 3 rebonds.', value: 14, proc: { on: 'hit', sources: ['skill'], effect: 'chain', chance: 1, bounces: 3, range: 240 } },
   { id: 'rancoeur', family: 'envie', slot: 'passive', name: 'Rancœur', text: 'Compétence : recharge −{v} %.', value: 20, pct: true, stat: 'skillCooldownMult', negative: true },
+  { id: 'eclair_de_depit', family: 'envie', slot: 'dash', name: 'Éclair de dépit', text: 'Votre dash lance un éclair : {v} dégâts, jusqu\'à 3 ennemis.', value: 9, proc: { on: 'dash', effect: 'chain', bounces: 3, range: 200 } },
+  { id: 'mauvais_oeil', family: 'envie', slot: 'passive', name: 'Mauvais œil', text: 'Chaque ennemi tué lance un éclair : {v} dégâts, 2 rebonds.', value: 8, proc: { on: 'kill', effect: 'chain', bounces: 2, range: 200 } },
   // Orgueil — exécution et pleine santé
   { id: 'superbe', family: 'orgueil', slot: 'passive', name: 'Superbe', text: '+{v} % de dégâts quand vos PV sont pleins.', value: 30, pct: true, proc: { on: 'passive', effect: 'fullHpBonus' } },
   { id: 'coup_de_grace', family: 'orgueil', slot: 'passive', name: 'Coup de grâce', text: '+{v} % de dégâts contre les ennemis sous 30 % de PV.', value: 50, pct: true, proc: { on: 'passive', effect: 'execute', threshold: 0.3 } },
   { id: 'vanite', family: 'orgueil', slot: 'passive', name: 'Vanité', text: '+{v} % de dégâts critiques.', value: 40, pct: true, stat: 'critMult' },
+  { id: 'invaincu', family: 'orgueil', slot: 'passive', name: 'Invaincu', text: '+{v} % de dégâts par salle nettoyée sans être touché (5 au plus). Une blessure remet le compte à zéro.', value: 6, pct: true, proc: { on: 'passive', effect: 'streakBonus', cap: 5 } },
+  { id: 'mepris', family: 'orgueil', slot: 'passive', name: 'Mépris', text: '+{v} % de chances de critique contre les ennemis sonnés.', value: 50, pct: true, proc: { on: 'passive', effect: 'stunnedCrit' } },
 ];
 
 // Duos : exigent une bénédiction de chacune des deux familles. Offerts en priorité quand
@@ -6173,9 +6673,21 @@ const DUOS = [
   { id: 'festin_dor', families: ['avarice', 'gourmandise'], slot: 'passive', name: 'Festin d\'or', text: 'Chaque ennemi tué rend {v} PV et 2 or.', value: 3, proc: { on: 'kill', effect: 'heal' }, extraGoldOnKill: 2 },
   { id: 'orage_jaloux', families: ['envie', 'colere'], slot: 'passive', name: 'Orage ardent', text: 'Les éclairs enflamment : {v} dégâts/s.', value: 8, proc: { on: 'hit', sources: ['chainHit'], effect: 'burn', duration: 3, chance: 1 } },
   { id: 'gloire_charnelle', families: ['orgueil', 'luxure'], slot: 'passive', name: 'Gloire charnelle', text: 'Le Super inflige +{v} % de dégâts et dure 0,4 s de plus.', value: 50, pct: true, stat: 'superDamageMult', superDurationBonus: 0.4 },
+  { id: 'passion_brulante', families: ['colere', 'luxure'], slot: 'passive', name: 'Passion brûlante', text: 'Lancer le Super enflamme les ennemis proches : {v} dégâts/s pendant 4 s.', value: 10, proc: { on: 'super', effect: 'around', apply: 'burn', radius: 220, duration: 4 } },
+  { id: 'faire_les_poches', families: ['paresse', 'avarice'], slot: 'passive', name: 'Faire les poches', text: 'Un ennemi projeté contre un mur lâche {v} or.', value: 2, noScale: true, proc: { on: 'wallSlam', effect: 'gold' } },
+  { id: 'trop_plein', families: ['gourmandise', 'orgueil'], slot: 'passive', name: 'Trop-plein', text: 'Chaque PV soigné au-delà du maximum charge le Super de {v} %.', value: 1, pct: true, proc: { on: 'overheal', effect: 'superCharge', perUnit: true } },
+  { id: 'foudre_du_dedain', families: ['envie', 'orgueil'], slot: 'passive', name: 'Foudre du dédain', text: 'Vos éclairs achèvent les ennemis sous {v} % de PV (sauf Gardiens).', value: 15, pct: true, proc: { on: 'hit', sources: ['chainHit'], effect: 'cull' } },
 ];
 
-const ALL = [...BOONS, ...DUOS];
+// PACTES : bénédictions à contrepartie, jamais tirées par une offre — un autel les accorde
+// (run.mjs, effet « pact »). TEMPORAIRES comme les autres : la mort les reprend, et l'écran de
+// mort les compte. `stats` : contreparties fixes (stats.mjs). Le pacte porte la couleur d'une
+// famille (il compte pour ses duos).
+const PACTS = [
+  { id: 'reflet_brise', family: 'orgueil', slot: 'passive', name: 'Reflet brisé', text: '+{v} % de dégâts, −20 PV max, jusqu\'à votre mort (pacte du Miroir).', value: 25, pct: true, stat: 'damageMult', stats: { maxHpBonus: -20 }, noScale: true, unique: true, pact: true },
+];
+
+const ALL = [...BOONS, ...DUOS, ...PACTS];
 function boonDef(id) {
   return ALL.find((b) => b.id === id) ?? null;
 }
@@ -6240,7 +6752,7 @@ function randomFamily(game) {
   return keys[Math.floor(rand(game.rng.gen) * keys.length)];
 }
 
-return { FAMILIES, RARITIES, BOONS, DUOS, boonDef, boonValue, boonText, rollBoonOffer, addBoon, randomFamily };
+return { FAMILIES, RARITIES, BOONS, DUOS, PACTS, boonDef, boonValue, boonText, rollBoonOffer, addBoon, randomFamily };
 })();
 // ---- src/sim/loadout.mjs
 __mod["src/sim/loadout.mjs"] = (() => {
@@ -6369,6 +6881,14 @@ const LEGENDARY_POWERS = [
   { id: 'coeur_braise', name: 'du Cœur de braise', text: 'Le dash explose en flammes (14 dégâts)', procs: [{ on: 'dash', effect: 'nova', radius: 85, value: 14 }] },
   { id: 'couronne_vorace', name: 'de la Couronne vorace', text: 'Chaque ennemi tué rend 3 PV', stats: { healOnKill: 3 } },
   { id: 'lame_azazel', name: 'd\'Azazel', text: '30 % de chances d\'éclair en chaîne (12 dégâts)', procs: [{ on: 'hit', sources: ['melee', 'strike'], effect: 'chain', chance: 0.3, value: 12, bounces: 2, range: 220 }] },
+  // Contenu 2026-10-01 : six pouvoirs branchés sur les déclencheurs de combat.mjs (esquive
+  // parfaite, dernier coup du combo, frappe de dash, salle sans blessure, mur, mort d'un ennemi).
+  { id: 'eperons_alastor', name: 'd\'Alastor', text: 'Une esquive parfaite rend 1 charge de dash', procs: [{ on: 'dodge', effect: 'dashCharge', value: 1 }] },
+  { id: 'marteau_belial', name: 'de Bélial', text: 'Le dernier coup du combo étourdit 0,6 s', procs: [{ on: 'hit', sources: ['melee'], when: 'finisher', effect: 'stun', value: 0.6 }] },
+  { id: 'dard_lilith', name: 'de Lilith', text: 'La frappe de dash lance un éclair en chaîne (16 dégâts, 3 rebonds)', procs: [{ on: 'hit', sources: ['strike'], effect: 'chain', value: 16, bounces: 3, range: 220 }] },
+  { id: 'main_de_gloire', name: 'de la Main de gloire', text: 'Salle nettoyée sans être touché : +1 charge de gadget', procs: [{ on: 'roomClear', when: 'untouched', effect: 'gadgetCharge', value: 1 }] },
+  { id: 'fracas_moloch', name: 'de Moloch', text: 'Un ennemi projeté contre un mur explose (20 dégâts, rayon 90)', procs: [{ on: 'wallSlam', effect: 'blast', value: 20, radius: 90 }] },
+  { id: 'linceul_abaddon', name: 'd\'Abaddon', text: 'Les ennemis tués explosent (12 dégâts, rayon 80)', procs: [{ on: 'kill', effect: 'blast', value: 12, radius: 80 }] },
 ];
 
 const FLOOR_SCALE = 0.012;
@@ -6533,17 +7053,18 @@ function recomputeStats(game) {
     const raw = boonValue(def, b.rarity) * lv;
     const v = def.pct ? raw / 100 : raw;
     if (def.stat) addStat(st, def.stat, def.negative ? -v : v);
+    // Contreparties fixes d'un pacte (valeurs brutes, jamais mises à l'échelle).
+    if (def.stats) for (const [k, x] of Object.entries(def.stats)) addStat(st, k, x);
     if (def.superDurationBonus) st.superDurationBonus += def.superDurationBonus;
     if (def.extraGoldOnKill) st.extraGoldOnKill += def.extraGoldOnKill;
     if (def.proc) {
       const pr = { chance: 1, ...def.proc, boon: def.id };
-      if (pr.effect === 'gold') {
+      if (def.proc.valueFixed !== undefined) {
+        // La valeur de la bénédiction est une CHANCE ; l'effet, lui, a un montant fixe.
         pr.chance = Math.min(1, v);
         pr.value = def.proc.valueFixed;
-      } else if (pr.effect === 'chill' || pr.effect === 'vuln' || pr.effect === 'execute' || pr.effect === 'fullHpBonus') {
-        pr.value = def.pct ? v : raw;
       } else {
-        pr.value = raw;
+        pr.value = def.pct ? v : raw; // pourcentage → fraction ; sinon la valeur telle quelle
       }
       procs.push(pr);
     }
@@ -7246,7 +7767,7 @@ const { rand, pick, weightedPick } = __mod["src/core/rng.mjs"];
 const { emit } = __mod["src/sim/state.mjs"];
 const { floorInfo, checkpointAfterBoss } = __mod["src/sim/floors.mjs"];
 const { buildRoom, playerStart, launchNextWave, spawnBoss, makeDoors, randomGold, rewardSpot } = __mod["src/sim/room.mjs"];
-const { spawnPickup, healPlayer, forceHitstop } = __mod["src/sim/combat.mjs"];
+const { spawnPickup, healPlayer, forceHitstop, fireProcs } = __mod["src/sim/combat.mjs"];
 const { FAMILIES, rollBoonOffer, addBoon, boonDef, boonText, randomFamily, RARITIES } = __mod["src/sim/boons.mjs"];
 const { generateItem, rollRarity, salvageValue, affixText, baseText, LEGENDARY_POWERS, ITEM_RARITIES, randomShopItem, priceOf, SLOT_NAMES } = __mod["src/sim/loot.mjs"];
 const { recomputeStats } = __mod["src/sim/stats.mjs"];
@@ -7302,6 +7823,47 @@ const EVENTS = [
       { label: 'Prier — recevoir 25 or', effect: 'gold25' },
     ],
   },
+  // Contenu 2026-10-01 : quatre dilemmes. Les libellés sont CHIFFRÉS par les champs de l'option
+  // ({souls}, {hp}, {gain}, {pct}, {need}, {levels} : optionLabel) — le nombre affiché est celui
+  // que la règle applique. Une option impossible est grisée (optionBlocked), jamais cachée.
+  {
+    // PERMANENT contre TEMPORAIRE : les Âmes du profil s'échangent contre le run, et inversement.
+    id: 'pacte_ames', title: 'Registre des âmes',
+    text: 'Un greffier sans visage tient le compte des morts. Tout s\'y achète, tout s\'y vend.',
+    options: [
+      { label: 'Céder {souls} Âmes (permanent) — recevoir une bénédiction épique', effect: 'soulBoon', souls: 40 },
+      { label: 'Vendre votre sang — perdre {hp} PV, gagner {gain} Âmes (permanent)', effect: 'bloodSouls', hp: 25, gain: 20 },
+      { label: 'Refermer le registre', effect: 'none' },
+    ],
+  },
+  {
+    // TEMPORAIRE : une bénédiction sacrifiée, une autre approfondie (largeur contre profondeur).
+    id: 'forge', title: 'Forge des regrets',
+    text: 'Une enclume rougeoie sans feu. Elle ne forge qu\'avec ce qu\'on lui abandonne.',
+    options: [
+      { label: 'Fondre {lost} — {gained} gagne {levels} niveaux', effect: 'reforge', levels: 2 },
+      { label: 'Garder tous vos dons', effect: 'none' },
+    ],
+  },
+  {
+    // TEMPORAIRE : un pacte (boons.mjs PACTS) — des PV max contre des dégâts, jusqu'à la mort.
+    id: 'miroir', title: 'Miroir d\'orgueil',
+    text: 'Votre reflet vous toise. Il est plus grand, plus fort — et il attend.',
+    options: [
+      { label: 'Briser le miroir — −{hp} PV max et +{pct} % de dégâts, jusqu\'à votre mort', effect: 'pact', pact: 'reflet_brise', hp: 20, pct: 25 },
+      { label: 'Baisser les yeux', effect: 'none' },
+    ],
+  },
+  {
+    // Ressources du combat : la jauge de Super contre des PV, dans un sens ou dans l'autre.
+    id: 'clepsydre', title: 'Clepsydre de Charon',
+    text: 'Le temps du Passeur s\'écoule goutte à goutte. On peut le boire, ou le briser.',
+    options: [
+      { label: 'Boire le temps — vider votre jauge de Super ({need} % au moins), rendre {pct} % des PV', effect: 'superToHp', need: 50, pct: 35 },
+      { label: 'Briser la clepsydre — perdre {hp} PV, jauge de Super pleine', effect: 'hpToSuper', hp: 15 },
+      { label: 'Passer votre chemin', effect: 'none' },
+    ],
+  },
 ];
 
 function createRun(startFloor) {
@@ -7311,6 +7873,7 @@ function createRun(startFloor) {
     boons: [],
     items: { arme: null, armure: null, talisman: null }, // = équipement du PROFIL (game.mjs)
     roomsThisRun: 0,
+    streak: 0, // salles nettoyées d'affilée sans blessure (procs « streakBonus ») : un coup reçu la remet à zéro
     startedAt: 0,
     deathRecap: null, // ce que la dernière mort a pris (bénédictions, or) : écran de mort
   };
@@ -7390,6 +7953,10 @@ function onRoomClear(game) {
   game.telemetry.roomsCleared++;
   game.telemetry.roomTimes.push({ floor: game.run.floor, kind: room.kind, time: game.time - room.enteredAt });
   emit(game, 'roomClear', { floor: game.run.floor, kind: room.kind, boss: room.kind === 'boss' });
+  // Salle nettoyée sans une blessure : la série s'allonge, les procs « roomClear » se déclenchent.
+  const untouched = !room.hurt;
+  if (untouched) game.run.streak = (game.run.streak ?? 0) + 1;
+  fireProcs(game, 'roomClear', null, { untouched });
   // Salle nettoyée : plus aucun coup ennemi ne part (souffle d'un élite ardent, flèche en vol).
   for (const h of game.hazards) {
     if (h.done || !h.hitsPlayer || h.burning) continue; // les flaques s'éteignent d'elles-mêmes
@@ -7513,10 +8080,7 @@ function openInteract(game) {
     choice = { kind: 'shop', gold: run.gold, offers: it.offers.map((o) => ({ ...o, item: o.item ? describeItem(o.item) : null, equipped: o.item ? describeItem(run.items[o.item.slot]) : null })) };
   } else if (it.kind === 'event') {
     const ev = EVENTS.find((e) => e.id === it.event);
-    const p = game.player;
-    const gadgetFull = p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
-    const unusable = (o) => !!(o.cost && run.gold < o.cost) || (o.effect === 'gadget1' && gadgetFull);
-    choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: o.label, disabled: unusable(o) })) };
+    choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: optionLabel(game, o), disabled: optionBlocked(game, o) })) };
   } else if (CALM_KINDS.includes(it.kind)) {
     choice = describeCalm(game, it); // chambre forte, fontaine de repos (calm_rooms.mjs)
   }
@@ -7686,6 +8250,63 @@ function applyCommand(game, cmd) {
   return false;
 }
 
+/**
+ * Forge des regrets : la bénédiction fondue (la moins avancée) et celle qui en profite (la plus
+ * avancée des autres), parmi celles qui ont des niveaux ; la première à égalité. Null s'il n'y
+ * en a pas deux.
+ */
+function forgeTargets(game) {
+  const pool = game.run.boons.filter((b) => {
+    const d = boonDef(b.id);
+    return !!d && !d.noScale;
+  });
+  if (pool.length < 2) return null;
+  let lost = pool[0];
+  for (const b of pool) if (b.level < lost.level) lost = b;
+  let gained = null;
+  for (const b of pool) if (b !== lost && (!gained || b.level > gained.level)) gained = b;
+  return { lost, gained };
+}
+
+/** Une option d'autel que le héros ne peut pas payer (ou qui ne lui donnerait rien) est grisée. */
+function optionBlocked(game, o) {
+  const run = game.run;
+  const p = game.player;
+  if (o.cost && run.gold < o.cost) return true;
+  if (o.souls && game.meta.souls < o.souls) return true;
+  switch (o.effect) {
+    case 'gadget1':
+      return p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
+    case 'superToHp':
+      return p.superCharge < o.need / 100;
+    case 'hpToSuper':
+      return p.superCharge >= 1;
+    case 'reforge':
+      return !forgeTargets(game);
+    case 'pact':
+      return run.boons.some((b) => b.id === o.pact);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Libellé d'une option d'autel : chaque {champ} est remplacé par le nombre du même nom dans
+ * l'option ; {lost} et {gained} par les bénédictions que la Forge fondrait et approfondirait.
+ */
+function optionLabel(game, o) {
+  let label = o.label;
+  for (const [k, v] of Object.entries(o)) {
+    if (typeof v === 'number') label = label.replace(`{${k}}`, String(v));
+  }
+  if (o.effect === 'reforge') {
+    const f = forgeTargets(game);
+    label = label.replace('{lost}', f ? `« ${boonDef(f.lost.id).name} »` : 'votre bénédiction la moins avancée');
+    label = label.replace('{gained}', f ? `« ${boonDef(f.gained.id).name} »` : 'la plus avancée');
+  }
+  return label;
+}
+
 function openShopRefresh(game) {
   game.mode = 'play';
   game.room.interact.used = false;
@@ -7729,6 +8350,43 @@ function applyEvent(game, opt) {
     case 'gold25':
       run.gold += 25;
       emit(game, 'gold', { x: p.x, y: p.y, amount: 25 });
+      break;
+    case 'soulBoon': {
+      // Le PERMANENT paie le TEMPORAIRE : des Âmes du profil contre une bénédiction épique.
+      game.meta.souls -= opt.souls;
+      const fam = randomFamily(game);
+      const offer = rollBoonOffer(game, fam)[0];
+      offer.rarity = 'epique';
+      addBoon(run, offer);
+      emit(game, 'boonGain', { id: offer.id, rarity: offer.rarity });
+      break;
+    }
+    case 'bloodSouls':
+      // … et l'inverse : des PV de ce run contre des Âmes qui resteront.
+      p.hp = Math.max(1, p.hp - opt.hp);
+      game.meta.souls += opt.gain;
+      game.telemetry.soulsEarned += opt.gain;
+      emit(game, 'souls', { x: p.x, y: p.y, amount: opt.gain });
+      break;
+    case 'reforge': {
+      const f = forgeTargets(game);
+      run.boons = run.boons.filter((b) => b !== f.lost);
+      f.gained.level += opt.levels;
+      emit(game, 'boonGain', { id: f.gained.id, rarity: f.gained.rarity });
+      break;
+    }
+    case 'pact':
+      addBoon(run, { id: opt.pact, rarity: 'commun' });
+      emit(game, 'boonGain', { id: opt.pact, rarity: 'commun' });
+      break;
+    case 'superToHp':
+      p.superCharge = 0;
+      healPlayer(game, p.maxHp * (opt.pct / 100), true);
+      break;
+    case 'hpToSuper':
+      p.hp = Math.max(1, p.hp - opt.hp);
+      p.superCharge = 1;
+      emit(game, 'superReady');
       break;
     default:
       break;
@@ -7823,6 +8481,7 @@ function respawn(game, floor) {
     return true;
   }
   run.boons = [];
+  run.streak = 0;
   revive(game);
   emit(game, 'respawn', { floor: target, boonsLost: run.deathRecap?.boonsLost ?? 0 });
   enterFloor(game, target, { reward: 'boon', family: randomFamily(game) });
@@ -7842,7 +8501,7 @@ function returnToTown(game) {
   return true;
 }
 
-return { REWARD_LABELS, EVENTS, createRun, syncPurse, planFor, enterFloor, onRoomClear, openInteract, describeBoon, canWield, describeItem, applyCommand, onDeath, lastCheckpoint, respawn, returnToTown };
+return { REWARD_LABELS, EVENTS, createRun, syncPurse, planFor, enterFloor, onRoomClear, openInteract, describeBoon, canWield, describeItem, applyCommand, forgeTargets, onDeath, lastCheckpoint, respawn, returnToTown };
 })();
 // ---- src/sim/lab.mjs
 __mod["src/sim/lab.mjs"] = (() => {
@@ -8797,6 +9456,11 @@ const PAL = {
   brute: '#9a3030',
   charger: '#c8732e',
   exploder: '#ff9c2a',
+  pavois: '#8a4a2a', // rouille : un porteur lourd
+  pavoisShield: '#e0b24a', // bronze : le pavois levé (ce qui arrête les coups)
+  stalker: '#5a1f4a', // prune sombre : il se fond dans le décor
+  banner: '#b5872f', // ocre : un porteur, pas un combattant
+  bannerFlag: '#e0283c', // étendard cramoisi
   boss: '#6a1428',
   bossTrim: '#ffcf5a',
 
@@ -9094,6 +9758,8 @@ const HANDLERS = {
   deflect(fx, cam, ev) {
     burst(fx, ev.x, ev.y, 6, 260, 0.25, 2, '#ffffff', { streak: 1, drag: 8 });
     addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 4, r1: 22, color: '#ffffff', width: 2, life: 0.12, max: 0.12 });
+    // Coup arrêté par un pavois (ev.guard) : le mot dit pourquoi rien n'est parti (une fois, pas en rafale).
+    if (ev.guard && !fx.texts.some((t) => t.text === 'PARÉ' && t.life > 0.35)) addText(fx, ev.x, ev.y - 34, 'PARÉ', '#e0b24a', 13, 0.55);
   },
   skill(fx, cam, ev, game) {
     const p = game.player;
@@ -9449,11 +10115,19 @@ __mod["src/render/art_foes.mjs"] = (() => {
 //   pyromancer  — capuche pointue rouge sombre + bâton à flamme (la flamme ENFLE pendant
 //                 l'incantation : on voit QUI pose les cercles)
 //   necromancer — robe violette, crâne d'os, éclats d'os en orbite (ils s'accélèrent et
-//                 brillent pendant la canalisation)const { PAL } = __mod["src/render/palette.mjs"];
+//                 brillent pendant la canalisation)
+//   pavois      — corps trapu rouille + grand PAVOIS de bronze tourné vers e.face (PAS vers le
+//                 héros) : l'arc dessiné est l'arc qui arrête les coups ; le dos est nu. Pavois
+//                 écarté et terni quand la garde est baissée (récupération, étourdi).
+//   stalker     — corps mince prune, deux lames, yeux magenta ; il PÂLIT pendant la dissolution,
+//                 n'est plus dessiné une fois disparu (render.mjs), lames levées avant la frappe.
+//   banner      — porteur ocre, hampe et étendard cramoisi qui flotte ; son aura est l'alerte
+//                 inoffensive (violette) dessinée par render.mjs ; les ennemis qu'il couvre
+//                 portent un chevron violet (drawWard).const { PAL } = __mod["src/render/palette.mjs"];const { EXTRA_ENEMIES } = __mod["src/sim/foe_data.mjs"];
 
 const TAU = Math.PI * 2;
 
-const FOE_BODY = { pyromancer: '#a8233a', necromancer: '#4b2d72' };
+const FOE_BODY = { pyromancer: '#a8233a', necromancer: '#4b2d72', pavois: PAL.pavois, stalker: PAL.stalker, banner: PAL.banner };
 
 function outlineCircle(ctx, r, fill) {
   ctx.fillStyle = fill;
@@ -9565,9 +10239,125 @@ function necromancer(ctx, r, face, body, e, time) {
   ctx.restore();
 }
 
-const FOE_ART = { pyromancer, necromancer };
+function pavois(ctx, r, face, body, e) {
+  const def = EXTRA_ENEMIES.pavois;
+  const up = !(e.stun > 0) && e.state !== 'recover'; // même règle que foe_defense.guardUp
+  const f = e.face ?? face;
+  // Dos nu : une échine sombre à l'opposé du pavois (c'est LÀ qu'il faut frapper).
+  const back = f + Math.PI;
+  ctx.fillStyle = '#3a1a10';
+  ctx.beginPath();
+  ctx.arc(Math.cos(back) * r * 0.55, Math.sin(back) * r * 0.55, r * 0.5, 0, TAU);
+  ctx.fill();
+  outlineCircle(ctx, r, body);
+  eyes(ctx, r, f, '#ffe14a', 0.35, 0.3);
+  // Pavois : arc épais, exactement de la largeur de la garde ; écarté sur le côté s'il est baissé.
+  const half = def.guardArc / 2;
+  const a = up ? f : f + 1.9;
+  const rr = r * (up ? 1.35 : 1.15);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = PAL.enemyOutline;
+  ctx.lineWidth = r * 0.62;
+  ctx.beginPath();
+  ctx.arc(0, 0, rr, a - (up ? half : 0.5), a + (up ? half : 0.5));
+  ctx.stroke();
+  ctx.strokeStyle = up ? PAL.pavoisShield : '#6e5a3a';
+  ctx.lineWidth = r * 0.38;
+  ctx.beginPath();
+  ctx.arc(0, 0, rr, a - (up ? half : 0.5), a + (up ? half : 0.5));
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+  if (up) {
+    // Umbo : le bossage central, pour lire d'un coup d'œil où le pavois regarde.
+    ctx.fillStyle = '#fff1c0';
+    ctx.beginPath();
+    ctx.arc(Math.cos(f) * rr, Math.sin(f) * rr, r * 0.2, 0, TAU);
+    ctx.fill();
+  }
+}
 
-return { FOE_BODY, FOE_ART };
+function stalker(ctx, r, face, body, e) {
+  const def = EXTRA_ENEMIES.stalker;
+  const fading = e.state === 'fade';
+  const striking = e.state === 'windup';
+  const alpha = ctx.globalAlpha;
+  if (fading) ctx.globalAlpha = alpha * Math.max(0.12, 1 - e.stateTime / def.fade);
+  // Deux lames : le long du corps au repos, écartées et levées avant la frappe.
+  ctx.strokeStyle = striking ? '#ffd0e8' : '#c9b8c8';
+  ctx.lineWidth = 3;
+  for (const s of [-1, 1]) {
+    const a = face + s * (striking ? 1.15 : 2.3);
+    const len = r * (striking ? 2.1 : 1.6);
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * r * 0.7, Math.sin(a) * r * 0.7);
+    ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len);
+    ctx.stroke();
+  }
+  // Corps mince : une amande allongée vers le héros (silhouette distincte des ronds).
+  ctx.save();
+  ctx.rotate(face);
+  ctx.fillStyle = body;
+  ctx.strokeStyle = PAL.enemyOutline;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 1.15, r * 0.72, 0, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  eyes(ctx, r, face, PAL.bossOrb, 0.3, 0.6);
+  ctx.globalAlpha = alpha;
+}
+
+function banner(ctx, r, face, body, e, time) {
+  const down = e.stun > 0; // étourdi : l'étendard tombe, l'aura avec lui
+  outlineCircle(ctx, r, body);
+  eyes(ctx, r, face, '#2a0a0a', 0.4, 0.45);
+  // Hampe plantée derrière l'épaule, étendard cramoisi qui flotte (couché s'il est étourdi).
+  const tilt = down ? 1.2 : 0;
+  const px = r * 0.5;
+  const top = -r * (down ? 1.2 : 2.9);
+  ctx.save();
+  ctx.rotate(tilt);
+  ctx.strokeStyle = '#3a2a1a';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(px, r * 0.4);
+  ctx.lineTo(px, top);
+  ctx.stroke();
+  const wave = Math.sin(time * 6 + e.id) * r * 0.18;
+  ctx.fillStyle = down ? '#6a1a24' : PAL.bannerFlag;
+  ctx.strokeStyle = PAL.enemyOutline;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(px, top);
+  ctx.lineTo(px + r * 1.5, top + r * 0.3 + wave);
+  ctx.lineTo(px + r * 1.1, top + r * 0.75);
+  ctx.lineTo(px + r * 1.5, top + r * 1.2 - wave);
+  ctx.lineTo(px, top + r * 1.1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * Marque d'un ennemi COUVERT par un étendard (foe_defense.wardOf) : chevron violet au-dessus de
+ * lui, de la couleur des alertes inoffensives (la même que l'aura). Contexte en coordonnées monde.
+ */
+function drawWard(ctx, e, r, time) {
+  const y = e.y - r - 16 + Math.sin(time * 5 + e.id) * 1.5;
+  ctx.strokeStyle = PAL.summon;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(e.x - 7, y - 4);
+  ctx.lineTo(e.x, y + 3);
+  ctx.lineTo(e.x + 7, y - 4);
+  ctx.stroke();
+}
+
+const FOE_ART = { pyromancer, necromancer, pavois, stalker, banner };
+
+return { FOE_BODY, drawWard, FOE_ART };
 })();
 // ---- src/render/art_bosses.mjs
 __mod["src/render/art_bosses.mjs"] = (() => {
@@ -9841,7 +10631,7 @@ __mod["src/render/render.mjs"] = (() => {
 // Rendu du monde (espace salle) sur canvas 2D. Lecture seule de la simulation.
 // Ordre de dessin = ordre de lisibilité : sol < télégraphes < objets < ennemis < héros <
 // projectiles < effets < textes. Les dangers sont dessinés AVANT les corps pour rester
-// visibles sous les mêlées, et leur intensité monte à l'approche de l'impact.const { PAL, ELITE_COLORS, ELITE_NAMES, CIRCLE_TINTS, REWARD_COLORS } = __mod["src/render/palette.mjs"];const { drawParticles, drawEffects, drawTexts } = __mod["src/render/fx.mjs"];const { hazardProgress, lingerLeft } = __mod["src/sim/projectiles.mjs"];const { FAMILIES } = __mod["src/sim/boons.mjs"];const { ITEM_RARITIES } = __mod["src/sim/loot.mjs"];const { REWARD_LABELS } = __mod["src/sim/run.mjs"];const { EXTRA_ART, EXTRA_BODY } = __mod["src/render/art.mjs"];const { computeAim } = __mod["src/sim/aim.mjs"];
+// visibles sous les mêlées, et leur intensité monte à l'approche de l'impact.const { PAL, ELITE_COLORS, ELITE_NAMES, CIRCLE_TINTS, REWARD_COLORS } = __mod["src/render/palette.mjs"];const { drawParticles, drawEffects, drawTexts } = __mod["src/render/fx.mjs"];const { hazardProgress, lingerLeft } = __mod["src/sim/projectiles.mjs"];const { FAMILIES } = __mod["src/sim/boons.mjs"];const { ITEM_RARITIES } = __mod["src/sim/loot.mjs"];const { REWARD_LABELS } = __mod["src/sim/run.mjs"];const { EXTRA_ART, EXTRA_BODY } = __mod["src/render/art.mjs"];const { computeAim } = __mod["src/sim/aim.mjs"];const { wardOf } = __mod["src/sim/foe_defense.mjs"];const { drawWard } = __mod["src/render/art_foes.mjs"];
 
 const TAU = Math.PI * 2;
 const TILE = 88;
@@ -10625,6 +11415,7 @@ function drawShadow(ctx, x, y, r) {
 }
 
 function drawEnemy(ctx, e, game, time) {
+  if (e.hidden && !e.boss) return; // Traqueur disparu : rien à l'écran jusqu'à sa réapparition
   let scale = 1;
   let alpha = 1;
   if (e.spawnT > 0) {
@@ -10679,6 +11470,7 @@ function drawEnemy(ctx, e, game, time) {
     ctx.stroke();
   }
   if (e.burn > 0) drawGlow(ctx, e.x, e.y - r * 0.5, r * 1.6, PAL.lava, 0.45 + 0.2 * Math.sin(time * 20 + e.id));
+  if (!e.boss && wardOf(game, e)) drawWard(ctx, e, r, time); // couvert par un Porte-étendard
   if (e.stun > 0) drawStun(ctx, e.x, e.y - r - 10, time);
   else if (e.guard > 0 && !e.boss) drawGuard(ctx, e.x + Math.max(28, r * 2.2) / 2 + 9, e.y - r - 10, Math.min(1, e.guard / GUARD_FADE));
   if (!e.boss && (e.hp < e.maxHp || e.eliteMod)) drawEnemyHp(ctx, e, r);
@@ -12498,6 +13290,7 @@ const BOSS_PITCH = 0.7;
 const ENEMY_PITCH = {
   imp: 1.1, archer: 1.05, exploder: 1.15, charger: 0.92, brute: 0.8, gardien: BOSS_PITCH, boss: BOSS_PITCH,
   pyromancer: 1.08, necromancer: 1.0,
+  pavois: 0.86, stalker: 1.12, banner: 0.95, // lourd et cuirassé ; mince et vif ; porteur moyen
 };
 
 const KILL_BASE = [
@@ -12724,6 +13517,16 @@ const ENEMY_ATTACK = {
     osc('triangle', 440, 300, adsr(0.06, 0.12, 0.6, 0.2, 0.25), 0.24, { glide: 0.5 }),
     osc('sine', 220, 150, adsr(0.06, 0.12, 0.6, 0.2, 0.25), 0.18, { glide: 0.5 }),
   ],
+  // Porte-pavois : le coup de pavois part — choc sourd du bois ferré + tintement de bronze.
+  pavois: [
+    osc('square', 140, 85, perc(0.004, 0.16), 0.4, { filter: { type: 'lowpass', freq: 600 } }),
+    hiss('bandpass', 2400, null, 4, perc(0.002, 0.07), 0.35),
+  ],
+  // Traqueur : il resurgit dans le dos — souffle qui monte, sifflement de lame (aigu, bref : on se retourne).
+  stalker: [
+    hiss('bandpass', 900, 3200, 2.5, perc(0.01, 0.16), 0.5),
+    osc('sine', 880, 1500, perc(0.005, 0.1), 0.14),
+  ],
   default: [osc('square', 500, 700, perc(0.005, 0.06), 0.1, { filter: { type: 'lowpass', freq: 1500 } })],
 };
 
@@ -12743,6 +13546,7 @@ const HAZARD_STYLE = {
   fireBlast: { pitch: 1, gain: 1, fire: true },
   sinBlast: { pitch: 1.3, gain: 0.6, fire: true },
   exploder: { pitch: 1, gain: 1, fire: true },
+  stalker: { pitch: 1.25, gain: 0.8, fire: false }, // frappe de lames : plus sèche et plus aiguë qu'une masse
   // Gardiens ajoutés : nombreuses zones à la fois, donc plus discrètes une à une (le mixage
   // de sfx.mjs regroupe les impacts d'une même image).
   cerbereLand: { pitch: 0.85, gain: 1, fire: false },

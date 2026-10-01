@@ -103,6 +103,7 @@ const BOSS_PITCH = 0.7;
 const ENEMY_PITCH = {
   imp: 1.1, archer: 1.05, exploder: 1.15, charger: 0.92, brute: 0.8, gardien: BOSS_PITCH, boss: BOSS_PITCH,
   pyromancer: 1.08, necromancer: 1.0,
+  pavois: 0.86, stalker: 1.12, banner: 0.95, // lourd et cuirassé ; mince et vif ; porteur moyen
 };
 
 const KILL_BASE = [
@@ -329,6 +330,16 @@ const ENEMY_ATTACK = {
     osc('triangle', 440, 300, adsr(0.06, 0.12, 0.6, 0.2, 0.25), 0.24, { glide: 0.5 }),
     osc('sine', 220, 150, adsr(0.06, 0.12, 0.6, 0.2, 0.25), 0.18, { glide: 0.5 }),
   ],
+  // Porte-pavois : le coup de pavois part — choc sourd du bois ferré + tintement de bronze.
+  pavois: [
+    osc('square', 140, 85, perc(0.004, 0.16), 0.4, { filter: { type: 'lowpass', freq: 600 } }),
+    hiss('bandpass', 2400, null, 4, perc(0.002, 0.07), 0.35),
+  ],
+  // Traqueur : il resurgit dans le dos — souffle qui monte, sifflement de lame (aigu, bref : on se retourne).
+  stalker: [
+    hiss('bandpass', 900, 3200, 2.5, perc(0.01, 0.16), 0.5),
+    osc('sine', 880, 1500, perc(0.005, 0.1), 0.14),
+  ],
   default: [osc('square', 500, 700, perc(0.005, 0.06), 0.1, { filter: { type: 'lowpass', freq: 1500 } })],
 };
 
@@ -348,6 +359,7 @@ const HAZARD_STYLE = {
   fireBlast: { pitch: 1, gain: 1, fire: true },
   sinBlast: { pitch: 1.3, gain: 0.6, fire: true },
   exploder: { pitch: 1, gain: 1, fire: true },
+  stalker: { pitch: 1.25, gain: 0.8, fire: false }, // frappe de lames : plus sèche et plus aiguë qu'une masse
   // Gardiens ajoutés : nombreuses zones à la fois, donc plus discrètes une à une (le mixage
   // de sfx.mjs regroupe les impacts d'une même image).
   cerbereLand: { pitch: 0.85, gain: 1, fire: false },

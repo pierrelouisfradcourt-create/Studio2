@@ -1,0 +1,152 @@
+{
+  "_note": "L'or et les objets : économie d'une partie (economy), tirage des raretés (loot), affixes ([stat, minimum, maximum, préfixe, suffixe, format]) et pouvoirs légendaires.",
+  "economy": {
+    "goldPerRoom": [8, 14],
+    "shopHealPrice": 40,
+    "shopBoonPrice": 70,
+    "shopItemPrice": [60, 140],
+    "deathGoldKeep": 0.5,
+    "treasure": { "gold": [45, 70], "rarityBonus": 2, "minRarity": "magique", "goldPickups": 8 },
+    "rest": { "heal": 0.5, "superCharge": 0.5 }
+  },
+  "loot": {
+    "rarityWeights": { "commun": 60, "magique": 28, "rare": 10, "legendaire": 2 },
+    "eliteRarityBonus": 1.8,
+    "bossGuaranteedRare": true
+  },
+  "SLOTS": ["arme", "armure", "talisman"],
+  "SLOT_NAMES": { "arme": "Arme", "armure": "Armure", "talisman": "Talisman" },
+  "BASES": {
+    "arme": ["Lame", "Hache", "Fauchon", "Glaive"],
+    "armure": ["Cuirasse", "Haubert", "Brigandine", "Robe"],
+    "talisman": ["Amulette", "Anneau", "Sceau", "Relique"]
+  },
+  "ITEM_RARITIES": [
+    { "id": "commun", "name": "Commun", "color": "#d8d4cc", "affixes": 0, "baseMult": 1 },
+    { "id": "magique", "name": "Magique", "color": "#5a8cff", "affixes": 2, "baseMult": 1.08 },
+    { "id": "rare", "name": "Rare", "color": "#ffd23c", "affixes": 3, "baseMult": 1.16 },
+    { "id": "legendaire", "name": "Légendaire", "color": "#ff8a1e", "affixes": 3, "baseMult": 1.25 }
+  ],
+  "AFFIXES": {
+    "arme": [
+      ["damageMult", 0.05, 0.12, "cruel", "du Carnage", "pct"],
+      ["attackSpeedMult", 0.06, 0.14, "vif", "de la Hâte", "pct"],
+      ["critChance", 0.03, 0.07, "acéré", "de Précision", "pct"],
+      ["critMult", 0.15, 0.4, "sanglant", "du Bourreau", "pct"],
+      ["skillDamageMult", 0.1, 0.25, "runique", "de la Lance", "pct"],
+      ["knockbackMult", 0.1, 0.3, "lourd", "du Bélier", "pct"]
+    ],
+    "armure": [
+      ["maxHpBonus", 10, 25, "robuste", "du Colosse", "flat"],
+      ["armor", 0.04, 0.09, "clouté", "du Rempart", "pct"],
+      ["moveSpeedMult", 0.04, 0.08, "léger", "du Vent", "pct"],
+      ["healOnKill", 1, 2, "vorace", "du Charognard", "flat"]
+    ],
+    "talisman": [
+      ["dashRechargeMult", -0.18, -0.08, "fuyant", "de l'Ombre", "pctNeg"],
+      ["skillCooldownMult", -0.18, -0.08, "savant", "de l'Érudit", "pctNeg"],
+      ["superChargeMult", 0.1, 0.25, "furieux", "de la Rage", "pct"],
+      ["goldFindMult", 0.15, 0.35, "doré", "de Mammon", "pct"],
+      ["lifesteal", 0.01, 0.03, "vampirique", "du Sang", "pct"],
+      ["critChance", 0.02, 0.05, "chanceux", "du Destin", "pct"]
+    ]
+  },
+  "STAT_LABELS": {
+    "damageMult": "dégâts",
+    "attackSpeedMult": "vitesse d'attaque",
+    "critChance": "chances de critique",
+    "critMult": "dégâts critiques",
+    "skillDamageMult": "dégâts de la Lance",
+    "knockbackMult": "recul infligé",
+    "maxHpBonus": "PV max",
+    "armor": "réduction des dégâts",
+    "moveSpeedMult": "vitesse de course",
+    "healOnKill": "PV par ennemi tué",
+    "dashRechargeMult": "recharge du dash",
+    "skillCooldownMult": "recharge de la Lance",
+    "superChargeMult": "charge du Super",
+    "goldFindMult": "or trouvé",
+    "lifesteal": "vol de vie"
+  },
+  "LEGENDARY_POWERS": [
+    {
+      "id": "ailes_mephisto",
+      "name": "des Ailes de Méphisto",
+      "text": "+1 charge de dash",
+      "stats": { "dashChargesBonus": 1 }
+    },
+    {
+      "id": "coeur_braise",
+      "name": "du Cœur de braise",
+      "text": "Le dash explose en flammes (14 dégâts)",
+      "procs": [{ "on": "dash", "effect": "nova", "radius": 85, "value": 14 }]
+    },
+    {
+      "id": "couronne_vorace",
+      "name": "de la Couronne vorace",
+      "text": "Chaque ennemi tué rend 3 PV",
+      "stats": { "healOnKill": 3 }
+    },
+    {
+      "id": "lame_azazel",
+      "name": "d'Azazel",
+      "text": "30 % de chances d'éclair en chaîne (12 dégâts)",
+      "procs": [
+        {
+          "on": "hit",
+          "sources": ["melee", "strike"],
+          "effect": "chain",
+          "chance": 0.3,
+          "value": 12,
+          "bounces": 2,
+          "range": 220
+        }
+      ]
+    },
+    {
+      "id": "eperons_alastor",
+      "name": "d'Alastor",
+      "text": "Une esquive parfaite rend 1 charge de dash",
+      "procs": [{ "on": "dodge", "effect": "dashCharge", "value": 1 }]
+    },
+    {
+      "id": "marteau_belial",
+      "name": "de Bélial",
+      "text": "Le dernier coup du combo étourdit 0,6 s",
+      "procs": [{ "on": "hit", "sources": ["melee"], "when": "finisher", "effect": "stun", "value": 0.6 }]
+    },
+    {
+      "id": "dard_lilith",
+      "name": "de Lilith",
+      "text": "La frappe de dash lance un éclair en chaîne (16 dégâts, 3 rebonds)",
+      "procs": [
+        {
+          "on": "hit",
+          "sources": ["strike"],
+          "effect": "chain",
+          "value": 16,
+          "bounces": 3,
+          "range": 220
+        }
+      ]
+    },
+    {
+      "id": "main_de_gloire",
+      "name": "de la Main de gloire",
+      "text": "Salle nettoyée sans être touché : +1 charge de gadget",
+      "procs": [{ "on": "roomClear", "when": "untouched", "effect": "gadgetCharge", "value": 1 }]
+    },
+    {
+      "id": "fracas_moloch",
+      "name": "de Moloch",
+      "text": "Un ennemi projeté contre un mur explose (20 dégâts, rayon 90)",
+      "procs": [{ "on": "wallSlam", "effect": "blast", "value": 20, "radius": 90 }]
+    },
+    {
+      "id": "linceul_abaddon",
+      "name": "d'Abaddon",
+      "text": "Les ennemis tués explosent (12 dégâts, rayon 80)",
+      "procs": [{ "on": "kill", "effect": "blast", "value": 12, "radius": 80 }]
+    }
+  ]
+}

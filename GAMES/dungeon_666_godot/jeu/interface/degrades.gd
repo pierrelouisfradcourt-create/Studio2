@@ -5,10 +5,10 @@ extends RefCounted
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
 
-static func bande() -> Texture2D:
+static func bande(opacite: float = 0.6) -> Texture2D:
 	var encre: Color = Couleurs.UI["void"]
 	var g := Gradient.new()
-	g.colors = PackedColorArray([Color(encre, 0.6), Color(encre, 0.0)])
+	g.colors = PackedColorArray([Color(encre, opacite), Color(encre, 0.0)])
 	g.offsets = PackedFloat32Array([0.0, 1.0])
 	var t := GradientTexture2D.new()
 	t.gradient = g

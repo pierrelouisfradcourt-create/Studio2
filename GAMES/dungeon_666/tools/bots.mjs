@@ -21,8 +21,10 @@
 //   mem.wantTown   — prendre le portail de la Ville quand il s'ouvre (sinon : jamais) ;
 //   mem.dashAttack — taper l'attaque au début de chaque dash (mesure du labo D5).
 
+import * as TRIG from '../src/core/trig.mjs'; // mêmes sinus et cosinus que la simulation : le bot est portable au bit près
 import { DT, emptyInput, applyCommand } from '../src/sim/game.mjs';
 import { hazardProgress, lingerLeft } from '../src/sim/projectiles.mjs';
+import { guardUp } from '../src/sim/foe_defense.mjs';
 import { pointSegDist2, pointBandDist2, dist2, clamp, angleDiff } from '../src/core/math.mjs';
 
 // ---------------------------------------------------------------- constantes de jeu du bot
@@ -67,6 +69,12 @@ const EXPLODER_BONUS = 40;
 const PYROMANCER_BONUS = 70; // une lanceuse de zones fragile : on la presse
 const NECROMANCER_BONUS = 140; // l'invocateur d'abord : chaque seconde de vie = des diablotins
 const CHANNEL_BONUS = 80; // en pleine canalisation (alerte violette visible) : le punir l'annule
+const BANNER_BONUS = 120; // le porte-étendard d'abord : son aura (visible) protège toute la vague
+const RECOVER_BONUS = 90; // un traqueur ou un porte-pavois qui vient de frapper : fenêtre de punition visible
+const GUARD_PENALTY = 150; // pavois levé, vu de face : on frappe ailleurs en attendant de le contourner
+const FLANK_MARGIN = 0.2; // rad de marge au-delà du bord du pavois avant de frapper
+const FLANK_DASH_RANGE = 130; // u : assez près pour traverser le porte-pavois d'un dash
+const FLANK_DASH_CHARGES = 2; // on ne dépense un dash pour contourner que si l'on en garde un pour esquiver
 const BUBBLE_PENALTY = 400; // bulle d'immunité visible (champion bouclier) : frapper ailleurs en attendant
 const POOL_WEIGHT = 1.5; // poids d'une seconde passée dans une flaque brûlante (vs un coup)
 const AVOID_PENALTY = 500; // une brute qui frappe ou un possédé qui gonfle : on s'écarte
@@ -116,7 +124,7 @@ const U32 = 4294967296;
 
 const DIRS = Array.from({ length: DIRECTION_COUNT }, (_, i) => {
   const a = (i / DIRECTION_COUNT) * Math.PI * 2;
-  return { x: Math.cos(a), y: Math.sin(a) };
+  return { x: TRIG.cos(a), y: TRIG.sin(a) };
 });
 
 // ---------------------------------------------------------------- utilitaires
@@ -341,8 +349,8 @@ function segDepth(x, y, ax, ay, bx, by, hw) {
 function bandDepth(x, y, h, r) {
   const d2 = pointBandDist2(x, y, h.x, h.y, h.angle, h.length, h.width);
   if (d2 >= r * r && d2 > 0) return 0;
-  const c = Math.cos(h.angle);
-  const s = Math.sin(h.angle);
+  const c = TRIG.cos(h.angle);
+  const s = TRIG.sin(h.angle);
   const v = Math.abs(-(x - h.x) * s + (y - h.y) * c);
   const hw = h.width / 2 + r;
   return Math.max(EDGE_DEPTH, 1 - v / hw);
@@ -397,7 +405,7 @@ function hazardThreats(h, r, out) {
 /** Ruée télégraphiée par un cône : le corps de l'ennemi file le long de l'axe du cône. */
 function lungeThreat(e, tele, tI, r) {
   return {
-    type: 'lunge', x: e.x, y: e.y, dx: Math.cos(tele.angle), dy: Math.sin(tele.angle),
+    type: 'lunge', x: e.x, y: e.y, dx: TRIG.cos(tele.angle), dy: TRIG.sin(tele.angle),
     len: Math.max(0, tele.range - e.r), t0: tI, rad: e.r + r + MOVER_PAD,
   };
 }
@@ -408,8 +416,8 @@ function lineThreat(game, e, tele, tI, r) {
     // La ligne d'un archer est courte, mais la flèche vole au-delà : on l'extrapole.
     length = Math.max(length, distTo(game.player, e) + ARROW_LINE_PAD);
   }
-  const ex = e.x + Math.cos(tele.angle) * length;
-  const ey = e.y + Math.sin(tele.angle) * length;
+  const ex = e.x + TRIG.cos(tele.angle) * length;
+  const ey = e.y + TRIG.sin(tele.angle) * length;
   const hw = tele.width / 2 + r;
   const span = e.kind === 'archer' ? ARROW_SPAN : CHARGE_SPAN;
   return zone((x, y) => segDepth(x, y, e.x, e.y, ex, ey, hw), tI - ZONE_SLACK, tI + span);
@@ -428,8 +436,8 @@ function sectorThreat(e, tele, tI, r) {
     const d = Math.sqrt(dx * dx + dy * dy);
     if (d >= reach) return 0;
     if (d > r && half < Math.PI) {
-      const slack = Math.asin(clamp(r / d, 0, 1));
-      if (Math.abs(angleDiff(tele.angle, Math.atan2(dy, dx))) > half + slack) return 0;
+      const slack = TRIG.asin(clamp(r / d, 0, 1));
+      if (Math.abs(angleDiff(tele.angle, TRIG.atan2(dy, dx))) > half + slack) return 0;
     }
     return 1 - d / reach;
   };
@@ -709,6 +717,18 @@ function isWindingDanger(e) {
   return (e.kind === 'brute' && e.state === 'windup') || (e.kind === 'exploder' && !!e.tele);
 }
 
+/**
+ * Le héros est-il DEVANT le pavois levé de `e` (ses coups rebondiraient) ? Lu sur ce qui se voit :
+ * l'orientation du pavois (e.face) et sa largeur dessinée (guardArc), levé ou non (guardUp).
+ */
+function facingGuard(game, e, margin = 0) {
+  if (!guardUp(game, e)) return false;
+  const p = game.player;
+  const def = game.tuning.enemies[e.kind];
+  const side = angleDiff(e.face, TRIG.atan2(p.y - e.y, p.x - e.x));
+  return Math.abs(side) <= def.guardArc / 2 + margin;
+}
+
 function pickTarget(game, mem, enemies) {
   const p = game.player;
   let best = null;
@@ -720,6 +740,9 @@ function pickTarget(game, mem, enemies) {
     if (e.kind === 'exploder' && !e.tele) score -= EXPLODER_BONUS;
     if (e.kind === 'pyromancer') score -= PYROMANCER_BONUS;
     if (e.kind === 'necromancer') score -= NECROMANCER_BONUS;
+    if (e.kind === 'banner') score -= BANNER_BONUS;
+    if ((e.kind === 'stalker' || e.kind === 'pavois') && e.state === 'recover') score -= RECOVER_BONUS;
+    if (facingGuard(game, e)) score += GUARD_PENALTY;
     // Canalisation visible (alerte violette du nécromancien, anneau de l'élite invocateur).
     if ((e.kind === 'necromancer' && e.tele?.harmless) || e.modPhase === 'channel') score -= CHANNEL_BONUS;
     if (e.invuln > 0 && !e.boss) score += BUBBLE_PENALTY; // bulle d'immunité dessinée
@@ -794,7 +817,9 @@ function engageIntent(game, mem, enemies, opts) {
     abilityIntent(game, mem, enemies, intent, opts);
     return intent;
   }
-  if (isWindingDanger(target)) {
+  if (facingGuard(game, target, FLANK_MARGIN)) {
+    flankIntent(game, p, target, d, intent, opts);
+  } else if (isWindingDanger(target)) {
     // Recul face à une brute qui arme son coup ou un possédé qui gonfle.
     if (d < RETREAT_DIST + target.r) {
       const away = norm(p.x - target.x, p.y - target.y);
@@ -815,6 +840,25 @@ function engageIntent(game, mem, enemies, opts) {
   }
   abilityIntent(game, mem, enemies, intent, opts);
   return intent;
+}
+
+/**
+ * Porte-pavois vu de face : on le contourne au plus près (il pivote moins vite qu'on ne tourne
+ * autour de lui), sans frapper (les coups rebondiraient). Avec deux charges de dash, on le
+ * TRAVERSE : le dash passe à travers les ennemis et dépose le héros dans son dos.
+ */
+function flankIntent(game, p, target, d, intent, opts) {
+  const rx = (p.x - target.x) / Math.max(1e-6, d);
+  const ry = (p.y - target.y) / Math.max(1e-6, d);
+  // Côté où le héros se trouve déjà par rapport à la face du pavois : on continue de ce côté.
+  const side = TRIG.cos(target.face) * ry - TRIG.sin(target.face) * rx >= 0 ? 1 : -1;
+  const orbit = target.r + p.r + STANDOFF_GAP;
+  const pull = clamp((d - orbit) / orbit, -1, 1); // trop loin : on se rapproche en tournant
+  const dir = norm(-ry * side - rx * pull, rx * side - ry * pull);
+  intent.mx = dir.x;
+  intent.my = dir.y;
+  intent.attack = false;
+  if (opts.dash && canDashNow(game) && p.dashCharges >= FLANK_DASH_CHARGES && d < FLANK_DASH_RANGE) intent.dash = { x: -rx, y: -ry };
 }
 
 /** Arme à distance : garder la cible à bonne distance, tirer quand la ligne est dégagée. */
@@ -971,6 +1015,12 @@ function intentToInput(intent) {
   }
   input.gadgetPressed = intent.gadget;
   input.superPressed = intent.superP;
+  if (intent.dash) {
+    // Dash offensif (traverser un porte-pavois) : la direction du dash est celle de la marche.
+    input.moveX = intent.dash.x;
+    input.moveY = intent.dash.y;
+    input.dashPressed = true;
+  }
   return input;
 }
 
@@ -1042,8 +1092,8 @@ function masher(game, mem) {
   input.attack = !!intent.attack;
   if (mem.rng() < MASHER_DASH_CHANCE) {
     const a = mem.rng() * Math.PI * 2;
-    input.moveX = Math.cos(a);
-    input.moveY = Math.sin(a);
+    input.moveX = TRIG.cos(a);
+    input.moveY = TRIG.sin(a);
     input.dashPressed = true;
   }
   return input;

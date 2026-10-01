@@ -9,8 +9,8 @@ signal operation_demandee(cle: String, nom: String, args: Array)
 ## L'onglet veut être redessiné sans opération (ex. : un recyclage attend sa confirmation).
 signal dessin_demande
 
-const Carte = preload("res://jeu/ville/carte.tscn")
-const Style = preload("res://jeu/ville/style_ville.gd")
+const Carte = preload("res://jeu/theme/carte.tscn")
+const Style = preload("res://jeu/theme/theme.gd")
 const TROP_CHER := "Âmes insuffisantes"
 
 var app: Node
@@ -71,7 +71,7 @@ func _pied_contenu(d: Dictionary, genre: String, id: String, equipe: bool) -> vo
 		d.etat = "equipe"
 		d.boutons = [{"nom": "", "texte": "Équipé", "inactif": true, "cle": cle}]
 	elif app.profil.unlocked[genre].has(id):
-		d.boutons = [{"nom": "choisir", "texte": "Choisir", "genre": "primaire", "cle": cle}]
+		d.boutons = [{"nom": "choisir", "texte": "Choisir", "genre": "principal", "cle": cle}]
 	else:
 		_pied_achat(d, cle, "debloquer", "Débloquer", D6Profile.unlock_cost(app.contenu, genre, id))
 		d.etat = "verrouille"
@@ -83,7 +83,7 @@ func _pied_achat(d: Dictionary, cle: String, nom: String, texte: String, prix: f
 	d.cher = cher
 	if cher and d.get("refus", "") == "":
 		d.refus = TROP_CHER
-	d.boutons = [{"nom": nom, "texte": texte, "genre": "" if cher else "primaire", "inactif": cher, "cle": cle}]
+	d.boutons = [{"nom": nom, "texte": texte, "genre": "" if cher else "principal", "inactif": cher, "cle": cle}]
 
 ## Bouton d'une carte de contenu : choisir (opération `op_choisir`) ou débloquer.
 func _sur_contenu(nom: String, genre: String, id: String, op_choisir: String) -> void:

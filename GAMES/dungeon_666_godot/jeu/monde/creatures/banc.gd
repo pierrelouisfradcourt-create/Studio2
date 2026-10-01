@@ -5,8 +5,12 @@ extends Node2D
 ##   D666_ZOOM                    zoom de la caméra (défaut 1,5 en combat, 1 sur une planche)
 ##   D666_DECALAGE="dx,dy"        décale la caméra (unités de monde) : regarder un rang de près
 ##   D666_DIEU=1                  le héros ne prend aucun dégât (pour tenir devant un Gardien)
-##   D666_PLANCHE=1               planche : les 7 archétypes, les 6 élites, les 4 Gardiens, immobiles
+##   D666_PLANCHE=1               planche : les 10 archétypes, les 6 élites, les 4 Gardiens, immobiles
 ##   D666_PLANCHE=2               planche des ÉTATS : statuts, attaques armées, pouvoirs d'élite, Gardiens
+##   D666_PLANCHE=3               planche des trois nouveaux : pavois, traqueur, étendard et ses protégés
+##   D666_PLANCHE=4 D666_POSE=…   une pose du héros (coup:active:0.5:2, frappe, dash, touche, elan, lancer,
+##                                colere, sentence, nuee : voir banc_planches.gd), avec D666_CLASSE / D666_ARME
+##   D666_PLANCHE=9               foule de 40 ennemis, pour jeu/monde/mesure.gd
 ## Capture : outils/capture.gd -- res://jeu/monde/creatures/banc.tscn <sortie.png> [images] [pilote]
 
 const Partie = preload("res://jeu/partie.gd")
@@ -37,7 +41,7 @@ func _ready() -> void:
 	if planche > 0:
 		partie.en_pause = true
 		_legendes = Planches.composer(partie.game, planche)
-	var zoom := _env("D666_ZOOM", "1.0" if planche > 0 else "1.5").to_float()
+	var zoom := _env("D666_ZOOM", ("0.8" if planche <= 3 else "1.0") if planche > 0 else "1.5").to_float()
 	camera.zoom = Vector2(zoom, zoom)
 	_cadrer(planche > 0)
 

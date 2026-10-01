@@ -15,10 +15,19 @@ const Degrades = preload("res://jeu/interface/degrades.gd")
 
 const BORD := 14 # marge entre le HUD et le bord (en plus de la zone sûre)
 const BANDE := 96.0 # hauteur de la bande sombre du haut
+const BANDE_BAS := 110.0 # hauteur de la bande sombre du bas (rangée de commandes du bureau)
 const BANDE_UTILE := 6.0 # marge sous le bloc central du haut (flèches hors champ)
 const VIE_LARGEUR := Vector2(90.0, 200.0) # mini, maxi
 const VIE_PART := 0.26 # part de la largeur d'écran
 const VIE_BASSE := 0.3
+const BANDE_BASSE := 0.42 # opacité de la bande sombre derrière la rangée de commandes du bureau
+const LARGEUR_UTILE := 700.0 # le haut du HUD (vie, fil des étages, bourse) tient dans cette largeur
+const SEUIL_MANETTE := 0.5 # un axe de manette compte comme « utilisé » au-delà
+## Libellé de chaque commande selon le dernier périphérique utilisé (mêmes touches que jeu/entrees/).
+const TOUCHES := {
+	"clavier": {"attack": "Clic G", "dash": "Espace", "skill": "Clic D", "gadget": "E", "super": "F"},
+	"manette": {"attack": "X", "dash": "A", "skill": "B", "gadget": "Y", "super": "RB"},
+}
 
 var app
 var partie
@@ -27,10 +36,13 @@ var forcer_tactile := false
 
 var _marges := Vector4.ZERO # zone sûre : gauche, haut, droite, bas (px du viewport)
 var _encoche_forcee := false
-var _gras: Font
+var _echelle := 1.0 # agrandissement des textes et barres sur une petite fenêtre (téléphone)
+## Dernier périphérique utilisé hors écran tactile : « clavier » ou « manette » (libellés des commandes).
+var _peripherique := "clavier"
 
 @onready var racine: Control = $Racine
 @onready var bande: TextureRect = $Racine/BandeHaute
+@onready var bande_basse: TextureRect = $Racine/BandeBasse
 @onready var danger: TextureRect = $Racine/Danger
 @onready var fleches: Control = $Racine/Fleches
 @onready var marges: MarginContainer = $Racine/Marges
@@ -39,6 +51,7 @@ var _gras: Font
 @onready var vie_nombre: Label = %VieNombre
 @onready var benedictions: Control = %Benedictions
 @onready var etage: Label = %Etage
+@onready var etage_total: Label = %EtageTotal
 @onready var fil: Control = %Fil
 @onready var cercle: Label = %Cercle
 @onready var gardien: VBoxContainer = %Gardien
@@ -57,6 +70,7 @@ var _gras: Font
 func _ready() -> void:
 	racine.theme = ThemeJeu.theme()
 	bande.texture = Degrades.bande()
+	bande_basse.texture = Degrades.bande(BANDE_BASSE)
 	_habiller()
 	_ignorer_souris(racine)
 	pause.pressed.connect(_sur_pause)
@@ -93,34 +107,13 @@ func _process(_delta: float) -> void:
 
 # ---------------------------------------------------------------- habillage et marges
 
-## Polices et couleurs des textes : palette par rôle, contour sombre (lisible sur tout fond).
+## Les textes prennent leur style du thème (variations Hud… de jeu/theme/theme.gd) ; ici, seulement
+## les couleurs des pièces dessinées et des filets, prises dans la palette par rôle.
 func _habiller() -> void:
 	var pal: Dictionary = Couleurs.PAL
-	_gras = ThemeJeu.police_corps()
-	(_gras as SystemFont).font_weight = 800
-	_ecrire(vie_nombre, 12, pal.text)
-	vie_nombre.add_theme_constant_override("outline_size", 5)
-	_ecrire(etage, 18, pal.text)
-	_ecrire(cercle, 13, pal.textDim)
-	_ecrire(gardien.nom, 13, pal.bossTrim)
-	_ecrire(or_montant, 18, pal.gold)
-	_ecrire(ames_montant, 14, pal.lance)
-	_ecrire(indice, 15, pal.text)
-	# Bannière dans la police du corps, graissée : la police d'apparat a des chiffres qui descendent
-	# sous la ligne (« ÉTAGE 7 » se lisait de travers).
-	_ecrire(banniere.titre, 30, pal.text)
-	_ecrire(banniere.sous, 14, pal.textDim)
-	for touche in bureau.find_children("Touche", "Label"):
-		_ecrire(touche, 12, pal.textDim)
 	or_piece.couleur = pal.gold
 	ames_gemme.couleur = pal.lance
-
-func _ecrire(texte: Label, taille: int, couleur: Color, police: Font = null) -> void:
-	texte.add_theme_font_override("font", police if police != null else _gras)
-	texte.add_theme_font_size_override("font_size", taille)
-	texte.add_theme_color_override("font_color", couleur)
-	texte.add_theme_color_override("font_outline_color", Color(Couleurs.UI["void"], 0.85))
-	texte.add_theme_constant_override("outline_size", maxi(3, taille / 4))
+	_ecrire_touches()
 
 ## Le HUD ne prend aucun clic ni toucher (ils vont à la vue Entrees), sauf le bouton pause.
 func _ignorer_souris(n: Node) -> void:
@@ -152,19 +145,56 @@ func _zone_sure() -> Vector4:
 	var fin := fenetre - sure.end
 	return Vector4(maxf(0.0, sure.position.x) * k.x, maxf(0.0, sure.position.y) * k.y, maxf(0.0, fin.x) * k.x, maxf(0.0, fin.y) * k.y)
 
+## Textes, barres et bouton pause gardent leur taille de référence sur une petite fenêtre : le
+## bloc `Marges` est agrandi (jamais au point que le haut du HUD ne tienne plus dans la largeur).
+## Les commandes tactiles et les flèches, placées en pixels du viewport, ne sont pas concernées.
 func _appliquer_marges() -> void:
-	marges.add_theme_constant_override("margin_left", BORD + int(_marges.x))
-	marges.add_theme_constant_override("margin_top", BORD + int(_marges.y))
-	marges.add_theme_constant_override("margin_right", BORD + int(_marges.z))
-	marges.add_theme_constant_override("margin_bottom", BORD + int(_marges.w))
-	bande.offset_bottom = BANDE + _marges.y
+	var vue := racine.get_viewport_rect().size
+	var k: float = ThemeJeu.echelle(vue, get_window())
+	ThemeJeu.nettete(get_viewport(), k)
+	_echelle = maxf(1.0, minf(k, vue.x / LARGEUR_UTILE))
+	marges.scale = Vector2(_echelle, _echelle)
+	marges.position = Vector2.ZERO
+	marges.size = vue / _echelle
+	marges.add_theme_constant_override("margin_left", BORD + int(_marges.x / _echelle))
+	marges.add_theme_constant_override("margin_top", BORD + int(_marges.y / _echelle))
+	marges.add_theme_constant_override("margin_right", BORD + int(_marges.z / _echelle))
+	marges.add_theme_constant_override("margin_bottom", BORD + int(_marges.w / _echelle))
+	bande.offset_bottom = BANDE * _echelle + _marges.y
+	bande_basse.offset_top = -BANDE_BAS * _echelle - _marges.w
+
+# ---------------------------------------------------------------- clavier ou manette
+
+## Le dernier périphérique utilisé décide des libellés sous les commandes. Le HUD écoute sans rien
+## consommer : les entrées restent à la vue Entrees.
+func _input(ev: InputEvent) -> void:
+	if ev is InputEventJoypadButton and ev.pressed:
+		montrer_peripherique("manette")
+	elif ev is InputEventJoypadMotion and absf(ev.axis_value) > SEUIL_MANETTE:
+		montrer_peripherique("manette")
+	elif (ev is InputEventKey or ev is InputEventMouseButton) and ev.pressed:
+		montrer_peripherique("clavier")
+
+## « clavier » ou « manette » : les libellés de la rangée de commandes suivent.
+func montrer_peripherique(nom: String) -> void:
+	if nom == _peripherique or not TOUCHES.has(nom):
+		return
+	_peripherique = nom
+	_ecrire_touches()
+
+func peripherique() -> String:
+	return _peripherique
+
+func _ecrire_touches() -> void:
+	for c in commandes_bureau:
+		c.get_parent().get_node("Touche").text = TOUCHES[_peripherique][c.id]
 
 # ---------------------------------------------------------------- lecture de la partie
 
 func _actualiser_vie(game: Dictionary) -> void:
 	var p: Dictionary = game.player
 	var part: float = p.hp / p.maxHp
-	vie.custom_minimum_size.x = clampf(racine.size.x * VIE_PART, VIE_LARGEUR.x, VIE_LARGEUR.y)
+	vie.custom_minimum_size.x = clampf(marges.size.x * VIE_PART, VIE_LARGEUR.x, VIE_LARGEUR.y)
 	vie.poser(part, Couleurs.PAL.danger if part < VIE_BASSE else Couleurs.PAL.hpBar)
 	vie_nombre.text = "%s / %s" % [D6Js.num_str(ceilf(p.hp)), D6Js.num_str(roundf(p.maxHp))]
 	benedictions.poser(game.run.boons)
@@ -173,6 +203,7 @@ func _actualiser_centre(game: Dictionary) -> void:
 	var info: Dictionary = game.info
 	if D6Js.truthy(game.get("sandbox")):
 		etage.text = "ARÈNE D'ESSAI"
+		etage_total.visible = false
 		cercle.text = "%s démons · %s esquives parfaites" % [D6Js.num_str(game.telemetry.kills), D6Js.num_str(game.telemetry.dodges)]
 		cercle.visible = true
 		fil.visible = false
@@ -180,9 +211,11 @@ func _actualiser_centre(game: Dictionary) -> void:
 		etage.add_theme_color_override("font_color", Couleurs.PAL.text)
 		return
 	var sur_gardien := D6Js.truthy(info.isBoss)
-	etage.text = "ÉTAGE %s / %s" % [D6Js.num_str(info.floor), D6Js.num_str(game.tuning.floors.total)]
+	etage.text = "ÉTAGE %s" % D6Js.num_str(info.floor)
+	etage_total.text = "/ %s" % D6Js.num_str(game.tuning.floors.total)
+	etage_total.visible = true
 	etage.add_theme_color_override("font_color", Couleurs.PAL.danger if sur_gardien else Couleurs.PAL.text)
-	var combat: bool = gardien.actualiser(game, racine.size.x)
+	var combat: bool = gardien.actualiser(game, marges.size.x)
 	fil.visible = not combat
 	cercle.visible = not combat
 	fil.poser(info.indexInSection, game.tuning.floors.sectionLength)
@@ -196,6 +229,7 @@ func _actualiser_bourse(game: Dictionary) -> void:
 
 func _actualiser_commandes(game: Dictionary, au_doigt: bool) -> void:
 	bureau.visible = not au_doigt
+	bande_basse.visible = not au_doigt
 	tactile.visible = au_doigt
 	if au_doigt:
 		tactile.actualiser(game, _interface_tactile())

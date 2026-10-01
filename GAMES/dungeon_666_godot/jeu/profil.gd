@@ -12,7 +12,8 @@ const FICHIER_REGLAGES := "reglages_jeu.json"
 ## automatique ne doit jamais lire ni écrire le vrai profil du joueur.
 const ENV_DOSSIER := "D666_DONNEES"
 const VERSION := 1
-const REGLAGES_DEFAUT := {"sound": true, "haptics": true, "shake": 1.0, "lab": {"dashStrike": "fin", "hitstop": "global", "comboMobility": "mobile"}}
+## `feel` : les écarts des « Réglages du feel » au tuning de référence, {chemin de tuning: nombre}.
+const REGLAGES_DEFAUT := {"sound": true, "haptics": true, "shake": 1.0, "lab": {"dashStrike": "fin", "hitstop": "global", "comboMobility": "mobile"}, "feel": {}}
 
 static func chemin(fichier: String) -> String:
 	var dossier := OS.get_environment(ENV_DOSSIER)
@@ -47,10 +48,22 @@ static func charger_reglages() -> Dictionary:
 			if lu.donnees.has(k) and typeof(lu.donnees[k]) == typeof(out[k]):
 				out[k] = lu.donnees[k]
 	out.lab = _labo_valide(out.lab)
+	out.feel = _feel_valide(out.feel)
 	return out
 
 static func enregistrer_reglages(reglages: Dictionary) -> bool:
 	return StudioStockage.ecrire(chemin(FICHIER_REGLAGES), reglages, VERSION) == OK
+
+## Écarts du feel validés : seulement des paires {chemin: nombre fini} ; un fichier abîmé ne casse rien.
+static func _feel_valide(feel) -> Dictionary:
+	var out := {}
+	if not (feel is Dictionary):
+		return out
+	for chemin in feel:
+		var v = feel[chemin]
+		if chemin is String and (v is float or v is int) and is_finite(float(v)):
+			out[chemin] = float(v)
+	return out
 
 ## Choix du labo validés : une variante inconnue retombe sur celle de référence.
 static func _labo_valide(lab) -> Dictionary:

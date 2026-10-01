@@ -1,0 +1,21 @@
+{
+  "_note": "Oracle des données (studio_kit). Lancer : godot --headless --path . --script res://addons/studio_kit/outils/valider.gd. Types, bornes et références simples sont ici ; les références croisées entre fichiers sont dans tests/regles/donnees.gd.",
+  "catalogues": {
+    "ennemis": { "fichier": "res://data/bestiaire.json", "liste": "ROSTER", "champ": "kind" },
+    "pactes": { "fichier": "res://data/benedictions.json", "liste": "PACTS", "champ": "id" },
+    "raretes_objet": { "fichier": "res://data/butin.json", "liste": "ITEM_RARITIES", "champ": "id" }
+  },
+  "controles": [
+    { "fichier": "res://data/heros.json", "schema": "res://data/schemas/heros.json" },
+    { "fichier": "res://data/classes.json", "schema": "res://data/schemas/classes.json" },
+    { "fichier": "res://data/bestiaire.json", "schema": "res://data/schemas/bestiaire.json" },
+    { "fichier": "res://data/gardiens.json", "schema": "res://data/schemas/gardiens.json" },
+    { "fichier": "res://data/salles.json", "schema": "res://data/schemas/salles.json" },
+    { "fichier": "res://data/etages.json", "schema": "res://data/schemas/etages.json" },
+    { "fichier": "res://data/benedictions.json", "schema": "res://data/schemas/benedictions.json" },
+    { "fichier": "res://data/butin.json", "schema": "res://data/schemas/butin.json" },
+    { "fichier": "res://data/autels.json", "schema": "res://data/schemas/autels.json" },
+    { "fichier": "res://data/ville.json", "schema": "res://data/schemas/ville.json" },
+    { "fichier": "res://data/labo.json", "schema": "res://data/schemas/labo.json" }
+  ]
+}

@@ -11,6 +11,8 @@ const MARGE := 9.0 # place de l'anneau autour du disque
 const ANNEAU := 4.0 # épaisseur des anneaux
 const ECART := 0.14 # rad entre deux segments de charge
 const POULS := 0.3 # s : onde quand la commande redevient prête
+const FOND := 0.72 # opacité du disque : le pictogramme se lit sur un sol clair comme sur un sol noir
+const CERNE := 5.0 # px du cerne sombre sous le cercle clair
 
 @export var id := "dash"
 @export var rayon := 22.0:
@@ -55,8 +57,13 @@ func _draw() -> void:
 	if _etat.get("eclat", false):
 		draw_circle(c, rayon + 8.0 + 3.0 * sin(_temps * 8.0), Color(Couleurs.PAL.superBar, 0.35), true, -1.0, true)
 	var r := rayon * (0.94 if _appuye else 1.0)
-	draw_circle(c, r, Color(texte, 0.32) if _appuye else Color(Couleurs.UI.panel, 0.6), true, -1.0, true)
-	draw_arc(c, r, 0.0, TAU, 48, Color(texte, 0.75 if _pret() else 0.25), 2.5, true)
+	var encre: Color = Couleurs.UI["void"]
+	draw_circle(c, r, Color(Couleurs.UI.panel, FOND), true, -1.0, true)
+	if _appuye:
+		draw_circle(c, r, Color(texte, 0.3), true, -1.0, true)
+	# Un cerne sombre sous le cercle clair : le bouton se détache d'un fond clair (flash, lave).
+	draw_arc(c, r + 0.5, 0.0, TAU, 48, Color(encre, 0.6), CERNE, true)
+	draw_arc(c, r, 0.0, TAU, 48, Color(texte, 0.85 if _pret() else 0.35), 2.5, true)
 	_dessiner_recharge(c)
 	var plein: Color = Couleurs.PAL.superBar if id == "super" else texte
 	Icones.dessiner(self, _etat.get("icone", id), c, rayon, plein if _pret() else Color(texte, 0.4))

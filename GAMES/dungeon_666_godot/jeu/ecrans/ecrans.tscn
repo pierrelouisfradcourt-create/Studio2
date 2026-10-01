@@ -1,9 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://jeu/ecrans/ecrans.gd" id="1"]
+[ext_resource type="Script" path="res://jeu/ecrans/fond_titre.gd" id="2"]
 
 [node name="Ecrans" type="CanvasLayer"]
-layer = 20
+layer = 30
 script = ExtResource("1")
 
 [node name="Racine" type="Control" parent="."]
@@ -13,7 +14,7 @@ layout_mode = 3
 anchors_preset = 0
 mouse_filter = 2
 
-[node name="FondTitre" type="TextureRect" parent="Racine"]
+[node name="FondTitre" type="Control" parent="Racine"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -23,7 +24,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-expand_mode = 1
+script = ExtResource("2")
 
 [node name="Voile" type="ColorRect" parent="Racine"]
 unique_name_in_owner = true

@@ -9,6 +9,7 @@ const SANS := Color(0.0, 0.0, 0.0, 0.0) # « pas de contour »
 const TRAIT := 2.5
 
 static var _halo: Texture2D = null
+static var _ombre: Texture2D = null
 static var _police: Font = null
 
 var ci: CanvasItem
@@ -61,8 +62,8 @@ func forme(pts: PackedVector2Array, fond: Color, contour: Color = ENCRE, ep: flo
 	elif alpha >= 1.0 and fond.a >= 1.0:
 		ci.draw_polyline(bord, fond, 1.0, true)
 
-func ellipse(centre: Vector2, rx: float, ry: float, fond: Color, contour: Color = ENCRE, ep: float = TRAIT, angle: float = 0.0) -> void:
-	forme(pts_ellipse(centre, rx, ry, angle), fond, contour, ep)
+func ellipse(centre: Vector2, rx: float, ry: float, fond: Color, contour: Color = ENCRE, ep: float = TRAIT, angle: float = 0.0, n: int = 28) -> void:
+	forme(pts_ellipse(centre, rx, ry, angle, n), fond, contour, ep)
 
 ## Triangle (corne, pointe, croc) : base a-b, sommet c.
 func pic(a: Vector2, b: Vector2, c: Vector2, fond: Color, contour: Color = ENCRE, ep: float = 2.0) -> void:
@@ -150,6 +151,11 @@ func taillade(centre: Vector2, rayon: float, a0: float, a1: float, epais: float,
 func lueur(centre: Vector2, rayon: float, couleur: Color, force: float = 1.0) -> void:
 	ci.draw_texture_rect(_texture_halo(), Rect2(centre - Vector2(rayon, rayon), Vector2(rayon, rayon) * 2.0), false, t(couleur, force))
 
+## Ombre douce posée au sol : une tache sombre aux bords fondus (rectangles texturés : toutes les
+## ombres d'une image partent en un seul appel de dessin).
+func ombre(centre: Vector2, rx: float, ry: float, force: float = 1.0) -> void:
+	ci.draw_texture_rect(_texture_ombre(), Rect2(centre - Vector2(rx, ry), Vector2(rx, ry) * 2.0), false, t(Color(0.0, 0.0, 0.0, 0.62), force))
+
 ## Deux yeux de part et d'autre de l'axe `angle`, à `dist` × r du centre.
 func yeux(centre: Vector2, r: float, couleur: Color, ecart: float = 0.45, dist: float = 0.45, taille: float = 0.14, angle: float = 0.0) -> void:
 	for s: float in [-ecart, ecart]:
@@ -172,15 +178,27 @@ static func police() -> Font:
 
 static func _texture_halo() -> Texture2D:
 	if _halo == null:
-		var g := Gradient.new()
-		g.offsets = PackedFloat32Array([0.0, 0.4, 1.0])
-		g.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0.4), Color(1, 1, 1, 0)])
-		var tex := GradientTexture2D.new()
-		tex.gradient = g
-		tex.width = 128
-		tex.height = 128
-		tex.fill = GradientTexture2D.FILL_RADIAL
-		tex.fill_from = Vector2(0.5, 0.5)
-		tex.fill_to = Vector2(1.0, 0.5)
-		_halo = tex
+		_halo = _radial(PackedFloat32Array([0.0, 0.4, 1.0]), PackedFloat32Array([1.0, 0.4, 0.0]), 128)
 	return _halo
+
+static func _texture_ombre() -> Texture2D:
+	if _ombre == null:
+		_ombre = _radial(PackedFloat32Array([0.0, 0.55, 0.8, 1.0]), PackedFloat32Array([1.0, 0.85, 0.35, 0.0]), 64)
+	return _ombre
+
+## Dégradé radial blanc dont l'opacité suit `alphas` du centre vers le bord.
+static func _radial(pas: PackedFloat32Array, alphas: PackedFloat32Array, taille: int) -> Texture2D:
+	var g := Gradient.new()
+	var teintes := PackedColorArray()
+	for a in alphas:
+		teintes.append(Color(1.0, 1.0, 1.0, a))
+	g.offsets = pas
+	g.colors = teintes
+	var tex := GradientTexture2D.new()
+	tex.gradient = g
+	tex.width = taille
+	tex.height = taille
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	return tex

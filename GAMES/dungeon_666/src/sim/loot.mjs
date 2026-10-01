@@ -75,6 +75,14 @@ export const LEGENDARY_POWERS = [
   { id: 'coeur_braise', name: 'du Cœur de braise', text: 'Le dash explose en flammes (14 dégâts)', procs: [{ on: 'dash', effect: 'nova', radius: 85, value: 14 }] },
   { id: 'couronne_vorace', name: 'de la Couronne vorace', text: 'Chaque ennemi tué rend 3 PV', stats: { healOnKill: 3 } },
   { id: 'lame_azazel', name: 'd\'Azazel', text: '30 % de chances d\'éclair en chaîne (12 dégâts)', procs: [{ on: 'hit', sources: ['melee', 'strike'], effect: 'chain', chance: 0.3, value: 12, bounces: 2, range: 220 }] },
+  // Contenu 2026-10-01 : six pouvoirs branchés sur les déclencheurs de combat.mjs (esquive
+  // parfaite, dernier coup du combo, frappe de dash, salle sans blessure, mur, mort d'un ennemi).
+  { id: 'eperons_alastor', name: 'd\'Alastor', text: 'Une esquive parfaite rend 1 charge de dash', procs: [{ on: 'dodge', effect: 'dashCharge', value: 1 }] },
+  { id: 'marteau_belial', name: 'de Bélial', text: 'Le dernier coup du combo étourdit 0,6 s', procs: [{ on: 'hit', sources: ['melee'], when: 'finisher', effect: 'stun', value: 0.6 }] },
+  { id: 'dard_lilith', name: 'de Lilith', text: 'La frappe de dash lance un éclair en chaîne (16 dégâts, 3 rebonds)', procs: [{ on: 'hit', sources: ['strike'], effect: 'chain', value: 16, bounces: 3, range: 220 }] },
+  { id: 'main_de_gloire', name: 'de la Main de gloire', text: 'Salle nettoyée sans être touché : +1 charge de gadget', procs: [{ on: 'roomClear', when: 'untouched', effect: 'gadgetCharge', value: 1 }] },
+  { id: 'fracas_moloch', name: 'de Moloch', text: 'Un ennemi projeté contre un mur explose (20 dégâts, rayon 90)', procs: [{ on: 'wallSlam', effect: 'blast', value: 20, radius: 90 }] },
+  { id: 'linceul_abaddon', name: 'd\'Abaddon', text: 'Les ennemis tués explosent (12 dégâts, rayon 80)', procs: [{ on: 'kill', effect: 'blast', value: 12, radius: 80 }] },
 ];
 
 const FLOOR_SCALE = 0.012;

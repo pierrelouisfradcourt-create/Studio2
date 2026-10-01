@@ -8,12 +8,12 @@ l'équilibrage ressenti : **D11 se juge en main**.
 
 | Kit | Habile : section battue | Habile : dégâts/salle | Sans dash : dégâts/salle | Valeur du dash | Sans dash vs étalon | Sans dash : section battue | Martèle : meurt | Martèle : étage atteint | Durée (habile) |
 |---|---|---|---|---|---|---|---|---|---|
-| Revenant · Lame du Revenant | 100 % | 2.3 | 17.5 | ×7.5 | 100 % | 15 % | 100 % | 10.1 | 6.2 min |
-| Revenant · Dagues jumelles | 100 % | 2.7 | 19.1 | ×7.0 | 109 % | 25 % | 100 % | 8.8 | 6.4 min |
-| Bourreau · Hache du bourreau | 100 % | 3.9 | 25.8 | ×6.7 | 147 % | 25 % | 100 % | 15.6 | 5.8 min |
-| Bourreau · Maillet des damnés | 100 % | 2.0 | 25.9 | ×13.2 | 148 % | 30 % | 100 % | 15.6 | 5.7 min |
-| Chasseresse · Arc d'os | 100 % | 0.6 | 20.5 | ×31.7 | 117 % | 15 % | 100 % | 5.8 | 5.7 min |
-| Chasseresse · Arbalète des limbes | 100 % | 0.7 | 21.2 | ×28.8 | 121 % | 30 % | 95 % | 9.2 | 5.3 min |
+| Revenant · Lame du Revenant | 100 % | 2.6 | 20.3 | ×7.8 | 100 % | 25 % | 100 % | 7.8 | 6.1 min |
+| Revenant · Dagues jumelles | 95 % | 4.8 | 22.1 | ×4.6 | 108 % | 30 % | 100 % | 7.0 | 6.6 min |
+| Bourreau · Hache du bourreau | 100 % | 2.2 | 27.9 | ×12.6 | 137 % | 5 % | 90 % | 13.9 | 5.8 min |
+| Bourreau · Maillet des damnés | 95 % | 2.9 | 24.4 | ×8.4 | 120 % | 20 % | 100 % | 13.5 | 5.6 min |
+| Chasseresse · Arc d'os | 100 % | 0.4 | 19.7 | ×50.6 | 97 % | 20 % | 100 % | 5.8 | 5.4 min |
+| Chasseresse · Arbalète des limbes | 100 % | 1.0 | 18.9 | ×19.0 | 93 % | 20 % | 100 % | 8.4 | 5.1 min |
 
 Seuils bloquants : section battue ≥ 90 % ; valeur du dash ≥ ×2 ; sans dash, au moins 70 % des dégâts/salle de l'étalon (revenant/lame).
 

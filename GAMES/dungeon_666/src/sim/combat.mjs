@@ -1,17 +1,34 @@
 // Résolution des dégâts — UN SEUL chemin pour toucher un ennemi (damageEnemy) et UN SEUL
 // pour toucher le héros (damagePlayer). Les bénédictions n'exécutent pas de code : elles
 // déclarent des « procs » (données) que ce module interprète. Pas d'import circulaire.
+//
+// VOCABULAIRE DES PROCS (bénédictions de boons.mjs, pouvoirs légendaires de loot.mjs) :
+//   on     — quand : 'hit' (un coup du héros porte ; `sources` = sortes de coups concernées),
+//            'kill' (un ennemi meurt), 'dash' (une charge de dash est dépensée), 'dodge' (esquive
+//            parfaite), 'wallSlam' (un ennemi est projeté contre un mur), 'super' (le Super est
+//            lancé), 'roomClear' (la salle est nettoyée), 'overheal' (un soin dépasse les PV max),
+//            'passive' (lu à chaque calcul de dégâts).
+//   when   — condition facultative, lue dans le contexte du déclencheur : 'finisher' (dernier coup
+//            du combo), 'untouched' (salle nettoyée sans blessure).
+//   chance — probabilité (flux rng.combat ; 1 = aucun tirage).
+//   effect — sur la CIBLE : burn | chill | vuln | chain | stun | blast | cull | gold ;
+//            sur le HÉROS : heal | surge | superCharge | dashCharge | gadgetCharge | gold (sans cible) ;
+//            AUTOUR du héros : nova (dégâts, gel facultatif) | around (`apply` = effet de cible) ;
+//            passifs : execute | fullHpBonus | goldPower | streakBonus | stunnedCrit.
+// Aucun effet ne connaît l'identifiant de la bénédiction qui le déclare.
 
 import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand } from '../core/rng.mjs';
 import { dist2, clamp } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
+import { frontBlocked, wardMult } from './foe_defense.mjs';
 
 // Sources de dégâts du héros qui déclenchent les procs « au toucher ».
 const PROC_SOURCES = new Set(['melee', 'strike', 'skill', 'gadget', 'super']);
 // Sources qui ne remplissent pas la jauge de Super (sinon le Super se recharge lui-même).
 const NO_SUPER_CHARGE = new Set(['super', 'burn', 'blast', 'chain']);
 const ARMOR_CAP = 0.6;
+const PROC_BLAST_DELAY = 0.12; // s : télégraphe d'une explosion déclenchée par un proc « blast »
 
 /**
  * Gel d'impact des coups du héros, puisé dans une réserve qui se recharge (anti-diaporama).
@@ -57,10 +74,17 @@ export function damageEnemy(game, e, src) {
     if (src.kind === 'melee' || src.kind === 'strike' || src.kind === 'skill') emit(game, 'immune', { x: e.x, y: e.y });
     return 0;
   }
+  if (frontBlocked(game, e, src)) {
+    // Porte-pavois frappé de face : le coup sonne sur le pavois (même signal qu'une parade :
+    // étincelles et tintement, au point de contact) et ne porte pas — ni dégât, ni recul, ni étourdissement.
+    emit(game, 'deflect', { x: e.x + TRIG.cos(e.face) * e.r, y: e.y + TRIG.sin(e.face) * e.r, guard: true });
+    return 0;
+  }
   const t = game.tuning;
   const p = game.player;
   const st = p.stats;
   let amount = src.amount;
+  let critBonus = 0;
   if (isPlayerSource(src.kind) && src.kind !== 'wall') {
     amount *= st.damageMult * (st.weaponDamage / t.weaponBase);
     if (src.kind === 'skill') amount *= st.skillDamageMult;
@@ -68,17 +92,26 @@ export function damageEnemy(game, e, src) {
     for (const pr of p.procs) {
       if (pr.effect === 'execute' && e.hp / e.maxHp <= pr.threshold && (!pr.needsBurnChill || (e.burn > 0 && e.chill > 0))) amount *= 1 + pr.value;
       if (pr.effect === 'fullHpBonus' && p.hp >= p.maxHp) amount *= 1 + pr.value;
+      // Bourse pleine : par tranche de `per` or portée, `cap` tranches au plus.
+      if (pr.effect === 'goldPower') amount *= 1 + pr.value * Math.min(pr.cap, Math.floor(game.run.gold / pr.per));
+      // Salles nettoyées d'affilée sans blessure (run.streak, remis à zéro par un coup reçu).
+      if (pr.effect === 'streakBonus') amount *= 1 + pr.value * Math.min(pr.cap, game.run.streak ?? 0);
+      // Cible sonnée : chances de critique en plus (lues AVANT que ce coup ne sonne lui-même).
+      if (pr.effect === 'stunnedCrit' && e.stun > 0) critBonus += pr.value;
     }
+    // Élan passager du héros (effet « surge ») : dégâts en plus tant qu'il dure.
+    if (p.surge > 0) amount *= 1 + p.surgeMult;
     if (src.kind === 'super') amount *= st.superDamageMult ?? 1;
   }
   if (e.eliteMod === 'blinde') amount *= t.elite.mods.blinde.damageTakenMult;
+  amount *= wardMult(game, e); // sous l'aura d'un Porte-étendard debout (foe_defense.mjs)
   if (e.stun > 0) amount *= t.combat.stunDamageTakenMult;
   if (e.vuln > 0) amount *= 1 + e.vulnMult;
   if (e.exposed > 0) amount *= 1 + e.exposedMult; // point faible d'un Gardien (boss_common.expose)
 
   let crit = false;
   if (src.canCrit) {
-    const chance = t.combat.critChance + st.critChance;
+    const chance = t.combat.critChance + st.critChance + critBonus;
     if (rand(game.rng.combat) < chance) {
       crit = true;
       amount *= t.combat.critMult + st.critMult;
@@ -143,33 +176,150 @@ function applyHitProcs(game, e, src) {
   const p = game.player;
   for (const pr of p.procs) {
     if (pr.on !== 'hit' || !pr.sources.includes(src.kind)) continue;
+    if (pr.when && !src[pr.when]) continue;
     if (pr.chance < 1 && rand(game.rng.combat) >= pr.chance) continue;
-    switch (pr.effect) {
-      case 'burn':
-        e.burn = Math.max(e.burn, pr.duration);
-        e.burnDps = Math.max(e.burnDps, pr.value);
-        break;
-      case 'chill':
-        e.chill = Math.max(e.chill, pr.duration);
-        // Borné : un ennemi ralenti reste un ennemi qui avance (jamais de vitesse négative).
-        e.chillMult = Math.min(e.chillMult || 1, Math.max(game.tuning.combat.minChillMult, 1 - pr.value));
-        break;
-      case 'vuln':
-        e.vuln = Math.max(e.vuln, pr.duration);
-        e.vulnMult = Math.max(e.vulnMult, pr.value);
-        break;
-      case 'chain':
-        chainLightning(game, e, pr);
-        break;
-      case 'gold':
-        if (e.summoned) break; // invocations : ni or ni Âmes (pas de ferme tant que l'invocateur vit)
-        game.run.gold += pr.value;
-        emit(game, 'gold', { x: e.x, y: e.y, amount: pr.value });
-        break;
-      default:
-        break;
+    applyProc(game, pr, e, src);
+  }
+}
+
+/**
+ * Déclenche les procs du moment `on` (tout sauf 'hit' et 'passive'). `target` : l'ennemi
+ * concerné s'il y en a un (tué, projeté) ; `ctx` : contexte du déclencheur (conditions `when`,
+ * quantité `amount` des effets « par unité »).
+ */
+export function fireProcs(game, on, target = null, ctx = null) {
+  const p = game.player;
+  for (const pr of p.procs) {
+    if (pr.on !== on) continue;
+    if (pr.when && !(ctx && ctx[pr.when])) continue;
+    if (pr.chance < 1 && rand(game.rng.combat) >= pr.chance) continue;
+    applyProc(game, pr, target, ctx);
+  }
+}
+
+/** Applique l'effet d'un proc déclenché : sur le héros, autour de lui, ou sur la cible `e`. */
+function applyProc(game, pr, e, ctx) {
+  const p = game.player;
+  switch (pr.effect) {
+    case 'heal':
+      healPlayer(game, pr.value, true);
+      break;
+    case 'surge':
+      p.surge = Math.max(p.surge, pr.duration);
+      p.surgeMult = Math.max(p.surgeMult, pr.value);
+      break;
+    case 'superCharge': {
+      if (p.state === 'super') break; // jamais pendant le Super : il ne se recharge pas lui-même
+      const before = p.superCharge;
+      p.superCharge = Math.min(1, p.superCharge + pr.value * (pr.perUnit ? ctx?.amount ?? 0 : 1));
+      if (before < 1 && p.superCharge >= 1) emit(game, 'superReady');
+      break;
+    }
+    case 'dashCharge': {
+      const max = game.tuning.dash.charges + p.stats.dashChargesBonus;
+      if (p.dashCharges >= max) break;
+      p.dashCharges = Math.min(max, p.dashCharges + pr.value);
+      emit(game, 'dashReady', { charges: p.dashCharges });
+      break;
+    }
+    case 'gadgetCharge': {
+      const max = game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
+      if (p.gadgetCharges >= max) break;
+      p.gadgetCharges = Math.min(max, p.gadgetCharges + pr.value);
+      emit(game, 'gadgetCharge', { x: p.x, y: p.y, charges: p.gadgetCharges });
+      break;
+    }
+    case 'nova':
+      heroNova(game, pr);
+      break;
+    case 'around':
+      aroundHero(game, pr);
+      break;
+    default:
+      applyTargetEffect(game, pr.effect, pr, e, ctx);
+  }
+}
+
+/** Effet posé sur un ennemi. `src` : le coup qui l'a déclenché (garde contre le ré-étourdissement). */
+function applyTargetEffect(game, effect, pr, e, src) {
+  const p = game.player;
+  if (effect === 'chain') {
+    chainLightning(game, e ?? p, pr); // sans cible : l'éclair part du héros
+    return;
+  }
+  if (effect === 'gold') {
+    if (e?.summoned) return; // invocations : ni or ni Âmes (pas de ferme tant que l'invocateur vit)
+    const at = e ?? p;
+    const amount = Math.round(pr.value);
+    game.run.gold += amount;
+    emit(game, 'gold', { x: at.x, y: at.y, amount });
+    return;
+  }
+  if (!e) return;
+  switch (effect) {
+    case 'burn':
+      e.burn = Math.max(e.burn, pr.duration);
+      e.burnDps = Math.max(e.burnDps, pr.value);
+      break;
+    case 'chill':
+      e.chill = Math.max(e.chill, pr.duration);
+      // Borné : un ennemi ralenti reste un ennemi qui avance (jamais de vitesse négative).
+      e.chillMult = Math.min(e.chillMult || 1, Math.max(game.tuning.combat.minChillMult, 1 - pr.value));
+      break;
+    case 'vuln':
+      e.vuln = Math.max(e.vuln, pr.duration);
+      e.vulnMult = Math.max(e.vulnMult, pr.value);
+      break;
+    case 'stun':
+      // Mêmes règles que damageEnemy : jamais un Gardien, et la garde tient contre un coup d'arme.
+      if (e.boss || e.dead) break;
+      if (e.guard > 0 && src && game.tuning.combat.stunGuardSources.includes(src.kind)) break;
+      e.stun = Math.max(e.stun, pr.value);
+      e.tele = null;
+      e.state = 'stunned';
+      e.stateTime = 0;
+      break;
+    case 'blast':
+      spawnHazard(game, {
+        shape: 'circle', x: e.x, y: e.y, r: pr.radius, delay: PROC_BLAST_DELAY, damage: pr.value,
+        hitsPlayer: false, hitsEnemies: true, kind: 'sinBlast', sourceId: 0,
+      });
+      break;
+    case 'cull':
+      // Achève un ennemi affaibli (jamais un Gardien) : la mort porte la marque de l'éclair.
+      if (!e.boss && !e.dead && e.hp / e.maxHp <= pr.value) killEnemy(game, e, { kind: 'chain' });
+      break;
+    default:
+      break;
+  }
+}
+
+/** Déflagration autour du héros : dégâts à tout ennemi dans le rayon, gel facultatif (`chill` s). */
+function heroNova(game, pr) {
+  const p = game.player;
+  for (const e of game.enemies) {
+    if (e.dead || e.spawnT > 0) continue;
+    const rr = pr.radius + e.r;
+    if (dist2(p.x, p.y, e.x, e.y) < rr * rr) {
+      damageEnemy(game, e, { kind: 'blast', amount: pr.value, dirX: 0, dirY: 0, canCrit: false });
+      if (pr.chill) {
+        e.chill = Math.max(e.chill, pr.chill);
+        e.chillMult = Math.min(e.chillMult || 1, 0.5);
+      }
     }
   }
+  emit(game, 'dashNova', { x: p.x, y: p.y, r: pr.radius });
+}
+
+/** Onde sans dégâts autour du héros : pose l'effet de cible `apply` sur tout ennemi dans le rayon. */
+function aroundHero(game, pr) {
+  const p = game.player;
+  for (const e of game.enemies) {
+    if (e.dead || e.spawnT > 0) continue;
+    const rr = pr.radius + e.r;
+    if (dist2(p.x, p.y, e.x, e.y) < rr * rr) applyTargetEffect(game, pr.apply, pr, e, null);
+  }
+  emit(game, 'dashNova', { x: p.x, y: p.y, r: pr.radius });
 }
 
 function chainLightning(game, from, pr) {
@@ -241,16 +391,7 @@ export function killEnemy(game, e, src) {
     });
   }
   const p = game.player;
-  for (const pr of p.procs) {
-    if (pr.on !== 'kill') continue;
-    if (pr.effect === 'heal') healPlayer(game, pr.value, true);
-    if (pr.effect === 'blast') {
-      spawnHazard(game, {
-        shape: 'circle', x: e.x, y: e.y, r: pr.radius, delay: 0.12, damage: pr.value,
-        hitsPlayer: false, hitsEnemies: true, kind: 'sinBlast', sourceId: 0,
-      });
-    }
-  }
+  fireProcs(game, 'kill', e);
   if (p.stats.healOnKill > 0) healPlayer(game, p.stats.healOnKill, true);
   if (p.stats.extraGoldOnKill > 0 && !e.summoned) {
     game.run.gold += p.stats.extraGoldOnKill;
@@ -264,6 +405,9 @@ export function healPlayer(game, amount, show) {
   const before = p.hp;
   p.hp = Math.min(p.maxHp, p.hp + amount);
   if (show && p.hp - before >= 1) emit(game, 'heal', { x: p.x, y: p.y, amount: Math.round(p.hp - before) });
+  // Trop-plein : les PV soignés au-delà du maximum nourrissent les procs « overheal ».
+  const over = before + amount - p.maxHp;
+  if (over > 0 && p.procs) fireProcs(game, 'overheal', null, { amount: over });
 }
 
 /**
@@ -285,6 +429,7 @@ export function damagePlayer(game, amount, src) {
       if (before < 1 && p.superCharge >= 1) emit(game, 'superReady');
       p.dashRecharge += d.perfectDodgeRefund;
       emit(game, 'dodge', { x: p.x, y: p.y });
+      fireProcs(game, 'dodge');
     }
     return false;
   }
@@ -294,6 +439,9 @@ export function damagePlayer(game, amount, src) {
   p.iframes = t.player.hurtIframes;
   p.dodgeIframes = 0;
   p.hurtFlash = 0.35;
+  // Une blessure : la salle n'est plus « sans une égratignure », la série sans blessure retombe.
+  if (game.room) game.room.hurt = true;
+  game.run.streak = 0;
   forceHitstop(game, t.player.hurtHitstop);
   const tel = game.telemetry;
   tel.damageTaken += dmg;

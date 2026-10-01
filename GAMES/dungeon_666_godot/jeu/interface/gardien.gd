@@ -6,6 +6,7 @@ const Couleurs = preload("res://jeu/theme/couleurs.gd")
 const LARGEUR_MAX := 420.0
 const PART_ECRAN := 0.5
 const HAUTEUR := 14.0
+const NOM := "◆  %s  ◆"
 
 @onready var nom: Label = $Nom
 @onready var barre: Control = $Barre
@@ -24,7 +25,8 @@ func actualiser(game: Dictionary, largeur: float) -> bool:
 		barre.reinitialiser()
 	var def: Dictionary = game.tuning.boss[boss.kind]
 	var enchaine := D6Js.truthy(boss.get("shielded"))
-	nom.text = "%s — ENCHAÎNÉ : abats ses geôliers" % def.name if enchaine else String(def.name)
+	nom.text = "%s — ENCHAÎNÉ : abats ses geôliers" % def.name if enchaine else NOM % def.name
+	barre.lisere = Couleurs.PAL.bossTrim
 	barre.custom_minimum_size = Vector2(minf(LARGEUR_MAX, largeur * PART_ECRAN), HAUTEUR)
 	barre.marques = [def.get("phase2At", 0.66), def.get("phase3At", 0.33)]
 	barre.poser(boss.hp / boss.maxHp, _couleur(boss, enchaine))

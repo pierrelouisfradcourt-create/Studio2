@@ -37,6 +37,10 @@ const AU_HUD: Array[String] = ["roomClear", "checkpoint"]
 
 const ONDE_SUPER := 140.0 # u : onde de départ d'un Super à longue portée (Nuée)
 const SOINS_DELAI := 0.4 # s entre deux chiffres de soin (les soins s'additionnent entre-temps)
+# Éclats du fil de la lame au départ d'un coup de mêlée (la taillade est au calque du héros).
+const ECLATS := 3
+const ECLATS_FRAPPE := 6
+const ECLATS_PORTEE := 0.7 # part de la portée où naissent les éclats
 const BRAISES := 0.2 # probabilité par image d'une braise ambiante (0,35 sur le web)
 # Secousse des ZONES qui frappent : pleine près du héros, faible loin ; un lot d'événements ne
 # secoue pas plus qu'une zone ; au-delà de quelques zones par lot, leurs particules s'allègent.
@@ -65,7 +69,6 @@ var _soins := 0.0
 var _soins_t := 0.0
 var _zones_secousse := 0.0
 var _zones_lot := 0
-var _heros_avant := Vector2.ZERO
 
 func _ready() -> void:
 	_table = {
@@ -126,10 +129,6 @@ func _process(delta: float) -> void:
 	textes.avancer(dt)
 	ecran.avancer(dt)
 	_montrer_soins(dt, p)
-	# Traînée du dash : la position de l'image d'avant, pour ne jamais couvrir le héros.
-	if g.player.state == "dash":
-		formes.fantome(_heros_avant)
-	_heros_avant = p
 	if braises and randf() < BRAISES and particules.n < particules.PLAFOND / 2:
 		var salle: Dictionary = g.room
 		particules.emettre(randf() * salle.w, salle.h + 10.0, (randf() - 0.5) * 20.0, -30.0 - randf() * 50.0, 4.0 + randf() * 3.0, 1.5 + randf() * 1.5, PAL.lava if randf() < 0.5 else TEINTES.braise, 0.05)
@@ -182,8 +181,12 @@ func _sur_swing(ev: Dictionary, _g: Dictionary) -> void:
 		particules.gerbe(ev.x + dir.x * 20.0, ev.y + dir.y * 20.0, 7 if lourd else 4, 260.0, 0.18, 2.0, PAL.lance, ev.angle, 0.6, 8.0, true)
 		_recul(-dir, 1.0)
 		return
+	# La taillade elle-même est dessinée par le calque du héros (jeu/monde/creatures/heros.gd) : elle
+	# y suit la portée et l'ouverture RÉELLES du coup. Ici, seulement les éclats du fil de la lame.
+	# (De même, la traînée du dash est celle de jeu/monde/entites.gd : une seule de chaque.)
 	var frappe := D6Js.truthy(ev.get("strike"))
-	formes.ajouter({"type": "taillade", "angle": ev.angle, "arc": ev.arc, "portee": ev.range, "indice": ev.index, "frappe": frappe, "couleur": PAL.slashStrike if frappe else PAL.slash, "vie": 0.15})
+	var bout: Vector2 = Vector2(ev.x, ev.y) + dir * (ev.range * ECLATS_PORTEE)
+	particules.gerbe(bout.x, bout.y, ECLATS_FRAPPE if frappe else ECLATS, 240.0, 0.16, 1.8, PAL.slashStrike if frappe else PAL.slash, ev.angle, minf(ev.arc, PI), 9.0, true)
 	_recul(dir, 1.5)
 
 func _sur_coup(ev: Dictionary, _g: Dictionary) -> void:
@@ -407,7 +410,7 @@ func _sur_super_coup(ev: Dictionary, _g: Dictionary) -> void:
 		var dir := Vector2.from_angle(ev.angle)
 		particules.gerbe(ev.x + dir.x * 18.0, ev.y + dir.y * 18.0, 3, 240.0, 0.15, 2.0, PAL.superBar, ev.angle, 0.5, 8.0, true)
 	else:
-		formes.ajouter({"type": "tourbillon", "r": ev.r, "a0": randf() * TAU, "vie": 0.16})
+		# Colère : le tourbillon lui-même est dessiné sous le héros, à sa portée réelle (monde/creatures/heros.gd).
 		particules.gerbe(ev.x, ev.y, 4, ev.r * 3.0, 0.3, 2.5, PAL.superBar, 0.0, TAU, 6.0, true)
 
 ## Exécution : immense taillade dorée (le 3e coup fait le tour complet).

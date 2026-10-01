@@ -1,0 +1,208 @@
+{
+  "type": "objet",
+  "requis": ["FAMILIES", "RARITIES", "BOONS", "DUOS", "PACTS"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "FAMILIES": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": ["name", "color"],
+        "fermé": true,
+        "champs": { "name": { "type": "texte", "min": 1 }, "color": { "type": "couleur" } }
+      }
+    },
+    "RARITIES": {
+      "type": "liste",
+      "min": 1,
+      "unique": "id",
+      "elements": {
+        "type": "objet",
+        "requis": ["id", "name", "mult", "weight"],
+        "fermé": true,
+        "champs": {
+          "id": { "type": "texte", "min": 1 },
+          "name": { "type": "texte", "min": 1 },
+          "mult": { "type": "nombre", "min": 0.1 },
+          "weight": { "type": "nombre", "min": 0 }
+        }
+      }
+    },
+    "BOONS": {
+      "type": "liste",
+      "min": 1,
+      "unique": "id",
+      "elements": {
+        "type": "objet",
+        "requis": ["id", "family", "slot", "name", "text", "value"],
+        "champs": {
+          "id": { "type": "texte", "min": 1 },
+          "slot": { "type": "texte", "valeurs": ["attack", "dash", "skill", "passive"] },
+          "name": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "value": { "type": "nombre", "min": 0 },
+          "pct": { "type": "booleen" },
+          "stat": { "type": "texte", "min": 1 },
+          "stats": { "type": "objet", "chaque": { "type": "nombre" } },
+          "negative": { "type": "booleen" },
+          "noScale": { "type": "booleen" },
+          "unique": { "type": "booleen" },
+          "pact": { "type": "booleen" },
+          "proc": {
+            "type": "objet",
+            "requis": ["on", "effect"],
+            "champs": {
+              "on": {
+                "type": "texte",
+                "valeurs": [
+                  "hit",
+                  "dash",
+                  "dodge",
+                  "wallSlam",
+                  "roomClear",
+                  "passive",
+                  "kill",
+                  "super",
+                  "overheal"
+                ]
+              },
+              "effect": { "type": "texte", "min": 1 },
+              "sources": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+              "when": { "type": "texte", "valeurs": ["finisher", "untouched"] },
+              "chance": { "type": "nombre", "min": 0, "max": 1 },
+              "duration": { "type": "nombre", "min": 0 },
+              "radius": { "type": "nombre", "min": 0 },
+              "range": { "type": "nombre", "min": 0 },
+              "bounces": { "type": "entier", "min": 0 },
+              "chill": { "type": "nombre", "min": 0 },
+              "threshold": { "type": "nombre", "min": 0 },
+              "per": { "type": "nombre", "min": 1 },
+              "cap": { "type": "entier", "min": 1 },
+              "value": { "type": "nombre", "min": 0 },
+              "valueFixed": { "type": "nombre", "min": 0 }
+            }
+          },
+          "family": { "type": "texte", "min": 1 }
+        }
+      }
+    },
+    "DUOS": {
+      "type": "liste",
+      "unique": "id",
+      "elements": {
+        "type": "objet",
+        "requis": ["id", "families", "slot", "name", "text", "value"],
+        "champs": {
+          "id": { "type": "texte", "min": 1 },
+          "slot": { "type": "texte", "valeurs": ["attack", "dash", "skill", "passive"] },
+          "name": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "value": { "type": "nombre", "min": 0 },
+          "pct": { "type": "booleen" },
+          "stat": { "type": "texte", "min": 1 },
+          "stats": { "type": "objet", "chaque": { "type": "nombre" } },
+          "negative": { "type": "booleen" },
+          "noScale": { "type": "booleen" },
+          "unique": { "type": "booleen" },
+          "pact": { "type": "booleen" },
+          "proc": {
+            "type": "objet",
+            "requis": ["on", "effect"],
+            "champs": {
+              "on": {
+                "type": "texte",
+                "valeurs": [
+                  "hit",
+                  "dash",
+                  "dodge",
+                  "wallSlam",
+                  "roomClear",
+                  "passive",
+                  "kill",
+                  "super",
+                  "overheal"
+                ]
+              },
+              "effect": { "type": "texte", "min": 1 },
+              "sources": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+              "when": { "type": "texte", "valeurs": ["finisher", "untouched"] },
+              "chance": { "type": "nombre", "min": 0, "max": 1 },
+              "duration": { "type": "nombre", "min": 0 },
+              "radius": { "type": "nombre", "min": 0 },
+              "range": { "type": "nombre", "min": 0 },
+              "bounces": { "type": "entier", "min": 0 },
+              "chill": { "type": "nombre", "min": 0 },
+              "threshold": { "type": "nombre", "min": 0 },
+              "per": { "type": "nombre", "min": 1 },
+              "cap": { "type": "entier", "min": 1 },
+              "value": { "type": "nombre", "min": 0 },
+              "valueFixed": { "type": "nombre", "min": 0 }
+            }
+          },
+          "families": { "type": "liste", "min": 2, "max": 2, "elements": { "type": "texte", "min": 1 } },
+          "extraGoldOnKill": { "type": "nombre", "min": 0 },
+          "superDurationBonus": { "type": "nombre", "min": 0 }
+        }
+      }
+    },
+    "PACTS": {
+      "type": "liste",
+      "unique": "id",
+      "elements": {
+        "type": "objet",
+        "requis": ["id", "family", "slot", "name", "text", "value"],
+        "champs": {
+          "id": { "type": "texte", "min": 1 },
+          "slot": { "type": "texte", "valeurs": ["attack", "dash", "skill", "passive"] },
+          "name": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "value": { "type": "nombre", "min": 0 },
+          "pct": { "type": "booleen" },
+          "stat": { "type": "texte", "min": 1 },
+          "stats": { "type": "objet", "chaque": { "type": "nombre" } },
+          "negative": { "type": "booleen" },
+          "noScale": { "type": "booleen" },
+          "unique": { "type": "booleen" },
+          "pact": { "type": "booleen" },
+          "proc": {
+            "type": "objet",
+            "requis": ["on", "effect"],
+            "champs": {
+              "on": {
+                "type": "texte",
+                "valeurs": [
+                  "hit",
+                  "dash",
+                  "dodge",
+                  "wallSlam",
+                  "roomClear",
+                  "passive",
+                  "kill",
+                  "super",
+                  "overheal"
+                ]
+              },
+              "effect": { "type": "texte", "min": 1 },
+              "sources": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+              "when": { "type": "texte", "valeurs": ["finisher", "untouched"] },
+              "chance": { "type": "nombre", "min": 0, "max": 1 },
+              "duration": { "type": "nombre", "min": 0 },
+              "radius": { "type": "nombre", "min": 0 },
+              "range": { "type": "nombre", "min": 0 },
+              "bounces": { "type": "entier", "min": 0 },
+              "chill": { "type": "nombre", "min": 0 },
+              "threshold": { "type": "nombre", "min": 0 },
+              "per": { "type": "nombre", "min": 1 },
+              "cap": { "type": "entier", "min": 1 },
+              "value": { "type": "nombre", "min": 0 },
+              "valueFixed": { "type": "nombre", "min": 0 }
+            }
+          },
+          "family": { "type": "texte", "min": 1 }
+        }
+      }
+    }
+  }
+}

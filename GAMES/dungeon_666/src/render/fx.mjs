@@ -250,6 +250,8 @@ const HANDLERS = {
   deflect(fx, cam, ev) {
     burst(fx, ev.x, ev.y, 6, 260, 0.25, 2, '#ffffff', { streak: 1, drag: 8 });
     addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 4, r1: 22, color: '#ffffff', width: 2, life: 0.12, max: 0.12 });
+    // Coup arrêté par un pavois (ev.guard) : le mot dit pourquoi rien n'est parti (une fois, pas en rafale).
+    if (ev.guard && !fx.texts.some((t) => t.text === 'PARÉ' && t.life > 0.35)) addText(fx, ev.x, ev.y - 34, 'PARÉ', '#e0b24a', 13, 0.55);
   },
   skill(fx, cam, ev, game) {
     const p = game.player;

@@ -9,7 +9,7 @@ import { rand, randRange } from '../core/rng.mjs';
 import { dist2 } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
 import { moveCircle, lineOfSight } from './physics.mjs';
-import { damageEnemy, damagePlayer, spawnHazard } from './combat.mjs';
+import { damageEnemy, damagePlayer, spawnHazard, fireProcs } from './combat.mjs';
 import { spawnProjectile } from './projectiles.mjs';
 import { floorScaling } from './floors.mjs';
 import { updateBoss } from './boss.mjs';
@@ -99,7 +99,9 @@ export function updateEnemies(game, dt) {
     e.flash = Math.max(0, e.flash - dt);
     if (e.spawnT > 0) {
       e.spawnT -= dt;
-      continue;
+      // Un ennemi DISPARU (e.hidden : Traqueur) revient à l'image même où son délai s'achève : il
+      // n'existe jamais d'image où il serait invisible mais touchable.
+      if (!(e.hidden && e.spawnT <= 0)) continue;
     }
     tickStatuses(game, e, dt);
     if (e.dead) continue;
@@ -165,6 +167,7 @@ function integrate(game, e, dt) {
       game.telemetry.wallSlams++;
       emit(game, 'wallSlam', { id: e.id, x: e.x, y: e.y });
       damageEnemy(game, e, { kind: 'wall', amount: ws.damage, stun: ws.stun, hitstop: ws.hitstop, canCrit: false });
+      fireProcs(game, 'wallSlam', e); // l'environnement est une arme : procs « projeté contre un mur »
     } else {
       // Glissement le long du mur : on retire la composante normale du knockback.
       const vn = e.kvx * res.nx + e.kvy * res.ny;

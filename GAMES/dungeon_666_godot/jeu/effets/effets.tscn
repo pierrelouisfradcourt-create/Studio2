@@ -19,6 +19,7 @@ script = ExtResource("3")
 script = ExtResource("4")
 
 [node name="Ecran" type="CanvasLayer" parent="."]
+layer = 5
 
 [node name="Flash" type="Control" parent="Ecran"]
 visible = false

@@ -1,6 +1,13 @@
 .godot/
 parite/essai/
-# Générés par `node tools/export_godot.mjs` (GAMES/dungeon_666) : 27 Mo, reproductibles.
+# Héritage du portage (parite/LISEZ_MOI.md) : exports de la version web figée, 27 Mo, hors dépôt.
 parite/traces/
 parite/traces_denses/
 parite/vecteurs/
+
+# Dossier de travail (captures, planche de sons) : hors import Godot (.gdignore), hors dépôt.
+_dev/captures/
+_dev/sons/
+
+# Versions jouables construites par le kit (SANDBOX/studio_kit/outils/construire.sh).
+_BUILDS/

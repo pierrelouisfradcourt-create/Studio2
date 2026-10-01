@@ -9,7 +9,7 @@ extends CanvasLayer
 ## écrans (une scène chacun) n'agissent que par deux signaux, `commande` et `action`, que ce
 ## nœud transmet à `app` : aucune règle de jeu ici, et rien n'écrit dans `partie.game`.
 
-const Styles = preload("res://jeu/ecrans/styles.gd")
+const ThemeJeu = preload("res://jeu/theme/theme.gd")
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
 const Feel = preload("res://jeu/ecrans/feel.gd")
 const Doigts = preload("res://jeu/ecrans/doigts.gd")
@@ -33,13 +33,20 @@ const OPACITE_DESARME := 0.5
 const MARGE := 16.0
 const LARGEUR := 760.0
 const VOILE := 0.45
-const ECHELLE_MAX := 2.0
-const DENSITE_ANDROID := 160.0
 const IMAGES_DE_POSE := 2 # images laissées à la mise en page avant de montrer un panneau
+## Apparition d'un panneau : il monte en opacité et glisse de quelques pixels. Pur habillage : le
+## panneau répond selon son ARMEMENT, jamais selon cette animation.
+const APPARITION_S := 0.18
+const GLISSEMENT := 14.0
+## Fondus (StudioTransitions du kit) : on coupe au noir puis on éclaircit. L'écran d'arrivée est
+## déjà là et répond pendant l'éclaircie : un fondu ne retarde jamais un choix.
+const NOIR_S := 0.01
+const FONDU_ECRAN_S := 0.3
+const FONDU_ETAGE_S := 0.22
 const NAVIGATION := ["ui_up", "ui_down", "ui_left", "ui_right", "ui_focus_next", "ui_focus_prev", "ui_accept"]
 
 @onready var _racine: Control = %Racine
-@onready var _fond_titre: TextureRect = %FondTitre
+@onready var _fond_titre: Control = %FondTitre
 @onready var _voile: ColorRect = %Voile
 @onready var _marge: MarginContainer = %Marge
 @onready var _panneau: PanelContainer = %Panneau
@@ -56,6 +63,9 @@ var _sans_delai := true
 var _delai := ARMEMENT_MS
 var _desarme_jusqu := 0.0
 var _images := 0
+var _apparition := 1.0 # 0..1 : avancement de l'apparition du panneau montré
+var _transitions: StudioTransitions
+var _en_fondu := false
 var _feel := Feel.new()
 var _doigts := Doigts.new()
 var _tir_au_doigt := false
@@ -63,9 +73,11 @@ var _dernier_tir := -1e9
 var _dernier_tir_au_doigt := false
 
 func _ready() -> void:
-	_racine.theme = Styles.theme()
+	_racine.theme = ThemeJeu.theme()
 	_voile.color = Color(Couleurs.UI["void"], VOILE)
-	_fond_titre.texture = _lueur_du_titre()
+	_transitions = StudioTransitions.new()
+	_transitions.couleur = Couleurs.UI["void"]
+	add_child(_transitions)
 	get_viewport().size_changed.connect(_disposer)
 	_disposer()
 
@@ -73,12 +85,16 @@ func brancher(app: Node, partie: Node) -> void:
 	_app = app
 	_partie = partie
 	partie.partie_demarree.connect(_sur_partie)
+	partie.evenements.connect(_sur_evenements)
 	app.reglages_change.connect(_sur_reglages)
+	if app.has_signal("ecran_change"):
+		app.ecran_change.connect(func(_ecran_app: String) -> void: _fondre(FONDU_ECRAN_S))
+	_feel.change.connect(_sur_feel)
 	var entrees = _vue("entrees")
 	if entrees != null and entrees.has_signal("pause_demandee"):
 		entrees.pause_demandee.connect(basculer_pause)
 	if partie.game != null:
-		_feel.nouvelle_partie(partie.game.tuning)
+		_sur_partie()
 	_synchroniser()
 
 # ---------------------------------------------------------------- ce que la vue expose
@@ -108,7 +124,7 @@ func basculer_pause() -> void:
 
 # ---------------------------------------------------------------- quel écran
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _app == null:
 		return
 	_synchroniser()
@@ -116,8 +132,17 @@ func _process(_delta: float) -> void:
 		return
 	_images += 1
 	_ajuster()
-	_panneau.modulate.a = 1.0 if _images > IMAGES_DE_POSE else 0.0
+	if _images > IMAGES_DE_POSE:
+		_apparition = minf(1.0, _apparition + delta / APPARITION_S)
+	_apparaitre()
 	_contenu.modulate.a = 1.0 if pret() else OPACITE_DESARME
+
+## Le panneau apparaît : opacité et léger glissement vers sa place, le voile suit.
+func _apparaitre() -> void:
+	var k := 1.0 - pow(1.0 - _apparition, 3.0) # départ vif, arrivée douce
+	_panneau.modulate.a = k if _images > IMAGES_DE_POSE else 0.0
+	_marge.position.y = (1.0 - k) * GLISSEMENT
+	_voile.color.a = 0.0 if _nom == "titre" else VOILE * k
 
 ## La clé de l'écran voulu : quand elle change, l'écran est reconstruit ("" : aucun).
 func _cle_voulue() -> String:
@@ -167,10 +192,11 @@ func _montrer(cle: String) -> void:
 	_ecran.ouvrir(_app, _partie)
 	_racine.visible = true
 	_fond_titre.visible = nom == "titre"
-	_voile.color.a = 0.0 if nom == "titre" else VOILE
 	_panneau.theme_type_variation = &"PanneauNu" if nom == "titre" else &"PanneauEcran"
 	_images = 0
-	_panneau.modulate.a = 0.0
+	# Le marchand qui se rafraîchit reste en place : pas de nouvelle apparition.
+	_apparition = 1.0 if rafraichi else 0.0
+	_apparaitre()
 	_sans_delai = nom in SANS_DELAI or rafraichi
 	_delai = ARMEMENT_CHOIX_MS if nom == "choix" else ARMEMENT_MS
 	_armer()
@@ -189,6 +215,8 @@ func _retirer() -> void:
 	_doigts.oublier()
 	if _ecran == null:
 		return
+	if _nom == "feel":
+		_enregistrer_feel(true) # les réglettes sont posées : les écarts vont sur le disque
 	_contenu.remove_child(_ecran)
 	_ecran.queue_free()
 	_ecran = null
@@ -232,9 +260,35 @@ func _sur_action(nom: String, args: Array) -> void:
 		"retour": _sous_ecran = ""
 	_synchroniser()
 
+## Une partie démarre : elle est NÉE avec les écarts du feel (options.tuning) ; l'état des réglettes
+## les reprend, avec la valeur de référence de chaque réglage. Rien n'est réappliqué ici.
 func _sur_partie() -> void:
 	_sous_ecran = ""
-	_feel.nouvelle_partie(_partie.game.tuning)
+	var reglages = _app.get("reglages")
+	var enregistres = reglages.get("feel") if reglages is Dictionary else null
+	var contenu = _app.get("contenu")
+	_feel.nouvelle_partie(_partie.game, contenu if contenu is Dictionary else _partie.game.tuning, enregistres if enregistres is Dictionary else {})
+
+func _sur_feel() -> void:
+	_enregistrer_feel(false)
+
+func _enregistrer_feel(sur_disque: bool) -> void:
+	if _app.has_method("regler_feel"):
+		_app.regler_feel(_feel.ecarts, sur_disque)
+
+func _sur_evenements(liste: Array) -> void:
+	for ev in liste:
+		if ev.get("type") == "floorEnter":
+			_fondre(FONDU_ETAGE_S)
+
+## Fondu d'arrivée : noir d'un coup, puis éclaircie en `duree` s. Un fondu déjà en cours suffit.
+func _fondre(duree: float) -> void:
+	if _en_fondu or not is_inside_tree():
+		return
+	_en_fondu = true
+	await _transitions.fondu(1.0, NOIR_S)
+	await _transitions.fondu(0.0, duree)
+	_en_fondu = false
 
 func _sur_reglages() -> void:
 	if _ecran != null and _ecran.has_method("rafraichir"):
@@ -344,28 +398,22 @@ func _ajuster() -> void:
 	place.y -= _marge.get_theme_constant("margin_top") + _marge.get_theme_constant("margin_bottom")
 	var largeur: float = _ecran.largeur() if _ecran.has_method("largeur") else LARGEUR
 	_panneau.custom_minimum_size.x = minf(largeur, place.x)
+	if _ecran.has_method("tenir_dans"):
+		_ecran.tenir_dans(place)
 	_defilement.custom_minimum_size.y = minf(_contenu.get_combined_minimum_size().y, place.y)
 
 ## Les panneaux gardent la taille du web (px CSS) : sur un écran étroit ou dense, la racine est
 ## agrandie plutôt que de laisser l'étirement du projet rétrécir les textes.
 func _disposer() -> void:
 	var vue := get_viewport().get_visible_rect().size
-	var k := _echelle(vue)
+	var k: float = ThemeJeu.echelle(vue, get_window())
+	ThemeJeu.nettete(get_viewport(), k)
 	_racine.scale = Vector2(k, k)
 	_racine.position = Vector2.ZERO
 	_racine.size = vue / k
 	var sures := _marges_sures(vue)
 	for cote in sures:
 		_marge.add_theme_constant_override("margin_" + cote, int(maxf(MARGE, sures[cote] / k)))
-
-func _echelle(vue: Vector2) -> float:
-	var fenetre := get_window().size
-	if fenetre.x <= 0:
-		return 1.0
-	var densite := DisplayServer.screen_get_scale()
-	if OS.has_feature("android"):
-		densite = DisplayServer.screen_get_dpi() / DENSITE_ANDROID
-	return clampf(vue.x / float(fenetre.x) * maxf(1.0, densite), 1.0, ECHELLE_MAX)
 
 ## Marges de la zone sûre (encoche, barre de gestes) en unités d'écran ; nulles hors téléphone.
 func _marges_sures(vue: Vector2) -> Dictionary:
@@ -380,16 +428,3 @@ func _marges_sures(vue: Vector2) -> Dictionary:
 	marges.right = maxf(0.0, fenetre.x - sure.end.x) * k
 	marges.bottom = maxf(0.0, fenetre.y - sure.end.y) * k
 	return marges
-
-## Le fond de l'écran titre : une lueur de braise qui monte du bas (dessinée, aucun fichier).
-func _lueur_du_titre() -> GradientTexture2D:
-	var ui: Dictionary = Couleurs.UI
-	var degrade := Gradient.new()
-	degrade.set_color(0, ui.ember.darkened(0.7))
-	degrade.set_color(1, ui["void"])
-	var texture := GradientTexture2D.new()
-	texture.gradient = degrade
-	texture.fill = GradientTexture2D.FILL_RADIAL
-	texture.fill_from = Vector2(0.5, 1.15)
-	texture.fill_to = Vector2(0.5, 0.1)
-	return texture

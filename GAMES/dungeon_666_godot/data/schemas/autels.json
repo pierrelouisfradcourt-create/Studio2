@@ -1,0 +1,44 @@
+{
+  "type": "objet",
+  "requis": ["EVENTS"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "EVENTS": {
+      "type": "liste",
+      "min": 1,
+      "unique": "id",
+      "elements": {
+        "type": "objet",
+        "requis": ["id", "title", "text", "options"],
+        "fermé": true,
+        "champs": {
+          "id": { "type": "texte", "min": 1 },
+          "title": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "options": {
+            "type": "liste",
+            "min": 2,
+            "elements": {
+              "type": "objet",
+              "requis": ["label", "effect"],
+              "fermé": true,
+              "champs": {
+                "label": { "type": "texte", "min": 1 },
+                "effect": { "type": "texte", "min": 1 },
+                "cost": { "type": "nombre", "min": 0 },
+                "souls": { "type": "nombre", "min": 0 },
+                "hp": { "type": "nombre", "min": 0 },
+                "gain": { "type": "nombre", "min": 0 },
+                "levels": { "type": "entier", "min": 1 },
+                "pct": { "type": "nombre", "min": 0, "max": 100 },
+                "need": { "type": "nombre", "min": 0, "max": 100 },
+                "pact": { "type": "texte", "ref": "pactes" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

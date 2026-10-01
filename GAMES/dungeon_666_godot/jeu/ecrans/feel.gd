@@ -1,9 +1,14 @@
 extends RefCounted
 ## L'état des « Réglages du feel » (outil de mise au point, portage de src/ui/tuning.mjs) : la
 ## liste des réglages offerts, leurs valeurs de départ, et les écarts choisis par le testeur.
-## C'est le SEUL endroit où une vue écrit dans `game.tuning` : c'est son rôle, comme sur le web.
-## Les écarts sont réappliqués à chaque nouvelle partie de la session (le web les garde aussi
-## d'une session à l'autre : ici il manque une action de `principal.gd` pour les enregistrer).
+## C'est le SEUL endroit où une vue écrit dans `game.tuning` : c'est son rôle, comme sur le web —
+## et seulement quand le testeur bouge une réglette, pour la partie EN COURS.
+## Les écarts survivent à la fermeture : `app.regler_feel` les range dans les réglages (clé `feel`,
+## jeu/profil.gd), et chaque partie neuve NAÎT avec eux (`surcharges` → `options.tuning` de
+## `demarrer_descente`, jeu/principal.gd). Rien n'est réappliqué après coup.
+
+## Un écart a bougé (réglette, réinitialisation) : à retenir par l'application.
+signal change
 
 const REGLAGES := [
 	{"path": "player.speed", "label": "Vitesse de course", "min": 180.0, "max": 460.0, "step": 10.0},
@@ -30,15 +35,65 @@ var ecarts: Dictionary = {}
 var _defauts: Dictionary = {} # chemin -> valeur de départ de la partie en cours
 var _tuning = null
 
-## À chaque partie : retient les valeurs de départ, puis réapplique les écarts de la session.
-func nouvelle_partie(tuning: Dictionary) -> void:
-	_tuning = tuning
+## Blocs du tuning qui ne sont que des RENVOIS vers le kit équipé (sim/loadout.gd) : le chemin
+## réel dépend de l'arme portée et du Super de la classe ({weaponType, superId}).
+const RENVOIS := {"combo": "weapons.%s.combo", "super": "supers.%s"}
+const CLE_DU_KIT := {"combo": "weaponType", "super": "superId"}
+
+## À chaque partie (née avec les écarts `enregistres`) : retient la valeur de RÉFÉRENCE de chaque
+## réglage — celle du tuning de référence `contenu` s'il a un écart, celle de la partie sinon.
+func nouvelle_partie(game: Dictionary, contenu: Dictionary, enregistres: Dictionary) -> void:
+	_tuning = game.tuning
+	var kit = game.get("kit")
+	ecarts.clear()
 	_defauts.clear()
 	for r in REGLAGES:
-		_defauts[r.path] = _lire(tuning, r.path)
+		var reference = _lire(contenu, _chemin_reel(r.path, kit if kit is Dictionary else {}))
+		if enregistres.has(r.path) and reference != null:
+			ecarts[r.path] = float(enregistres[r.path])
+			_defauts[r.path] = reference
+		else:
+			_defauts[r.path] = _lire(_tuning, r.path)
+
+## Les écarts {chemin: valeur} en SURCHARGES de tuning, pour `options.tuning` de D6Game.create_game.
+## `kit` : {weaponType, superId} du héros qui va descendre. Un tableau (les coups d'un combo) est
+## recopié en entier depuis `contenu` : la fusion des surcharges remplace les tableaux d'un bloc.
+static func surcharges(enregistres: Dictionary, contenu: Dictionary, kit: Dictionary) -> Dictionary:
+	var out := {}
 	for r in REGLAGES:
-		if ecarts.has(r.path):
-			_appliquer(r, ecarts[r.path])
+		if not enregistres.has(r.path):
+			continue
+		for chemin in [r.path] + r.get("also", []):
+			_poser(out, contenu, _chemin_reel(chemin, kit).split("."), float(enregistres[r.path]))
+	return out
+
+## « combo.0.damage » → « weapons.lame.combo.0.damage » : le chemin dans le tuning de référence.
+static func _chemin_reel(chemin: String, kit: Dictionary) -> String:
+	var tete := chemin.get_slice(".", 0)
+	if not RENVOIS.has(tete):
+		return chemin
+	return RENVOIS[tete] % str(kit.get(CLE_DU_KIT[tete], "")) + chemin.substr(tete.length())
+
+## Pose `v` au bout du chemin `cles` dans `out`, en suivant la forme de la référence `ref`.
+static func _poser(out: Dictionary, ref, cles: PackedStringArray, v: float) -> void:
+	var cible = out
+	for i in cles.size() - 1:
+		ref = _suivre(ref, cles[i])
+		if ref == null:
+			return
+		if cible is Array:
+			cible = cible[int(cles[i])]
+			continue
+		if not cible.has(cles[i]):
+			cible[cles[i]] = ref.duplicate(true) if ref is Array else {}
+		cible = cible[cles[i]]
+	var derniere := cles[cles.size() - 1]
+	if _suivre(ref, derniere) == null:
+		return
+	if cible is Array:
+		cible[int(derniere)] = v
+	else:
+		cible[derniere] = v
 
 func fin_de_partie() -> void:
 	_tuning = null
@@ -52,7 +107,7 @@ func valeur(r: Dictionary) -> float:
 func defaut(r: Dictionary) -> float:
 	return float(D6Js.nz(_defauts.get(r.path), r.min))
 
-func change(r: Dictionary) -> bool:
+func a_change(r: Dictionary) -> bool:
 	return absf(valeur(r) - defaut(r)) >= r.step / 2.0
 
 ## Le testeur a bougé une réglette : la partie en cours prend la valeur tout de suite.
@@ -60,10 +115,11 @@ func regler(r: Dictionary, v: float) -> void:
 	if _tuning == null:
 		return
 	_appliquer(r, v)
-	if change(r):
+	if a_change(r):
 		ecarts[r.path] = v
 	else:
 		ecarts.erase(r.path)
+	change.emit()
 
 ## Valeurs EXACTES de départ, sans passer par le pas de la réglette.
 func reinitialiser() -> void:
@@ -72,6 +128,7 @@ func reinitialiser() -> void:
 		return
 	for r in REGLAGES:
 		_appliquer(r, defaut(r))
+	change.emit()
 
 ## Les écarts au format JSON, à coller dans un rapport de playtest.
 func texte_ecarts() -> String:

@@ -36,6 +36,11 @@ func _draw() -> void:
 		return
 	var blanc: Color = Couleurs.PAL.text
 	var base := Vector2(_manette.baseX, _manette.baseY)
-	draw_circle(base, COURSE, Color(blanc, 0.08), true, -1.0, true)
-	draw_arc(base, COURSE, 0.0, TAU, 48, Color(blanc, 0.3), 2.0, true)
-	draw_circle(Vector2(_manette.knobX, _manette.knobY), POUCE, Color(blanc, 0.45), true, -1.0, true)
+	var encre: Color = Couleurs.UI["void"]
+	var pouce := Vector2(_manette.knobX, _manette.knobY)
+	# Cerne sombre puis trait clair : le joystick se lit sur un sol clair comme sur un sol noir.
+	draw_circle(base, COURSE, Color(encre, 0.22), true, -1.0, true)
+	draw_arc(base, COURSE + 0.5, 0.0, TAU, 48, Color(encre, 0.45), 4.5, true)
+	draw_arc(base, COURSE, 0.0, TAU, 48, Color(blanc, 0.45), 2.0, true)
+	draw_circle(pouce, POUCE + 1.5, Color(encre, 0.45), true, -1.0, true)
+	draw_circle(pouce, POUCE, Color(blanc, 0.5), true, -1.0, true)

@@ -1,0 +1,224 @@
+{
+  "type": "objet",
+  "requis": ["boss", "guardians", "GUARDIAN_MIN_TELE"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "boss": {
+      "type": "objet",
+      "requis": ["gardien", "cerbere", "minos", "colosse"],
+      "chaque": {
+        "type": "objet",
+        "requis": [
+          "name",
+          "radius",
+          "hp",
+          "speed",
+          "mass",
+          "damage",
+          "hitstopCap",
+          "phase2At",
+          "phase3At",
+          "transition",
+          "reinforcements",
+          "phaseHealOrb",
+          "restBetween",
+          "restMultByPhase",
+          "speedMultByPhase"
+        ],
+        "champs": {
+          "name": { "type": "texte", "min": 1 },
+          "radius": { "type": "nombre", "min": 1 },
+          "hp": { "type": "nombre", "min": 1 },
+          "speed": { "type": "nombre", "min": 0 },
+          "mass": { "type": "nombre", "min": 0.1 },
+          "damage": { "type": "nombre", "min": 0 },
+          "hitstopCap": { "type": "nombre", "min": 0, "max": 0.5 },
+          "phase2At": { "type": "nombre", "min": 0, "max": 1 },
+          "phase3At": { "type": "nombre", "min": 0, "max": 1 },
+          "transition": { "type": "nombre", "min": 0 },
+          "reinforcements": { "type": "objet", "chaque": { "type": "liste", "ref": "ennemis" } },
+          "phaseHealOrb": { "type": "nombre", "min": 0 },
+          "restBetween": { "type": "point" },
+          "restMultByPhase": { "type": "liste", "min": 3, "max": 3, "elements": { "type": "nombre", "min": 0 } },
+          "speedMultByPhase": { "type": "liste", "min": 3, "max": 3, "elements": { "type": "nombre", "min": 0 } },
+          "secondChargeWindup": { "type": "nombre", "min": 0.5 }
+        },
+        "_note": "Les attaques de chaque Gardien sont décrites plus bas (champs) : leurs annonces (windup, secondWindup, delay, delayMin, leapDelay) durent au moins 0,5 s, la valeur de GUARDIAN_MIN_TELE."
+      },
+      "champs": {
+        "gardien": {
+          "type": "objet",
+          "requis": ["slam", "charge", "ring", "summon"],
+          "champs": {
+            "slam": {
+              "type": "objet",
+              "requis": ["windup", "damage"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            },
+            "charge": {
+              "type": "objet",
+              "requis": ["windup", "damage"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            },
+            "ring": {
+              "type": "objet",
+              "requis": ["windup", "damage"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            },
+            "summon": {
+              "type": "objet",
+              "requis": ["windup", "kind"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "kind": { "type": "texte", "ref": "ennemis" }
+              }
+            }
+          }
+        },
+        "cerbere": {
+          "type": "objet",
+          "requis": ["prowl", "bond", "souffle", "morsures", "hurlement"],
+          "champs": {
+            "bond": {
+              "type": "objet",
+              "requis": ["windup", "damage", "exposedMult", "recover"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 },
+                "exposedMult": { "type": "nombre", "min": 0, "max": 1 },
+                "recover": { "type": "nombre", "min": 0 }
+              }
+            },
+            "souffle": {
+              "type": "objet",
+              "requis": ["windup", "damage"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            },
+            "morsures": {
+              "type": "objet",
+              "requis": ["windup", "damage", "exposedMult", "lockAt", "recover", "finalRecover"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 },
+                "exposedMult": { "type": "nombre", "min": 0, "max": 1 },
+                "lockAt": { "type": "nombre", "min": 0, "max": 1 },
+                "recover": { "type": "nombre", "min": 0 },
+                "finalRecover": { "type": "nombre", "min": 0 }
+              }
+            },
+            "hurlement": {
+              "type": "objet",
+              "requis": ["delay", "leapDelay", "damage"],
+              "champs": {
+                "delay": { "type": "nombre", "min": 0.5 },
+                "leapDelay": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            }
+          }
+        },
+        "minos": {
+          "type": "objet",
+          "requis": ["throne", "sentence", "jugement", "fouet", "sceau"],
+          "champs": {
+            "sentence": {
+              "type": "objet",
+              "requis": ["delay", "damage"],
+              "champs": {
+                "delay": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            },
+            "jugement": {
+              "type": "objet",
+              "requis": ["delay", "damage"],
+              "champs": {
+                "delay": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            },
+            "fouet": {
+              "type": "objet",
+              "requis": ["windup", "secondWindup", "damage", "exposedMult", "recover"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "secondWindup": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 },
+                "exposedMult": { "type": "nombre", "min": 0, "max": 1 },
+                "recover": { "type": "nombre", "min": 0 }
+              }
+            },
+            "sceau": {
+              "type": "objet",
+              "requis": ["delay", "damage"],
+              "champs": {
+                "delay": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            }
+          }
+        },
+        "colosse": {
+          "type": "objet",
+          "requis": ["poing", "seisme", "eboulis", "geoliers"],
+          "champs": {
+            "poing": {
+              "type": "objet",
+              "requis": ["windup", "damage", "exposedMult"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 },
+                "exposedMult": { "type": "nombre", "min": 0, "max": 1 }
+              }
+            },
+            "seisme": {
+              "type": "objet",
+              "requis": ["delay", "damage"],
+              "champs": {
+                "delay": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            },
+            "eboulis": {
+              "type": "objet",
+              "requis": ["delayMin", "delayMax", "damage"],
+              "champs": {
+                "delayMin": { "type": "nombre", "min": 0.5 },
+                "delayMax": { "type": "nombre", "min": 0.5 },
+                "damage": { "type": "nombre", "min": 0 }
+              }
+            },
+            "geoliers": {
+              "type": "objet",
+              "requis": ["windup", "kind"],
+              "champs": {
+                "windup": { "type": "nombre", "min": 0.5 },
+                "kind": { "type": "texte", "ref": "ennemis" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "guardians": {
+      "type": "objet",
+      "requis": ["rotation"],
+      "fermé": true,
+      "champs": { "rotation": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } } }
+    },
+    "GUARDIAN_MIN_TELE": { "type": "nombre", "min": 0.4 }
+  }
+}

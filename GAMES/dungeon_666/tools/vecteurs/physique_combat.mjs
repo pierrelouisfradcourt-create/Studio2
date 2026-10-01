@@ -53,7 +53,33 @@ const PROCS = [
   { chance: 1, on: 'passive', effect: 'execute', threshold: 1.01, needsBurnChill: true, value: 0.4 },
   { chance: 1, on: 'hit', sources: ['chainHit'], effect: 'burn', duration: 3, value: 8 },
   { chance: 1, on: 'dash', effect: 'nova', radius: 80, value: 12 },
+  // Contenu 2026-10-01 : chaque déclencheur, chaque condition, chaque effet nouveau.
+  { chance: 1, on: 'dodge', effect: 'surge', duration: 3, value: 0.4 },
+  { chance: 1, on: 'dodge', effect: 'nova', radius: 150, chill: 3, value: 8 },
+  { chance: 1, on: 'dodge', effect: 'superCharge', value: 0.08 },
+  { chance: 1, on: 'dodge', effect: 'dashCharge', value: 1 },
+  { chance: 1, on: 'hit', sources: ['melee'], when: 'finisher', effect: 'blast', radius: 70, value: 12 },
+  { chance: 1, on: 'hit', sources: ['melee'], when: 'finisher', effect: 'heal', value: 1.5 },
+  { chance: 1, on: 'hit', sources: ['melee'], when: 'finisher', effect: 'stun', value: 0.6 },
+  { chance: 1, on: 'hit', sources: ['strike'], effect: 'vuln', duration: 4, value: 0.25 },
+  { chance: 1, on: 'hit', sources: ['chainHit'], effect: 'cull', value: 0.15 },
+  { chance: 1, on: 'wallSlam', effect: 'stun', value: 1.2 },
+  { chance: 1, on: 'wallSlam', effect: 'gold', value: 2 },
+  { chance: 1, on: 'wallSlam', effect: 'blast', radius: 90, value: 20 },
+  { chance: 1, on: 'roomClear', when: 'untouched', effect: 'gold', value: 14 },
+  { chance: 1, on: 'roomClear', when: 'untouched', effect: 'gadgetCharge', value: 1 },
+  { chance: 1, on: 'super', effect: 'heal', value: 15 },
+  { chance: 1, on: 'super', effect: 'around', apply: 'burn', radius: 220, duration: 4, value: 10 },
+  { chance: 1, on: 'overheal', effect: 'superCharge', perUnit: true, value: 0.01 },
+  { chance: 1, on: 'dash', effect: 'chain', bounces: 3, range: 200, value: 9 },
+  { chance: 1, on: 'kill', effect: 'chain', bounces: 2, range: 200, value: 8 },
+  { chance: 0.5, on: 'kill', effect: 'gold', value: 3 },
+  { chance: 1, on: 'passive', effect: 'goldPower', per: 25, cap: 5, value: 0.04 },
+  { chance: 1, on: 'passive', effect: 'streakBonus', cap: 5, value: 0.06 },
+  { chance: 1, on: 'passive', effect: 'stunnedCrit', value: 0.5 },
 ];
+// Moments déclenchés à la main dans un scénario (opération fireProcs) et leurs contextes.
+const PROC_MOMENTS = ['dodge', 'wallSlam', 'super', 'roomClear', 'dash', 'kill', 'overheal'];
 
 async function scenarios(seed) {
   const { createTuning } = await import('../../src/sim/config.mjs');
@@ -102,10 +128,15 @@ async function scenarios(seed) {
     player.iframes = maybe(0.2, 0.1);
     player.dodgeIframes = player.iframes > 0 ? maybe(0.6, 0.1) : 0;
     player.gadgetCharges = maybe(0.5, tuning.gadget.chargesPerSection);
+    player.dashCharges = pick([0, 1, tuning.dash.charges]);
+    if (rnd() < 0.25) Object.assign(player, { surge: u(0.1, 3), surgeMult: 0.4 });
+    // Bourse et série sans blessure : lues par les procs passifs (la série peut manquer : ?? 0).
+    const run = { gold: rnd() < 0.5 ? 0 : Math.floor(u(0, 220)), floor: 3 };
+    if (rnd() < 0.6) run.streak = Math.floor(u(0, 8));
     return {
       tick: 120, time: 2, nextId: 100, events: [], rng: { combat: R.createRng(Math.floor(rnd() * 4294967296)), gen: R.createRng(Math.floor(rnd() * 4294967296)) },
       tuning, player, enemies: many(2 + Math.floor(u(0, 4)), (k) => foe(tuning, k + 1)), hazards: [], pickups: [], projectiles: [], spawns: [],
-      telemetry: createTelemetry(), run: { gold: 0, floor: 3 }, meta: { souls: 0, stats: { kills: 0 } }, hitstop: 0, hitstopBank: u(0, 0.12),
+      telemetry: createTelemetry(), run, meta: { souls: 0, stats: { kills: 0 } }, hitstop: 0, hitstopBank: u(0, 0.12),
       sandbox: rnd() < 0.1, practice: rnd() < 0.1, godMode: rnd() < 0.05, room: { w: 1400, h: 880, pad: 40, obstacles: [], cleared: false },
     };
   };
@@ -141,6 +172,7 @@ async function scenarios(seed) {
     if (rnd() < 0.5) src.hitstop = u(0.02, 0.1);
     if (rnd() < 0.3) src.stun = u(0.3, 1.2);
     if (rnd() < 0.2) src.shake = 4;
+    if (rnd() < 0.3) src.finisher = true;
     return src;
   };
 
@@ -158,6 +190,7 @@ async function scenarios(seed) {
     iframes: () => ['iframes', maybe(0.4, 0.2), maybe(0.5, 0.1)],
     stun: (g) => ['stun', idx(g), u(0.1, 1)],
     cleared: () => ['cleared'],
+    fireProcs: (g) => ['fireProcs', pick(PROC_MOMENTS), rnd() < 0.6 ? idx(g) : null, pick([null, { untouched: true }, { untouched: false }, { amount: u(0, 20) }])],
   };
   const play = (game, op) => {
     const [name, a, b, c, d, e] = op;
@@ -181,6 +214,7 @@ async function scenarios(seed) {
       case 'iframes': game.player.iframes = a; game.player.dodgeIframes = b; return null;
       case 'stun': game.enemies[a].stun = b; return null;
       case 'cleared': game.room.cleared = true; return null;
+      case 'fireProcs': C.fireProcs(game, a, b === null ? null : game.enemies[b], c); return null;
       default: throw new Error(`opération inconnue : ${name}`);
     }
   };
@@ -371,7 +405,7 @@ export const VECTORS = {
         }),
       },
       // Le chemin entier : dégâts, critiques, procs, éclairs en chaîne, morts, butin, héros touché.
-      { fn: 'scenario', cases: many(140, () => scenario(['damageEnemy', 'damageEnemy', 'damageEnemy', 'damageEnemy', 'killEnemy', 'damagePlayer', 'damagePlayer', 'healPlayer', 'spawnPickup', 'spawnHazard', 'iframes'], 8)) },
+      { fn: 'scenario', cases: many(140, () => scenario(['damageEnemy', 'damageEnemy', 'damageEnemy', 'damageEnemy', 'killEnemy', 'damagePlayer', 'damagePlayer', 'healPlayer', 'spawnPickup', 'spawnHazard', 'iframes', 'fireProcs', 'fireProcs', 'stun'], 8)) },
     ];
   },
 

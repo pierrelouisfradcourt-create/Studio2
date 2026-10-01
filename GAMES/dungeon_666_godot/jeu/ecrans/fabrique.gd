@@ -1,10 +1,11 @@
 extends RefCounted
 ## Petites fabriques des écrans : un bouton à la taille du doigt, une étiquette qui passe à la
-## ligne. Le style vient du thème (variations de jeu/ecrans/styles.gd), jamais d'ici.
+## ligne. Le style vient du thème (variations de jeu/theme/theme.gd), jamais d'ici.
 
+const ThemeJeu = preload("res://jeu/theme/theme.gd")
 ## Hauteur minimale d'une cible tactile (px de la résolution de référence).
-const CIBLE := 48.0
-const CIBLE_PETITE := 44.0
+const CIBLE := ThemeJeu.CIBLE_GRANDE
+const CIBLE_PETITE := ThemeJeu.CIBLE
 
 static func bouton(texte: String, variation: StringName = &"", desactive: bool = false) -> Button:
 	var b := Button.new()

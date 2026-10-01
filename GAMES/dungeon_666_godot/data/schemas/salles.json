@@ -1,0 +1,36 @@
+{
+  "type": "objet",
+  "requis": ["room", "LAYOUTS", "COMBAT_LAYOUTS", "BOSS_LAYOUT", "CALM_KINDS"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "room": {
+      "type": "objet",
+      "requis": [
+        "width",
+        "height",
+        "wallPad",
+        "spawnWarn",
+        "spawnMinPlayerDist",
+        "pickupMagnetRange",
+        "pickupMagnetSpeed",
+        "healOrbAmount"
+      ],
+      "fermé": true,
+      "champs": {
+        "width": { "type": "nombre", "min": 400 },
+        "height": { "type": "nombre", "min": 300 },
+        "wallPad": { "type": "nombre", "min": 0 },
+        "spawnWarn": { "type": "nombre", "min": 0 },
+        "spawnMinPlayerDist": { "type": "nombre", "min": 0 },
+        "pickupMagnetRange": { "type": "nombre", "min": 0 },
+        "pickupMagnetSpeed": { "type": "nombre", "min": 0 },
+        "healOrbAmount": { "type": "nombre", "min": 0 }
+      }
+    },
+    "LAYOUTS": { "type": "objet", "min": 1, "chaque": { "type": "liste", "elements": { "type": "rect" } } },
+    "COMBAT_LAYOUTS": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+    "BOSS_LAYOUT": { "type": "liste", "elements": { "type": "rect" } },
+    "CALM_KINDS": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } }
+  }
+}

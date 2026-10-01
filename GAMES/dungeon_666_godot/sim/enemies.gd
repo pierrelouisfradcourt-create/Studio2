@@ -120,7 +120,10 @@ static func _update_enemy(game: Dictionary, e: Dictionary, dt: float, t: Diction
 	e.flash = maxf(0.0, e.flash - dt)
 	if e.spawnT > 0.0:
 		e.spawnT -= dt
-		return
+		# Un ennemi DISPARU (e.hidden : Traqueur) revient à l'image même où son délai s'achève : il
+		# n'existe jamais d'image où il serait invisible mais touchable.
+		if not (D6Js.truthy(e.get("hidden")) and e.spawnT <= 0.0):
+			return
 	_tick_statuses(game, e, dt)
 	if e.dead:
 		return
@@ -183,6 +186,7 @@ static func _integrate(game: Dictionary, e: Dictionary, dt: float) -> void:
 			game.telemetry.wallSlams += 1.0
 			D6State.emit(game, "wallSlam", {"id": e.id, "x": e.x, "y": e.y})
 			D6Combat.damage_enemy(game, e, {"kind": "wall", "amount": ws.damage, "stun": ws.stun, "hitstop": ws.hitstop, "canCrit": false})
+			D6Combat.fire_procs(game, "wallSlam", e) # l'environnement est une arme : procs « projeté contre un mur »
 		else:
 			# Glissement le long du mur : on retire la composante normale du knockback.
 			var vn: float = e.kvx * res.nx + e.kvy * res.ny

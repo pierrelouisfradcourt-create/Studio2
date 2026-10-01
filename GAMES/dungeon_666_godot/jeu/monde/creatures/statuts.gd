@@ -7,6 +7,7 @@ extends "res://jeu/monde/creatures/calque.gd"
 ##   garde          petit écu au bout de la barre de vie (il ne peut pas être ré-étourdi à l'arme)
 ##   barre de vie   seulement si l'ennemi est blessé ou d'élite (celle d'un Gardien est au HUD)
 ##   élites         étiquette, bulle d'immunité annoncée puis active, canalisation, rayon de drain
+##   protégé        chevron violet au-dessus de l'ennemi qu'un porte-étendard couvre
 
 const GARDE_FONDU := 0.3 # s : l'écu s'efface sur la fin de la garde
 const BULLE := Color(1.0, 0.914, 0.659, 0.16)
@@ -84,6 +85,17 @@ func _jauges(e: Dictionary) -> void:
 		y -= 12.0
 	if elite:
 		p.texte(Vector2(0.0, y - 3.0), String(Couleurs.ELITE_NAMES[e.eliteMod]).to_upper(), 11, Couleurs.ELITE_COLORS[e.eliteMod])
+		y -= 17.0
+	if entites.gardes.has(e.id):
+		_chevron(Vector2(0.0, y - 3.0))
+
+## Protégé par un porte-étendard (il ne prend qu'une part des dégâts) : chevron violet, la couleur
+## de l'aura de l'étendard et du fil qui l'y relie.
+func _chevron(pointe: Vector2) -> void:
+	var bat := 1.5 * sin(temps() * 5.0)
+	var pts := PackedVector2Array([pointe + Vector2(-7.0, 1.0 + bat), pointe + Vector2(0.0, -6.0 + bat), pointe + Vector2(7.0, 1.0 + bat)])
+	p.filet(pts, NOIR, 6.0)
+	p.filet(pts, PAL.summon, 3.0)
 
 func _barre_vie(e: Dictionary, y: float, largeur: float) -> void:
 	var x := -largeur * 0.5

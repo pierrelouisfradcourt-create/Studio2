@@ -12,6 +12,10 @@ static var _melee_kinds = null
 # Archétypes qui prennent un jeton de TIR (au plus combat.maxShooters à la fois).
 static var _shooter_kinds = null
 
+# États où un ennemi de mêlée TIENT son jeton d'attaque. « fade » et « ambush » : le Traqueur
+# garde le sien de sa dissolution à sa frappe (foe_stalker), sinon il resurgirait en surnombre.
+const TOKEN_STATES := ["windup", "strike", "charge", "fade", "ambush"]
+
 # Objet partagé de module (const navOut = { x: 0, y: 0 }).
 static var _nav_out: Dictionary = {"x": 0.0, "y": 0.0}
 
@@ -44,7 +48,7 @@ static func active_attackers(game: Dictionary) -> float:
 	var kinds := melee_kinds()
 	var n := 0.0
 	for o in game.enemies:
-		if not o.dead and kinds.has(o.kind) and (o.state == "windup" or o.state == "strike" or o.state == "charge"):
+		if not o.dead and kinds.has(o.kind) and TOKEN_STATES.has(o.state):
 			n += 1.0
 	return n
 

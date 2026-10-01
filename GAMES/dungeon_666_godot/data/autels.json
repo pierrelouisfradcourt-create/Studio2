@@ -1,0 +1,107 @@
+{
+  "_note": "Les autels (salles d'événement) : texte et options. L'effet de chaque option est codé dans sim/run.gd ; ses nombres (coût, PV, Âmes) sont ici.",
+  "EVENTS": [
+    {
+      "id": "autel_sang",
+      "title": "Autel de sang",
+      "text": "Le sang frais coule encore sur la pierre. L'autel réclame une offrande.",
+      "options": [
+        { "label": "Offrir 25 % de vos PV — recevoir une bénédiction rare", "effect": "bloodBoon" },
+        { "label": "Passer votre chemin", "effect": "none" }
+      ]
+    },
+    {
+      "id": "fontaine",
+      "title": "Fontaine des âmes",
+      "text": "Une eau noire et tiède murmure des noms oubliés.",
+      "options": [
+        { "label": "Boire — rend 40 % des PV", "effect": "heal40" },
+        { "label": "Remplir une fiole — +1 charge de gadget", "effect": "gadget1" }
+      ]
+    },
+    {
+      "id": "coffre_maudit",
+      "title": "Coffre maudit",
+      "text": "Des runes brûlantes scellent un coffre. Quelque chose y respire.",
+      "options": [
+        { "label": "Forcer le coffre — objet rare, mais perdre 20 PV", "effect": "cursedChest" },
+        { "label": "Le laisser dormir", "effect": "none" }
+      ]
+    },
+    {
+      "id": "mammon",
+      "title": "Sanctuaire de Mammon",
+      "text": "Une statue d'or tend la main. Elle sait ce que vous portez.",
+      "options": [
+        { "label": "Donner 40 or — bénédiction d'Avarice", "effect": "mammonBoon", "cost": 40 },
+        { "label": "Prier — recevoir 25 or", "effect": "gold25" }
+      ]
+    },
+    {
+      "id": "pacte_ames",
+      "title": "Registre des âmes",
+      "text": "Un greffier sans visage tient le compte des morts. Tout s'y achète, tout s'y vend.",
+      "options": [
+        {
+          "label": "Céder {souls} Âmes (permanent) — recevoir une bénédiction épique",
+          "effect": "soulBoon",
+          "souls": 40
+        },
+        {
+          "label": "Vendre votre sang — perdre {hp} PV, gagner {gain} Âmes (permanent)",
+          "effect": "bloodSouls",
+          "hp": 25,
+          "gain": 20
+        },
+        { "label": "Refermer le registre", "effect": "none" }
+      ]
+    },
+    {
+      "id": "forge",
+      "title": "Forge des regrets",
+      "text": "Une enclume rougeoie sans feu. Elle ne forge qu'avec ce qu'on lui abandonne.",
+      "options": [
+        {
+          "label": "Fondre {lost} — {gained} gagne {levels} niveaux",
+          "effect": "reforge",
+          "levels": 2
+        },
+        { "label": "Garder tous vos dons", "effect": "none" }
+      ]
+    },
+    {
+      "id": "miroir",
+      "title": "Miroir d'orgueil",
+      "text": "Votre reflet vous toise. Il est plus grand, plus fort — et il attend.",
+      "options": [
+        {
+          "label": "Briser le miroir — −{hp} PV max et +{pct} % de dégâts, jusqu'à votre mort",
+          "effect": "pact",
+          "pact": "reflet_brise",
+          "hp": 20,
+          "pct": 25
+        },
+        { "label": "Baisser les yeux", "effect": "none" }
+      ]
+    },
+    {
+      "id": "clepsydre",
+      "title": "Clepsydre de Charon",
+      "text": "Le temps du Passeur s'écoule goutte à goutte. On peut le boire, ou le briser.",
+      "options": [
+        {
+          "label": "Boire le temps — vider votre jauge de Super ({need} % au moins), rendre {pct} % des PV",
+          "effect": "superToHp",
+          "need": 50,
+          "pct": 35
+        },
+        {
+          "label": "Briser la clepsydre — perdre {hp} PV, jauge de Super pleine",
+          "effect": "hpToSuper",
+          "hp": 15
+        },
+        { "label": "Passer votre chemin", "effect": "none" }
+      ]
+    }
+  ]
+}

@@ -19,7 +19,8 @@ import { pickEliteMod } from './foe_elites.mjs';
 // Le bas-centre (entrée) et le haut (portes) restent toujours dégagés.
 // BRIQUES réutilisables : le plan de section (sections.mjs) dit lesquelles un étage peut tirer
 // et avec quel poids (thème du Cercle). Les six premières sont celles de tous les Cercles ;
-// `cross`, `ring` et `alcoves` n'apparaissent que plus bas (tuning.circles).
+// `cross`, `ring`, `alcoves`, puis `colonnade`, `chicane`, `goulet` et `ilots` n'apparaissent que
+// plus bas (tuning.circles).
 export const LAYOUTS = {
   open: [],
   pillars: [[0.27, 0.36, 70, 70], [0.73, 0.36, 70, 70], [0.27, 0.66, 70, 70], [0.73, 0.66, 70, 70]],
@@ -36,6 +37,14 @@ export const LAYOUTS = {
   ],
   // Alcôves : des éperons collés aux murs latéraux découpent des niches, un bloc au centre.
   alcoves: [[0.0886, 0.36, 200, 40], [0.9114, 0.36, 200, 40], [0.0886, 0.68, 200, 40], [0.9114, 0.68, 200, 40], [0.5, 0.42, 110, 60]],
+  // Colonnade : deux rangées de trois colonnes bordent une nef centrale (six murs où projeter).
+  colonnade: [[0.34, 0.27, 50, 50], [0.66, 0.27, 50, 50], [0.34, 0.5, 50, 50], [0.66, 0.5, 50, 50], [0.34, 0.73, 50, 50], [0.66, 0.73, 50, 50]],
+  // Chicane : deux longs murs décalés ; on traverse en S, les lignes de tir sont coupées.
+  chicane: [[0.38, 0.33, 520, 40], [0.62, 0.66, 520, 40]],
+  // Goulet : deux massifs collés aux murs latéraux étranglent la salle en un col de 470 u.
+  goulet: [[0.1743, 0.5, 440, 180], [0.8257, 0.5, 440, 180]],
+  // Îlots : deux gros blocs en diagonale, couverts épais autour desquels tourner.
+  ilots: [[0.3, 0.34, 220, 120], [0.7, 0.64, 220, 120]],
 };
 /** Identifiants des dispositions connues (le plan de section ne tire que parmi elles). */
 export const LAYOUT_IDS = Object.freeze(Object.keys(LAYOUTS));
@@ -82,6 +91,7 @@ export function buildRoom(game, info, plan) {
     enteredAt: game.time,
     doors: [],
     interact: null, // objet à toucher : récompense, marchand, autel, coffre, fontaine
+    hurt: false, // le héros a été blessé dans cette salle (procs « sans être touché »)
     theme: info.circle,
   };
   let rects = [];

@@ -1,0 +1,182 @@
+{
+  "type": "objet",
+  "requis": ["floors", "section", "encounter", "circles", "REWARD_LABELS", "FLOOR_TYPE_OF_REWARD"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "floors": {
+      "type": "objet",
+      "requis": [
+        "total",
+        "sectionLength",
+        "circleLength",
+        "circleNames",
+        "finaleName",
+        "itemGrowth",
+        "permBuildCap",
+        "permBuildScale",
+        "sectionBuildCap",
+        "driftAt666",
+        "dmgCurve",
+        "dmgScale",
+        "densityCurve",
+        "densityScale",
+        "sectionStartMax"
+      ],
+      "fermé": true,
+      "champs": {
+        "total": { "type": "entier", "min": 1 },
+        "sectionLength": { "type": "entier", "min": 1 },
+        "circleLength": { "type": "entier", "min": 1 },
+        "circleNames": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+        "finaleName": { "type": "texte", "min": 1 },
+        "itemGrowth": { "type": "nombre", "min": 0 },
+        "permBuildCap": { "type": "nombre", "min": 0, "max": 1 },
+        "permBuildScale": { "type": "nombre", "min": 1 },
+        "sectionBuildCap": { "type": "nombre", "min": 0, "max": 1 },
+        "driftAt666": { "type": "nombre", "min": 0 },
+        "dmgCurve": { "type": "nombre", "min": 0 },
+        "dmgScale": { "type": "nombre", "min": 1 },
+        "densityCurve": { "type": "nombre", "min": 0 },
+        "densityScale": { "type": "nombre", "min": 1 },
+        "sectionStartMax": {
+          "type": "objet",
+          "requis": ["toughness", "lethality"],
+          "fermé": true,
+          "champs": {
+            "toughness": { "type": "nombre", "min": 1 },
+            "lethality": { "type": "nombre", "min": 1 }
+          }
+        }
+      }
+    },
+    "section": {
+      "type": "objet",
+      "requis": [
+        "rhythms",
+        "paces",
+        "calmPace",
+        "eliteAt",
+        "halte",
+        "antichambre",
+        "treasure",
+        "doorWeights",
+        "gadgetRefillEvery",
+        "sandbox",
+        "session"
+      ],
+      "fermé": true,
+      "champs": {
+        "rhythms": {
+          "type": "liste",
+          "min": 1,
+          "elements": {
+            "type": "liste",
+            "min": 1,
+            "elements": {
+              "type": "texte",
+              "valeurs": ["court", "normal", "assaut", "halte", "antichambre", "gardien"]
+            }
+          }
+        },
+        "paces": {
+          "type": "objet",
+          "min": 1,
+          "chaque": {
+            "type": "objet",
+            "requis": ["waves", "budgetMult"],
+            "fermé": true,
+            "champs": {
+              "waves": { "type": "entier", "min": 1 },
+              "budgetMult": { "type": "nombre", "min": 0.1 }
+            }
+          }
+        },
+        "calmPace": { "type": "texte", "min": 1 },
+        "eliteAt": { "type": "liste", "elements": { "type": "entier", "min": 1 } },
+        "halte": {
+          "type": "objet",
+          "requis": ["fixed", "doors", "pool"],
+          "fermé": true,
+          "champs": {
+            "fixed": { "type": "liste", "elements": { "type": "texte", "min": 1 } },
+            "doors": { "type": "entier", "min": 1 },
+            "pool": { "type": "objet", "chaque": { "type": "nombre", "min": 0 } }
+          }
+        },
+        "antichambre": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+        "treasure": {
+          "type": "objet",
+          "requis": ["from", "to"],
+          "fermé": true,
+          "champs": { "from": { "type": "entier", "min": 1 }, "to": { "type": "entier", "min": 1 } }
+        },
+        "doorWeights": { "type": "objet", "min": 1, "chaque": { "type": "nombre", "min": 0 } },
+        "gadgetRefillEvery": { "type": "entier", "min": 1 },
+        "sandbox": {
+          "type": "objet",
+          "requis": ["floor", "eliteChance"],
+          "fermé": true,
+          "champs": {
+            "floor": { "type": "entier", "min": 1 },
+            "eliteChance": { "type": "nombre", "min": 0, "max": 1 }
+          }
+        },
+        "session": {
+          "type": "objet",
+          "requis": ["maxMinutes", "humanPace", "menuSeconds"],
+          "fermé": true,
+          "champs": {
+            "maxMinutes": { "type": "nombre", "min": 1 },
+            "humanPace": { "type": "nombre", "min": 0.1 },
+            "menuSeconds": { "type": "nombre", "min": 0 }
+          }
+        }
+      }
+    },
+    "encounter": {
+      "type": "objet",
+      "requis": ["baseBudget", "perIndex", "lastWaveMult", "strayEliteChance", "strayEliteFrom", "costRef"],
+      "fermé": true,
+      "champs": {
+        "baseBudget": { "type": "nombre", "min": 0.5 },
+        "perIndex": { "type": "nombre", "min": 0 },
+        "lastWaveMult": { "type": "nombre", "min": 0.1 },
+        "strayEliteChance": { "type": "nombre", "min": 0, "max": 1 },
+        "strayEliteFrom": { "type": "entier", "min": 1 },
+        "costRef": { "type": "nombre", "min": 0.1 }
+      }
+    },
+    "circles": {
+      "type": "liste",
+      "min": 1,
+      "unique": "id",
+      "elements": {
+        "type": "objet",
+        "requis": [
+          "id",
+          "costBias",
+          "featured",
+          "featuredMult",
+          "budgetMult",
+          "strayEliteMult",
+          "layouts",
+          "doors"
+        ],
+        "fermé": true,
+        "champs": {
+          "id": { "type": "texte", "min": 1 },
+          "costBias": { "type": "nombre" },
+          "featured": { "type": "entier", "min": 0 },
+          "featuredMult": { "type": "nombre", "min": 0 },
+          "budgetMult": { "type": "nombre", "min": 0.1 },
+          "strayEliteMult": { "type": "nombre", "min": 0 },
+          "layouts": { "type": "objet", "min": 1, "chaque": { "type": "nombre", "min": 0 } },
+          "doors": { "type": "objet", "chaque": { "type": "nombre", "min": 0 } }
+        }
+      }
+    },
+    "REWARD_LABELS": { "type": "objet", "min": 1, "chaque": { "type": "texte", "min": 1 } },
+    "FLOOR_TYPE_OF_REWARD": { "type": "objet", "min": 1, "chaque": { "type": "texte", "min": 1 } }
+  }
+}

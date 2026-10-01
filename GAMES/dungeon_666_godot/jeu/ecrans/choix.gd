@@ -7,7 +7,7 @@ extends VBoxContainer
 signal commande(cmd: Dictionary)
 signal action(nom: String, args: Array)
 
-const Carte = preload("res://jeu/ecrans/carte.tscn")
+const Carte = preload("res://jeu/theme/carte.tscn")
 const Fabrique = preload("res://jeu/ecrans/fabrique.gd")
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
 
@@ -17,6 +17,7 @@ const CARTE_OBJET_MIN := 220.0
 ## Libellés des emplacements d'une bénédiction (SLOT_LABELS de menus.mjs).
 const EMPLACEMENTS := {"attack": "Attaque", "dash": "Dash", "skill": "Compétence", "passive": "Passif", "super": "Super"}
 const SEP := " · "
+const POUVOIR := "★ %s"
 
 @onready var _titre: Label = %Titre
 @onready var _accroche: Label = %Accroche
@@ -50,7 +51,7 @@ func _en_tete(titre: String, accroche: String, couleur = null, variation: String
 func _poser_carte(d: Dictionary) -> Control:
 	var carte := Carte.instantiate()
 	_cartes.add_child(carte)
-	carte.remplir(d)
+	carte.decrire(d)
 	return carte
 
 func _action(texte: String, variation: StringName, cmd: Dictionary, grise: bool = false) -> void:
@@ -71,8 +72,8 @@ func _benediction(ch: Dictionary) -> void:
 		if niveau > 1.0:
 			sur_titre += SEP + "niv. " + D6Js.num_str(niveau)
 		var carte := _poser_carte({
-			"accent": Fabrique.couleur(o.color, Couleurs.UI.ember), "sur_titre": sur_titre,
-			"titre": o.name, "texte": o.text, "a_choisir": true,
+			"accent": Fabrique.couleur(o.color, Couleurs.UI.ember), "surtitre": sur_titre,
+			"titre": o.name, "lignes": [o.text], "a_choisir": true,
 		})
 		carte.choisie.connect(_choisir.bind(i))
 
@@ -91,13 +92,18 @@ func _butin(ch: Dictionary) -> void:
 ## La carte d'un objet décrit par la simulation (describe_item), ou d'un emplacement vide.
 func _carte_objet(objet, sur_titre: String) -> Dictionary:
 	if not (objet is Dictionary):
-		return {"sur_titre": sur_titre, "sur_titre_neutre": true, "titre": "Emplacement vide", "grisee": true}
+		return {"surtitre": sur_titre, "surtitre_doux": true, "titre": "Emplacement vide", "etat": "vide"}
 	var couleur := Fabrique.couleur(objet.get("color"), Couleurs.UI.ink)
+	var lignes: Array = []
+	for ligne in objet.lines:
+		lignes.append({"texte": String(ligne), "genre": "Affixe"})
+	if String(D6Js.nz(objet.get("power"), "")) != "":
+		lignes.append({"texte": POUVOIR % objet.power, "genre": "Pouvoir"})
 	return {
-		"accent": couleur, "sur_titre": sur_titre, "sur_titre_neutre": true,
+		"accent": couleur, "surtitre": sur_titre, "surtitre_doux": true,
 		"titre": String(objet.name), "couleur_titre": couleur,
-		"sous_titre": SEP.join([objet.rarityName, objet.slotName, "niv. " + D6Js.num_str(D6Js.nz(objet.get("level"), 1.0))]),
-		"lignes": objet.lines, "pouvoir": D6Js.nz(objet.get("power"), ""),
+		"sous": SEP.join([objet.rarityName, objet.slotName, "niv. " + D6Js.num_str(D6Js.nz(objet.get("level"), 1.0))]),
+		"lignes": lignes,
 	}
 
 # ---------------------------------------------------------------- marchand
@@ -108,21 +114,20 @@ func _marchand(ch: Dictionary) -> void:
 	for i in ch.offers.size():
 		var o: Dictionary = ch.offers[i]
 		var vendu: bool = D6Js.truthy(o.get("sold"))
-		var carte := _poser_carte(_carte_offre(o))
-		var acheter := Fabrique.bouton("Vendu" if vendu else "Acheter" + SEP + D6Js.num_str(o.price) + " or", &"BoutonPetit", vendu or ch.gold < o.price)
-		acheter.pressed.connect(_choisir.bind(i))
-		carte.ajouter_au_pied(acheter)
+		var d := _carte_offre(o)
+		d.boutons = [{"nom": "acheter", "texte": "Vendu" if vendu else "Acheter" + SEP + D6Js.num_str(o.price) + " or", "genre": "petit", "inactif": vendu or ch.gold < o.price}]
+		_poser_carte(d).action.connect(func(_nom: String) -> void: _choisir(i))
 	_action("Partir", &"", {"type": "close"})
 
 func _carte_offre(o: Dictionary) -> Dictionary:
 	var objet = o.get("item")
 	if not (objet is Dictionary):
-		return {"accent": Fabrique.couleur(o.get("color"), Couleurs.UI.ember), "titre": String(o.label), "texte": String(o.get("text", ""))}
+		return {"accent": Fabrique.couleur(o.get("color"), Couleurs.UI.ember), "titre": String(o.label), "lignes": [String(o.get("text", ""))]}
 	var d := _carte_objet(objet, "")
-	d.sous_titre = SEP.join([objet.rarityName, objet.slotName])
+	d.sous = SEP.join([objet.rarityName, objet.slotName])
 	var porte = o.get("equipped")
 	if porte is Dictionary:
-		d.texte = "Remplace : " + String(porte.name)
+		d.lignes.append({"texte": "Remplace : " + String(porte.name), "genre": "TexteDoux"})
 	return d
 
 # ---------------------------------------------------------------- autel, salles calmes
@@ -145,7 +150,7 @@ func _salle_calme(ch: Dictionary) -> void:
 		var o: Dictionary = ch.options[i]
 		var carte := _poser_carte({
 			"accent": Fabrique.couleur(D6Js.nz(o.get("color"), ch.get("color")), Couleurs.UI.ember),
-			"sur_titre": String(o.kicker), "titre": String(o.label), "texte": String(o.text),
+			"surtitre": String(o.kicker), "titre": String(o.label), "lignes": [String(o.text)],
 			"a_choisir": true, "grisee": D6Js.truthy(o.get("disabled")),
 		})
 		carte.choisie.connect(_choisir.bind(i))

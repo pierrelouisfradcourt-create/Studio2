@@ -1,0 +1,57 @@
+{
+  "type": "objet",
+  "requis": ["progression", "town", "STASH_MAX", "PROFILE_SCHEMA"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "progression": {
+      "type": "objet",
+      "requis": ["souls"],
+      "fermé": true,
+      "champs": {
+        "souls": {
+          "type": "objet",
+          "requis": ["kill", "elite", "guardian", "guardianPerSection"],
+          "fermé": true,
+          "champs": {
+            "kill": { "type": "nombre", "min": 0 },
+            "elite": { "type": "nombre", "min": 0 },
+            "guardian": { "type": "nombre", "min": 0 },
+            "guardianPerSection": { "type": "nombre", "min": 0 }
+          }
+        }
+      }
+    },
+    "town": {
+      "type": "objet",
+      "requis": ["upgrades", "salvageSouls"],
+      "fermé": true,
+      "champs": {
+        "upgrades": {
+          "type": "objet",
+          "min": 1,
+          "chaque": {
+            "type": "objet",
+            "requis": ["name", "text", "stat", "perLevel", "max", "costs"],
+            "fermé": true,
+            "champs": {
+              "name": { "type": "texte", "min": 1 },
+              "text": { "type": "texte", "min": 1 },
+              "stat": { "type": "texte", "min": 1 },
+              "perLevel": { "type": "nombre" },
+              "max": { "type": "entier", "min": 1 },
+              "costs": { "type": "liste", "min": 1, "elements": { "type": "nombre", "min": 0 } }
+            }
+          }
+        },
+        "salvageSouls": { "type": "objet", "min": 1, "chaque": { "type": "nombre", "min": 0 } }
+      }
+    },
+    "STASH_MAX": { "type": "entier", "min": 1 },
+    "PROFILE_SCHEMA": {
+      "type": "entier",
+      "valeurs": [3],
+      "_note": "version du format de sauvegarde : se change ici ET dans data/ville.json, avec une migration dans sim/profile.gd"
+    }
+  }
+}

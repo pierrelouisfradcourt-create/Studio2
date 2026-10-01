@@ -1,96 +1,94 @@
 extends "res://jeu/monde/creatures/calque.gd"
-## Calque des ENNEMIS et des GARDIENS : chaque corps est posé dans un repère tourné vers le héros
-## (x = devant lui), grossi à l'apparition, écrasé dans l'axe du coup reçu, puis confié au
-## dessin de son archétype (archetypes.gd) ou de son modèle de Gardien (gardiens.gd).
+## Calque des ENNEMIS et des GARDIENS. Chaque ennemi vivant a son nœud (corps.gd), enfant de ce
+## calque et trié du fond vers l'avant (y_sort). Le nœud porte le repère de la créature (position,
+## regard, respiration, pas, anticipation, écrasement) ; ce calque-ci ne fait que tenir la liste
+## des corps à jour et PEINDRE un corps quand son nœud le demande : marque d'élite, puis le dessin
+## de son archétype (archetypes.gd, nouveaux.gd) ou de son modèle de Gardien (gardiens.gd).
+## Coût : un corps n'est repeint que si sa pose change ou vingt fois par seconde ; entre deux, le
+## moteur rejoue ses commandes sous un nouveau repère.
 
+const Corps = preload("res://jeu/monde/creatures/corps.gd")
 const Archetypes = preload("res://jeu/monde/creatures/archetypes.gd")
+const Nouveaux = preload("res://jeu/monde/creatures/nouveaux.gd")
 const Gardiens = preload("res://jeu/monde/creatures/gardiens.gd")
 
-const APPARITION := 0.25 # s : durée de l'apparition (spawnT de la simulation)
-const REBOND := 1.70158 # dépassement de l'apparition (0 -> 1,15 -> 1)
-const ECRASE := Vector2(0.8, 1.25) # touché : écrasé dans l'axe du coup, aire conservée
-const TREMBLE := 2.0 # u : tremblement le long du coup pendant le gel d'impact
+const NOUVEAUX := ["pavois", "stalker", "banner"]
 
-var _corps := {}
+var _teintes := {}
 var _bestiaire: Archetypes
+var _nouveaux: Nouveaux
 var _gardiens: Gardiens
+var _noeuds := {} # id d'ennemi -> son corps
 
 func _init() -> void:
 	super()
+	y_sort_enabled = true
 	_bestiaire = Archetypes.new(p)
+	_nouveaux = Nouveaux.new(p)
 	_gardiens = Gardiens.new(p)
-	_corps = {
+	_teintes = {
 		"imp": PAL.imp, "archer": PAL.archer, "brute": PAL.brute, "charger": PAL.charger, "exploder": PAL.exploder,
 		"pyromancer": Color("#a8233a"), "necromancer": Color("#5a3690"),
+		"pavois": Color("#8a4a2a"), "stalker": Color("#5a1f4a"), "banner": Color("#b5872f"),
 		"gardien": PAL.boss, "cerbere": Color("#8a2e1e"), "minos": Color("#3a2e6e"), "colosse": Color("#6b5a50"),
 	}
 
-func _draw() -> void:
+## Une image : chaque ennemi vivant a son corps, qui le suit ; les corps sans ennemi sont rendus.
+func actualiser(delta: float) -> void:
+	var g = jeu()
+	if g == null:
+		_rendre({})
+		return
+	var cible := lieu_heros(g)
+	var vus := {}
+	for e in g.enemies:
+		if D6Js.truthy(e.get("dead")):
+			continue
+		var n: Node2D = _noeuds.get(e.id)
+		if n == null:
+			n = Corps.new()
+			n.calque = self
+			_noeuds[e.id] = n
+			add_child(n)
+		vus[e.id] = true
+		n.suivre(e, g, cible, delta)
+	if vus.size() != _noeuds.size():
+		_rendre(vus)
+
+func _rendre(vus: Dictionary) -> void:
+	for id in _noeuds.keys():
+		if not vus.has(id):
+			_noeuds[id].queue_free()
+			_noeuds.erase(id)
+
+## Dessin d'un corps, dans SON repère (origine au centre, x = devant lui). Appelé par son nœud.
+func peindre(n: Node2D) -> void:
 	var g = jeu()
 	if g == null:
 		return
-	_bestiaire.temps = temps()
-	_gardiens.temps = temps()
-	var cible := lieu_heros(g)
-	var liste := vivants(g)
-	liste.sort_custom(func(a, b): return a.y < b.y)
-	for e in liste:
-		_dessiner(e, g, cible)
+	var e: Dictionary = n.e
+	p.ci = n
 	p.alpha = 1.0
-	p.lever()
-
-func _dessiner(e: Dictionary, g: Dictionary, cible: Vector2) -> void:
-	var pos := lieu(e)
-	var face := _face(e, pos, cible)
-	var haut := envol(e)
-	var r: float = e.r * _echelle(e, g) * (1.0 + 0.18 * haut)
-	p.alpha = _alpha(e)
+	var r: float = e.r
 	if D6Js.truthy(e.eliteMod):
-		p.poser(Transform2D(0.0, pos))
-		p.pointille(Vector2.ZERO, r + 7.0, Couleurs.ELITE_COLORS[e.eliteMod], 3.0, 14.0, -temps() * 30.0 / (r + 7.0))
-	var m := _repere(e, g, pos - Vector2(0.0, haut * e.r * 1.3))
-	p.poser(m * Transform2D(face, Vector2.ZERO))
-	var corps: Color = PAL.enemyFlash if e.flash > 0.0 else _corps.get(e.kind, PAL.imp)
+		_marque_elite(e, r)
+	var corps: Color = PAL.enemyFlash if e.flash > 0.0 else _teintes.get(e.kind, PAL.imp)
 	if D6Js.truthy(e.boss):
-		_gardiens.dessiner(e, r, face, corps)
+		_gardiens.temps = temps()
+		_gardiens.dessiner(e, r, n.rotation, corps)
+	elif e.kind in NOUVEAUX:
+		_nouveaux.dessiner(e, r, corps, g, n, temps())
 	else:
-		_bestiaire.dessiner(e, r, face, corps, g)
+		_bestiaire.dessiner(e, r, corps, g, n, temps())
+	p.alpha = 1.0
+	p.ci = self
 
-## Il regarde le héros ; le bélier lancé regarde où il court.
-func _face(e: Dictionary, pos: Vector2, cible: Vector2) -> float:
-	if e.kind == "charger" and e.state == "charge":
-		return Vector2(e.dirX, e.dirY).angle()
-	return (cible - pos).angle()
-
-func _alpha(e: Dictionary) -> float:
-	if D6Js.truthy(e.get("hidden")):
-		return 0.28 + 0.12 * sin(temps() * 20.0) # Minos dissous : en filigrane
-	if e.spawnT > 0.0:
-		return 0.5 + 0.5 * (1.0 - clampf(e.spawnT / APPARITION, 0.0, 1.0))
-	return 1.0
-
-## Taille dessinée : rebond d'apparition, frémissement de l'attaque qui se prépare, possédé qui gonfle.
-func _echelle(e: Dictionary, g: Dictionary) -> float:
-	var s := 1.0
-	if e.spawnT > 0.0:
-		var k: float = 1.0 - clampf(e.spawnT / APPARITION, 0.0, 1.0)
-		s = maxf(0.05, 1.0 + (REBOND + 1.0) * pow(k - 1.0, 3.0) + REBOND * pow(k - 1.0, 2.0))
-	if e.state != "windup":
-		return s
-	if e.kind == "exploder":
-		var duree: float = maxf(1e-3, g.tuning.enemies.exploder.windup)
-		return s * (1.0 + 0.45 * clampf(e.stateTime / duree, 0.0, 1.0) + 0.04 * sin(e.stateTime * 40.0))
-	return s * (1.0 + 0.08 * sin(e.stateTime * 30.0))
-
-## Repère du corps : tremblement pendant le gel d'impact, puis écrasement dans l'axe du coup.
-func _repere(e: Dictionary, g: Dictionary, pos: Vector2) -> Transform2D:
-	var m := Transform2D(0.0, pos)
-	var coup := Vector2(nombre(e, "hitDirX"), nombre(e, "hitDirY"))
-	if e.flash <= 0.0 or coup == Vector2.ZERO:
-		return m
-	var a := coup.angle()
-	if g.hitstop > 0.0 or e.freeze > 0.0:
-		m.origin += Vector2.from_angle(a) * (TREMBLE if int(temps() * 60.0) % 2 == 0 else -TREMBLE)
-	if D6Js.truthy(e.boss):
-		return m
-	return m * Transform2D(a, Vector2.ZERO) * Transform2D(0.0, ECRASE, 0.0, Vector2.ZERO) * Transform2D(-a, Vector2.ZERO)
+## Champion : anneau en tirets de sa couleur, qui tourne, et trois pointes de la même couleur
+## dans son dos — on le reconnaît de loin, avant de lire son étiquette.
+func _marque_elite(e: Dictionary, r: float) -> void:
+	var teinte: Color = Couleurs.ELITE_COLORS[e.eliteMod]
+	p.pointille(Vector2.ZERO, r + 7.0, teinte, 3.0, 14.0, -temps() * 30.0 / (r + 7.0))
+	for i in 3:
+		var d := Vector2.from_angle(PI + (i - 1) * 0.5)
+		var cote := d.orthogonal() * r * 0.2
+		p.pic(d * r * 0.9 + cote, d * r * 0.9 - cote, d * r * (1.55 if i == 1 else 1.32), teinte, Pinceau.ENCRE, 2.0)

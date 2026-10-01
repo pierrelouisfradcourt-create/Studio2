@@ -1,0 +1,161 @@
+{
+  "type": "objet",
+  "requis": [
+    "economy",
+    "loot",
+    "SLOTS",
+    "SLOT_NAMES",
+    "BASES",
+    "ITEM_RARITIES",
+    "AFFIXES",
+    "STAT_LABELS",
+    "LEGENDARY_POWERS"
+  ],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "economy": {
+      "type": "objet",
+      "requis": [
+        "goldPerRoom",
+        "shopHealPrice",
+        "shopBoonPrice",
+        "shopItemPrice",
+        "deathGoldKeep",
+        "treasure",
+        "rest"
+      ],
+      "fermé": true,
+      "champs": {
+        "goldPerRoom": { "type": "point" },
+        "shopHealPrice": { "type": "nombre", "min": 0 },
+        "shopBoonPrice": { "type": "nombre", "min": 0 },
+        "shopItemPrice": { "type": "point" },
+        "deathGoldKeep": { "type": "nombre", "min": 0, "max": 1 },
+        "treasure": {
+          "type": "objet",
+          "requis": ["gold", "rarityBonus", "minRarity", "goldPickups"],
+          "fermé": true,
+          "champs": {
+            "gold": { "type": "point" },
+            "rarityBonus": { "type": "nombre", "min": 0 },
+            "minRarity": { "type": "texte", "ref": "raretes_objet" },
+            "goldPickups": { "type": "entier", "min": 0 }
+          }
+        },
+        "rest": {
+          "type": "objet",
+          "requis": ["heal", "superCharge"],
+          "fermé": true,
+          "champs": {
+            "heal": { "type": "nombre", "min": 0, "max": 1 },
+            "superCharge": { "type": "nombre", "min": 0, "max": 1 }
+          }
+        }
+      }
+    },
+    "loot": {
+      "type": "objet",
+      "requis": ["rarityWeights", "eliteRarityBonus", "bossGuaranteedRare"],
+      "fermé": true,
+      "champs": {
+        "rarityWeights": { "type": "objet", "min": 1, "chaque": { "type": "nombre", "min": 0 } },
+        "eliteRarityBonus": { "type": "nombre", "min": 0 },
+        "bossGuaranteedRare": { "type": "booleen" }
+      }
+    },
+    "SLOTS": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+    "SLOT_NAMES": { "type": "objet", "min": 1, "chaque": { "type": "texte", "min": 1 } },
+    "BASES": {
+      "type": "objet",
+      "min": 1,
+      "chaque": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } }
+    },
+    "ITEM_RARITIES": {
+      "type": "liste",
+      "min": 1,
+      "unique": "id",
+      "elements": {
+        "type": "objet",
+        "requis": ["id", "name", "color", "affixes", "baseMult"],
+        "fermé": true,
+        "champs": {
+          "id": { "type": "texte", "min": 1 },
+          "name": { "type": "texte", "min": 1 },
+          "color": { "type": "couleur" },
+          "affixes": { "type": "entier", "min": 0 },
+          "baseMult": { "type": "nombre", "min": 0.1 }
+        }
+      }
+    },
+    "AFFIXES": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "liste",
+        "min": 1,
+        "elements": {
+          "type": "liste",
+          "min": 6,
+          "max": 6,
+          "_note": "[stat, minimum, maximum, préfixe, suffixe, format] : détail vérifié par tests/regles/donnees.gd"
+        }
+      }
+    },
+    "STAT_LABELS": { "type": "objet", "min": 1, "chaque": { "type": "texte", "min": 1 } },
+    "LEGENDARY_POWERS": {
+      "type": "liste",
+      "min": 1,
+      "unique": "id",
+      "elements": {
+        "type": "objet",
+        "requis": ["id", "name", "text"],
+        "fermé": true,
+        "champs": {
+          "id": { "type": "texte", "min": 1 },
+          "name": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "stats": { "type": "objet", "chaque": { "type": "nombre" } },
+          "procs": {
+            "type": "liste",
+            "min": 1,
+            "elements": {
+              "type": "objet",
+              "requis": ["on", "effect"],
+              "champs": {
+                "on": {
+                  "type": "texte",
+                  "valeurs": [
+                    "hit",
+                    "dash",
+                    "dodge",
+                    "wallSlam",
+                    "roomClear",
+                    "passive",
+                    "kill",
+                    "super",
+                    "overheal"
+                  ]
+                },
+                "effect": { "type": "texte", "min": 1 },
+                "sources": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+                "when": { "type": "texte", "valeurs": ["finisher", "untouched"] },
+                "chance": { "type": "nombre", "min": 0, "max": 1 },
+                "duration": { "type": "nombre", "min": 0 },
+                "radius": { "type": "nombre", "min": 0 },
+                "range": { "type": "nombre", "min": 0 },
+                "bounces": { "type": "entier", "min": 0 },
+                "chill": { "type": "nombre", "min": 0 },
+                "threshold": { "type": "nombre", "min": 0 },
+                "per": { "type": "nombre", "min": 1 },
+                "cap": { "type": "entier", "min": 1 },
+                "value": { "type": "nombre", "min": 0 },
+                "valueFixed": { "type": "nombre", "min": 0 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

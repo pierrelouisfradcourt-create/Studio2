@@ -23,7 +23,7 @@ static func _has_id(ids: Array, id) -> bool:
 static func spawn_shot(game: Dictionary, s: Dictionary) -> Dictionary:
 	var shot := {
 		"id": D6State.new_id(game), "kind": "arrow", "traveled": 0.0, "pierce": 0.0, "hitIds": [], "knockback": 0.0, "hitstop": 0.0, "shake": 0.0,
-		"stun": 0.0, "pull": null, "heavy": false, "dead": false,
+		"stun": 0.0, "pull": null, "heavy": false, "finisher": false, "dead": false,
 	}
 	shot.merge(s, true)
 	D6KitCommon.kit_store(game).shots.append(shot)
@@ -58,6 +58,7 @@ static func fire_weapon_shots(game: Dictionary, a: Dictionary) -> void:
 			"shake": D6Js.nz(def.get("shake"), 0.0),
 			"stun": D6Js.nz(def.get("stun"), 0.0),
 			"heavy": D6Js.truthy(sh.get("heavy")) or D6Js.truthy(a.strike),
+			"finisher": D6Js.truthy(a.get("finisher")),
 		})
 		i += 1.0
 
@@ -119,7 +120,7 @@ static func _shot_hits(game: Dictionary, s: Dictionary, ox: float, oy: float, sp
 		s.hitIds.append(e.id)
 		D6Combat.damage_enemy(game, e, {
 			"kind": s.source, "amount": s.damage, "dirX": s.vx / speed, "dirY": s.vy / speed,
-			"knockback": s.knockback, "hitstop": s.hitstop, "canCrit": true, "shake": s.shake, "stun": s.stun,
+			"knockback": s.knockback, "hitstop": s.hitstop, "canCrit": true, "shake": s.shake, "stun": s.stun, "finisher": s.finisher,
 		})
 		if s.pull != null:
 			_hook(game, s, e)

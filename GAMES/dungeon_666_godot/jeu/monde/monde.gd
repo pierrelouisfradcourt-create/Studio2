@@ -6,21 +6,26 @@ extends Node2D
 ## Contrat (jeu/ARCHITECTURE.md) : `camera`, `monde_vers_ecran()`, `ecran_vers_monde()`.
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
-const FISSURES := 14
-const PART_DE_LAVE := 0.35 # part des fissures qui rougeoient
-const FLAQUES := 4
+const Ambiance = preload("res://jeu/monde/ambiance.gd")
+const Calque = preload("res://jeu/monde/calque.gd")
+## Flambeaux : part de la largeur (mur du fond) et de la hauteur (murs de côté) où ils sont scellés.
+const FLAMBEAUX_FOND := [0.1, 0.24, 0.76, 0.9]
+const FLAMBEAUX_COTE := [0.3, 0.7]
 
 var app: Node
 var partie: Node
 ## Horloge d'animation (s), figée pendant la pause : les calques y lisent leurs pulsations.
 var temps := 0.0
 
-var _decor := {}
-var _salle_du_decor = null
+var _ambiance := {}
+var _cercle := -1
+var _flambeaux: Array = []
+var _salle_des_flambeaux = null
 
 @onready var camera: Camera2D = $Camera
 @onready var entites: Node2D = $Entites
-@onready var _calques: Array[Node] = [$Sol, $Lueurs, $Portes, $Objets, $ZonesHeros, $Dangers, $Contours, $Tirs]
+@onready var voile: CanvasLayer = $Voile
+@onready var _calques: Array[Node] = [$Sol, $Murs, $Lueurs, $Portes, $Objets, $ZonesHeros, $Dangers, $Contours, $Tirs, $Braises]
 
 func brancher(p_app: Node, p_partie: Node) -> void:
 	app = p_app
@@ -39,40 +44,41 @@ func ecran_vers_monde(p: Vector2) -> Vector2:
 
 func _process(delta: float) -> void:
 	visible = partie != null and partie.game != null
+	voile.visible = visible
 	if visible and not partie.en_pause:
 		temps += delta
 
-## Teinte du Cercle en cours (sols, lueurs).
-func teinte_du_cercle() -> Color:
-	var teintes: Array[Color] = Couleurs.CIRCLE_TINTS
+## Numéro du Cercle en cours (1..10).
+func cercle() -> int:
 	var info = partie.game.get("info")
-	var cercle := int(info.circle) if info is Dictionary else 1
-	return teintes[posmod(cercle - 1, teintes.size())]
+	return int(info.circle) if info is Dictionary else 1
 
-## Décor procédural de la salle (fissures, flaques de lueur), stable pour une salle donnée :
-## {fissures: [{pts: PackedVector2Array, lave: bool, phase: float}], flaques: [{p, r}]}.
-## Tirage de présentation seulement : aucune règle n'en dépend.
-func decor() -> Dictionary:
-	var g: Dictionary = partie.game
-	if is_same(g.room, _salle_du_decor):
-		return _decor
-	_salle_du_decor = g.room
-	var alea := RandomNumberGenerator.new()
-	alea.seed = int(g.run.floor) * 7919 + int(g.get("seed", 1.0))
-	var taille := Vector2(g.room.w, g.room.h)
-	var fissures: Array = []
-	for i in FISSURES:
-		fissures.append(_fissure(alea, taille))
-	var flaques: Array = []
-	for i in FLAQUES:
-		flaques.append({"p": Vector2(alea.randf(), alea.randf()) * taille, "r": 30.0 + alea.randf() * 50.0})
-	_decor = {"fissures": fissures, "flaques": flaques}
-	return _decor
+## Teinte du Cercle en cours (lueurs, flammes, braises).
+func teinte_du_cercle() -> Color:
+	return ambiance().teinte
 
-func _fissure(alea: RandomNumberGenerator, taille: Vector2) -> Dictionary:
-	var pts := PackedVector2Array([Vector2(alea.randf(), alea.randf()) * taille])
-	var a := alea.randf() * TAU
-	for k in 4:
-		a += (alea.randf() - 0.5) * 1.4
-		pts.append(pts[pts.size() - 1] + Vector2.from_angle(a) * (20.0 + alea.randf() * 40.0))
-	return {"pts": pts, "lave": alea.randf() < PART_DE_LAVE, "phase": pts[0].x}
+## Matière et lumière du Cercle en cours (voir ambiance.gd).
+func ambiance() -> Dictionary:
+	var c := cercle()
+	if c != _cercle:
+		_cercle = c
+		_ambiance = Ambiance.du_cercle(c)
+	return _ambiance
+
+## Les flambeaux de la salle : [{p: la flamme, sol: le centre de sa flaque de lumière}].
+## Trois murs en portent ; celui de devant reste dans l'ombre.
+func flambeaux() -> Array:
+	var room: Dictionary = partie.game.room
+	if is_same(room, _salle_des_flambeaux):
+		return _flambeaux
+	_salle_des_flambeaux = room
+	_flambeaux = []
+	var d: Rect2 = Calque.dedans(room)
+	for k in FLAMBEAUX_FOND:
+		var x: float = room.w * k
+		_flambeaux.append({"p": Vector2(x, d.position.y - Calque.FACE_NORD * 0.6), "sol": Vector2(x, d.position.y + 44.0)})
+	for k in FLAMBEAUX_COTE:
+		var y: float = room.h * k
+		_flambeaux.append({"p": Vector2(d.position.x - Calque.FACE_COTE * 0.55, y - 14.0), "sol": Vector2(d.position.x + 44.0, y)})
+		_flambeaux.append({"p": Vector2(d.end.x + Calque.FACE_COTE * 0.55, y - 14.0), "sol": Vector2(d.end.x - 44.0, y)})
+	return _flambeaux

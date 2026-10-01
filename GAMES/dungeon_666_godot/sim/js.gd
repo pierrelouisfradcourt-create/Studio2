@@ -1,15 +1,17 @@
 class_name D6Js
 extends RefCounted
-## Fidélité à JavaScript : la simulation est PORTÉE de GAMES/dungeon_666/src/sim (la spécification).
-## Ce module tient les quelques endroits où GDScript ne calcule pas comme JavaScript.
+## Arithmétique et conventions héritées de JavaScript : la simulation a été portée de la version
+## web (GAMES/dungeon_666, figée le 2026-10-01) et garde ses habitudes de calcul — arrondi dont la
+## demie monte, entiers de 32 bits du générateur aléatoire, valeurs « vraies ». Ce module les tient.
 ##
-## Règle de portage n°1 : TOUT nombre de la simulation est un float (comme en JavaScript, qui n'a
-## que des doubles). Les données lues par D6Data sont des floats ; une division entre deux entiers
-## GDScript tronquerait. On ne convertit en int qu'au moment d'indexer un tableau.
+## Règle n°1 de sim/ : TOUT nombre de la simulation est un float. Les données lues par D6Data
+## sont des floats ; une division entre deux entiers GDScript tronquerait. On ne convertit en int
+## qu'au moment d'indexer un tableau.
 
 const U32 := 4294967296.0
 const MASK := 0xFFFFFFFF
 const EXACT_PREFIX := "~"
+const EXACT_HEX_DIGITS := 16
 
 ## Math.round de JavaScript : la demie monte TOUJOURS (round(-2.5) = -2 ; GDScript rendrait -3).
 static func jround(x: float) -> float:
@@ -54,8 +56,12 @@ static func truthy(v) -> bool:
 			return v != ""
 	return true
 
-## Reconstruit les données écrites par tools/export_godot.mjs : « ~ » + 16 chiffres hexadécimaux
-## = un double exact. Tous les nombres sortent en float.
+## Met une donnée JSON à la forme que lit la simulation : tous les nombres en float.
+## Accepte encore la forme EXACTE — « ~ » + 16 chiffres hexadécimaux = les 8 octets d'un double,
+## « ~inf », « ~-inf », « ~nan » — qu'écrivaient les exports de la version web et qu'écrivent
+## toujours les résultats partiels des oracles de jouabilité (outils/bots/format.gd, write_exact).
+## Les fichiers de data/ sont du JSON ordinaire ; un texte qui commence par « ~ » sans être de
+## cette forme reste un texte.
 static func decode(v):
 	match typeof(v):
 		TYPE_STRING:
@@ -77,7 +83,7 @@ static func decode(v):
 			return d
 	return v
 
-static func _exact(s: String) -> float:
+static func _exact(s: String):
 	var h := s.substr(1)
 	if h == "inf":
 		return INF
@@ -85,9 +91,11 @@ static func _exact(s: String) -> float:
 		return -INF
 	if h == "nan":
 		return NAN
+	if h.length() != EXACT_HEX_DIGITS or not h.is_valid_hex_number():
+		return s
 	return h.hex_decode().decode_double(0)
 
-## Lit un fichier JSON exporté et le décode. Rend null si le fichier manque ou est illisible.
+## Lit un fichier JSON et le décode (decode). Rend null si le fichier manque ou est illisible.
 static func read_exact(path: String):
 	if not FileAccess.file_exists(path):
 		return null

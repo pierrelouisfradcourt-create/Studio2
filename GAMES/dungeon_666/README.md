@@ -1,5 +1,8 @@
 # Dungeon 666 — prototype jouable
 
+> **VERSION FIGÉE le 2026-10-01 : le jeu continue dans `GAMES/dungeon_666_godot/` ; ce dossier
+> reste comme archive jouable et comme origine des règles.**
+
 Action-roguelite mobile : descendre les 666 étages de l'Enfer. Le combat s'inspire de Hades, le
 butin de Diablo 1/2, les contrôles tactiles de Brawl Stars. Ce prototype sert d'abord à
 **vérifier que le déplacement et le combat sont amusants**. Charte : [`00_CHARTER/CHARTER.md`](00_CHARTER/CHARTER.md).
@@ -63,6 +66,11 @@ En jeu : **pause → Réglages du feel**. Ce panneau règle en direct la vitesse
   - Âmes ;
   - checkpoints.
 - **Temporaire** (`game.run`) : bénédictions des 7 péchés (bonus, pouvoirs, améliorations, synergies).
+- **Contenu** (état au 2026-10-01, détail dans [`01_DESIGN/RELECTURES_V2.md`](01_DESIGN/RELECTURES_V2.md), « Contenu ajouté ») :
+  - **35 bénédictions** en 7 familles (5 par famille), **8 duos**, 1 pacte (accordé par un autel) ;
+  - **10 pouvoirs légendaires** d'objet ;
+  - **8 événements d'autel** ;
+  - **13 dispositions de salle**, pondérées par Cercle.
 - **Mort** : retour au **dernier checkpoint** (ou en Ville). Les bénédictions sont **remises à zéro**, tout le permanent est gardé, et Charon prélève une part de l'or. L'écran de mort montre ce qui est perdu et ce qui est gardé.
 - **666 étages** : sections de **18** étages, avec un **Gardien** au 18ᵉ, soit 37 sections. Le Gardien ouvre un checkpoint et un point de téléportation. À la sortie, deux portes : « section suivante » (le build est conservé) ou portail vers la Ville. Les étages sont **composés** à partir d'un plan de section (`src/sim/sections.mjs`), de dispositions, du bestiaire et des thèmes des 9 Cercles + finale.
 - **Classes** :
@@ -79,6 +87,9 @@ En jeu : **pause → Réglages du feel**. Ce panneau règle en direct la vitesse
   - **Pyromancienne** (zone : flaques persistantes) ;
   - **Nécromancien** (invocateur) ;
   - possédé (kamikaze) ;
+  - **Porte-pavois** (garde de face : on le frappe de dos, de flanc, ou après son coup) ;
+  - **Traqueur** (embuscade : il disparaît et resurgit dans le dos) ;
+  - **Porte-étendard** (soutien : les ennemis sous son aura prennent moins) ;
   - 6 modificateurs d'élite.
 - **Gardiens** : **Charon**, **Cerbère**, **Minos**, **Éphialte le Colosse**. Leurs patterns sont distincts, en rotation sur les 37 sections.
 - **D5 / D8 / D9 restent ouvertes** : on les teste dans le **Labo du feel** (en Ville ou en pause).
@@ -122,7 +133,7 @@ entièrement déterminée par sa graine et la suite de ses `InputFrame`.
 
 ```
 node run-oracle.mjs        # tout : règles, propriétés, audio, bundle, solvabilité, classes, e2e, playtest
-node --test tests/*.test.mjs   # 260 tests (dont tests/v2_*.test.mjs)
+node --test tests/*.test.mjs   # 327 tests (dont tests/v2_*.test.mjs)
 node solvability.mjs       # un bot bat la section 1 ; mesure la « valeur du dash »
 node tools/classes.mjs     # les 6 kits joués par les bots → reports/classes.md (bloquant)
 node e2e.mjs               # Chromium réel : doigts tactiles (CDP), clavier, souris, file://

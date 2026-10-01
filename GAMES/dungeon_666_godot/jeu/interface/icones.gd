@@ -1,7 +1,7 @@
 extends RefCounted
 ## Pictogrammes des commandes, DESSINÉS (aucune image) : portage des `ICONS` de
 ## GAMES/dungeon_666/src/render/hud.mjs. Les noms sont ceux du champ `icon` des kits
-## (data/tuning.json) et, par défaut, l'identifiant du bouton (attack, dash, skill, gadget, super).
+## (data/classes.json) et, par défaut, l'identifiant du bouton (attack, dash, skill, gadget, super).
 ##   Icones.dessiner(self, "axe", centre, rayon, couleur)   dans le `_draw` d'un CanvasItem
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")

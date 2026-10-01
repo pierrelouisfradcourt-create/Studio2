@@ -25,6 +25,7 @@ static func create_run(start_floor) -> Dictionary:
 		"boons": [],
 		"items": {"arme": null, "armure": null, "talisman": null}, # = équipement du PROFIL (game)
 		"roomsThisRun": 0.0,
+		"streak": 0.0, # salles nettoyées d'affilée sans blessure (procs « streakBonus ») : un coup reçu la remet à zéro
 		"startedAt": 0.0,
 		"deathRecap": null, # ce que la dernière mort a pris (bénédictions, or) : écran de mort
 	}
@@ -112,6 +113,11 @@ static func on_room_clear(game: Dictionary) -> void:
 	game.telemetry.roomsCleared += 1.0
 	game.telemetry.roomTimes.append({"floor": game.run.floor, "kind": room.kind, "time": game.time - room.enteredAt})
 	D6State.emit(game, "roomClear", {"floor": game.run.floor, "kind": room.kind, "boss": room.kind == "boss"})
+	# Salle nettoyée sans une blessure : la série s'allonge, les procs « roomClear » se déclenchent.
+	var untouched: bool = not D6Js.truthy(room.get("hurt"))
+	if untouched:
+		game.run.streak = D6Js.nz(game.run.get("streak"), 0.0) + 1.0
+	D6Combat.fire_procs(game, "roomClear", null, {"untouched": untouched})
 	_cancel_enemy_attacks(game)
 	var spot: Dictionary = D6Room.reward_spot(room)
 
@@ -301,16 +307,79 @@ static func _event_def(id):
 	return null
 
 static func _event_choice(game: Dictionary, it: Dictionary) -> Dictionary:
-	var run: Dictionary = game.run
 	var ev: Dictionary = _event_def(it.event)
-	var p: Dictionary = game.player
-	var gadget_full: bool = p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus
 	var options: Array = []
 	for o in ev.options:
-		var cost = o.get("cost")
-		var unusable: bool = (D6Js.truthy(cost) and run.gold < cost) or (o.effect == "gadget1" and gadget_full)
-		options.append({"label": o.label, "disabled": unusable})
+		options.append({"label": _option_label(game, o), "disabled": _option_blocked(game, o)})
 	return {"kind": "event", "title": ev.title, "text": ev.text, "options": options}
+
+## Forge des regrets : la bénédiction fondue (la moins avancée) et celle qui en profite (la plus
+## avancée des autres), parmi celles qui ont des niveaux ; la première à égalité. Null s'il n'y
+## en a pas deux.
+static func forge_targets(game: Dictionary):
+	var pool: Array = []
+	for b in game.run.boons:
+		var d = D6Boons.boon_def(b.id)
+		if d != null and not D6Js.truthy(d.get("noScale")):
+			pool.append(b)
+	if pool.size() < 2:
+		return null
+	var lost: Dictionary = pool[0]
+	for b in pool:
+		if b.level < lost.level:
+			lost = b
+	var gained = null
+	for b in pool:
+		if not is_same(b, lost) and (gained == null or b.level > gained.level):
+			gained = b
+	return {"lost": lost, "gained": gained}
+
+## Une option d'autel que le héros ne peut pas payer (ou qui ne lui donnerait rien) est grisée.
+static func _option_blocked(game: Dictionary, o: Dictionary) -> bool:
+	var run: Dictionary = game.run
+	var p: Dictionary = game.player
+	var cost = o.get("cost")
+	if D6Js.truthy(cost) and run.gold < cost:
+		return true
+	var souls = o.get("souls")
+	if D6Js.truthy(souls) and game.meta.souls < souls:
+		return true
+	match o.effect:
+		"gadget1":
+			return p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus
+		"superToHp":
+			return p.superCharge < o.need / 100.0
+		"hpToSuper":
+			return p.superCharge >= 1.0
+		"reforge":
+			return forge_targets(game) == null
+		"pact":
+			for b in run.boons:
+				if b.id == o.pact:
+					return true
+			return false
+	return false
+
+## String.replace de JavaScript avec un motif texte : seule la 1re occurrence est remplacée.
+static func _replace_first(text: String, what: String, by: String) -> String:
+	var at := text.find(what)
+	if at < 0:
+		return text
+	return text.substr(0, at) + by + text.substr(at + what.length())
+
+## Libellé d'une option d'autel : chaque {champ} est remplacé par le nombre du même nom dans
+## l'option ; {lost} et {gained} par les bénédictions que la Forge fondrait et approfondirait.
+static func _option_label(game: Dictionary, o: Dictionary) -> String:
+	var label: String = o.label
+	for k in o:
+		var v = o[k]
+		if v is float or v is int:
+			label = _replace_first(label, "{%s}" % k, D6Js.num_str(v))
+	if o.effect == "reforge":
+		var f = forge_targets(game)
+		label = _replace_first(label, "{lost}", ("« %s »" % D6Boons.boon_def(f.lost.id).name) if f != null else "votre bénédiction la moins avancée")
+		label = _replace_first(label, "{gained}", ("« %s »" % D6Boons.boon_def(f.gained.id).name) if f != null else "la plus avancée")
+	return label
 
 static func describe_boon(o: Dictionary) -> Dictionary:
 	var def: Dictionary = D6Boons.boon_def(o.id)
@@ -590,6 +659,36 @@ static func _apply_event(game: Dictionary, opt: Dictionary) -> bool:
 		"gold25":
 			run.gold += 25.0
 			D6State.emit(game, "gold", {"x": p.x, "y": p.y, "amount": 25.0})
+		"soulBoon":
+			# Le PERMANENT paie le TEMPORAIRE : des Âmes du profil contre une bénédiction épique.
+			game.meta.souls -= opt.souls
+			var fam = D6Boons.random_family(game)
+			var offer = D6Boons.roll_boon_offer(game, fam)[0]
+			offer.rarity = "epique"
+			D6Boons.add_boon(run, offer)
+			D6State.emit(game, "boonGain", {"id": offer.id, "rarity": offer.rarity})
+		"bloodSouls":
+			# … et l'inverse : des PV de ce run contre des Âmes qui resteront.
+			p.hp = maxf(1.0, p.hp - opt.hp)
+			game.meta.souls += opt.gain
+			game.telemetry.soulsEarned += opt.gain
+			D6State.emit(game, "souls", {"x": p.x, "y": p.y, "amount": opt.gain})
+		"reforge":
+			var f: Dictionary = forge_targets(game)
+			var lost: Dictionary = f.lost
+			run.boons = run.boons.filter(func(b): return not is_same(b, lost))
+			f.gained.level += opt.levels
+			D6State.emit(game, "boonGain", {"id": f.gained.id, "rarity": f.gained.rarity})
+		"pact":
+			D6Boons.add_boon(run, {"id": opt.pact, "rarity": "commun"})
+			D6State.emit(game, "boonGain", {"id": opt.pact, "rarity": "commun"})
+		"superToHp":
+			p.superCharge = 0.0
+			D6Combat.heal_player(game, p.maxHp * (opt.pct / 100.0), true)
+		"hpToSuper":
+			p.hp = maxf(1.0, p.hp - opt.hp)
+			p.superCharge = 1.0
+			D6State.emit(game, "superReady")
 	D6Stats.recompute_stats(game)
 	return false
 
@@ -676,6 +775,7 @@ static func respawn(game: Dictionary, floor_num = null) -> bool:
 		enter_floor(game, run.floor, null)
 		return true
 	run.boons = []
+	run.streak = 0.0
 	_revive(game)
 	var recap = run.get("deathRecap")
 	var boons_lost = 0.0

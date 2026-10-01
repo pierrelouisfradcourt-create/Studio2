@@ -1,7 +1,9 @@
 extends Node2D
-## Formes passagères : taillades, anneaux d'impact, ondes (Nova, Super, explosion), tourbillon,
-## bandes qui frappent, éclairs, pose de mort, et la traînée du dash. Portage de addEffect /
+## Formes passagères : anneaux d'impact, ondes (Nova, Super, explosion), bandes qui
+## frappent, éclairs, pose de mort, grande taillade dorée de l'Exécution. Portage de addEffect /
 ## drawEffects / drawSlash / drawBolt de GAMES/dungeon_666/src/render/fx.mjs.
+## La taillade d'un coup ordinaire et la traînée du dash ne sont PAS ici : le calque du héros
+## (jeu/monde/creatures/) les dessine, à la portée réelle du coup — une seule de chaque à l'écran.
 ##
 ## Une forme naît sur un événement (un petit dictionnaire) ; le dessin, lui, n'alloue rien.
 ## Cette vue est montée AU-DESSUS du Monde : les ondes de sol sont donc dessinées en trait, avec
@@ -12,9 +14,6 @@ const Couleurs = preload("res://jeu/theme/couleurs.gd")
 const PLAFOND := 80
 const SEGMENTS_ECLAIR := 6
 const ECLAIR_ECART := 14.0 # u : débattement d'un éclair
-const FANTOMES := 16
-const FANTOME_VIE := 0.18 # s
-const FANTOME_ALPHA := 0.32
 const REMPLI_CHOC := 0.16 # opacité du disque d'une onde de choc (0,35 sur le web, dessiné sous les créatures)
 const REMPLI_NOVA := 0.09
 const FIL_TAILLADE := 0.16 # part du rayon occupée par le fil net d'une taillade
@@ -23,25 +22,16 @@ const BORD_NOVA := Color("#fff1d6")
 const BORD_CHOC := Color("#ffd0a0")
 const BANDE := Color("#ffb08a")
 
-## Position de dessin du héros (posée par Effets à chaque image) : taillades et tourbillon le suivent.
+## Position de dessin du héros (posée par Effets à chaque image) : les taillades le suivent.
 var heros := Vector2.ZERO
 var rayon_heros := 14.0
 
 var _formes: Array[Dictionary] = []
 var _eclair := PackedVector2Array()
-var _fx := PackedFloat32Array()
-var _fy := PackedFloat32Array()
-var _fvie := PackedFloat32Array()
-var _fantome := 0 # prochaine case de l'anneau de fantômes
-var _fantomes_vivants := 0
 var _vide := true
 
 func _init() -> void:
 	_eclair.resize(SEGMENTS_ECLAIR + 1)
-	_fx.resize(FANTOMES)
-	_fy.resize(FANTOMES)
-	_fvie.resize(FANTOMES)
-	_fvie.fill(0.0)
 
 func nombre() -> int:
 	return _formes.size()
@@ -56,16 +46,8 @@ func ajouter(forme: Dictionary) -> void:
 func anneau(x: float, y: float, r0: float, r1: float, couleur: Color, epaisseur: float, vie: float) -> void:
 	ajouter({"type": "anneau", "x": x, "y": y, "r0": r0, "r1": r1, "couleur": couleur, "epaisseur": epaisseur, "vie": vie})
 
-## Laisse une image du héros derrière lui (traînée du dash).
-func fantome(p: Vector2) -> void:
-	_fx[_fantome] = p.x
-	_fy[_fantome] = p.y
-	_fvie[_fantome] = FANTOME_VIE
-	_fantome = (_fantome + 1) % FANTOMES
-
 func vider() -> void:
 	_formes.clear()
-	_fvie.fill(0.0)
 	queue_redraw()
 
 func avancer(dt: float) -> void:
@@ -75,18 +57,12 @@ func avancer(dt: float) -> void:
 		if _formes[i].vie <= 0.0:
 			_formes.remove_at(i)
 		i -= 1
-	_fantomes_vivants = 0
-	for k in FANTOMES:
-		if _fvie[k] > 0.0:
-			_fvie[k] -= dt
-			_fantomes_vivants += 1
-	var vide := _formes.is_empty() and _fantomes_vivants == 0
+	var vide := _formes.is_empty()
 	if not vide or not _vide:
 		queue_redraw()
 	_vide = vide
 
 func _draw() -> void:
-	_dessiner_fantomes()
 	for f in _formes:
 		var a: float = f.vie / f.max
 		var t := 1.0 - a
@@ -95,18 +71,9 @@ func _draw() -> void:
 			"anneau": draw_arc(Vector2(f.x, f.y), f.r0 + (f.r1 - f.r0) * t, 0.0, TAU, 40, Color(f.couleur, a), f.epaisseur * a + 0.5, true)
 			"choc": _onde(f, f.r * (0.6 + 0.4 * t), a, REMPLI_CHOC, f.get("bord", BORD_CHOC), 4.0)
 			"nova": _onde(f, f.r * t, a, REMPLI_NOVA, BORD_NOVA, 5.0)
-			"tourbillon": _tourbillon(f, t, a)
 			"bande": _bande(f, a)
 			"eclair": _dessiner_eclair(f, a)
 			"mort": _mort(f, t, a)
-
-func _dessiner_fantomes() -> void:
-	if _fantomes_vivants == 0:
-		return
-	var c: Color = Couleurs.PAL.heroCape
-	for k in FANTOMES:
-		if _fvie[k] > 0.0:
-			draw_circle(Vector2(_fx[k], _fy[k]), rayon_heros * 0.95, Color(c, _fvie[k] / FANTOME_VIE * FANTOME_ALPHA))
 
 ## Croissant : l'arc balaie d'un bord à l'autre (dans l'autre sens pour le 2e coup).
 func _taillade(f: Dictionary, t: float, a: float) -> void:
@@ -131,12 +98,6 @@ func _onde(f: Dictionary, r: float, a: float, rempli: float, bord: Color, epaiss
 	draw_circle(p, r, Color(f.couleur, a * rempli))
 	draw_arc(p, r, 0.0, TAU, 48, Color(f.couleur, a * 0.55), epaisseur * a + 3.0, true)
 	draw_arc(p, r, 0.0, TAU, 48, Color(bord, a), epaisseur * a * 0.5 + 1.0, true)
-
-func _tourbillon(f: Dictionary, t: float, a: float) -> void:
-	var c := Color(Couleurs.PAL.superBar, a * 0.8)
-	var a0: float = f.a0 + t * 3.0
-	draw_arc(heros, f.r * 0.85, a0, a0 + 2.2, 16, c, 6.0)
-	draw_arc(heros, f.r * 0.85, a0 + PI, a0 + PI + 2.2, 16, c, 6.0)
 
 ## Bande qui frappe (zone en ligne) : un éclat qui se referme sur son axe.
 func _bande(f: Dictionary, a: float) -> void:

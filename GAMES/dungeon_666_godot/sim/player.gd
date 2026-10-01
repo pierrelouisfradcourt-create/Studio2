@@ -197,6 +197,11 @@ static func _tick_timers(game: Dictionary, dt: float) -> void:
 	p.hurtFlash = maxf(0.0, p.hurtFlash - dt)
 	p.skillCd = maxf(0.0, p.skillCd - dt)
 	p.strikeWindow = maxf(0.0, p.strikeWindow - dt)
+	# Élan passager (proc « surge ») : il s'éteint avec son bonus.
+	if p.surge > 0.0:
+		p.surge = maxf(0.0, p.surge - dt)
+		if p.surge <= 0.0:
+			p.surgeMult = 0.0
 	if p.state != "attack":
 		p.comboTimer += dt
 	var max_c: float = max_dash_charges(game)
@@ -285,6 +290,7 @@ static func _start_attack(game: Dictionary) -> void:
 		"def": def,
 		"index": index,
 		"strike": strike,
+		"finisher": (not strike) and index == float(t.combo.size()) - 1.0, # dernier coup du combo (procs `when: 'finisher'`)
 		"phase": "startup",
 		"t": 0.0,
 		"dur": _phase_durations(def, p.stats.attackSpeedMult),
@@ -393,6 +399,7 @@ static func _sweep_hits(game: Dictionary, a: Dictionary) -> void:
 			"canCrit": true,
 			"shake": D6Js.nz(def.get("shake"), 0.0),
 			"stun": D6Js.nz(def.get("stun"), 0.0), # coups lourds (hache, maillet) : étourdissement des ennemis ordinaires
+			"finisher": a.finisher,
 		})
 	# Parade : un coup détruit les projectiles ennemis qu'il balaie.
 	var projectiles: Array = game.projectiles
@@ -439,31 +446,7 @@ static func _start_dash(game: Dictionary) -> void:
 	game.hitstop = 0.0
 	game.telemetry.dashes += 1.0
 	D6State.emit(game, "dash", {"x": p.x, "y": p.y, "dirX": dx, "dirY": dy, "charges": p.dashCharges})
-	var procs: Array = p.procs
-	var i := 0
-	while i < procs.size():
-		var pr: Dictionary = procs[i]
-		i += 1
-		if pr.get("on") == "dash" and pr.get("effect") == "nova":
-			_dash_nova(game, pr)
-
-static func _dash_nova(game: Dictionary, pr: Dictionary) -> void:
-	var p: Dictionary = game.player
-	var enemies: Array = game.enemies
-	var i := 0
-	while i < enemies.size():
-		var e: Dictionary = enemies[i]
-		i += 1
-		if e.dead or e.spawnT > 0.0:
-			continue
-		var rr: float = pr.radius + e.r
-		if D6Geo.dist2(p.x, p.y, e.x, e.y) < rr * rr:
-			D6Combat.damage_enemy(game, e, {"kind": "blast", "amount": pr.value, "dirX": 0.0, "dirY": 0.0, "canCrit": false})
-			if D6Js.truthy(pr.get("chill")):
-				e.chill = maxf(e.chill, pr.chill)
-				var cur: float = e.chillMult if D6Js.truthy(e.get("chillMult")) else 1.0
-				e.chillMult = minf(cur, 0.5)
-	D6State.emit(game, "dashNova", {"x": p.x, "y": p.y, "r": pr.radius})
+	D6Combat.fire_procs(game, "dash") # une charge de dash dépensée (déflagration, éclair… : combat)
 
 static func _update_dash(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player
@@ -609,6 +592,7 @@ static func _start_super(game: Dictionary) -> void:
 	p.stateTime = 0.0
 	game.telemetry.superUses += 1.0
 	D6State.emit(game, "super", {"x": p.x, "y": p.y, "r": s.get("radius"), "super": s.kind})
+	D6Combat.fire_procs(game, "super") # Super lancé (soin, embrasement… : combat)
 
 static func _update_super(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player

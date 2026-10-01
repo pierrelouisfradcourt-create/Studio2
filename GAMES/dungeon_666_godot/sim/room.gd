@@ -40,6 +40,7 @@ static func build_room(game: Dictionary, info: Dictionary, plan: Dictionary) -> 
 		"enteredAt": game.time,
 		"doors": [],
 		"interact": null, # objet à toucher : récompense, marchand, autel, coffre, fontaine
+		"hurt": false, # le héros a été blessé dans cette salle (procs « sans être touché »)
 		"theme": info.circle,
 	}
 	var rects: Array = []

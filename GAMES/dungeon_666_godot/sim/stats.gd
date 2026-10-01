@@ -106,6 +106,11 @@ static func _add_boons(game: Dictionary, st: Dictionary, procs: Array) -> void:
 		var v: float = raw / 100.0 if pct else raw
 		if D6Js.truthy(def.get("stat")):
 			_add_stat(st, def.stat, -v if D6Js.truthy(def.get("negative")) else v)
+		# Contreparties fixes d'un pacte (valeurs brutes, jamais mises à l'échelle).
+		var extra = def.get("stats")
+		if extra is Dictionary:
+			for k in extra:
+				_add_stat(st, k, extra[k])
 		if D6Js.truthy(def.get("superDurationBonus")):
 			st.superDurationBonus += def.superDurationBonus
 		if D6Js.truthy(def.get("extraGoldOnKill")):
@@ -114,13 +119,12 @@ static func _add_boons(game: Dictionary, st: Dictionary, procs: Array) -> void:
 			var pr := {"chance": 1.0}
 			pr.merge(def.proc, true)
 			pr.boon = def.id
-			if pr.effect == "gold":
+			if def.proc.has("valueFixed"):
+				# La valeur de la bénédiction est une CHANCE ; l'effet, lui, a un montant fixe.
 				pr.chance = minf(1.0, v)
 				pr.value = def.proc.get("valueFixed")
-			elif pr.effect == "chill" or pr.effect == "vuln" or pr.effect == "execute" or pr.effect == "fullHpBonus":
-				pr.value = v if pct else raw
 			else:
-				pr.value = raw
+				pr.value = v if pct else raw # pourcentage → fraction ; sinon la valeur telle quelle
 			procs.append(pr)
 
 ## Pose les stats sur le héros et ramène ses PV et ses charges dans leurs nouvelles bornes.

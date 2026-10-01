@@ -4,7 +4,7 @@ extends VBoxContainer
 
 signal choisi(axe: String, choix: String)
 
-const Style = preload("res://jeu/ville/style_ville.gd")
+const Style = preload("res://jeu/theme/theme.gd")
 const REFERENCE := "%s  ·  référence"
 
 @onready var _titre: Label = $Tete/Titre
@@ -38,7 +38,7 @@ func _option(id: String, option: Dictionary, reference: bool) -> Control:
 	bloc.add_child(b)
 	var texte := Label.new()
 	texte.text = option.get("text", "")
-	texte.theme_type_variation = &"Note"
+	texte.theme_type_variation = &"TexteDoux"
 	texte.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	bloc.add_child(texte)
 	_boutons[id] = b

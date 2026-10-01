@@ -85,6 +85,8 @@ export function createPlayer(tuning, x, y) {
     superCharge: tuning.super.startCharge ?? 0,
     superT: 0,
     superTick: 0,
+    surge: 0, // élan passager (proc « surge ») : secondes restantes…
+    surgeMult: 0, // … et dégâts en plus tant qu'il dure
     buffer: { action: null, t: 0, aimX: 0, aimY: 0 },
     dodgedIds: [], // attaques déjà esquivées pendant le dash en cours
     lastTargetId: 0, // cible « collante » de la visée assistée

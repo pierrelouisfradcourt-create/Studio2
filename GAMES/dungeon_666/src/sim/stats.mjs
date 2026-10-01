@@ -51,17 +51,18 @@ export function recomputeStats(game) {
     const raw = boonValue(def, b.rarity) * lv;
     const v = def.pct ? raw / 100 : raw;
     if (def.stat) addStat(st, def.stat, def.negative ? -v : v);
+    // Contreparties fixes d'un pacte (valeurs brutes, jamais mises à l'échelle).
+    if (def.stats) for (const [k, x] of Object.entries(def.stats)) addStat(st, k, x);
     if (def.superDurationBonus) st.superDurationBonus += def.superDurationBonus;
     if (def.extraGoldOnKill) st.extraGoldOnKill += def.extraGoldOnKill;
     if (def.proc) {
       const pr = { chance: 1, ...def.proc, boon: def.id };
-      if (pr.effect === 'gold') {
+      if (def.proc.valueFixed !== undefined) {
+        // La valeur de la bénédiction est une CHANCE ; l'effet, lui, a un montant fixe.
         pr.chance = Math.min(1, v);
         pr.value = def.proc.valueFixed;
-      } else if (pr.effect === 'chill' || pr.effect === 'vuln' || pr.effect === 'execute' || pr.effect === 'fullHpBonus') {
-        pr.value = def.pct ? v : raw;
       } else {
-        pr.value = raw;
+        pr.value = def.pct ? v : raw; // pourcentage → fraction ; sinon la valeur telle quelle
       }
       procs.push(pr);
     }

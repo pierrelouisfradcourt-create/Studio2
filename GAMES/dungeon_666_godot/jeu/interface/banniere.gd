@@ -7,10 +7,12 @@ const Couleurs = preload("res://jeu/theme/couleurs.gd")
 const ENTREE := 0.15 # part de la durée passée à apparaître
 const SORTIE := 0.4 # s de fondu final
 const COUPE := 0.3 # s restantes quand le combat démarre (bannière d'entrée d'étage)
-const OPACITE := 0.9
+const OPACITE := 0.95
+const ELAN := 0.12 # la bannière arrive un peu plus grande, puis se pose
 
 @onready var titre: Label = $Titre
 @onready var sous: Label = $Sous
+@onready var filet: Control = $Filet
 
 var _partie
 var _vie := 0.0
@@ -27,6 +29,7 @@ func brancher(partie) -> void:
 func afficher(texte: String, detail: String, couleur: Color, duree: float = 2.2, jusqu_au_combat: bool = false) -> void:
 	titre.text = texte
 	titre.add_theme_color_override("font_color", couleur)
+	filet.couleur = couleur
 	sous.text = detail
 	sous.visible = detail != ""
 	_vie = duree
@@ -69,6 +72,8 @@ func _process(delta: float) -> void:
 	var t := 1.0 - _vie / _duree
 	var a := t / ENTREE if t < ENTREE else (_vie / SORTIE if _vie < SORTIE else 1.0)
 	modulate.a = clampf(a, 0.0, 1.0) * OPACITE
+	pivot_offset = size / 2.0
+	scale = Vector2.ONE * (1.0 + ELAN * (1.0 - clampf(t / ENTREE, 0.0, 1.0)))
 	visible = _vie > 0.0 and game.mode != "choice"
 
 func _combat_engage(game: Dictionary) -> bool:

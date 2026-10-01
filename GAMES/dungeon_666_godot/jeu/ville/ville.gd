@@ -12,13 +12,14 @@ extends CanvasLayer
 ## Clavier / manette : flèches ou croix = focus, Entrée / A = appuyer, Page préc. / suiv. ou
 ## gâchettes hautes = onglet voisin, stick droit = défiler, Échap / B = retour au titre.
 
-const Style = preload("res://jeu/ville/style_ville.gd")
+const Style = preload("res://jeu/theme/theme.gd")
 ## Les onglets, dans l'ordre des boutons (Onglets) et des pages (Pages) de ville.tscn.
 const ONGLETS := ["portail", "classe", "armurerie", "coffre", "grimoire", "sanctuaire", "labo"]
 ## En portrait, l'écran est mis en page comme s'il faisait cette largeur (sinon tout est minuscule).
 const LARGEUR_PORTRAIT := 540.0
 const DEFILEMENT_MANETTE := 900.0 # px de référence par seconde, stick droit à fond
 const ZONE_MORTE := 0.25
+const APPARITION_S := 0.16 # la page d'un onglet monte en opacité ; elle répond dès le début
 
 ## L'onglet affiché (un identifiant de ONGLETS).
 var onglet := "portail"
@@ -27,6 +28,7 @@ var _app: Node
 var _partie: Node
 var _refus: Dictionary = {} # clé de carte -> raison du dernier refus (effacé à l'opération suivante)
 var _sale := false
+var _fondu: Tween
 
 @onready var _racine: Control = $Racine
 @onready var _fond: ColorRect = $Racine/Fond
@@ -76,6 +78,18 @@ func ouvrir_onglet(id: String) -> void:
 		_pages.get_child(i).visible = ONGLETS[i] == id
 	_corps.scroll_vertical = 0
 	_dessiner()
+	_faire_apparaitre(page(id))
+
+## Apparition douce de la page montrée (opacité seulement : rien n'est retardé ni déplacé).
+func _faire_apparaitre(page_n: Control) -> void:
+	if _fondu != null:
+		_fondu.kill()
+	if not visible:
+		page_n.modulate.a = 1.0
+		return
+	page_n.modulate.a = 0.0
+	_fondu = create_tween()
+	_fondu.tween_property(page_n, "modulate:a", 1.0, APPARITION_S)
 
 ## La page (scène d'onglet) d'identifiant `id`.
 func page(id: String) -> Control:
@@ -191,24 +205,15 @@ func _process(delta: float) -> void:
 	if absf(axe) > ZONE_MORTE:
 		_corps.scroll_vertical += int(axe * DEFILEMENT_MANETTE * delta)
 
-## Paysage : la mise en page occupe l'écran tel quel. Portrait : la vue de référence (960 de
-## large) rendrait tout minuscule ; on met en page sur LARGEUR_PORTRAIT et on agrandit d'autant.
+## Paysage : la mise en page occupe l'écran tel quel, agrandie seulement si la fenêtre est plus
+## petite que la référence (téléphone : les boutons gardent 44 px). Portrait : la vue de référence
+## (960 de large) rendrait tout minuscule ; on met en page sur LARGEUR_PORTRAIT et on agrandit d'autant.
 func _adapter() -> void:
 	var vue: Vector2 = _racine.get_viewport_rect().size
-	var echelle := 1.0
+	var echelle: float = Style.echelle(vue, get_window())
 	if vue.x < vue.y:
-		echelle = maxf(1.0, vue.x / LARGEUR_PORTRAIT)
+		echelle = maxf(echelle, vue.x / LARGEUR_PORTRAIT)
 	_racine.scale = Vector2(echelle, echelle)
 	_racine.position = Vector2.ZERO
 	_racine.size = vue / echelle
-	_nettete(echelle)
-
-## Texte net malgré l'agrandissement du portrait : tant que la Ville est affichée et agrandie,
-## les polices de la fenêtre sont tramées à l'échelle réelle. Rendu à l'automatique sinon.
-func _nettete(echelle: float) -> void:
-	var fenetre := get_viewport()
-	var voulu := 0.0 # 0 = automatique
-	if visible and echelle > 1.0:
-		voulu = fenetre.get_stretch_transform().get_scale().x * echelle
-	if not is_equal_approx(fenetre.oversampling_override, voulu):
-		fenetre.oversampling_override = voulu # (renvoie size_changed : d'où la comparaison)
+	Style.nettete(get_viewport(), echelle)

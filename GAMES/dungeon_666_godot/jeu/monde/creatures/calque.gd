@@ -15,6 +15,11 @@ var p: Pinceau
 func _init() -> void:
 	p = Pinceau.new(self)
 
+## Appelé à chaque image par Entites. Par défaut le calque se redessine en entier ; celui des
+## ennemis (ennemis.gd) garde ses dessins et ne fait que les déplacer.
+func actualiser(_delta: float) -> void:
+	queue_redraw()
+
 ## L'état de la simulation, ou null hors partie.
 func jeu():
 	if entites == null or entites.partie == null:

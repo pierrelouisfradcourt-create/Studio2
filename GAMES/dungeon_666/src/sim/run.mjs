@@ -15,7 +15,7 @@ import { rand, pick, weightedPick } from '../core/rng.mjs';
 import { emit } from './state.mjs';
 import { floorInfo, checkpointAfterBoss } from './floors.mjs';
 import { buildRoom, playerStart, launchNextWave, spawnBoss, makeDoors, randomGold, rewardSpot } from './room.mjs';
-import { spawnPickup, healPlayer, forceHitstop } from './combat.mjs';
+import { spawnPickup, healPlayer, forceHitstop, fireProcs } from './combat.mjs';
 import { FAMILIES, rollBoonOffer, addBoon, boonDef, boonText, randomFamily, RARITIES } from './boons.mjs';
 import { generateItem, rollRarity, salvageValue, affixText, baseText, LEGENDARY_POWERS, ITEM_RARITIES, randomShopItem, priceOf, SLOT_NAMES } from './loot.mjs';
 import { recomputeStats } from './stats.mjs';
@@ -71,6 +71,47 @@ export const EVENTS = [
       { label: 'Prier — recevoir 25 or', effect: 'gold25' },
     ],
   },
+  // Contenu 2026-10-01 : quatre dilemmes. Les libellés sont CHIFFRÉS par les champs de l'option
+  // ({souls}, {hp}, {gain}, {pct}, {need}, {levels} : optionLabel) — le nombre affiché est celui
+  // que la règle applique. Une option impossible est grisée (optionBlocked), jamais cachée.
+  {
+    // PERMANENT contre TEMPORAIRE : les Âmes du profil s'échangent contre le run, et inversement.
+    id: 'pacte_ames', title: 'Registre des âmes',
+    text: 'Un greffier sans visage tient le compte des morts. Tout s\'y achète, tout s\'y vend.',
+    options: [
+      { label: 'Céder {souls} Âmes (permanent) — recevoir une bénédiction épique', effect: 'soulBoon', souls: 40 },
+      { label: 'Vendre votre sang — perdre {hp} PV, gagner {gain} Âmes (permanent)', effect: 'bloodSouls', hp: 25, gain: 20 },
+      { label: 'Refermer le registre', effect: 'none' },
+    ],
+  },
+  {
+    // TEMPORAIRE : une bénédiction sacrifiée, une autre approfondie (largeur contre profondeur).
+    id: 'forge', title: 'Forge des regrets',
+    text: 'Une enclume rougeoie sans feu. Elle ne forge qu\'avec ce qu\'on lui abandonne.',
+    options: [
+      { label: 'Fondre {lost} — {gained} gagne {levels} niveaux', effect: 'reforge', levels: 2 },
+      { label: 'Garder tous vos dons', effect: 'none' },
+    ],
+  },
+  {
+    // TEMPORAIRE : un pacte (boons.mjs PACTS) — des PV max contre des dégâts, jusqu'à la mort.
+    id: 'miroir', title: 'Miroir d\'orgueil',
+    text: 'Votre reflet vous toise. Il est plus grand, plus fort — et il attend.',
+    options: [
+      { label: 'Briser le miroir — −{hp} PV max et +{pct} % de dégâts, jusqu\'à votre mort', effect: 'pact', pact: 'reflet_brise', hp: 20, pct: 25 },
+      { label: 'Baisser les yeux', effect: 'none' },
+    ],
+  },
+  {
+    // Ressources du combat : la jauge de Super contre des PV, dans un sens ou dans l'autre.
+    id: 'clepsydre', title: 'Clepsydre de Charon',
+    text: 'Le temps du Passeur s\'écoule goutte à goutte. On peut le boire, ou le briser.',
+    options: [
+      { label: 'Boire le temps — vider votre jauge de Super ({need} % au moins), rendre {pct} % des PV', effect: 'superToHp', need: 50, pct: 35 },
+      { label: 'Briser la clepsydre — perdre {hp} PV, jauge de Super pleine', effect: 'hpToSuper', hp: 15 },
+      { label: 'Passer votre chemin', effect: 'none' },
+    ],
+  },
 ];
 
 export function createRun(startFloor) {
@@ -80,6 +121,7 @@ export function createRun(startFloor) {
     boons: [],
     items: { arme: null, armure: null, talisman: null }, // = équipement du PROFIL (game.mjs)
     roomsThisRun: 0,
+    streak: 0, // salles nettoyées d'affilée sans blessure (procs « streakBonus ») : un coup reçu la remet à zéro
     startedAt: 0,
     deathRecap: null, // ce que la dernière mort a pris (bénédictions, or) : écran de mort
   };
@@ -159,6 +201,10 @@ export function onRoomClear(game) {
   game.telemetry.roomsCleared++;
   game.telemetry.roomTimes.push({ floor: game.run.floor, kind: room.kind, time: game.time - room.enteredAt });
   emit(game, 'roomClear', { floor: game.run.floor, kind: room.kind, boss: room.kind === 'boss' });
+  // Salle nettoyée sans une blessure : la série s'allonge, les procs « roomClear » se déclenchent.
+  const untouched = !room.hurt;
+  if (untouched) game.run.streak = (game.run.streak ?? 0) + 1;
+  fireProcs(game, 'roomClear', null, { untouched });
   // Salle nettoyée : plus aucun coup ennemi ne part (souffle d'un élite ardent, flèche en vol).
   for (const h of game.hazards) {
     if (h.done || !h.hitsPlayer || h.burning) continue; // les flaques s'éteignent d'elles-mêmes
@@ -282,10 +328,7 @@ export function openInteract(game) {
     choice = { kind: 'shop', gold: run.gold, offers: it.offers.map((o) => ({ ...o, item: o.item ? describeItem(o.item) : null, equipped: o.item ? describeItem(run.items[o.item.slot]) : null })) };
   } else if (it.kind === 'event') {
     const ev = EVENTS.find((e) => e.id === it.event);
-    const p = game.player;
-    const gadgetFull = p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
-    const unusable = (o) => !!(o.cost && run.gold < o.cost) || (o.effect === 'gadget1' && gadgetFull);
-    choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: o.label, disabled: unusable(o) })) };
+    choice = { kind: 'event', title: ev.title, text: ev.text, options: ev.options.map((o) => ({ label: optionLabel(game, o), disabled: optionBlocked(game, o) })) };
   } else if (CALM_KINDS.includes(it.kind)) {
     choice = describeCalm(game, it); // chambre forte, fontaine de repos (calm_rooms.mjs)
   }
@@ -455,6 +498,63 @@ export function applyCommand(game, cmd) {
   return false;
 }
 
+/**
+ * Forge des regrets : la bénédiction fondue (la moins avancée) et celle qui en profite (la plus
+ * avancée des autres), parmi celles qui ont des niveaux ; la première à égalité. Null s'il n'y
+ * en a pas deux.
+ */
+export function forgeTargets(game) {
+  const pool = game.run.boons.filter((b) => {
+    const d = boonDef(b.id);
+    return !!d && !d.noScale;
+  });
+  if (pool.length < 2) return null;
+  let lost = pool[0];
+  for (const b of pool) if (b.level < lost.level) lost = b;
+  let gained = null;
+  for (const b of pool) if (b !== lost && (!gained || b.level > gained.level)) gained = b;
+  return { lost, gained };
+}
+
+/** Une option d'autel que le héros ne peut pas payer (ou qui ne lui donnerait rien) est grisée. */
+function optionBlocked(game, o) {
+  const run = game.run;
+  const p = game.player;
+  if (o.cost && run.gold < o.cost) return true;
+  if (o.souls && game.meta.souls < o.souls) return true;
+  switch (o.effect) {
+    case 'gadget1':
+      return p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
+    case 'superToHp':
+      return p.superCharge < o.need / 100;
+    case 'hpToSuper':
+      return p.superCharge >= 1;
+    case 'reforge':
+      return !forgeTargets(game);
+    case 'pact':
+      return run.boons.some((b) => b.id === o.pact);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Libellé d'une option d'autel : chaque {champ} est remplacé par le nombre du même nom dans
+ * l'option ; {lost} et {gained} par les bénédictions que la Forge fondrait et approfondirait.
+ */
+function optionLabel(game, o) {
+  let label = o.label;
+  for (const [k, v] of Object.entries(o)) {
+    if (typeof v === 'number') label = label.replace(`{${k}}`, String(v));
+  }
+  if (o.effect === 'reforge') {
+    const f = forgeTargets(game);
+    label = label.replace('{lost}', f ? `« ${boonDef(f.lost.id).name} »` : 'votre bénédiction la moins avancée');
+    label = label.replace('{gained}', f ? `« ${boonDef(f.gained.id).name} »` : 'la plus avancée');
+  }
+  return label;
+}
+
 function openShopRefresh(game) {
   game.mode = 'play';
   game.room.interact.used = false;
@@ -498,6 +598,43 @@ function applyEvent(game, opt) {
     case 'gold25':
       run.gold += 25;
       emit(game, 'gold', { x: p.x, y: p.y, amount: 25 });
+      break;
+    case 'soulBoon': {
+      // Le PERMANENT paie le TEMPORAIRE : des Âmes du profil contre une bénédiction épique.
+      game.meta.souls -= opt.souls;
+      const fam = randomFamily(game);
+      const offer = rollBoonOffer(game, fam)[0];
+      offer.rarity = 'epique';
+      addBoon(run, offer);
+      emit(game, 'boonGain', { id: offer.id, rarity: offer.rarity });
+      break;
+    }
+    case 'bloodSouls':
+      // … et l'inverse : des PV de ce run contre des Âmes qui resteront.
+      p.hp = Math.max(1, p.hp - opt.hp);
+      game.meta.souls += opt.gain;
+      game.telemetry.soulsEarned += opt.gain;
+      emit(game, 'souls', { x: p.x, y: p.y, amount: opt.gain });
+      break;
+    case 'reforge': {
+      const f = forgeTargets(game);
+      run.boons = run.boons.filter((b) => b !== f.lost);
+      f.gained.level += opt.levels;
+      emit(game, 'boonGain', { id: f.gained.id, rarity: f.gained.rarity });
+      break;
+    }
+    case 'pact':
+      addBoon(run, { id: opt.pact, rarity: 'commun' });
+      emit(game, 'boonGain', { id: opt.pact, rarity: 'commun' });
+      break;
+    case 'superToHp':
+      p.superCharge = 0;
+      healPlayer(game, p.maxHp * (opt.pct / 100), true);
+      break;
+    case 'hpToSuper':
+      p.hp = Math.max(1, p.hp - opt.hp);
+      p.superCharge = 1;
+      emit(game, 'superReady');
       break;
     default:
       break;
@@ -592,6 +729,7 @@ export function respawn(game, floor) {
     return true;
   }
   run.boons = [];
+  run.streak = 0;
   revive(game);
   emit(game, 'respawn', { floor: target, boonsLost: run.deathRecap?.boonsLost ?? 0 });
   enterFloor(game, target, { reward: 'boon', family: randomFamily(game) });

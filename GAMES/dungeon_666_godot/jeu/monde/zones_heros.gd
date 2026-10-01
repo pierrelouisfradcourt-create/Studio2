@@ -57,8 +57,8 @@ func _brasier(z: Dictionary) -> void:
 		var d: float = z.r * (0.45 + 0.45 * float((i * 7) % 5) / 5.0)
 		var h := 7.0 + 5.0 * sin(t * 9.0 + float(i) * 1.7)
 		var pied := p + Vector2.from_angle(a) * d
-		var langue := PackedVector2Array([pied + Vector2(-4, 0), pied + Vector2(-1.5, -h * 0.7), pied + Vector2(0, -h * 1.15), pied + Vector2(1.5, -h * 0.7), pied + Vector2(4, 0)])
-		draw_colored_polygon(langue, Trace.voile(PAL.lance, 0.65 * fondu))
+		var feu := Trace.voile(PAL.lance, 0.7 * fondu)
+		Trace.triangle(self, pied + Vector2(-4, 0), pied + Vector2(4, 0), pied + Vector2(0, -h * 1.25), feu, feu, Trace.voile(Color.WHITE, 0.15 * fondu))
 	_cible(p, z.r, PAL.lance, 0.6 * fondu)
 
 func _bombe(z: Dictionary) -> void:
@@ -85,8 +85,8 @@ func _piege(z: Dictionary) -> void:
 	for i in 8:
 		var a := float(i) / 8.0 * TAU
 		var pied := p + Vector2.from_angle(a) * r
-		var dent := PackedVector2Array([pied + Vector2.from_angle(a + 1.3) * 4.0, pied - Vector2.from_angle(a) * 8.0, pied + Vector2.from_angle(a - 1.3) * 4.0])
-		draw_colored_polygon(dent, Trace.voile(PAL.lance, alpha))
+		var acier := Trace.voile(PAL.lance, alpha)
+		Trace.triangle(self, pied + Vector2.from_angle(a + 1.3) * 4.0, pied - Vector2.from_angle(a) * 8.0, pied + Vector2.from_angle(a - 1.3) * 4.0, acier, acier, acier)
 	if arme:
 		_cible(p, z.r, PAL.heroCape, 0.35 + 0.15 * sin(temps() * 5.0))
 
@@ -95,7 +95,7 @@ func _totem(z: Dictionary) -> void:
 	var p := Vector2(z.x, z.y)
 	draw_circle(p, z.r, Trace.voile(GIVRE, 0.07 * fondu), true, -1.0, true)
 	_cible(p, z.r, GIVRE, 0.4 * fondu)
-	draw_colored_polygon(Trace.ellipse(p + Vector2(0, 5.5), 10.5, 5.0), Trace.voile(Color.BLACK, 0.45 * fondu))
+	Trace.halo_ovale(self, p + Vector2(0, 5.5), 16.0, 8.0, Color.BLACK, 0.75 * fondu)
 	Trace.halo(self, p + Vector2(0, -18.0), 34.0, PAL.heroGlow, 0.9 * fondu)
 	var cristal := PackedVector2Array([p + Vector2(0, -40), p + Vector2(9, -18), p + Vector2(6, 4), p + Vector2(-6, 4), p + Vector2(-9, -18)])
 	Trace.forme(self, cristal, Trace.voile(GIVRE, fondu), Trace.voile(PAL.heroCape, fondu), 2.0)

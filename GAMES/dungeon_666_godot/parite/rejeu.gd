@@ -7,6 +7,7 @@ extends RefCounted
 ##   [1, commande, acceptée]                une commande de menu tentée (Godot doit répondre pareil)
 ##   [2, empreinte]                         un point de contrôle
 ## Égalité stricte sur le discret, 1e-6 sur les nombres (D6Comparer).
+## options.build : départ garni posé APRÈS create_game, comme tools/traces.mjs (applyBuild).
 
 const Q := 1024.0
 const FLAGS := ["attack", "attackPressed", "dashPressed", "skillPressed", "gadgetPressed", "superPressed"]
@@ -62,6 +63,23 @@ static func _drain(game: Dictionary, events: Dictionary) -> void:
 		events[ev.type] = events.get(ev.type, 0) + 1
 	game.events.clear()
 
+## Départ garni : {boons: [identifiants], rarity, power: pouvoir légendaire, souls: Âmes}. Les
+## bénédictions passent par add_boon, le pouvoir est porté en talisman, puis les stats sont
+## recalculées — exactement comme applyBuild de tools/traces.mjs.
+static func _apply_build(game: Dictionary, build: Dictionary) -> void:
+	var boons = build.get("boons")
+	if boons is Array:
+		for id in boons:
+			D6Boons.add_boon(game.run, {"id": id, "rarity": D6Js.nz(build.get("rarity"), "commun")})
+	if D6Js.truthy(build.get("power")):
+		game.run.items.talisman = {
+			"id": 0.0, "slot": "talisman", "rarity": "legendaire", "name": "Relique de parité", "level": 1.0,
+			"affixes": [], "power": build.power, "base": {}, "score": 0.0,
+		}
+	if D6Js.truthy(build.get("souls")):
+		game.meta.souls = build.souls
+	D6Stats.recompute_stats(game)
+
 ## Rejoue une trace. Rend {name, ok, checks, steps, message} ; `message` décrit le 1er écart.
 static func replay(trace: Dictionary) -> Dictionary:
 	var res := {"name": trace.name, "ok": true, "checks": 0, "steps": 0, "message": ""}
@@ -70,6 +88,8 @@ static func replay(trace: Dictionary) -> Dictionary:
 		res.ok = false
 		res.message = "create_game n'a pas rendu de partie"
 		return res
+	if trace.options.get("build") is Dictionary:
+		_apply_build(game, trace.options.build)
 	var events := {}
 	for step in trace.steps:
 		res.steps += 1

@@ -122,7 +122,8 @@ export const DEFAULT_TUNING = {
     mods: {
       // Les télégraphes ne sont JAMAIS raccourcis (équité) : « rapide » accélère le déplacement.
       rapide: { speedMult: 1.45, windupMult: 1 },
-      blinde: { damageTakenMult: 0.8, knockbackMult: 0.25 }, // le recul ×0,25 fait son identité, pas un sac à PV
+      // Jamais sur le Porte-pavois : deux défenses empilées en feraient un sac à PV.
+      blinde: { damageTakenMult: 0.8, knockbackMult: 0.25, excludeKinds: ['pavois'] }, // le recul ×0,25 fait son identité, pas un sac à PV
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
       // Champions V2 (comportements : foe_elites.mjs). minIndex : index minimal dans la 1re
       // section (ensuite tous) ; excludeKinds : archétypes qui ne le reçoivent jamais.
@@ -131,13 +132,14 @@ export const DEFAULT_TUNING = {
       vampirique: { minIndex: 6, leech: 2.5, flash: 0.6, excludeKinds: ['necromancer'] },
       // Bouclier : bulle d'immunité périodique, annoncée par un anneau doré (warn) — contre-jeu :
       // changer de cible ou se replacer pendant la bulle, frapper entre deux.
-      bouclier: { minIndex: 6, firstDelay: 2, every: 5, warn: 0.6, duration: 1.8 },
+      // Jamais sur le Porte-pavois (deux immunités) ni sur le Traqueur (il disparaît déjà).
+      bouclier: { minIndex: 6, firstDelay: 2, every: 5, warn: 0.6, duration: 1.8, excludeKinds: ['pavois', 'stalker'] },
       // Invocateur : canalise (alerte violette inoffensive) puis ouvre des cercles d'invocation ;
       // plafond d'invocations vivantes ; le tuer pendant la canalisation l'annule.
       invocateur: {
         minIndex: 10, firstDelay: 1.5, every: 7, retry: 0.5, channel: 1.2, channelRadius: 54,
         count: 2, maxMinions: 3, kind: 'imp', summonMinR: 40, summonMaxR: 120, summonMinPlayerDist: 150,
-        excludeKinds: ['necromancer'],
+        excludeKinds: ['necromancer', 'stalker'], // un Traqueur qui canalise en disparaissant ne se lit pas
       },
     },
   },
@@ -253,17 +255,19 @@ export const DEFAULT_TUNING = {
   // bestiaire est pondéré par COÛT (costBias > 0 : lourds ; < 0 : nuées) et `featured`
   // archétypes tirés par section dans tout le bestiaire présent sont multipliés par featuredMult.
   // layouts : dispositions permises et poids ; doors : multiplicateurs des poids de portes.
+  // Dispositions du 2026-10-01 : colonnade (Luxure, Hérésie), goulet (Gourmandise, Violence),
+  // îlots (Avarice, Fraude), chicane (Colère, Violence, Fraude) ; toutes en Trahison et dans l'Abîme.
   circles: [
     { id: 'limbes', costBias: 0, featured: 0, featuredMult: 1, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1 }, doors: {} },
-    { id: 'luxure', costBias: -0.5, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 2, pillars: 1, center: 1, lanes: 1, bastions: 0.5, scatter: 2, ring: 2 }, doors: { boon: 1.2 } },
-    { id: 'gourmandise', costBias: -0.3, featured: 1, featuredMult: 2, budgetMult: 1.05, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 2, lanes: 1, bastions: 1, scatter: 1, cross: 2 }, doors: { heal: 1.5 } },
-    { id: 'avarice', costBias: 0, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 2, scatter: 1, alcoves: 2 }, doors: { gold: 1.6, treasure: 3 } },
-    { id: 'colere', costBias: 0.6, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 2, pillars: 1, center: 1, lanes: 2, bastions: 1, scatter: 1, cross: 1, ring: 1 }, doors: { elite: 1.3 } },
-    { id: 'heresie', costBias: 0.2, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 1, pillars: 2, center: 1, lanes: 1, bastions: 1, scatter: 1, ring: 1, alcoves: 2 }, doors: { loot: 1.2 } },
-    { id: 'violence', costBias: 0.8, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 2, ring: 1 }, doors: { elite: 1.5 } },
-    { id: 'fraude', costBias: 0, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 2, ring: 2, alcoves: 2 }, doors: { loot: 1.3, treasure: 2 } },
-    { id: 'trahison', costBias: 0.4, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1 }, doors: { elite: 1.6 } },
-    { id: 'abime', costBias: 0.3, featured: 3, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1 }, doors: {} },
+    { id: 'luxure', costBias: -0.5, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 2, pillars: 1, center: 1, lanes: 1, bastions: 0.5, scatter: 2, ring: 2, colonnade: 1 }, doors: { boon: 1.2 } },
+    { id: 'gourmandise', costBias: -0.3, featured: 1, featuredMult: 2, budgetMult: 1.05, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 2, lanes: 1, bastions: 1, scatter: 1, cross: 2, goulet: 2 }, doors: { heal: 1.5 } },
+    { id: 'avarice', costBias: 0, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 2, scatter: 1, alcoves: 2, ilots: 1 }, doors: { gold: 1.6, treasure: 3 } },
+    { id: 'colere', costBias: 0.6, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 2, pillars: 1, center: 1, lanes: 2, bastions: 1, scatter: 1, cross: 1, ring: 1, chicane: 1 }, doors: { elite: 1.3 } },
+    { id: 'heresie', costBias: 0.2, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 1, pillars: 2, center: 1, lanes: 1, bastions: 1, scatter: 1, ring: 1, alcoves: 2, colonnade: 2 }, doors: { loot: 1.2 } },
+    { id: 'violence', costBias: 0.8, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 2, ring: 1, goulet: 1, chicane: 1 }, doors: { elite: 1.5 } },
+    { id: 'fraude', costBias: 0, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 2, ring: 2, alcoves: 2, chicane: 2, ilots: 1 }, doors: { loot: 1.3, treasure: 2 } },
+    { id: 'trahison', costBias: 0.4, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1, colonnade: 1, chicane: 1, goulet: 1, ilots: 1 }, doors: { elite: 1.6 } },
+    { id: 'abime', costBias: 0.3, featured: 3, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1, colonnade: 1, chicane: 1, goulet: 1, ilots: 1 }, doors: {} },
   ],
   // Rotation des Gardiens sur les 37 sections (le 1er de la liste garde la section 1).
   guardians: { rotation: GUARDIAN_ROTATION },

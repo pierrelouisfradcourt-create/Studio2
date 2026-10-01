@@ -40,6 +40,11 @@ export const PAL = {
   brute: '#9a3030',
   charger: '#c8732e',
   exploder: '#ff9c2a',
+  pavois: '#8a4a2a', // rouille : un porteur lourd
+  pavoisShield: '#e0b24a', // bronze : le pavois levé (ce qui arrête les coups)
+  stalker: '#5a1f4a', // prune sombre : il se fond dans le décor
+  banner: '#b5872f', // ocre : un porteur, pas un combattant
+  bannerFlag: '#e0283c', // étendard cramoisi
   boss: '#6a1428',
   bossTrim: '#ffcf5a',
 

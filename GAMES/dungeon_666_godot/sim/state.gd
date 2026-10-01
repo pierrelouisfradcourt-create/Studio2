@@ -87,6 +87,8 @@ static func create_player(tuning: Dictionary, x, y) -> Dictionary:
 		"superCharge": D6Js.nz(tuning["super"].get("startCharge"), 0.0),
 		"superT": 0.0,
 		"superTick": 0.0,
+		"surge": 0.0, # élan passager (proc « surge ») : secondes restantes…
+		"surgeMult": 0.0, # … et dégâts en plus tant qu'il dure
 		"buffer": {"action": null, "t": 0.0, "aimX": 0.0, "aimY": 0.0},
 		"dodgedIds": [], # attaques déjà esquivées pendant le dash en cours
 		"lastTargetId": 0.0, # cible « collante » de la visée assistée

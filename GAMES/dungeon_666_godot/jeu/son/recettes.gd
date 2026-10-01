@@ -272,6 +272,16 @@ static func _cris_sbires(t: Dictionary) -> void:
 		ton("triangle", 330.0, 220.0, adsr(0.08, 0.15, 0.6, 0.25, 0.3), 0.28, {"glide": 0.6}),
 		ton("sine", 165.0, 110.0, adsr(0.08, 0.15, 0.6, 0.25, 0.3), 0.22, {"glide": 0.6}),
 	]
+	# Porte-pavois : le coup de pavois part — choc sourd du bois ferré + tintement de bronze.
+	t["cri_pavois"] = [
+		ton("square", 140.0, 85.0, perc(0.004, 0.16), 0.4, {"filter": {"type": "lowpass", "freq": 600.0}}),
+		souffle("bandpass", 2400.0, FIXE, 4.0, perc(0.002, 0.07), 0.35),
+	]
+	# Traqueur : il resurgit dans le dos — souffle qui monte, sifflement de lame (aigu, bref : on se retourne).
+	t["cri_stalker"] = [
+		souffle("bandpass", 900.0, 3200.0, 2.5, perc(0.01, 0.16), 0.5),
+		ton("sine", 880.0, 1500.0, perc(0.005, 0.1), 0.14),
+	]
 	# Élite invocateur : même famille que le nécromancien, plus aigu (un champion, pas un mage).
 	t["cri_summon"] = [
 		ton("triangle", 440.0, 300.0, adsr(0.06, 0.12, 0.6, 0.2, 0.25), 0.24, {"glide": 0.5}),

@@ -11,5 +11,5 @@ static var _extra_foes = null
 ## EXTRA_FOES.
 static func extra_foes() -> Array:
 	if _extra_foes == null:
-		_extra_foes = [D6FoePyromancer.model(), D6FoeNecromancer.model()]
+		_extra_foes = [D6FoePyromancer.model(), D6FoeNecromancer.model(), D6FoePavois.model(), D6FoeStalker.model(), D6FoeBanner.model()]
 	return _extra_foes

@@ -13,6 +13,8 @@ extends Node2D
 ##   D666_SUPER=1         Super chargé         D666_BENEDICTIONS=6  nombre de bénédictions
 ##   D666_OR=1234         bourse               D666_ENCOCHE=44,0,44,21  zone sûre simulée
 ##   D666_PAUSE=1         à la 90e image, un doigt touche le bouton pause (le résultat est imprimé)
+##   D666_MANETTE=1       la manette est le dernier périphérique utilisé (libellés X, A, B, Y, RB)
+##   D666_SOL=clair       sol clair (lisibilité des commandes sur un fond lumineux)
 ## Le banc est un outil d'essai : il est le SEUL ici à modifier l'état de la partie.
 
 const Partie = preload("res://jeu/partie.gd")
@@ -69,6 +71,8 @@ func _ready() -> void:
 	add_child(hud)
 	_preparer_tactile()
 	hud.brancher(app, partie)
+	if _env("D666_MANETTE") == "1":
+		hud.montrer_peripherique("manette")
 	var tuning: Dictionary = D6Data.create_tuning()
 	app.profil = _profil(tuning)
 	partie.demarrer({"seed": 7.0, "startFloor": float(_env("D666_ETAGE", "1")), "meta": app.profil})
@@ -171,7 +175,7 @@ func _draw() -> void:
 	var p: Vector2 = partie.position_dessin(g.player, true)
 	draw_set_transform(get_viewport_rect().size / 2.0 - p * ZOOM, 0.0, Vector2(ZOOM, ZOOM))
 	draw_rect(Rect2(0, 0, room.w, room.h), pal.wall)
-	draw_rect(Rect2(room.pad, room.pad, room.w - 2 * room.pad, room.h - 2 * room.pad), pal.floorB)
+	draw_rect(Rect2(room.pad, room.pad, room.w - 2 * room.pad, room.h - 2 * room.pad), pal.enemyFlash if _env("D666_SOL") == "clair" else pal.floorB)
 	for o in room.obstacles:
 		draw_rect(Rect2(o.x0, o.y0, o.x1 - o.x0, o.y1 - o.y0), pal.pillarTop)
 	for e in g.enemies:

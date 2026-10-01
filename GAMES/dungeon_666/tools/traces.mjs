@@ -2,7 +2,9 @@
 // Godot rejoue les mêmes entrées depuis le même départ et compare ses empreintes d'état.
 //
 // Une trace : { name, options, steps, ticks }
-//   options : ce qu'on passe à createGame (graine, étage, profil, réglages, modes).
+//   options : ce qu'on passe à createGame (graine, étage, profil, réglages, modes), plus
+//             `build` : un départ garni posé APRÈS createGame, des deux côtés (applyBuild ici,
+//             parite/rejeu.gd côté Godot) — bénédictions, pouvoir légendaire porté, Âmes.
 //   steps   : [0, mx, my, ax, ay, drapeaux, sx, sy]   une image d'entrées (voir quantize)
 //             [1, commande, acceptée]                 une commande de menu TENTÉE (toutes notées,
 //                                                     même refusées : Godot doit refuser pareil)
@@ -16,6 +18,8 @@
 import { createGame, stepGame, applyCommand, emptyInput, DT } from '../src/sim/game.mjs';
 import { createTuning } from '../src/sim/config.mjs';
 import { lastCheckpoint } from '../src/sim/run.mjs';
+import { addBoon } from '../src/sim/boons.mjs';
+import { recomputeStats } from '../src/sim/stats.mjs';
 import { POLICIES } from './bots.mjs';
 import { kitProfile } from './classes.mjs';
 
@@ -129,11 +133,26 @@ function tryCommands(game, steps, cmds) {
 }
 
 /**
- * Joue et note une partie. spec : { name, seed, floor, kit: [classe, arme], policy, seconds,
- * tuning, sandbox, practice, godMode, deaths: 'respawn' | 'town' }. `every` : images entre deux
- * points de contrôle (1 = une empreinte par image, pour localiser une divergence).
+ * Départ garni : { boons: [identifiants], rarity, power: pouvoir légendaire, souls: Âmes }.
+ * Les bénédictions passent par addBoon (emplacements exclusifs compris), le pouvoir est porté en
+ * talisman, puis les stats sont recalculées. Godot fait exactement de même (parite/rejeu.gd).
  */
-export function recordTrace(spec, every = CHECK_EVERY) {
+export function applyBuild(game, build) {
+  for (const id of build.boons ?? []) addBoon(game.run, { id, rarity: build.rarity ?? 'commun' });
+  if (build.power) {
+    game.run.items.talisman = { id: 0, slot: 'talisman', rarity: 'legendaire', name: 'Relique de parité', level: 1, affixes: [], power: build.power, base: {}, score: 0 };
+  }
+  if (build.souls) game.meta.souls = build.souls;
+  recomputeStats(game);
+}
+
+/**
+ * Joue et note une partie. spec : { name, seed, floor, kit: [classe, arme], policy, seconds,
+ * tuning, sandbox, practice, godMode, deaths: 'respawn' | 'town', build }. `every` : images entre deux
+ * points de contrôle (1 = une empreinte par image, pour localiser une divergence). `observe` :
+ * regard facultatif sur la partie après chaque pas (choix des graines du catalogue), sans effet.
+ */
+export function recordTrace(spec, every = CHECK_EVERY, observe = null) {
   const base = createTuning();
   const options = {
     seed: spec.seed,
@@ -143,8 +162,10 @@ export function recordTrace(spec, every = CHECK_EVERY) {
     sandbox: !!spec.sandbox,
     practice: !!spec.practice,
     godMode: !!spec.godMode,
+    build: spec.build ?? null,
   };
   const game = createGame({ ...options, meta: options.meta ?? undefined, tuning: options.tuning ?? undefined });
+  if (options.build) applyBuild(game, options.build);
   const policy = spec.policy === 'hasard' ? randomPolicy(spec.seed) : POLICIES[spec.policy ?? 'skilled'];
   const mem = {};
   const steps = [];
@@ -163,6 +184,7 @@ export function recordTrace(spec, every = CHECK_EVERY) {
   let played = 0;
   while (played < frames && steps.length < frames * MAX_STEPS_FACTOR) {
     if (game.mode === 'choice') {
+      if (observe) observe(game);
       if (!tryCommands(game, steps, menuCandidates(game))) break;
       check();
       continue;
@@ -177,12 +199,13 @@ export function recordTrace(spec, every = CHECK_EVERY) {
     const q = quantize(policy(game, mem));
     steps.push(inputStep(q));
     stepGame(game, q);
+    if (observe) observe(game);
     played++;
     drain();
     if (played % every === 0) check();
   }
   check();
-  return { name: spec.name, options, steps, ticks: game.tick };
+  return { name: spec.name, policy: spec.policy ?? 'skilled', options, steps, ticks: game.tick }; // policy : lu par parite/verifier_bots.gd (Godot)
 }
 
 // ---------------------------------------------------------------- catalogue
@@ -232,6 +255,46 @@ function catalogue() {
   // Modes : arène d'essai, entraînement contre un Gardien.
   out.push({ name: 'arene', seed: 701, floor: 1, policy: 'skilled', seconds: 45, sandbox: true });
   out.push({ name: 'entrainement_cerbere', seed: 702, floor: 36, policy: 'masher', seconds: 40, practice: true });
+  // CONTENU du 2026-10-01 : départs garnis (build) qui exercent les nouveaux procs. Les graines sont
+  // choisies pour que l'effet se produise vraiment dans la partie notée (esquives parfaites, murs,
+  // Super lancé, salles sans blessure, derniers coups de combo, éclairs, explosions).
+  out.push({ name: 'contenu_esquives_hasard', seed: 5115, floor: 14, policy: 'hasard', seconds: 60, build: { boons: ['represailles', 'baillement', 'ivresse', 'eclair_de_depit', 'mauvais_oeil', 'foudre_du_dedain', 'trop_plein', 'festin'], power: 'eperons_alastor' } });
+  out.push({ name: 'contenu_murs_marteau', seed: 5012, floor: 9, kit: ['bourreau', 'marteau'], policy: 'masher', seconds: 60, build: { boons: ['mur_du_sommeil', 'faire_les_poches', 'mepris', 'coup_de_sang', 'tresor_de_guerre', 'prime_de_risque'], power: 'fracas_moloch' } });
+  out.push({ name: 'contenu_super_lame', seed: 5022, floor: 5, policy: 'skilled', seconds: 75, build: { boons: ['ripaille', 'passion_brulante', 'bouchee_double', 'baiser_vole', 'invaincu', 'prime_de_risque', 'extase'], power: 'main_de_gloire' } });
+  out.push({ name: 'contenu_eclairs_arc', seed: 5031, floor: 10, kit: ['chasseresse', 'arc'], policy: 'skilled', seconds: 60, build: { boons: ['coup_de_sang', 'baiser_vole', 'mauvais_oeil', 'foudre_du_dedain', 'invaincu'], rarity: 'rare', power: 'dard_lilith' } });
+  out.push({ name: 'contenu_dagues_belial', seed: 5041, floor: 11, kit: ['revenant', 'dagues'], policy: 'skilled', seconds: 60, build: { boons: ['bouchee_double', 'mepris', 'eclair_de_depit', 'tresor_de_guerre'], rarity: 'epique', power: 'marteau_belial' } });
+  out.push({ name: 'contenu_hache_abaddon', seed: 5052, floor: 13, kit: ['bourreau', 'hache'], policy: 'skilled', seconds: 60, build: { boons: ['mauvais_oeil', 'coup_de_sang', 'mur_du_sommeil', 'faire_les_poches', 'represailles'], power: 'linceul_abaddon' } });
+  // Les quatre autels nouveaux : graines où le bot rencontre l'autel et y prend une option qui coûte.
+  const altarBuild = { boons: ['furie', 'torpeur', 'voracite'], souls: 90 };
+  // Graines RECHOISIES le 2026-10-01 après l'ajout de trois archétypes au bestiaire (les tirages de
+  // vagues et de portes ont changé : trois de ces parties ne rencontraient plus leur autel).
+  out.push({ name: 'autel_forge', seed: 3000, floor: 8, policy: 'skilled', seconds: 60, build: altarBuild });
+  out.push({ name: 'autel_miroir', seed: 3004, floor: 16, policy: 'skilled', seconds: 60, build: altarBuild });
+  out.push({ name: 'autel_registre_achat', seed: 3066, floor: 16, policy: 'skilled', seconds: 60, build: altarBuild });
+  out.push({ name: 'autel_registre_sang', seed: 3063, floor: 16, policy: 'skilled', seconds: 60, build: altarBuild });
+  out.push({ name: 'autel_clepsydre', seed: 3040, floor: 8, policy: 'skilled', seconds: 60, build: altarBuild });
+  // Les quatre dispositions nouvelles, dans un Cercle qui les tire (héros invulnérable : équipement de départ).
+  out.push({ name: 'salle_colonnade', seed: 4000, floor: 74, policy: 'skilled', seconds: 45, godMode: true, build: { boons: ['mur_du_sommeil', 'faire_les_poches', 'coup_de_sang'] } });
+  out.push({ name: 'salle_goulet', seed: 4000, floor: 146, policy: 'skilled', seconds: 45, godMode: true, build: { boons: ['eclair_de_depit', 'mauvais_oeil', 'foudre_du_dedain'] } });
+  out.push({ name: 'salle_ilots', seed: 4000, floor: 220, policy: 'skilled', seconds: 45, godMode: true, build: { boons: ['passion_brulante', 'ripaille', 'trop_plein', 'sang_devore'] } });
+  out.push({ name: 'salle_chicane', seed: 4000, floor: 290, policy: 'skilled', seconds: 45, godMode: true, build: { boons: ['represailles', 'ivresse', 'baillement', 'invaincu'], power: 'linceul_abaddon' } });
+  // BESTIAIRE du 2026-10-01 : Porte-pavois (étage 10), Traqueur (12), Porte-étendard (14). Graines
+  // choisies pour que l'archétype COMBATTE vraiment dans la partie notée : coups arrêtés par le pavois
+  // et coups de pavois, embuscades (dont certaines touchent), ennemis frappés sous l'étendard.
+  out.push({ name: 'bestiaire_pavois_habile', seed: 6009, floor: 10, policy: 'skilled', seconds: 60 });
+  out.push({ name: 'bestiaire_pavois_marteau_martele', seed: 6103, floor: 10, kit: ['bourreau', 'marteau'], policy: 'masher', seconds: 60 });
+  out.push({ name: 'bestiaire_traqueur_sans_dash', seed: 6202, floor: 12, policy: 'noDash', seconds: 60 });
+  out.push({ name: 'bestiaire_traqueur_arc', seed: 6308, floor: 12, kit: ['chasseresse', 'arc'], policy: 'skilled', seconds: 60 });
+  out.push({ name: 'bestiaire_etendard_habile', seed: 6407, floor: 14, policy: 'skilled', seconds: 75 });
+  // Champions : un Traqueur ardent (6405), un Porte-pavois vampirique (6406).
+  out.push({ name: 'bestiaire_elite_traqueur', seed: 6405, floor: 14, policy: 'skilled', seconds: 75 });
+  out.push({ name: 'bestiaire_elite_pavois', seed: 6406, floor: 14, policy: 'skilled', seconds: 75 });
+  // Entrées au hasard : coups sur un pavois sous tous les angles, dashs à travers, frappes dans le vide d'un traqueur disparu.
+  out.push({ name: 'bestiaire_hasard_hache', seed: 6503, floor: 15, kit: ['bourreau', 'hache'], policy: 'hasard', seconds: 90, godMode: true });
+  out.push({ name: 'bestiaire_hasard_dagues', seed: 6605, floor: 16, kit: ['revenant', 'dagues'], policy: 'hasard', seconds: 90 });
+  // En profondeur (toutes les sections suivantes ont le bestiaire entier), héros invulnérable.
+  out.push({ name: 'bestiaire_profond_230', seed: 6706, floor: 230, policy: 'skilled', seconds: 60, godMode: true });
+  out.push({ name: 'bestiaire_profond_100_arbalete', seed: 6803, floor: 100, kit: ['chasseresse', 'arbalete'], policy: 'noDash', seconds: 60, godMode: true });
   return out;
 }
 

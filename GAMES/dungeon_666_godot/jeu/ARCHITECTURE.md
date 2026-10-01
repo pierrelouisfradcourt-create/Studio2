@@ -40,7 +40,8 @@ C'est le SEUL point d'entrée d'une vue. Elle y garde `app` et `partie`, et s'ab
 - `partie.position_dessin(e, est_heros := false) -> Vector2` : la position INTERPOLÉE d'une
   entité (héros, ennemi, projectile, ramassable). Toujours dessiner à cette position, jamais à `e.x, e.y`.
 - `partie.en_pause`, `partie.alpha`.
-- `app.profil` (profil permanent), `app.reglages` (`sound`, `haptics`, `shake`, `lab`),
+- `app.profil` (profil permanent), `app.reglages` (`sound`, `haptics`, `shake`, `lab`, et `feel` :
+  les écarts des « Réglages du feel », `{chemin de tuning: valeur}`, enregistrés par `jeu/profil.gd`),
   `app.contenu` (réglages de référence : classes, armes, prix, pour la Ville), `app.ecran`
   (`titre` | `ville` | `jeu`), `app.vues` (les autres vues, par nom de scène : `app.vues.monde`…).
 - Tables : `D6Data.tables()` (bénédictions, raretés, libellés…), jamais recopiées.
@@ -65,6 +66,7 @@ C'est le SEUL point d'entrée d'une vue. Elle y garde `app` et `partie`, et s'ab
 | Descendre, arène, entraînement | `app.demarrer_descente(etage)`, `app.demarrer_descente(1.0, true)`, `app.demarrer_entrainement(gardien)` |
 | Opération de la Ville | `app.operation_ville("unlock", ["weapons", "dagues"])` → `{ok, reason?}` |
 | Réglage, labo du feel | `app.regler("sound", false)`, `app.regler_labo("hitstop", "local")` |
+| Réglages du feel (écarts au tuning de référence) | `app.regler_feel({"player.speed": 340.0})` — retenus, enregistrés, et passés à chaque partie neuve par `options.tuning` (`demarrer_descente`) |
 
 Une vue ne modifie JAMAIS `partie.game`, n'appelle JAMAIS `D6Game.step_game`, ne tire aucun
 nombre au hasard qui influence la partie (`randf` est permis pour une particule, pas pour une règle).
@@ -82,13 +84,38 @@ nombre au hasard qui influence la partie (`randf` est permis pour une particule,
   Elle demande la position du héros à l'écran à `app.vues.monde.monde_vers_ecran(...)`.
 - **Effets** et **Son** n'exposent rien : ils écoutent `partie.evenements`. Effets appelle la
   caméra du Monde pour les secousses.
-- **Hud** laisse la zone des commandes tactiles libre (il lit `app.vues.entrees.tactile()`).
+- **Hud** laisse la zone des commandes tactiles libre (il lit `app.vues.entrees.tactile()`). Hors
+  tactile, il écrit sous chaque commande la touche du DERNIER périphérique utilisé (clavier et
+  souris, ou manette : X, A, B, Y, RB) ; `peripherique()` le dit, `montrer_peripherique(nom)` l'impose.
 - **Ecrans** est seul à afficher des panneaux par-dessus le JEU (et l'écran titre) ; il met le jeu
   en pause quand il le faut et écoute `app.vues.entrees.pause_demandee`. **Ville** affiche la Ville
   quand `app.ecran == "ville"` et fournit `jeu/ville/panneau_labo.tscn` (racine avec
   `brancher(app, partie)`), que la pause d'Ecrans réutilise.
 
 Une vue doit fonctionner si une autre manque (`app.vues.has("monde")`).
+
+## Ordre des couches
+
+Du dessous au dessus. Les nombres sont ceux de `jeu/theme/couches.gd` ; une scène écrite à la main
+porte le nombre (`layer = 10`), `jeu/theme/verifier.gd` vérifie qu'il est le bon.
+
+| Couche | `layer` | Qui |
+|---|---|---|
+| monde | 0 | `Monde` et ses calques, puis `Effets` (particules, formes, chiffres) : repère du monde, caméra |
+| voile | 2 | `Monde/Voile` : la vignette d'ambiance. Sur le monde et ses effets, SOUS les flashs |
+| flash | 5 | `Effets/Ecran` : voile clair, vignette de blessure. Sur le monde, SOUS le HUD |
+| HUD | 10 | `Hud` : toujours lisible, même pendant un flash |
+| Ville | 20 | `Ville` (plein écran) |
+| écrans | 30 | `Ecrans` : titre, choix, mort, victoire, pause |
+| fondu | 100 | `StudioTransitions` (kit du studio), enfant d'`Ecrans` : fondu d'arrivée à chaque changement d'écran (`app.ecran_change`) et à l'entrée d'un étage (`floorEnter`) |
+
+Un fondu COUPE au noir puis éclaircit : l'écran d'arrivée est déjà là et répond pendant
+l'éclaircie. Aucun fondu, aucune apparition de panneau ne retarde un choix ; seul l'ARMEMENT d'un
+panneau (anti-martelage, `jeu/ecrans/ecrans.gd`) décide quand il répond.
+
+Une seule main dessine chaque chose : la taillade d'un coup et la traînée du dash sont au calque
+du héros (`jeu/monde/creatures/`, à la portée réelle du coup) ; `Effets` n'ajoute que les éclats,
+les ondes, les chiffres, et la grande taillade dorée de l'Exécution (un Super).
 
 ## Règles de maison
 
@@ -101,8 +128,17 @@ Une vue doit fonctionner si une autre manque (`app.vues.has("monde")`).
 - Couleurs : `preload("res://jeu/theme/couleurs.gd").PAL` (la palette par RÔLE de
   `src/render/palette.mjs`, mêmes clés ; aussi `ELITE_COLORS`, `CIRCLE_TINTS`, `REWARD_COLORS`, `UI`).
   Panneaux, boutons, textes d'interface : le thème `preload("res://jeu/theme/theme.gd").theme()`
-  posé sur la racine de la vue, et ses polices `police_corps()` / `police_titre()`. Aucune couleur
-  de bouton ni de panneau écrite dans une vue.
+  posé sur la racine de la vue — UN SEUL thème pour le HUD, les écrans et la Ville. Une vue ne
+  nomme que des VARIATIONS (`theme_type_variation`, liste en tête de `theme.gd` : bouton principal
+  « braise », bouton neutre, carte, sur-titre, titre d'apparat, texte doux, prix, textes du HUD…) ;
+  aucune couleur de bouton, de panneau ni de texte écrite dans une vue. L'état grisé :
+  `ThemeJeu.OPACITE_GRISE`. Les cibles : `ThemeJeu.CIBLE` (44 px) et `CIBLE_GRANDE` (48 px).
+- Briques communes, sous `jeu/theme/` : `carte.tscn` (LA carte, pour les écrans comme pour la
+  Ville : `carte.decrire({...})`), `filet.gd` (filet d'ornement sous un grand titre),
+  `titre_relief.gd` (relief d'un titre d'apparat), `couches.gd` (ordre des couches).
+- Petite fenêtre (téléphone en paysage, 844 × 390) : chaque vue agrandit sa racine de
+  `ThemeJeu.echelle(vue, fenetre)` pour garder la taille de référence (cibles ≥ 44 px), et demande
+  un texte net par `ThemeJeu.nettete(viewport, echelle)`.
 - Résolution de référence 960 × 540, étirement `canvas_items` + `expand` : ancrer les éléments,
   jamais de coordonnées d'écran en dur. Le jeu doit rester lisible en 1600 × 720 et en 960 × 540.
 - Aucun fichier d'image, de son ou de police importé : formes dessinées, sons synthétisés,
@@ -116,6 +152,9 @@ G=C:/Users/Studio-Dev/Desktop/Godot_v4.6.3-stable_win64.exe/Godot_v4.6.3-stable_
 "$G" --headless --path . --check-only --script res://jeu/<...>.gd
 "$G" --position -3000,-3000 --resolution 960x540 --path . --script res://outils/capture.gd -- <scene.tscn> <sortie.png> [images] [pilote]
 ```
+
+Le thème commun, l'ordre des couches et les réglages du feel ont leur vérification sans fenêtre :
+`"$G" --headless --path . --script res://jeu/theme/verifier.gd` (finit par « THEME : OK »).
 
 `capture.gd` lance une scène dans une vraie fenêtre (hors écran), la laisse vivre, et enregistre
 des PNG : c'est la preuve d'une vue. Chaque lot écrit sa scène de banc `jeu/<lot>/banc.tscn`

@@ -42,4 +42,4 @@ func _sur_curseur(v: float) -> void:
 
 func _afficher() -> void:
 	_valeur.text = _etat.texte_valeur(_r, _etat.valeur(_r))
-	_nom.theme_type_variation = &"ReglageChange" if _etat.change(_r) else &"Reglage"
+	_nom.theme_type_variation = &"ReglageChange" if _etat.a_change(_r) else &"Reglage"

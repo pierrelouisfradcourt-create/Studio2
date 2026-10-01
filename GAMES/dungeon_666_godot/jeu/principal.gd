@@ -13,6 +13,7 @@ signal reglages_change
 
 const Partie = preload("res://jeu/partie.gd")
 const Profil = preload("res://jeu/profil.gd")
+const Feel = preload("res://jeu/ecrans/feel.gd")
 ## Les vues, dans l'ordre de montage (dessous → dessus). Une vue absente est simplement ignorée.
 const VUES := [
 	"res://jeu/monde/monde.tscn",
@@ -75,10 +76,19 @@ func demarrer_descente(etage: float, arene: bool = false, entrainement: bool = f
 		"meta": profil,
 		"sandbox": arene,
 		"practice": entrainement,
-		"tuning": {"lab": reglages.lab.duplicate()},
+		"tuning": _tuning_de_depart(),
 	}
 	partie.demarrer(options)
 	_changer_ecran("jeu")
+
+## Surcharges de tuning d'une partie neuve : la variante du labo, et les écarts des « Réglages du
+## feel » (reglages.feel), traduits pour l'arme et le Super que le héros va porter.
+func _tuning_de_depart() -> Dictionary:
+	var esquisse := {"tuning": contenu, "meta": profil, "run": {"items": profil.get("equipment", {})}}
+	var kit := {"weaponType": D6Loadout.weapon_type_of(esquisse), "superId": D6Loadout.class_of(esquisse).get("super")}
+	var t: Dictionary = Feel.surcharges(reglages.feel, contenu, kit)
+	t.lab = reglages.lab.duplicate()
+	return t
 
 ## Entraînement : le Gardien choisi, à l'étage de sa première section, sans récompense ni risque.
 func demarrer_entrainement(gardien: String) -> void:
@@ -146,6 +156,13 @@ func regler(cle: String, valeur) -> void:
 	reglages[cle] = valeur
 	Profil.enregistrer_reglages(reglages)
 	reglages_change.emit()
+
+## Écarts des « Réglages du feel » ({chemin de tuning: valeur}) : retenus pour les parties suivantes
+## (ils passent par `options.tuning`). `sur_disque` : faux pendant qu'une réglette bouge.
+func regler_feel(ecarts: Dictionary, sur_disque: bool = true) -> void:
+	reglages.feel = ecarts.duplicate()
+	if sur_disque:
+		Profil.enregistrer_reglages(reglages)
 
 ## Variante du labo du feel (D5 / D8 / D9) : retenue, et appliquée à la partie en cours.
 func regler_labo(axe: String, choix: String) -> void:

@@ -22,7 +22,7 @@ import { inSector, dist2 } from '../core/math.mjs';
 import { emit } from './state.mjs';
 import { computeAim } from './aim.mjs';
 import { moveCircle } from './physics.mjs';
-import { damageEnemy } from './combat.mjs';
+import { damageEnemy, fireProcs } from './combat.mjs';
 import { spawnProjectile, destroyEnemyProjectilesInCircle } from './projectiles.mjs';
 import { fireWeaponShots, updateShots } from './kit_shots.mjs';
 import { updateZones } from './kit_zones.mjs';
@@ -184,6 +184,11 @@ function tickTimers(game, dt) {
   p.hurtFlash = Math.max(0, p.hurtFlash - dt);
   p.skillCd = Math.max(0, p.skillCd - dt);
   p.strikeWindow = Math.max(0, p.strikeWindow - dt);
+  // Élan passager (proc « surge ») : il s'éteint avec son bonus.
+  if (p.surge > 0) {
+    p.surge = Math.max(0, p.surge - dt);
+    if (p.surge <= 0) p.surgeMult = 0;
+  }
   if (p.state !== 'attack') p.comboTimer += dt;
   const maxC = maxDashCharges(game);
   if (p.dashCharges < maxC) {
@@ -284,6 +289,7 @@ function startAttack(game) {
     def,
     index,
     strike,
+    finisher: !strike && index === t.combo.length - 1, // dernier coup du combo (procs `when: 'finisher'`)
     phase: 'startup',
     t: 0,
     dur: phaseDurations(def, p.stats.attackSpeedMult),
@@ -384,6 +390,7 @@ function sweepHits(game, a) {
       canCrit: true,
       shake: def.shake,
       stun: def.stun, // coups lourds (hache, maillet) : étourdissement des ennemis ordinaires
+      finisher: a.finisher,
     });
   }
   // Parade : un coup détruit les projectiles ennemis qu'il balaie.
@@ -428,25 +435,7 @@ function startDash(game) {
   game.hitstop = 0;
   game.telemetry.dashes++;
   emit(game, 'dash', { x: p.x, y: p.y, dirX: dx, dirY: dy, charges: p.dashCharges });
-  for (const pr of p.procs) {
-    if (pr.on === 'dash' && pr.effect === 'nova') dashNova(game, pr);
-  }
-}
-
-function dashNova(game, pr) {
-  const p = game.player;
-  for (const e of game.enemies) {
-    if (e.dead || e.spawnT > 0) continue;
-    const rr = pr.radius + e.r;
-    if (dist2(p.x, p.y, e.x, e.y) < rr * rr) {
-      damageEnemy(game, e, { kind: 'blast', amount: pr.value, dirX: 0, dirY: 0, canCrit: false });
-      if (pr.chill) {
-        e.chill = Math.max(e.chill, pr.chill);
-        e.chillMult = Math.min(e.chillMult || 1, 0.5);
-      }
-    }
-  }
-  emit(game, 'dashNova', { x: p.x, y: p.y, r: pr.radius });
+  fireProcs(game, 'dash'); // une charge de dash dépensée (déflagration, éclair… : combat.mjs)
 }
 
 function updateDash(game, dt) {
@@ -587,6 +576,7 @@ function startSuper(game) {
   p.stateTime = 0;
   game.telemetry.superUses++;
   emit(game, 'super', { x: p.x, y: p.y, r: s.radius, super: s.kind });
+  fireProcs(game, 'super'); // Super lancé (soin, embrasement… : combat.mjs)
 }
 
 function updateSuper(game, dt) {

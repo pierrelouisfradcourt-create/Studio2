@@ -1,0 +1,129 @@
+{
+  "type": "objet",
+  "requis": ["enemies", "elite", "ROSTER", "EXTRA_ELITE_KINDS", "MELEE_KINDS", "SHOOTER_KINDS"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "enemies": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": ["name", "radius", "hp", "speed", "mass", "damage", "gold"],
+        "champs": {
+          "name": { "type": "texte", "min": 1 },
+          "radius": { "type": "nombre", "min": 1 },
+          "hp": { "type": "nombre", "min": 1 },
+          "speed": { "type": "nombre", "min": 0 },
+          "mass": { "type": "nombre", "min": 0.1 },
+          "damage": { "type": "nombre", "min": 0 },
+          "gold": { "type": "point" },
+          "windup": { "type": "nombre", "min": 0.4 },
+          "castTime": { "type": "nombre", "min": 0.4 },
+          "channel": { "type": "nombre", "min": 0.4 },
+          "slashWindup": { "type": "nombre", "min": 0.4 },
+          "pyre": {
+            "type": "objet",
+            "requis": [
+              "count",
+              "radius",
+              "spread",
+              "delay",
+              "stagger",
+              "linger",
+              "tickEvery",
+              "tickDamage",
+              "wallInset"
+            ],
+            "fermé": true,
+            "champs": {
+              "count": { "type": "entier", "min": 1 },
+              "radius": { "type": "nombre", "min": 1 },
+              "spread": { "type": "nombre", "min": 0 },
+              "delay": { "type": "nombre", "min": 0.4 },
+              "stagger": { "type": "nombre", "min": 0 },
+              "linger": { "type": "nombre", "min": 0 },
+              "tickEvery": { "type": "nombre", "min": 0.02 },
+              "tickDamage": { "type": "nombre", "min": 0 },
+              "wallInset": { "type": "nombre", "min": 0 }
+            }
+          },
+          "recover": { "type": "nombre", "min": 0 },
+          "cooldown": { "type": "nombre", "min": 0 },
+          "cooldownJitter": { "type": "point" },
+          "lockAt": { "type": "nombre", "min": 0, "max": 1 },
+          "strikeTime": { "type": "nombre", "min": 0.02 },
+          "chargeMaxTime": { "type": "nombre", "min": 0.02 },
+          "wallStun": { "type": "nombre", "min": 0 },
+          "strafeFlip": { "type": "nombre", "min": 0, "max": 1 },
+          "fade": { "type": "nombre", "min": 0 },
+          "hiddenTime": { "type": "nombre", "min": 0 },
+          "wardMult": { "type": "nombre", "min": 0, "max": 1 },
+          "blastHurtsEnemies": { "type": "booleen" },
+          "minionKind": { "type": "texte", "ref": "ennemis" },
+          "count": { "type": "entier", "min": 1 },
+          "maxMinions": { "type": "entier", "min": 1 },
+          "guardSources": { "type": "liste", "elements": { "type": "texte", "min": 1 } },
+          "backAngles": { "type": "liste", "min": 1, "elements": { "type": "nombre" } }
+        },
+        "_note": "PILIER DU JEU : tout coup ennemi est télégraphié au moins 0,4 s. D'où le minimum de windup, castTime, channel, slashWindup et pyre.delay."
+      }
+    },
+    "elite": {
+      "type": "objet",
+      "requis": ["hpMult", "damageMult", "sizeMult", "goldMult", "mods"],
+      "fermé": true,
+      "champs": {
+        "hpMult": { "type": "nombre", "min": 1 },
+        "damageMult": { "type": "nombre", "min": 1 },
+        "sizeMult": { "type": "nombre", "min": 1 },
+        "goldMult": { "type": "nombre", "min": 1 },
+        "mods": {
+          "type": "objet",
+          "min": 1,
+          "chaque": {
+            "type": "objet",
+            "champs": {
+              "excludeKinds": { "type": "liste", "ref": "ennemis" },
+              "minIndex": { "type": "entier", "min": 1 },
+              "kind": { "type": "texte", "ref": "ennemis" },
+              "speedMult": { "type": "nombre", "min": 0.1 },
+              "windupMult": { "type": "nombre", "min": 1 },
+              "damageTakenMult": { "type": "nombre", "min": 0, "max": 1 },
+              "knockbackMult": { "type": "nombre", "min": 0 },
+              "deathBlastDelay": { "type": "nombre", "min": 0.4 },
+              "warn": { "type": "nombre", "min": 0.4 },
+              "channel": { "type": "nombre", "min": 0.4 },
+              "firstDelay": { "type": "nombre", "min": 0 },
+              "every": { "type": "nombre", "min": 0.5 },
+              "retry": { "type": "nombre", "min": 0 },
+              "duration": { "type": "nombre", "min": 0 },
+              "count": { "type": "entier", "min": 1 },
+              "maxMinions": { "type": "entier", "min": 1 }
+            },
+            "_note": "Un champion ne raccourcit jamais un télégraphe (windupMult >= 1) ; ses propres annonces (deathBlastDelay, warn, channel) durent au moins 0,4 s."
+          }
+        }
+      }
+    },
+    "ROSTER": {
+      "type": "liste",
+      "min": 1,
+      "unique": "kind",
+      "elements": {
+        "type": "objet",
+        "requis": ["kind", "cost", "minIndex", "weight"],
+        "fermé": true,
+        "champs": {
+          "kind": { "type": "texte", "min": 1 },
+          "cost": { "type": "nombre", "min": 0.5 },
+          "minIndex": { "type": "entier", "min": 1 },
+          "weight": { "type": "nombre", "min": 0 }
+        }
+      }
+    },
+    "EXTRA_ELITE_KINDS": { "type": "liste", "ref": "ennemis" },
+    "MELEE_KINDS": { "type": "liste", "ref": "ennemis" },
+    "SHOOTER_KINDS": { "type": "liste", "ref": "ennemis" }
+  }
+}

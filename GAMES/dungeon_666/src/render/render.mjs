@@ -11,6 +11,8 @@ import { ITEM_RARITIES } from '../sim/loot.mjs';
 import { REWARD_LABELS } from '../sim/run.mjs';
 import { EXTRA_ART, EXTRA_BODY } from './art.mjs';
 import { computeAim } from '../sim/aim.mjs';
+import { wardOf } from '../sim/foe_defense.mjs';
+import { drawWard } from './art_foes.mjs';
 
 const TAU = Math.PI * 2;
 const TILE = 88;
@@ -794,6 +796,7 @@ function drawShadow(ctx, x, y, r) {
 }
 
 function drawEnemy(ctx, e, game, time) {
+  if (e.hidden && !e.boss) return; // Traqueur disparu : rien à l'écran jusqu'à sa réapparition
   let scale = 1;
   let alpha = 1;
   if (e.spawnT > 0) {
@@ -848,6 +851,7 @@ function drawEnemy(ctx, e, game, time) {
     ctx.stroke();
   }
   if (e.burn > 0) drawGlow(ctx, e.x, e.y - r * 0.5, r * 1.6, PAL.lava, 0.45 + 0.2 * Math.sin(time * 20 + e.id));
+  if (!e.boss && wardOf(game, e)) drawWard(ctx, e, r, time); // couvert par un Porte-étendard
   if (e.stun > 0) drawStun(ctx, e.x, e.y - r - 10, time);
   else if (e.guard > 0 && !e.boss) drawGuard(ctx, e.x + Math.max(28, r * 2.2) / 2 + 9, e.y - r - 10, Math.min(1, e.guard / GUARD_FADE));
   if (!e.boss && (e.hp < e.maxHp || e.eliteMod)) drawEnemyHp(ctx, e, r);

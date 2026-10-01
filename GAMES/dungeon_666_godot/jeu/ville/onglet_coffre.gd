@@ -43,11 +43,11 @@ func _carte_objet(objet: Dictionary) -> void:
 	d.refus = _raison(cle)
 	var maniable: bool = not arme or app.contenu.classes[app.profil.loadout.classId].weapons.has(_type_arme(objet))
 	if not maniable:
-		d.lignes.append({"texte": AUTRE_CLASSE % _classe_de(_type_arme(objet)), "genre": "Note"})
+		d.lignes.append({"texte": AUTRE_CLASSE % _classe_de(_type_arme(objet)), "genre": "TexteDoux"})
 	var gain := _ames(D6Profile.salvage_souls(app.contenu, objet))
 	var confirme := _a_confirmer == uid
 	d.boutons = [
-		{"nom": "equiper", "texte": "Équiper" if maniable else "Autre classe", "genre": "primaire" if maniable else "", "inactif": not maniable, "cle": cle},
+		{"nom": "equiper", "texte": "Équiper" if maniable else "Autre classe", "genre": "principal" if maniable else "", "inactif": not maniable, "cle": cle},
 		{"nom": "recycler", "texte": ("Confirmer · %s" if confirme else "Recycler · %s") % gain, "genre": "danger" if confirme else "", "cle": cle + ":recycler"},
 	]
 	_carte(_objets, d).action.connect(_sur_objet.bind(uid))

@@ -1,0 +1,50 @@
+{
+  "_note": "Le héros et son combat : déplacement, dash, gel d'impact, visée, règles communes des coups. Durées en secondes, distances en unités de salle (la salle fait 1400 × 880), angles en degrés.",
+  "player": {
+    "radius": 16,
+    "maxHp": 100,
+    "speed": 300,
+    "accelTime": 0.083,
+    "decelTime": 0.05,
+    "attackMoveMult": 0.5,
+    "hurtIframes": 0.6,
+    "hurtHitstop": 0.083,
+    "cancelMult": 1,
+    "inputBuffer": 0.15,
+    "attackBuffer": 0.35,
+    "innateHp": 45
+  },
+  "weaponBase": 10,
+  "armorBase": 55,
+  "hitstopBank": { "max": 0.22, "refill": 0.22 },
+  "hitstopMode": "global",
+  "killHitstop": { "elite": 0.1, "boss": 0.2, "lastEnemy": 0.13 },
+  "dash": {
+    "distance": 165,
+    "duration": 0.15,
+    "iframes": 0.18,
+    "charges": 2,
+    "recharge": 0.9,
+    "strikeWindow": 0.3,
+    "strikeCancelFrom": 0.45,
+    "cancelsHitstop": true,
+    "perfectDodgeSuper": 0.06,
+    "perfectDodgeRefund": 0.5
+  },
+  "comboResetTime": 0.32,
+  "comboCancelFrom": { "hits": [0.3, 0.3, 0.6], "strike": 0.3 },
+  "wallSlam": { "minSpeed": 380, "damage": 8, "stun": 0.45, "hitstop": 0.05 },
+  "autoAim": { "range": 160, "skillRange": 520, "coneDeg": 80, "movePreference": 0.35 },
+  "combat": {
+    "critChance": 0.05,
+    "critMult": 1.75,
+    "enemyFriction": 11,
+    "enemySeparation": 0.6,
+    "maxAttackers": 2,
+    "maxShooters": 2,
+    "stunDamageTakenMult": 1.5,
+    "stunGuard": 1.5,
+    "stunGuardSources": ["melee", "strike"],
+    "minChillMult": 0.35
+  }
+}

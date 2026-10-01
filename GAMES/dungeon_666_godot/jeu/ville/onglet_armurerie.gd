@@ -39,9 +39,9 @@ func _carte_arme(type: String, arme: Dictionary) -> void:
 		d.badge = "● Portée"
 		d.boutons = [{"nom": "", "texte": "Portée", "inactif": true, "cle": cle}]
 	else:
-		d.boutons = [{"nom": "equiper", "texte": "Prendre la meilleure", "genre": "primaire", "inactif": exemplaire == null, "cle": cle}]
+		d.boutons = [{"nom": "equiper", "texte": "Prendre la meilleure", "genre": "principal", "inactif": exemplaire == null, "cle": cle}]
 		if exemplaire == null:
-			d.lignes.append({"texte": AUCUN_EXEMPLAIRE, "genre": "Note"})
+			d.lignes.append({"texte": AUCUN_EXEMPLAIRE, "genre": "TexteDoux"})
 	_carte(_armes, d).action.connect(_sur_arme.bind(type, exemplaire))
 
 ## L'exemplaire de ce type le mieux noté du coffre (null s'il n'y en a pas).

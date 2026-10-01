@@ -5,5 +5,8 @@
 
 import { PYROMANCER } from './foe_pyromancer.mjs';
 import { NECROMANCER } from './foe_necromancer.mjs';
+import { PAVOIS } from './foe_pavois.mjs';
+import { STALKER } from './foe_stalker.mjs';
+import { BANNER } from './foe_banner.mjs';
 
-export const EXTRA_FOES = [PYROMANCER, NECROMANCER];
+export const EXTRA_FOES = [PYROMANCER, NECROMANCER, PAVOIS, STALKER, BANNER];

@@ -1,5 +1,5 @@
-; Dungeon 666 — version Godot. Les règles sont portées de GAMES/dungeon_666/src/sim (la
-; spécification) et vérifiées au bit près par `bash outils/verifier.sh`.
+; Dungeon 666. Godot est seul maître des règles (sim/) et des données (data/) ; elles sont
+; vérifiées par `bash outils/verifier.sh`. La version web (GAMES/dungeon_666) est figée.
 config_version=5
 
 [application]

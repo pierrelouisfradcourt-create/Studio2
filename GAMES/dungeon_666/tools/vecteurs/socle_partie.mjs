@@ -54,7 +54,7 @@ const SEEDS = [0, 1, 2, 42, 0x7fffffff, 0x80000000, 0xffffffff, -1, 3.7, 2 ** 40
 
 /** Bénédictions d'un run tirées par des addBoon successifs (état toujours atteignable). */
 function randomBoons(T, B, n) {
-  const ids = [...B.BOONS, ...B.DUOS].map((b) => b.id);
+  const ids = [...B.BOONS, ...B.DUOS, ...B.PACTS].map((b) => b.id);
   const run = { boons: [] };
   for (let i = 0; i < n; i++) B.addBoon(run, { id: T.of(ids), rarity: T.of(['commun', 'rare', 'epique']), level: 1 });
   return run.boons;

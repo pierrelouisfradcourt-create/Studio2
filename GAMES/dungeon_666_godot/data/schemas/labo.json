@@ -1,0 +1,36 @@
+{
+  "type": "objet",
+  "requis": ["lab", "LAB_AXES"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "lab": { "type": "objet", "min": 1, "chaque": { "type": "texte", "min": 1 } },
+    "LAB_AXES": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": ["label", "reference", "options"],
+        "fermé": true,
+        "champs": {
+          "label": { "type": "texte", "min": 1 },
+          "reference": { "type": "texte", "min": 1 },
+          "options": {
+            "type": "objet",
+            "min": 2,
+            "chaque": {
+              "type": "objet",
+              "requis": ["label", "text", "set"],
+              "fermé": true,
+              "champs": {
+                "label": { "type": "texte", "min": 1 },
+                "text": { "type": "texte", "min": 1 },
+                "set": { "type": "objet", "min": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

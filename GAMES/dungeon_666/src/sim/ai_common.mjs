@@ -23,10 +23,14 @@ export function windupOf(game, e, base) {
   return e.eliteMod === 'rapide' ? base * game.tuning.elite.mods.rapide.windupMult : base;
 }
 
+// États où un ennemi de mêlée TIENT son jeton d'attaque. « fade » et « ambush » : le Traqueur
+// garde le sien de sa dissolution à sa frappe (foe_stalker.mjs), sinon il resurgirait en surnombre.
+const TOKEN_STATES = new Set(['windup', 'strike', 'charge', 'fade', 'ambush']);
+
 export function activeAttackers(game) {
   let n = 0;
   for (const o of game.enemies) {
-    if (!o.dead && MELEE_KINDS.has(o.kind) && (o.state === 'windup' || o.state === 'strike' || o.state === 'charge')) n++;
+    if (!o.dead && MELEE_KINDS.has(o.kind) && TOKEN_STATES.has(o.state)) n++;
   }
   return n;
 }

@@ -7,7 +7,8 @@ extends RefCounted
 ## bénédiction du même emplacement remplace l'ancienne. Les passifs s'empilent.
 ##
 ## Rareté : commun ×1, rare ×1,4, épique ×1,8 sur les valeurs.
-## Tables FAMILIES, RARITIES, BOONS, DUOS : D6Data.tables().boons (jamais modifiées).
+## Tables FAMILIES, RARITIES, BOONS, DUOS, PACTS : D6Data.tables().boons (jamais modifiées).
+## PACTS : bénédictions à contrepartie, jamais tirées par une offre — un autel les accorde (run).
 
 static func _t() -> Dictionary:
 	return D6Data.tables().boons
@@ -18,6 +19,9 @@ static func boon_def(id):
 		if b.id == id:
 			return b
 	for b in t.DUOS:
+		if b.id == id:
+			return b
+	for b in t.PACTS:
 		if b.id == id:
 			return b
 	return null
