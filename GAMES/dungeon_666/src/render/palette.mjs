@@ -46,6 +46,9 @@ export const PAL = {
   eliteRapide: '#4fd1ff',
   eliteBlinde: '#c9c9d6',
   eliteArdent: '#ff6a1a',
+  eliteVampirique: '#ff3d7f', // rouge-rose : le drain se lit comme du sang
+  eliteBouclier: '#ffe9a8', // or pâle : la bulle d'immunité
+  eliteInvocateur: '#b48cff', // violet : la couleur des invocations (alerte inoffensive)
 
   gold: '#ffd23c',
   heal: '#6dff8a',
@@ -58,8 +61,14 @@ export const PAL = {
   dashPip: '#7fe8ff',
 };
 
-export const ELITE_COLORS = { rapide: PAL.eliteRapide, blinde: PAL.eliteBlinde, ardent: PAL.eliteArdent };
-export const ELITE_NAMES = { rapide: 'Rapide', blinde: 'Blindé', ardent: 'Ardent' };
+export const ELITE_COLORS = {
+  rapide: PAL.eliteRapide, blinde: PAL.eliteBlinde, ardent: PAL.eliteArdent,
+  vampirique: PAL.eliteVampirique, bouclier: PAL.eliteBouclier, invocateur: PAL.eliteInvocateur,
+};
+export const ELITE_NAMES = {
+  rapide: 'Rapide', blinde: 'Blindé', ardent: 'Ardent',
+  vampirique: 'Vampirique', bouclier: 'Bouclier', invocateur: 'Invocateur',
+};
 
 // Teinte de chaque Cercle (sols, lueurs) — le biome se lit d'un coup d'œil.
 export const CIRCLE_TINTS = ['#ff5a1f', '#ff3c8c', '#9be03c', '#ffc83c', '#ff2a2a', '#b98cff', '#ff7a3c', '#3ce0b4', '#7ab8ff', '#ffffff'];

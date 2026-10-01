@@ -4,6 +4,23 @@ import { dist2, pointSegDist2 } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
 import { damageEnemy, damagePlayer } from './combat.mjs';
 import { pointBlocked } from './physics.mjs';
+import { foeDealt } from './foe_elites.mjs';
+
+/** Source vivante d'une attaque (id d'ennemi), ou null. */
+function sourceOf(game, id) {
+  if (!id) return null;
+  for (const e of game.enemies) if (e.id === id && !e.dead) return e;
+  return null;
+}
+
+/** Blesse le héros au nom d'un ennemi (élite vampirique : se soigne de ce qui a porté). */
+function hurtPlayerFor(game, sourceId, amount, src) {
+  const p = game.player;
+  const hp0 = p.hp;
+  const landed = damagePlayer(game, amount, src);
+  if (landed && sourceId) foeDealt(game, sourceOf(game, sourceId), hp0 - p.hp);
+  return landed;
+}
 
 /**
  * p : {owner: 'player'|'enemy', kind, x, y, vx, vy, r, damage, range, pierce, knockback,
@@ -50,7 +67,7 @@ export function updateProjectiles(game, dt) {
       const rr = pr.r + p.r;
       // Test sur le segment parcouru : pas de traversée à grande vitesse.
       if (pointSegDist2(p.x, p.y, ox, oy, pr.x, pr.y) < rr * rr) {
-        const landed = damagePlayer(game, pr.damage, { kind: pr.kind, id: pr.id, x: pr.x, y: pr.y });
+        const landed = hurtPlayerFor(game, pr.sourceId, pr.damage, { kind: pr.kind, id: pr.id, x: pr.x, y: pr.y });
         if (landed) pr.dead = true;
       }
     } else {
@@ -91,10 +108,35 @@ function inHazard(h, x, y, r) {
   return pointSegDist2(x, y, h.x, h.y, ex, ey) < hw * hw;
 }
 
+/**
+ * Zone PERSISTANTE (h.linger > 0, ex. flamme de la Pyromancienne) : une fois allumée — donc
+ * TOUJOURS après son télégraphe —, elle brûle `linger` s et blesse le héros de `tickDamage`
+ * toutes les `tickEvery` s, SEULEMENT s'il est à l'intérieur. Sa source peut mourir : la flaque
+ * reste (elle est au sol). Elle s'éteint quand la salle est nettoyée. Les i-frames (dash, coup
+ * reçu) protègent sans compter d'esquive : traverser une flaque n'est pas une esquive parfaite.
+ */
+function burnHazard(game, h, dt) {
+  const p = game.player;
+  h.burnT += dt;
+  if (h.burnT >= h.linger || game.room.cleared) {
+    h.done = true;
+    return;
+  }
+  h.tickT += dt;
+  if (h.tickT < h.tickEvery) return;
+  h.tickT -= h.tickEvery;
+  if (!h.hitsPlayer || p.state === 'dead' || p.iframes > 0 || !inHazard(h, p.x, p.y, p.r)) return;
+  hurtPlayerFor(game, h.sourceId, h.tickDamage, { kind: h.kind, id: h.id, x: h.x, y: h.y });
+}
+
 export function updateHazards(game, dt) {
   const p = game.player;
   for (const h of game.hazards) {
     if (h.done) continue;
+    if (h.burning) {
+      burnHazard(game, h, dt);
+      continue;
+    }
     // Source morte ou étourdie pendant le télégraphe : l'attaque est annulée (punition récompensée).
     if (h.sourceId) {
       const src = game.enemies.find((e) => e.id === h.sourceId);
@@ -106,10 +148,17 @@ export function updateHazards(game, dt) {
     }
     h.t += dt;
     if (h.t < h.delay) continue;
-    h.done = true;
+    if (h.linger > 0) {
+      // Allumage d'une zone persistante : elle frappe comme les autres, puis reste au sol.
+      h.burning = true;
+      h.burnT = 0;
+      h.tickT = 0;
+    } else {
+      h.done = true;
+    }
     emit(game, 'hazardFire', { id: h.id, kind: h.kind, shape: h.shape, x: h.x, y: h.y, r: h.r, angle: h.angle, length: h.length, width: h.width });
     if (h.hitsPlayer && p.state !== 'dead' && inHazard(h, p.x, p.y, p.r)) {
-      damagePlayer(game, h.damage, { kind: h.kind, id: h.id, x: h.x, y: h.y });
+      hurtPlayerFor(game, h.sourceId, h.damage, { kind: h.kind, id: h.id, x: h.x, y: h.y });
     }
     if (h.hitsEnemies) {
       for (const e of game.enemies) {
@@ -143,4 +192,12 @@ function compactDone(arr) {
 /** Progression 0..1 du télégraphe d'une zone (pour le rendu). */
 export function hazardProgress(h) {
   return h.delay > 0 ? Math.min(1, h.t / h.delay) : 1;
+}
+
+/**
+ * Part 0..1 de vie restante d'une zone persistante allumée (1 = vient de s'allumer, 0 =
+ * éteinte). Le rendu la DESSINE (la flaque se résorbe) : c'est ce que lit l'œil du joueur.
+ */
+export function lingerLeft(h) {
+  return h.burning && h.linger > 0 ? Math.max(0, 1 - h.burnT / h.linger) : 0;
 }

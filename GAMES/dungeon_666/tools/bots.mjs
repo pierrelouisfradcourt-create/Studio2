@@ -18,7 +18,7 @@
 //   masher  — fonce sur l'ennemi le plus proche et tape sans arrêt, dash aléatoire rare.
 
 import { DT, emptyInput, applyCommand } from '../src/sim/game.mjs';
-import { hazardProgress } from '../src/sim/projectiles.mjs';
+import { hazardProgress, lingerLeft } from '../src/sim/projectiles.mjs';
 import { pointSegDist2, dist2, clamp } from '../src/core/math.mjs';
 
 // ---------------------------------------------------------------- constantes de jeu du bot
@@ -58,6 +58,11 @@ const REACH_MARGIN = 6; // u retirées à la portée du coup 1 pour attaquer « 
 const PUNISH_BONUS = 220; // priorité d'une cible sonnée (u équivalentes)
 const ARCHER_BONUS = 50;
 const EXPLODER_BONUS = 40;
+const PYROMANCER_BONUS = 70; // une lanceuse de zones fragile : on la presse
+const NECROMANCER_BONUS = 140; // l'invocateur d'abord : chaque seconde de vie = des diablotins
+const CHANNEL_BONUS = 80; // en pleine canalisation (alerte violette visible) : le punir l'annule
+const SHIELD_PENALTY = 400; // bulle d'immunité visible : frapper ailleurs en attendant
+const POOL_WEIGHT = 1.5; // poids d'une seconde passée dans une flaque brûlante (vs un coup)
 const AVOID_PENALTY = 500; // une brute qui frappe ou un possédé qui gonfle : on s'écarte
 const STICKY_BONUS = 35; // garder la même cible évite les hésitations
 const RETREAT_DIST = 170; // u : distance de recul face à une menace de zone
@@ -89,7 +94,9 @@ const HEAL_DOOR_HP = 0.5;
 const ELITE_DOOR_HP = 0.75;
 
 // Préférences de porte (bonus additif, + un bruit déterministe pour varier les runs).
-const DOOR_PREFS = { boon: 3, loot: 2.5, event: 2, elite: 1.6, gold: 1.2, heal: 0.6, shop: 1.5, boss: 10 };
+// Le portail de la Ville (après un Gardien) termine le run : un bot qui mesure la descente
+// prend toujours la suite (sinon la partie quitte le donjon et l'épisode ne finit jamais).
+const DOOR_PREFS = { boon: 3, loot: 2.5, event: 2, elite: 1.6, gold: 1.2, heal: 0.6, shop: 1.5, boss: 10, town: -100 };
 const DOOR_NOISE = 1.2;
 const DOOR_URGENT_HEAL = 4; // blessé : la porte de soin passe devant tout
 const DOOR_URGENT_SHOP = 2;
@@ -326,23 +333,41 @@ function hazardRemaining(h) {
   return prog >= 1 ? 0 : (h.t * (1 - prog)) / prog;
 }
 
-function hazardThreat(h, r) {
-  if (h.done || !h.hitsPlayer || h.t < REACTION_TIME) return null;
-  const tI = Math.max(0, hazardRemaining(h));
-  if (tI > HORIZON) return null;
-  let test;
-  if (h.shape === 'circle') test = (x, y) => discDepth(x, y, h.x, h.y, h.r + r);
-  else if (h.shape === 'ring') {
-    test = (x, y) => {
+/** Test de profondeur (0..1) d'un point dans la zone `h`, rayon du héros `r` compris. */
+function hazardTest(h, r) {
+  if (h.shape === 'circle') return (x, y) => discDepth(x, y, h.x, h.y, h.r + r);
+  if (h.shape === 'ring') {
+    return (x, y) => {
       const d = Math.sqrt(dist2(x, y, h.x, h.y));
       return d < h.r + r && d > h.inner - r ? 1 - Math.abs(d - (h.r + h.inner) / 2) / ((h.r - h.inner) / 2 + r) : 0;
     };
-  } else {
-    const ex = h.x + Math.cos(h.angle) * h.length;
-    const ey = h.y + Math.sin(h.angle) * h.length;
-    test = (x, y) => segDepth(x, y, h.x, h.y, ex, ey, h.width / 2 + r);
   }
-  return zone(test, tI - ZONE_SLACK, tI + FRAME_SPAN);
+  const ex = h.x + Math.cos(h.angle) * h.length;
+  const ey = h.y + Math.sin(h.angle) * h.length;
+  return (x, y) => segDepth(x, y, h.x, h.y, ex, ey, h.width / 2 + r);
+}
+
+/** Flaque persistante : le danger est le TEMPS passé dedans entre t0 et t1 (pas un coup unique). */
+function pool(test, t0, t1) {
+  return { type: 'pool', test, t0: Math.max(0, t0), t1 };
+}
+
+/**
+ * Menaces d'une zone : son impact (télégraphe), puis, pour une zone persistante, la flaque qui
+ * reste au sol. Une flaque allumée se lit à sa jauge de temps restant (dessinée par le rendu).
+ */
+function hazardThreats(h, r, out) {
+  if (h.done || !h.hitsPlayer) return;
+  const test = hazardTest(h, r);
+  if (h.burning) {
+    out.push(pool(test, 0, lingerLeft(h) * h.linger));
+    return;
+  }
+  if (h.t < REACTION_TIME) return;
+  const tI = Math.max(0, hazardRemaining(h));
+  if (tI > HORIZON) return;
+  out.push(zone(test, tI - ZONE_SLACK, tI + FRAME_SPAN));
+  if (h.linger > 0) out.push(pool(test, tI, tI + h.linger));
 }
 
 /** Ruée télégraphiée par un cône : le corps de l'ennemi file le long de l'axe du cône. */
@@ -404,10 +429,7 @@ function perceiveThreats(game, mem) {
   const p = game.player;
   const r = p.r + SAFETY_MARGIN;
   const out = [];
-  for (const h of game.hazards) {
-    const th = hazardThreat(h, r);
-    if (th) out.push(th);
-  }
+  for (const h of game.hazards) hazardThreats(h, r, out);
   for (const e of game.enemies) {
     if (e.dead || e.spawnT > 0) continue;
     if (e.tele) {
@@ -508,17 +530,37 @@ function threatHitTime(th, traj, invulT) {
   return -1;
 }
 
+/** Secondes (pondérées par la profondeur) passées dans une flaque, hors invulnérabilité. */
+function poolExposure(th, traj, invulT) {
+  const k0 = Math.max(0, Math.floor(th.t0 * SAMPLE_HZ));
+  const k1 = Math.min(SAMPLES, Math.ceil(th.t1 * SAMPLE_HZ));
+  let s = 0;
+  for (let k = k0; k <= k1; k++) {
+    if (k / SAMPLE_HZ < invulT) continue;
+    const depth = th.test(traj[2 * k], traj[2 * k + 1]);
+    if (depth > 0) s += (DEPTH_BASE + depth) * FRAME_SPAN;
+  }
+  return s;
+}
+
 function evaluate(traj, threats, invulT) {
   let danger = 0;
   let firstHit = Infinity;
+  let pooled = 0; // part du danger qui vient des flaques (on en sort à pied, jamais en dash)
   for (const th of threats) {
+    if (th.type === 'pool') {
+      const s = poolExposure(th, traj, invulT);
+      danger += s * POOL_WEIGHT;
+      pooled += s;
+      continue;
+    }
     const hit = threatHitTime(th, traj, invulT);
     if (hit < 0) continue;
     // Un coup proche pèse plus lourd ; être au bord de la zone vaut mieux qu'en son cœur.
     danger += (DEPTH_BASE + hitDepth) * (1 + HORIZON - hit);
     firstHit = Math.min(firstHit, hit);
   }
-  return { danger, firstHit };
+  return { danger, firstHit, pooled };
 }
 
 /** Balaye les directions (et l'immobilité) ; rend le meilleur geste au sens danger + écart au plan. */
@@ -533,7 +575,7 @@ function scanMoves(game, mem, threats, intentDir, lockT, dash, invulT) {
     const still = d.x === 0 && d.y === 0;
     const deviation = intentDir.l > 0 ? (still ? 1 : 1 - (d.x * intentDir.x + d.y * intentDir.y)) : still ? 0 : IDLE_MOVE_COST;
     const score = ev.danger * DANGER_WEIGHT + deviation + wallPenalty(room, buf[2 * SAMPLES], buf[2 * SAMPLES + 1]);
-    if (!best || score < best.score) best = { x: d.x, y: d.y, score, danger: ev.danger, firstHit: ev.firstHit };
+    if (!best || score < best.score) best = { x: d.x, y: d.y, score, danger: ev.danger, firstHit: ev.firstHit, pooled: ev.pooled };
   }
   return best;
 }
@@ -548,8 +590,9 @@ function planIsSafe(game, mem, threats, intent, dir, lock, invul, opts) {
   const plan = evaluate(mem.buf, threats, invul);
   if (plan.danger === 0) return true;
   // Un dash disponible annule n'importe quelle attaque : on continue de frapper tant que
-  // le coup adverse n'est pas imminent (le jeu « attaque puis dash » à la Hades).
-  return opts.dash && canDashNow(game) && plan.firstHit > DASH_TRIGGER + DASH_CANCEL_MARGIN;
+  // le coup adverse n'est pas imminent (le jeu « attaque puis dash » à la Hades). Une flaque,
+  // elle, brûle tant qu'on y reste : le dash n'y change rien, le plan n'est pas sûr.
+  return opts.dash && canDashNow(game) && plan.pooled === 0 && plan.firstHit > DASH_TRIGGER + DASH_CANCEL_MARGIN;
 }
 
 /** Retient une direction d'esquive sûre pour COMMIT_TIME (anti-hésitation). */
@@ -604,6 +647,8 @@ function planEvasion(game, mem, threats, intent, opts) {
   const input = emptyInput();
   input.moveX = walk.x;
   input.moveY = walk.y;
+  // Contourner une flaque n'empêche pas de frapper ce qui est à portée (aucun coup n'arrive).
+  if (walk.firstHit === Infinity) input.attack = intent.attack;
   if (walk.danger === 0 || walk.firstHit > DASH_TRIGGER) return input;
   return emergencyDodge(game, mem, threats, ref, walk, invul, opts, input);
 }
@@ -623,6 +668,11 @@ function pickTarget(game, mem, enemies) {
     if (e.stun > 0) score -= PUNISH_BONUS;
     if (e.kind === 'archer') score -= ARCHER_BONUS;
     if (e.kind === 'exploder' && !e.tele) score -= EXPLODER_BONUS;
+    if (e.kind === 'pyromancer') score -= PYROMANCER_BONUS;
+    if (e.kind === 'necromancer') score -= NECROMANCER_BONUS;
+    // Canalisation visible (alerte violette du nécromancien, anneau de l'élite invocateur).
+    if ((e.kind === 'necromancer' && e.tele?.harmless) || e.modPhase === 'channel') score -= CHANNEL_BONUS;
+    if (e.invuln > 0 && !e.boss) score += SHIELD_PENALTY; // bulle d'immunité dessinée
     if (isWindingDanger(e)) score += AVOID_PENALTY;
     if (e.id === mem.targetId) score -= STICKY_BONUS;
     if (score < bestScore) {

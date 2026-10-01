@@ -14,6 +14,7 @@ import { floorScaling } from './floors.mjs';
 import { updateBoss } from './boss.mjs';
 import { MELEE_KINDS, SHOOTER_KINDS, speedOf, windupOf, activeAttackers, activeShooters, setState, toPlayer, steer, trackUntilLock } from './ai_common.mjs';
 import { EXTRA_FOES } from './foes.mjs';
+import { updateEliteMod, foeDealt } from './foe_elites.mjs';
 
 const BURN_TICK = 0.25;
 
@@ -103,6 +104,8 @@ export function updateEnemies(game, dt) {
     e.cooldown = Math.max(0, e.cooldown - dt);
     e.vx = 0;
     e.vy = 0;
+    // Champions V2 (bouclier, invocateur, vampirique) : foe_elites.mjs.
+    if (e.eliteMod && p.state !== 'dead') updateEliteMod(game, e, dt);
     if (e.stun > 0) {
       e.stun -= dt;
       e.tele = null;
@@ -112,7 +115,11 @@ export function updateEnemies(game, dt) {
       }
     } else if (p.state !== 'dead') {
       if (e.boss) updateBoss(game, e, dt);
-      else AI[e.kind](game, e, t.enemies[e.kind], dt);
+      else {
+        const hp0 = p.hp;
+        AI[e.kind](game, e, t.enemies[e.kind], dt);
+        if (e.eliteMod && p.hp < hp0) foeDealt(game, e, hp0 - p.hp); // coup direct qui a porté
+      }
     }
     integrate(game, e, dt);
   }

@@ -3,4 +3,7 @@
 // Chaque entrée : { kind, ai(game, e, def, dt), melee?: bool, shooter?: bool }.
 // Les données (PV, vitesses, télégraphes…) vivent dans tuning.enemies[kind] (config.mjs).
 
-export const EXTRA_FOES = [];
+import { PYROMANCER } from './foe_pyromancer.mjs';
+import { NECROMANCER } from './foe_necromancer.mjs';
+
+export const EXTRA_FOES = [PYROMANCER, NECROMANCER];
