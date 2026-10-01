@@ -145,7 +145,9 @@ async function phoneRun(browser, base) {
     await touch.tap(6, bb0.x + bb0.width / 2, bb0.y + bb0.height / 2, 30);
     await page.waitForTimeout(80);
     check('menu tout juste ouvert : un tap réflexe ne choisit rien', (await state(page)).mode === 'choice');
-    await page.waitForTimeout(400);
+    // Le tap réflexe a relancé l'armement : on attend que le panneau réponde (classe .arming retirée).
+    await page.waitForFunction(() => !document.querySelector('#overlay.arming'), null, { timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(50);
     await shot(page, '04_menu_recompense');
     const bb = await card.boundingBox();
     await touch.tap(6, bb.x + bb.width / 2, bb.y + bb.height / 2);
@@ -288,6 +290,32 @@ async function bundleRun(browser) {
   await ctx.close();
 }
 
+/** Dash martelé (4 Hz) en arrivant sur la récompense : le panneau s'ouvre, rien n'est choisi. */
+async function mashRun(browser, base) {
+  const ctx = await browser.newContext(PHONE);
+  const page = await ctx.newPage();
+  const errors = watchErrors(page);
+  await page.goto(`${base}/?seed=4242&autostart=1&tune=0`);
+  await page.waitForTimeout(800);
+  await page.evaluate(() => window.__d666.killAll());
+  await page.waitForTimeout(1200);
+  const it = await page.evaluate(() => ({ x: window.__d666.game.room.interact.x, y: window.__d666.game.room.interact.y }));
+  // Le héros fonce vers la récompense : le panneau s'ouvre au milieu de la rafale de dash.
+  await page.evaluate(([x, y]) => { window.__d666.teleport(x - 200, y); window.__d666.game.player.facing = 0; }, [it.x, it.y]);
+  await page.waitForTimeout(200);
+  const touch = await createTouch(page);
+  await touch.down(40, 120, 300);
+  await touch.move(40, 170, 300);
+  for (let i = 0; i < 8; i++) {
+    await touch.tap(2 + i, DASH.x, DASH.y, 50);
+    await page.waitForTimeout(200);
+  }
+  await touch.up(40);
+  const s = await page.evaluate(() => ({ mode: window.__d666.game.mode, boons: window.__d666.game.run.boons.length }));
+  check('dash martelé à l\'ouverture du menu : aucun choix à l\'aveugle', s.mode === 'choice' && s.boons === 0 && errors.length === 0, `mode=${s.mode} bénédictions=${s.boons}`);
+  await ctx.close();
+}
+
 async function main() {
   await mkdir(SHOTS, { recursive: true });
   const server = await startServer(PORT);
@@ -296,6 +324,7 @@ async function main() {
   const base = `http://localhost:${PORT}`;
   try {
     await phoneRun(browser, base);
+    await mashRun(browser, base);
     await portraitRun(browser, base);
     await desktopRun(browser, base);
     await arenaRun(browser, base);

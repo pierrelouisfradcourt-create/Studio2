@@ -16,12 +16,15 @@ export const DEFAULT_TUNING = {
     accelTime: 0.083, // s pour atteindre la vitesse max depuis l'arrêt (5 images)
     decelTime: 0.05, // s pour s'arrêter (3 images) : l'arrêt net fait la nervosité
     // Vitesse pendant une attaque. Sur tactile on MAINTIENT l'attaque : à 0,2 le héros devenait
-    // plus lent qu'un diablotin (critique « fun »). 0,4 garde le combo mobile sans rendre le
-    // dash superflu (à 0,5 l'oracle de solvabilité mesurait un dash qui ne vaut plus rien).
-    attackMoveMult: 0.4,
+    // plus lent qu'un diablotin (critique « fun »). 0,5 garde le combo mobile ; l'oracle de
+    // solvabilité mesure que le dash reste décisif (×4,5 de dégâts reçus sans lui).
+    attackMoveMult: 0.5,
     hurtIframes: 0.6, // invulnérabilité après un coup reçu
     hurtHitstop: 0.083, // gel global quand le héros est touché : il DOIT le sentir
     inputBuffer: 0.15, // une action pressée trop tôt reste en mémoire
+    // Attaque et Lance tapées pendant un coup engagé : le finisher verrouille 0,32 s, un tampon
+    // de 0,15 s y perdait un tap sur trois (revue « feel »). Dash et Super gardent 0,15 s.
+    attackBuffer: 0.35,
     innateHp: 45, // PV sans armure ; l'armure de départ en apporte 55
   },
   // Arme : les dégâts du combo sont donnés pour une arme de base `weaponBase`, puis mis à
@@ -47,15 +50,15 @@ export const DEFAULT_TUNING = {
   },
   // Combo de 3 coups. arc en degrés. lunge = petit déplacement vers l'avant au début de l'actif.
   combo: [
-    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 10, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.12 },
-    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 11, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.12 },
-    { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.3 },
+    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 10, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
+    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 11, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
+    { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.45 },
   ],
   comboResetTime: 0.32, // au-delà, le prochain coup repart du coup 1
   // Fraction de la récupération à jouer avant que le coup suivant puisse partir (le dash, lui,
   // annule tout). Le finisher (coup 3) engage davantage ; le dash reste la sortie rapide.
   comboCancelFrom: { hits: [0.3, 0.3, 0.6], strike: 0.3 },
-  dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.22 },
+  dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.35 },
   wallSlam: { minSpeed: 380, damage: 8, stun: 0.45, hitstop: 0.05 },
   // Visée assistée : la mêlée ne se tourne que vers ce qu'elle peut atteindre ; la Lance voit loin.
   autoAim: { range: 160, skillRange: 520, coneDeg: 80, movePreference: 0.35 },
@@ -76,7 +79,7 @@ export const DEFAULT_TUNING = {
     archer: {
       name: 'Archer squelette', radius: 14, hp: 20, speed: 135, mass: 1, damage: 10,
       preferredDist: 260, fleeDist: 170, windup: 0.62, lockAt: 0.75, recover: 0.35, cooldown: 1.7,
-      projSpeed: 380, projRadius: 7, projRange: 700, teleLength: 240,
+      projSpeed: 380, projRadius: 7, projRange: 700, teleLength: 560, // ligne de visée jusqu'au héros (p90 des tirs)
       gold: [1, 3],
     },
     brute: {
@@ -96,26 +99,28 @@ export const DEFAULT_TUNING = {
     },
   },
   elite: {
-    hpMult: 2.4, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
+    hpMult: 1.8, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
     // Modificateurs façon champions Diablo : un seul par élite dans le prototype.
     mods: {
       // Les télégraphes ne sont JAMAIS raccourcis (équité) : « rapide » accélère le déplacement.
       rapide: { speedMult: 1.45, windupMult: 1 },
-      blinde: { damageTakenMult: 0.7, knockbackMult: 0.25 },
+      blinde: { damageTakenMult: 0.8, knockbackMult: 0.25 }, // le recul ×0,25 fait son identité, pas un sac à PV
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
     },
   },
   boss: {
     gardien: {
       name: 'Charon, le Passeur', radius: 40, hp: 1700, speed: 105, mass: 12, damage: 20,
+      hitstopCap: 0.075, // gel max d'un coup sur le Gardien : le finisher (0,085) garde son poids
       phase2At: 0.66,
       phase3At: 0.33,
       transition: 1.5, // s d'invulnérabilité au changement de phase (rugissement, projectiles effacés)
       reinforcements: { 2: ['imp', 'imp', 'imp', 'imp'], 3: ['archer', 'archer', 'exploder', 'exploder'] },
       phaseHealOrb: 15,
       slam: { windup: 0.75, radius: 120, count: 3, interval: 0.45, damage: 20 },
-      charge: { windup: 0.8, speed: 820, maxTime: 1.0, damage: 22, wallStun: 1.6, width: 70 },
-      ring: { windup: 0.7, bullets: 18, gapCount: 3, speed: 260, radius: 9, damage: 12, waves: 2, waveInterval: 0.5 },
+      charge: { windup: 0.8, speed: 820, maxTime: 1.0, damage: 22, wallStun: 1.6, width: 88 }, // ≥ 2 × (rayon + 4) : le bord dessiné est le bord qui touche
+      // teleRadius : cercle d'alerte, affiché aussi ENTRE les vagues tant que la salve continue.
+      ring: { windup: 0.7, bullets: 18, gapCount: 3, speed: 260, radius: 9, damage: 12, waves: 2, waveInterval: 0.5, teleRadius: 90 },
       summon: { windup: 0.9, count: 3, kind: 'imp' },
       restBetween: [0.6, 1.1],
       restMultByPhase: [1, 0.8, 0.6], // pauses plus courtes à chaque phase…

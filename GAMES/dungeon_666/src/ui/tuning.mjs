@@ -1,3 +1,5 @@
+import { onActivate } from './menus.mjs';
+
 // Panneau de réglage du feel, pour le playtest : chaque curseur modifie `game.tuning` en
 // direct (la copie de la partie, jamais les valeurs par défaut). Les réglages sont gardés
 // dans le navigateur du testeur, et un bouton les copie au format JSON pour les rapporter.
@@ -113,7 +115,8 @@ export function buildTuningPanel(p, { getTuning, defaults, onClose }) {
   copy.type = 'button';
   copy.className = 'btn';
   copy.textContent = 'Copier les réglages';
-  copy.addEventListener('click', async () => {
+  // Activation au doigt (même avec le pouce gauche posé sur le joystick), comme les autres menus.
+  onActivate(copy, async () => {
     const json = JSON.stringify(loadTuningOverrides(), null, 1);
     try {
       await navigator.clipboard.writeText(json);
@@ -126,7 +129,7 @@ export function buildTuningPanel(p, { getTuning, defaults, onClose }) {
   reset.type = 'button';
   reset.className = 'btn';
   reset.textContent = 'Valeurs par défaut';
-  reset.addEventListener('click', () => {
+  onActivate(reset, () => {
     // Valeurs EXACTES des défauts, sans passer par le pas du curseur ni réécrire de surcharge.
     for (const key of Object.keys(overrides)) delete overrides[key];
     saveOverrides({});
@@ -145,7 +148,7 @@ export function buildTuningPanel(p, { getTuning, defaults, onClose }) {
   close.type = 'button';
   close.className = 'btn primary';
   close.textContent = 'Fermer';
-  close.addEventListener('click', onClose);
+  onActivate(close, onClose);
   actions.append(close, copy, reset);
   p.appendChild(actions);
 }

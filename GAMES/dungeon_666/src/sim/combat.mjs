@@ -11,7 +11,6 @@ const PROC_SOURCES = new Set(['melee', 'strike', 'skill', 'gadget', 'super']);
 // Sources qui ne remplissent pas la jauge de Super (sinon le Super se recharge lui-même).
 const NO_SUPER_CHARGE = new Set(['super', 'burn', 'blast', 'chain']);
 const ARMOR_CAP = 0.6;
-const BOSS_HITSTOP_CAP = 0.05; // frapper un boss ne casse pas le rythme de ses patterns
 
 /** Gel d'impact des coups du héros, puisé dans une réserve qui se recharge (anti-diaporama). */
 export function applyHitstop(game, h) {
@@ -94,7 +93,7 @@ export function damageEnemy(game, e, src) {
     e.state = 'stunned';
     e.stateTime = 0;
   }
-  if (src.hitstop) applyHitstop(game, e.boss ? Math.min(src.hitstop, BOSS_HITSTOP_CAP) : src.hitstop);
+  if (src.hitstop) applyHitstop(game, e.boss ? Math.min(src.hitstop, t.boss[e.kind].hitstopCap) : src.hitstop);
 
   const tel = game.telemetry;
   tel.damageDealt += amount;

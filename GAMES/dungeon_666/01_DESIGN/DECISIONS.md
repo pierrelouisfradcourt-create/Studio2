@@ -13,13 +13,13 @@ défauts sont **réversibles** : ce sont des valeurs de `src/sim/config.mjs`, ou
 | D6 | **Moteur cible** | Prototype web (canvas 2D) : testable sur n'importe quel téléphone en un lien, simulation isolée et portable. | Port Godot 4 (export Android/iOS natif) une fois le feel validé. | Après le verdict de feel. |
 | D7 | **Place dans le studio** | Hors du rail (`RAIL_REGISTER.md`) et hors de la Forge (`forge/oracles.json` est une surface protégée) : oracles locaux (`node run-oracle.mjs`). | L'inscrire au portefeuille, ou en faire un brief Forge (`EVIDENCE/briefs/dungeon_666/`). | Décision de portefeuille. |
 | D8 | **Gel d'impact** | Gel global (coups 0,04 s, 3ᵉ coup 0,085 s), plafonné par une réserve de 0,22 s qui se recharge. Le dash l'interrompt. | Gel local (attaquant + cible seulement), recommandé par le spécialiste juice : plus fluide en mêlée, plus complexe. | Mêlée de 6 ennemis : est-ce que ça « colle » ? |
-| D9 | **Mobilité pendant le combo** | On garde 40 % de la vitesse en attaquant (`player.attackMoveMult`). Le coup suivant part après 30 % de la récupération (60 % après le 3ᵉ coup, `comboCancelFrom`). | 50 % de vitesse et des annulations plus tôt : plus mobile, mais l'oracle mesure alors un dash qui ne vaut plus que ×1,6–1,7 (seuil ×2). À 20 % (valeur initiale), le héros était plus lent qu'un diablotin. | Arène d'essai, combo maintenu : le dash reste-t-il le réflexe ? |
+| D9 | **Mobilité pendant le combo** | On garde 50 % de la vitesse en attaquant (`player.attackMoveMult`). Le coup suivant part après 30 % de la récupération (60 % après le 3ᵉ coup, `comboCancelFrom`) ; le dash, lui, annule tout. | Plus lent (40 %) : le dash pèse encore plus, le combo colle davantage au sol. À 20 % (valeur initiale), le héros était plus lent qu'un diablotin. | Arène d'essai, combo maintenu : le dash reste-t-il le réflexe ? |
 
 ## Ce qui est mesuré, et ce qui ne l'est pas
 
 - **Mesuré (bots, `node solvability.mjs` et `node tools/playtest.mjs`)** :
   - la section 1 est battable ;
-  - **ne jamais dasher fait prendre environ 2,4 fois plus de dégâts** (seuil de l'oracle : 2) ;
+  - **ne jamais dasher fait prendre environ 4,5 fois plus de dégâts** (seuil de l'oracle : 2) ;
   - un joueur qui martèle sans lire les télégraphes meurt presque toujours ;
   - aucune partie bloquée sur 60 parties ;
   - la cadence du Super est d'environ 4 à 5 par section (bot habile).

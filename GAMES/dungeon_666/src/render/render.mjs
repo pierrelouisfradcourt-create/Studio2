@@ -363,10 +363,25 @@ function drawTelegraphs(ctx, game) {
   for (const e of game.enemies) {
     const t = e.tele;
     if (!t || e.dead) continue;
-    if (t.shape === 'cone') drawCone(ctx, e.x, e.y, t.angle, t.range, t.arc, t.progress);
+    if (t.harmless) drawHarmlessCircle(ctx, e.x, e.y, t.r, t.progress);
+    else if (t.shape === 'cone') drawCone(ctx, e.x, e.y, t.angle, t.range, t.arc, t.progress);
     else if (t.shape === 'line') drawLine(ctx, e.x, e.y, t.angle, t.length, t.width, t.progress);
     else drawCircleDanger(ctx, e.x, e.y, t.r, t.progress);
   }
+}
+
+/** Alerte sans danger (invocation) : violet, sans remplissage rouge. Rouge = ça fait mal. */
+function drawHarmlessCircle(ctx, x, y, r, progress) {
+  ctx.strokeStyle = PAL.summon;
+  ctx.globalAlpha = 0.35 + 0.5 * Math.min(1, progress);
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(0.1, r * Math.min(1, progress)), 0, TAU);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 }
 
 /** Contours seuls des télégraphes, retracés au-dessus du héros et des ennemis : le bord reste lisible. */
@@ -384,7 +399,7 @@ function drawTelegraphEdges(ctx, game) {
   }
   for (const e of game.enemies) {
     const t = e.tele;
-    if (!t || e.dead) continue;
+    if (!t || e.dead || t.harmless) continue;
     if (t.shape === 'cone') {
       const a0 = t.angle - t.arc / 2;
       ctx.moveTo(e.x + Math.cos(a0) * t.range, e.y + Math.sin(a0) * t.range);

@@ -31,6 +31,7 @@ export const PAL = {
   enemyOutline: '#140507',
   enemyFlash: '#ffc9b0', // flash d'impact : chaud, jamais le blanc froid du héros
   impactRing: '#ffd2a8',
+  summon: '#b48cff', // alertes sans danger (invocation)
   arrow: '#ff8a2a',
   bossOrb: '#ff3cbe',
 

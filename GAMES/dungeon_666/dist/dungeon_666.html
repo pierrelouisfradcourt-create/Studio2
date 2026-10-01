@@ -445,12 +445,15 @@ const DEFAULT_TUNING = {
     accelTime: 0.083, // s pour atteindre la vitesse max depuis l'arrêt (5 images)
     decelTime: 0.05, // s pour s'arrêter (3 images) : l'arrêt net fait la nervosité
     // Vitesse pendant une attaque. Sur tactile on MAINTIENT l'attaque : à 0,2 le héros devenait
-    // plus lent qu'un diablotin (critique « fun »). 0,4 garde le combo mobile sans rendre le
-    // dash superflu (à 0,5 l'oracle de solvabilité mesurait un dash qui ne vaut plus rien).
-    attackMoveMult: 0.4,
+    // plus lent qu'un diablotin (critique « fun »). 0,5 garde le combo mobile ; l'oracle de
+    // solvabilité mesure que le dash reste décisif (×4,5 de dégâts reçus sans lui).
+    attackMoveMult: 0.5,
     hurtIframes: 0.6, // invulnérabilité après un coup reçu
     hurtHitstop: 0.083, // gel global quand le héros est touché : il DOIT le sentir
     inputBuffer: 0.15, // une action pressée trop tôt reste en mémoire
+    // Attaque et Lance tapées pendant un coup engagé : le finisher verrouille 0,32 s, un tampon
+    // de 0,15 s y perdait un tap sur trois (revue « feel »). Dash et Super gardent 0,15 s.
+    attackBuffer: 0.35,
     innateHp: 45, // PV sans armure ; l'armure de départ en apporte 55
   },
   // Arme : les dégâts du combo sont donnés pour une arme de base `weaponBase`, puis mis à
@@ -476,15 +479,15 @@ const DEFAULT_TUNING = {
   },
   // Combo de 3 coups. arc en degrés. lunge = petit déplacement vers l'avant au début de l'actif.
   combo: [
-    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 10, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.12 },
-    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 11, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.12 },
-    { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.3 },
+    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 10, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
+    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 11, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
+    { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.45 },
   ],
   comboResetTime: 0.32, // au-delà, le prochain coup repart du coup 1
   // Fraction de la récupération à jouer avant que le coup suivant puisse partir (le dash, lui,
   // annule tout). Le finisher (coup 3) engage davantage ; le dash reste la sortie rapide.
   comboCancelFrom: { hits: [0.3, 0.3, 0.6], strike: 0.3 },
-  dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.22 },
+  dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.35 },
   wallSlam: { minSpeed: 380, damage: 8, stun: 0.45, hitstop: 0.05 },
   // Visée assistée : la mêlée ne se tourne que vers ce qu'elle peut atteindre ; la Lance voit loin.
   autoAim: { range: 160, skillRange: 520, coneDeg: 80, movePreference: 0.35 },
@@ -505,7 +508,7 @@ const DEFAULT_TUNING = {
     archer: {
       name: 'Archer squelette', radius: 14, hp: 20, speed: 135, mass: 1, damage: 10,
       preferredDist: 260, fleeDist: 170, windup: 0.62, lockAt: 0.75, recover: 0.35, cooldown: 1.7,
-      projSpeed: 380, projRadius: 7, projRange: 700, teleLength: 240,
+      projSpeed: 380, projRadius: 7, projRange: 700, teleLength: 560, // ligne de visée jusqu'au héros (p90 des tirs)
       gold: [1, 3],
     },
     brute: {
@@ -525,26 +528,28 @@ const DEFAULT_TUNING = {
     },
   },
   elite: {
-    hpMult: 2.4, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
+    hpMult: 1.8, damageMult: 1.25, sizeMult: 1.25, goldMult: 3,
     // Modificateurs façon champions Diablo : un seul par élite dans le prototype.
     mods: {
       // Les télégraphes ne sont JAMAIS raccourcis (équité) : « rapide » accélère le déplacement.
       rapide: { speedMult: 1.45, windupMult: 1 },
-      blinde: { damageTakenMult: 0.7, knockbackMult: 0.25 },
+      blinde: { damageTakenMult: 0.8, knockbackMult: 0.25 }, // le recul ×0,25 fait son identité, pas un sac à PV
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
     },
   },
   boss: {
     gardien: {
       name: 'Charon, le Passeur', radius: 40, hp: 1700, speed: 105, mass: 12, damage: 20,
+      hitstopCap: 0.075, // gel max d'un coup sur le Gardien : le finisher (0,085) garde son poids
       phase2At: 0.66,
       phase3At: 0.33,
       transition: 1.5, // s d'invulnérabilité au changement de phase (rugissement, projectiles effacés)
       reinforcements: { 2: ['imp', 'imp', 'imp', 'imp'], 3: ['archer', 'archer', 'exploder', 'exploder'] },
       phaseHealOrb: 15,
       slam: { windup: 0.75, radius: 120, count: 3, interval: 0.45, damage: 20 },
-      charge: { windup: 0.8, speed: 820, maxTime: 1.0, damage: 22, wallStun: 1.6, width: 70 },
-      ring: { windup: 0.7, bullets: 18, gapCount: 3, speed: 260, radius: 9, damage: 12, waves: 2, waveInterval: 0.5 },
+      charge: { windup: 0.8, speed: 820, maxTime: 1.0, damage: 22, wallStun: 1.6, width: 88 }, // ≥ 2 × (rayon + 4) : le bord dessiné est le bord qui touche
+      // teleRadius : cercle d'alerte, affiché aussi ENTRE les vagues tant que la salve continue.
+      ring: { windup: 0.7, bullets: 18, gapCount: 3, speed: 260, radius: 9, damage: 12, waves: 2, waveInterval: 0.5, teleRadius: 90 },
       summon: { windup: 0.9, count: 3, kind: 'imp' },
       restBetween: [0.6, 1.1],
       restMultByPhase: [1, 0.8, 0.6], // pauses plus courtes à chaque phase…
@@ -922,7 +927,6 @@ const PROC_SOURCES = new Set(['melee', 'strike', 'skill', 'gadget', 'super']);
 // Sources qui ne remplissent pas la jauge de Super (sinon le Super se recharge lui-même).
 const NO_SUPER_CHARGE = new Set(['super', 'burn', 'blast', 'chain']);
 const ARMOR_CAP = 0.6;
-const BOSS_HITSTOP_CAP = 0.05; // frapper un boss ne casse pas le rythme de ses patterns
 
 /** Gel d'impact des coups du héros, puisé dans une réserve qui se recharge (anti-diaporama). */
 function applyHitstop(game, h) {
@@ -1005,7 +1009,7 @@ function damageEnemy(game, e, src) {
     e.state = 'stunned';
     e.stateTime = 0;
   }
-  if (src.hitstop) applyHitstop(game, e.boss ? Math.min(src.hitstop, BOSS_HITSTOP_CAP) : src.hitstop);
+  if (src.hitstop) applyHitstop(game, e.boss ? Math.min(src.hitstop, t.boss[e.kind].hitstopCap) : src.hitstop);
 
   const tel = game.telemetry;
   tel.damageDealt += amount;
@@ -1463,6 +1467,7 @@ function readInput(game, input) {
   const p = game.player;
   const t = game.tuning;
   const buf = t.player.inputBuffer;
+  const lockBuf = t.player.attackBuffer ?? buf; // attaque et Lance attendent la fin d'un coup engagé
   let mx = input.moveX || 0;
   let my = input.moveY || 0;
   const ml = Math.sqrt(mx * mx + my * my);
@@ -1475,8 +1480,8 @@ function readInput(game, input) {
   p.manualAimX = input.aimX || 0;
   p.manualAimY = input.aimY || 0;
   p.attackHeld = !!input.attack;
-  if (input.attackPressed) bufferAction(p, 'attack', buf);
-  if (input.skillPressed && feasibleSoon(game, 'skill', buf)) bufferAction(p, 'skill', buf, input.skillAimX || 0, input.skillAimY || 0);
+  if (input.attackPressed) bufferAction(p, 'attack', lockBuf);
+  if (input.skillPressed && feasibleSoon(game, 'skill', lockBuf)) bufferAction(p, 'skill', lockBuf, input.skillAimX || 0, input.skillAimY || 0);
   if (input.superPressed && feasibleSoon(game, 'super', buf)) bufferAction(p, 'super', buf);
   if (input.dashPressed && feasibleSoon(game, 'dash', buf)) bufferAction(p, 'dash', buf);
   if (input.gadgetPressed) useGadget(game);
@@ -2242,7 +2247,7 @@ function ring(game, e, d, dt) {
   const r = d.ring;
   const windup = r.windup * wmult();
   if (e.patternStep === 0) {
-    e.tele = { shape: 'circle', r: 90, progress: e.stateTime / windup };
+    e.tele = { shape: 'circle', r: r.teleRadius, progress: e.stateTime / windup };
     if (e.stateTime >= windup) {
       e.tele = null;
       e.patternStep = 1;
@@ -2252,6 +2257,9 @@ function ring(game, e, d, dt) {
   }
   e.patternT -= dt;
   const waves = r.waves + (e.phase - 1);
+  // Salve en cours : le cercle d'alerte reste affiché et se remplit avant chaque vague, pour
+  // qu'on ne revienne pas au contact sous le tir suivant.
+  if (e.patternStep <= waves) e.tele = { shape: 'circle', r: r.teleRadius, progress: 1 - Math.max(0, e.patternT) / r.waveInterval };
   if (e.patternStep <= waves && e.patternT <= 0) {
     // Brèches contiguës à un angle aléatoire : il y a toujours un couloir sûr.
     const n = r.bullets;
@@ -2276,7 +2284,8 @@ function ring(game, e, d, dt) {
 function summon(game, e, d) {
   const s = d.summon;
   if (e.patternStep === 0) {
-    e.tele = { shape: 'circle', r: 70, progress: e.stateTime / s.windup };
+    // Invocation : alerte inoffensive, dessinée autrement que le rouge « ça fait mal ».
+    e.tele = { shape: 'circle', r: 70, progress: e.stateTime / s.windup, harmless: true };
     if (e.stateTime >= s.windup) {
       e.tele = null;
       for (let i = 0; i < s.count; i++) {
@@ -4695,7 +4704,7 @@ const TRAUMA_DECAY = 1.8; // trauma perdu par seconde (linéaire)
 const PLAYER_TRAUMA_CAP = 0.55; // les coups du héros ne poussent pas le trauma au-delà
 const KICK_RETURN = 16; // 1/s — retour exponentiel du recul directionnel
 const KICK_CAP = 12; // u — somme des reculs plafonnée
-const SHAKE_FREQ = 31; // Hz approximatifs du bruit de tremblement
+const SHAKE_RATE = 55; // rad/s du bruit de tremblement : fondamentale ≈ 9 Hz, harmoniques jusqu'à ≈ 36 Hz
 const ZOOM_RATE = 9;
 const BOSS_FRAMING = 0.35; // part de l'écart héros -> boss intégrée au cadrage
 const BOSS_ZOOM = 0.88; // léger recul de caméra pendant un combat de boss
@@ -4704,6 +4713,7 @@ const THUMB_OFFSET = 0.05; // fraction de la hauteur visible : le héros est cad
 const THUMB_OFFSET_PORTRAIT = 0.16; // en portrait, les boutons occupent le bas : héros à ~35 % du haut
 const THUMB_BAND = 0.1; // fraction de la vue « hors salle » permise en bas (paysage)
 const THUMB_BAND_PORTRAIT = 0.4; // idem en portrait
+const HERO_PAD = 40; // u : marge minimale entre le héros et le groupe de boutons (paysage tactile)
 
 function createCamera() {
   return { x: 0, y: 0, scale: 1, viewW: 900, viewH: 506, trauma: 0, shakeX: 0, shakeY: 0, rot: 0, zoom: 1, zoomTarget: 1, t: 0, shakeScale: 1, snapped: false, kickX: 0, kickY: 0, bossFrame: 0, baseZoom: 1, rightInsetPx: 0 };
@@ -4775,6 +4785,8 @@ function updateCamera(cam, game, dt) {
     tx += (boss.x - p.x) * BOSS_FRAMING * cam.bossFrame;
     ty += (boss.y - p.y) * BOSS_FRAMING * cam.bossFrame;
   }
+  // Le cadrage du duel ne pousse jamais le héros sous les boutons.
+  if (inset > 0) tx = Math.max(tx, p.x - cam.viewW / (2 * cam.zoom) + inset + HERO_PAD);
   cam.baseZoom = 1 + (BOSS_ZOOM - 1) * cam.bossFrame;
   // Bornes : la salle reste cadrée ; si elle est plus petite que la vue, on la centre.
   const halfW = cam.viewW / (2 * cam.zoom);
@@ -4795,7 +4807,7 @@ function updateCamera(cam, game, dt) {
   cam.t += dt;
   cam.trauma = Math.max(0, cam.trauma - TRAUMA_DECAY * dt);
   const s = cam.trauma * cam.trauma;
-  const ft = cam.t * SHAKE_FREQ * 0.3;
+  const ft = cam.t * SHAKE_RATE;
   cam.shakeX = SHAKE_MAX * s * noise(ft, 1);
   cam.shakeY = SHAKE_MAX * s * noise(ft, 7);
   cam.rot = SHAKE_ROT * s * noise(ft, 13);
@@ -4865,6 +4877,7 @@ const PAL = {
   enemyOutline: '#140507',
   enemyFlash: '#ffc9b0', // flash d'impact : chaud, jamais le blanc froid du héros
   impactRing: '#ffd2a8',
+  summon: '#b48cff', // alertes sans danger (invocation)
   arrow: '#ff8a2a',
   bossOrb: '#ff3cbe',
 
@@ -5773,10 +5786,25 @@ function drawTelegraphs(ctx, game) {
   for (const e of game.enemies) {
     const t = e.tele;
     if (!t || e.dead) continue;
-    if (t.shape === 'cone') drawCone(ctx, e.x, e.y, t.angle, t.range, t.arc, t.progress);
+    if (t.harmless) drawHarmlessCircle(ctx, e.x, e.y, t.r, t.progress);
+    else if (t.shape === 'cone') drawCone(ctx, e.x, e.y, t.angle, t.range, t.arc, t.progress);
     else if (t.shape === 'line') drawLine(ctx, e.x, e.y, t.angle, t.length, t.width, t.progress);
     else drawCircleDanger(ctx, e.x, e.y, t.r, t.progress);
   }
+}
+
+/** Alerte sans danger (invocation) : violet, sans remplissage rouge. Rouge = ça fait mal. */
+function drawHarmlessCircle(ctx, x, y, r, progress) {
+  ctx.strokeStyle = PAL.summon;
+  ctx.globalAlpha = 0.35 + 0.5 * Math.min(1, progress);
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(0.1, r * Math.min(1, progress)), 0, TAU);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 }
 
 /** Contours seuls des télégraphes, retracés au-dessus du héros et des ennemis : le bord reste lisible. */
@@ -5794,7 +5822,7 @@ function drawTelegraphEdges(ctx, game) {
   }
   for (const e of game.enemies) {
     const t = e.tele;
-    if (!t || e.dead) continue;
+    if (!t || e.dead || t.harmless) continue;
     if (t.shape === 'cone') {
       const a0 = t.angle - t.arc / 2;
       ctx.moveTo(e.x + Math.cos(a0) * t.range, e.y + Math.sin(a0) * t.range);
@@ -8152,13 +8180,16 @@ __mod["src/ui/menus.mjs"] = (() => {
 
 const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Lance', passive: 'Passif', super: 'Super' };
 const ARM_MS = 350; // un panneau ne répond qu'après ce délai : jamais de choix « à l'aveugle »
+// Panneaux de choix (bénédiction, butin, autel, marchand) : plus long, et chaque tap reçu pendant
+// l'armement le relance. Un dash martelé à 3-4 Hz qui ouvre le panneau ne choisit donc rien.
+const ARM_CHOICE_MS = 600;
 const REFIRE_MS = 300; // anti double déclenchement (pointerup puis click)
 
 // Instant d'ouverture du panneau courant (armement), partagé par tous ses boutons.
-const arming = { shownAt: 0, noDelay: false };
+const arming = { shownAt: 0, noDelay: false, ms: ARM_MS };
 
 function armed() {
-  return arming.noDelay || performance.now() - arming.shownAt >= ARM_MS;
+  return arming.noDelay || performance.now() - arming.shownAt >= arming.ms;
 }
 
 function el(tag, cls, text) {
@@ -8239,6 +8270,19 @@ function createUI(root, handlers) {
   root.appendChild(panel);
   let shownKey = '';
   let shownKind = '';
+  let armTimer = 0;
+
+  function startArming() {
+    arming.shownAt = performance.now();
+    panel.classList.add('arming');
+    clearTimeout(armTimer);
+    armTimer = setTimeout(() => panel.classList.remove('arming'), arming.ms);
+  }
+
+  // Anti-martelage : tout appui pendant l'armement le prolonge (capture, avant les boutons).
+  panel.addEventListener('pointerdown', () => {
+    if (!armed()) startArming();
+  }, true);
 
   function show(builder, key) {
     if (key === shownKey) return;
@@ -8251,10 +8295,12 @@ function createUI(root, handlers) {
     const refresh = key.startsWith('choice:shop') && shownKind === 'shop';
     shownKind = key.split(':')[1] ?? key;
     arming.noDelay = key.startsWith('title') || key.startsWith('pause') || key === 'tuning' || refresh;
+    arming.ms = key.startsWith('choice') ? ARM_CHOICE_MS : ARM_MS;
     arming.shownAt = performance.now();
-    if (!arming.noDelay) {
-      panel.classList.add('arming');
-      setTimeout(() => panel.classList.remove('arming'), ARM_MS);
+    if (!arming.noDelay) startArming();
+    else {
+      clearTimeout(armTimer);
+      panel.classList.remove('arming');
     }
     const first = panel.querySelector('button:not([disabled])');
     if (first && !handlers.isTouch()) first.focus({ preventScroll: true });
@@ -8426,10 +8472,12 @@ function createUI(root, handlers) {
   return { sync, hide, get visible() { return !panel.hidden; } };
 }
 
-return { createUI };
+return { onActivate, createUI };
 })();
 // ---- src/ui/tuning.mjs
 __mod["src/ui/tuning.mjs"] = (() => {
+const { onActivate } = __mod["src/ui/menus.mjs"];
+
 // Panneau de réglage du feel, pour le playtest : chaque curseur modifie `game.tuning` en
 // direct (la copie de la partie, jamais les valeurs par défaut). Les réglages sont gardés
 // dans le navigateur du testeur, et un bouton les copie au format JSON pour les rapporter.
@@ -8545,7 +8593,8 @@ function buildTuningPanel(p, { getTuning, defaults, onClose }) {
   copy.type = 'button';
   copy.className = 'btn';
   copy.textContent = 'Copier les réglages';
-  copy.addEventListener('click', async () => {
+  // Activation au doigt (même avec le pouce gauche posé sur le joystick), comme les autres menus.
+  onActivate(copy, async () => {
     const json = JSON.stringify(loadTuningOverrides(), null, 1);
     try {
       await navigator.clipboard.writeText(json);
@@ -8558,7 +8607,7 @@ function buildTuningPanel(p, { getTuning, defaults, onClose }) {
   reset.type = 'button';
   reset.className = 'btn';
   reset.textContent = 'Valeurs par défaut';
-  reset.addEventListener('click', () => {
+  onActivate(reset, () => {
     // Valeurs EXACTES des défauts, sans passer par le pas du curseur ni réécrire de surcharge.
     for (const key of Object.keys(overrides)) delete overrides[key];
     saveOverrides({});
@@ -8577,7 +8626,7 @@ function buildTuningPanel(p, { getTuning, defaults, onClose }) {
   close.type = 'button';
   close.className = 'btn primary';
   close.textContent = 'Fermer';
-  close.addEventListener('click', onClose);
+  onActivate(close, onClose);
   actions.append(close, copy, reset);
   p.appendChild(actions);
 }

@@ -15,7 +15,7 @@ const TRAUMA_DECAY = 1.8; // trauma perdu par seconde (linéaire)
 const PLAYER_TRAUMA_CAP = 0.55; // les coups du héros ne poussent pas le trauma au-delà
 const KICK_RETURN = 16; // 1/s — retour exponentiel du recul directionnel
 const KICK_CAP = 12; // u — somme des reculs plafonnée
-const SHAKE_FREQ = 31; // Hz approximatifs du bruit de tremblement
+const SHAKE_RATE = 55; // rad/s du bruit de tremblement : fondamentale ≈ 9 Hz, harmoniques jusqu'à ≈ 36 Hz
 const ZOOM_RATE = 9;
 const BOSS_FRAMING = 0.35; // part de l'écart héros -> boss intégrée au cadrage
 const BOSS_ZOOM = 0.88; // léger recul de caméra pendant un combat de boss
@@ -24,6 +24,7 @@ const THUMB_OFFSET = 0.05; // fraction de la hauteur visible : le héros est cad
 const THUMB_OFFSET_PORTRAIT = 0.16; // en portrait, les boutons occupent le bas : héros à ~35 % du haut
 const THUMB_BAND = 0.1; // fraction de la vue « hors salle » permise en bas (paysage)
 const THUMB_BAND_PORTRAIT = 0.4; // idem en portrait
+const HERO_PAD = 40; // u : marge minimale entre le héros et le groupe de boutons (paysage tactile)
 
 export function createCamera() {
   return { x: 0, y: 0, scale: 1, viewW: 900, viewH: 506, trauma: 0, shakeX: 0, shakeY: 0, rot: 0, zoom: 1, zoomTarget: 1, t: 0, shakeScale: 1, snapped: false, kickX: 0, kickY: 0, bossFrame: 0, baseZoom: 1, rightInsetPx: 0 };
@@ -95,6 +96,8 @@ export function updateCamera(cam, game, dt) {
     tx += (boss.x - p.x) * BOSS_FRAMING * cam.bossFrame;
     ty += (boss.y - p.y) * BOSS_FRAMING * cam.bossFrame;
   }
+  // Le cadrage du duel ne pousse jamais le héros sous les boutons.
+  if (inset > 0) tx = Math.max(tx, p.x - cam.viewW / (2 * cam.zoom) + inset + HERO_PAD);
   cam.baseZoom = 1 + (BOSS_ZOOM - 1) * cam.bossFrame;
   // Bornes : la salle reste cadrée ; si elle est plus petite que la vue, on la centre.
   const halfW = cam.viewW / (2 * cam.zoom);
@@ -115,7 +118,7 @@ export function updateCamera(cam, game, dt) {
   cam.t += dt;
   cam.trauma = Math.max(0, cam.trauma - TRAUMA_DECAY * dt);
   const s = cam.trauma * cam.trauma;
-  const ft = cam.t * SHAKE_FREQ * 0.3;
+  const ft = cam.t * SHAKE_RATE;
   cam.shakeX = SHAKE_MAX * s * noise(ft, 1);
   cam.shakeY = SHAKE_MAX * s * noise(ft, 7);
   cam.rot = SHAKE_ROT * s * noise(ft, 13);

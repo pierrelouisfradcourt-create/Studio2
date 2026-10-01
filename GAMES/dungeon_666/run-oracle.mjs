@@ -22,7 +22,7 @@ import { dirname } from 'node:path';
 const GAME_DIR = dirname(fileURLToPath(import.meta.url));
 
 const STEPS = [
-  { label: 'règles (tests unitaires)', argv: ['node', '--test', 'tests/logic.test.mjs'], gating: true },
+  { label: 'règles (tests unitaires)', argv: ['node', '--test', 'tests/logic.test.mjs', 'tests/feel_review.test.mjs'], gating: true },
   { label: 'propriétés', argv: ['node', '--test', 'tests/properties.test.mjs', 'tests/properties_strict.test.mjs'], gating: true },
   { label: 'audio', argv: ['node', '--test', 'tests/audio.test.mjs'], gating: true },
   { label: 'fichier unique jouable', argv: ['node', 'tools/bundle.mjs'], gating: true },

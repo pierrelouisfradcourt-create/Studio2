@@ -372,8 +372,9 @@ function teleThreat(game, mem, e, r) {
   if (tI > HORIZON || game.time - mem.tele.get(e.id).t0 < REACTION_TIME) return null;
   if (tele.shape === 'cone') return lungeThreat(e, tele, tI, r);
   if (tele.shape === 'line') return lineThreat(game, e, tele, tI, r);
-  // Cercle : seul celui du possédé fait mal (ceux du boss annoncent anneau ou invocation).
-  if (e.kind !== 'exploder') return null;
+  // Cercle : celui du possédé (explosion) et ceux du boss (anneau de projectiles qui naît dans
+  // le cercle) font mal ; l'alerte d'invocation est marquée inoffensive.
+  if (tele.harmless || (e.kind !== 'exploder' && !e.boss)) return null;
   return zone((x, y) => discDepth(x, y, e.x, e.y, tele.r + r), tI - ZONE_SLACK, tI + FRAME_SPAN);
 }
 

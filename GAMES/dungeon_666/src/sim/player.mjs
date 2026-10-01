@@ -86,6 +86,7 @@ export function readInput(game, input) {
   const p = game.player;
   const t = game.tuning;
   const buf = t.player.inputBuffer;
+  const lockBuf = t.player.attackBuffer ?? buf; // attaque et Lance attendent la fin d'un coup engagé
   let mx = input.moveX || 0;
   let my = input.moveY || 0;
   const ml = Math.sqrt(mx * mx + my * my);
@@ -98,8 +99,8 @@ export function readInput(game, input) {
   p.manualAimX = input.aimX || 0;
   p.manualAimY = input.aimY || 0;
   p.attackHeld = !!input.attack;
-  if (input.attackPressed) bufferAction(p, 'attack', buf);
-  if (input.skillPressed && feasibleSoon(game, 'skill', buf)) bufferAction(p, 'skill', buf, input.skillAimX || 0, input.skillAimY || 0);
+  if (input.attackPressed) bufferAction(p, 'attack', lockBuf);
+  if (input.skillPressed && feasibleSoon(game, 'skill', lockBuf)) bufferAction(p, 'skill', lockBuf, input.skillAimX || 0, input.skillAimY || 0);
   if (input.superPressed && feasibleSoon(game, 'super', buf)) bufferAction(p, 'super', buf);
   if (input.dashPressed && feasibleSoon(game, 'dash', buf)) bufferAction(p, 'dash', buf);
   if (input.gadgetPressed) useGadget(game);

@@ -192,7 +192,7 @@ function ring(game, e, d, dt) {
   const r = d.ring;
   const windup = r.windup * wmult();
   if (e.patternStep === 0) {
-    e.tele = { shape: 'circle', r: 90, progress: e.stateTime / windup };
+    e.tele = { shape: 'circle', r: r.teleRadius, progress: e.stateTime / windup };
     if (e.stateTime >= windup) {
       e.tele = null;
       e.patternStep = 1;
@@ -202,6 +202,9 @@ function ring(game, e, d, dt) {
   }
   e.patternT -= dt;
   const waves = r.waves + (e.phase - 1);
+  // Salve en cours : le cercle d'alerte reste affiché et se remplit avant chaque vague, pour
+  // qu'on ne revienne pas au contact sous le tir suivant.
+  if (e.patternStep <= waves) e.tele = { shape: 'circle', r: r.teleRadius, progress: 1 - Math.max(0, e.patternT) / r.waveInterval };
   if (e.patternStep <= waves && e.patternT <= 0) {
     // Brèches contiguës à un angle aléatoire : il y a toujours un couloir sûr.
     const n = r.bullets;
@@ -226,7 +229,8 @@ function ring(game, e, d, dt) {
 function summon(game, e, d) {
   const s = d.summon;
   if (e.patternStep === 0) {
-    e.tele = { shape: 'circle', r: 70, progress: e.stateTime / s.windup };
+    // Invocation : alerte inoffensive, dessinée autrement que le rouge « ça fait mal ».
+    e.tele = { shape: 'circle', r: 70, progress: e.stateTime / s.windup, harmless: true };
     if (e.stateTime >= s.windup) {
       e.tele = null;
       for (let i = 0; i < s.count; i++) {

@@ -4,13 +4,16 @@
 
 const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Lance', passive: 'Passif', super: 'Super' };
 const ARM_MS = 350; // un panneau ne répond qu'après ce délai : jamais de choix « à l'aveugle »
+// Panneaux de choix (bénédiction, butin, autel, marchand) : plus long, et chaque tap reçu pendant
+// l'armement le relance. Un dash martelé à 3-4 Hz qui ouvre le panneau ne choisit donc rien.
+const ARM_CHOICE_MS = 600;
 const REFIRE_MS = 300; // anti double déclenchement (pointerup puis click)
 
 // Instant d'ouverture du panneau courant (armement), partagé par tous ses boutons.
-const arming = { shownAt: 0, noDelay: false };
+const arming = { shownAt: 0, noDelay: false, ms: ARM_MS };
 
 function armed() {
-  return arming.noDelay || performance.now() - arming.shownAt >= ARM_MS;
+  return arming.noDelay || performance.now() - arming.shownAt >= arming.ms;
 }
 
 function el(tag, cls, text) {
@@ -25,7 +28,7 @@ function el(tag, cls, text) {
  * de l'élément. Chromium/Android n'émettent pas `click` pour un 2e doigt (le pouce gauche
  * resté sur le joystick) ; `click` ne sert plus qu'au clavier (detail === 0).
  */
-function onActivate(node, fn) {
+export function onActivate(node, fn) {
   let pid = null;
   let last = 0;
   const fire = () => {
@@ -91,6 +94,19 @@ export function createUI(root, handlers) {
   root.appendChild(panel);
   let shownKey = '';
   let shownKind = '';
+  let armTimer = 0;
+
+  function startArming() {
+    arming.shownAt = performance.now();
+    panel.classList.add('arming');
+    clearTimeout(armTimer);
+    armTimer = setTimeout(() => panel.classList.remove('arming'), arming.ms);
+  }
+
+  // Anti-martelage : tout appui pendant l'armement le prolonge (capture, avant les boutons).
+  panel.addEventListener('pointerdown', () => {
+    if (!armed()) startArming();
+  }, true);
 
   function show(builder, key) {
     if (key === shownKey) return;
@@ -103,10 +119,12 @@ export function createUI(root, handlers) {
     const refresh = key.startsWith('choice:shop') && shownKind === 'shop';
     shownKind = key.split(':')[1] ?? key;
     arming.noDelay = key.startsWith('title') || key.startsWith('pause') || key === 'tuning' || refresh;
+    arming.ms = key.startsWith('choice') ? ARM_CHOICE_MS : ARM_MS;
     arming.shownAt = performance.now();
-    if (!arming.noDelay) {
-      panel.classList.add('arming');
-      setTimeout(() => panel.classList.remove('arming'), ARM_MS);
+    if (!arming.noDelay) startArming();
+    else {
+      clearTimeout(armTimer);
+      panel.classList.remove('arming');
     }
     const first = panel.querySelector('button:not([disabled])');
     if (first && !handlers.isTouch()) first.focus({ preventScroll: true });
