@@ -5,7 +5,7 @@
 
 import { PAL, ELITE_COLORS, ELITE_NAMES, CIRCLE_TINTS, REWARD_COLORS } from './palette.mjs';
 import { drawParticles, drawEffects, drawTexts } from './fx.mjs';
-import { hazardProgress } from '../sim/projectiles.mjs';
+import { hazardProgress, lingerLeft } from '../sim/projectiles.mjs';
 import { FAMILIES } from '../sim/boons.mjs';
 import { ITEM_RARITIES } from '../sim/loot.mjs';
 import { REWARD_LABELS } from '../sim/run.mjs';
@@ -385,6 +385,7 @@ function drawTelegraphs(ctx, game) {
   for (const h of game.hazards) {
     const pr = hazardProgress(h);
     if (!h.hitsPlayer) continue; // les explosions des bénédictions ne menacent pas le héros
+    if (h.burning) continue; // flaque allumée : drawLingeringZones
     if (h.shape === 'circle') drawCircleDanger(ctx, h.x, h.y, h.r, pr);
     else if (h.shape === 'ring') drawCircleDanger(ctx, h.x, h.y, h.r, pr, h.inner);
     else drawLine(ctx, h.x, h.y, h.angle, h.length, h.width, pr);
@@ -455,6 +456,122 @@ function lineEdge(ctx, x, y, angle, length, width) {
   ctx.lineTo(x + c * length + s * hw, y + s * length - c * hw);
   ctx.lineTo(x + s * hw, y - c * hw);
   ctx.closePath();
+}
+
+// ------------------------------------------------------------------ bestiaire V2 : flaques et champions
+
+const FLAME_TONGUES = 10;
+const PUDDLE_FADE = 4; // la flaque pâlit dans le dernier quart de sa vie
+const SHIELD_FILL = 'rgba(255, 233, 168, 0.16)';
+
+/**
+ * Flaque brûlante (zone persistante allumée, ex. Pyromancienne) : sol embrasé, langues de feu
+ * au bord, contour rouge (« ça fait mal »), et une jauge circulaire qui se vide — le temps
+ * restant se LIT à l'écran (c'est aussi ce que lisent les bots).
+ */
+function drawLingeringZones(ctx, game, time) {
+  for (const h of game.hazards) {
+    if (!h.burning || h.done || !h.hitsPlayer) continue;
+    const left = lingerLeft(h);
+    const fade = Math.min(1, left * PUDDLE_FADE);
+    drawGlow(ctx, h.x, h.y, h.r * 1.6, PAL.lava, 0.35 * fade);
+    ctx.globalAlpha = 0.15 + 0.5 * fade;
+    ctx.fillStyle = PAL.lavaDim;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.r, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = (0.3 + 0.12 * Math.sin(time * 9 + h.id)) * fade;
+    ctx.fillStyle = PAL.lava;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.r * 0.82, 0, TAU);
+    ctx.fill();
+    // Langues de feu qui lèchent le bord : la zone « vit ».
+    ctx.globalAlpha = 0.85 * fade;
+    ctx.fillStyle = '#ffb03a';
+    ctx.beginPath();
+    for (let i = 0; i < FLAME_TONGUES; i++) {
+      const a = (i / FLAME_TONGUES) * TAU + time * 0.6;
+      const tl = h.r * (0.2 + 0.1 * Math.sin(time * 14 + i * 1.7 + h.id));
+      const bx = h.x + Math.cos(a) * h.r * 0.92;
+      const by = h.y + Math.sin(a) * h.r * 0.92;
+      ctx.moveTo(bx + Math.cos(a + 1.57) * 6, by + Math.sin(a + 1.57) * 6);
+      ctx.lineTo(bx - Math.cos(a) * tl, by - Math.sin(a) * tl - tl * 0.4);
+      ctx.lineTo(bx + Math.cos(a - 1.57) * 6, by + Math.sin(a - 1.57) * 6);
+    }
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = PAL.danger;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.r, 0, TAU);
+    ctx.stroke();
+    // Jauge du temps restant (se vide dans le sens horaire).
+    ctx.strokeStyle = PAL.impactRing;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.r + 6, -Math.PI / 2, -Math.PI / 2 + left * TAU);
+    ctx.stroke();
+  }
+}
+
+/**
+ * Champions V2 par-dessus les corps : rayon de drain du vampirique (du héros vers l'élite),
+ * anneau doré d'annonce puis bulle du bouclier, alerte violette inoffensive de l'invocateur.
+ */
+function drawFoeOverlays(ctx, game, time) {
+  const p = game.player;
+  const mods = game.tuning.elite.mods;
+  for (const e of game.enemies) {
+    if (e.dead) continue;
+    if (e.leechFlash > 0 && mods.vampirique) {
+      const k = Math.min(1, e.leechFlash / mods.vampirique.flash);
+      ctx.globalAlpha = 0.9 * k;
+      ctx.strokeStyle = PAL.eliteVampirique;
+      ctx.lineWidth = 2 + 4 * k;
+      ctx.setLineDash([10, 6]);
+      ctx.lineDashOffset = -time * 120; // le sang coule vers l'élite
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(e.x, e.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      drawGlow(ctx, e.x, e.y, e.r * 2.4, PAL.eliteVampirique, 0.55 * k);
+    }
+    if (e.modPhase === 'warn' && e.modDur > 0) {
+      const k = Math.min(1, 1 - e.modT / e.modDur);
+      ctx.globalAlpha = 0.4 + 0.5 * k;
+      ctx.strokeStyle = PAL.eliteBouclier;
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([5, 5]);
+      ctx.lineDashOffset = time * 40;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.r + 22 - 10 * k, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+    if (e.invuln > 0 && !e.boss) {
+      const br = e.r + 12;
+      ctx.fillStyle = SHIELD_FILL;
+      ctx.strokeStyle = PAL.eliteBouclier;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, br, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.globalAlpha = 0.6;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, br - 5, -2.4 + Math.sin(time * 3) * 0.2, -1.4 + Math.sin(time * 3) * 0.2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (e.modPhase === 'channel' && e.modDur > 0 && mods.invocateur) {
+      drawHarmlessCircle(ctx, e.x, e.y, mods.invocateur.channelRadius, Math.min(1, 1 - e.modT / e.modDur));
+    }
+  }
 }
 
 function drawSpawnWarns(ctx, game, time) {
@@ -1440,6 +1557,7 @@ export function drawWorld(ctx, game, fx, time, touch) {
   drawRoom(ctx, game, time);
   drawPlayerUnderlay(ctx, game, fx, time);
   drawSpawnWarns(ctx, game, time);
+  drawLingeringZones(ctx, game, time);
   drawTelegraphs(ctx, game);
   drawEffects(ctx, fx, game, true);
   drawPickups(ctx, game, time);
@@ -1447,6 +1565,7 @@ export function drawWorld(ctx, game, fx, time, touch) {
   drawAimHints(ctx, game, touch);
   const sorted = game.enemies.slice().sort((a, b) => a.y - b.y);
   for (const e of sorted) if (!e.dead) drawEnemy(ctx, e, game, time);
+  drawFoeOverlays(ctx, game, time);
   drawPlayer(ctx, game, fx, time);
   drawTelegraphEdges(ctx, game);
   drawProjectiles(ctx, game);

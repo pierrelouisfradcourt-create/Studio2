@@ -124,6 +124,21 @@ export const DEFAULT_TUNING = {
       rapide: { speedMult: 1.45, windupMult: 1 },
       blinde: { damageTakenMult: 0.8, knockbackMult: 0.25 }, // le recul ×0,25 fait son identité, pas un sac à PV
       ardent: { deathBlastRadius: 110, deathBlastDelay: 0.7, deathBlastDamage: 18 },
+      // Champions V2 (comportements : foe_elites.mjs). minIndex : index minimal dans la 1re
+      // section (ensuite tous) ; excludeKinds : archétypes qui ne le reçoivent jamais.
+      // Vampirique : chaque coup qui BLESSE le héros le soigne de leech × les dégâts infligés
+      // (rayon de drain rouge visible) — contre-jeu : ne pas se faire toucher, le finir vite.
+      vampirique: { minIndex: 6, leech: 2.5, flash: 0.6, excludeKinds: ['necromancer'] },
+      // Bouclier : bulle d'immunité périodique, annoncée par un anneau doré (warn) — contre-jeu :
+      // changer de cible ou se replacer pendant la bulle, frapper entre deux.
+      bouclier: { minIndex: 6, firstDelay: 2, every: 5, warn: 0.6, duration: 1.8 },
+      // Invocateur : canalise (alerte violette inoffensive) puis ouvre des cercles d'invocation ;
+      // plafond d'invocations vivantes ; le tuer pendant la canalisation l'annule.
+      invocateur: {
+        minIndex: 10, firstDelay: 1.5, every: 7, retry: 0.5, channel: 1.2, channelRadius: 54,
+        count: 2, maxMinions: 3, kind: 'imp', summonMinR: 40, summonMaxR: 120, summonMinPlayerDist: 150,
+        excludeKinds: ['necromancer'],
+      },
     },
   },
   boss: {

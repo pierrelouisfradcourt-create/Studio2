@@ -12,6 +12,7 @@ import { floorScaling } from './floors.mjs';
 import { buildNav } from './nav.mjs';
 import { pointBlocked } from './physics.mjs';
 import { EXTRA_ROSTER, EXTRA_ELITE_KINDS } from './foe_data.mjs';
+import { pickEliteMod } from './foe_elites.mjs';
 
 // Dispositions d'obstacles, en fractions de la salle (cx, cy, w, h en unités).
 // Le bas-centre (entrée) et le haut (portes) restent toujours dégagés.
@@ -51,7 +52,8 @@ export const ROSTER = Object.freeze([
   { kind: 'brute', cost: 3, minIndex: 3, weight: 2 },
   ...EXTRA_ROSTER, // archétypes ajoutés (foe_data.mjs)
 ]);
-const ELITE_MODS = ['rapide', 'blinde', 'ardent'];
+// Modificateurs d'élite : tuning.elite.mods, tirés par foe_elites.pickEliteMod (introduction
+// progressive dans la 1re section, exclusions par archétype).
 
 const DOOR_W = 120;
 const DOOR_H = 40;
@@ -177,9 +179,11 @@ function planWaves(game, info, plan) {
   if (plan.elite) {
     // Salle d'élite : un champion (modificateur façon Diablo) dans la dernière vague.
     const kinds = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS].filter((k) => t.enemies[k]);
-    waves[waves.length - 1].push({ kind: pick(game.rng.gen, kinds), elite: pick(game.rng.gen, ELITE_MODS) });
+    const kind = pick(game.rng.gen, kinds);
+    waves[waves.length - 1].push({ kind, elite: pickEliteMod(game, kind, info) });
   } else if (stray > 0 && rand(game.rng.gen) < stray) {
-    waves[waves.length - 1].push({ kind: pick(game.rng.gen, ['imp', 'archer']), elite: pick(game.rng.gen, ELITE_MODS) });
+    const kind = pick(game.rng.gen, ['imp', 'archer']);
+    waves[waves.length - 1].push({ kind, elite: pickEliteMod(game, kind, info) });
   }
   return waves;
 }

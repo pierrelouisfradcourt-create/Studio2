@@ -100,7 +100,10 @@ const HIT_GAIN_RANGE = [0.6, 1.25];
 // Timbre de la cible : les grosses bêtes sonnent plus grave. Les événements hit / kill portent
 // le TYPE réel de l'ennemi (e.kind) : le boss y vaut 'gardien' (config.boss), jamais 'boss'.
 const BOSS_PITCH = 0.7;
-const ENEMY_PITCH = { imp: 1.1, archer: 1.05, exploder: 1.15, charger: 0.92, brute: 0.8, gardien: BOSS_PITCH, boss: BOSS_PITCH };
+const ENEMY_PITCH = {
+  imp: 1.1, archer: 1.05, exploder: 1.15, charger: 0.92, brute: 0.8, gardien: BOSS_PITCH, boss: BOSS_PITCH,
+  pyromancer: 1.08, necromancer: 1.0,
+};
 
 const KILL_BASE = [
   hiss('bandpass', 2200, null, 1.4, perc(0.001, 0.06), 1.4),
@@ -311,6 +314,21 @@ const ENEMY_ATTACK = {
     osc('sawtooth', 55, 42, adsr(0.06, 0.12, 0.7, 0.2, 0.3), 0.55, { drive: true, filter: { type: 'lowpass', freq: 380 } }),
     hiss('lowpass', 300, null, 0.8, perc(0.06, 0.45), 0.4),
   ],
+  // Pyromancienne : les cercles de feu apparaissent — souffle qui s'embrase (grave -> aigu).
+  pyromancer: [
+    hiss('bandpass', 500, 1800, 1.4, adsr(0.03, 0.08, 0.6, 0.08, 0.2), 0.55),
+    osc('sawtooth', 120, 190, perc(0.03, 0.22), 0.18, { filter: { type: 'lowpass', freq: 900 } }),
+  ],
+  // Nécromancien : la canalisation commence — psalmodie qui descend, voix creuse.
+  necromancer: [
+    osc('triangle', 330, 220, adsr(0.08, 0.15, 0.6, 0.25, 0.3), 0.28, { glide: 0.6 }),
+    osc('sine', 165, 110, adsr(0.08, 0.15, 0.6, 0.25, 0.3), 0.22, { glide: 0.6 }),
+  ],
+  // Élite invocateur : même famille que le nécromancien, plus aigu (un champion, pas un mage).
+  summon: [
+    osc('triangle', 440, 300, adsr(0.06, 0.12, 0.6, 0.2, 0.25), 0.24, { glide: 0.5 }),
+    osc('sine', 220, 150, adsr(0.06, 0.12, 0.6, 0.2, 0.25), 0.18, { glide: 0.5 }),
+  ],
   default: [osc('square', 500, 700, perc(0.005, 0.06), 0.1, { filter: { type: 'lowpass', freq: 1500 } })],
 };
 
@@ -348,6 +366,7 @@ const HAZARD_STYLE = {
   piege: { pitch: 1.4, gain: 0.6, fire: false },
   bond: { pitch: 0.7, gain: 1.1, fire: false },
   brasier: { pitch: 1.2, gain: 0.55, fire: false },
+  pyre: { pitch: 1.2, gain: 0.55, fire: true }, // cercle de la Pyromancienne qui s'embrase
 };
 
 const HAZARD_CANCEL = [
