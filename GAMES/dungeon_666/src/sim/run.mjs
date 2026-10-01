@@ -159,6 +159,13 @@ export function onRoomClear(game) {
   game.telemetry.roomsCleared++;
   game.telemetry.roomTimes.push({ floor: game.run.floor, kind: room.kind, time: game.time - room.enteredAt });
   emit(game, 'roomClear', { floor: game.run.floor, kind: room.kind, boss: room.kind === 'boss' });
+  // Salle nettoyée : plus aucun coup ennemi ne part (souffle d'un élite ardent, flèche en vol).
+  for (const h of game.hazards) {
+    if (h.done || !h.hitsPlayer || h.burning) continue; // les flaques s'éteignent d'elles-mêmes
+    h.done = true;
+    emit(game, 'hazardCancel', { id: h.id, x: h.x, y: h.y });
+  }
+  for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
   const { x: cx, y: cy } = rewardSpot(room);
   const plan = room.plan;
 
@@ -175,7 +182,9 @@ export function onRoomClear(game) {
     // Le build TEMPORAIRE n'est PAS figé : il ne survivra pas à la prochaine mort.
     const cp = checkpointAfterBoss(t, game.run.floor);
     const meta = game.meta;
-    if (!meta.checkpoints.includes(cp)) meta.checkpoints.push(cp);
+    // Le Gardien final n'ouvre aucun checkpoint : il n'y a pas d'étage suivant, et un point de
+    // reprise SUR le Gardien du 666 offrait une victoire (et ses Âmes) à chaque reprise.
+    if (!game.info.isFinal && !meta.checkpoints.includes(cp)) meta.checkpoints.push(cp);
     meta.checkpoints.sort((a, b) => a - b);
     const kind = guardianFor(t, game.info.section);
     meta.guardians[kind] = (meta.guardians[kind] ?? 0) + 1;
@@ -347,10 +356,11 @@ function rollShop(game) {
 export function applyCommand(game, cmd) {
   if (cmd.type === 'respawn') return respawn(game, cmd.floor);
   if (cmd.type === 'returnToTown') {
-    // Depuis l'écran de mort (Charon a déjà pris sa part), ou au portail ouvert après un Gardien.
-    // Jamais en plein combat : quitter un run en cours, c'est « abandon » (taxé comme une mort).
+    // Depuis l'écran de mort (Charon a déjà pris sa part), l'écran de victoire, ou au portail
+    // ouvert après un Gardien. Jamais en plein combat : quitter un run en cours, c'est
+    // « abandon » (taxé comme une mort).
     const portal = game.mode === 'play' && game.room.doors.some((d) => d.reward === 'town' && d.open);
-    if (game.mode !== 'dead' && !portal) return false;
+    if (game.mode !== 'dead' && game.mode !== 'victory' && !portal) return false;
     return returnToTown(game);
   }
   if (cmd.type === 'abandon') {
@@ -589,11 +599,11 @@ export function respawn(game, floor) {
 }
 
 /**
- * Fin du run et retour en Ville : depuis l'écran de mort, ou par le portail qui suit un
- * Gardien. Le temporaire est abandonné avec la partie ; main sauvegarde le profil.
+ * Fin du run et retour en Ville : depuis l'écran de mort, l'écran de victoire, ou par le portail
+ * qui suit un Gardien. Le temporaire est abandonné avec la partie ; main sauvegarde le profil.
  */
 export function returnToTown(game) {
-  if (game.mode !== 'dead' && game.mode !== 'play') return false;
+  if (game.mode !== 'dead' && game.mode !== 'play' && game.mode !== 'victory') return false;
   syncPurse(game);
   game.mode = 'town';
   game.choice = null;

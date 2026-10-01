@@ -12,6 +12,7 @@
 // Chaque cercle allumé laisse une FLAQUE brûlante persistante et visible (`linger` s) qui ne
 // blesse qu'à l'intérieur, par ticks (projectiles.mjs, updateHazards). Aucun dégât de contact.
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand, randRange } from '../core/rng.mjs';
 import { clamp } from '../core/math.mjs';
 import { lineOfSight } from './physics.mjs';
@@ -60,7 +61,7 @@ function castPyres(game, e, def) {
   const a0 = rand(game.rng.ai) * TAU;
   for (let i = 0; i < sats; i++) {
     const a = a0 + (i / sats) * TAU;
-    spawnPyre(game, p.x + Math.cos(a) * pyre.spread, p.y + Math.sin(a) * pyre.spread, def, e, pyre.delay + (i + 1) * pyre.stagger);
+    spawnPyre(game, p.x + TRIG.cos(a) * pyre.spread, p.y + TRIG.sin(a) * pyre.spread, def, e, pyre.delay + (i + 1) * pyre.stagger);
   }
 }
 

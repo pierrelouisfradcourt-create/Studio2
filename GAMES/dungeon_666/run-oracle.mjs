@@ -9,8 +9,9 @@
 //                      (tout fichier v2_* présent est pris : les lots fusionnés y ajoutent les leurs)
 //   (e) fichier unique tools/bundle.mjs               dist/dungeon_666.html se construit
 //   (f) solvabilité    solvability.mjs                un bot bat la section 1 (18 étages) ; le dash compte
-//   (g) e2e            e2e.mjs                        navigateur réel, doigts tactiles, clavier, clics
-//   (h) mesures        tools/playtest.mjs             rapport de feel des bots, labo D5/D8/D9 (non bloquants)
+//   (g) classes        tools/classes.mjs              chaque kit jouable, le dash compte, pas d'étourdissement en boucle
+//   (h) e2e            e2e.mjs                        navigateur réel, doigts tactiles, clavier, clics
+//   (i) mesures        tools/playtest.mjs             rapport de feel des bots, labo D5/D8/D9 (non bloquants)
 //
 // Les tests vivent sous tests/ : surface protégée du studio (forge/test_surfaces.yaml) — les
 // créer est permis, les modifier après coup demande une gate Pierre.
@@ -137,6 +138,7 @@ async function testStep(group) {
 const OTHER_STEPS = [
   { label: 'fichier unique jouable', argv: ['node', 'tools/bundle.mjs'], gating: true },
   { label: 'solvabilité (un bot bat la section 1 de 18 étages)', argv: ['node', 'solvability.mjs', '20'], gating: true },
+  { label: 'classes (6 kits : jouable, dash décisif, mêlée qui riposte ; reports/classes.md)', argv: ['node', 'tools/classes.mjs', '20'], gating: true },
   { label: 'e2e navigateur réel', argv: ['node', 'e2e.mjs'], gating: true },
   { label: 'rapport de playtest des bots', argv: ['node', 'tools/playtest.mjs', '--seeds', '20'], gating: false },
   { label: 'labo D5/D8/D9 : mesure comparée (reports/lab.md)', argv: ['node', 'tools/playtest.mjs', '--lab-report', '--seeds', '20'], gating: false },

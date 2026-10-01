@@ -1,7 +1,7 @@
 // Point d'entrée navigateur : boucle à pas fixe (60 Hz) découplée de l'affichage, câblage
 // sim <-> entrées <-> rendu <-> audio <-> menus, persistance locale, outils de test.
 //
-// Paramètres d'URL (playtest) : ?seed=123  ?floor=6  ?god=1  ?autostart=1  ?tune=0
+// Paramètres d'URL (playtest) : ?seed=123  ?floor=18  ?god=1  ?autostart=1  ?tune=0
 
 import { createGame, stepGame, applyCommand, DT } from './sim/game.mjs';
 import { DEFAULT_TUNING, createTuning } from './sim/config.mjs';
@@ -68,6 +68,16 @@ function save(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // navigation privée, stockage bloqué : la partie continue sans persistance
+  }
+}
+
+/** Copie brute du profil enregistré, sous une clé datée, avant de le remplacer par un profil neuf. */
+function archiveProfile() {
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    if (raw) localStorage.setItem(`${META_KEY}.archive.${Date.now()}`, raw);
+  } catch {
+    // stockage bloqué : rien à archiver
   }
 }
 
@@ -216,13 +226,18 @@ const ui = createUI(uiRoot, {
 
 function startRun(floor, sandbox = false, practice = false) {
   const seed = params.has('seed') ? Number(params.get('seed')) : (Math.random() * 2 ** 31) >>> 0;
-  const startFloor = params.has('floor') && !practice ? Number(params.get('floor')) : floor;
+  // Un `?floor=` illisible (lien abîmé) est ignoré : il ne doit ni planter ni toucher au profil.
+  const asked = Number(params.get('floor'));
+  const fallback = Number.isFinite(floor) ? floor : 1;
+  const startFloor = params.has('floor') && !practice && Number.isFinite(asked) ? asked : fallback;
   const tune = params.get('tune') === '0' ? {} : loadTuningOverrides();
   const opts = { seed, startFloor: sandbox ? 1 : startFloor, meta: app.profile, godMode: params.get('god') === '1', sandbox, practice, tuning: { lab: { ...app.settings.lab } } };
   try {
     app.game = createGame(opts);
   } catch {
     // Profil illisible (forme d'objet ancienne…) : on repart d'un profil neuf plutôt que de bloquer.
+    // L'ancien est d'abord ARCHIVÉ tel quel : une progression n'est jamais écrasée sans copie.
+    archiveProfile();
     app.profile = sanitizeProfile({}, CONTENT);
     save(META_KEY, app.profile);
     app.game = createGame({ ...opts, meta: app.profile });

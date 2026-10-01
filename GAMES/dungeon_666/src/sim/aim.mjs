@@ -2,6 +2,7 @@
 // pertinent (proche ET dans la direction où l'on se déplace). La visée manuelle (souris,
 // joystick d'attaque glissé) l'emporte toujours.
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { DEG } from './config.mjs';
 import { lineOfSight } from './physics.mjs';
 
@@ -36,10 +37,10 @@ export function computeAim(game, manualX, manualY, range) {
     px /= pl;
     py /= pl;
   } else {
-    px = Math.cos(p.facing);
-    py = Math.sin(p.facing);
+    px = TRIG.cos(p.facing);
+    py = TRIG.sin(p.facing);
   }
-  const cosCone = Math.cos((a.coneDeg / 2) * DEG);
+  const cosCone = TRIG.cos((a.coneDeg / 2) * DEG);
   let best = null;
   let bestScore = Infinity;
   let bestD = 0;

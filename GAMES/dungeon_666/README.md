@@ -26,7 +26,7 @@ Aucune dépendance : Node 18+ suffit pour le serveur et les tests. Playwright ne
 | Attaquer (combo 3 coups) | gros bouton à droite ou n'importe où dans la moitié droite. **Tap** = visée auto, **glisser** = visée manuelle, **maintenir** = combo continu | clic gauche (vise la souris), J | X / RT |
 | **Dash** (invulnérable) | gros bouton à gauche de l'attaque. Direction = joystick | Espace / Maj / K | A / LB |
 | Lance infernale (compétence) | glisser puis relâcher pour viser, tap = auto. Revenir au centre annule | clic droit, L | B |
-| Nova de cendres (gadget, 3 charges par section) | petit bouton en haut à droite du groupe | E | Y |
+| Nova de cendres (gadget, 3 charges, rendues tous les 6 étages) | petit bouton en haut à droite du groupe | E | Y |
 | Colère (Super, se charge en frappant) | bouton flamme quand il brille | F / R | RB |
 | Pause, réglages | bouton ⏸ en haut à droite | Échap / P | Start |
 
@@ -35,10 +35,11 @@ Aucune dépendance : Node 18+ suffit pour le serveur et les tests. Playwright ne
 - **L'esquive parfaite paie.** Un coup évité grâce au dash remplit la jauge de Super et accélère la recharge du dash.
 - **Rien ne fait mal sans prévenir.** Il n'y a aucun dégât de contact : chaque attaque ennemie est annoncée par une zone rouge qui se remplit.
 - **L'environnement est une arme.** Un ennemi projeté contre un mur est sonné. Le Bélier qui rate sa charge contre un mur reste sonné longtemps : c'est le moment de punir.
+- **Un ennemi sonné se relève en garde.** Pendant 1,5 s (petit écu au bout de sa barre de vie), un coup d'arme le blesse et le repousse mais ne le sonne plus. Compétences, gadgets, Supers et murs sonnent toujours. Sans cette règle, la Hache et le Maillet maintenus sur place sonnaient en boucle.
 
 ### Paramètres d'URL (playtest)
 
-`?seed=123` partie rejouable · `?floor=6` aller directement au Gardien · `?god=1` invulnérable ·
+`?seed=123` partie rejouable · `?floor=18` aller directement au Gardien · `?god=1` invulnérable ·
 `?autostart=1` sauter l'écran titre · `?tune=0` ignorer les réglages enregistrés.
 
 Écran titre → **Arène d'essai** : des vagues sans fin, sans portes ni menus. C'est le bac à sable pour juger le déplacement et le combat en boucle (`?autostart=1&arena=1`).
@@ -67,9 +68,9 @@ En jeu : **pause → Réglages du feel**. Ce panneau règle en direct la vitesse
 - **Classes** :
   - **Revenant** : Lame, Dagues ;
   - **Bourreau** : Hache, Maillet ;
-  - **Chasseresse** : Arc, Arbalète.
+  - **Chasseresse** : Arc, Arbalète. Elle tire à pas lents (moins vite qu'un diablotin) : pour fuir, il faut cesser de tirer ou dasher.
 
-  Il y a 5 compétences, 5 gadgets, et un Super par classe (`src/sim/kits.mjs`).
+  Il y a 5 compétences, 5 gadgets, et un Super par classe (`src/sim/kits.mjs`). La mesure des 6 kits par les bots est dans [`reports/classes.md`](reports/classes.md).
 - **Bestiaire** :
   - diablotin (mêlée rapide) ;
   - brute (mêlée lourde) ;
@@ -89,6 +90,9 @@ En jeu : **pause → Réglages du feel**. Ce panneau règle en direct la vitesse
 
 ## Reprise sous Godot
 
+Décision de Pierre du 2026-10-01 : une version plus propre sous Godot. Le projet Godot vit dans
+`GAMES/dungeon_666_godot/` ; ce prototype web reste la référence des règles.
+
 La simulation (`src/sim/`) est isolée, déterministe à 60 Hz, sans DOM, et tous ses nombres sont dans des fichiers de données (`config.mjs`, `kits.mjs`, `foe_data.mjs`, `boss_data.mjs`, `town_data.mjs`). C'est la **spécification exécutable** à porter. Les tests `tests/*.test.mjs` décrivent les règles une par une ; ce sont les oracles à reproduire côté Godot. Le feel reste à valider en main **avant** le portage (charte).
 
 ## Code
@@ -96,6 +100,7 @@ La simulation (`src/sim/`) est isolée, déterministe à 60 Hz, sans DOM, et tou
 ```
 src/
   core/      rng.mjs (mulberry32 seedé) · math.mjs (géométrie sans allocation)
+             trig.mjs (sinus, cosinus… déterministes : la sim n'appelle jamais Math.sin & co)
   sim/       SIMULATION déterministe 60 Hz, sans DOM — game.mjs est le point d'entrée
              config.mjs (TOUS les nombres) · player · enemies · boss · combat · projectiles
              room · nav (pathfinding BFS) · run (étages, portes, choix, mort) · floors (666)
@@ -106,6 +111,7 @@ src/
   ui/        menus (DOM) · tuning (panneau de réglage du feel)
   main.mjs   boucle à pas fixe, câblage, persistance locale
 tools/       bundle (→ dist/) · bots (politiques de jeu) · playtest (métriques) · shots · pw
+             classes (mesure des 6 kits) · export_godot + traces + vecteurs/ (parité avec la version Godot)
 ```
 
 Règle de dépendances : `sim` n'importe que `core`. `input` n'importe rien du jeu. `render`, `ui` et
@@ -115,9 +121,10 @@ entièrement déterminée par sa graine et la suite de ses `InputFrame`.
 ## Oracles
 
 ```
-node run-oracle.mjs        # tout : règles, propriétés, audio, bundle, solvabilité, e2e, playtest
-node --test tests/*.test.mjs   # 239 tests (dont tests/v2_*.test.mjs)
+node run-oracle.mjs        # tout : règles, propriétés, audio, bundle, solvabilité, classes, e2e, playtest
+node --test tests/*.test.mjs   # 260 tests (dont tests/v2_*.test.mjs)
 node solvability.mjs       # un bot bat la section 1 ; mesure la « valeur du dash »
+node tools/classes.mjs     # les 6 kits joués par les bots → reports/classes.md (bloquant)
 node e2e.mjs               # Chromium réel : doigts tactiles (CDP), clavier, souris, file://
 node tools/playtest.mjs    # rapport de feel des bots → reports/playtest.md
 node tools/shots.mjs       # le bot joue dans le navigateur : endurance + captures

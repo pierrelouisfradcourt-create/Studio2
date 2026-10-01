@@ -2,6 +2,7 @@
 // avant que l'ennemi n'apparaisse — jamais d'apparition injuste sous les pieds du héros.
 // Module feuille (aucun import de sim) : utilisable par la salle comme par le boss.
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand } from '../core/rng.mjs';
 import { dist2 } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
@@ -26,8 +27,8 @@ export function findSpawnPoint(game, r, minPlayerDist, near) {
     if (near) {
       const a = rand(game.rng.gen) * Math.PI * 2;
       const d = near.minR + rand(game.rng.gen) * (near.maxR - near.minR);
-      x = near.x + Math.cos(a) * d;
-      y = near.y + Math.sin(a) * d;
+      x = near.x + TRIG.cos(a) * d;
+      y = near.y + TRIG.sin(a) * d;
     } else {
       x = room.pad + r + rand(game.rng.gen) * (room.w - 2 * (room.pad + r));
       y = room.pad + r + rand(game.rng.gen) * (room.h - 2 * (room.pad + r));

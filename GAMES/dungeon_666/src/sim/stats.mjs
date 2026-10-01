@@ -46,7 +46,8 @@ export function recomputeStats(game) {
   for (const b of run.boons) {
     const def = boonDef(b.id);
     if (!def) continue;
-    const lv = 1 + LEVEL_STEP * (b.level - 1);
+    // Une bénédiction `noScale` vaut sa valeur entière quel que soit son niveau (jamais 1,5 charge de dash).
+    const lv = def.noScale ? 1 : 1 + LEVEL_STEP * (b.level - 1);
     const raw = boonValue(def, b.rarity) * lv;
     const v = def.pct ? raw / 100 : raw;
     if (def.stat) addStat(st, def.stat, def.negative ? -v : v);

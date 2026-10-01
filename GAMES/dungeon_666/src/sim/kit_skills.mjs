@@ -10,6 +10,7 @@
 //   releaseKitSkill à la fin du lancer, ou AVANT un dash / Super qui l'interrompt : une
 //                   recharge consommée produit toujours son effet (comme la Lance).
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { clamp } from '../core/math.mjs';
 import { emit } from './state.mjs';
 import { spawnShot, fireFan } from './kit_shots.mjs';
@@ -37,7 +38,7 @@ function beginLeap(game, s) {
   p.castT = s.leapTime;
   p.iframes = Math.max(p.iframes, s.leapTime + s.iframesGrace);
   game.telemetry.skillCasts++;
-  emit(game, 'skill', { x: p.x, y: p.y, angle: Math.atan2(p.castDirY, p.castDirX), skill: 'bond' });
+  emit(game, 'skill', { x: p.x, y: p.y, angle: TRIG.atan2(p.castDirY, p.castDirX), skill: 'bond' });
 }
 
 /** Un pas du Bond (état 'cast'). Rend true quand le héros a atterri. */
@@ -67,7 +68,7 @@ function land(game) {
 export function releaseKitSkill(game) {
   const p = game.player;
   const s = game.tuning.skill;
-  const angle = Math.atan2(p.castDirY, p.castDirX);
+  const angle = TRIG.atan2(p.castDirY, p.castDirX);
   switch (s.kind) {
     case 'bond':
       // Interrompu en plein saut (dash, Super) : il atterrit là où il est.

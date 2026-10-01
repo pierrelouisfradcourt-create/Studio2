@@ -9,9 +9,17 @@
 //   Cercle   = 72 étages (4 sections) — 9 Cercles de l'Enfer = 648 étages,
 //   finale   = 18 étages (1 section) « L'Abîme » = 666. Soit 37 sections, 37 Gardiens.
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+
+/** Numéro d'étage borné à 1..total ; une valeur non numérique (lien `?floor=abc`) vaut l'étage 1. */
+function clampFloor(tuning, floor) {
+  const n = Math.floor(floor);
+  return Number.isFinite(n) ? Math.max(1, Math.min(tuning.floors.total, n)) : 1;
+}
+
 export function floorInfo(tuning, floor) {
   const f = tuning.floors;
-  const n = Math.max(1, Math.min(f.total, Math.floor(floor)));
+  const n = clampFloor(tuning, floor);
   const section = Math.ceil(n / f.sectionLength); // 1..37
   const indexInSection = n - (section - 1) * f.sectionLength; // 1..18
   const circleCount = f.circleNames.length;
@@ -59,16 +67,16 @@ export function checkpointAfterBoss(tuning, bossFloor) {
  */
 export function floorScaling(tuning, floor) {
   const f = tuning.floors;
-  const n = Math.max(1, Math.min(f.total, Math.floor(floor)));
+  const n = clampFloor(tuning, floor);
   const k = n - 1;
   const index = k % f.sectionLength; // 0..17
   const L = 1 + f.itemGrowth * k;
-  const Bp = 1 + f.permBuildCap * (1 - Math.exp(-k / f.permBuildScale));
+  const Bp = 1 + f.permBuildCap * (1 - TRIG.exp(-k / f.permBuildScale));
   const Bs = 1 + (f.sectionBuildCap * index) / Math.max(1, f.sectionLength - 1);
   const C = 1 + (f.driftAt666 * k) / Math.max(1, f.total - 1);
   const H = playerHpGrowth(tuning, L);
-  const D = 1 + f.dmgCurve * (1 - Math.exp(-k / f.dmgScale));
-  const density = 1 + f.densityCurve * (1 - Math.exp(-k / f.densityScale));
+  const D = 1 + f.dmgCurve * (1 - TRIG.exp(-k / f.dmgScale));
+  const density = 1 + f.densityCurve * (1 - TRIG.exp(-k / f.densityScale));
   return { hp: L * Bp * Bs * C, damage: H * D, density, level: L, permBuild: Bp, sectionBuild: Bs, drift: C, hpGrowth: H, lethality: D };
 }
 

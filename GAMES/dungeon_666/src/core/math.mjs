@@ -1,6 +1,8 @@
 // Utilitaires géométriques SANS allocation dans les chemins chauds : les fonctions
 // travaillent sur des nombres, ou écrivent dans un objet `out` fourni par l'appelant.
 
+import * as TRIG from './trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+
 export const TAU = Math.PI * 2;
 const EPS = 1e-9;
 
@@ -65,9 +67,9 @@ export function inSector(px, py, cx, cy, r, dir, arc, pad = 0) {
   if (d <= pad) return true; // cible qui chevauche l'origine : toujours touchée
   const half = arc / 2;
   if (half >= Math.PI) return true;
-  const diff = Math.abs(angleDiff(dir, Math.atan2(dy, dx)));
+  const diff = Math.abs(angleDiff(dir, TRIG.atan2(dy, dx)));
   // Tolérance angulaire liée au rayon de la cible : un gros ennemi au bord de l'arc est touché.
-  const slack = Math.asin(clamp(pad / d, 0, 1));
+  const slack = TRIG.asin(clamp(pad / d, 0, 1));
   return diff <= half + slack;
 }
 
@@ -94,8 +96,8 @@ export function pointSegDist2(px, py, ax, ay, bx, by) {
  * C'est la forme que dessine le rendu pour une zone 'line' (rectangle, pas capsule).
  */
 export function pointBandDist2(px, py, ax, ay, angle, length, width) {
-  const c = Math.cos(angle);
-  const s = Math.sin(angle);
+  const c = TRIG.cos(angle);
+  const s = TRIG.sin(angle);
   const dx = px - ax;
   const dy = py - ay;
   const u = dx * c + dy * s; // le long de l'axe

@@ -92,7 +92,9 @@ export function countAlive(game, kind) {
  * probabilité `def.strafeFlip` par image). Le comportement de l'archer, mis en données.
  */
 export function keepDistance(game, e, def, tp, sees, speed) {
-  if (tp.d < def.fleeDist) {
+  // On ne fuit que ce qu'on voit : derrière un obstacle, fuite et approche s'annulaient à chaque
+  // image et le tireur, vibrant sur place, n'attaquait plus jamais.
+  if (tp.d < def.fleeDist && sees) {
     e.vx = -tp.dx * speed;
     e.vy = -tp.dy * speed;
   } else if (tp.d > def.preferredDist + def.approachSlack || !sees) {

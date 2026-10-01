@@ -6,6 +6,7 @@
 // (structuredClone / JSON) ; le code qui les joue est choisi par `kind` (kit_shots, kit_zones).
 // Aucune dépendance vers player.mjs (pas d'import circulaire).
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { dist2, inSector } from '../core/math.mjs';
 import { DT } from './config.mjs';
 import { damageEnemy } from './combat.mjs';
@@ -52,8 +53,8 @@ export function hitCircle(game, x, y, r, src) {
  * balayés sont détruits (parade). `arc` en radians. Rend le nombre d'ennemis touchés.
  */
 export function hitSector(game, x, y, range, angle, arc, src) {
-  const dirX = Math.cos(angle);
-  const dirY = Math.sin(angle);
+  const dirX = TRIG.cos(angle);
+  const dirY = TRIG.sin(angle);
   let n = 0;
   for (const e of game.enemies) {
     if (e.dead || e.spawnT > 0) continue;
@@ -109,7 +110,7 @@ export function pullToward(game, e, x, y, stopDist, pullMass) {
   const travel = d - stopDist;
   if (travel <= 0 || d < 1e-6) return 0;
   // Somme géométrique de l'intégration (enemies.mjs) : déplacement total = v0 × DT / (1 − k).
-  const k = Math.exp(-t.combat.enemyFriction * DT);
+  const k = TRIG.exp(-t.combat.enemyFriction * DT);
   let v0 = (travel * (1 - k)) / DT;
   v0 *= Math.min(1, pullMass / Math.max(1e-6, e.mass));
   if (e.eliteMod === 'blinde') v0 *= t.elite.mods.blinde.knockbackMult;

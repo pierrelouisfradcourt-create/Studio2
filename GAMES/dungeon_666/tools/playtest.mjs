@@ -219,7 +219,8 @@ export function parseLab(spec) {
 
 /**
  * Joue une partie complète avec une politique. Rend le résumé mesuré de la partie.
- * options : { floors, minutes, tuning, lab, dashAudit, town, dashAttack }
+ * options : { floors, minutes, tuning, meta, lab, dashAudit, town, dashAttack }
+ *   meta       — profil permanent de départ (classe, arme, kit : tools/classes.mjs) ; absent = profil neuf ;
  *   lab        — variantes du labo ({hitstop: 'local'}…), fusionnées dans le tuning ;
  *   dashAudit  — (défaut false) n'audite que la politique skilled ;
  *   town       — le bot prend le portail de la Ville après le Gardien (fin d'épisode 'town') ;
@@ -230,7 +231,7 @@ export function runEpisode(policyName, seed, options = {}) {
   const minutes = options.minutes ?? DEFAULTS.minutes;
   if (!POLICIES[policyName]) throw new Error(`politique inconnue : ${policyName}`);
   const tuning = options.lab ? { ...(options.tuning ?? {}), lab: { ...(options.tuning?.lab ?? {}), ...options.lab } } : options.tuning;
-  const game = createGame({ seed, tuning });
+  const game = createGame({ seed, tuning, meta: options.meta });
   const rec = newRecorder();
   consumeEvents(game, rec);
   const maxTicks = Math.round((minutes * SECONDS_PER_MINUTE) / DT);

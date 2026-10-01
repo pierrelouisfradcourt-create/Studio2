@@ -2,6 +2,7 @@
 // pour toucher le héros (damagePlayer). Les bénédictions n'exécutent pas de code : elles
 // déclarent des « procs » (données) que ce module interprète. Pas d'import circulaire.
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand } from '../core/rng.mjs';
 import { dist2, clamp } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
@@ -104,7 +105,9 @@ export function damageEnemy(game, e, src) {
       e.kvy = src.dirY * kb;
     }
   }
-  if (src.stun && !e.boss) {
+  // En garde (il sort d'un étourdissement) : un coup d'arme blesse et repousse, sans ré-étourdir.
+  const guarded = e.guard > 0 && t.combat.stunGuardSources.includes(src.kind);
+  if (src.stun && !e.boss && !guarded) {
     e.stun = Math.max(e.stun, src.stun);
     e.tele = null;
     e.state = 'stunned';
@@ -120,7 +123,11 @@ export function damageEnemy(game, e, src) {
     const before = p.superCharge;
     // L'overkill ne compte pas : achever un ennemi à 1 PV ne remplit pas la jauge.
     const effective = Math.min(amount, Math.max(0, hpBefore));
-    p.superCharge = Math.min(1, p.superCharge + (effective / t.super.chargeDamage) * st.superChargeMult);
+    // chargeDamage est donné pour l'arme de base : mis à l'échelle de l'arme portée, comme les
+    // dégâts. Sans cela la jauge se remplissait en 90 coups à l'étage 1 et en 3 à l'étage 649
+    // (les PV ennemis suivent l'arme) : invulnérable 40 % du temps en profondeur.
+    const need = t.super.chargeDamage * (st.weaponDamage / t.weaponBase);
+    p.superCharge = Math.min(1, p.superCharge + (effective / need) * st.superChargeMult);
     if (before < 1 && p.superCharge >= 1) emit(game, 'superReady');
   }
   if (st.lifesteal > 0 && PROC_SOURCES.has(src.kind)) healPlayer(game, amount * st.lifesteal, false);
@@ -155,6 +162,7 @@ function applyHitProcs(game, e, src) {
         chainLightning(game, e, pr);
         break;
       case 'gold':
+        if (e.summoned) break; // invocations : ni or ni Âmes (pas de ferme tant que l'invocateur vit)
         game.run.gold += pr.value;
         emit(game, 'gold', { x: e.x, y: e.y, amount: pr.value });
         break;
@@ -306,7 +314,7 @@ export function damagePlayer(game, amount, src) {
 export function spawnPickup(game, kind, x, y, value, extra) {
   const a = rand(game.rng.gen) * Math.PI * 2;
   const s = 80 + rand(game.rng.gen) * 120;
-  const pk = { id: newId(game), kind, x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, r: kind === 'gold' ? 6 : 10, value, age: 0, ...extra };
+  const pk = { id: newId(game), kind, x, y, vx: TRIG.cos(a) * s, vy: TRIG.sin(a) * s, r: kind === 'gold' ? 6 : 10, value, age: 0, ...extra };
   game.pickups.push(pk);
   return pk;
 }

@@ -18,7 +18,7 @@ export const ITEM_RARITIES = [
 export const SLOTS = ['arme', 'armure', 'talisman'];
 export const SLOT_NAMES = { arme: 'Arme', armure: 'Armure', talisman: 'Talisman' };
 
-const BASES = {
+export const BASES = {
   arme: ['Lame', 'Hache', 'Fauchon', 'Glaive'],
   armure: ['Cuirasse', 'Haubert', 'Brigandine', 'Robe'],
   talisman: ['Amulette', 'Anneau', 'Sceau', 'Relique'],
@@ -26,7 +26,7 @@ const BASES = {
 
 // [stat, min, max, préfixe, suffixe, format] — valeurs de l'étage 1, mises à l'échelle.
 // format : 'pct' (affiché en %), 'pctNeg' (réduction affichée en %), 'flat'.
-const AFFIXES = {
+export const AFFIXES = {
   arme: [
     ['damageMult', 0.05, 0.12, 'cruel', 'du Carnage', 'pct'],
     ['attackSpeedMult', 0.06, 0.14, 'vif', 'de la Hâte', 'pct'],

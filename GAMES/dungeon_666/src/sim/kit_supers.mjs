@@ -7,6 +7,7 @@
 // Les dégâts portent la source 'super' (ils ne rechargent pas la jauge ; « Gloire charnelle »
 // s'y applique).
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { DEG } from './config.mjs';
 import { emit } from './state.mjs';
 import { computeAim } from './aim.mjs';
@@ -36,7 +37,7 @@ function sentence(game, s) {
     const st = s.strikes[p.superStep];
     p.superStep++;
     const aim = computeAim(game, p.manualAimX, p.manualAimY, s.aimRange);
-    const angle = Math.atan2(aim.y, aim.x);
+    const angle = TRIG.atan2(aim.y, aim.x);
     p.facing = angle;
     hitSector(game, p.x, p.y, st.range, angle, st.arc * DEG, {
       kind: 'super', amount: st.damage, knockback: st.knockback, stun: st.stun ?? 0, hitstop: st.hitstop, canCrit: true, shake: st.shake,
@@ -77,5 +78,5 @@ function nuee(game, dt, s) {
     kind: 'star', x: p.x, y: p.y, vx: (dx / l) * s.speed, vy: (dy / l) * s.speed, r: s.shotRadius, range: s.range,
     pierce: s.pierce, damage: s.damage, source: 'super', knockback: s.knockback, hitstop: s.hitstop, heavy: false,
   });
-  emit(game, 'superTick', { x: p.x, y: p.y, r: s.shotRadius, super: 'nuee', angle: Math.atan2(dy, dx) });
+  emit(game, 'superTick', { x: p.x, y: p.y, r: s.shotRadius, super: 'nuee', angle: TRIG.atan2(dy, dx) });
 }

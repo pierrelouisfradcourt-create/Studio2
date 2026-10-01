@@ -219,6 +219,12 @@ export function createUI(root, handlers) {
     p.className = 'panel death';
     p.appendChild(el('h1', 'logo', 'LE TRÔNE EST VIDE'));
     p.appendChild(el('p', 'lede', 'Vous avez atteint le 666e étage.'));
+    // Sans ce bouton, l'écran de victoire était sans issue (il fallait recharger la page).
+    const col = el('div', 'col');
+    const town = button('Retour à la Ville', 'primary', () => handlers.command({ type: 'returnToTown' }));
+    town.id = 'to-town';
+    col.appendChild(town);
+    p.appendChild(col);
   }
 
   function buildPause(p, settings) {

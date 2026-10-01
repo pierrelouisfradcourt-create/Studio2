@@ -14,6 +14,7 @@
 //   hurlement — (phase 3, frénésie) un cercle de flammes se referme autour du héros, avec une
 //               brèche, puis Cerbère bondit en son centre : sortir par la brèche, ou dasher.
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand } from '../core/rng.mjs';
 import { dist2, clamp, inSector, TAU } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
@@ -97,7 +98,7 @@ export function bond(game, e, d, dt) {
 
 function volley(game, e, s, index) {
   const tp = toPlayer(game, e);
-  const aim = Math.atan2(tp.dy, tp.dx);
+  const aim = TRIG.atan2(tp.dy, tp.dx);
   // Sens de la salve (gauche -> droite ou l'inverse) : tiré pour la 1re, alterné ensuite.
   if (index === 0) e.breathDir = rand(game.rng.ai) < 0.5 ? 1 : -1;
   else e.breathDir = -e.breathDir;
@@ -163,7 +164,7 @@ export function morsures(game, e, d, dt, speed) {
         e.dirX = tp.dx;
         e.dirY = tp.dy;
       }
-      e.tele = { shape: 'cone', angle: Math.atan2(e.dirY, e.dirX), range: biteRange(e, m), arc: m.arcDeg * DEG, progress: e.subT / m.windup };
+      e.tele = { shape: 'cone', angle: TRIG.atan2(e.dirY, e.dirX), range: biteRange(e, m), arc: m.arcDeg * DEG, progress: e.subT / m.windup };
       if (e.subT >= m.windup) {
         e.tele = null;
         e.hitPlayer = false;
@@ -181,7 +182,7 @@ export function morsures(game, e, d, dt, speed) {
       e.vy = e.dirY * m.strikeSpeed;
       // Contact de la gueule (morsures.hitPad) ET corps du héros dans le cône annoncé : la ruée
       // ne déborde jamais du télégraphe (près de l'apex, le contact seul dépasserait du cône).
-      const inCone = inSector(p.x, p.y, e.biteX, e.biteY, biteRange(e, m), Math.atan2(e.dirY, e.dirX), m.arcDeg * DEG, p.r);
+      const inCone = inSector(p.x, p.y, e.biteX, e.biteY, biteRange(e, m), TRIG.atan2(e.dirY, e.dirX), m.arcDeg * DEG, p.r);
       if (!e.hitPlayer && inCone && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + m.hitPad) ** 2) {
         e.hitPlayer = true;
         damagePlayer(game, m.damage * e.dmgScale, { kind: 'cerbereBite', id: e.atkId, x: e.x, y: e.y });
@@ -215,8 +216,8 @@ export function hurlement(game, e, d, dt) {
     const a0 = rand(game.rng.ai) * TAU;
     for (let k = h.gaps; k < h.flames; k++) {
       const a = a0 + (k / h.flames) * TAU;
-      const fx = clamp(c.x + Math.cos(a) * h.ringRadius, room.pad, room.w - room.pad);
-      const fy = clamp(c.y + Math.sin(a) * h.ringRadius, room.pad, room.h - room.pad);
+      const fx = clamp(c.x + TRIG.cos(a) * h.ringRadius, room.pad, room.w - room.pad);
+      const fy = clamp(c.y + TRIG.sin(a) * h.ringRadius, room.pad, room.h - room.pad);
       bossHazard(game, e, { shape: 'circle', x: fx, y: fy, r: h.flameRadius, delay: h.delay, damage: h.damage, kind: 'cerbereFire' });
     }
     // ... et le chien bondit au centre, juste après.

@@ -15,16 +15,19 @@ défauts sont **réversibles** : ce sont des valeurs de `src/sim/config.mjs`, ou
 | D8 | **Gel d'impact** | **TESTABLE** : Labo du feel → global (réf.) / local (seuls le héros et ses cibles se figent). Mesure bots : `reports/lab.md`. | — | Mêlée de 6 ennemis, en main. |
 | D9 | **Mobilité pendant le combo** | **TESTABLE** : Labo du feel → ancré (20 %) / mobile (50 %, réf.) / fluide (75 %), avec annulations allongées ou abrégées. Mesure bots : `reports/lab.md`. | — | Arène d'essai, combo maintenu. |
 | D10 | **Économie permanente** | Âmes : 1 par ennemi, 6 par élite, 60 + 15/section par Gardien ; classes 120, armes 40-60, compétences/gadgets 35-45 ; Sanctuaire 6 améliorations. | Coûts plus bas pour tester vite ; or comme seule monnaie. | Une soirée de jeu. |
-| D11 | **Équilibrage des classes** | Bourreau (Hache/Maillet) : la relecture a relevé un étourdissement en boucle en maintenant l'attaque ; Chasseresse : le dash devient facultatif pour le bot. **Non corrigé** (correction interrompue à la clôture). | Garde/stagger des ennemis, recul de la Chasseresse. | En main, puis bots. |
-| D12 | **Portage Godot** | Pierre (2026-10-01) : reprise sous Godot. La charte demandait un feel validé avant ; la sim web reste la spécification exécutable. | — | Pierre. |
+| D11 | **Équilibrage des classes** | Les deux défauts de la relecture sont **corrigés** (reprise du 2026-10-01) : garde de 1,5 s après un étourdissement ; la Chasseresse tire à pas lents, recul réduit. Mesure : `reports/classes.md`. Reste ouvert : l'équilibrage RESSENTI (Chasseresse très sûre quand elle dashe, Maillet qui tient les diablotins à distance). | Garde plus courte ou plus longue ; recul du Maillet. | En main. |
+| D12 | **Portage Godot** | **TRANCHÉE par Pierre (2026-10-01)** : « une version plus propre sur Godot ». Projet : `GAMES/dungeon_666_godot/`. La sim web reste la spécification exécutable ; la parité est gardée par des traces rejouées. | — | — |
+| D13 | **Économie en profondeur** | Soins et or plats : Festin 2 PV = 2 % des PV à l'étage 1, 0,1 % au 649 ; la bourse d'une chambre forte vaut moins que recycler l'objet du même coffre. | Soins en part des PV max ; or mis à l'échelle du niveau. | Pierre (voir `RELECTURES_V2.md`). |
+| D14 | **Reprise après une téléportation en arrière** | Mourir à l'étage 20 avec un checkpoint au 325 propose de repartir du 325. | Reprise au checkpoint le plus proche sous l'étage quitté, le plus profond en second bouton. | Pierre. |
 
 ## Ce qui est mesuré, et ce qui ne l'est pas
 
 - **Mesuré (bots, `node solvability.mjs` et `node tools/playtest.mjs`)** :
   - la section 1 est battable ;
-  - **ne jamais dasher fait prendre environ 4,5 fois plus de dégâts** (seuil de l'oracle : 2) ;
+  - **ne jamais dasher fait prendre environ 9 fois plus de dégâts** (seuil de l'oracle : 2) ;
   - un joueur qui martèle sans lire les télégraphes meurt presque toujours ;
   - aucune partie bloquée sur 60 parties ;
-  - la cadence du Super est d'environ 4 à 5 par section (bot habile).
+  - la cadence du Super est d'environ 10 par section de 18 étages (bot habile), stable en profondeur ;
+  - les 6 kits sont jouables et le dash y compte (`node tools/classes.mjs`).
 - **Non mesurable par un bot** : le plaisir, le poids des coups, le confort du pouce, la lisibilité
   ressentie. C'est la **gate Pierre**. La grille G1 à G10 est dans [`GDD_PROTOTYPE.md`](GDD_PROTOTYPE.md).

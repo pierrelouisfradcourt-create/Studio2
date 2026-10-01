@@ -52,18 +52,20 @@ const MARTEAU_STRIKE = { startup: 0.05, active: 0.12, recovery: 0.26, range: 100
 
 // Arc d'os : attaque principale à projectiles. range = portée du trait ; arc = éventail (degrés) ;
 // lunge négatif = léger recul ; shot = projectile tiré au début de l'actif.
+// Le recul reste une sensation, pas une fuite : recul + marche en tirant restent sous la vitesse
+// d'un diablotin (tests/v2_classes.test.mjs). À -8 / -8 / -24 il offrait 60 u/s de fuite gratuite.
 const ARC_COMBO = [
-  { startup: 0.08, active: 0.04, recovery: 0.16, range: 480, arc: 0, damage: 7, knockback: 140, lunge: -8, hitstop: 0.025, shake: 0.08, cancelFrom: 0.3, shot: { kind: 'arrow', speed: 980, radius: 6, pierce: 0, count: 1 } },
-  { startup: 0.08, active: 0.04, recovery: 0.16, range: 480, arc: 0, damage: 7, knockback: 140, lunge: -8, hitstop: 0.025, shake: 0.08, cancelFrom: 0.3, shot: { kind: 'arrow', speed: 980, radius: 6, pierce: 0, count: 1 } },
-  { startup: 0.14, active: 0.05, recovery: 0.26, range: 560, arc: 0, damage: 18, knockback: 420, lunge: -24, hitstop: 0.06, shake: 0.25, cancelFrom: 0.5, shot: { kind: 'arrow', speed: 1250, radius: 8, pierce: 2, count: 1, heavy: true } },
+  { startup: 0.08, active: 0.04, recovery: 0.16, range: 480, arc: 0, damage: 7, knockback: 140, lunge: -4, hitstop: 0.025, shake: 0.08, cancelFrom: 0.3, shot: { kind: 'arrow', speed: 980, radius: 6, pierce: 0, count: 1 } },
+  { startup: 0.08, active: 0.04, recovery: 0.16, range: 480, arc: 0, damage: 7, knockback: 140, lunge: -4, hitstop: 0.025, shake: 0.08, cancelFrom: 0.3, shot: { kind: 'arrow', speed: 980, radius: 6, pierce: 0, count: 1 } },
+  { startup: 0.14, active: 0.05, recovery: 0.26, range: 560, arc: 0, damage: 18, knockback: 420, lunge: -12, hitstop: 0.06, shake: 0.25, cancelFrom: 0.5, shot: { kind: 'arrow', speed: 1250, radius: 8, pierce: 2, count: 1, heavy: true } },
 ];
 // Tir roulé : trois flèches à bout portant en sortie de dash.
 const ARC_STRIKE = { startup: 0.03, active: 0.04, recovery: 0.14, range: 380, arc: 24, damage: 12, knockback: 300, lunge: 0, hitstop: 0.05, shake: 0.25, shot: { kind: 'arrow', speed: 1100, radius: 7, pierce: 1, count: 3, heavy: true } };
 
 // Arbalète des limbes : carreaux lents et perforants ; le 2e coup tire en éventail.
 const ARBALETE_COMBO = [
-  { startup: 0.1, active: 0.04, recovery: 0.2, range: 640, arc: 0, damage: 18, knockback: 520, lunge: -30, hitstop: 0.06, shake: 0.28, cancelFrom: 0.35, shot: { kind: 'bolt', speed: 1400, radius: 9, pierce: 3, count: 1 } },
-  { startup: 0.14, active: 0.05, recovery: 0.3, range: 560, arc: 18, damage: 12, knockback: 380, lunge: -36, hitstop: 0.06, shake: 0.3, cancelFrom: 0.55, shot: { kind: 'bolt', speed: 1250, radius: 8, pierce: 1, count: 3, heavy: true } },
+  { startup: 0.1, active: 0.04, recovery: 0.2, range: 640, arc: 0, damage: 18, knockback: 520, lunge: -12, hitstop: 0.06, shake: 0.28, cancelFrom: 0.35, shot: { kind: 'bolt', speed: 1400, radius: 9, pierce: 3, count: 1 } },
+  { startup: 0.14, active: 0.05, recovery: 0.3, range: 560, arc: 18, damage: 12, knockback: 380, lunge: -16, hitstop: 0.06, shake: 0.3, cancelFrom: 0.55, shot: { kind: 'bolt', speed: 1250, radius: 8, pierce: 1, count: 3, heavy: true } },
 ];
 const ARBALETE_STRIKE = { startup: 0.04, active: 0.05, recovery: 0.2, range: 640, arc: 0, damage: 30, knockback: 700, lunge: 0, hitstop: 0.08, shake: 0.4, shot: { kind: 'bolt', speed: 1500, radius: 10, pierce: 4, count: 1, heavy: true } };
 
@@ -113,7 +115,10 @@ export const WEAPONS = {
     starterName: 'Arc de côtes',
     bases: ['Arc', 'Arc long', 'Arc court', 'Arc de corne'],
     baseMult: 1,
-    moveMult: 1.1, // on tire en marchant (55 % de vitesse au réglage D9 « mobile ») : le dash reste la fuite
+    // On tire à pas lents : 30 % de la course au réglage D9 « mobile » (97 u/s, moins vite qu'un
+    // diablotin à 150). Pour fuir il faut cesser de tirer, ou dasher. À 1,1 la Chasseresse
+    // distançait la mêlée en tirant et le bot sans dash battait la section une fois sur deux.
+    moveMult: 0.6,
     aimRange: 400, // visée assistée : portée de recherche de cible
     combo: ARC_COMBO,
     dashStrike: ARC_STRIKE,
@@ -124,7 +129,7 @@ export const WEAPONS = {
     starterName: 'Arbalète vermoulue',
     bases: ['Arbalète', 'Baliste', 'Arbalète lourde', 'Cranequin'],
     baseMult: 1,
-    moveMult: 0.8,
+    moveMult: 0.4, // arme lourde : presque plantée pendant le tir (20 % de la course)
     aimRange: 500,
     combo: ARBALETE_COMBO,
     dashStrike: ARBALETE_STRIKE,
@@ -268,7 +273,7 @@ export const CLASSES = {
     super: 'sentence',
   },
   chasseresse: {
-    name: 'Chasseresse', text: 'Traqueuse des Limbes. Elle tire à distance en se déplaçant et dashe loin ; fragile.', cost: 120,
+    name: 'Chasseresse', text: 'Traqueuse des Limbes. Elle tire de loin, à pas lents, et dashe loin pour se replacer ; fragile.', cost: 120,
     passive: { name: 'Pied léger', text: 'Dash +30 % de distance, vitesse +8 %, critique +5 % ; −20 PV max.' },
     stats: { dashDistanceMult: 0.3, moveSpeedMult: 0.08, critChance: 0.05, maxHpBonus: -20 },
     weapons: ['arc', 'arbalete'],

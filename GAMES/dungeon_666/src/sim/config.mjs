@@ -170,6 +170,13 @@ export const DEFAULT_TUNING = {
     maxAttackers: 2, // ennemis de mêlée autorisés à lancer une attaque en même temps (lisibilité)
     maxShooters: 2, // archers autorisés à viser en même temps
     stunDamageTakenMult: 1.5,
+    // GARDE : un ennemi qui sort d'un étourdissement ne peut plus être ré-étourdi par un coup
+    // d'ARME (stunGuardSources) pendant stunGuard s — le temps de placer une attaque (recharge
+    // 0,3 s + télégraphe le plus long 0,7 s + le coup). Sans elle, la Hache ou le Maillet
+    // maintenus sur place étourdissaient en boucle : plus aucun dégât de mêlée (tools/classes.mjs).
+    // Compétences, gadgets, Supers et murs étourdissent toujours : ressources comptées, ou placement.
+    stunGuard: 1.5,
+    stunGuardSources: ['melee', 'strike'],
     minChillMult: 0.35, // plancher du ralentissement cumulé
   },
 

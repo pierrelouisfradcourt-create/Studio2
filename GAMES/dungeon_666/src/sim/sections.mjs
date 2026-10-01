@@ -16,6 +16,7 @@
 // Graine : celle de la partie. Le plan a son propre flux (hashSeed) : le calculer ne consomme
 // jamais les flux de la partie, et la même partie revoit le même plan après une mort.
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { createRng, hashSeed, rand, weightedPick, shuffle } from '../core/rng.mjs';
 import { floorInfo, floorScaling, guardianFor, sectionBounds } from './floors.mjs';
 import { ROSTER, LAYOUT_IDS } from './room.mjs';
@@ -181,7 +182,7 @@ function rosterFor(tuning, theme, featured, section, index) {
   return ROSTER.filter((r) => r.minIndex <= reach && tuning.enemies[r.kind]).map((r) => ({
     kind: r.kind,
     cost: r.cost,
-    weight: r.weight * Math.pow(r.cost / ref, theme.costBias) * (featured.includes(r.kind) ? theme.featuredMult : 1),
+    weight: r.weight * TRIG.pow(r.cost / ref, theme.costBias) * (featured.includes(r.kind) ? theme.featuredMult : 1),
   }));
 }
 

@@ -849,6 +849,7 @@ function drawEnemy(ctx, e, game, time) {
   }
   if (e.burn > 0) drawGlow(ctx, e.x, e.y - r * 0.5, r * 1.6, PAL.lava, 0.45 + 0.2 * Math.sin(time * 20 + e.id));
   if (e.stun > 0) drawStun(ctx, e.x, e.y - r - 10, time);
+  else if (e.guard > 0 && !e.boss) drawGuard(ctx, e.x + Math.max(28, r * 2.2) / 2 + 9, e.y - r - 10, Math.min(1, e.guard / GUARD_FADE));
   if (!e.boss && (e.hp < e.maxHp || e.eliteMod)) drawEnemyHp(ctx, e, r);
   if (e.eliteMod) {
     ctx.font = `800 11px ${FONT}`;
@@ -986,6 +987,27 @@ function drawStun(ctx, x, y, time) {
     ctx.arc(x + Math.cos(a) * 12, y + Math.sin(a) * 4, 3, 0, TAU);
     ctx.fill();
   }
+}
+
+const GUARD_FADE = 0.3; // s : l'écu s'efface sur la fin de la garde
+
+/** Garde (il sort d'un étourdissement, combat.stunGuard) : petit écu au bout de la barre de vie. */
+function drawGuard(ctx, x, y, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.moveTo(x - 6, y - 6);
+  ctx.lineTo(x + 6, y - 6);
+  ctx.lineTo(x + 6, y);
+  ctx.quadraticCurveTo(x + 5, y + 5, x, y + 8);
+  ctx.quadraticCurveTo(x - 5, y + 5, x - 6, y);
+  ctx.closePath();
+  ctx.fillStyle = '#c9c9d6';
+  ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+  ctx.lineWidth = 2;
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawEnemyHp(ctx, e, r) {

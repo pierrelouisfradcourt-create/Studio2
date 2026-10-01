@@ -5,6 +5,7 @@
 //   ring   — anneaux de projectiles avec des brèches : lire, se placer, dasher à travers
 //   summon — (phase 3) invoque des diablotins via des cercles d'invocation (alerte inoffensive)
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand } from '../core/rng.mjs';
 import { dist2 } from '../core/math.mjs';
 import { emit } from './state.mjs';
@@ -46,7 +47,7 @@ export function charge(game, e, d, dt) {
     }
     // Largeur = zone qui touche réellement (rayon du boss + marge du test de contact) : esquiver
     // « au pixel » le bord rouge doit toujours suffire.
-    e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: c.speed * c.maxTime, width: Math.max(c.width, 2 * (e.r + CHARGE_HIT_PAD)), progress: e.stateTime / windup };
+    e.tele = { shape: 'line', angle: TRIG.atan2(e.dirY, e.dirX), length: c.speed * c.maxTime, width: Math.max(c.width, 2 * (e.r + CHARGE_HIT_PAD)), progress: e.stateTime / windup };
     if (e.stateTime >= windup) {
       e.tele = null;
       e.patternStep = 1;
@@ -107,8 +108,8 @@ export function ring(game, e, d, dt) {
       if (rel < r.gapCount) continue;
       const a = offset + (i / n) * Math.PI * 2;
       spawnProjectile(game, {
-        owner: 'enemy', kind: 'bossOrb', x: e.x + Math.cos(a) * e.r, y: e.y + Math.sin(a) * e.r,
-        vx: Math.cos(a) * r.speed, vy: Math.sin(a) * r.speed, r: r.radius, damage: r.damage * e.dmgScale, range: 1400, sourceId: e.id,
+        owner: 'enemy', kind: 'bossOrb', x: e.x + TRIG.cos(a) * e.r, y: e.y + TRIG.sin(a) * e.r,
+        vx: TRIG.cos(a) * r.speed, vy: TRIG.sin(a) * r.speed, r: r.radius, damage: r.damage * e.dmgScale, range: 1400, sourceId: e.id,
       });
     }
     emit(game, 'enemyAttack', { id: e.id, x: e.x, y: e.y, enemy: 'bossRing' });

@@ -7,6 +7,7 @@
 // shot : {id, kind, x, y, vx, vy, r, range, traveled, pierce, hitIds, damage, source,
 //         knockback, hitstop, shake, stun, pull?: {stopGap, mass}, heavy, dead}
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { DEG } from './config.mjs';
 import { pointSegDist2 } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
@@ -39,8 +40,8 @@ export function fireWeaponShots(game, a) {
   const spread = (def.arc ?? 0) * DEG;
   for (let i = 0; i < count; i++) {
     const ang = a.angle + (count > 1 ? (i / (count - 1) - 0.5) * spread : 0);
-    const cx = Math.cos(ang);
-    const cy = Math.sin(ang);
+    const cx = TRIG.cos(ang);
+    const cy = TRIG.sin(ang);
     spawnShot(game, {
       kind: sh.kind ?? 'arrow',
       x: p.x + cx * p.r * MUZZLE,
@@ -67,8 +68,8 @@ export function fireFan(game, angle, count, spreadDeg, spec) {
   const spread = spreadDeg * DEG;
   for (let i = 0; i < count; i++) {
     const ang = angle + (count > 1 ? (i / (count - 1) - 0.5) * spread : 0);
-    const cx = Math.cos(ang);
-    const cy = Math.sin(ang);
+    const cx = TRIG.cos(ang);
+    const cy = TRIG.sin(ang);
     spawnShot(game, {
       ...spec,
       x: p.x + cx * p.r * MUZZLE,

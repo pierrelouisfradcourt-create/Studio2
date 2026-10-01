@@ -13,6 +13,7 @@
 //              COURONNE autour du point d'arrivée — rester au centre (contre lui) ou fuir loin.
 //              Phase 3 : le fouet suit aussitôt.
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand, randRange } from '../core/rng.mjs';
 import { clamp, inSector, TAU } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
@@ -158,7 +159,7 @@ export function fouet(game, e, d, dt) {
     const tp = toPlayer(game, e);
     const side = rand(game.rng.ai) < 0.5 ? -1 : 1;
     const min = f.minOffsetDeg * DEG;
-    e.breachAngle = Math.atan2(tp.dy, tp.dx) + side * (min + rand(game.rng.ai) * (Math.PI - min));
+    e.breachAngle = TRIG.atan2(tp.dy, tp.dx) + side * (min + rand(game.rng.ai) * (Math.PI - min));
     setSub(e, 'whip');
   }
   e.subT += dt;

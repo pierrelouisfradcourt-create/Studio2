@@ -32,7 +32,9 @@ export function setupCalmRoom(game, it) {
   const rolled = rollRarity(game, tr.rarityBonus);
   const rank = Math.max(minRank, ITEM_RARITIES.findIndex((r) => r.id === rolled));
   it.item = generateItem(game, { rarity: ITEM_RARITIES[rank].id });
-  it.gold = Math.round(randInt(game.rng.gen, tr.gold[0], tr.gold[1]) * game.player.stats.goldFindMult);
+  // La bourse tombe en goldPickups pièces égales : le montant ANNONCÉ est celui qui sera versé.
+  const each = Math.max(1, Math.round((randInt(game.rng.gen, tr.gold[0], tr.gold[1]) * game.player.stats.goldFindMult) / tr.goldPickups));
+  it.gold = each * tr.goldPickups;
   it.family = randomFamily(game);
 }
 
@@ -40,10 +42,16 @@ function gadgetMax(game) {
   return game.tuning.gadget.chargesPerSection + game.player.stats.gadgetChargesBonus;
 }
 
-/** Bénédiction que la méditation approfondit : la moins avancée (la première à égalité). */
+/**
+ * Bénédiction que la méditation approfondit : la moins avancée (la première à égalité). Jamais
+ * une bénédiction `noScale` (Envol : « +1 charge de dash ») : elle n'a pas de niveau.
+ */
 function meditationTarget(game) {
   let best = null;
-  for (const b of game.run.boons) if (!best || b.level < best.level) best = b;
+  for (const b of game.run.boons) {
+    if (boonDef(b.id)?.noScale) continue;
+    if (!best || b.level < best.level) best = b;
+  }
   return best;
 }
 

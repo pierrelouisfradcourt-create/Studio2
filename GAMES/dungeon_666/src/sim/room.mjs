@@ -4,6 +4,7 @@
 // Une salle = un étage. Le héros entre en bas, deux portes s'ouvrent en haut une fois la
 // salle nettoyée ; chacune annonce la récompense de la salle suivante (façon Hades).
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand, randInt, pick, weightedPick } from '../core/rng.mjs';
 import { emit } from './state.mjs';
 import { createEnemy, aliveEnemies } from './enemies.mjs';
@@ -19,7 +20,7 @@ import { pickEliteMod } from './foe_elites.mjs';
 // BRIQUES réutilisables : le plan de section (sections.mjs) dit lesquelles un étage peut tirer
 // et avec quel poids (thème du Cercle). Les six premières sont celles de tous les Cercles ;
 // `cross`, `ring` et `alcoves` n'apparaissent que plus bas (tuning.circles).
-const LAYOUTS = {
+export const LAYOUTS = {
   open: [],
   pillars: [[0.27, 0.36, 70, 70], [0.73, 0.36, 70, 70], [0.27, 0.66, 70, 70], [0.73, 0.66, 70, 70]],
   center: [[0.5, 0.48, 150, 150]],
@@ -40,7 +41,7 @@ const LAYOUTS = {
 export const LAYOUT_IDS = Object.freeze(Object.keys(LAYOUTS));
 /** Les six dispositions de combat d'origine (toujours tirables ; repli sans plan). */
 export const COMBAT_LAYOUTS = Object.freeze(['open', 'pillars', 'center', 'lanes', 'bastions', 'scatter']);
-const BOSS_LAYOUT = [[0.15, 0.25, 64, 64], [0.85, 0.25, 64, 64], [0.15, 0.78, 64, 64], [0.85, 0.78, 64, 64]];
+export const BOSS_LAYOUT = [[0.15, 0.25, 64, 64], [0.85, 0.25, 64, 64], [0.15, 0.78, 64, 64], [0.85, 0.78, 64, 64]];
 
 // Coût en « budget de vague » de chaque archétype, et étage d'apparition minimal (dans la section).
 // Le plan de section (sections.mjs) en dérive le bestiaire PONDÉRÉ de chaque étage.
@@ -124,8 +125,8 @@ export function rewardSpot(room) {
     const d = ring * 30;
     for (let k = 0; k < 16; k++) {
       const a = (k / 16) * Math.PI * 2 + Math.PI / 2; // commence sous l'obstacle
-      const x = cx + Math.cos(a) * d;
-      const y = cy + Math.sin(a) * d;
+      const x = cx + TRIG.cos(a) * d;
+      const y = cy + TRIG.sin(a) * d;
       if (!pointBlocked(room, x, y, REWARD_CLEARANCE)) return { x, y };
     }
   }
@@ -178,8 +179,11 @@ function planWaves(game, info, plan) {
   const stray = plan.strayEliteChance ?? (info.floor >= enc.strayEliteFrom ? enc.strayEliteChance : 0);
   if (plan.elite) {
     // Salle d'élite : un champion (modificateur façon Diablo) dans la dernière vague.
-    const kinds = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS].filter((k) => t.enemies[k]);
-    const kind = pick(game.rng.gen, kinds);
+    // Le champion sort du bestiaire de l'étage : en section 1 les archétypes entrent un à un
+    // (sections.mjs rosterFor), une porte d'élite ne les fait pas apparaître plus tôt.
+    const known = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS].filter((k) => t.enemies[k]);
+    const present = known.filter((k) => !plan.roster || pool.some((r) => r.kind === k));
+    const kind = pick(game.rng.gen, present.length ? present : known);
     waves[waves.length - 1].push({ kind, elite: pickEliteMod(game, kind, info) });
   } else if (stray > 0 && rand(game.rng.gen) < stray) {
     const kind = pick(game.rng.gen, ['imp', 'archer']);

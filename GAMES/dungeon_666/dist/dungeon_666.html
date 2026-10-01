@@ -193,6 +193,154 @@
 <script type="module">
 "use strict";
 const __mod = Object.create(null);
+// ---- src/core/trig.mjs
+__mod["src/core/trig.mjs"] = (() => {
+// Fonctions transcendantes DÉTERMINISTES : sinus, cosinus, arc tangente, exponentielle,
+// logarithme, puissance — écrites avec les seules opérations que tous les moteurs calculent à
+// l'identique (+, −, ×, ÷, racine carrée, partie entière).
+//
+// Pourquoi : Math.sin, Math.cos, Math.atan2, Math.exp… ne sont PAS tenues au même dernier bit
+// d'un moteur à l'autre (mesuré le 2026-10-01 entre V8 et Godot : 9 % des sinus diffèrent), et
+// dans un combat dense cet écart s'amplifie jusqu'à faire diverger deux parties rejouées. La
+// simulation n'appelle donc JAMAIS Math.sin & co : elle passe par ce module, que la version
+// Godot porte ligne à ligne (sim/trig.gd). Même graine + mêmes entrées = même partie, au bit
+// près, quel que soit le moteur.
+//
+// Précision : erreur relative de l'ordre de 1e-15 (largement sous ce que le jeu peut voir).
+// AUCUN nombre décimal écrit en dur ne sert de coefficient : les lecteurs de décimaux diffèrent
+// aussi d'un moteur à l'autre. Les coefficients sont des quotients d'entiers, calculés.
+
+const PI = Math.PI;
+const HALF_PI = PI / 2;
+// π/2 en deux morceaux (Cody-Waite) : le premier a ses 27 bits bas à zéro, k × HI est exact.
+const PIO2_HI = Math.floor(HALF_PI * 67108864) / 67108864; // 2^26
+const PIO2_LO = HALF_PI - PIO2_HI;
+const LN2 = ln2Series();
+const SIN_TERMS = 10; // jusqu'à r^21 / 21!
+const EXP_TERMS = 16;
+const ATAN_TERMS = 14; // jusqu'à z^29 / 29, |z| <= tan(π/16)
+const LOG_TERMS = 16;
+
+/** ln 2 = 2·atanh(1/3), sommé du plus petit terme au plus grand : aucun décimal écrit en dur. */
+function ln2Series() {
+  let s = 0;
+  for (let i = 20; i >= 0; i--) s = 1 / (2 * i + 1) + s / 9;
+  return (2 * s) / 3;
+}
+
+function jround(x) {
+  return Math.floor(x + 0.5);
+}
+
+/** Réduit x à r dans [-π/4, π/4] ; rend le quadrant (0..3) dans out.q et r dans out.r. */
+const red = { q: 0, r: 0 };
+function reduce(x) {
+  const k = jround(x / HALF_PI);
+  red.r = x - k * PIO2_HI - k * PIO2_LO;
+  red.q = ((k % 4) + 4) % 4;
+}
+
+function sinKernel(r) {
+  // r − r³/3! + r⁵/5! − … (Horner sur r²)
+  const r2 = r * r;
+  let s = 0;
+  for (let i = SIN_TERMS; i >= 1; i--) s = (1 - s) * r2 / ((2 * i) * (2 * i + 1));
+  return r * (1 - s);
+}
+
+function cosKernel(r) {
+  // 1 − r²/2! + r⁴/4! − …
+  const r2 = r * r;
+  let s = 0;
+  for (let i = SIN_TERMS; i >= 1; i--) s = (1 - s) * r2 / ((2 * i - 1) * (2 * i));
+  return 1 - s;
+}
+
+function sin(x) {
+  reduce(x);
+  switch (red.q) {
+    case 0: return sinKernel(red.r);
+    case 1: return cosKernel(red.r);
+    case 2: return -sinKernel(red.r);
+    default: return -cosKernel(red.r);
+  }
+}
+
+function cos(x) {
+  reduce(x);
+  switch (red.q) {
+    case 0: return cosKernel(red.r);
+    case 1: return -sinKernel(red.r);
+    case 2: return -cosKernel(red.r);
+    default: return sinKernel(red.r);
+  }
+}
+
+/** Arc tangente de z >= 0. Deux demi-angles ramènent z sous tan(π/16), puis la série. */
+function atanPos(z) {
+  if (z > 1) return HALF_PI - atanPos(1 / z);
+  let w = z / (1 + Math.sqrt(1 + z * z));
+  w = w / (1 + Math.sqrt(1 + w * w));
+  const w2 = w * w;
+  let s = 0;
+  for (let i = ATAN_TERMS; i >= 0; i--) s = 1 / (2 * i + 1) - w2 * s;
+  return 4 * w * s;
+}
+
+function atan(z) {
+  return z < 0 ? -atanPos(-z) : atanPos(z);
+}
+
+/** Angle du vecteur (x, y) dans (-π, π], mêmes conventions que Math.atan2 (hors zéros signés). */
+function atan2(y, x) {
+  if (x > 0) return atan(y / x);
+  if (x < 0) return y >= 0 ? atan(y / x) + PI : atan(y / x) - PI;
+  if (y > 0) return HALF_PI;
+  if (y < 0) return -HALF_PI;
+  return 0;
+}
+
+function asin(v) {
+  if (v >= 1) return HALF_PI;
+  if (v <= -1) return -HALF_PI;
+  return atan(v / Math.sqrt(1 - v * v));
+}
+
+function exp(x) {
+  const k = jround(x / LN2);
+  const r = x - k * LN2;
+  let s = 1;
+  for (let i = EXP_TERMS; i >= 1; i--) s = 1 + (r / i) * s;
+  // × 2^k par doublements (exacts).
+  if (k > 0) for (let i = 0; i < k; i++) s *= 2;
+  else for (let i = 0; i < -k; i++) s /= 2;
+  return s;
+}
+
+/** Logarithme naturel (x > 0) : x = m × 2^e avec m dans [0,75 ; 1,5), puis 2·atanh((m−1)/(m+1)). */
+function log(x) {
+  let m = x;
+  let e = 0;
+  while (m >= 1.5) { m /= 2; e++; }
+  while (m < 0.75) { m *= 2; e--; }
+  const u = (m - 1) / (m + 1);
+  const u2 = u * u;
+  let s = 0;
+  for (let i = LOG_TERMS; i >= 0; i--) s = 1 / (2 * i + 1) + u2 * s;
+  return 2 * u * s + e * LN2;
+}
+
+/** a^b pour a > 0 (le seul usage de la simulation : un poids). */
+function pow(a, b) {
+  if (b === 0) return 1;
+  if (a === 1) return 1;
+  return exp(b * log(a));
+}
+
+const TRIG_CONSTANTS = { PIO2_HI, PIO2_LO, LN2 };
+
+return { sin, cos, atan, atan2, asin, exp, log, pow, TRIG_CONSTANTS };
+})();
 // ---- src/core/rng.mjs
 __mod["src/core/rng.mjs"] = (() => {
 // RNG déterministe (mulberry32). L'état tient dans un entier 32 bits : sérialisable,
@@ -282,7 +430,7 @@ return { createRng, cloneRng, nextU32, rand, randRange, randInt, chance, pick, w
 // ---- src/core/math.mjs
 __mod["src/core/math.mjs"] = (() => {
 // Utilitaires géométriques SANS allocation dans les chemins chauds : les fonctions
-// travaillent sur des nombres, ou écrivent dans un objet `out` fourni par l'appelant.
+// travaillent sur des nombres, ou écrivent dans un objet `out` fourni par l'appelant.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 
 const TAU = Math.PI * 2;
 const EPS = 1e-9;
@@ -348,9 +496,9 @@ function inSector(px, py, cx, cy, r, dir, arc, pad = 0) {
   if (d <= pad) return true; // cible qui chevauche l'origine : toujours touchée
   const half = arc / 2;
   if (half >= Math.PI) return true;
-  const diff = Math.abs(angleDiff(dir, Math.atan2(dy, dx)));
+  const diff = Math.abs(angleDiff(dir, TRIG.atan2(dy, dx)));
   // Tolérance angulaire liée au rayon de la cible : un gros ennemi au bord de l'arc est touché.
-  const slack = Math.asin(clamp(pad / d, 0, 1));
+  const slack = TRIG.asin(clamp(pad / d, 0, 1));
   return diff <= half + slack;
 }
 
@@ -377,8 +525,8 @@ function pointSegDist2(px, py, ax, ay, bx, by) {
  * C'est la forme que dessine le rendu pour une zone 'line' (rectangle, pas capsule).
  */
 function pointBandDist2(px, py, ax, ay, angle, length, width) {
-  const c = Math.cos(angle);
-  const s = Math.sin(angle);
+  const c = TRIG.cos(angle);
+  const s = TRIG.sin(angle);
   const dx = px - ax;
   const dy = py - ay;
   const u = dx * c + dy * s; // le long de l'axe
@@ -517,18 +665,20 @@ const MARTEAU_STRIKE = { startup: 0.05, active: 0.12, recovery: 0.26, range: 100
 
 // Arc d'os : attaque principale à projectiles. range = portée du trait ; arc = éventail (degrés) ;
 // lunge négatif = léger recul ; shot = projectile tiré au début de l'actif.
+// Le recul reste une sensation, pas une fuite : recul + marche en tirant restent sous la vitesse
+// d'un diablotin (tests/v2_classes.test.mjs). À -8 / -8 / -24 il offrait 60 u/s de fuite gratuite.
 const ARC_COMBO = [
-  { startup: 0.08, active: 0.04, recovery: 0.16, range: 480, arc: 0, damage: 7, knockback: 140, lunge: -8, hitstop: 0.025, shake: 0.08, cancelFrom: 0.3, shot: { kind: 'arrow', speed: 980, radius: 6, pierce: 0, count: 1 } },
-  { startup: 0.08, active: 0.04, recovery: 0.16, range: 480, arc: 0, damage: 7, knockback: 140, lunge: -8, hitstop: 0.025, shake: 0.08, cancelFrom: 0.3, shot: { kind: 'arrow', speed: 980, radius: 6, pierce: 0, count: 1 } },
-  { startup: 0.14, active: 0.05, recovery: 0.26, range: 560, arc: 0, damage: 18, knockback: 420, lunge: -24, hitstop: 0.06, shake: 0.25, cancelFrom: 0.5, shot: { kind: 'arrow', speed: 1250, radius: 8, pierce: 2, count: 1, heavy: true } },
+  { startup: 0.08, active: 0.04, recovery: 0.16, range: 480, arc: 0, damage: 7, knockback: 140, lunge: -4, hitstop: 0.025, shake: 0.08, cancelFrom: 0.3, shot: { kind: 'arrow', speed: 980, radius: 6, pierce: 0, count: 1 } },
+  { startup: 0.08, active: 0.04, recovery: 0.16, range: 480, arc: 0, damage: 7, knockback: 140, lunge: -4, hitstop: 0.025, shake: 0.08, cancelFrom: 0.3, shot: { kind: 'arrow', speed: 980, radius: 6, pierce: 0, count: 1 } },
+  { startup: 0.14, active: 0.05, recovery: 0.26, range: 560, arc: 0, damage: 18, knockback: 420, lunge: -12, hitstop: 0.06, shake: 0.25, cancelFrom: 0.5, shot: { kind: 'arrow', speed: 1250, radius: 8, pierce: 2, count: 1, heavy: true } },
 ];
 // Tir roulé : trois flèches à bout portant en sortie de dash.
 const ARC_STRIKE = { startup: 0.03, active: 0.04, recovery: 0.14, range: 380, arc: 24, damage: 12, knockback: 300, lunge: 0, hitstop: 0.05, shake: 0.25, shot: { kind: 'arrow', speed: 1100, radius: 7, pierce: 1, count: 3, heavy: true } };
 
 // Arbalète des limbes : carreaux lents et perforants ; le 2e coup tire en éventail.
 const ARBALETE_COMBO = [
-  { startup: 0.1, active: 0.04, recovery: 0.2, range: 640, arc: 0, damage: 18, knockback: 520, lunge: -30, hitstop: 0.06, shake: 0.28, cancelFrom: 0.35, shot: { kind: 'bolt', speed: 1400, radius: 9, pierce: 3, count: 1 } },
-  { startup: 0.14, active: 0.05, recovery: 0.3, range: 560, arc: 18, damage: 12, knockback: 380, lunge: -36, hitstop: 0.06, shake: 0.3, cancelFrom: 0.55, shot: { kind: 'bolt', speed: 1250, radius: 8, pierce: 1, count: 3, heavy: true } },
+  { startup: 0.1, active: 0.04, recovery: 0.2, range: 640, arc: 0, damage: 18, knockback: 520, lunge: -12, hitstop: 0.06, shake: 0.28, cancelFrom: 0.35, shot: { kind: 'bolt', speed: 1400, radius: 9, pierce: 3, count: 1 } },
+  { startup: 0.14, active: 0.05, recovery: 0.3, range: 560, arc: 18, damage: 12, knockback: 380, lunge: -16, hitstop: 0.06, shake: 0.3, cancelFrom: 0.55, shot: { kind: 'bolt', speed: 1250, radius: 8, pierce: 1, count: 3, heavy: true } },
 ];
 const ARBALETE_STRIKE = { startup: 0.04, active: 0.05, recovery: 0.2, range: 640, arc: 0, damage: 30, knockback: 700, lunge: 0, hitstop: 0.08, shake: 0.4, shot: { kind: 'bolt', speed: 1500, radius: 10, pierce: 4, count: 1, heavy: true } };
 
@@ -578,7 +728,10 @@ const WEAPONS = {
     starterName: 'Arc de côtes',
     bases: ['Arc', 'Arc long', 'Arc court', 'Arc de corne'],
     baseMult: 1,
-    moveMult: 1.1, // on tire en marchant (55 % de vitesse au réglage D9 « mobile ») : le dash reste la fuite
+    // On tire à pas lents : 30 % de la course au réglage D9 « mobile » (97 u/s, moins vite qu'un
+    // diablotin à 150). Pour fuir il faut cesser de tirer, ou dasher. À 1,1 la Chasseresse
+    // distançait la mêlée en tirant et le bot sans dash battait la section une fois sur deux.
+    moveMult: 0.6,
     aimRange: 400, // visée assistée : portée de recherche de cible
     combo: ARC_COMBO,
     dashStrike: ARC_STRIKE,
@@ -589,7 +742,7 @@ const WEAPONS = {
     starterName: 'Arbalète vermoulue',
     bases: ['Arbalète', 'Baliste', 'Arbalète lourde', 'Cranequin'],
     baseMult: 1,
-    moveMult: 0.8,
+    moveMult: 0.4, // arme lourde : presque plantée pendant le tir (20 % de la course)
     aimRange: 500,
     combo: ARBALETE_COMBO,
     dashStrike: ARBALETE_STRIKE,
@@ -733,7 +886,7 @@ const CLASSES = {
     super: 'sentence',
   },
   chasseresse: {
-    name: 'Chasseresse', text: 'Traqueuse des Limbes. Elle tire à distance en se déplaçant et dashe loin ; fragile.', cost: 120,
+    name: 'Chasseresse', text: 'Traqueuse des Limbes. Elle tire de loin, à pas lents, et dashe loin pour se replacer ; fragile.', cost: 120,
     passive: { name: 'Pied léger', text: 'Dash +30 % de distance, vitesse +8 %, critique +5 % ; −20 PV max.' },
     stats: { dashDistanceMult: 0.3, moveSpeedMult: 0.08, critChance: 0.05, maxHpBonus: -20 },
     weapons: ['arc', 'arbalete'],
@@ -970,11 +1123,7 @@ __mod["src/sim/config.mjs"] = (() => {
 // de la partie (le panneau de réglage modifie la copie en direct, jamais les défauts).
 //
 // Unités : 1 u = 1 px à l'échelle de référence (caméra ~ 960 × 540 u en paysage).
-// Temps en secondes, angles en degrés dans ce fichier (convertis à l'usage), simulation à 60 Hz.
-const { WEAPONS, SKILLS, GADGETS, SUPERS, CLASSES } = __mod["src/sim/kits.mjs"];
-const { UPGRADES, SALVAGE_SOULS } = __mod["src/sim/town_data.mjs"];
-const { EXTRA_ENEMIES } = __mod["src/sim/foe_data.mjs"];
-const { EXTRA_BOSSES, GUARDIAN_ROTATION } = __mod["src/sim/boss_data.mjs"];
+// Temps en secondes, angles en degrés dans ce fichier (convertis à l'usage), simulation à 60 Hz.const { WEAPONS, SKILLS, GADGETS, SUPERS, CLASSES } = __mod["src/sim/kits.mjs"];const { UPGRADES, SALVAGE_SOULS } = __mod["src/sim/town_data.mjs"];const { EXTRA_ENEMIES } = __mod["src/sim/foe_data.mjs"];const { EXTRA_BOSSES, GUARDIAN_ROTATION } = __mod["src/sim/boss_data.mjs"];
 
 const SIM_HZ = 60;
 const DT = 1 / SIM_HZ;
@@ -1136,6 +1285,13 @@ const DEFAULT_TUNING = {
     maxAttackers: 2, // ennemis de mêlée autorisés à lancer une attaque en même temps (lisibilité)
     maxShooters: 2, // archers autorisés à viser en même temps
     stunDamageTakenMult: 1.5,
+    // GARDE : un ennemi qui sort d'un étourdissement ne peut plus être ré-étourdi par un coup
+    // d'ARME (stunGuardSources) pendant stunGuard s — le temps de placer une attaque (recharge
+    // 0,3 s + télégraphe le plus long 0,7 s + le coup). Sans elle, la Hache ou le Maillet
+    // maintenus sur place étourdissaient en boucle : plus aucun dégât de mêlée (tools/classes.mjs).
+    // Compétences, gadgets, Supers et murs étourdissent toujours : ressources comptées, ou placement.
+    stunGuard: 1.5,
+    stunGuardSources: ['melee', 'strike'],
     minChillMult: 0.35, // plancher du ralentissement cumulé
   },
 
@@ -1399,8 +1555,7 @@ return { newId, emit, baseStats, createPlayer, createTelemetry };
 // ---- src/sim/physics.mjs
 __mod["src/sim/physics.mjs"] = (() => {
 // Déplacement d'un cercle dans la salle : murs extérieurs + obstacles rectangulaires.
-// Sous-pas automatiques pour les objets rapides (dash, charge) : jamais de traversée de mur.
-const { pushCircleOutOfRect } = __mod["src/core/math.mjs"];
+// Sous-pas automatiques pour les objets rapides (dash, charge) : jamais de traversée de mur.const { pushCircleOutOfRect } = __mod["src/core/math.mjs"];
 
 const scratch = { x: 0, y: 0, nx: 0, ny: 0 };
 const result = { hitWall: false, nx: 0, ny: 0 };
@@ -1484,9 +1639,8 @@ return { roomBounds, moveCircle, pointBlocked, lineOfSight };
 __mod["src/sim/aim.mjs"] = (() => {
 // Visée assistée — décisive sur mobile : un tap sur « attaque » vise l'ennemi le plus
 // pertinent (proche ET dans la direction où l'on se déplace). La visée manuelle (souris,
-// joystick d'attaque glissé) l'emporte toujours.
-const { DEG } = __mod["src/sim/config.mjs"];
-const { lineOfSight } = __mod["src/sim/physics.mjs"];
+// joystick d'attaque glissé) l'emporte toujours.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { DEG } = __mod["src/sim/config.mjs"];const { lineOfSight } = __mod["src/sim/physics.mjs"];
 
 const STICKY_TIME = 0.4; // s : la cible précédente reste privilégiée (pas de saut de cible)
 const STICKY_BONUS = 60; // u retirés au score de la cible précédente
@@ -1519,10 +1673,10 @@ function computeAim(game, manualX, manualY, range) {
     px /= pl;
     py /= pl;
   } else {
-    px = Math.cos(p.facing);
-    py = Math.sin(p.facing);
+    px = TRIG.cos(p.facing);
+    py = TRIG.sin(p.facing);
   }
-  const cosCone = Math.cos((a.coneDeg / 2) * DEG);
+  const cosCone = TRIG.cos((a.coneDeg / 2) * DEG);
   let best = null;
   let bestScore = Infinity;
   let bestD = 0;
@@ -1571,6 +1725,7 @@ __mod["src/sim/combat.mjs"] = (() => {
 // Résolution des dégâts — UN SEUL chemin pour toucher un ennemi (damageEnemy) et UN SEUL
 // pour toucher le héros (damagePlayer). Les bénédictions n'exécutent pas de code : elles
 // déclarent des « procs » (données) que ce module interprète. Pas d'import circulaire.
+const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 const { rand } = __mod["src/core/rng.mjs"];
 const { dist2, clamp } = __mod["src/core/math.mjs"];
 const { emit, newId } = __mod["src/sim/state.mjs"];
@@ -1673,7 +1828,9 @@ function damageEnemy(game, e, src) {
       e.kvy = src.dirY * kb;
     }
   }
-  if (src.stun && !e.boss) {
+  // En garde (il sort d'un étourdissement) : un coup d'arme blesse et repousse, sans ré-étourdir.
+  const guarded = e.guard > 0 && t.combat.stunGuardSources.includes(src.kind);
+  if (src.stun && !e.boss && !guarded) {
     e.stun = Math.max(e.stun, src.stun);
     e.tele = null;
     e.state = 'stunned';
@@ -1689,7 +1846,11 @@ function damageEnemy(game, e, src) {
     const before = p.superCharge;
     // L'overkill ne compte pas : achever un ennemi à 1 PV ne remplit pas la jauge.
     const effective = Math.min(amount, Math.max(0, hpBefore));
-    p.superCharge = Math.min(1, p.superCharge + (effective / t.super.chargeDamage) * st.superChargeMult);
+    // chargeDamage est donné pour l'arme de base : mis à l'échelle de l'arme portée, comme les
+    // dégâts. Sans cela la jauge se remplissait en 90 coups à l'étage 1 et en 3 à l'étage 649
+    // (les PV ennemis suivent l'arme) : invulnérable 40 % du temps en profondeur.
+    const need = t.super.chargeDamage * (st.weaponDamage / t.weaponBase);
+    p.superCharge = Math.min(1, p.superCharge + (effective / need) * st.superChargeMult);
     if (before < 1 && p.superCharge >= 1) emit(game, 'superReady');
   }
   if (st.lifesteal > 0 && PROC_SOURCES.has(src.kind)) healPlayer(game, amount * st.lifesteal, false);
@@ -1724,6 +1885,7 @@ function applyHitProcs(game, e, src) {
         chainLightning(game, e, pr);
         break;
       case 'gold':
+        if (e.summoned) break; // invocations : ni or ni Âmes (pas de ferme tant que l'invocateur vit)
         game.run.gold += pr.value;
         emit(game, 'gold', { x: e.x, y: e.y, amount: pr.value });
         break;
@@ -1875,7 +2037,7 @@ function damagePlayer(game, amount, src) {
 function spawnPickup(game, kind, x, y, value, extra) {
   const a = rand(game.rng.gen) * Math.PI * 2;
   const s = 80 + rand(game.rng.gen) * 120;
-  const pk = { id: newId(game), kind, x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, r: kind === 'gold' ? 6 : 10, value, age: 0, ...extra };
+  const pk = { id: newId(game), kind, x, y, vx: TRIG.cos(a) * s, vy: TRIG.sin(a) * s, r: kind === 'gold' ? 6 : 10, value, age: 0, ...extra };
   game.pickups.push(pk);
   return pk;
 }
@@ -2013,11 +2175,8 @@ return { buildNav, updateNav, navDirection };
 __mod["src/sim/spawns.mjs"] = (() => {
 // File d'apparitions télégraphiées : un cercle d'invocation est visible `warn` secondes
 // avant que l'ennemi n'apparaisse — jamais d'apparition injuste sous les pieds du héros.
-// Module feuille (aucun import de sim) : utilisable par la salle comme par le boss.
-const { rand } = __mod["src/core/rng.mjs"];
-const { dist2 } = __mod["src/core/math.mjs"];
-const { emit, newId } = __mod["src/sim/state.mjs"];
-const { pointBlocked } = __mod["src/sim/physics.mjs"];
+// Module feuille (aucun import de sim) : utilisable par la salle comme par le boss.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { rand } = __mod["src/core/rng.mjs"];const { dist2 } = __mod["src/core/math.mjs"];const { emit, newId } = __mod["src/sim/state.mjs"];const { pointBlocked } = __mod["src/sim/physics.mjs"];
 
 const PLACEMENT_TRIES = 40;
 
@@ -2038,8 +2197,8 @@ function findSpawnPoint(game, r, minPlayerDist, near) {
     if (near) {
       const a = rand(game.rng.gen) * Math.PI * 2;
       const d = near.minR + rand(game.rng.gen) * (near.maxR - near.minR);
-      x = near.x + Math.cos(a) * d;
-      y = near.y + Math.sin(a) * d;
+      x = near.x + TRIG.cos(a) * d;
+      y = near.y + TRIG.sin(a) * d;
     } else {
       x = room.pad + r + rand(game.rng.gen) * (room.w - 2 * (room.pad + r));
       y = room.pad + r + rand(game.rng.gen) * (room.h - 2 * (room.pad + r));
@@ -2153,7 +2312,9 @@ function countAlive(game, kind) {
  * probabilité `def.strafeFlip` par image). Le comportement de l'archer, mis en données.
  */
 function keepDistance(game, e, def, tp, sees, speed) {
-  if (tp.d < def.fleeDist) {
+  // On ne fuit que ce qu'on voit : derrière un obstacle, fuite et approche s'annulaient à chaque
+  // image et le tireur, vibrant sur place, n'attaquait plus jamais.
+  if (tp.d < def.fleeDist && sees) {
     e.vx = -tp.dx * speed;
     e.vy = -tp.dy * speed;
   } else if (tp.d > def.preferredDist + def.approachSlack || !sees) {
@@ -2230,9 +2391,7 @@ __mod["src/sim/foe_elites.mjs"] = (() => {
 //   invocateur — canalise (alerte violette inoffensive, e.modPhase 'channel'), puis ouvre des
 //                cercles d'invocation sous le plafond de la salle. Le tuer pendant la
 //                canalisation l'annule ; l'étourdir aussi.
-// Module feuille côté sim (n'importe ni enemies.mjs ni projectiles.mjs).
-const { pick } = __mod["src/core/rng.mjs"];
-const { emit, summonRoom, summonAround } = __mod["src/sim/ai_common.mjs"];
+// Module feuille côté sim (n'importe ni enemies.mjs ni projectiles.mjs).const { pick } = __mod["src/core/rng.mjs"];const { emit, summonRoom, summonAround } = __mod["src/sim/ai_common.mjs"];
 
 /**
  * Modificateur d'élite pour un archétype `kind` à l'étage `info` (floorInfo). UN tirage dans
@@ -2330,12 +2489,7 @@ return { pickEliteMod, updateEliteMod, foeDealt };
 })();
 // ---- src/sim/projectiles.mjs
 __mod["src/sim/projectiles.mjs"] = (() => {
-// Projectiles (héros et ennemis) et zones de danger télégraphiées.
-const { dist2, pointSegDist2, pointBandDist2 } = __mod["src/core/math.mjs"];
-const { emit, newId } = __mod["src/sim/state.mjs"];
-const { damageEnemy, damagePlayer } = __mod["src/sim/combat.mjs"];
-const { pointBlocked } = __mod["src/sim/physics.mjs"];
-const { foeDealt } = __mod["src/sim/foe_elites.mjs"];
+// Projectiles (héros et ennemis) et zones de danger télégraphiées.const { dist2, pointSegDist2, pointBandDist2 } = __mod["src/core/math.mjs"];const { emit, newId } = __mod["src/sim/state.mjs"];const { damageEnemy, damagePlayer } = __mod["src/sim/combat.mjs"];const { pointBlocked } = __mod["src/sim/physics.mjs"];const { foeDealt } = __mod["src/sim/foe_elites.mjs"];
 
 /** Source vivante d'une attaque (id d'ennemi), ou null. */
 function sourceOf(game, id) {
@@ -2544,12 +2698,8 @@ __mod["src/sim/kit_common.mjs"] = (() => {
 // Les tirs et zones du héros vivent DANS LA SALLE (game.room.kitFx) : un nouvel étage construit
 // une nouvelle salle, et efface donc d'office tout ce que le héros y avait posé. Données pures
 // (structuredClone / JSON) ; le code qui les joue est choisi par `kind` (kit_shots, kit_zones).
-// Aucune dépendance vers player.mjs (pas d'import circulaire).
-const { dist2, inSector } = __mod["src/core/math.mjs"];
-const { DT } = __mod["src/sim/config.mjs"];
-const { damageEnemy } = __mod["src/sim/combat.mjs"];
-const { pointBlocked } = __mod["src/sim/physics.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
+// Aucune dépendance vers player.mjs (pas d'import circulaire).const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { dist2, inSector } = __mod["src/core/math.mjs"];const { DT } = __mod["src/sim/config.mjs"];const { damageEnemy } = __mod["src/sim/combat.mjs"];const { pointBlocked } = __mod["src/sim/physics.mjs"];const { emit } = __mod["src/sim/state.mjs"];
 
 const THROW_STEP = 8; // u : pas de recul d'un point de lancer tombé dans un mur ou un obstacle
 const KNOCK_AXIS = 0.7; // recul d'un secteur : 70 % dans l'axe du coup, 30 % vers l'extérieur
@@ -2591,8 +2741,8 @@ function hitCircle(game, x, y, r, src) {
  * balayés sont détruits (parade). `arc` en radians. Rend le nombre d'ennemis touchés.
  */
 function hitSector(game, x, y, range, angle, arc, src) {
-  const dirX = Math.cos(angle);
-  const dirY = Math.sin(angle);
+  const dirX = TRIG.cos(angle);
+  const dirY = TRIG.sin(angle);
   let n = 0;
   for (const e of game.enemies) {
     if (e.dead || e.spawnT > 0) continue;
@@ -2648,7 +2798,7 @@ function pullToward(game, e, x, y, stopDist, pullMass) {
   const travel = d - stopDist;
   if (travel <= 0 || d < 1e-6) return 0;
   // Somme géométrique de l'intégration (enemies.mjs) : déplacement total = v0 × DT / (1 − k).
-  const k = Math.exp(-t.combat.enemyFriction * DT);
+  const k = TRIG.exp(-t.combat.enemyFriction * DT);
   let v0 = (travel * (1 - k)) / DT;
   v0 *= Math.min(1, pullMass / Math.max(1e-6, e.mass));
   if (e.eliteMod === 'blinde') v0 *= t.elite.mods.blinde.knockbackMult;
@@ -2668,14 +2818,8 @@ __mod["src/sim/kit_shots.mjs"] = (() => {
 // game.projectiles (projectiles.mjs), à l'identique.
 //
 // shot : {id, kind, x, y, vx, vy, r, range, traveled, pierce, hitIds, damage, source,
-//         knockback, hitstop, shake, stun, pull?: {stopGap, mass}, heavy, dead}
-const { DEG } = __mod["src/sim/config.mjs"];
-const { pointSegDist2 } = __mod["src/core/math.mjs"];
-const { emit, newId } = __mod["src/sim/state.mjs"];
-const { damageEnemy } = __mod["src/sim/combat.mjs"];
-const { pointBlocked } = __mod["src/sim/physics.mjs"];
-const { compact } = __mod["src/sim/projectiles.mjs"];
-const { kitStore, pullToward } = __mod["src/sim/kit_common.mjs"];
+//         knockback, hitstop, shake, stun, pull?: {stopGap, mass}, heavy, dead}const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { DEG } = __mod["src/sim/config.mjs"];const { pointSegDist2 } = __mod["src/core/math.mjs"];const { emit, newId } = __mod["src/sim/state.mjs"];const { damageEnemy } = __mod["src/sim/combat.mjs"];const { pointBlocked } = __mod["src/sim/physics.mjs"];const { compact } = __mod["src/sim/projectiles.mjs"];const { kitStore, pullToward } = __mod["src/sim/kit_common.mjs"];
 
 const MUZZLE = 0.5; // × rayon du héros : point de départ d'un tir (à bout portant, ça touche)
 
@@ -2701,8 +2845,8 @@ function fireWeaponShots(game, a) {
   const spread = (def.arc ?? 0) * DEG;
   for (let i = 0; i < count; i++) {
     const ang = a.angle + (count > 1 ? (i / (count - 1) - 0.5) * spread : 0);
-    const cx = Math.cos(ang);
-    const cy = Math.sin(ang);
+    const cx = TRIG.cos(ang);
+    const cy = TRIG.sin(ang);
     spawnShot(game, {
       kind: sh.kind ?? 'arrow',
       x: p.x + cx * p.r * MUZZLE,
@@ -2729,8 +2873,8 @@ function fireFan(game, angle, count, spreadDeg, spec) {
   const spread = spreadDeg * DEG;
   for (let i = 0; i < count; i++) {
     const ang = angle + (count > 1 ? (i / (count - 1) - 0.5) * spread : 0);
-    const cx = Math.cos(ang);
-    const cy = Math.sin(ang);
+    const cx = TRIG.cos(ang);
+    const cy = TRIG.sin(ang);
     spawnShot(game, {
       ...spec,
       x: p.x + cx * p.r * MUZZLE,
@@ -2798,12 +2942,7 @@ __mod["src/sim/kit_zones.mjs"] = (() => {
 // la pose (un réglage modifié ensuite ne change pas un objet déjà posé).
 //
 // zone : {id, kind, x, y, r, t, dead, ...} — kind : pot | brasier | bombe | piege | totem.
-// Les objets lancés (pot, bombe) portent x0, y0, tx, ty, flight et leur hauteur `lift` (0..1).
-const { dist2 } = __mod["src/core/math.mjs"];
-const { emit, newId } = __mod["src/sim/state.mjs"];
-const { damageEnemy } = __mod["src/sim/combat.mjs"];
-const { compact, destroyEnemyProjectilesInCircle } = __mod["src/sim/projectiles.mjs"];
-const { kitStore, hitCircle } = __mod["src/sim/kit_common.mjs"];
+// Les objets lancés (pot, bombe) portent x0, y0, tx, ty, flight et leur hauteur `lift` (0..1).const { dist2 } = __mod["src/core/math.mjs"];const { emit, newId } = __mod["src/sim/state.mjs"];const { damageEnemy } = __mod["src/sim/combat.mjs"];const { compact, destroyEnemyProjectilesInCircle } = __mod["src/sim/projectiles.mjs"];const { kitStore, hitCircle } = __mod["src/sim/kit_common.mjs"];
 
 function spawnZone(game, z) {
   const zone = { id: newId(game), t: 0, dead: false, ...z };
@@ -2933,12 +3072,8 @@ __mod["src/sim/kit_skills.mjs"] = (() => {
 //   beginKitSkill   au début du lancer (mémorise la cible ; le Bond part aussitôt)
 //   updateLeap      à chaque pas du Bond (rend true à l'atterrissage)
 //   releaseKitSkill à la fin du lancer, ou AVANT un dash / Super qui l'interrompt : une
-//                   recharge consommée produit toujours son effet (comme la Lance).
-const { clamp } = __mod["src/core/math.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { spawnShot, fireFan } = __mod["src/sim/kit_shots.mjs"];
-const { spawnZone } = __mod["src/sim/kit_zones.mjs"];
-const { hitCircle, liveEnemy, throwPoint } = __mod["src/sim/kit_common.mjs"];
+//                   recharge consommée produit toujours son effet (comme la Lance).const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { clamp } = __mod["src/core/math.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { spawnShot, fireFan } = __mod["src/sim/kit_shots.mjs"];const { spawnZone } = __mod["src/sim/kit_zones.mjs"];const { hitCircle, liveEnemy, throwPoint } = __mod["src/sim/kit_common.mjs"];
 
 const LAND_OVERLAP = 0.5; // le Bond s'arrête quand le héros chevauche la cible de moitié
 const point = { x: 0, y: 0 };
@@ -2961,7 +3096,7 @@ function beginLeap(game, s) {
   p.castT = s.leapTime;
   p.iframes = Math.max(p.iframes, s.leapTime + s.iframesGrace);
   game.telemetry.skillCasts++;
-  emit(game, 'skill', { x: p.x, y: p.y, angle: Math.atan2(p.castDirY, p.castDirX), skill: 'bond' });
+  emit(game, 'skill', { x: p.x, y: p.y, angle: TRIG.atan2(p.castDirY, p.castDirX), skill: 'bond' });
 }
 
 /** Un pas du Bond (état 'cast'). Rend true quand le héros a atterri. */
@@ -2991,7 +3126,7 @@ function land(game) {
 function releaseKitSkill(game) {
   const p = game.player;
   const s = game.tuning.skill;
-  const angle = Math.atan2(p.castDirY, p.castDirX);
+  const angle = TRIG.atan2(p.castDirY, p.castDirX);
   switch (s.kind) {
     case 'bond':
       // Interrompu en plein saut (dash, Super) : il atterrit là où il est.
@@ -3040,12 +3175,7 @@ __mod["src/sim/kit_gadgets.mjs"] = (() => {
 //   piege — posé aux pieds ; se referme sur le premier ennemi qui passe (maxActive au plus)
 //   totem — posé aux pieds ; impulsions qui blessent et ralentissent
 //   cri   — hurlement autour du héros : étourdit et rend vulnérable, sans repousser
-// player.mjs vérifie que le gadget est utilisable (ni mort, ni Super, une charge au moins).
-const { dist2 } = __mod["src/core/math.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { computeAim } = __mod["src/sim/aim.mjs"];
-const { spawnZone, zonesOf } = __mod["src/sim/kit_zones.mjs"];
-const { hitCircle, throwPoint } = __mod["src/sim/kit_common.mjs"];
+// player.mjs vérifie que le gadget est utilisable (ni mort, ni Super, une charge au moins).const { dist2 } = __mod["src/core/math.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { computeAim } = __mod["src/sim/aim.mjs"];const { spawnZone, zonesOf } = __mod["src/sim/kit_zones.mjs"];const { hitCircle, throwPoint } = __mod["src/sim/kit_common.mjs"];
 
 const point = { x: 0, y: 0 };
 
@@ -3115,14 +3245,8 @@ __mod["src/sim/kit_supers.mjs"] = (() => {
 //   nuee     — Nuée de traits (Chasseresse) : un trait toutes les `interval` s sur les ennemis
 //              les plus proches, en rotation
 // Les dégâts portent la source 'super' (ils ne rechargent pas la jauge ; « Gloire charnelle »
-// s'y applique).
-const { DEG } = __mod["src/sim/config.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { computeAim } = __mod["src/sim/aim.mjs"];
-const { lineOfSight } = __mod["src/sim/physics.mjs"];
-const { dist2 } = __mod["src/core/math.mjs"];
-const { hitSector } = __mod["src/sim/kit_common.mjs"];
-const { spawnShot } = __mod["src/sim/kit_shots.mjs"];
+// s'y applique).const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { DEG } = __mod["src/sim/config.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { computeAim } = __mod["src/sim/aim.mjs"];const { lineOfSight } = __mod["src/sim/physics.mjs"];const { dist2 } = __mod["src/core/math.mjs"];const { hitSector } = __mod["src/sim/kit_common.mjs"];const { spawnShot } = __mod["src/sim/kit_shots.mjs"];
 
 function startKitSuper(game) {
   const p = game.player;
@@ -3145,7 +3269,7 @@ function sentence(game, s) {
     const st = s.strikes[p.superStep];
     p.superStep++;
     const aim = computeAim(game, p.manualAimX, p.manualAimY, s.aimRange);
-    const angle = Math.atan2(aim.y, aim.x);
+    const angle = TRIG.atan2(aim.y, aim.x);
     p.facing = angle;
     hitSector(game, p.x, p.y, st.range, angle, st.arc * DEG, {
       kind: 'super', amount: st.damage, knockback: st.knockback, stun: st.stun ?? 0, hitstop: st.hitstop, canCrit: true, shake: st.shake,
@@ -3186,7 +3310,7 @@ function nuee(game, dt, s) {
     kind: 'star', x: p.x, y: p.y, vx: (dx / l) * s.speed, vy: (dy / l) * s.speed, r: s.shotRadius, range: s.range,
     pierce: s.pierce, damage: s.damage, source: 'super', knockback: s.knockback, hitstop: s.hitstop, heavy: false,
   });
-  emit(game, 'superTick', { x: p.x, y: p.y, r: s.shotRadius, super: 'nuee', angle: Math.atan2(dy, dx) });
+  emit(game, 'superTick', { x: p.x, y: p.y, r: s.shotRadius, super: 'nuee', angle: TRIG.atan2(dy, dx) });
 }
 
 return { startKitSuper, tickKitSuper };
@@ -3209,19 +3333,8 @@ __mod["src/sim/player.mjs"] = (() => {
 //     aimX, aimY,              // visée manuelle (0, 0 = visée assistée)
 //     attack,                  // maintenu : enchaîne le combo
 //     attackPressed, dashPressed, skillPressed, gadgetPressed, superPressed,  // fronts
-//     skillAimX, skillAimY }   // visée de la compétence au relâcher (0, 0 = assistée)
-const { DEG } = __mod["src/sim/config.mjs"];
-const { inSector, dist2 } = __mod["src/core/math.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { computeAim } = __mod["src/sim/aim.mjs"];
-const { moveCircle } = __mod["src/sim/physics.mjs"];
-const { damageEnemy } = __mod["src/sim/combat.mjs"];
-const { spawnProjectile, destroyEnemyProjectilesInCircle } = __mod["src/sim/projectiles.mjs"];
-const { fireWeaponShots, updateShots } = __mod["src/sim/kit_shots.mjs"];
-const { updateZones } = __mod["src/sim/kit_zones.mjs"];
-const { beginKitSkill, updateLeap, releaseKitSkill } = __mod["src/sim/kit_skills.mjs"];
-const { useKitGadget } = __mod["src/sim/kit_gadgets.mjs"];
-const { startKitSuper, tickKitSuper } = __mod["src/sim/kit_supers.mjs"];
+//     skillAimX, skillAimY }   // visée de la compétence au relâcher (0, 0 = assistée)const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { DEG } = __mod["src/sim/config.mjs"];const { inSector, dist2 } = __mod["src/core/math.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { computeAim } = __mod["src/sim/aim.mjs"];const { moveCircle } = __mod["src/sim/physics.mjs"];const { damageEnemy } = __mod["src/sim/combat.mjs"];const { spawnProjectile, destroyEnemyProjectilesInCircle } = __mod["src/sim/projectiles.mjs"];const { fireWeaponShots, updateShots } = __mod["src/sim/kit_shots.mjs"];const { updateZones } = __mod["src/sim/kit_zones.mjs"];const { beginKitSkill, updateLeap, releaseKitSkill } = __mod["src/sim/kit_skills.mjs"];const { useKitGadget } = __mod["src/sim/kit_gadgets.mjs"];const { startKitSuper, tickKitSuper } = __mod["src/sim/kit_supers.mjs"];
 
 const PRIORITY = ['dash', 'super', 'skill', 'attack'];
 const DASH_CHAIN_FRACTION = 0.35; // on peut re-dasher quand il reste moins de 35 % du dash
@@ -3348,8 +3461,8 @@ function updatePlayer(game, dt) {
   switch (p.state) {
     case 'free':
       locomotion(game, dt, t.player.speed * p.stats.moveSpeedMult);
-      if (Math.abs(p.manualAimX) + Math.abs(p.manualAimY) > 0.15) p.facing = Math.atan2(p.manualAimY, p.manualAimX);
-      else if (p.moveX * p.moveX + p.moveY * p.moveY > 0.04) p.facing = Math.atan2(p.moveY, p.moveX);
+      if (Math.abs(p.manualAimX) + Math.abs(p.manualAimY) > 0.15) p.facing = TRIG.atan2(p.manualAimY, p.manualAimX);
+      else if (p.moveX * p.moveX + p.moveY * p.moveY > 0.04) p.facing = TRIG.atan2(p.moveY, p.moveX);
       break;
     case 'attack':
       updateAttack(game, dt);
@@ -3449,7 +3562,7 @@ function locomotion(game, dt, speed) {
 
 /**
  * Part de la vitesse gardée pendant un coup : player.attackMoveMult (D9), modulée par l'arme
- * (moveMult : dagues et arc mobiles, hache et maillet lourds), jamais au-delà de la course.
+ * (moveMult : dagues mobiles ; hache, maillet, arc et arbalète lents), jamais au-delà de la course.
  */
 function attackMoveFactor(t) {
   const m = t.weapon?.moveMult;
@@ -3482,7 +3595,7 @@ function startAttack(game) {
     dur: phaseDurations(def, p.stats.attackSpeedMult),
     dirX: aim.x,
     dirY: aim.y,
-    angle: Math.atan2(aim.y, aim.x),
+    angle: TRIG.atan2(aim.y, aim.x),
     targetId: aim.targetId,
     targetDist: aim.targetDist,
     hitIds: [],
@@ -3602,8 +3715,8 @@ function startDash(game) {
     dx /= l;
     dy /= l;
   } else {
-    dx = Math.cos(p.facing);
-    dy = Math.sin(p.facing);
+    dx = TRIG.cos(p.facing);
+    dy = TRIG.sin(p.facing);
   }
   if (p.state === 'attack') emit(game, 'cancel', { from: 'attack' });
   if (p.state === 'cast') releaseSkill(game);
@@ -3615,7 +3728,7 @@ function startDash(game) {
   p.dashT = t.duration;
   p.iframes = Math.max(p.iframes, t.iframes);
   p.dodgeIframes = Math.max(p.dodgeIframes, t.iframes);
-  p.facing = Math.atan2(dy, dx);
+  p.facing = TRIG.atan2(dy, dx);
   p.state = 'dash';
   p.stateTime = 0;
   game.hitstop = 0;
@@ -3674,7 +3787,7 @@ function startCast(game, aimX, aimY) {
   p.attack = null;
   p.castDirX = aim.x;
   p.castDirY = aim.y;
-  p.facing = Math.atan2(aim.y, aim.x);
+  p.facing = TRIG.atan2(aim.y, aim.x);
   p.castT = s.castTime;
   p.skillCd = s.cooldown * p.stats.skillCooldownMult;
   p.state = 'cast';
@@ -3733,7 +3846,7 @@ function releaseLance(game) {
   p.vx -= p.castDirX * 120;
   p.vy -= p.castDirY * 120;
   game.telemetry.skillCasts++;
-  emit(game, 'skill', { x: p.x, y: p.y, angle: Math.atan2(p.castDirY, p.castDirX) });
+  emit(game, 'skill', { x: p.x, y: p.y, angle: TRIG.atan2(p.castDirY, p.castDirX) });
 }
 
 // ---------------------------------------------------------------- gadget (Nova de cendres, kits)
@@ -3834,11 +3947,17 @@ __mod["src/sim/floors.mjs"] = (() => {
 //   section  = 18 étages (tuning.floors.sectionLength) ; le 18e est un GARDIEN : le battre
 //              ouvre un checkpoint et un point de téléportation (l'étage suivant).
 //   Cercle   = 72 étages (4 sections) — 9 Cercles de l'Enfer = 648 étages,
-//   finale   = 18 étages (1 section) « L'Abîme » = 666. Soit 37 sections, 37 Gardiens.
+//   finale   = 18 étages (1 section) « L'Abîme » = 666. Soit 37 sections, 37 Gardiens.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+
+/** Numéro d'étage borné à 1..total ; une valeur non numérique (lien `?floor=abc`) vaut l'étage 1. */
+function clampFloor(tuning, floor) {
+  const n = Math.floor(floor);
+  return Number.isFinite(n) ? Math.max(1, Math.min(tuning.floors.total, n)) : 1;
+}
 
 function floorInfo(tuning, floor) {
   const f = tuning.floors;
-  const n = Math.max(1, Math.min(f.total, Math.floor(floor)));
+  const n = clampFloor(tuning, floor);
   const section = Math.ceil(n / f.sectionLength); // 1..37
   const indexInSection = n - (section - 1) * f.sectionLength; // 1..18
   const circleCount = f.circleNames.length;
@@ -3886,16 +4005,16 @@ function checkpointAfterBoss(tuning, bossFloor) {
  */
 function floorScaling(tuning, floor) {
   const f = tuning.floors;
-  const n = Math.max(1, Math.min(f.total, Math.floor(floor)));
+  const n = clampFloor(tuning, floor);
   const k = n - 1;
   const index = k % f.sectionLength; // 0..17
   const L = 1 + f.itemGrowth * k;
-  const Bp = 1 + f.permBuildCap * (1 - Math.exp(-k / f.permBuildScale));
+  const Bp = 1 + f.permBuildCap * (1 - TRIG.exp(-k / f.permBuildScale));
   const Bs = 1 + (f.sectionBuildCap * index) / Math.max(1, f.sectionLength - 1);
   const C = 1 + (f.driftAt666 * k) / Math.max(1, f.total - 1);
   const H = playerHpGrowth(tuning, L);
-  const D = 1 + f.dmgCurve * (1 - Math.exp(-k / f.dmgScale));
-  const density = 1 + f.densityCurve * (1 - Math.exp(-k / f.densityScale));
+  const D = 1 + f.dmgCurve * (1 - TRIG.exp(-k / f.dmgScale));
+  const density = 1 + f.densityCurve * (1 - TRIG.exp(-k / f.densityScale));
   return { hp: L * Bp * Bs * C, damage: H * D, density, level: L, permBuild: Bp, sectionBuild: Bs, drift: C, hpGrowth: H, lethality: D };
 }
 
@@ -3941,10 +4060,7 @@ return { floorInfo, checkpointAfterBoss, floorScaling, playerHpGrowth, sectionSt
 // ---- src/sim/boss_common.mjs
 __mod["src/sim/boss_common.mjs"] = (() => {
 // Briques communes à tous les Gardiens (module feuille, sans import de boss.mjs) : états,
-// visée, repos. Chaque modèle de Gardien vit dans son fichier src/sim/boss_<modèle>.mjs.
-const { clamp } = __mod["src/core/math.mjs"];
-const { spawnHazard } = __mod["src/sim/combat.mjs"];
-const { pointBlocked } = __mod["src/sim/physics.mjs"];
+// visée, repos. Chaque modèle de Gardien vit dans son fichier src/sim/boss_<modèle>.mjs.const { clamp } = __mod["src/core/math.mjs"];const { spawnHazard } = __mod["src/sim/combat.mjs"];const { pointBlocked } = __mod["src/sim/physics.mjs"];
 
 function bossDef(game, e) {
   return game.tuning.boss[e.kind];
@@ -4086,15 +4202,8 @@ __mod["src/sim/boss_charon.mjs"] = (() => {
 //   slam   — trois impacts circulaires successifs, posés là où se trouve le héros
 //   charge — ligne télégraphiée puis ruée ; s'il percute un mur, il reste sonné (punition)
 //   ring   — anneaux de projectiles avec des brèches : lire, se placer, dasher à travers
-//   summon — (phase 3) invoque des diablotins via des cercles d'invocation (alerte inoffensive)
-const { rand } = __mod["src/core/rng.mjs"];
-const { dist2 } = __mod["src/core/math.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { moveCircle } = __mod["src/sim/physics.mjs"];
-const { damagePlayer, spawnHazard } = __mod["src/sim/combat.mjs"];
-const { spawnProjectile } = __mod["src/sim/projectiles.mjs"];
-const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
-const { wmult, toPlayer, setState, toRest } = __mod["src/sim/boss_common.mjs"];
+//   summon — (phase 3) invoque des diablotins via des cercles d'invocation (alerte inoffensive)const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { rand } = __mod["src/core/rng.mjs"];const { dist2 } = __mod["src/core/math.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { moveCircle } = __mod["src/sim/physics.mjs"];const { damagePlayer, spawnHazard } = __mod["src/sim/combat.mjs"];const { spawnProjectile } = __mod["src/sim/projectiles.mjs"];const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];const { wmult, toPlayer, setState, toRest } = __mod["src/sim/boss_common.mjs"];
 
 const CHARGE_HIT_PAD = 4; // u ajoutés au contact boss/héros pendant la charge
 
@@ -4128,7 +4237,7 @@ function charge(game, e, d, dt) {
     }
     // Largeur = zone qui touche réellement (rayon du boss + marge du test de contact) : esquiver
     // « au pixel » le bord rouge doit toujours suffire.
-    e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: c.speed * c.maxTime, width: Math.max(c.width, 2 * (e.r + CHARGE_HIT_PAD)), progress: e.stateTime / windup };
+    e.tele = { shape: 'line', angle: TRIG.atan2(e.dirY, e.dirX), length: c.speed * c.maxTime, width: Math.max(c.width, 2 * (e.r + CHARGE_HIT_PAD)), progress: e.stateTime / windup };
     if (e.stateTime >= windup) {
       e.tele = null;
       e.patternStep = 1;
@@ -4189,8 +4298,8 @@ function ring(game, e, d, dt) {
       if (rel < r.gapCount) continue;
       const a = offset + (i / n) * Math.PI * 2;
       spawnProjectile(game, {
-        owner: 'enemy', kind: 'bossOrb', x: e.x + Math.cos(a) * e.r, y: e.y + Math.sin(a) * e.r,
-        vx: Math.cos(a) * r.speed, vy: Math.sin(a) * r.speed, r: r.radius, damage: r.damage * e.dmgScale, range: 1400, sourceId: e.id,
+        owner: 'enemy', kind: 'bossOrb', x: e.x + TRIG.cos(a) * e.r, y: e.y + TRIG.sin(a) * e.r,
+        vx: TRIG.cos(a) * r.speed, vy: TRIG.sin(a) * r.speed, r: r.radius, damage: r.damage * e.dmgScale, range: 1400, sourceId: e.id,
       });
     }
     emit(game, 'enemyAttack', { id: e.id, x: e.x, y: e.y, enemy: 'bossRing' });
@@ -4243,12 +4352,8 @@ __mod["src/sim/boss_cerbere.mjs"] = (() => {
 //   morsures  — trois ruées enchaînées, chacune re-visée et annoncée par un cône ; une ruée ne
 //               mord QUE dans son cône dessiné (corps du héros compris). La dernière l'expose.
 //   hurlement — (phase 3, frénésie) un cercle de flammes se referme autour du héros, avec une
-//               brèche, puis Cerbère bondit en son centre : sortir par la brèche, ou dasher.
-const { rand } = __mod["src/core/rng.mjs"];
-const { dist2, clamp, inSector, TAU } = __mod["src/core/math.mjs"];
-const { emit, newId } = __mod["src/sim/state.mjs"];
-const { damagePlayer } = __mod["src/sim/combat.mjs"];
-const { toPlayer, toRest, setSub, holdStill, bossHazard, exposedRecovery, roomPoint } = __mod["src/sim/boss_common.mjs"];
+//               brèche, puis Cerbère bondit en son centre : sortir par la brèche, ou dasher.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { rand } = __mod["src/core/rng.mjs"];const { dist2, clamp, inSector, TAU } = __mod["src/core/math.mjs"];const { emit, newId } = __mod["src/sim/state.mjs"];const { damagePlayer } = __mod["src/sim/combat.mjs"];const { toPlayer, toRest, setSub, holdStill, bossHazard, exposedRecovery, roomPoint } = __mod["src/sim/boss_common.mjs"];
 
 const DEG = Math.PI / 180;
 const LEAP_STATES = new Set(['bond', 'hurlement']);
@@ -4327,7 +4432,7 @@ function bond(game, e, d, dt) {
 
 function volley(game, e, s, index) {
   const tp = toPlayer(game, e);
-  const aim = Math.atan2(tp.dy, tp.dx);
+  const aim = TRIG.atan2(tp.dy, tp.dx);
   // Sens de la salve (gauche -> droite ou l'inverse) : tiré pour la 1re, alterné ensuite.
   if (index === 0) e.breathDir = rand(game.rng.ai) < 0.5 ? 1 : -1;
   else e.breathDir = -e.breathDir;
@@ -4393,7 +4498,7 @@ function morsures(game, e, d, dt, speed) {
         e.dirX = tp.dx;
         e.dirY = tp.dy;
       }
-      e.tele = { shape: 'cone', angle: Math.atan2(e.dirY, e.dirX), range: biteRange(e, m), arc: m.arcDeg * DEG, progress: e.subT / m.windup };
+      e.tele = { shape: 'cone', angle: TRIG.atan2(e.dirY, e.dirX), range: biteRange(e, m), arc: m.arcDeg * DEG, progress: e.subT / m.windup };
       if (e.subT >= m.windup) {
         e.tele = null;
         e.hitPlayer = false;
@@ -4411,7 +4516,7 @@ function morsures(game, e, d, dt, speed) {
       e.vy = e.dirY * m.strikeSpeed;
       // Contact de la gueule (morsures.hitPad) ET corps du héros dans le cône annoncé : la ruée
       // ne déborde jamais du télégraphe (près de l'apex, le contact seul dépasserait du cône).
-      const inCone = inSector(p.x, p.y, e.biteX, e.biteY, biteRange(e, m), Math.atan2(e.dirY, e.dirX), m.arcDeg * DEG, p.r);
+      const inCone = inSector(p.x, p.y, e.biteX, e.biteY, biteRange(e, m), TRIG.atan2(e.dirY, e.dirX), m.arcDeg * DEG, p.r);
       if (!e.hitPlayer && inCone && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + m.hitPad) ** 2) {
         e.hitPlayer = true;
         damagePlayer(game, m.damage * e.dmgScale, { kind: 'cerbereBite', id: e.atkId, x: e.x, y: e.y });
@@ -4445,8 +4550,8 @@ function hurlement(game, e, d, dt) {
     const a0 = rand(game.rng.ai) * TAU;
     for (let k = h.gaps; k < h.flames; k++) {
       const a = a0 + (k / h.flames) * TAU;
-      const fx = clamp(c.x + Math.cos(a) * h.ringRadius, room.pad, room.w - room.pad);
-      const fy = clamp(c.y + Math.sin(a) * h.ringRadius, room.pad, room.h - room.pad);
+      const fx = clamp(c.x + TRIG.cos(a) * h.ringRadius, room.pad, room.w - room.pad);
+      const fy = clamp(c.y + TRIG.sin(a) * h.ringRadius, room.pad, room.h - room.pad);
       bossHazard(game, e, { shape: 'circle', x: fx, y: fy, r: h.flameRadius, delay: h.delay, damage: h.damage, kind: 'cerbereFire' });
     }
     // ... et le chien bondit au centre, juste après.
@@ -4511,12 +4616,8 @@ __mod["src/sim/boss_minos.mjs"] = (() => {
 //              phase 2+ : second coup, brèche ailleurs. Après le fouet, il se découvre.
 //   sceau    — (phase 2+) il se dissout et se matérialise sur le héros : la sentence tombe en
 //              COURONNE autour du point d'arrivée — rester au centre (contre lui) ou fuir loin.
-//              Phase 3 : le fouet suit aussitôt.
-const { rand, randRange } = __mod["src/core/rng.mjs"];
-const { clamp, inSector, TAU } = __mod["src/core/math.mjs"];
-const { emit, newId } = __mod["src/sim/state.mjs"];
-const { damagePlayer } = __mod["src/sim/combat.mjs"];
-const { toPlayer, setState, toRest, setSub, holdStill, bossHazard, exposedRecovery, roomPoint } = __mod["src/sim/boss_common.mjs"];
+//              Phase 3 : le fouet suit aussitôt.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { rand, randRange } = __mod["src/core/rng.mjs"];const { clamp, inSector, TAU } = __mod["src/core/math.mjs"];const { emit, newId } = __mod["src/sim/state.mjs"];const { damagePlayer } = __mod["src/sim/combat.mjs"];const { toPlayer, setState, toRest, setSub, holdStill, bossHazard, exposedRecovery, roomPoint } = __mod["src/sim/boss_common.mjs"];
 
 const DEG = Math.PI / 180;
 
@@ -4657,7 +4758,7 @@ function fouet(game, e, d, dt) {
     const tp = toPlayer(game, e);
     const side = rand(game.rng.ai) < 0.5 ? -1 : 1;
     const min = f.minOffsetDeg * DEG;
-    e.breachAngle = Math.atan2(tp.dy, tp.dx) + side * (min + rand(game.rng.ai) * (Math.PI - min));
+    e.breachAngle = TRIG.atan2(tp.dy, tp.dx) + side * (min + rand(game.rng.ai) * (Math.PI - min));
     setSub(e, 'whip');
   }
   e.subT += dt;
@@ -4753,12 +4854,8 @@ __mod["src/sim/boss_colosse.mjs"] = (() => {
 //   geoliers — (phase 2+, UNE fois par phase : geoliers.callsPerPhase) il appelle ses geôliers
 //              (archers) ; tant qu'ils vivent, ses chaînes le rendent INVULNÉRABLE (bouclier
 //              visible, borné dans le temps) : les adds d'abord.
-// Changement de phase : les braises s'éteignent avec les autres zones (crochet onPhase).
-const { rand } = __mod["src/core/rng.mjs"];
-const { clamp, TAU } = __mod["src/core/math.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
-const { toPlayer, toRest, setSub, holdStill, bossHazard, exposedRecovery, summonedAlive } = __mod["src/sim/boss_common.mjs"];
+// Changement de phase : les braises s'éteignent avec les autres zones (crochet onPhase).const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { rand } = __mod["src/core/rng.mjs"];const { clamp, TAU } = __mod["src/core/math.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];const { toPlayer, toRest, setSub, holdStill, bossHazard, exposedRecovery, summonedAlive } = __mod["src/sim/boss_common.mjs"];
 
 /** Grondement d'effort : le son porte le timbre du Gardien (recipes.mjs, ENEMY_ATTACK.colosse). */
 function grunt(game, e) {
@@ -4780,7 +4877,7 @@ function poing(game, e, d, dt) {
   while (e.patternStep < fists && e.subT >= e.patternStep * f.fistGap) {
     const tp = toPlayer(game, e);
     bossHazard(game, e, {
-      shape: 'line', x: e.x, y: e.y, angle: Math.atan2(tp.dy, tp.dx), length: e.r + f.length, width: f.width,
+      shape: 'line', x: e.x, y: e.y, angle: TRIG.atan2(tp.dy, tp.dx), length: e.r + f.length, width: f.width,
       delay: f.windup, damage: f.damage, kind: 'colosseFist',
     });
     e.patternStep++;
@@ -4823,8 +4920,8 @@ function eboulis(game, e, d, dt) {
       // Le premier tombe sur le héros ; les autres autour de lui (tirage uniforme dans le disque).
       const a = rand(game.rng.ai) * TAU;
       const rr = k === 0 ? 0 : b.spread * Math.sqrt(rand(game.rng.ai));
-      const x = clamp(p.x + Math.cos(a) * rr, room.pad + b.radius / 2, room.w - room.pad - b.radius / 2);
-      const y = clamp(p.y + Math.sin(a) * rr, room.pad + b.radius / 2, room.h - room.pad - b.radius / 2);
+      const x = clamp(p.x + TRIG.cos(a) * rr, room.pad + b.radius / 2, room.w - room.pad - b.radius / 2);
+      const y = clamp(p.y + TRIG.sin(a) * rr, room.pad + b.radius / 2, room.h - room.pad - b.radius / 2);
       const delay = b.delayMin + rand(game.rng.ai) * (b.delayMax - b.delayMin);
       last = Math.max(last, delay);
       const rock = bossHazard(game, e, { shape: 'circle', x, y, r: b.radius, delay, damage: b.damage, kind: 'colosseRock' });
@@ -4952,10 +5049,7 @@ __mod["src/sim/boss_models.mjs"] = (() => {
 // Registre des MODÈLES de Gardien ajoutés (un fichier par modèle : src/sim/boss_<modèle>.mjs).
 // Chaque modèle : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn(game, e, d, dt, speed)},
 // rest?(game, e, d, dt, speed), tick?(game, e, d, dt), available?(game, e, d, nom) }.
-// La clé = kind de l'ennemi = clé de tuning.boss (boss_data.mjs).
-const { CERBERE } = __mod["src/sim/boss_cerbere.mjs"];
-const { MINOS } = __mod["src/sim/boss_minos.mjs"];
-const { COLOSSE } = __mod["src/sim/boss_colosse.mjs"];
+// La clé = kind de l'ennemi = clé de tuning.boss (boss_data.mjs).const { CERBERE } = __mod["src/sim/boss_cerbere.mjs"];const { MINOS } = __mod["src/sim/boss_minos.mjs"];const { COLOSSE } = __mod["src/sim/boss_colosse.mjs"];
 
 const EXTRA_BOSS_MODELS = {
   cerbere: CERBERE,
@@ -4971,14 +5065,7 @@ __mod["src/sim/boss.mjs"] = (() => {
 // Commun à tous les modèles : trois phases (seuils de PV en tuning), transitions invulnérables
 // (projectiles effacés, renforts, orbe de soin), repos entre deux patterns (fenêtre de
 // punition), patterns jamais répétés deux fois de suite, télégraphes JAMAIS raccourcis.
-// Chaque modèle (src/sim/boss_<modèle>.mjs) fournit ses patterns et leur ordre par phase.
-const { randRange, pick } = __mod["src/core/rng.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { spawnPickup } = __mod["src/sim/combat.mjs"];
-const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
-const { bossDef, toPlayer, setState, holdVulnFlag } = __mod["src/sim/boss_common.mjs"];
-const { CHARON } = __mod["src/sim/boss_charon.mjs"];
-const { EXTRA_BOSS_MODELS } = __mod["src/sim/boss_models.mjs"];
+// Chaque modèle (src/sim/boss_<modèle>.mjs) fournit ses patterns et leur ordre par phase.const { randRange, pick } = __mod["src/core/rng.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { spawnPickup } = __mod["src/sim/combat.mjs"];const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];const { bossDef, toPlayer, setState, holdVulnFlag } = __mod["src/sim/boss_common.mjs"];const { CHARON } = __mod["src/sim/boss_charon.mjs"];const { EXTRA_BOSS_MODELS } = __mod["src/sim/boss_models.mjs"];
 
 // Registre des modèles de Gardien : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn},
 // rest?(game, e, d, dt, speed), tick?(game, e, d, dt), available?(game, e, d, nom),
@@ -5099,12 +5186,8 @@ __mod["src/sim/foe_pyromancer.mjs"] = (() => {
 //             pris) : la tuer ou l'étourdir avant ANNULE les cercles (sourceId, projectiles.mjs).
 //   recover — souffle, puis repart en chase (temps de recharge).
 // Chaque cercle allumé laisse une FLAQUE brûlante persistante et visible (`linger` s) qui ne
-// blesse qu'à l'intérieur, par ticks (projectiles.mjs, updateHazards). Aucun dégât de contact.
-const { rand, randRange } = __mod["src/core/rng.mjs"];
-const { clamp } = __mod["src/core/math.mjs"];
-const { lineOfSight } = __mod["src/sim/physics.mjs"];
-const { spawnHazard } = __mod["src/sim/combat.mjs"];
-const { emit, setState, toPlayer, speedOf, windupOf, activeShooters, keepDistance } = __mod["src/sim/ai_common.mjs"];
+// blesse qu'à l'intérieur, par ticks (projectiles.mjs, updateHazards). Aucun dégât de contact.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { rand, randRange } = __mod["src/core/rng.mjs"];const { clamp } = __mod["src/core/math.mjs"];const { lineOfSight } = __mod["src/sim/physics.mjs"];const { spawnHazard } = __mod["src/sim/combat.mjs"];const { emit, setState, toPlayer, speedOf, windupOf, activeShooters, keepDistance } = __mod["src/sim/ai_common.mjs"];
 
 const TAU = Math.PI * 2;
 
@@ -5148,7 +5231,7 @@ function castPyres(game, e, def) {
   const a0 = rand(game.rng.ai) * TAU;
   for (let i = 0; i < sats; i++) {
     const a = a0 + (i / sats) * TAU;
-    spawnPyre(game, p.x + Math.cos(a) * pyre.spread, p.y + Math.sin(a) * pyre.spread, def, e, pyre.delay + (i + 1) * pyre.stagger);
+    spawnPyre(game, p.x + TRIG.cos(a) * pyre.spread, p.y + TRIG.sin(a) * pyre.spread, def, e, pyre.delay + (i + 1) * pyre.stagger);
   }
 }
 
@@ -5206,10 +5289,7 @@ __mod["src/sim/foe_necromancer.mjs"] = (() => {
 //             (invocations : ni or ni Âmes). Le tuer ou l'étourdir pendant la canalisation
 //             l'annule : aucun cercle ne s'ouvre.
 //   recover — souffle, puis repart (temps de recharge).
-// Il n'attaque jamais lui-même : peu de PV, cible prioritaire. Aucun dégât de contact.
-const { randRange } = __mod["src/core/rng.mjs"];
-const { lineOfSight } = __mod["src/sim/physics.mjs"];
-const { emit, setState, toPlayer, speedOf, windupOf, keepDistance, summonRoom, summonAround } = __mod["src/sim/ai_common.mjs"];
+// Il n'attaque jamais lui-même : peu de PV, cible prioritaire. Aucun dégât de contact.const { randRange } = __mod["src/core/rng.mjs"];const { lineOfSight } = __mod["src/sim/physics.mjs"];const { emit, setState, toPlayer, speedOf, windupOf, keepDistance, summonRoom, summonAround } = __mod["src/sim/ai_common.mjs"];
 
 function necromancerAI(game, e, def) {
   const p = game.player;
@@ -5258,9 +5338,7 @@ __mod["src/sim/foes.mjs"] = (() => {
 // Registre des archétypes d'ennemis AJOUTÉS hors de enemies.mjs (un fichier par archétype :
 // src/sim/foe_<archétype>.mjs — src/sim reste À PLAT, un test protégé lit ce dossier sans récursion).
 // Chaque entrée : { kind, ai(game, e, def, dt), melee?: bool, shooter?: bool }.
-// Les données (PV, vitesses, télégraphes…) vivent dans tuning.enemies[kind] (config.mjs).
-const { PYROMANCER } = __mod["src/sim/foe_pyromancer.mjs"];
-const { NECROMANCER } = __mod["src/sim/foe_necromancer.mjs"];
+// Les données (PV, vitesses, télégraphes…) vivent dans tuning.enemies[kind] (config.mjs).const { PYROMANCER } = __mod["src/sim/foe_pyromancer.mjs"];const { NECROMANCER } = __mod["src/sim/foe_necromancer.mjs"];
 
 const EXTRA_FOES = [PYROMANCER, NECROMANCER];
 
@@ -5273,6 +5351,7 @@ __mod["src/sim/enemies.mjs"] = (() => {
 // Règle de lisibilité : AUCUN dégât de contact. Tout coup ennemi passe par un télégraphe
 // (e.tele ou une zone de danger) d'une durée >= au seuil de réaction, et un nombre limité
 // d'ennemis de mêlée attaque en même temps (jetons d'attaque).
+const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 const { rand, randRange } = __mod["src/core/rng.mjs"];
 const { dist2 } = __mod["src/core/math.mjs"];
 const { emit, newId } = __mod["src/sim/state.mjs"];
@@ -5319,6 +5398,7 @@ function createEnemy(game, kind, x, y, opts = {}) {
     tele: null,
     flash: 0,
     stun: 0,
+    guard: 0, // garde restante après un étourdissement (combat.stunGuard) : pas de ré-étourdissement à l'arme
     burn: 0,
     burnDps: 0,
     burnAcc: 0,
@@ -5381,8 +5461,10 @@ function updateEnemies(game, dt) {
       if (e.stun <= 0) {
         setState(e, 'chase');
         e.cooldown = Math.max(e.cooldown, 0.3);
+        e.guard = t.combat.stunGuard;
       }
     } else if (p.state !== 'dead') {
+      e.guard = Math.max(0, e.guard - dt);
       if (e.boss) updateBoss(game, e, dt);
       else {
         const hp0 = p.hp;
@@ -5403,6 +5485,7 @@ function tickStatuses(game, e, dt) {
   else e.chillMult = 1;
   if (e.vuln > 0) e.vuln -= dt;
   else e.vulnMult = 0;
+  if (e.burn <= 0) e.burnDps = 0; // éteinte : la suivante brûle à sa propre intensité
   if (e.burn > 0) {
     e.burn -= dt;
     e.burnAcc += e.burnDps * dt;
@@ -5417,7 +5500,7 @@ function tickStatuses(game, e, dt) {
 function integrate(game, e, dt) {
   const t = game.tuning;
   const ws = t.wallSlam;
-  const k = Math.exp(-t.combat.enemyFriction * dt);
+  const k = TRIG.exp(-t.combat.enemyFriction * dt);
   const kSpeed = Math.sqrt(e.kvx * e.kvx + e.kvy * e.kvy);
   const res = moveCircle(game.room, e, (e.vx + e.kvx) * dt, (e.vy + e.kvy) * dt);
   if (res.hitWall) {
@@ -5506,15 +5589,15 @@ const AI = {
         // Avec le droit de frapper, on fonce : sinon l'anneau (85 u) restait hors de portée (68 u)
         // et un diablotin n'attaquait plus jamais un héros immobile.
         const ring = !canStrike && tp.d < reach * 1.6 ? reach * 1.25 : 0;
-        const tx = p.x + Math.cos(e.flank) * ring;
-        const ty = p.y + Math.sin(e.flank) * ring;
+        const tx = p.x + TRIG.cos(e.flank) * ring;
+        const ty = p.y + TRIG.sin(e.flank) * ring;
         steer(game, e, tx, ty, speedOf(game, e, def));
         e.flank += e.strafe * dt * 0.6;
         break;
       }
       case 'windup':
         trackUntilLock(game, e, 0.7, windup);
-        e.tele = { shape: 'cone', angle: Math.atan2(e.dirY, e.dirX), range: def.strikeSpeed * def.strikeTime + e.r + 14, arc: 0.9, progress: e.stateTime / windup };
+        e.tele = { shape: 'cone', angle: TRIG.atan2(e.dirY, e.dirX), range: def.strikeSpeed * def.strikeTime + e.r + 14, arc: 0.9, progress: e.stateTime / windup };
         if (e.stateTime >= windup) {
           setState(e, 'strike');
           e.tele = null;
@@ -5555,7 +5638,7 @@ const AI = {
           e.dirY = tp.dy;
           break;
         }
-        if (tp.d < def.fleeDist) {
+        if (tp.d < def.fleeDist && sees) { // on ne fuit que ce qu'on voit (ai_common.keepDistance)
           e.vx = -tp.dx * speed;
           e.vy = -tp.dy * speed;
         } else if (tp.d > def.preferredDist + 60 || !sees) {
@@ -5570,7 +5653,7 @@ const AI = {
       }
       case 'windup':
         trackUntilLock(game, e, def.lockAt, windup);
-        e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: def.teleLength, width: def.projRadius * 2 + 4, progress: e.stateTime / windup };
+        e.tele = { shape: 'line', angle: TRIG.atan2(e.dirY, e.dirX), length: def.teleLength, width: def.projRadius * 2 + 4, progress: e.stateTime / windup };
         if (e.stateTime >= windup) {
           e.tele = null;
           spawnProjectile(game, {
@@ -5647,7 +5730,7 @@ const AI = {
       }
       case 'windup':
         trackUntilLock(game, e, 0.7, windup);
-        e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: def.chargeSpeed * def.chargeMaxTime, width: e.r * 2 + 10, progress: e.stateTime / windup };
+        e.tele = { shape: 'line', angle: TRIG.atan2(e.dirY, e.dirX), length: def.chargeSpeed * def.chargeMaxTime, width: e.r * 2 + 10, progress: e.stateTime / windup };
         if (e.stateTime >= windup) {
           e.tele = null;
           setState(e, 'charge');
@@ -5744,6 +5827,7 @@ __mod["src/sim/room.mjs"] = (() => {
 //
 // Une salle = un étage. Le héros entre en bas, deux portes s'ouvrent en haut une fois la
 // salle nettoyée ; chacune annonce la récompense de la salle suivante (façon Hades).
+const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 const { rand, randInt, pick, weightedPick } = __mod["src/core/rng.mjs"];
 const { emit } = __mod["src/sim/state.mjs"];
 const { createEnemy, aliveEnemies } = __mod["src/sim/enemies.mjs"];
@@ -5864,8 +5948,8 @@ function rewardSpot(room) {
     const d = ring * 30;
     for (let k = 0; k < 16; k++) {
       const a = (k / 16) * Math.PI * 2 + Math.PI / 2; // commence sous l'obstacle
-      const x = cx + Math.cos(a) * d;
-      const y = cy + Math.sin(a) * d;
+      const x = cx + TRIG.cos(a) * d;
+      const y = cy + TRIG.sin(a) * d;
       if (!pointBlocked(room, x, y, REWARD_CLEARANCE)) return { x, y };
     }
   }
@@ -5918,8 +6002,11 @@ function planWaves(game, info, plan) {
   const stray = plan.strayEliteChance ?? (info.floor >= enc.strayEliteFrom ? enc.strayEliteChance : 0);
   if (plan.elite) {
     // Salle d'élite : un champion (modificateur façon Diablo) dans la dernière vague.
-    const kinds = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS].filter((k) => t.enemies[k]);
-    const kind = pick(game.rng.gen, kinds);
+    // Le champion sort du bestiaire de l'étage : en section 1 les archétypes entrent un à un
+    // (sections.mjs rosterFor), une porte d'élite ne les fait pas apparaître plus tôt.
+    const known = ['brute', 'charger', 'imp', 'archer', ...EXTRA_ELITE_KINDS].filter((k) => t.enemies[k]);
+    const present = known.filter((k) => !plan.roster || pool.some((r) => r.kind === k));
+    const kind = pick(game.rng.gen, present.length ? present : known);
     waves[waves.length - 1].push({ kind, elite: pickEliteMod(game, kind, info) });
   } else if (stray > 0 && rand(game.rng.gen) < stray) {
     const kind = pick(game.rng.gen, ['imp', 'archer']);
@@ -6019,7 +6106,7 @@ function randomGold(game) {
   return randInt(game.rng.gen, lo, hi);
 }
 
-return { LAYOUT_IDS, COMBAT_LAYOUTS, ROSTER, buildRoom, rewardSpot, playerStart, refillSandboxWaves, launchNextWave, spawnBoss, updateSpawns, updateWaves, makeDoors, doorTouched, randomGold };
+return { LAYOUTS, LAYOUT_IDS, COMBAT_LAYOUTS, BOSS_LAYOUT, ROSTER, buildRoom, rewardSpot, playerStart, refillSandboxWaves, launchNextWave, spawnBoss, updateSpawns, updateWaves, makeDoors, doorTouched, randomGold };
 })();
 // ---- src/sim/boons.mjs
 __mod["src/sim/boons.mjs"] = (() => {
@@ -6028,8 +6115,7 @@ __mod["src/sim/boons.mjs"] = (() => {
 // combat.mjs interprète. Emplacements exclusifs (attack, dash, skill) : une nouvelle
 // bénédiction du même emplacement remplace l'ancienne. Les passifs s'empilent.
 //
-// Rareté : commun ×1, rare ×1,4, épique ×1,8 sur les valeurs.
-const { rand, shuffle, weightedPick } = __mod["src/core/rng.mjs"];
+// Rareté : commun ×1, rare ×1,4, épique ×1,8 sur les valeurs.const { rand, shuffle, weightedPick } = __mod["src/core/rng.mjs"];
 
 const FAMILIES = {
   colere: { name: 'Colère', color: '#ff5a3c' },
@@ -6395,16 +6481,12 @@ function priceOf(game, item) {
   return Math.round(lo + ((hi - lo) * idx) / (ITEM_RARITIES.length - 1)) + randInt(game.rng.gen, 0, 9);
 }
 
-return { ITEM_RARITIES, SLOTS, SLOT_NAMES, STAT_LABELS, LEGENDARY_POWERS, rollRarity, generateItem, starterItems, itemScore, salvageValue, baseText, affixText, randomShopItem, priceOf };
+return { ITEM_RARITIES, SLOTS, SLOT_NAMES, BASES, AFFIXES, STAT_LABELS, LEGENDARY_POWERS, rollRarity, generateItem, starterItems, itemScore, salvageValue, baseText, affixText, randomShopItem, priceOf };
 })();
 // ---- src/sim/stats.mjs
 __mod["src/sim/stats.mjs"] = (() => {
 // Statistiques dérivées du héros : base + équipement + bénédictions. Recalculées à chaque
-// changement de build (jamais à chaque image). Produit aussi la liste des procs.
-const { baseStats } = __mod["src/sim/state.mjs"];
-const { boonDef, boonValue } = __mod["src/sim/boons.mjs"];
-const { LEGENDARY_POWERS } = __mod["src/sim/loot.mjs"];
-const { resolveKit, classOf } = __mod["src/sim/loadout.mjs"];
+// changement de build (jamais à chaque image). Produit aussi la liste des procs.const { baseStats } = __mod["src/sim/state.mjs"];const { boonDef, boonValue } = __mod["src/sim/boons.mjs"];const { LEGENDARY_POWERS } = __mod["src/sim/loot.mjs"];const { resolveKit, classOf } = __mod["src/sim/loadout.mjs"];
 
 const LEVEL_STEP = 0.5; // chaque niveau supplémentaire d'une bénédiction : +50 % de sa valeur
 
@@ -6446,7 +6528,8 @@ function recomputeStats(game) {
   for (const b of run.boons) {
     const def = boonDef(b.id);
     if (!def) continue;
-    const lv = 1 + LEVEL_STEP * (b.level - 1);
+    // Une bénédiction `noScale` vaut sa valeur entière quel que soit son niveau (jamais 1,5 charge de dash).
+    const lv = def.noScale ? 1 : 1 + LEVEL_STEP * (b.level - 1);
     const raw = boonValue(def, b.rarity) * lv;
     const v = def.pct ? raw / 100 : raw;
     if (def.stat) addStat(st, def.stat, def.negative ? -v : v);
@@ -6500,8 +6583,7 @@ __mod["src/sim/profile.mjs"] = (() => {
 // à chaque mort (economy.deathGoldKeep). Les Âmes, elles, ne se perdent jamais.
 //
 // Fonctions PURES sur des objets JSON (aucun DOM) : la Ville (src/ui/town.mjs) appelle ces
-// opérations, main.mjs sauvegarde le résultat. Chaque opération rend { ok, reason? }.
-const { floorInfo } = __mod["src/sim/floors.mjs"];
+// opérations, main.mjs sauvegarde le résultat. Chaque opération rend { ok, reason? }.const { floorInfo } = __mod["src/sim/floors.mjs"];
 
 const PROFILE_SCHEMA = 3;
 const STASH_MAX = 24;
@@ -6815,10 +6897,8 @@ __mod["src/sim/sections.mjs"] = (() => {
 // Le run (run.mjs) COMPOSE ensuite chaque étage : plan de l'index + porte choisie (composeFloor).
 //
 // Graine : celle de la partie. Le plan a son propre flux (hashSeed) : le calculer ne consomme
-// jamais les flux de la partie, et la même partie revoit le même plan après une mort.
-const { createRng, hashSeed, rand, weightedPick, shuffle } = __mod["src/core/rng.mjs"];
-const { floorInfo, floorScaling, guardianFor, sectionBounds } = __mod["src/sim/floors.mjs"];
-const { ROSTER, LAYOUT_IDS } = __mod["src/sim/room.mjs"];
+// jamais les flux de la partie, et la même partie revoit le même plan après une mort.const TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { createRng, hashSeed, rand, weightedPick, shuffle } = __mod["src/core/rng.mjs"];const { floorInfo, floorScaling, guardianFor, sectionBounds } = __mod["src/sim/floors.mjs"];const { ROSTER, LAYOUT_IDS } = __mod["src/sim/room.mjs"];
 
 const PLAN_SALT = 0x5ec7;
 
@@ -6981,7 +7061,7 @@ function rosterFor(tuning, theme, featured, section, index) {
   return ROSTER.filter((r) => r.minIndex <= reach && tuning.enemies[r.kind]).map((r) => ({
     kind: r.kind,
     cost: r.cost,
-    weight: r.weight * Math.pow(r.cost / ref, theme.costBias) * (featured.includes(r.kind) ? theme.featuredMult : 1),
+    weight: r.weight * TRIG.pow(r.cost / ref, theme.costBias) * (featured.includes(r.kind) ? theme.featuredMult : 1),
   }));
 }
 
@@ -7032,13 +7112,7 @@ __mod["src/sim/calm_rooms.mjs"] = (() => {
 //
 // Contrat avec run.mjs : setupCalmRoom à l'entrée, describeCalm pour le panneau (mode 'choice'),
 // applyCalm(index) rend 'close' (choix fait), 'replaced' (l'objet d'interaction est remplacé par
-// un butin ou une bénédiction à toucher) ou false (choix refusé).
-const { randInt } = __mod["src/core/rng.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { healPlayer, spawnPickup } = __mod["src/sim/combat.mjs"];
-const { generateItem, rollRarity, ITEM_RARITIES, SLOT_NAMES } = __mod["src/sim/loot.mjs"];
-const { FAMILIES, randomFamily, addBoon, boonDef } = __mod["src/sim/boons.mjs"];
-const { recomputeStats } = __mod["src/sim/stats.mjs"];
+// un butin ou une bénédiction à toucher) ou false (choix refusé).const { randInt } = __mod["src/core/rng.mjs"];const { emit } = __mod["src/sim/state.mjs"];const { healPlayer, spawnPickup } = __mod["src/sim/combat.mjs"];const { generateItem, rollRarity, ITEM_RARITIES, SLOT_NAMES } = __mod["src/sim/loot.mjs"];const { FAMILIES, randomFamily, addBoon, boonDef } = __mod["src/sim/boons.mjs"];const { recomputeStats } = __mod["src/sim/stats.mjs"];
 
 const CALM_KINDS = Object.freeze(['treasure', 'rest']);
 
@@ -7054,7 +7128,9 @@ function setupCalmRoom(game, it) {
   const rolled = rollRarity(game, tr.rarityBonus);
   const rank = Math.max(minRank, ITEM_RARITIES.findIndex((r) => r.id === rolled));
   it.item = generateItem(game, { rarity: ITEM_RARITIES[rank].id });
-  it.gold = Math.round(randInt(game.rng.gen, tr.gold[0], tr.gold[1]) * game.player.stats.goldFindMult);
+  // La bourse tombe en goldPickups pièces égales : le montant ANNONCÉ est celui qui sera versé.
+  const each = Math.max(1, Math.round((randInt(game.rng.gen, tr.gold[0], tr.gold[1]) * game.player.stats.goldFindMult) / tr.goldPickups));
+  it.gold = each * tr.goldPickups;
   it.family = randomFamily(game);
 }
 
@@ -7062,10 +7138,16 @@ function gadgetMax(game) {
   return game.tuning.gadget.chargesPerSection + game.player.stats.gadgetChargesBonus;
 }
 
-/** Bénédiction que la méditation approfondit : la moins avancée (la première à égalité). */
+/**
+ * Bénédiction que la méditation approfondit : la moins avancée (la première à égalité). Jamais
+ * une bénédiction `noScale` (Envol : « +1 charge de dash ») : elle n'a pas de niveau.
+ */
 function meditationTarget(game) {
   let best = null;
-  for (const b of game.run.boons) if (!best || b.level < best.level) best = b;
+  for (const b of game.run.boons) {
+    if (boonDef(b.id)?.noScale) continue;
+    if (!best || b.level < best.level) best = b;
+  }
   return best;
 }
 
@@ -7308,6 +7390,13 @@ function onRoomClear(game) {
   game.telemetry.roomsCleared++;
   game.telemetry.roomTimes.push({ floor: game.run.floor, kind: room.kind, time: game.time - room.enteredAt });
   emit(game, 'roomClear', { floor: game.run.floor, kind: room.kind, boss: room.kind === 'boss' });
+  // Salle nettoyée : plus aucun coup ennemi ne part (souffle d'un élite ardent, flèche en vol).
+  for (const h of game.hazards) {
+    if (h.done || !h.hitsPlayer || h.burning) continue; // les flaques s'éteignent d'elles-mêmes
+    h.done = true;
+    emit(game, 'hazardCancel', { id: h.id, x: h.x, y: h.y });
+  }
+  for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
   const { x: cx, y: cy } = rewardSpot(room);
   const plan = room.plan;
 
@@ -7324,7 +7413,9 @@ function onRoomClear(game) {
     // Le build TEMPORAIRE n'est PAS figé : il ne survivra pas à la prochaine mort.
     const cp = checkpointAfterBoss(t, game.run.floor);
     const meta = game.meta;
-    if (!meta.checkpoints.includes(cp)) meta.checkpoints.push(cp);
+    // Le Gardien final n'ouvre aucun checkpoint : il n'y a pas d'étage suivant, et un point de
+    // reprise SUR le Gardien du 666 offrait une victoire (et ses Âmes) à chaque reprise.
+    if (!game.info.isFinal && !meta.checkpoints.includes(cp)) meta.checkpoints.push(cp);
     meta.checkpoints.sort((a, b) => a - b);
     const kind = guardianFor(t, game.info.section);
     meta.guardians[kind] = (meta.guardians[kind] ?? 0) + 1;
@@ -7496,10 +7587,11 @@ function rollShop(game) {
 function applyCommand(game, cmd) {
   if (cmd.type === 'respawn') return respawn(game, cmd.floor);
   if (cmd.type === 'returnToTown') {
-    // Depuis l'écran de mort (Charon a déjà pris sa part), ou au portail ouvert après un Gardien.
-    // Jamais en plein combat : quitter un run en cours, c'est « abandon » (taxé comme une mort).
+    // Depuis l'écran de mort (Charon a déjà pris sa part), l'écran de victoire, ou au portail
+    // ouvert après un Gardien. Jamais en plein combat : quitter un run en cours, c'est
+    // « abandon » (taxé comme une mort).
     const portal = game.mode === 'play' && game.room.doors.some((d) => d.reward === 'town' && d.open);
-    if (game.mode !== 'dead' && !portal) return false;
+    if (game.mode !== 'dead' && game.mode !== 'victory' && !portal) return false;
     return returnToTown(game);
   }
   if (cmd.type === 'abandon') {
@@ -7738,11 +7830,11 @@ function respawn(game, floor) {
 }
 
 /**
- * Fin du run et retour en Ville : depuis l'écran de mort, ou par le portail qui suit un
- * Gardien. Le temporaire est abandonné avec la partie ; main sauvegarde le profil.
+ * Fin du run et retour en Ville : depuis l'écran de mort, l'écran de victoire, ou par le portail
+ * qui suit un Gardien. Le temporaire est abandonné avec la partie ; main sauvegarde le profil.
  */
 function returnToTown(game) {
-  if (game.mode !== 'dead' && game.mode !== 'play') return false;
+  if (game.mode !== 'dead' && game.mode !== 'play' && game.mode !== 'victory') return false;
   syncPurse(game);
   game.mode = 'town';
   game.choice = null;
@@ -7849,24 +7941,8 @@ __mod["src/sim/game.mjs"] = (() => {
 //   const game = createGame({ seed });
 //   stepGame(game, inputFrame);   // un pas fixe de 1/60 s
 //   applyCommand(game, {type: 'choose', index: 0});   // menus (bénédiction, butin…)
-//   game.events                   // événements de l'image, à vider par l'appelant
-const { createRng, hashSeed } = __mod["src/core/rng.mjs"];
-const { dist2 } = __mod["src/core/math.mjs"];
-const { DT, createTuning } = __mod["src/sim/config.mjs"];
-const { createPlayer, createTelemetry, emit } = __mod["src/sim/state.mjs"];
-const { readInput, updatePlayer, canDash } = __mod["src/sim/player.mjs"];
-const { updateEnemies } = __mod["src/sim/enemies.mjs"];
-const { updateNav } = __mod["src/sim/nav.mjs"];
-const { updateProjectiles, updateHazards, compact } = __mod["src/sim/projectiles.mjs"];
-const { updateSpawns, updateWaves, doorTouched, refillSandboxWaves } = __mod["src/sim/room.mjs"];
-const { createRun, enterFloor, onRoomClear, openInteract, onDeath, returnToTown, applyCommand: runCommand } = __mod["src/sim/run.mjs"];
-const { recomputeStats } = __mod["src/sim/stats.mjs"];
-const { moveCircle } = __mod["src/sim/physics.mjs"];
-const { healPlayer } = __mod["src/sim/combat.mjs"];
-const { starterItems } = __mod["src/sim/loot.mjs"];
-const { newProfile, sanitizeProfile } = __mod["src/sim/profile.mjs"];
-const { resolveKit } = __mod["src/sim/loadout.mjs"];
-const { applyLab } = __mod["src/sim/lab.mjs"];
+//   game.events                   // événements de l'image, à vider par l'appelantconst TRIG = __mod["src/core/trig.mjs"]; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
+const { createRng, hashSeed } = __mod["src/core/rng.mjs"];const { dist2 } = __mod["src/core/math.mjs"];const { DT, createTuning } = __mod["src/sim/config.mjs"];const { createPlayer, createTelemetry, emit } = __mod["src/sim/state.mjs"];const { readInput, updatePlayer, canDash } = __mod["src/sim/player.mjs"];const { updateEnemies } = __mod["src/sim/enemies.mjs"];const { updateNav } = __mod["src/sim/nav.mjs"];const { updateProjectiles, updateHazards, compact } = __mod["src/sim/projectiles.mjs"];const { updateSpawns, updateWaves, doorTouched, refillSandboxWaves } = __mod["src/sim/room.mjs"];const { createRun, enterFloor, onRoomClear, openInteract, onDeath, returnToTown, applyCommand: runCommand } = __mod["src/sim/run.mjs"];const { recomputeStats } = __mod["src/sim/stats.mjs"];const { moveCircle } = __mod["src/sim/physics.mjs"];const { healPlayer } = __mod["src/sim/combat.mjs"];const { starterItems } = __mod["src/sim/loot.mjs"];const { newProfile, sanitizeProfile } = __mod["src/sim/profile.mjs"];const { resolveKit } = __mod["src/sim/loadout.mjs"];const { applyLab } = __mod["src/sim/lab.mjs"];
 
 
 const DEATH_DELAY = 1.4; // s de ralenti/agonie avant l'écran de mort
@@ -7975,7 +8051,7 @@ function stepGame(game, input) {
 function updatePickups(game, dt) {
   const p = game.player;
   const t = game.tuning.room;
-  const friction = Math.exp(-6 * dt);
+  const friction = TRIG.exp(-6 * dt);
   for (const pk of game.pickups) {
     pk.age += dt;
     const d2 = dist2(pk.x, pk.y, p.x, p.y);
@@ -8772,10 +8848,7 @@ return { PAL, ELITE_COLORS, ELITE_NAMES, CIRCLE_TINTS, REWARD_COLORS };
 __mod["src/render/fx.mjs"] = (() => {
 // Effets visuels pilotés par les événements de simulation : particules (pool fixe, zéro
 // allocation par image), textes flottants, effets transitoires (taillades, ondes, éclairs),
-// tremblement et coups de zoom. Présentation pure : Math.random autorisé ici.
-const { PAL } = __mod["src/render/palette.mjs"];
-const { addTrauma, zoomKick, kick } = __mod["src/render/camera.mjs"];
-const { pointBandDist2 } = __mod["src/core/math.mjs"];
+// tremblement et coups de zoom. Présentation pure : Math.random autorisé ici.const { PAL } = __mod["src/render/palette.mjs"];const { addTrauma, zoomKick, kick } = __mod["src/render/camera.mjs"];const { pointBandDist2 } = __mod["src/core/math.mjs"];
 
 const MAX_PARTICLES = 700;
 const MAX_TEXTS = 48;
@@ -9376,8 +9449,7 @@ __mod["src/render/art_foes.mjs"] = (() => {
 //   pyromancer  — capuche pointue rouge sombre + bâton à flamme (la flamme ENFLE pendant
 //                 l'incantation : on voit QUI pose les cercles)
 //   necromancer — robe violette, crâne d'os, éclats d'os en orbite (ils s'accélèrent et
-//                 brillent pendant la canalisation)
-const { PAL } = __mod["src/render/palette.mjs"];
+//                 brillent pendant la canalisation)const { PAL } = __mod["src/render/palette.mjs"];
 
 const TAU = Math.PI * 2;
 
@@ -9757,9 +9829,7 @@ return { BOSS_BODY, BOSS_ART };
 __mod["src/render/art.mjs"] = (() => {
 // Registre du DESSIN des archétypes d'ennemis et des Gardiens ajoutés (un module par famille :
 // art_foes.mjs, art_bosses.mjs). Signature : (ctx, r, face, body, e, time), contexte déjà centré
-// sur l'ennemi et tourné/écrasé comme les autres. Couleurs de corps : EXTRA_BODY[kind].
-const { FOE_ART, FOE_BODY } = __mod["src/render/art_foes.mjs"];
-const { BOSS_ART, BOSS_BODY } = __mod["src/render/art_bosses.mjs"];
+// sur l'ennemi et tourné/écrasé comme les autres. Couleurs de corps : EXTRA_BODY[kind].const { FOE_ART, FOE_BODY } = __mod["src/render/art_foes.mjs"];const { BOSS_ART, BOSS_BODY } = __mod["src/render/art_bosses.mjs"];
 
 const EXTRA_ART = { ...FOE_ART, ...BOSS_ART };
 const EXTRA_BODY = { ...FOE_BODY, ...BOSS_BODY };
@@ -9771,15 +9841,7 @@ __mod["src/render/render.mjs"] = (() => {
 // Rendu du monde (espace salle) sur canvas 2D. Lecture seule de la simulation.
 // Ordre de dessin = ordre de lisibilité : sol < télégraphes < objets < ennemis < héros <
 // projectiles < effets < textes. Les dangers sont dessinés AVANT les corps pour rester
-// visibles sous les mêlées, et leur intensité monte à l'approche de l'impact.
-const { PAL, ELITE_COLORS, ELITE_NAMES, CIRCLE_TINTS, REWARD_COLORS } = __mod["src/render/palette.mjs"];
-const { drawParticles, drawEffects, drawTexts } = __mod["src/render/fx.mjs"];
-const { hazardProgress, lingerLeft } = __mod["src/sim/projectiles.mjs"];
-const { FAMILIES } = __mod["src/sim/boons.mjs"];
-const { ITEM_RARITIES } = __mod["src/sim/loot.mjs"];
-const { REWARD_LABELS } = __mod["src/sim/run.mjs"];
-const { EXTRA_ART, EXTRA_BODY } = __mod["src/render/art.mjs"];
-const { computeAim } = __mod["src/sim/aim.mjs"];
+// visibles sous les mêlées, et leur intensité monte à l'approche de l'impact.const { PAL, ELITE_COLORS, ELITE_NAMES, CIRCLE_TINTS, REWARD_COLORS } = __mod["src/render/palette.mjs"];const { drawParticles, drawEffects, drawTexts } = __mod["src/render/fx.mjs"];const { hazardProgress, lingerLeft } = __mod["src/sim/projectiles.mjs"];const { FAMILIES } = __mod["src/sim/boons.mjs"];const { ITEM_RARITIES } = __mod["src/sim/loot.mjs"];const { REWARD_LABELS } = __mod["src/sim/run.mjs"];const { EXTRA_ART, EXTRA_BODY } = __mod["src/render/art.mjs"];const { computeAim } = __mod["src/sim/aim.mjs"];
 
 const TAU = Math.PI * 2;
 const TILE = 88;
@@ -10618,6 +10680,7 @@ function drawEnemy(ctx, e, game, time) {
   }
   if (e.burn > 0) drawGlow(ctx, e.x, e.y - r * 0.5, r * 1.6, PAL.lava, 0.45 + 0.2 * Math.sin(time * 20 + e.id));
   if (e.stun > 0) drawStun(ctx, e.x, e.y - r - 10, time);
+  else if (e.guard > 0 && !e.boss) drawGuard(ctx, e.x + Math.max(28, r * 2.2) / 2 + 9, e.y - r - 10, Math.min(1, e.guard / GUARD_FADE));
   if (!e.boss && (e.hp < e.maxHp || e.eliteMod)) drawEnemyHp(ctx, e, r);
   if (e.eliteMod) {
     ctx.font = `800 11px ${FONT}`;
@@ -10755,6 +10818,27 @@ function drawStun(ctx, x, y, time) {
     ctx.arc(x + Math.cos(a) * 12, y + Math.sin(a) * 4, 3, 0, TAU);
     ctx.fill();
   }
+}
+
+const GUARD_FADE = 0.3; // s : l'écu s'efface sur la fin de la garde
+
+/** Garde (il sort d'un étourdissement, combat.stunGuard) : petit écu au bout de la barre de vie. */
+function drawGuard(ctx, x, y, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.moveTo(x - 6, y - 6);
+  ctx.lineTo(x + 6, y - 6);
+  ctx.lineTo(x + 6, y);
+  ctx.quadraticCurveTo(x + 5, y + 5, x, y + 8);
+  ctx.quadraticCurveTo(x - 5, y + 5, x - 6, y);
+  ctx.closePath();
+  ctx.fillStyle = '#c9c9d6';
+  ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+  ctx.lineWidth = 2;
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawEnemyHp(ctx, e, r) {
@@ -11349,11 +11433,7 @@ return { drawWorld };
 __mod["src/render/hud.mjs"] = (() => {
 // HUD en espace écran (px CSS) : PV, progression de la descente, or, bénédictions, barre
 // du boss, contrôles tactiles (avec recharges et charges), barre d'aptitudes au clavier,
-// bannières, vignette de danger, indicateurs hors champ.
-const { PAL } = __mod["src/render/palette.mjs"];
-const { worldToScreen } = __mod["src/render/camera.mjs"];
-const { FAMILIES, boonDef } = __mod["src/sim/boons.mjs"];
-const { maxDashCharges } = __mod["src/sim/player.mjs"];
+// bannières, vignette de danger, indicateurs hors champ.const { PAL } = __mod["src/render/palette.mjs"];const { worldToScreen } = __mod["src/render/camera.mjs"];const { FAMILIES, boonDef } = __mod["src/sim/boons.mjs"];const { maxDashCharges } = __mod["src/sim/player.mjs"];
 
 const TAU = Math.PI * 2;
 const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -12069,8 +12149,7 @@ __mod["src/audio/synth.mjs"] = (() => {
 //       filter {type, freq, to, q} (tons), detune, drive (distorsion douce),
 //       vibrato {rate, cents}, tremolo {rate, depth} }
 //
-// Ce module ne connaît ni le jeu ni ses événements : il ne fait que jouer des couches.
-const { clamp } = __mod["src/core/math.mjs"];
+// Ce module ne connaît ni le jeu ni ses événements : il ne fait que jouer des couches.const { clamp } = __mod["src/core/math.mjs"];
 
 /** Plancher des rampes exponentielles (WebAudio interdit d'y viser 0). */
 const SILENCE = 0.0001;
@@ -12328,9 +12407,7 @@ __mod["src/audio/recipes.mjs"] = (() => {
 //   ev    : l'événement représentatif du groupe (champs de sim, lecture seule)
 //   pitch : multiplicateur de hauteur (variation aléatoire légère déjà appliquée)
 //   gain  : multiplicateur d'intensité (regroupement de plusieurs événements identiques)
-//   heavy : coup lourd (3e coup du combo ou frappe de dash) — calculé par sfx.mjs
-const { clamp, lerp } = __mod["src/core/math.mjs"];
-const { perc, adsr, playLayers, finite } = __mod["src/audio/synth.mjs"];
+//   heavy : coup lourd (3e coup du combo ou frappe de dash) — calculé par sfx.mjsconst { clamp, lerp } = __mod["src/core/math.mjs"];const { perc, adsr, playLayers, finite } = __mod["src/audio/synth.mjs"];
 
 // ---------------------------------------------------------------- outillage des tables
 
@@ -12968,10 +13045,7 @@ __mod["src/audio/sfx.mjs"] = (() => {
 //
 // Chaîne : voix -> bus -> compresseur -> volume maître -> sortie.
 // Une image = des événements GROUPÉS par son : 6 coups dans la même image donnent 1-2 sons
-// plus forts, pas 6. Chaque son a un plafond de voix simultanées, et le mixage un plafond global.
-const { clamp, lerp } = __mod["src/core/math.mjs"];
-const { createEngine, openVoice, closeVoice, finite } = __mod["src/audio/synth.mjs"];
-const { RECIPES } = __mod["src/audio/recipes.mjs"];
+// plus forts, pas 6. Chaque son a un plafond de voix simultanées, et le mixage un plafond global.const { clamp, lerp } = __mod["src/core/math.mjs"];const { createEngine, openVoice, closeVoice, finite } = __mod["src/audio/synth.mjs"];const { RECIPES } = __mod["src/audio/recipes.mjs"];
 
 const DEFAULT_VOLUME = 0.6;
 const PITCH_JITTER = 0.05; // ±5 % de hauteur à chaque son (Math.random : présentation, pas la sim)
@@ -13558,12 +13632,7 @@ __mod["src/ui/town.mjs"] = (() => {
 // Elle ne contient AUCUNE règle : chaque bouton appelle une action de `actions` (main.mjs), qui
 // applique l'opération pure correspondante du profil (src/sim/profile.mjs) puis sauvegarde.
 // Tout ce qui s'achète ou se choisit ici est PERMANENT ; les bénédictions du donjon, elles,
-// meurent avec le run.
-const { el, button, itemCard } = __mod["src/ui/dom.mjs"];
-const { floorInfo, guardianFor } = __mod["src/sim/floors.mjs"];
-const { unlockCost, upgradeCost, salvageSouls } = __mod["src/sim/profile.mjs"];
-const { describeItem } = __mod["src/sim/run.mjs"];
-const { LAB_AXES } = __mod["src/sim/lab.mjs"];
+// meurent avec le run.const { el, button, itemCard } = __mod["src/ui/dom.mjs"];const { floorInfo, guardianFor } = __mod["src/sim/floors.mjs"];const { unlockCost, upgradeCost, salvageSouls } = __mod["src/sim/profile.mjs"];const { describeItem } = __mod["src/sim/run.mjs"];const { LAB_AXES } = __mod["src/sim/lab.mjs"];
 
 const TOWN_TABS = [
   { id: 'portail', label: 'Portail' },
@@ -13797,9 +13866,7 @@ __mod["src/ui/menus.mjs"] = (() => {
 // Menus DOM par-dessus le canvas : écran titre, choix (bénédiction, butin, marchand, autel,
 // chambre forte, fontaine de repos), mort et reprise au checkpoint, pause et réglages,
 // panneau de tuning du feel.
-// AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.
-const { el, button, onActivate, itemCard, arming, armed, ARM_MS, ARM_CHOICE_MS } = __mod["src/ui/dom.mjs"];
-const { buildTown, buildLabControls } = __mod["src/ui/town.mjs"];
+// AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.const { el, button, onActivate, itemCard, arming, armed, ARM_MS, ARM_CHOICE_MS } = __mod["src/ui/dom.mjs"];const { buildTown, buildLabControls } = __mod["src/ui/town.mjs"];
 
 const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Compétence', passive: 'Passif', super: 'Super' };
 function createUI(root, handlers) {
@@ -14014,6 +14081,12 @@ function createUI(root, handlers) {
     p.className = 'panel death';
     p.appendChild(el('h1', 'logo', 'LE TRÔNE EST VIDE'));
     p.appendChild(el('p', 'lede', 'Vous avez atteint le 666e étage.'));
+    // Sans ce bouton, l'écran de victoire était sans issue (il fallait recharger la page).
+    const col = el('div', 'col');
+    const town = button('Retour à la Ville', 'primary', () => handlers.command({ type: 'returnToTown' }));
+    town.id = 'to-town';
+    col.appendChild(town);
+    p.appendChild(col);
   }
 
   function buildPause(p, settings) {
@@ -14289,7 +14362,7 @@ __mod["src/main.mjs"] = (() => {
 // Point d'entrée navigateur : boucle à pas fixe (60 Hz) découplée de l'affichage, câblage
 // sim <-> entrées <-> rendu <-> audio <-> menus, persistance locale, outils de test.
 //
-// Paramètres d'URL (playtest) : ?seed=123  ?floor=6  ?god=1  ?autostart=1  ?tune=0
+// Paramètres d'URL (playtest) : ?seed=123  ?floor=18  ?god=1  ?autostart=1  ?tune=0
 const { createGame, stepGame, applyCommand, DT } = __mod["src/sim/game.mjs"];
 const { DEFAULT_TUNING, createTuning } = __mod["src/sim/config.mjs"];
 const { sanitizeProfile, unlock, selectClass, selectSkill, selectGadget, equipFromStash, salvageFromStash, buyUpgrade } = __mod["src/sim/profile.mjs"];
@@ -14355,6 +14428,16 @@ function save(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // navigation privée, stockage bloqué : la partie continue sans persistance
+  }
+}
+
+/** Copie brute du profil enregistré, sous une clé datée, avant de le remplacer par un profil neuf. */
+function archiveProfile() {
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    if (raw) localStorage.setItem(`${META_KEY}.archive.${Date.now()}`, raw);
+  } catch {
+    // stockage bloqué : rien à archiver
   }
 }
 
@@ -14503,13 +14586,18 @@ const ui = createUI(uiRoot, {
 
 function startRun(floor, sandbox = false, practice = false) {
   const seed = params.has('seed') ? Number(params.get('seed')) : (Math.random() * 2 ** 31) >>> 0;
-  const startFloor = params.has('floor') && !practice ? Number(params.get('floor')) : floor;
+  // Un `?floor=` illisible (lien abîmé) est ignoré : il ne doit ni planter ni toucher au profil.
+  const asked = Number(params.get('floor'));
+  const fallback = Number.isFinite(floor) ? floor : 1;
+  const startFloor = params.has('floor') && !practice && Number.isFinite(asked) ? asked : fallback;
   const tune = params.get('tune') === '0' ? {} : loadTuningOverrides();
   const opts = { seed, startFloor: sandbox ? 1 : startFloor, meta: app.profile, godMode: params.get('god') === '1', sandbox, practice, tuning: { lab: { ...app.settings.lab } } };
   try {
     app.game = createGame(opts);
   } catch {
     // Profil illisible (forme d'objet ancienne…) : on repart d'un profil neuf plutôt que de bloquer.
+    // L'ancien est d'abord ARCHIVÉ tel quel : une progression n'est jamais écrasée sans copie.
+    archiveProfile();
     app.profile = sanitizeProfile({}, CONTENT);
     save(META_KEY, app.profile);
     app.game = createGame({ ...opts, meta: app.profile });

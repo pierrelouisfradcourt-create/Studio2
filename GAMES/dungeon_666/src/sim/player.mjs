@@ -16,6 +16,7 @@
 //     attackPressed, dashPressed, skillPressed, gadgetPressed, superPressed,  // fronts
 //     skillAimX, skillAimY }   // visée de la compétence au relâcher (0, 0 = assistée)
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { DEG } from './config.mjs';
 import { inSector, dist2 } from '../core/math.mjs';
 import { emit } from './state.mjs';
@@ -154,8 +155,8 @@ export function updatePlayer(game, dt) {
   switch (p.state) {
     case 'free':
       locomotion(game, dt, t.player.speed * p.stats.moveSpeedMult);
-      if (Math.abs(p.manualAimX) + Math.abs(p.manualAimY) > 0.15) p.facing = Math.atan2(p.manualAimY, p.manualAimX);
-      else if (p.moveX * p.moveX + p.moveY * p.moveY > 0.04) p.facing = Math.atan2(p.moveY, p.moveX);
+      if (Math.abs(p.manualAimX) + Math.abs(p.manualAimY) > 0.15) p.facing = TRIG.atan2(p.manualAimY, p.manualAimX);
+      else if (p.moveX * p.moveX + p.moveY * p.moveY > 0.04) p.facing = TRIG.atan2(p.moveY, p.moveX);
       break;
     case 'attack':
       updateAttack(game, dt);
@@ -255,7 +256,7 @@ function locomotion(game, dt, speed) {
 
 /**
  * Part de la vitesse gardée pendant un coup : player.attackMoveMult (D9), modulée par l'arme
- * (moveMult : dagues et arc mobiles, hache et maillet lourds), jamais au-delà de la course.
+ * (moveMult : dagues mobiles ; hache, maillet, arc et arbalète lents), jamais au-delà de la course.
  */
 function attackMoveFactor(t) {
   const m = t.weapon?.moveMult;
@@ -288,7 +289,7 @@ function startAttack(game) {
     dur: phaseDurations(def, p.stats.attackSpeedMult),
     dirX: aim.x,
     dirY: aim.y,
-    angle: Math.atan2(aim.y, aim.x),
+    angle: TRIG.atan2(aim.y, aim.x),
     targetId: aim.targetId,
     targetDist: aim.targetDist,
     hitIds: [],
@@ -408,8 +409,8 @@ function startDash(game) {
     dx /= l;
     dy /= l;
   } else {
-    dx = Math.cos(p.facing);
-    dy = Math.sin(p.facing);
+    dx = TRIG.cos(p.facing);
+    dy = TRIG.sin(p.facing);
   }
   if (p.state === 'attack') emit(game, 'cancel', { from: 'attack' });
   if (p.state === 'cast') releaseSkill(game);
@@ -421,7 +422,7 @@ function startDash(game) {
   p.dashT = t.duration;
   p.iframes = Math.max(p.iframes, t.iframes);
   p.dodgeIframes = Math.max(p.dodgeIframes, t.iframes);
-  p.facing = Math.atan2(dy, dx);
+  p.facing = TRIG.atan2(dy, dx);
   p.state = 'dash';
   p.stateTime = 0;
   game.hitstop = 0;
@@ -480,7 +481,7 @@ function startCast(game, aimX, aimY) {
   p.attack = null;
   p.castDirX = aim.x;
   p.castDirY = aim.y;
-  p.facing = Math.atan2(aim.y, aim.x);
+  p.facing = TRIG.atan2(aim.y, aim.x);
   p.castT = s.castTime;
   p.skillCd = s.cooldown * p.stats.skillCooldownMult;
   p.state = 'cast';
@@ -539,7 +540,7 @@ function releaseLance(game) {
   p.vx -= p.castDirX * 120;
   p.vy -= p.castDirY * 120;
   game.telemetry.skillCasts++;
-  emit(game, 'skill', { x: p.x, y: p.y, angle: Math.atan2(p.castDirY, p.castDirX) });
+  emit(game, 'skill', { x: p.x, y: p.y, angle: TRIG.atan2(p.castDirY, p.castDirX) });
 }
 
 // ---------------------------------------------------------------- gadget (Nova de cendres, kits)

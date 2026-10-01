@@ -12,6 +12,7 @@
 //              visible, borné dans le temps) : les adds d'abord.
 // Changement de phase : les braises s'éteignent avec les autres zones (crochet onPhase).
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand } from '../core/rng.mjs';
 import { clamp, TAU } from '../core/math.mjs';
 import { emit } from './state.mjs';
@@ -38,7 +39,7 @@ export function poing(game, e, d, dt) {
   while (e.patternStep < fists && e.subT >= e.patternStep * f.fistGap) {
     const tp = toPlayer(game, e);
     bossHazard(game, e, {
-      shape: 'line', x: e.x, y: e.y, angle: Math.atan2(tp.dy, tp.dx), length: e.r + f.length, width: f.width,
+      shape: 'line', x: e.x, y: e.y, angle: TRIG.atan2(tp.dy, tp.dx), length: e.r + f.length, width: f.width,
       delay: f.windup, damage: f.damage, kind: 'colosseFist',
     });
     e.patternStep++;
@@ -81,8 +82,8 @@ export function eboulis(game, e, d, dt) {
       // Le premier tombe sur le héros ; les autres autour de lui (tirage uniforme dans le disque).
       const a = rand(game.rng.ai) * TAU;
       const rr = k === 0 ? 0 : b.spread * Math.sqrt(rand(game.rng.ai));
-      const x = clamp(p.x + Math.cos(a) * rr, room.pad + b.radius / 2, room.w - room.pad - b.radius / 2);
-      const y = clamp(p.y + Math.sin(a) * rr, room.pad + b.radius / 2, room.h - room.pad - b.radius / 2);
+      const x = clamp(p.x + TRIG.cos(a) * rr, room.pad + b.radius / 2, room.w - room.pad - b.radius / 2);
+      const y = clamp(p.y + TRIG.sin(a) * rr, room.pad + b.radius / 2, room.h - room.pad - b.radius / 2);
       const delay = b.delayMin + rand(game.rng.ai) * (b.delayMax - b.delayMin);
       last = Math.max(last, delay);
       const rock = bossHazard(game, e, { shape: 'circle', x, y, r: b.radius, delay, damage: b.damage, kind: 'colosseRock' });

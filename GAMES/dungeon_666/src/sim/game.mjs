@@ -6,6 +6,7 @@
 //   applyCommand(game, {type: 'choose', index: 0});   // menus (bénédiction, butin…)
 //   game.events                   // événements de l'image, à vider par l'appelant
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { createRng, hashSeed } from '../core/rng.mjs';
 import { dist2 } from '../core/math.mjs';
 import { DT, createTuning } from './config.mjs';
@@ -131,7 +132,7 @@ export function stepGame(game, input) {
 function updatePickups(game, dt) {
   const p = game.player;
   const t = game.tuning.room;
-  const friction = Math.exp(-6 * dt);
+  const friction = TRIG.exp(-6 * dt);
   for (const pk of game.pickups) {
     pk.age += dt;
     const d2 = dist2(pk.x, pk.y, p.x, p.y);

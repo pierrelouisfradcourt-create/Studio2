@@ -523,8 +523,9 @@ function simulateMove(game, out, dx, dy, lockT, dash) {
   const t = game.tuning;
   const room = game.room;
   const run = t.player.speed * p.stats.moveSpeedMult;
-  const slow = run * t.player.attackMoveMult;
-  const dashSpeed = t.dash.distance / t.dash.duration;
+  // Vitesse pendant un coup : celle de l'arme en main (player.mjs attackMoveFactor), pas l'étalon.
+  const slow = run * Math.min(1, t.player.attackMoveMult * (t.weapon?.moveMult ?? 1));
+  const dashSpeed = (t.dash.distance * (p.stats.dashDistanceMult ?? 1)) / t.dash.duration; // dash de la classe
   const step = 1 / SAMPLE_HZ;
   const lo = room.pad + p.r;
   let x = p.x;

@@ -4,6 +4,7 @@
 // (e.tele ou une zone de danger) d'une durée >= au seuil de réaction, et un nombre limité
 // d'ennemis de mêlée attaque en même temps (jetons d'attaque).
 
+import * as TRIG from '../core/trig.mjs'; // sinus, cosinus… déterministes : jamais Math.sin & co dans la simulation
 import { rand, randRange } from '../core/rng.mjs';
 import { dist2 } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
@@ -50,6 +51,7 @@ export function createEnemy(game, kind, x, y, opts = {}) {
     tele: null,
     flash: 0,
     stun: 0,
+    guard: 0, // garde restante après un étourdissement (combat.stunGuard) : pas de ré-étourdissement à l'arme
     burn: 0,
     burnDps: 0,
     burnAcc: 0,
@@ -112,8 +114,10 @@ export function updateEnemies(game, dt) {
       if (e.stun <= 0) {
         setState(e, 'chase');
         e.cooldown = Math.max(e.cooldown, 0.3);
+        e.guard = t.combat.stunGuard;
       }
     } else if (p.state !== 'dead') {
+      e.guard = Math.max(0, e.guard - dt);
       if (e.boss) updateBoss(game, e, dt);
       else {
         const hp0 = p.hp;
@@ -134,6 +138,7 @@ function tickStatuses(game, e, dt) {
   else e.chillMult = 1;
   if (e.vuln > 0) e.vuln -= dt;
   else e.vulnMult = 0;
+  if (e.burn <= 0) e.burnDps = 0; // éteinte : la suivante brûle à sa propre intensité
   if (e.burn > 0) {
     e.burn -= dt;
     e.burnAcc += e.burnDps * dt;
@@ -148,7 +153,7 @@ function tickStatuses(game, e, dt) {
 function integrate(game, e, dt) {
   const t = game.tuning;
   const ws = t.wallSlam;
-  const k = Math.exp(-t.combat.enemyFriction * dt);
+  const k = TRIG.exp(-t.combat.enemyFriction * dt);
   const kSpeed = Math.sqrt(e.kvx * e.kvx + e.kvy * e.kvy);
   const res = moveCircle(game.room, e, (e.vx + e.kvx) * dt, (e.vy + e.kvy) * dt);
   if (res.hitWall) {
@@ -237,15 +242,15 @@ const AI = {
         // Avec le droit de frapper, on fonce : sinon l'anneau (85 u) restait hors de portée (68 u)
         // et un diablotin n'attaquait plus jamais un héros immobile.
         const ring = !canStrike && tp.d < reach * 1.6 ? reach * 1.25 : 0;
-        const tx = p.x + Math.cos(e.flank) * ring;
-        const ty = p.y + Math.sin(e.flank) * ring;
+        const tx = p.x + TRIG.cos(e.flank) * ring;
+        const ty = p.y + TRIG.sin(e.flank) * ring;
         steer(game, e, tx, ty, speedOf(game, e, def));
         e.flank += e.strafe * dt * 0.6;
         break;
       }
       case 'windup':
         trackUntilLock(game, e, 0.7, windup);
-        e.tele = { shape: 'cone', angle: Math.atan2(e.dirY, e.dirX), range: def.strikeSpeed * def.strikeTime + e.r + 14, arc: 0.9, progress: e.stateTime / windup };
+        e.tele = { shape: 'cone', angle: TRIG.atan2(e.dirY, e.dirX), range: def.strikeSpeed * def.strikeTime + e.r + 14, arc: 0.9, progress: e.stateTime / windup };
         if (e.stateTime >= windup) {
           setState(e, 'strike');
           e.tele = null;
@@ -286,7 +291,7 @@ const AI = {
           e.dirY = tp.dy;
           break;
         }
-        if (tp.d < def.fleeDist) {
+        if (tp.d < def.fleeDist && sees) { // on ne fuit que ce qu'on voit (ai_common.keepDistance)
           e.vx = -tp.dx * speed;
           e.vy = -tp.dy * speed;
         } else if (tp.d > def.preferredDist + 60 || !sees) {
@@ -301,7 +306,7 @@ const AI = {
       }
       case 'windup':
         trackUntilLock(game, e, def.lockAt, windup);
-        e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: def.teleLength, width: def.projRadius * 2 + 4, progress: e.stateTime / windup };
+        e.tele = { shape: 'line', angle: TRIG.atan2(e.dirY, e.dirX), length: def.teleLength, width: def.projRadius * 2 + 4, progress: e.stateTime / windup };
         if (e.stateTime >= windup) {
           e.tele = null;
           spawnProjectile(game, {
@@ -378,7 +383,7 @@ const AI = {
       }
       case 'windup':
         trackUntilLock(game, e, 0.7, windup);
-        e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: def.chargeSpeed * def.chargeMaxTime, width: e.r * 2 + 10, progress: e.stateTime / windup };
+        e.tele = { shape: 'line', angle: TRIG.atan2(e.dirY, e.dirX), length: def.chargeSpeed * def.chargeMaxTime, width: e.r * 2 + 10, progress: e.stateTime / windup };
         if (e.stateTime >= windup) {
           e.tele = null;
           setState(e, 'charge');
