@@ -796,6 +796,7 @@ function playerAlpha(p, time) {
 function drawPlayerUnderlay(ctx, game, fx, time) {
   const p = game.player;
   const pr = p.r * HERO_VISUAL;
+  drawHeroZones(ctx, game, time);
   for (const g of fx.ghosts) {
     ctx.globalAlpha = (g.life / g.max) * 0.45;
     ctx.fillStyle = PAL.heroCape;
@@ -856,10 +857,173 @@ function drawPlayer(ctx, game, fx, time) {
   ctx.arc(Math.cos(f) * pr * 0.35, Math.sin(f) * pr * 0.35, pr * 0.42, f - 1.2, f + 1.2);
   ctx.closePath();
   ctx.fill();
-  drawBlade(ctx, p, pr);
+  drawClassAccent(ctx, game.kit?.classId, f, pr, time);
+  drawWeapon(ctx, game, p, pr);
   ctx.restore();
   ctx.globalAlpha = 1;
 }
+
+// Silhouette de classe : un détail sombre et froid sur le corps (le héros reste cyan et blanc).
+const CLASS_ACCENT = '#123c4c';
+
+function drawClassAccent(ctx, classId, f, pr, time) {
+  if (classId === 'bourreau') {
+    // Cagoule de bourreau : calotte sombre sur l'arrière du crâne, deux pointes.
+    ctx.fillStyle = CLASS_ACCENT;
+    ctx.beginPath();
+    ctx.arc(0, 0, pr * 0.98, f + 1.5, f + Math.PI * 2 - 1.5);
+    ctx.closePath();
+    ctx.fill();
+    for (const s of [-1, 1]) {
+      const a = f + Math.PI + s * 0.75;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a - 0.25) * pr * 0.9, Math.sin(a - 0.25) * pr * 0.9);
+      ctx.lineTo(Math.cos(a) * pr * 1.45, Math.sin(a) * pr * 1.45);
+      ctx.lineTo(Math.cos(a + 0.25) * pr * 0.9, Math.sin(a + 0.25) * pr * 0.9);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (classId === 'chasseresse') {
+    // Carquois dans le dos et mèche qui flotte.
+    const b = f + Math.PI;
+    ctx.save();
+    ctx.rotate(b + 0.5);
+    ctx.fillStyle = CLASS_ACCENT;
+    ctx.fillRect(pr * 0.35, -pr * 0.22, pr * 0.95, pr * 0.44);
+    ctx.fillStyle = PAL.hero;
+    for (let i = 0; i < 3; i++) ctx.fillRect(pr * 1.25, -pr * 0.18 + i * pr * 0.16, pr * 0.22, pr * 0.06);
+    ctx.restore();
+    ctx.strokeStyle = PAL.heroCape;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(b - 0.4) * pr * 0.8, Math.sin(b - 0.4) * pr * 0.8);
+    ctx.quadraticCurveTo(Math.cos(b - 0.2) * pr * 1.5, Math.sin(b - 0.2) * pr * 1.5 + Math.sin(time * 10) * 2, Math.cos(b - 0.5) * pr * 1.9, Math.sin(b - 0.5) * pr * 1.9);
+    ctx.stroke();
+  }
+}
+
+/** Arme portée (forme selon le type d'arme) ; la Lame garde son dessin d'origine. */
+function drawWeapon(ctx, game, p, pr) {
+  const wt = game.kit?.weaponType;
+  const draw = WEAPON_DRAW[wt];
+  if (draw) draw(ctx, p, pr);
+  else drawBlade(ctx, p, pr);
+}
+
+/** Angle d'une arme qui balaie pendant l'actif (comme la Lame), sinon au repos. */
+function swingAngle(p, rest) {
+  let a = p.facing + rest;
+  if (p.state === 'attack' && p.attack) {
+    const at = p.attack;
+    const half = (at.def.arc * Math.PI) / 360;
+    const dir = at.index % 2 === 1 ? -1 : 1;
+    let k = 0;
+    if (at.phase === 'active') k = Math.min(1, at.t / at.dur.active);
+    else if (at.phase === 'recovery') k = 1;
+    a = at.angle - half * dir + at.def.arc * (Math.PI / 180) * dir * k;
+  }
+  return a;
+}
+
+/** Arme à distance : tenue dans l'axe de visée, corde tendue pendant la préparation. */
+function aimAngle(p) {
+  return p.state === 'attack' && p.attack ? p.attack.angle : p.facing;
+}
+
+function drawPull(p) {
+  if (p.state !== 'attack' || !p.attack) return 0;
+  const at = p.attack;
+  if (at.phase === 'startup') return Math.min(1, at.t / Math.max(1e-3, at.dur.startup));
+  return 0;
+}
+
+const WEAPON_DRAW = {
+  dagues(ctx, p, pr) {
+    ctx.strokeStyle = '#cfe9f5';
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    const main = swingAngle(p, 0.7);
+    for (const a of [main, p.facing - 0.9]) {
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * pr * 0.8, Math.sin(a) * pr * 0.8);
+      ctx.lineTo(Math.cos(a) * pr * 1.75, Math.sin(a) * pr * 1.75);
+      ctx.stroke();
+    }
+  },
+  hache(ctx, p, pr) {
+    const a = swingAngle(p, 0.9);
+    ctx.strokeStyle = '#7a8c96';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * pr * 0.6, Math.sin(a) * pr * 0.6);
+    ctx.lineTo(Math.cos(a) * pr * 2.4, Math.sin(a) * pr * 2.4);
+    ctx.stroke();
+    ctx.save();
+    ctx.rotate(a);
+    ctx.fillStyle = '#cfe9f5';
+    ctx.beginPath();
+    ctx.moveTo(pr * 1.7, 0);
+    ctx.quadraticCurveTo(pr * 2.1, pr * 0.95, pr * 2.55, pr * 0.75);
+    ctx.lineTo(pr * 2.4, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  },
+  marteau(ctx, p, pr) {
+    const a = swingAngle(p, 0.9);
+    ctx.strokeStyle = '#7a8c96';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * pr * 0.6, Math.sin(a) * pr * 0.6);
+    ctx.lineTo(Math.cos(a) * pr * 2.2, Math.sin(a) * pr * 2.2);
+    ctx.stroke();
+    ctx.save();
+    ctx.rotate(a);
+    ctx.fillStyle = '#cfe9f5';
+    ctx.fillRect(pr * 2.0, -pr * 0.55, pr * 0.62, pr * 1.1);
+    ctx.restore();
+  },
+  arc(ctx, p, pr) {
+    const a = aimAngle(p);
+    const pull = drawPull(p);
+    ctx.save();
+    ctx.rotate(a);
+    ctx.strokeStyle = '#cfe9f5';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(pr * 0.5, 0, pr * 1.1, -1.05, 1.05);
+    ctx.stroke();
+    const tipX = pr * 0.5 + Math.cos(1.05) * pr * 1.1;
+    const tipY = Math.sin(1.05) * pr * 1.1;
+    const back = tipX - pull * pr * 0.7;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(tipX, -tipY);
+    ctx.lineTo(back, 0);
+    ctx.lineTo(tipX, tipY);
+    ctx.stroke();
+    if (pull > 0) {
+      ctx.fillStyle = PAL.lance;
+      ctx.fillRect(back, -1.5, pr * 1.3, 3);
+    }
+    ctx.restore();
+  },
+  arbalete(ctx, p, pr) {
+    const a = aimAngle(p);
+    ctx.save();
+    ctx.rotate(a);
+    ctx.fillStyle = '#7a8c96';
+    ctx.fillRect(pr * 0.3, -pr * 0.14, pr * 1.6, pr * 0.28);
+    ctx.strokeStyle = '#cfe9f5';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(pr * 2.3, 0, pr * 0.9, Math.PI - 0.9, Math.PI + 0.9);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
 
 function drawBlade(ctx, p, pr) {
   let a = p.facing + 0.9;
@@ -881,7 +1045,203 @@ function drawBlade(ctx, p, pr) {
   ctx.stroke();
 }
 
+const LOB_HEIGHT = 70; // u : hauteur dessinée de la cloche d'un objet lancé (pot, bombe)
+
+/** Tirs du héros des kits (traits, carreaux, épines, crochet, Nuée) et objets lancés en vol. */
+function drawHeroShots(ctx, game) {
+  const store = game.room?.kitFx;
+  if (!store) return;
+  const p = game.player;
+  for (const s of store.shots) {
+    if (s.dead) continue;
+    const a = Math.atan2(s.vy, s.vx);
+    if (s.kind === 'hook') {
+      // Chaîne tendue du héros au crochet.
+      ctx.strokeStyle = '#7a8c96';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([7, 5]);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(s.x, s.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    const style = SHOT_STYLE[s.kind] ?? SHOT_STYLE.arrow;
+    const len = style.len * (s.heavy ? 1.3 : 1);
+    drawGlow(ctx, s.x, s.y, style.glow * (s.heavy ? 1.4 : 1), style.color, 0.55);
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(a);
+    ctx.strokeStyle = style.color;
+    ctx.lineWidth = style.width * (s.heavy ? 1.4 : 1);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-len, 0);
+    ctx.lineTo(0, 0);
+    ctx.stroke();
+    ctx.fillStyle = PAL.hero;
+    ctx.beginPath();
+    ctx.moveTo(style.head, 0);
+    ctx.lineTo(-style.head * 0.4, -style.head * 0.6);
+    ctx.lineTo(-style.head * 0.4, style.head * 0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  for (const z of store.zones) {
+    if (z.dead || !(z.lift > 0)) continue;
+    const y = z.y - z.lift * LOB_HEIGHT;
+    drawShadow(ctx, z.x, z.y - 6, 8);
+    drawGlow(ctx, z.x, y, 26, PAL.lance, 0.5);
+    ctx.fillStyle = z.kind === 'pot' ? '#2a6f86' : '#1d2a33';
+    ctx.strokeStyle = PAL.lance;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(z.x, y, 9, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+// Tirs du héros : froids (cyan, blanc) — jamais l'orange des flèches ennemies, même en Super.
+const SHOT_STYLE = {
+  arrow: { color: PAL.lance, len: 22, width: 2.5, head: 7, glow: 16 },
+  bolt: { color: PAL.lance, len: 16, width: 4, head: 8, glow: 20 },
+  thorn: { color: PAL.heroCape, len: 12, width: 3, head: 6, glow: 14 },
+  hook: { color: '#cfe9f5', len: 6, width: 4, head: 10, glow: 18 },
+  star: { color: '#e8fbff', len: 20, width: 2, head: 6, glow: 18 },
+};
+
+/** Zones posées par le héros (au sol, sous les télégraphes : jamais en rouge). */
+function drawHeroZones(ctx, game, time) {
+  const store = game.room?.kitFx;
+  if (!store) return;
+  for (const z of store.zones) {
+    if (z.dead) continue;
+    const draw = ZONE_DRAW[z.kind];
+    if (draw) draw(ctx, z, time);
+  }
+}
+
+function dashedRing(ctx, x, y, r, color, alpha, time) {
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 7]);
+  ctx.lineDashOffset = -time * 30;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+}
+
+const ZONE_DRAW = {
+  // Pot en vol : on montre où il va tomber.
+  pot(ctx, z, time) {
+    dashedRing(ctx, z.tx, z.ty, z.r, PAL.lance, 0.5, time);
+  },
+  brasier(ctx, z, time) {
+    const fade = Math.min(1, (z.duration - z.t) / 0.4);
+    ctx.globalAlpha = 0.2 * fade;
+    ctx.fillStyle = '#3fb8ff';
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.r, 0, TAU);
+    ctx.fill();
+    drawGlow(ctx, z.x, z.y, z.r * 1.1, PAL.heroGlow, 0.8 * fade);
+    // Langues de feu d'âmes (bleues) qui dansent sur le bord.
+    ctx.fillStyle = PAL.lance;
+    for (let i = 0; i < 12; i++) {
+      const ang = (i / 12) * TAU + time * 0.6;
+      const rr = z.r * (0.45 + 0.45 * ((i * 7) % 5) / 5);
+      const h = 7 + 5 * Math.sin(time * 9 + i * 1.7);
+      const x = z.x + Math.cos(ang) * rr;
+      const y = z.y + Math.sin(ang) * rr;
+      ctx.globalAlpha = 0.65 * fade;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y);
+      ctx.quadraticCurveTo(x, y - h * 2, x + 4, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    dashedRing(ctx, z.x, z.y, z.r, PAL.lance, 0.6 * fade, time);
+  },
+  bombe(ctx, z, time) {
+    if (z.phase === 'flight') {
+      dashedRing(ctx, z.tx, z.ty, z.r, PAL.lance, 0.5, time);
+      return;
+    }
+    // Mèche : l'anneau du souffle se remplit jusqu'à l'explosion.
+    const k = Math.min(1, z.t / Math.max(1e-3, z.fuse));
+    ctx.globalAlpha = 0.12 + 0.18 * k;
+    ctx.fillStyle = PAL.lance;
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.r * k, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    dashedRing(ctx, z.x, z.y, z.r, PAL.lance, 0.85, time);
+    ctx.fillStyle = '#1d2a33';
+    ctx.strokeStyle = PAL.lance;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, 10, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    drawGlow(ctx, z.x + 6, z.y - 10, 12, '#ffffff', 0.5 + 0.5 * Math.sin(time * 40));
+  },
+  piege(ctx, z, time) {
+    const armed = z.t >= z.armTime;
+    ctx.globalAlpha = armed ? 0.95 : 0.45;
+    ctx.strokeStyle = '#7a8c96';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.r * 0.55, 0, TAU);
+    ctx.stroke();
+    ctx.fillStyle = PAL.lance;
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * TAU;
+      const x = z.x + Math.cos(a) * z.r * 0.55;
+      const y = z.y + Math.sin(a) * z.r * 0.55;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(a + 1.3) * 4, y + Math.sin(a + 1.3) * 4);
+      ctx.lineTo(x - Math.cos(a) * 8, y - Math.sin(a) * 8);
+      ctx.lineTo(x + Math.cos(a - 1.3) * 4, y + Math.sin(a - 1.3) * 4);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (armed) dashedRing(ctx, z.x, z.y, z.r, PAL.heroCape, 0.35 + 0.15 * Math.sin(time * 5), time);
+  },
+  totem(ctx, z, time) {
+    const fade = Math.min(1, (z.life - z.t) / 0.4);
+    dashedRing(ctx, z.x, z.y, z.r, '#bff8ff', 0.4 * fade, time);
+    ctx.globalAlpha = 0.07 * fade;
+    ctx.fillStyle = '#bff8ff';
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.r, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = fade;
+    drawShadow(ctx, z.x, z.y, 10);
+    drawGlow(ctx, z.x, z.y - 18, 34, PAL.heroGlow, 0.9 * fade);
+    ctx.fillStyle = '#bff8ff';
+    ctx.strokeStyle = PAL.heroCape;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(z.x, z.y - 40);
+    ctx.lineTo(z.x + 9, z.y - 18);
+    ctx.lineTo(z.x + 6, z.y + 4);
+    ctx.lineTo(z.x - 6, z.y + 4);
+    ctx.lineTo(z.x - 9, z.y - 18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  },
+};
+
 function drawProjectiles(ctx, game) {
+  drawHeroShots(ctx, game);
   for (const pr of game.projectiles) {
     if (pr.dead) continue;
     const a = Math.atan2(pr.vy, pr.vx);
@@ -952,7 +1312,8 @@ function drawAimHints(ctx, game, touch) {
     const l = Math.hypot(b.dx, b.dy) || 1;
     const ax = b.dx / l;
     const ay = b.dy / l;
-    const len = b.id === 'skill' ? game.tuning.skill.range : game.tuning.combo[0].range + 30;
+    // Portée montrée : la compétence, l'arme à distance (aimRange) ou le premier coup de mêlée.
+    const len = b.id === 'skill' ? game.tuning.skill.range : game.tuning.weapon?.aimRange ?? game.tuning.combo[0].range + 30;
     ctx.strokeStyle = b.id === 'skill' ? PAL.lance : '#ffffff';
     ctx.globalAlpha = 0.55;
     ctx.lineWidth = b.id === 'skill' ? 10 : 6;

@@ -103,6 +103,7 @@ const TAB_BUILDERS = {
       card.appendChild(el('div', 'card-kicker', `Super : ${tuning.supers[c.super]?.name ?? '?'}`));
       card.appendChild(el('div', 'card-title', c.name));
       card.appendChild(el('div', 'card-text', c.text));
+      if (c.passive) card.appendChild(el('div', 'card-text', `Passif · ${c.passive.name} : ${c.passive.text}`));
       const owned = profile.unlocked.classes.includes(id);
       card.appendChild(statusButton(
         { owned, selected: profile.loadout.classId === id, cost: unlockCost(tuning, 'classes', id), souls: profile.souls },

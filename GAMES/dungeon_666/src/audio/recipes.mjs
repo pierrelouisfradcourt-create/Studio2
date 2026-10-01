@@ -168,6 +168,80 @@ const SUPER_READY = [
   osc('sine', semis(NOTE.A6, 12), null, perc(0.002, 0.2), 0.05, { at: 0.08 }),
 ];
 
+// ---------------------------------------------------------------- kits (classes, armes, aptitudes)
+// Mêmes événements que le kit d'origine (swing, skill, gadget, super, superTick, explode) :
+// le champ ajouté par la sim (ranged / weapon, skill, gadget, super, kind) choisit le timbre.
+
+// Arc : corde pincée + souffle bref ; arbalète (et trait lourd) : déclic sec et plus grave.
+const SHOOT_BOW = [
+  osc('triangle', 520, 190, perc(0.002, 0.09), 0.35),
+  hiss('bandpass', 2400, 5200, 2, perc(0.004, 0.07), 0.45),
+];
+const SHOOT_HEAVY = [
+  osc('square', 210, 90, perc(0.002, 0.07), 0.3, { filter: { type: 'lowpass', freq: 1600 } }),
+  hiss('bandpass', 1500, 4200, 1.6, perc(0.003, 0.1), 0.6),
+  hiss('highpass', 4000, null, 0.7, perc(0.001, 0.02), 0.35),
+];
+const HEAVY_WEAPONS = { arbalete: true };
+
+const SKILL_STYLES = {
+  // Chaîne d'Enfer : cliquetis de maillons qui file.
+  chain: [
+    hiss('bandpass', 3200, 1800, 3, perc(0.003, 0.18), 0.5),
+    ...bell(880, METAL_PARTIALS, 0, 0.18, 0.12),
+    osc('square', 300, 520, perc(0.004, 0.12), 0.08, { filter: { type: 'lowpass', freq: 2200 } }),
+  ],
+  // Bond : élan grave qui monte.
+  bond: [
+    hiss('bandpass', 300, 1400, 0.8, adsr(0.02, 0.05, 0.6, 0.08, 0.2), 0.7),
+    osc('sine', 120, 260, perc(0.01, 0.2), 0.25),
+  ],
+  // Brasier d'âmes : pot qui siffle en l'air.
+  brasier: [
+    osc('sine', 700, 1500, adsr(0.01, 0.05, 0.6, 0.05, 0.2), 0.15, { glide: 0.3 }),
+    hiss('bandpass', 1200, 2600, 1.4, perc(0.01, 0.2), 0.35),
+  ],
+  // Volée d'épines : rafale de souffles aigus.
+  volee: [
+    hiss('bandpass', 2600, 5800, 2, perc(0.004, 0.08), 0.45),
+    hiss('bandpass', 2200, 5000, 2, perc(0.004, 0.08), 0.35, { at: 0.025 }),
+    hiss('bandpass', 3000, 6200, 2, perc(0.004, 0.08), 0.3, { at: 0.05 }),
+  ],
+};
+
+const GADGET_STYLES = {
+  // Bombe : lancer (souffle) — l'explosion vient avec `explode`.
+  bombe: [hiss('bandpass', 600, 1800, 1, perc(0.01, 0.16), 0.5), osc('sine', 220, 140, perc(0.005, 0.12), 0.15)],
+  // Piège : déclic métallique d'armement.
+  piege: [...bell(1240, METAL_PARTIALS, 0, 0.16, 0.2), hiss('highpass', 4500, null, 0.7, perc(0.001, 0.02), 0.3)],
+  // Cri du bourreau : rugissement grave, saturé.
+  cri: [
+    osc('sawtooth', 110, 70, adsr(0.02, 0.1, 0.7, 0.15, 0.35), 0.3, { drive: true, filter: { type: 'lowpass', freq: 900, to: 300 } }),
+    hiss('bandpass', 500, 250, 0.9, adsr(0.02, 0.1, 0.6, 0.15, 0.3), 0.5),
+  ],
+  // Totem de givre : carillon cristallin.
+  totem: [...bell(NOTE.E6, BELL_PARTIALS, 0, 0.5, 0.12), osc('sine', NOTE.B5, null, perc(0.005, 0.4), 0.08, { at: 0.05 })],
+};
+
+const SUPER_STYLES = {
+  // Sentence : coup de gong grave, puis la lame qui se lève.
+  sentence: [
+    ...bell(NOTE.G2, BELL_PARTIALS, 0, 1.4, 0.5),
+    osc('sawtooth', 70, 140, adsr(0.05, 0.2, 0.7, 0.3, 0.5), 0.2, { drive: true, filter: { type: 'lowpass', freq: 400, to: 1800 } }),
+  ],
+  // Nuée : montée scintillante.
+  nuee: [
+    ...chord('triangle', NOTE.E5, MAJOR, 0.03, perc(0.005, 0.4), 0.1),
+    hiss('highpass', 3000, 7000, 0.7, adsr(0.1, 0.1, 0.6, 0.2, 0.4), 0.2),
+  ],
+};
+const SUPER_TICK_STYLES = {
+  // Exécution de la Sentence : choc lourd.
+  sentence: [osc('sine', 85, 35, perc(0.003, 0.35), 0.9), hiss('lowpass', 1200, 200, 0.8, perc(0.003, 0.25), 0.6)],
+  // Trait de la Nuée : pincement bref.
+  nuee: [osc('triangle', 900, 400, perc(0.002, 0.05), 0.2), hiss('bandpass', 3500, null, 2, perc(0.002, 0.04), 0.25)],
+};
+
 const DEFLECT = [
   ...bell(1480, METAL_PARTIALS, 0, 0.3, 0.25),
   hiss('highpass', 5000, null, 0.7, perc(0.001, 0.015), 0.25),
@@ -243,6 +317,11 @@ const HAZARD_STYLE = {
   fireBlast: { pitch: 1, gain: 1, fire: true },
   sinBlast: { pitch: 1.3, gain: 0.6, fire: true },
   exploder: { pitch: 1, gain: 1, fire: true },
+  // Zones du héros (explode{hero, kind}) : sans crépitement de feu (le feu = les ennemis).
+  bombe: { pitch: 0.85, gain: 1.1, fire: false },
+  piege: { pitch: 1.4, gain: 0.6, fire: false },
+  bond: { pitch: 0.7, gain: 1.1, fire: false },
+  brasier: { pitch: 1.2, gain: 0.55, fire: false },
 };
 
 const HAZARD_CANCEL = [
@@ -362,6 +441,10 @@ const CHOICE_OPEN = chord('triangle', NOTE.G5, FIFTH, 0.04, perc(0.005, 0.4), 0.
 
 function swing(v, p) {
   const ev = p.ev;
+  if (ev.ranged) {
+    playLayers(v, ev.strike || lookup(HEAVY_WEAPONS, ev.weapon, false) ? SHOOT_HEAVY : SHOOT_BOW, p.pitch, p.gain);
+    return;
+  }
   const index = clamp(Math.round(finite(ev.index, 0)), 0, SWING_COMBO.length - 1);
   playLayers(v, ev.strike ? SWING_STRIKE : SWING_COMBO[index], p.pitch, p.gain);
 }
@@ -482,10 +565,10 @@ export const RECIPES = {
   dodge: flat(DODGE),
   playerDeath: flat(DEATH),
   deflect: flat(DEFLECT),
-  skill: flat(SKILL),
-  gadget: flat(GADGET),
-  super: flat(SUPER),
-  superTick: flat(SUPER_TICK),
+  skill: (v, p) => playLayers(v, lookup(SKILL_STYLES, p.ev.skill, SKILL), p.pitch, p.gain),
+  gadget: (v, p) => playLayers(v, lookup(GADGET_STYLES, p.ev.gadget, GADGET), p.pitch, p.gain),
+  super: (v, p) => playLayers(v, lookup(SUPER_STYLES, p.ev.super, SUPER), p.pitch, p.gain),
+  superTick: (v, p) => playLayers(v, lookup(SUPER_TICK_STYLES, p.ev.super, SUPER_TICK), p.pitch, p.gain),
   superEnd: flat(SUPER_END),
   superReady: flat(SUPER_READY),
   heal: flat(HEAL),

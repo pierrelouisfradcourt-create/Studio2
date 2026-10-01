@@ -68,6 +68,10 @@ const SUPER_CROWD = 2;
 const SUPER_LOW_HP = 0.4;
 const SUPER_REACH_PAD = 20;
 const LANCE_BOSS_WEIGHT = 3; // un boss aligné vaut trois ennemis pour la Lance
+// Arme à distance (kits) : on tient la cible à cette distance (u, bord à bord), on recule
+// en deçà de RANGED_TOO_CLOSE, et l'on ne tire que si la ligne de tir est dégagée.
+const RANGED_KEEP = 210;
+const RANGED_TOO_CLOSE = 120;
 
 const PICKUP_WINDOW = 5; // s passées à ramasser l'or après le combat
 const SPAWN_WAIT_DIST = 160; // u : on attend la vague à cette distance des cercles d'invocation
@@ -695,6 +699,8 @@ function engageIntent(game, mem, enemies, opts) {
       intent.mx = away.x;
       intent.my = away.y;
     }
+  } else if (game.tuning.weapon?.kind === 'ranged') {
+    rangedIntent(game, p, target, d, intent);
   } else {
     const standoff = target.r + p.r + STANDOFF_GAP;
     const reach = game.tuning.combo[0].range + target.r - REACH_MARGIN;
@@ -707,6 +713,28 @@ function engageIntent(game, mem, enemies, opts) {
   }
   abilityIntent(game, mem, enemies, intent, opts);
   return intent;
+}
+
+/** Arme à distance : garder la cible à bonne distance, tirer quand la ligne est dégagée. */
+function rangedIntent(game, p, target, d, intent) {
+  const gap = d - target.r - p.r;
+  const reach = game.tuning.combo[0].range + target.r - REACH_MARGIN;
+  const shot = clearShot(game.room, p.x, p.y, target.x, target.y);
+  if (gap > RANGED_KEEP || !shot) {
+    const nav = navDir(game.room, p.x, p.y, target.x, target.y, p.r);
+    intent.mx = nav.x;
+    intent.my = nav.y;
+  } else if (gap < RANGED_TOO_CLOSE) {
+    const away = norm(p.x - target.x, p.y - target.y);
+    intent.mx = away.x;
+    intent.my = away.y;
+  }
+  intent.attack = shot && d <= reach;
+  if (intent.attack) {
+    const aim = norm(target.x - p.x, target.y - p.y);
+    intent.aimX = aim.x;
+    intent.aimY = aim.y;
+  }
 }
 
 // ---------------------------------------------------------------- intention : hors combat
@@ -817,6 +845,10 @@ function intentToInput(intent) {
   input.moveX = intent.mx;
   input.moveY = intent.my;
   input.attack = intent.attack;
+  if (intent.aimX || intent.aimY) {
+    input.aimX = intent.aimX;
+    input.aimY = intent.aimY;
+  }
   if (intent.skill) {
     input.skillPressed = true;
     input.skillAimX = intent.skill.x;
