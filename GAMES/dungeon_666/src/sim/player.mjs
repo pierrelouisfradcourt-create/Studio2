@@ -47,7 +47,12 @@ function canAttack(game) {
   if (p.state === 'free') return true;
   // Frappe de dash : attaquer en fin de dash coupe la ruée et frappe tout de suite.
   if (p.state === 'dash') return p.dashT <= game.tuning.dash.duration * game.tuning.dash.strikeCancelFrom;
-  return p.state === 'attack' && p.attack.phase === 'recovery';
+  if (p.state !== 'attack' || p.attack.phase !== 'recovery') return false;
+  // Le coup suivant n'annule qu'une PARTIE de la récupération (le finisher engage) ; seul le
+  // dash annule tout, tout de suite.
+  const a = p.attack;
+  const from = a.strike ? game.tuning.comboCancelFrom.strike : game.tuning.comboCancelFrom.hits[a.index] ?? 1;
+  return a.t >= a.dur.recovery * from;
 }
 
 function canSkill(p) {
@@ -58,6 +63,22 @@ function canSkill(p) {
 
 function canSuper(p) {
   return p.superCharge >= 1 && (p.state === 'free' || p.state === 'attack' || p.state === 'cast' || p.state === 'dash');
+}
+
+/**
+ * Une action ne mérite le tampon que si elle peut partir pendant sa fenêtre : marteler un dash
+ * sans charge, ou toucher un Super pas prêt, ne doit JAMAIS avaler la frappe qui suit.
+ */
+function feasibleSoon(game, action, window) {
+  const p = game.player;
+  const t = game.tuning;
+  if (action === 'dash') {
+    if (p.dashCharges >= 1) return true;
+    return t.dash.recharge * p.stats.dashRechargeMult - p.dashRecharge <= window;
+  }
+  if (action === 'super') return p.superCharge >= 1;
+  if (action === 'skill') return p.skillCd <= window;
+  return true;
 }
 
 /** Lit les fronts de l'InputFrame et les met en tampon. Rend true si dash est en attente. */
@@ -78,9 +99,9 @@ export function readInput(game, input) {
   p.manualAimY = input.aimY || 0;
   p.attackHeld = !!input.attack;
   if (input.attackPressed) bufferAction(p, 'attack', buf);
-  if (input.skillPressed) bufferAction(p, 'skill', buf, input.skillAimX || 0, input.skillAimY || 0);
-  if (input.superPressed) bufferAction(p, 'super', buf);
-  if (input.dashPressed) bufferAction(p, 'dash', buf);
+  if (input.skillPressed && feasibleSoon(game, 'skill', buf)) bufferAction(p, 'skill', buf, input.skillAimX || 0, input.skillAimY || 0);
+  if (input.superPressed && feasibleSoon(game, 'super', buf)) bufferAction(p, 'super', buf);
+  if (input.dashPressed && feasibleSoon(game, 'dash', buf)) bufferAction(p, 'dash', buf);
   if (input.gadgetPressed) useGadget(game);
   return p.buffer.action === 'dash' && p.buffer.t > 0;
 }
@@ -350,8 +371,10 @@ function startDash(game) {
     dy = Math.sin(p.facing);
   }
   if (p.state === 'attack') emit(game, 'cancel', { from: 'attack' });
+  if (p.state === 'cast') releaseLance(game);
   p.attack = null;
   p.dashCharges--;
+  p.dodgedIds.length = 0; // chaque dash compte ses esquives parfaites, une fois par coup
   p.dashDirX = dx;
   p.dashDirY = dy;
   p.dashT = t.duration;
@@ -426,12 +449,21 @@ function startCast(game, aimX, aimY) {
 function updateCast(game, dt) {
   const p = game.player;
   const t = game.tuning;
-  const s = t.skill;
   const slow = t.player.speed * p.stats.moveSpeedMult * t.player.attackMoveMult;
   p.vx = p.moveX * slow;
   p.vy = p.moveY * slow;
   p.castT -= dt;
   if (p.castT > 0) return;
+  releaseLance(game);
+  p.state = 'free';
+  p.stateTime = 0;
+}
+
+/** Tire la Lance préparée. Appelé à la fin du lancer, ou AVANT un dash/Super qui l'interrompt :
+ *  une recharge consommée doit toujours produire une Lance. */
+function releaseLance(game) {
+  const p = game.player;
+  const s = game.tuning.skill;
   spawnProjectile(game, {
     owner: 'player',
     kind: 'lance',
@@ -451,8 +483,6 @@ function updateCast(game, dt) {
   p.vy -= p.castDirY * 120;
   game.telemetry.skillCasts++;
   emit(game, 'skill', { x: p.x, y: p.y, angle: Math.atan2(p.castDirY, p.castDirX) });
-  p.state = 'free';
-  p.stateTime = 0;
 }
 
 // ---------------------------------------------------------------- gadget (Nova de cendres)
@@ -488,6 +518,7 @@ function startSuper(game) {
   const p = game.player;
   const s = game.tuning.super;
   if (p.state === 'attack' || p.state === 'dash') emit(game, 'cancel', { from: p.state });
+  if (p.state === 'cast') releaseLance(game);
   p.attack = null;
   p.superCharge = 0;
   p.superT = s.duration + (p.stats.superDurationBonus ?? 0);

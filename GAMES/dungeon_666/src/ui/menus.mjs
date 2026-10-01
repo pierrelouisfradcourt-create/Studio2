@@ -214,6 +214,13 @@ export function createUI(root, handlers) {
     p.appendChild(el('p', 'lede', `Étage ${game.run.floor} · ${t.kills} démons abattus · ${t.dodges} esquives au dash`));
     p.appendChild(el('p', 'dim', 'Vous reprenez au checkpoint avec le build que vous aviez en battant son Gardien. Votre équipement vous suit toujours.'));
     const col = el('div', 'col');
+    if (game.sandbox) {
+      const b = button('Recommencer l\'arène', 'primary', () => handlers.command({ type: 'respawn', floor: 1 }));
+      b.id = 'restart';
+      col.appendChild(b);
+      p.appendChild(col);
+      return;
+    }
     const retry = handlers.canRetryBoss(game);
     if (retry) {
       const b = button(`Réessayer le Gardien · étage ${game.run.floor}`, 'primary', () => handlers.command({ type: 'retryBoss' }));

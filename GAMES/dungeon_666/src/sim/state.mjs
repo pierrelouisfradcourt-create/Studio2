@@ -83,7 +83,7 @@ export function createPlayer(tuning, x, y) {
     superT: 0,
     superTick: 0,
     buffer: { action: null, t: 0, aimX: 0, aimY: 0 },
-    lastDodgedId: 0,
+    dodgedIds: [], // attaques déjà esquivées pendant le dash en cours
     lastTargetId: 0, // cible « collante » de la visée assistée
     lastTargetAt: -99,
     stats: baseStats(),

@@ -16,8 +16,9 @@ export const DEFAULT_TUNING = {
     accelTime: 0.083, // s pour atteindre la vitesse max depuis l'arrêt (5 images)
     decelTime: 0.05, // s pour s'arrêter (3 images) : l'arrêt net fait la nervosité
     // Vitesse pendant une attaque. Sur tactile on MAINTIENT l'attaque : à 0,2 le héros devenait
-    // plus lent qu'un diablotin (critique « fun ») — 0,5 garde le combo mobile.
-    attackMoveMult: 0.5,
+    // plus lent qu'un diablotin (critique « fun »). 0,4 garde le combo mobile sans rendre le
+    // dash superflu (à 0,5 l'oracle de solvabilité mesurait un dash qui ne vaut plus rien).
+    attackMoveMult: 0.4,
     hurtIframes: 0.6, // invulnérabilité après un coup reçu
     hurtHitstop: 0.083, // gel global quand le héros est touché : il DOIT le sentir
     inputBuffer: 0.15, // une action pressée trop tôt reste en mémoire
@@ -51,6 +52,9 @@ export const DEFAULT_TUNING = {
     { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.3 },
   ],
   comboResetTime: 0.32, // au-delà, le prochain coup repart du coup 1
+  // Fraction de la récupération à jouer avant que le coup suivant puisse partir (le dash, lui,
+  // annule tout). Le finisher (coup 3) engage davantage ; le dash reste la sortie rapide.
+  comboCancelFrom: { hits: [0.3, 0.3, 0.6], strike: 0.3 },
   dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.22 },
   wallSlam: { minSpeed: 380, damage: 8, stun: 0.45, hitstop: 0.05 },
   // Visée assistée : la mêlée ne se tourne que vers ce qu'elle peut atteindre ; la Lance voit loin.
@@ -127,6 +131,7 @@ export const DEFAULT_TUNING = {
     maxAttackers: 2, // ennemis de mêlée autorisés à lancer une attaque en même temps (lisibilité)
     maxShooters: 2, // archers autorisés à viser en même temps
     stunDamageTakenMult: 1.5,
+    minChillMult: 0.35, // plancher du ralentissement cumulé
   },
 
   room: {

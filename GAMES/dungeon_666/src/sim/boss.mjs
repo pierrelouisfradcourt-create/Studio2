@@ -16,6 +16,8 @@ import { spawnProjectile } from './projectiles.mjs';
 import { queueSpawn, findSpawnPoint } from './spawns.mjs';
 
 // Patterns disponibles par phase : la charge arrive en phase 2, les invocations en phase 3.
+const CHARGE_HIT_PAD = 4; // u ajoutés au contact boss/héros pendant la charge
+
 const PATTERNS = { 1: ['slam', 'ring'], 2: ['slam', 'ring', 'charge'], 3: ['slam', 'ring', 'charge', 'summon'] };
 
 function def(game, e) {
@@ -150,7 +152,9 @@ function charge(game, e, d, dt) {
       e.dirX = tp.dx;
       e.dirY = tp.dy;
     }
-    e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: c.speed * c.maxTime, width: c.width, progress: e.stateTime / windup };
+    // Largeur = zone qui touche réellement (rayon du boss + marge du test de contact) : esquiver
+    // « au pixel » le bord rouge doit toujours suffire.
+    e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: c.speed * c.maxTime, width: Math.max(c.width, 2 * (e.r + CHARGE_HIT_PAD)), progress: e.stateTime / windup };
     if (e.stateTime >= windup) {
       e.tele = null;
       e.patternStep = 1;
@@ -163,7 +167,7 @@ function charge(game, e, d, dt) {
   }
   e.patternT += dt;
   const res = moveCircle(game.room, e, e.dirX * c.speed * dt, e.dirY * c.speed * dt);
-  if (!e.hitPlayer && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + 4) ** 2) {
+  if (!e.hitPlayer && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + CHARGE_HIT_PAD) ** 2) {
     e.hitPlayer = true;
     damagePlayer(game, c.damage * e.dmgScale, { kind: 'bossCharge', id: e.atkId, x: e.x, y: e.y });
   }

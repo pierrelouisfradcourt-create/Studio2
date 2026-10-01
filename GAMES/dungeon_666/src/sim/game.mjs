@@ -76,6 +76,13 @@ export function createGame(options = {}) {
   };
   game.player = createPlayer(tuning, 0, 0);
   Object.assign(game.run.items, starterItems(game), options.items ?? {});
+  // Reprise à un checkpoint (relance de l'appli, écran titre) : même build que la reprise
+  // après une mort — l'instantané pris en battant le Gardien.
+  const snap = !options.sandbox ? meta.snapshots?.[options.startFloor ?? 1] : null;
+  if (snap) {
+    game.run.boons = snap.boons.map((b) => ({ ...b }));
+    game.run.gold = snap.gold;
+  }
   recomputeStats(game);
   game.player.hp = game.player.maxHp;
   enterFloor(game, options.startFloor ?? 1, { reward: 'boon', family: 'colere' });

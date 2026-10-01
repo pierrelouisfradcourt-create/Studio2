@@ -118,7 +118,8 @@ export function updateHazards(game, dt) {
           const dx = e.x - h.x;
           const dy = e.y - h.y;
           const l = Math.max(1e-6, Math.sqrt(dx * dx + dy * dy));
-          damageEnemy(game, e, { kind: 'blast', amount: h.damage, dirX: dx / l, dirY: dy / l, knockback: 260, canCrit: false });
+          // Une explosion d'ENNEMI (Possédé) ne profite ni de l'arme ni des bonus du héros.
+          damageEnemy(game, e, { kind: h.ownerId ? 'enemyBlast' : 'blast', amount: h.damage, dirX: dx / l, dirY: dy / l, knockback: 260, canCrit: false });
         }
       }
     }

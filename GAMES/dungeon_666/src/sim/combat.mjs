@@ -27,7 +27,7 @@ export function forceHitstop(game, h) {
 }
 
 export function isPlayerSource(kind) {
-  return kind !== 'enemyBlast';
+  return kind !== 'enemyBlast' && kind !== 'wall';
 }
 
 /**
@@ -128,7 +128,8 @@ function applyHitProcs(game, e, src) {
         break;
       case 'chill':
         e.chill = Math.max(e.chill, pr.duration);
-        e.chillMult = Math.min(e.chillMult || 1, 1 - pr.value);
+        // Borné : un ennemi ralenti reste un ennemi qui avance (jamais de vitesse négative).
+        e.chillMult = Math.min(e.chillMult || 1, Math.max(game.tuning.combat.minChillMult, 1 - pr.value));
         break;
       case 'vuln':
         e.vuln = Math.max(e.vuln, pr.duration);
@@ -242,8 +243,8 @@ export function damagePlayer(game, amount, src) {
   const t = game.tuning;
   if (p.state === 'dead' || game.godMode) return false;
   if (p.iframes > 0 || p.state === 'super') {
-    if (p.dodgeIframes > 0 && src.id !== p.lastDodgedId) {
-      p.lastDodgedId = src.id;
+    if (p.dodgeIframes > 0 && !p.dodgedIds.includes(src.id)) {
+      p.dodgedIds.push(src.id);
       game.telemetry.dodges++;
       // Esquive parfaite : la jauge de Super grimpe et le dash se recharge plus vite.
       const d = t.dash;

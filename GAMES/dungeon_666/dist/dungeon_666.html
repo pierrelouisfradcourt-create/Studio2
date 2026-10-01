@@ -445,8 +445,9 @@ const DEFAULT_TUNING = {
     accelTime: 0.083, // s pour atteindre la vitesse max depuis l'arrêt (5 images)
     decelTime: 0.05, // s pour s'arrêter (3 images) : l'arrêt net fait la nervosité
     // Vitesse pendant une attaque. Sur tactile on MAINTIENT l'attaque : à 0,2 le héros devenait
-    // plus lent qu'un diablotin (critique « fun ») — 0,5 garde le combo mobile.
-    attackMoveMult: 0.5,
+    // plus lent qu'un diablotin (critique « fun »). 0,4 garde le combo mobile sans rendre le
+    // dash superflu (à 0,5 l'oracle de solvabilité mesurait un dash qui ne vaut plus rien).
+    attackMoveMult: 0.4,
     hurtIframes: 0.6, // invulnérabilité après un coup reçu
     hurtHitstop: 0.083, // gel global quand le héros est touché : il DOIT le sentir
     inputBuffer: 0.15, // une action pressée trop tôt reste en mémoire
@@ -480,6 +481,9 @@ const DEFAULT_TUNING = {
     { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.3 },
   ],
   comboResetTime: 0.32, // au-delà, le prochain coup repart du coup 1
+  // Fraction de la récupération à jouer avant que le coup suivant puisse partir (le dash, lui,
+  // annule tout). Le finisher (coup 3) engage davantage ; le dash reste la sortie rapide.
+  comboCancelFrom: { hits: [0.3, 0.3, 0.6], strike: 0.3 },
   dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.22 },
   wallSlam: { minSpeed: 380, damage: 8, stun: 0.45, hitstop: 0.05 },
   // Visée assistée : la mêlée ne se tourne que vers ce qu'elle peut atteindre ; la Lance voit loin.
@@ -556,6 +560,7 @@ const DEFAULT_TUNING = {
     maxAttackers: 2, // ennemis de mêlée autorisés à lancer une attaque en même temps (lisibilité)
     maxShooters: 2, // archers autorisés à viser en même temps
     stunDamageTakenMult: 1.5,
+    minChillMult: 0.35, // plancher du ralentissement cumulé
   },
 
   room: {
@@ -699,7 +704,7 @@ function createPlayer(tuning, x, y) {
     superT: 0,
     superTick: 0,
     buffer: { action: null, t: 0, aimX: 0, aimY: 0 },
-    lastDodgedId: 0,
+    dodgedIds: [], // attaques déjà esquivées pendant le dash en cours
     lastTargetId: 0, // cible « collante » de la visée assistée
     lastTargetAt: -99,
     stats: baseStats(),
@@ -933,7 +938,7 @@ function forceHitstop(game, h) {
 }
 
 function isPlayerSource(kind) {
-  return kind !== 'enemyBlast';
+  return kind !== 'enemyBlast' && kind !== 'wall';
 }
 
 /**
@@ -1034,7 +1039,8 @@ function applyHitProcs(game, e, src) {
         break;
       case 'chill':
         e.chill = Math.max(e.chill, pr.duration);
-        e.chillMult = Math.min(e.chillMult || 1, 1 - pr.value);
+        // Borné : un ennemi ralenti reste un ennemi qui avance (jamais de vitesse négative).
+        e.chillMult = Math.min(e.chillMult || 1, Math.max(game.tuning.combat.minChillMult, 1 - pr.value));
         break;
       case 'vuln':
         e.vuln = Math.max(e.vuln, pr.duration);
@@ -1148,8 +1154,8 @@ function damagePlayer(game, amount, src) {
   const t = game.tuning;
   if (p.state === 'dead' || game.godMode) return false;
   if (p.iframes > 0 || p.state === 'super') {
-    if (p.dodgeIframes > 0 && src.id !== p.lastDodgedId) {
-      p.lastDodgedId = src.id;
+    if (p.dodgeIframes > 0 && !p.dodgedIds.includes(src.id)) {
+      p.dodgedIds.push(src.id);
       game.telemetry.dodges++;
       // Esquive parfaite : la jauge de Super grimpe et le dash se recharge plus vite.
       const d = t.dash;
@@ -1339,7 +1345,8 @@ function updateHazards(game, dt) {
           const dx = e.x - h.x;
           const dy = e.y - h.y;
           const l = Math.max(1e-6, Math.sqrt(dx * dx + dy * dy));
-          damageEnemy(game, e, { kind: 'blast', amount: h.damage, dirX: dx / l, dirY: dy / l, knockback: 260, canCrit: false });
+          // Une explosion d'ENNEMI (Possédé) ne profite ni de l'arme ni des bonus du héros.
+          damageEnemy(game, e, { kind: h.ownerId ? 'enemyBlast' : 'blast', amount: h.damage, dirX: dx / l, dirY: dy / l, knockback: 260, canCrit: false });
         }
       }
     }
@@ -1417,7 +1424,12 @@ function canAttack(game) {
   if (p.state === 'free') return true;
   // Frappe de dash : attaquer en fin de dash coupe la ruée et frappe tout de suite.
   if (p.state === 'dash') return p.dashT <= game.tuning.dash.duration * game.tuning.dash.strikeCancelFrom;
-  return p.state === 'attack' && p.attack.phase === 'recovery';
+  if (p.state !== 'attack' || p.attack.phase !== 'recovery') return false;
+  // Le coup suivant n'annule qu'une PARTIE de la récupération (le finisher engage) ; seul le
+  // dash annule tout, tout de suite.
+  const a = p.attack;
+  const from = a.strike ? game.tuning.comboCancelFrom.strike : game.tuning.comboCancelFrom.hits[a.index] ?? 1;
+  return a.t >= a.dur.recovery * from;
 }
 
 function canSkill(p) {
@@ -1428,6 +1440,22 @@ function canSkill(p) {
 
 function canSuper(p) {
   return p.superCharge >= 1 && (p.state === 'free' || p.state === 'attack' || p.state === 'cast' || p.state === 'dash');
+}
+
+/**
+ * Une action ne mérite le tampon que si elle peut partir pendant sa fenêtre : marteler un dash
+ * sans charge, ou toucher un Super pas prêt, ne doit JAMAIS avaler la frappe qui suit.
+ */
+function feasibleSoon(game, action, window) {
+  const p = game.player;
+  const t = game.tuning;
+  if (action === 'dash') {
+    if (p.dashCharges >= 1) return true;
+    return t.dash.recharge * p.stats.dashRechargeMult - p.dashRecharge <= window;
+  }
+  if (action === 'super') return p.superCharge >= 1;
+  if (action === 'skill') return p.skillCd <= window;
+  return true;
 }
 
 /** Lit les fronts de l'InputFrame et les met en tampon. Rend true si dash est en attente. */
@@ -1448,9 +1476,9 @@ function readInput(game, input) {
   p.manualAimY = input.aimY || 0;
   p.attackHeld = !!input.attack;
   if (input.attackPressed) bufferAction(p, 'attack', buf);
-  if (input.skillPressed) bufferAction(p, 'skill', buf, input.skillAimX || 0, input.skillAimY || 0);
-  if (input.superPressed) bufferAction(p, 'super', buf);
-  if (input.dashPressed) bufferAction(p, 'dash', buf);
+  if (input.skillPressed && feasibleSoon(game, 'skill', buf)) bufferAction(p, 'skill', buf, input.skillAimX || 0, input.skillAimY || 0);
+  if (input.superPressed && feasibleSoon(game, 'super', buf)) bufferAction(p, 'super', buf);
+  if (input.dashPressed && feasibleSoon(game, 'dash', buf)) bufferAction(p, 'dash', buf);
   if (input.gadgetPressed) useGadget(game);
   return p.buffer.action === 'dash' && p.buffer.t > 0;
 }
@@ -1720,8 +1748,10 @@ function startDash(game) {
     dy = Math.sin(p.facing);
   }
   if (p.state === 'attack') emit(game, 'cancel', { from: 'attack' });
+  if (p.state === 'cast') releaseLance(game);
   p.attack = null;
   p.dashCharges--;
+  p.dodgedIds.length = 0; // chaque dash compte ses esquives parfaites, une fois par coup
   p.dashDirX = dx;
   p.dashDirY = dy;
   p.dashT = t.duration;
@@ -1796,12 +1826,21 @@ function startCast(game, aimX, aimY) {
 function updateCast(game, dt) {
   const p = game.player;
   const t = game.tuning;
-  const s = t.skill;
   const slow = t.player.speed * p.stats.moveSpeedMult * t.player.attackMoveMult;
   p.vx = p.moveX * slow;
   p.vy = p.moveY * slow;
   p.castT -= dt;
   if (p.castT > 0) return;
+  releaseLance(game);
+  p.state = 'free';
+  p.stateTime = 0;
+}
+
+/** Tire la Lance préparée. Appelé à la fin du lancer, ou AVANT un dash/Super qui l'interrompt :
+ *  une recharge consommée doit toujours produire une Lance. */
+function releaseLance(game) {
+  const p = game.player;
+  const s = game.tuning.skill;
   spawnProjectile(game, {
     owner: 'player',
     kind: 'lance',
@@ -1821,8 +1860,6 @@ function updateCast(game, dt) {
   p.vy -= p.castDirY * 120;
   game.telemetry.skillCasts++;
   emit(game, 'skill', { x: p.x, y: p.y, angle: Math.atan2(p.castDirY, p.castDirX) });
-  p.state = 'free';
-  p.stateTime = 0;
 }
 
 // ---------------------------------------------------------------- gadget (Nova de cendres)
@@ -1858,6 +1895,7 @@ function startSuper(game) {
   const p = game.player;
   const s = game.tuning.super;
   if (p.state === 'attack' || p.state === 'dash') emit(game, 'cancel', { from: p.state });
+  if (p.state === 'cast') releaseLance(game);
   p.attack = null;
   p.superCharge = 0;
   p.superT = s.duration + (p.stats.superDurationBonus ?? 0);
@@ -2028,6 +2066,8 @@ const { spawnProjectile } = __mod["src/sim/projectiles.mjs"];
 const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
 
 // Patterns disponibles par phase : la charge arrive en phase 2, les invocations en phase 3.
+const CHARGE_HIT_PAD = 4; // u ajoutés au contact boss/héros pendant la charge
+
 const PATTERNS = { 1: ['slam', 'ring'], 2: ['slam', 'ring', 'charge'], 3: ['slam', 'ring', 'charge', 'summon'] };
 
 function def(game, e) {
@@ -2162,7 +2202,9 @@ function charge(game, e, d, dt) {
       e.dirX = tp.dx;
       e.dirY = tp.dy;
     }
-    e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: c.speed * c.maxTime, width: c.width, progress: e.stateTime / windup };
+    // Largeur = zone qui touche réellement (rayon du boss + marge du test de contact) : esquiver
+    // « au pixel » le bord rouge doit toujours suffire.
+    e.tele = { shape: 'line', angle: Math.atan2(e.dirY, e.dirX), length: c.speed * c.maxTime, width: Math.max(c.width, 2 * (e.r + CHARGE_HIT_PAD)), progress: e.stateTime / windup };
     if (e.stateTime >= windup) {
       e.tele = null;
       e.patternStep = 1;
@@ -2175,7 +2217,7 @@ function charge(game, e, d, dt) {
   }
   e.patternT += dt;
   const res = moveCircle(game.room, e, e.dirX * c.speed * dt, e.dirY * c.speed * dt);
-  if (!e.hitPlayer && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + 4) ** 2) {
+  if (!e.hitPlayer && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + CHARGE_HIT_PAD) ** 2) {
     e.hitPlayer = true;
     damagePlayer(game, c.damage * e.dmgScale, { kind: 'bossCharge', id: e.atkId, x: e.x, y: e.y });
   }
@@ -3945,10 +3987,18 @@ function respawn(game, floor) {
   const cps = game.meta.checkpoints;
   const target = cps.includes(floor) ? floor : cps[cps.length - 1];
   const run = game.run;
+  if (game.sandbox) {
+    // Arène d'essai : on recommence l'arène, jamais un checkpoint profond.
+    revive(game);
+    emit(game, 'respawn', { floor: 1 });
+    enterFloor(game, 1, { reward: 'boon' });
+    return true;
+  }
   const snap = game.meta.snapshots?.[target];
   if (snap) {
     run.boons = snap.boons.map((b) => ({ ...b }));
-    run.gold = snap.gold;
+    // Jamais plus d'or qu'on n'en a : sinon mourir après le marchand rembourserait l'achat.
+    run.gold = Math.min(snap.gold, run.gold);
   } else {
     run.boons = [];
     run.gold = Math.floor(run.gold * game.tuning.economy.deathGoldKeep);
@@ -4040,6 +4090,13 @@ function createGame(options = {}) {
   };
   game.player = createPlayer(tuning, 0, 0);
   Object.assign(game.run.items, starterItems(game), options.items ?? {});
+  // Reprise à un checkpoint (relance de l'appli, écran titre) : même build que la reprise
+  // après une mort — l'instantané pris en battant le Gardien.
+  const snap = !options.sandbox ? meta.snapshots?.[options.startFloor ?? 1] : null;
+  if (snap) {
+    game.run.boons = snap.boons.map((b) => ({ ...b }));
+    game.run.gold = snap.gold;
+  }
   recomputeStats(game);
   game.player.hp = game.player.maxHp;
   enterFloor(game, options.startFloor ?? 1, { reward: 'boon', family: 'colere' });
@@ -8188,6 +8245,13 @@ function createUI(root, handlers) {
     p.appendChild(el('p', 'lede', `Étage ${game.run.floor} · ${t.kills} démons abattus · ${t.dodges} esquives au dash`));
     p.appendChild(el('p', 'dim', 'Vous reprenez au checkpoint avec le build que vous aviez en battant son Gardien. Votre équipement vous suit toujours.'));
     const col = el('div', 'col');
+    if (game.sandbox) {
+      const b = button('Recommencer l\'arène', 'primary', () => handlers.command({ type: 'respawn', floor: 1 }));
+      b.id = 'restart';
+      col.appendChild(b);
+      p.appendChild(col);
+      return;
+    }
     const retry = handlers.canRetryBoss(game);
     if (retry) {
       const b = button(`Réessayer le Gardien · étage ${game.run.floor}`, 'primary', () => handlers.command({ type: 'retryBoss' }));

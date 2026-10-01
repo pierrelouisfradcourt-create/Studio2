@@ -461,10 +461,18 @@ export function respawn(game, floor) {
   const cps = game.meta.checkpoints;
   const target = cps.includes(floor) ? floor : cps[cps.length - 1];
   const run = game.run;
+  if (game.sandbox) {
+    // Arène d'essai : on recommence l'arène, jamais un checkpoint profond.
+    revive(game);
+    emit(game, 'respawn', { floor: 1 });
+    enterFloor(game, 1, { reward: 'boon' });
+    return true;
+  }
   const snap = game.meta.snapshots?.[target];
   if (snap) {
     run.boons = snap.boons.map((b) => ({ ...b }));
-    run.gold = snap.gold;
+    // Jamais plus d'or qu'on n'en a : sinon mourir après le marchand rembourserait l'achat.
+    run.gold = Math.min(snap.gold, run.gold);
   } else {
     run.boons = [];
     run.gold = Math.floor(run.gold * game.tuning.economy.deathGoldKeep);

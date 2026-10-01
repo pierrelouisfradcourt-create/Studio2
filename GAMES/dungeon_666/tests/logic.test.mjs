@@ -446,7 +446,8 @@ test('checkpoint : vaincre un Gardien fige le build ; mourir ensuite le restaure
   assert.equal(g.mode, 'dead');
   applyCommand(g, { type: 'respawn', floor: 7 });
   assert.deepEqual(g.run.boons.map((b) => b.id), [BOONS[0].id]);
-  assert.equal(g.run.gold, 80);
+  // Or : jamais plus que ce qu'on a (règle anti-exploit, revue de la sim) — min(80, 5).
+  assert.equal(g.run.gold, 5);
   assert.equal(g.run.floor, 7);
 });
 
@@ -484,4 +485,43 @@ test('réessayer le Gardien : retour à l\'entrée de sa salle avec le build d\'
   assert.deepEqual(g.run.boons.map((b) => b.id), [BOONS[0].id]);
   assert.equal(g.run.gold, 42);
   assert.equal(g.player.hp, g.player.maxHp);
+});
+
+test('tampon : un dash à vide ou un Super pas prêt n\'avalent pas la frappe suivante', () => {
+  const g = sandbox();
+  g.player.dashCharges = 0;
+  g.player.dashRecharge = 0;
+  g.player.superCharge = 0;
+  stepGame(g, input({ dashPressed: true }));
+  stepGame(g, input({ superPressed: true }));
+  stepGame(g, input({ attackPressed: true }));
+  steps(g, 3);
+  assert.ok(g.telemetry.attacks >= 1, 'la frappe est partie');
+});
+
+test('Lance interrompue par un dash : la Lance part quand même (recharge jamais perdue)', () => {
+  const g = sandbox();
+  stepGame(g, input({ skillPressed: true, skillAimX: 1, skillAimY: 0 }));
+  assert.equal(g.player.state, 'cast');
+  stepGame(g, input({ moveX: -1, dashPressed: true }));
+  assert.equal(g.player.state, 'dash');
+  assert.equal(g.telemetry.skillCasts, 1);
+  assert.ok(g.projectiles.some((p) => p.owner === 'player'));
+});
+
+test('esquive parfaite : deux projectiles superposés pendant un dash = exactement 2 esquives', () => {
+  const g = sandbox();
+  stepGame(g, input({ moveX: 1, dashPressed: true }));
+  for (let i = 0; i < 4; i++) {
+    damagePlayer(g, 5, { kind: 'test', id: 900, x: g.player.x, y: g.player.y });
+    damagePlayer(g, 5, { kind: 'test', id: 901, x: g.player.x, y: g.player.y });
+  }
+  assert.equal(g.telemetry.dodges, 2);
+});
+
+test('relance de l\'appli au checkpoint : même build que la reprise après une mort', () => {
+  const meta = { checkpoints: [1, 7], bestFloor: 7, snapshots: { 7: { boons: [{ id: BOONS[0].id, rarity: 'rare', level: 1 }], gold: 120 } } };
+  const g = createGame({ seed: 4, startFloor: 7, meta });
+  assert.deepEqual(g.run.boons.map((b) => b.id), [BOONS[0].id]);
+  assert.equal(g.run.gold, 120);
 });
