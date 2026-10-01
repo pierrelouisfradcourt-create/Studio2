@@ -4,6 +4,7 @@
 import { baseStats } from './state.mjs';
 import { boonDef, boonValue } from './boons.mjs';
 import { LEGENDARY_POWERS } from './loot.mjs';
+import { resolveKit, classOf } from './loadout.mjs';
 
 const LEVEL_STEP = 0.5; // chaque niveau supplémentaire d'une bénédiction : +50 % de sa valeur
 
@@ -22,6 +23,14 @@ export function recomputeStats(game) {
   const procs = [];
 
   const t = game.tuning;
+  // Kit équipé (classe, arme portée, compétence, gadget, Super) : l'arme peut avoir changé.
+  resolveKit(game);
+  // PERMANENT : bonus de la classe et améliorations du Sanctuaire (profil).
+  for (const [k, v] of Object.entries(classOf(game).stats ?? {})) addStat(st, k, v);
+  for (const [id, lv] of Object.entries(game.meta.upgrades ?? {})) {
+    const up = t.town?.upgrades?.[id];
+    if (up && lv > 0) addStat(st, up.stat, up.perLevel * lv);
+  }
   st.weaponDamage = run.items.arme?.base?.damage ?? t.weaponBase;
   st.armorHp = run.items.armure ? run.items.armure.base?.hp ?? t.armorBase : 0;
   for (const item of Object.values(run.items)) {

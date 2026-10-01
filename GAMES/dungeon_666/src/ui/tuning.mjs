@@ -1,4 +1,4 @@
-import { onActivate } from './menus.mjs';
+import { onActivate } from './dom.mjs';
 
 // Panneau de réglage du feel, pour le playtest : chaque curseur modifie `game.tuning` en
 // direct (la copie de la partie, jamais les valeurs par défaut). Les réglages sont gardés

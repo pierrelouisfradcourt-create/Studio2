@@ -73,4 +73,5 @@ export const REWARD_COLORS = {
   shop: '#7fe8ff',
   event: '#b98cff',
   boss: '#ff3b3b',
+  town: '#9ff4ff', // portail vers la Ville (après un Gardien)
 };

@@ -4,8 +4,10 @@
 // Paramètres d'URL (playtest) : ?seed=123  ?floor=6  ?god=1  ?autostart=1  ?tune=0
 
 import { createGame, stepGame, applyCommand, DT } from './sim/game.mjs';
-import { canRetryBoss } from './sim/run.mjs';
-import { DEFAULT_TUNING } from './sim/config.mjs';
+import { DEFAULT_TUNING, createTuning } from './sim/config.mjs';
+import { sanitizeProfile, unlock, selectClass, selectSkill, selectGadget, equipFromStash, salvageFromStash, buyUpgrade } from './sim/profile.mjs';
+import { setLab, LAB_AXES } from './sim/lab.mjs';
+import { guardianFor, sectionBounds } from './sim/floors.mjs';
 import { createInput } from './input/input.mjs';
 import { createCamera, fitCamera, updateCamera, applyCamera, worldToScreen, resetCamera } from './render/camera.mjs';
 import { createFx, handleFxEvents, updateFx, clearFx } from './render/fx.mjs';
@@ -26,7 +28,7 @@ const DEGRADE_AFTER = 2; // s de surcharge avant de baisser d'un cran
 const UPGRADE_AFTER = 10; // s de marge avant de remonter d'un cran
 const QUALITY_MIN = 0.6;
 const QUALITY_STEP = 0.2;
-const META_KEY = 'dungeon666.meta.v1';
+const META_KEY = 'dungeon666.meta.v1'; // le PROFIL permanent (schéma 3 ; migre les anciens)
 const SETTINGS_KEY = 'dungeon666.settings.v1';
 const SLOWMO = {
   roomClear: { scale: 0.3, dur: 0.45 },
@@ -48,39 +50,17 @@ function load(key, fallback) {
   }
 }
 
-const META_SCHEMA = 2; // à incrémenter quand la forme des objets sauvegardés change
-const SLOTS = ['arme', 'armure', 'talisman'];
+// Registre du contenu (classes, armes, compétences…) pour les opérations de la Ville.
+const CONTENT = createTuning();
+const DEFAULT_LAB = { dashStrike: 'fin', hitstop: 'global', comboMobility: 'mobile' };
 
-function isItem(it) {
-  return !!it && typeof it === 'object' && SLOTS.includes(it.slot) && Array.isArray(it.affixes) && typeof it.name === 'string';
-}
-
-/**
- * Méta validée champ par champ : une sauvegarde ancienne ou corrompue retombe sur des défauts
- * au lieu de bloquer le jeu (la forme des objets évolue pendant le prototype).
- */
-function sanitizeMeta(m) {
-  const cps = Array.isArray(m.checkpoints) ? m.checkpoints.filter((f) => Number.isInteger(f) && f >= 1 && f <= 666) : [];
-  if (!cps.includes(1)) cps.unshift(1);
-  const sameSchema = m.schema === META_SCHEMA;
-  let items = null;
-  if (sameSchema && m.items && typeof m.items === 'object') {
-    items = {};
-    for (const s of SLOTS) items[s] = isItem(m.items[s]) && m.items[s].slot === s ? m.items[s] : null;
+/** Choix du labo validés (une variante inconnue retombe sur celle de référence). */
+function sanitizeLab(lab) {
+  const out = { ...DEFAULT_LAB };
+  if (lab && typeof lab === 'object') {
+    for (const axis of Object.keys(LAB_AXES)) if (LAB_AXES[axis].options[lab[axis]]) out[axis] = lab[axis];
   }
-  const snapshots = {};
-  if (sameSchema && m.snapshots && typeof m.snapshots === 'object') {
-    for (const [f, snap] of Object.entries(m.snapshots)) {
-      if (snap && Array.isArray(snap.boons) && Number.isFinite(snap.gold)) snapshots[f] = snap;
-    }
-  }
-  return {
-    schema: META_SCHEMA,
-    checkpoints: [...new Set(cps)].sort((a, b) => a - b),
-    bestFloor: Number.isInteger(m.bestFloor) && m.bestFloor >= 1 ? m.bestFloor : 1,
-    items,
-    snapshots,
-  };
+  return out;
 }
 
 function save(key, value) {
@@ -99,15 +79,19 @@ const uiRoot = document.getElementById('ui');
 const safeProbe = document.getElementById('safe');
 
 const app = {
-  screen: 'title', // title | game | tuning
+  screen: 'title', // title | town | game | tuning | lab
   paused: false,
-  meta: sanitizeMeta(load(META_KEY, { checkpoints: [1], bestFloor: 1, items: null, snapshots: {} })),
-  settings: load(SETTINGS_KEY, { sound: true, haptics: true, shake: 1 }),
+  profile: sanitizeProfile(load(META_KEY, {}), CONTENT),
+  townTab: 'portail',
+  townRev: 0, // incrémenté à chaque action de la Ville (reconstruit l'écran)
+  settings: load(SETTINGS_KEY, { sound: true, haptics: true, shake: 1, lab: DEFAULT_LAB }),
   game: null,
   view: { w: 1, h: 1, dpr: 1, safe: { top: 0, right: 0, bottom: 0, left: 0 } },
   quality: 1,
   slowmo: { scale: 1, t: 0, last: -99 },
 };
+
+app.settings.lab = sanitizeLab(app.settings.lab);
 
 const camera = createCamera();
 const fx = createFx();
@@ -146,10 +130,54 @@ async function enterImmersive() {
 
 const ui = createUI(uiRoot, {
   isTouch: () => input.usingTouch || matchMedia('(pointer: coarse)').matches,
-  canRetryBoss: (g) => canRetryBoss(g),
   start: (floor, sandbox = false) => {
     enterImmersive();
     startRun(floor, sandbox);
+  },
+  openTown: () => {
+    enterImmersive();
+    openTown();
+  },
+  townView: () => ({ profile: app.profile, tuning: CONTENT, tab: app.townTab, lab: app.settings.lab, rev: app.townRev, allGuardians: params.get('lab') === '1' }),
+  townActions: {
+    setTab: (tab) => {
+      app.townTab = tab;
+      app.townRev++;
+    },
+    depart: (floor) => {
+      enterImmersive();
+      startRun(floor);
+    },
+    arena: () => {
+      enterImmersive();
+      startRun(1, true);
+    },
+    practice: (kind) => {
+      enterImmersive();
+      startPractice(kind);
+    },
+    selectClass: (id) => townOp(selectClass, id),
+    unlock: (kind, id) => townOp(unlock, kind, id),
+    selectSkill: (id) => townOp(selectSkill, id),
+    selectGadget: (id) => townOp(selectGadget, id),
+    equip: (uid) => townOp(equipFromStash, uid),
+    salvage: (uid) => townOp(salvageFromStash, uid),
+    buyUpgrade: (id) => townOp(buyUpgrade, id),
+    setLab: (axis, choice) => setLabChoice(axis, choice),
+  },
+  openLab: () => {
+    app.screen = 'lab';
+  },
+  closeLab: () => {
+    app.screen = app.game ? 'game' : 'town';
+  },
+  setLab: (axis, choice) => setLabChoice(axis, choice),
+  abandon: () => {
+    app.paused = false;
+    if (app.game) {
+      applyCommand(app.game, { type: 'abandon' });
+      afterCommand();
+    }
   },
   command: (cmd) => {
     if (app.game) {
@@ -162,7 +190,7 @@ const ui = createUI(uiRoot, {
   },
   quit: () => {
     app.paused = false;
-    app.screen = 'title';
+    app.screen = 'town';
     app.game = null;
   },
   setSetting: (k, v) => {
@@ -179,26 +207,25 @@ const ui = createUI(uiRoot, {
     getTuning: () => app.game?.tuning ?? DEFAULT_TUNING,
     defaults: DEFAULT_TUNING,
     onClose: () => {
-      app.screen = app.game ? 'game' : 'title';
+      app.screen = app.game ? 'game' : 'town';
     },
   }),
 });
 
 // ------------------------------------------------------------------ partie
 
-function startRun(floor, sandbox = false) {
+function startRun(floor, sandbox = false, practice = false) {
   const seed = params.has('seed') ? Number(params.get('seed')) : (Math.random() * 2 ** 31) >>> 0;
-  const startFloor = params.has('floor') ? Number(params.get('floor')) : floor;
-  const meta = { checkpoints: app.meta.checkpoints, bestFloor: app.meta.bestFloor, snapshots: app.meta.snapshots ?? {} };
+  const startFloor = params.has('floor') && !practice ? Number(params.get('floor')) : floor;
   const tune = params.get('tune') === '0' ? {} : loadTuningOverrides();
-  const opts = { seed, startFloor: sandbox ? 1 : startFloor, meta, godMode: params.get('god') === '1', items: app.meta.items ?? undefined, sandbox };
+  const opts = { seed, startFloor: sandbox ? 1 : startFloor, meta: app.profile, godMode: params.get('god') === '1', sandbox, practice, tuning: { lab: { ...app.settings.lab } } };
   try {
     app.game = createGame(opts);
   } catch {
-    // Équipement sauvegardé illisible : on repart avec l'équipement de départ plutôt que de bloquer.
-    app.meta.items = null;
-    save(META_KEY, app.meta);
-    app.game = createGame({ ...opts, items: undefined });
+    // Profil illisible (forme d'objet ancienne…) : on repart d'un profil neuf plutôt que de bloquer.
+    app.profile = sanitizeProfile({}, CONTENT);
+    save(META_KEY, app.profile);
+    app.game = createGame({ ...opts, meta: app.profile });
   }
   applyOverrides(app.game.tuning, tune);
   // Réglages partageables par lien : ?t.player.speed=320&t.dash.distance=190
@@ -215,16 +242,52 @@ function startRun(floor, sandbox = false) {
   requestWakeLock();
 }
 
+/** Recopie le PROFIL de la partie (permanent) et le sauvegarde. */
 function persistMeta() {
   const g = app.game;
-  if (!g) return;
-  app.meta = { schema: META_SCHEMA, checkpoints: g.meta.checkpoints.slice(), bestFloor: g.meta.bestFloor, items: g.run.items, snapshots: g.meta.snapshots };
-  save(META_KEY, app.meta);
+  if (!g || g.sandbox || g.practice) return;
+  app.profile = structuredClone(g.meta);
+  save(META_KEY, app.profile);
 }
 
 function afterCommand() {
   flushEvents();
   persistMeta();
+  // Fin du run (portail du checkpoint, écran de mort, abandon) : retour en Ville.
+  if (app.game?.mode === 'town') {
+    app.game = null;
+    openTown();
+  }
+}
+
+function openTown() {
+  app.screen = 'town';
+  app.paused = false;
+  app.game = null;
+  app.townRev++;
+}
+
+/** Opération de la Ville sur le profil (pure, profile.mjs), puis sauvegarde. */
+function townOp(fn, ...args) {
+  const res = fn(app.profile, CONTENT, ...args);
+  if (res?.ok) save(META_KEY, app.profile);
+  app.townRev++;
+  return res;
+}
+
+function setLabChoice(axis, choice) {
+  if (!LAB_AXES[axis]?.options[choice]) return;
+  app.settings.lab = { ...app.settings.lab, [axis]: choice };
+  save(SETTINGS_KEY, app.settings);
+  if (app.game) setLab(app.game.tuning, axis, choice);
+  app.townRev++;
+}
+
+/** Entraînement : le Gardien choisi, à l'étage de sa première section, sans récompense ni risque. */
+function startPractice(kind) {
+  let section = 1;
+  while (section <= CONTENT.floors.total / CONTENT.floors.sectionLength && guardianFor(CONTENT, section) !== kind) section++;
+  startRun(sectionBounds(CONTENT, section).guardian, false, true);
 }
 
 function flushEvents() {
@@ -240,7 +303,7 @@ function flushEvents() {
     if (ev.type === 'roomClear') setSlowmo(ev.boss ? SLOWMO.bossKill : SLOWMO.roomClear);
     else if (ev.type === 'playerDeath') setSlowmo(SLOWMO.playerDeath);
     else if (ev.type === 'dodge') setSlowmo(SLOWMO.dodge);
-    if (ev.type === 'checkpoint' || ev.type === 'equip' || ev.type === 'gameOver' || ev.type === 'floorEnter') persistMeta();
+    if (ev.type === 'checkpoint' || ev.type === 'equip' || ev.type === 'stash' || ev.type === 'gameOver' || ev.type === 'floorEnter' || ev.type === 'returnTown') persistMeta();
   }
   g.events.length = 0;
 }
@@ -414,7 +477,7 @@ function render() {
   ctx.fillStyle = '#07040a';
   ctx.fillRect(0, 0, w, h);
   const g = app.game;
-  if (!g || app.screen === 'title') {
+  if (!g || app.screen === 'title' || app.screen === 'town') {
     drawTitleBackdrop(w, h);
     return;
   }

@@ -110,15 +110,18 @@ export function refillSandboxWaves(game) {
 }
 
 function planWaves(game, info, elite) {
-  const scale = floorScaling(game.tuning, info.floor);
+  const t = game.tuning;
+  const scale = floorScaling(t, info.floor);
   const idx = info.indexInSection;
-  // Premier étage d'une section : plus court ; la densité monte vers le boss.
-  const waveCount = idx <= 1 ? 2 : 3;
-  const budget = (5 + 1.4 * idx) * scale.density;
-  const pool = ROSTER.filter((r) => r.minIndex <= Math.max(idx, info.section > 1 ? 3 : 1));
+  // Plan de section : étages courts au début, assauts avant le Gardien (tuning.section.waves).
+  const waveCount = t.section.waves[Math.min(idx, t.section.waves.length) - 1] ?? 2;
+  const enc = t.encounter;
+  const budget = (enc.baseBudget + enc.perIndex * idx) * scale.density;
+  // Les archétypes entrent progressivement dans la 1re section ; ensuite tous sont là.
+  const pool = ROSTER.filter((r) => r.minIndex <= (info.section > 1 ? t.floors.sectionLength : idx) && t.enemies[r.kind]);
   const waves = [];
   for (let w = 0; w < waveCount; w++) {
-    let b = budget * (w === waveCount - 1 ? 1.2 : 1);
+    let b = budget * (w === waveCount - 1 ? enc.lastWaveMult : 1);
     const wave = [];
     let guard = 0;
     while (b >= 1 && guard++ < 40) {
@@ -133,7 +136,7 @@ function planWaves(game, info, elite) {
     // Salle d'élite : un champion (modificateur façon Diablo) dans la dernière vague.
     const kinds = ['brute', 'charger', 'imp', 'archer'];
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, kinds), elite: pick(game.rng.gen, ELITE_MODS) });
-  } else if (info.floor > 2 && rand(game.rng.gen) < 0.15) {
+  } else if (info.floor > 2 && rand(game.rng.gen) < enc.strayEliteChance) {
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, ['imp', 'archer']), elite: pick(game.rng.gen, ELITE_MODS) });
   }
   return waves;
@@ -152,9 +155,10 @@ export function launchNextWave(game) {
   return true;
 }
 
-export function spawnBoss(game) {
+/** Gardien de la section (modèle tiré de la rotation, floors.guardianFor). */
+export function spawnBoss(game, kind = 'gardien') {
   const room = game.room;
-  createEnemy(game, 'gardien', room.w / 2, room.h * 0.35, { boss: true, spawnT: 1.2 });
+  createEnemy(game, kind, room.w / 2, room.h * 0.35, { boss: true, spawnT: 1.2 });
 }
 
 export function updateSpawns(game, dt) {

@@ -266,6 +266,11 @@ function drawRewardIcon(ctx, reward, x, y, r, color, time) {
       ctx.lineTo(r * 0.6, -r * 1.4);
       ctx.lineTo(r * 0.2, -r * 0.6);
       break;
+    case 'town':
+      // Portail : anneau (téléportation vers la Ville).
+      ctx.arc(0, 0, r, 0, TAU);
+      ctx.arc(0, 0, r * 0.55, 0, TAU, true);
+      break;
     default:
       ctx.rect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6);
   }
@@ -607,7 +612,7 @@ function drawEnemy(ctx, e, game, time) {
     // Touché : tremblement le long de l'axe du coup pendant le gel (principe de Sakurai),
     // puis écrasement dans l'axe (aire conservée).
     const a = Math.atan2(e.hitDirY, e.hitDirX);
-    const jitter = game.hitstop > 0 ? (Math.floor(time * 60) % 2 === 0 ? 2 : -2) : 0;
+    const jitter = game.hitstop > 0 || e.freeze > 0 ? (Math.floor(time * 60) % 2 === 0 ? 2 : -2) : 0;
     ctx.translate(Math.cos(a) * jitter, Math.sin(a) * jitter);
     if (!e.boss) {
       ctx.rotate(a);

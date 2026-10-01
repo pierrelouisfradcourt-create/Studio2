@@ -51,7 +51,10 @@ function canAttack(game) {
   // Le coup suivant n'annule qu'une PARTIE de la récupération (le finisher engage) ; seul le
   // dash annule tout, tout de suite.
   const a = p.attack;
-  const from = a.strike ? game.tuning.comboCancelFrom.strike : game.tuning.comboCancelFrom.hits[a.index] ?? 1;
+  const t = game.tuning;
+  // Part de récupération propre au coup (armes) ou celle de la Lame ; D9 l'allonge ou l'abrège.
+  const base = a.strike ? t.comboCancelFrom.strike : a.def.cancelFrom ?? t.comboCancelFrom.hits[a.index] ?? 1;
+  const from = Math.min(1, base * (t.player.cancelMult ?? 1));
   return a.t >= a.dur.recovery * from;
 }
 
@@ -110,6 +113,11 @@ export function readInput(game, input) {
 export function updatePlayer(game, dt) {
   const p = game.player;
   const t = game.tuning;
+  if (p.freeze > 0) {
+    // Gel d'impact LOCAL (D8) : le héros se fige comme en mode global, mais seul.
+    p.freeze = Math.max(0, p.freeze - dt);
+    return;
+  }
   p.stateTime += dt;
   if (p.state === 'dead') {
     p.vx *= 0.85;
@@ -411,7 +419,7 @@ function dashNova(game, pr) {
 function updateDash(game, dt) {
   const p = game.player;
   const t = game.tuning;
-  const speed = t.dash.distance / t.dash.duration;
+  const speed = (t.dash.distance * (p.stats.dashDistanceMult ?? 1)) / t.dash.duration;
   p.vx = p.dashDirX * speed;
   p.vy = p.dashDirY * speed;
   p.dashT -= dt;

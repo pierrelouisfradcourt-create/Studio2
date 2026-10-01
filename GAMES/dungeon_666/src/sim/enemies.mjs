@@ -12,9 +12,9 @@ import { damageEnemy, damagePlayer, spawnHazard } from './combat.mjs';
 import { spawnProjectile } from './projectiles.mjs';
 import { floorScaling } from './floors.mjs';
 import { updateBoss } from './boss.mjs';
-import { navDirection } from './nav.mjs';
+import { MELEE_KINDS, SHOOTER_KINDS, speedOf, windupOf, activeAttackers, activeShooters, setState, toPlayer, steer, trackUntilLock } from './ai_common.mjs';
+import { EXTRA_FOES } from './foes.mjs';
 
-const MELEE_KINDS = new Set(['imp', 'brute', 'charger']);
 const BURN_TICK = 0.25;
 
 export function createEnemy(game, kind, x, y, opts = {}) {
@@ -65,6 +65,7 @@ export function createEnemy(game, kind, x, y, opts = {}) {
     atkId: 0,
     summoned: !!opts.summoned,
     lastHitAt: -1,
+    freeze: 0, // gel d'impact LOCAL restant (D8) : l'ennemi touché se fige, le reste continue
     // État propre au boss (patterns), ignoré par les autres.
     phase: 1,
     pattern: null,
@@ -76,41 +77,21 @@ export function createEnemy(game, kind, x, y, opts = {}) {
   return e;
 }
 
-function speedOf(game, e, def) {
-  let s = def.speed;
-  if (e.eliteMod === 'rapide') s *= game.tuning.elite.mods.rapide.speedMult;
-  if (e.chill > 0) s *= e.chillMult;
-  return s;
-}
 
-export function windupOf(game, e, base) {
-  return e.eliteMod === 'rapide' ? base * game.tuning.elite.mods.rapide.windupMult : base;
-}
 
-function activeAttackers(game) {
-  let n = 0;
-  for (const o of game.enemies) {
-    if (!o.dead && MELEE_KINDS.has(o.kind) && (o.state === 'windup' || o.state === 'strike' || o.state === 'charge')) n++;
-  }
-  return n;
-}
 
-function activeShooters(game) {
-  let n = 0;
-  for (const o of game.enemies) if (!o.dead && o.kind === 'archer' && o.state === 'windup') n++;
-  return n;
-}
 
-function setState(e, s) {
-  e.state = s;
-  e.stateTime = 0;
-}
 
 export function updateEnemies(game, dt) {
   const t = game.tuning;
   const p = game.player;
   for (const e of game.enemies) {
     if (e.dead) continue;
+    if (e.freeze > 0) {
+      // Gel LOCAL : figé dans la pose d'impact ; son recul part au dégel (élan conservé).
+      e.freeze = Math.max(0, e.freeze - dt);
+      continue;
+    }
     e.stateTime += dt;
     e.flash = Math.max(0, e.flash - dt);
     if (e.spawnT > 0) {
@@ -225,39 +206,8 @@ function separate(game) {
   }
 }
 
-function toPlayer(game, e) {
-  const p = game.player;
-  const dx = p.x - e.x;
-  const dy = p.y - e.y;
-  const d = Math.max(1e-6, Math.sqrt(dx * dx + dy * dy));
-  return { dx: dx / d, dy: dy / d, d };
-}
 
-const navOut = { x: 0, y: 0 };
 
-/** Se dirige vers (x, y) ; sans ligne de vue, suit le champ de navigation (contourne). */
-function steer(game, e, x, y, speed) {
-  const dx = x - e.x;
-  const dy = y - e.y;
-  const d = Math.sqrt(dx * dx + dy * dy);
-  if (d < 4) return;
-  if (!lineOfSight(game.room, e.x, e.y, x, y) && navDirection(game, e.x, e.y, navOut)) {
-    e.vx = navOut.x * speed;
-    e.vy = navOut.y * speed;
-    return;
-  }
-  e.vx = (dx / d) * speed;
-  e.vy = (dy / d) * speed;
-}
-
-/** Fait suivre la direction visée jusqu'au verrouillage, puis la fige (équité). */
-function trackUntilLock(game, e, lockFraction, windup) {
-  if (e.stateTime < windup * lockFraction) {
-    const tp = toPlayer(game, e);
-    e.dirX = tp.dx;
-    e.dirY = tp.dy;
-  }
-}
 
 const AI = {
   imp(game, e, def, dt) {
@@ -490,6 +440,15 @@ const AI = {
     }
   },
 };
+
+// Archétypes ajoutés (un fichier chacun : src/sim/foe_<archétype>.mjs) : branchés dans la même table.
+for (const f of EXTRA_FOES) {
+  AI[f.kind] = f.ai;
+  if (f.melee) MELEE_KINDS.add(f.kind);
+  if (f.shooter) SHOOTER_KINDS.add(f.kind);
+}
+
+export { windupOf };
 
 export function aliveEnemies(game) {
   let n = 0;

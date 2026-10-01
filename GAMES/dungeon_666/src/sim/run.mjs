@@ -1,11 +1,15 @@
 // Le run : descente étage par étage, portes à récompense, choix (bénédiction, butin,
-// marchand, autel), checkpoints de boss, mort et reprise.
+// marchand, autel), Gardiens, checkpoints et téléportation, mort et reprise.
 //
-// Persistance (recommandation des deux concepteurs ; décision finale : Pierre) :
-//   - un Gardien vaincu prend un INSTANTANÉ du build (bénédictions + or) pour son checkpoint ;
-//   - à la mort, on reprend au checkpoint choisi avec SON instantané : on ne perd que la
-//     section en cours. L'équipement, lui, n'est jamais perdu (progression façon Diablo).
-//   - sans instantané (étage 1) : bénédictions remises à zéro, moitié de l'or.
+// PERMANENT vs TEMPORAIRE (demande de Pierre, V2) :
+//   - TEMPORAIRE (game.run) : bénédictions — bonus, pouvoirs, améliorations, synergies. La mort
+//     les remet TOUJOURS à zéro : aucun instantané de build n'est figé au Gardien.
+//   - PERMANENT (game.meta = profil) : classe, armes, équipement (tout objet trouvé est équipé
+//     ou rangé au coffre, jamais perdu), compétences, déblocages de la Ville, Âmes, checkpoints.
+//   - La bourse (or) suit le héros, mais Charon en prélève une part à chaque mort.
+//   - Mort : retour au DERNIER checkpoint (ou en Ville), le temporaire repart de zéro.
+//   - Gardien vaincu (tous les 18 étages) : checkpoint + point de téléportation ; deux portes,
+//     « section suivante » (le run continue, build conservé) ou « Ville » (fin du run).
 
 import { rand, pick, weightedPick } from '../core/rng.mjs';
 import { emit } from './state.mjs';
@@ -15,6 +19,8 @@ import { spawnPickup, healPlayer, forceHitstop } from './combat.mjs';
 import { FAMILIES, rollBoonOffer, addBoon, boonDef, boonText, randomFamily, RARITIES } from './boons.mjs';
 import { generateItem, rollRarity, salvageValue, affixText, baseText, LEGENDARY_POWERS, ITEM_RARITIES, randomShopItem, priceOf, SLOT_NAMES } from './loot.mjs';
 import { recomputeStats } from './stats.mjs';
+import { stashLoot } from './profile.mjs';
+import { guardianFor } from './floors.mjs';
 
 export const DOOR_WEIGHTS = [
   { reward: 'boon', weight: 40 },
@@ -33,6 +39,7 @@ export const REWARD_LABELS = {
   shop: 'Marchand',
   event: 'Autel',
   boss: 'Gardien',
+  town: 'Ville',
 };
 
 export const EVENTS = [
@@ -75,10 +82,16 @@ export function createRun(startFloor) {
     floor: startFloor,
     gold: 0,
     boons: [],
-    items: { arme: null, armure: null, talisman: null },
+    items: { arme: null, armure: null, talisman: null }, // = équipement du PROFIL (game.mjs)
     roomsThisRun: 0,
     startedAt: 0,
+    deathRecap: null, // ce que la dernière mort a pris (bénédictions, or) : écran de mort
   };
+}
+
+/** La bourse du run est celle du profil : on la recopie à chaque moment clé. */
+export function syncPurse(game) {
+  game.meta.gold = game.run.gold;
 }
 
 /** Plan de la salle d'un étage à partir de la récompense annoncée sur la porte choisie. */
@@ -97,6 +110,7 @@ export function enterFloor(game, floor, door) {
   const plan = planFor(info, door);
   game.run.floor = info.floor;
   game.meta.bestFloor = Math.max(game.meta.bestFloor, info.floor);
+  syncPurse(game);
   game.enemies.length = 0;
   game.projectiles.length = 0;
   game.hazards.length = 0;
@@ -115,17 +129,15 @@ export function enterFloor(game, floor, door) {
   p.state = 'free';
   p.facing = -Math.PI / 2;
   p.buffer.action = null;
-  if (info.indexInSection === 1) {
+  // Gadget : charges rendues toutes les `gadgetRefillEvery` étages de la section.
+  if ((info.indexInSection - 1) % (t.section.gadgetRefillEvery ?? t.floors.sectionLength) === 0) {
     p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
   }
   game.run.roomsThisRun++;
   emit(game, 'floorEnter', { floor: info.floor, circle: info.circle, circleName: info.circleName, section: info.section, indexInSection: info.indexInSection, kind: plan.kind, reward: plan.reward, isBoss: info.isBoss });
 
   if (plan.kind === 'boss') {
-    // Instantané d'entrée : mourir face au Gardien permet de le réessayer aussitôt,
-    // sans rejouer toute la section (sessions courtes).
-    game.run.bossEntry = { floor: info.floor, boons: game.run.boons.map((b) => ({ ...b })), gold: game.run.gold };
-    spawnBoss(game);
+    spawnBoss(game, guardianFor(t, info.section));
   } else if (plan.kind === 'combat' || plan.kind === 'elite') {
     launchNextWave(game);
   } else {
@@ -153,14 +165,32 @@ export function onRoomClear(game) {
   const { x: cx, y: cy } = rewardSpot(room);
   const plan = room.plan;
 
-  if (room.kind === 'boss') {
-    const cp = checkpointAfterBoss(t, game.run.floor);
-    if (!game.meta.checkpoints.includes(cp)) game.meta.checkpoints.push(cp);
-    game.meta.checkpoints.sort((a, b) => a - b);
-    game.meta.snapshots = game.meta.snapshots ?? {};
-    game.meta.snapshots[cp] = { boons: game.run.boons.map((b) => ({ ...b })), gold: game.run.gold };
+  if (room.kind === 'boss' && game.practice) {
+    // Entraînement : aucune récompense ; une seule porte, retour en Ville.
     healPlayer(game, p.maxHp * 0.5, true);
-    emit(game, 'checkpoint', { floor: cp });
+    emit(game, 'checkpoint', { floor: game.run.floor, practice: true });
+    makeDoors(game, [{ reward: 'town' }]);
+    emit(game, 'doorsOpen', { count: 1 });
+    return;
+  }
+  if (room.kind === 'boss') {
+    // Gardien vaincu : checkpoint + point de téléportation (PERMANENTS), Âmes, soin.
+    // Le build TEMPORAIRE n'est PAS figé : il ne survivra pas à la prochaine mort.
+    const cp = checkpointAfterBoss(t, game.run.floor);
+    const meta = game.meta;
+    if (!meta.checkpoints.includes(cp)) meta.checkpoints.push(cp);
+    meta.checkpoints.sort((a, b) => a - b);
+    const kind = guardianFor(t, game.info.section);
+    meta.guardians[kind] = (meta.guardians[kind] ?? 0) + 1;
+    meta.stats.guardianKills++;
+    const souls = t.progression.souls.guardian + t.progression.souls.guardianPerSection * (game.info.section - 1);
+    if (!game.sandbox) {
+      meta.souls += souls;
+      game.telemetry.soulsEarned += souls;
+    }
+    healPlayer(game, p.maxHp * 0.5, true);
+    syncPurse(game);
+    emit(game, 'checkpoint', { floor: cp, guardian: kind, souls });
     if (game.info.isFinal) {
       game.mode = 'victory';
       emit(game, 'victory', { floor: game.run.floor });
@@ -195,21 +225,30 @@ export function onRoomClear(game) {
   prepareDoors(game, !room.interact);
 }
 
+/**
+ * Portes de sortie, composées par le PLAN DE SECTION (tuning.section) : Gardien au 18e étage,
+ * portes imposées à mi-section et dans l'antichambre, épreuve d'élite garantie à certains
+ * index, sinon deux récompenses tirées au hasard. Après un Gardien : « section suivante » ou
+ * « Ville » (téléportation, fin du run).
+ */
 function prepareDoors(game, openNow) {
-  const next = floorInfo(game.tuning, game.run.floor + 1);
+  const t = game.tuning;
+  const next = floorInfo(t, game.run.floor + 1);
+  const fixed = t.section.fixedDoors[next.indexInSection];
   let rewards;
   if (next.isBoss) {
     rewards = [{ reward: 'boss' }];
-  } else if (next.indexInSection === 5) {
-    // Antichambre du boss : préparation (marchand ou autel).
-    rewards = [{ reward: 'shop' }, { reward: 'event' }];
+  } else if (fixed) {
+    rewards = fixed.map((reward) => ({ reward }));
   } else {
     const first = weightedPick(game.rng.gen, DOOR_WEIGHTS, (d) => d.weight).reward;
     let second = first;
     let guard = 0;
     while (second === first && guard++ < 20) second = weightedPick(game.rng.gen, DOOR_WEIGHTS, (d) => d.weight).reward;
     rewards = [{ reward: first }, { reward: second }];
+    if (t.section.eliteAt.includes(next.indexInSection) && first !== 'elite' && second !== 'elite') rewards[1] = { reward: 'elite' };
   }
+  if (game.room.kind === 'boss' && !game.sandbox) rewards = [rewards[0], { reward: 'town' }];
   for (const r of rewards) if (r.reward === 'boon') r.family = randomFamily(game);
   makeDoors(game, rewards);
   for (const d of game.room.doors) d.open = openNow;
@@ -234,7 +273,7 @@ export function openInteract(game) {
     const offers = it.offers ?? (it.offers = rollBoonOffer(game, it.family));
     choice = { kind: 'boon', family: it.family, familyName: FAMILIES[it.family].name, color: FAMILIES[it.family].color, options: offers.map((o) => describeBoon(o)) };
   } else if (it.kind === 'loot') {
-    choice = { kind: 'loot', item: describeItem(it.item), equipped: describeItem(run.items[it.item.slot]), salvage: salvageValue(it.item) };
+    choice = { kind: 'loot', item: describeItem(it.item), equipped: describeItem(run.items[it.item.slot]), salvage: salvageValue(it.item), wieldable: canWield(game, it.item) };
   } else if (it.kind === 'shop') {
     choice = { kind: 'shop', gold: run.gold, offers: it.offers.map((o) => ({ ...o, item: o.item ? describeItem(o.item) : null, equipped: o.item ? describeItem(run.items[o.item.slot]) : null })) };
   } else if (it.kind === 'event') {
@@ -268,6 +307,13 @@ export function describeBoon(o) {
   };
 }
 
+/** Une arme ne se manie que par sa classe (le coffre la garde pour plus tard). */
+export function canWield(game, item) {
+  if (item.slot !== 'arme') return true;
+  const c = game.tuning.classes[game.kit?.classId] ?? game.tuning.classes[Object.keys(game.tuning.classes)[0]];
+  return c.weapons.includes(item.weaponType ?? 'lame');
+}
+
 export function describeItem(item) {
   if (!item) return null;
   const rar = ITEM_RARITIES.find((r) => r.id === item.rarity);
@@ -276,6 +322,7 @@ export function describeItem(item) {
     id: item.id,
     slot: item.slot,
     slotName: SLOT_NAMES[item.slot],
+    weaponType: item.weaponType ?? null,
     name: item.name,
     rarity: item.rarity,
     rarityName: rar.name,
@@ -302,7 +349,14 @@ function rollShop(game) {
 
 export function applyCommand(game, cmd) {
   if (cmd.type === 'respawn') return respawn(game, cmd.floor);
-  if (cmd.type === 'retryBoss') return retryBoss(game);
+  if (cmd.type === 'returnToTown') return returnToTown(game);
+  if (cmd.type === 'abandon') {
+    // Abandonner = mourir : Charon prend sa part, le temporaire est perdu, retour en Ville.
+    if (game.mode !== 'play' && game.mode !== 'choice') return false;
+    onDeath(game);
+    game.mode = 'play';
+    return returnToTown(game);
+  }
   if (game.mode !== 'choice' || !game.choice) return false;
   const it = game.room.interact;
   const ch = game.choice;
@@ -318,9 +372,18 @@ export function applyCommand(game, cmd) {
   }
   if (ch.kind === 'loot') {
     if (cmd.type === 'equip') {
+      if (!canWield(game, it.item)) return false;
+      // L'objet porté n'est jamais perdu : il part au coffre (Ville).
+      const old = run.items[it.item.slot];
+      if (old) stashLoot(game.meta, old);
       run.items[it.item.slot] = it.item;
       recomputeStats(game);
       emit(game, 'equip', { slot: it.item.slot, rarity: it.item.rarity });
+      return closeChoice(game);
+    }
+    if (cmd.type === 'stash') {
+      stashLoot(game.meta, it.item);
+      emit(game, 'stash', { slot: it.item.slot, rarity: it.item.rarity });
       return closeChoice(game);
     }
     if (cmd.type === 'salvage') {
@@ -339,7 +402,14 @@ export function applyCommand(game, cmd) {
     offer.sold = true;
     if (offer.kind === 'heal') healPlayer(game, p.maxHp * 0.4, true);
     if (offer.kind === 'boon') addBoon(run, offer.boon);
-    if (offer.kind === 'item') run.items[offer.item.slot] = offer.item;
+    if (offer.kind === 'item') {
+      if (canWield(game, offer.item)) {
+        const old = run.items[offer.item.slot];
+        if (old) stashLoot(game.meta, old);
+        run.items[offer.item.slot] = offer.item;
+      } else stashLoot(game.meta, offer.item);
+    }
+    syncPurse(game);
     recomputeStats(game);
     emit(game, 'buy', { kind: offer.kind });
     openShopRefresh(game);
@@ -421,11 +491,38 @@ function closeChoice(game) {
   return true;
 }
 
-// ---------------------------------------------------------------- mort et reprise
+// ---------------------------------------------------------------- mort, reprise, Ville
 
-/** Vrai si la mort a eu lieu face à un Gardien dont on a l'instantané d'entrée. */
-export function canRetryBoss(game) {
-  return game.mode === 'dead' && !!game.run.bossEntry && game.info?.isBoss && game.run.bossEntry.floor === game.run.floor;
+/**
+ * Mort du héros (appelé une fois, quand l'écran de mort s'ouvre) : Charon prélève sa part de
+ * la bourse, le récapitulatif dit ce qui est PERDU (temporaire) et ce qui est GARDÉ (permanent).
+ */
+export function onDeath(game) {
+  const run = game.run;
+  const meta = game.meta;
+  const keep = Math.min(1, game.tuning.economy.deathGoldKeep + (game.player.stats.deathGoldKeepBonus ?? 0));
+  const before = run.gold;
+  if (!game.sandbox && !game.practice) {
+    run.gold = Math.floor(run.gold * keep);
+    meta.stats.deaths++;
+  }
+  run.deathRecap = {
+    floor: run.floor,
+    boonsLost: run.boons.length,
+    boonNames: run.boons.map((b) => boonDef(b.id)?.name ?? b.id),
+    goldLost: before - run.gold,
+    gold: run.gold,
+    souls: meta.souls,
+    soulsEarned: game.telemetry.soulsEarned,
+    checkpoint: lastCheckpoint(game),
+  };
+  syncPurse(game);
+}
+
+/** Dernier checkpoint débloqué (point de reprise par défaut). */
+export function lastCheckpoint(game) {
+  const cps = game.meta.checkpoints;
+  return cps[cps.length - 1] ?? 1;
 }
 
 function revive(game) {
@@ -438,28 +535,22 @@ function revive(game) {
   p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
   p.skillCd = 0;
   p.iframes = 1.0;
+  p.freeze = 0;
   p.state = 'free';
   game.mode = 'play';
   game.choice = null;
   game.deathT = 0;
 }
 
-/** Réessayer le Gardien : retour à l'entrée de sa salle avec le build qu'on avait en y entrant. */
-export function retryBoss(game) {
-  if (!canRetryBoss(game)) return false;
-  const entry = game.run.bossEntry;
-  game.run.boons = entry.boons.map((b) => ({ ...b }));
-  game.run.gold = entry.gold;
-  revive(game);
-  emit(game, 'respawn', { floor: entry.floor, boss: true });
-  enterFloor(game, entry.floor, null);
-  return true;
-}
-
+/**
+ * Reprise après la mort : au checkpoint demandé (s'il est débloqué), sinon au DERNIER.
+ * Le TEMPORAIRE repart de zéro (bénédictions vidées) ; le PERMANENT reste (équipement, classe,
+ * kit, Âmes, déblocages). La bourse a déjà payé Charon (onDeath).
+ */
 export function respawn(game, floor) {
   if (game.mode !== 'dead') return false;
   const cps = game.meta.checkpoints;
-  const target = cps.includes(floor) ? floor : cps[cps.length - 1];
+  const target = cps.includes(floor) ? floor : lastCheckpoint(game);
   const run = game.run;
   if (game.sandbox) {
     // Arène d'essai : on recommence l'arène, jamais un checkpoint profond.
@@ -468,17 +559,30 @@ export function respawn(game, floor) {
     enterFloor(game, 1, { reward: 'boon' });
     return true;
   }
-  const snap = game.meta.snapshots?.[target];
-  if (snap) {
-    run.boons = snap.boons.map((b) => ({ ...b }));
-    // Jamais plus d'or qu'on n'en a : sinon mourir après le marchand rembourserait l'achat.
-    run.gold = Math.min(snap.gold, run.gold);
-  } else {
+  if (game.practice) {
+    // Entraînement : le même Gardien, aussitôt.
     run.boons = [];
-    run.gold = Math.floor(run.gold * game.tuning.economy.deathGoldKeep);
+    revive(game);
+    emit(game, 'respawn', { floor: run.floor });
+    enterFloor(game, run.floor, null);
+    return true;
   }
+  run.boons = [];
   revive(game);
-  emit(game, 'respawn', { floor: target });
+  emit(game, 'respawn', { floor: target, boonsLost: run.deathRecap?.boonsLost ?? 0 });
   enterFloor(game, target, { reward: 'boon', family: randomFamily(game) });
+  return true;
+}
+
+/**
+ * Fin du run et retour en Ville : depuis l'écran de mort, ou par le portail qui suit un
+ * Gardien. Le temporaire est abandonné avec la partie ; main sauvegarde le profil.
+ */
+export function returnToTown(game) {
+  if (game.mode !== 'dead' && game.mode !== 'play') return false;
+  syncPurse(game);
+  game.mode = 'town';
+  game.choice = null;
+  emit(game, 'returnTown', { floor: game.run.floor, checkpoint: lastCheckpoint(game) });
   return true;
 }

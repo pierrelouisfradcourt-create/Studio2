@@ -139,6 +139,9 @@ const ROUTES = table({
 export const SILENT_EVENTS = Object.freeze([
   'spawn', 'attackStart', 'castStart', 'cancel', 'dashEnd', 'projectileEnd', 'hazard', 'choiceClose', 'wave',
   'immune', // boss en transition de phase : retour visuel seulement
+  'souls', // Âmes d'un élite : le son de mort de l'élite suffit
+  'stash', // objet rangé au coffre : le clic du menu suffit
+  'returnTown', // fin du run : la Ville (DOM) prend le relais
 ]);
 
 /** Vibration (ms) demandée par une entrée annotée ; 0 = aucune. */

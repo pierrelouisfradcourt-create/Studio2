@@ -794,7 +794,7 @@ function applyUnstick(game, mem, intent) {
     return;
   }
   const wants = intent.mx * intent.mx + intent.my * intent.my > MOVE_INTENT_MIN2 && !intent.attack && p.state === 'free';
-  if (!wants || game.hitstop > 0) {
+  if (!wants || game.hitstop > 0 || p.freeze > 0) {
     mem.stuckX = p.x;
     mem.stuckY = p.y;
     mem.stuckT = now;

@@ -2,90 +2,10 @@
 // mort et reprise au checkpoint, pause et réglages, panneau de tuning du feel.
 // AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.
 
-const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Lance', passive: 'Passif', super: 'Super' };
-const ARM_MS = 350; // un panneau ne répond qu'après ce délai : jamais de choix « à l'aveugle »
-// Panneaux de choix (bénédiction, butin, autel, marchand) : plus long, et chaque tap reçu pendant
-// l'armement le relance. Un dash martelé à 3-4 Hz qui ouvre le panneau ne choisit donc rien.
-const ARM_CHOICE_MS = 600;
-const REFIRE_MS = 300; // anti double déclenchement (pointerup puis click)
+import { el, button, onActivate, itemCard, arming, armed, ARM_MS, ARM_CHOICE_MS } from './dom.mjs';
+import { buildTown, buildLabControls } from './town.mjs';
 
-// Instant d'ouverture du panneau courant (armement), partagé par tous ses boutons.
-const arming = { shownAt: 0, noDelay: false, ms: ARM_MS };
-
-function armed() {
-  return arming.noDelay || performance.now() - arming.shownAt >= arming.ms;
-}
-
-function el(tag, cls, text) {
-  const n = document.createElement(tag);
-  if (cls) n.className = cls;
-  if (text !== undefined) n.textContent = text;
-  return n;
-}
-
-/**
- * Activation robuste au doigt : au POINTERUP du même doigt que le pointerdown, à l'intérieur
- * de l'élément. Chromium/Android n'émettent pas `click` pour un 2e doigt (le pouce gauche
- * resté sur le joystick) ; `click` ne sert plus qu'au clavier (detail === 0).
- */
-export function onActivate(node, fn) {
-  let pid = null;
-  let last = 0;
-  const fire = () => {
-    const now = performance.now();
-    if (node.disabled || now - last < REFIRE_MS) return;
-    last = now;
-    fn();
-  };
-  node.addEventListener('pointerdown', (ev) => {
-    pid = armed() ? ev.pointerId : null;
-  });
-  node.addEventListener('pointerup', (ev) => {
-    if (pid === null || pid !== ev.pointerId) return;
-    pid = null;
-    const r = node.getBoundingClientRect();
-    if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return;
-    ev.preventDefault();
-    fire();
-  });
-  node.addEventListener('pointercancel', () => {
-    pid = null;
-  });
-  node.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    if (ev.detail === 0 && armed()) fire();
-  });
-}
-
-function button(label, cls, onClick, disabled = false) {
-  const b = el('button', `btn ${cls ?? ''}`, label);
-  b.type = 'button';
-  b.disabled = disabled;
-  onActivate(b, onClick);
-  return b;
-}
-
-function itemCard(item, title) {
-  const card = el('div', 'card item');
-  card.appendChild(el('div', 'card-kicker', title));
-  if (!item) {
-    card.appendChild(el('div', 'card-title dim', 'Emplacement vide'));
-    return card;
-  }
-  const name = el('div', 'card-title', item.name);
-  name.style.color = item.color;
-  card.appendChild(name);
-  card.appendChild(el('div', 'card-sub', `${item.rarityName} · ${item.slotName} · niv. ${item.level}`));
-  const ul = el('ul', 'affixes');
-  for (const line of item.lines) ul.appendChild(el('li', '', line));
-  if (item.power) {
-    const li = el('li', 'power', item.power);
-    ul.appendChild(li);
-  }
-  card.appendChild(ul);
-  return card;
-}
-
+const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Compétence', passive: 'Passif', super: 'Super' };
 export function createUI(root, handlers) {
   // #overlay / .hidden / #restart : vocabulaire du PLAYABLE_CONTRACT du studio.
   const panel = el('div', 'panel hidden');
@@ -118,7 +38,7 @@ export function createUI(root, handlers) {
     // Armement : l'écran titre et les rafraîchissements du marchand répondent tout de suite.
     const refresh = key.startsWith('choice:shop') && shownKind === 'shop';
     shownKind = key.split(':')[1] ?? key;
-    arming.noDelay = key.startsWith('title') || key.startsWith('pause') || key === 'tuning' || refresh;
+    arming.noDelay = key.startsWith('title') || key.startsWith('pause') || key.startsWith('town') || key.startsWith('lab') || key === 'tuning' || refresh;
     arming.ms = key.startsWith('choice') ? ARM_CHOICE_MS : ARM_MS;
     arming.shownAt = performance.now();
     if (!arming.noDelay) startArming();
@@ -145,11 +65,13 @@ export function createUI(root, handlers) {
     p.className = 'panel title-screen';
     p.appendChild(el('div', 'kicker', 'Descente vers l\'Enfer'));
     p.appendChild(el('h1', 'logo', 'DUNGEON 666'));
-    p.appendChild(el('p', 'lede', '666 étages. Un Gardien tous les six. Chaque Gardien vaincu devient un point de reprise.'));
+    p.appendChild(el('p', 'lede', '666 étages. Un Gardien tous les dix-huit. Chaque Gardien vaincu ouvre un checkpoint et un portail vers la Ville.'));
     const row = el('div', 'row');
     const cps = meta.checkpoints.slice().sort((a, b) => b - a);
-    row.appendChild(button(cps[0] > 1 ? `Reprendre · étage ${cps[0]}` : 'Descendre', 'primary', () => handlers.start(cps[0])));
-    if (cps[0] > 1) row.appendChild(button('Recommencer · étage 1', '', () => handlers.start(1)));
+    const go = button('Entrer dans Dité', 'primary', () => handlers.openTown());
+    go.id = 'enter-town';
+    row.appendChild(go);
+    row.appendChild(button(`Descendre · étage ${cps[0]}`, '', () => handlers.start(cps[0])));
     row.appendChild(button('Arène d\'essai', '', () => handlers.start(1, true)));
     p.appendChild(row);
     const help = el('div', 'help');
@@ -183,13 +105,15 @@ export function createUI(root, handlers) {
   function buildLoot(p, ch) {
     p.className = 'panel choice';
     p.appendChild(el('h2', '', 'Trésor'));
+    p.appendChild(el('p', 'dim small', 'Équipement PERMANENT : l\'objet remplacé, ou celui que vous gardez, part au coffre de la Ville.'));
     const cols = el('div', 'cards two');
     cols.appendChild(itemCard(ch.item, 'Trouvé'));
-    cols.appendChild(itemCard(ch.equipped, 'Équipé'));
+    cols.appendChild(itemCard(ch.equipped, 'Porté'));
     p.appendChild(cols);
     const row = el('div', 'row');
-    row.appendChild(button('Équiper', 'primary', () => handlers.command({ type: 'equip' })));
-    row.appendChild(button(`Récupérer · +${ch.salvage} or`, '', () => handlers.command({ type: 'salvage' })));
+    row.appendChild(button(ch.wieldable === false ? 'Arme d\'une autre classe' : 'Équiper', 'primary', () => handlers.command({ type: 'equip' }), ch.wieldable === false));
+    row.appendChild(button('Garder au coffre', '', () => handlers.command({ type: 'stash' })));
+    row.appendChild(button(`Vendre · +${ch.salvage} or`, '', () => handlers.command({ type: 'salvage' })));
     p.appendChild(row);
   }
 
@@ -230,28 +154,37 @@ export function createUI(root, handlers) {
     p.appendChild(el('h1', 'logo red', 'VOUS ÊTES MORT'));
     const t = game.telemetry;
     p.appendChild(el('p', 'lede', `Étage ${game.run.floor} · ${t.kills} démons abattus · ${t.dodges} esquives au dash`));
-    p.appendChild(el('p', 'dim', 'Vous reprenez au checkpoint avec le build que vous aviez en battant son Gardien. Votre équipement vous suit toujours.'));
     const col = el('div', 'col');
-    if (game.sandbox) {
-      const b = button('Recommencer l\'arène', 'primary', () => handlers.command({ type: 'respawn', floor: 1 }));
+    if (game.sandbox || game.practice) {
+      const b = button(game.practice ? 'Réessayer le Gardien' : 'Recommencer l\'arène', 'primary', () => handlers.command({ type: 'respawn', floor: game.run.floor }));
       b.id = 'restart';
       col.appendChild(b);
+      col.appendChild(button('Retour à la Ville', '', () => handlers.command({ type: 'returnToTown' })));
       p.appendChild(col);
       return;
     }
-    const retry = handlers.canRetryBoss(game);
-    if (retry) {
-      const b = button(`Réessayer le Gardien · étage ${game.run.floor}`, 'primary', () => handlers.command({ type: 'retryBoss' }));
-      b.id = 'restart';
-      col.appendChild(b);
-    }
-    const cps = game.meta.checkpoints.slice().sort((a, b) => b - a).slice(0, 4);
-    cps.forEach((f, i) => {
-      const first = i === 0 && !retry;
-      const b = button(`Reprendre · étage ${f}`, first ? 'primary' : '', () => handlers.command({ type: 'respawn', floor: f }));
-      if (first) b.id = 'restart';
-      col.appendChild(b);
-    });
+    // Récapitulatif : la boucle de reset doit se LIRE.
+    const r = game.run.deathRecap ?? { boonsLost: 0, boonNames: [], goldLost: 0, souls: game.meta.souls, soulsEarned: 0, checkpoint: 1 };
+    const recap = el('div', 'cards two recap');
+    const lost = el('div', 'card');
+    lost.style.setProperty('--accent', '#c0304a');
+    lost.appendChild(el('div', 'card-kicker', 'Perdu · temporaire'));
+    lost.appendChild(el('div', 'card-title', `${r.boonsLost} bénédiction${r.boonsLost > 1 ? 's' : ''}`));
+    if (r.boonNames.length) lost.appendChild(el('div', 'card-text', r.boonNames.join(' · ')));
+    lost.appendChild(el('div', 'card-text', `Charon a prélevé ${r.goldLost} or.`));
+    const kept = el('div', 'card');
+    kept.style.setProperty('--accent', '#2fc7ff');
+    kept.appendChild(el('div', 'card-kicker', 'Gardé · permanent'));
+    kept.appendChild(el('div', 'card-title', `◆ ${r.souls} Âmes (+${r.soulsEarned})`));
+    kept.appendChild(el('div', 'card-text', 'Classe, armes, équipement et coffre, compétences, améliorations de la Ville, checkpoints.'));
+    recap.append(lost, kept);
+    p.appendChild(recap);
+    const b = button(`Repartir du checkpoint · étage ${r.checkpoint}`, 'primary', () => handlers.command({ type: 'respawn', floor: r.checkpoint }));
+    b.id = 'restart';
+    col.appendChild(b);
+    const town = button('Retour à la Ville', '', () => handlers.command({ type: 'returnToTown' }));
+    town.id = 'to-town';
+    col.appendChild(town);
     p.appendChild(col);
   }
 
@@ -269,17 +202,31 @@ export function createUI(root, handlers) {
     col.appendChild(button(`Son : ${settings.sound ? 'oui' : 'non'}`, '', () => handlers.setSetting('sound', !settings.sound)));
     col.appendChild(button(`Vibrations : ${settings.haptics ? 'oui' : 'non'}`, '', () => handlers.setSetting('haptics', !settings.haptics)));
     col.appendChild(button(`Tremblement : ${Math.round(settings.shake * 100)} %`, '', () => handlers.setSetting('shake', settings.shake >= 1 ? 0.5 : settings.shake > 0 ? 0 : 1)));
+    col.appendChild(button('Labo du feel (D5 · D8 · D9)', '', () => handlers.openLab()));
     col.appendChild(button('Réglages du feel', '', () => handlers.openTuning()));
-    col.appendChild(button('Retour au titre', 'ghost', () => handlers.quit()));
+    col.appendChild(button('Abandonner · retour à la Ville', 'ghost', () => handlers.abandon()));
     p.appendChild(col);
+  }
+
+  function buildLabPanel(p, lab) {
+    p.className = 'panel pause lab';
+    p.appendChild(el('h2', '', 'Labo du feel'));
+    p.appendChild(el('p', 'dim small', 'Change la variante tout de suite, dans cette partie et les suivantes.'));
+    buildLabControls(p, lab, handlers.setLab);
+    p.appendChild(button('Retour', 'primary', () => handlers.closeLab()));
   }
 
   // -------------------------------------------------------------- synchronisation
 
   /** Appelée à chaque image : affiche le bon panneau selon l'état. */
   function sync(game, app) {
-    if (app.screen === 'title') return show((p) => buildTitle(p, app.meta), `title:${app.meta.bestFloor}:${app.meta.checkpoints.length}`);
+    if (app.screen === 'title') return show((p) => buildTitle(p, app.profile), `title:${app.profile.bestFloor}:${app.profile.checkpoints.length}`);
+    if (app.screen === 'town') {
+      const view = handlers.townView();
+      return show((p) => buildTown(p, view, handlers.townActions), `town:${view.tab}:${view.rev}`);
+    }
     if (app.screen === 'tuning') return show((p) => handlers.buildTuning(p), 'tuning');
+    if (app.screen === 'lab') return show((p) => buildLabPanel(p, app.settings.lab), `lab:${JSON.stringify(app.settings.lab)}`);
     if (app.paused) return show((p) => buildPause(p, app.settings), `pause:${JSON.stringify(app.settings)}`);
     if (!game) return hide();
     if (game.mode === 'choice' && game.choice) {

@@ -1,8 +1,12 @@
-// Structure des 666 étages — fonctions pures sur le numéro d'étage (1..666).
+// Structure des 666 étages — fonctions pures sur le numéro d'étage (1..666). Aucun étage n'est
+// écrit à la main : chaque étage est COMPOSÉ à la volée à partir de briques réutilisables
+// (plan de section → type d'étage et portes, run.mjs ; disposition et vagues, room.mjs ;
+// archétypes et élites, enemies.mjs ; Gardien de la section, ci-dessous et bosses).
 //
-//   section  = 6 étages ; le 6e est un BOSS, et le battre ouvre un checkpoint (téléportation).
-//   Cercle   = 72 étages (12 sections) — 9 Cercles de l'Enfer = 648 étages,
-//   finale   = 18 étages (3 sections) « Le Trône » = 666.
+//   section  = 18 étages (tuning.floors.sectionLength) ; le 18e est un GARDIEN : le battre
+//              ouvre un checkpoint et un point de téléportation (l'étage suivant).
+//   Cercle   = 72 étages (4 sections) — 9 Cercles de l'Enfer = 648 étages,
+//   finale   = 18 étages (1 section) « L'Abîme » = 666. Soit 37 sections, 37 Gardiens.
 
 export function floorInfo(tuning, floor) {
   const f = tuning.floors;
@@ -50,4 +54,21 @@ export function floorScaling(tuning, floor) {
   const C = 1 + (f.driftAt666 * k) / (f.total - 1);
   const D = 1 + f.dmgCurve * (1 - Math.exp(-k / f.dmgScale));
   return { hp: L * B * C, damage: L * D, density: D };
+}
+
+/**
+ * Modèle de Gardien qui garde la section `section` (1..37) : rotation des modèles connus
+ * (tuning.guardians.rotation). Un même modèle revient plus loin, plus coriace (floorScaling).
+ */
+export function guardianFor(tuning, section) {
+  const rot = tuning.guardians.rotation.filter((k) => tuning.boss[k]);
+  if (rot.length === 0) return Object.keys(tuning.boss)[0];
+  return rot[(Math.max(1, section) - 1) % rot.length];
+}
+
+/** Étage du Gardien de la section, et checkpoint qu'il ouvre. */
+export function sectionBounds(tuning, section) {
+  const len = tuning.floors.sectionLength;
+  const last = Math.min(tuning.floors.total, section * len);
+  return { first: (section - 1) * len + 1, guardian: last, checkpoint: checkpointAfterBoss(tuning, last) };
 }

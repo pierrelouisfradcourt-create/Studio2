@@ -12,9 +12,21 @@ const PROC_SOURCES = new Set(['melee', 'strike', 'skill', 'gadget', 'super']);
 const NO_SUPER_CHARGE = new Set(['super', 'burn', 'blast', 'chain']);
 const ARMOR_CAP = 0.6;
 
-/** Gel d'impact des coups du héros, puisé dans une réserve qui se recharge (anti-diaporama). */
-export function applyHitstop(game, h) {
+/**
+ * Gel d'impact des coups du héros, puisé dans une réserve qui se recharge (anti-diaporama).
+ * D8 (lab.mjs) : en mode GLOBAL toute la scène se fige (game.hitstop) ; en mode LOCAL seuls le
+ * héros et la cible touchée se figent (player.freeze, e.freeze), le reste du monde continue.
+ */
+export function applyHitstop(game, h, target = null) {
   const allowed = Math.min(h, game.hitstopBank);
+  if (game.tuning.hitstopMode === 'local') {
+    const p = game.player;
+    if (target && allowed > (target.freeze ?? 0)) target.freeze = allowed;
+    if (allowed <= p.freeze) return;
+    game.hitstopBank -= allowed - p.freeze;
+    p.freeze = allowed;
+    return;
+  }
   if (allowed <= game.hitstop) return;
   game.hitstopBank -= allowed - game.hitstop;
   game.hitstop = allowed;
@@ -22,6 +34,10 @@ export function applyHitstop(game, h) {
 
 /** Gel imposé (héros touché, mort d'un élite, d'un boss) : hors réserve, toujours ressenti. */
 export function forceHitstop(game, h) {
+  if (game.tuning.hitstopMode === 'local') {
+    game.player.freeze = Math.max(game.player.freeze, h);
+    return;
+  }
   game.hitstop = Math.max(game.hitstop, h);
 }
 
@@ -93,7 +109,7 @@ export function damageEnemy(game, e, src) {
     e.state = 'stunned';
     e.stateTime = 0;
   }
-  if (src.hitstop) applyHitstop(game, e.boss ? Math.min(src.hitstop, t.boss[e.kind].hitstopCap) : src.hitstop);
+  if (src.hitstop) applyHitstop(game, e.boss ? Math.min(src.hitstop, t.boss[e.kind].hitstopCap) : src.hitstop, e);
 
   const tel = game.telemetry;
   tel.damageDealt += amount;
@@ -179,6 +195,14 @@ export function killEnemy(game, e, src) {
   const tel = game.telemetry;
   tel.kills++;
   tel.killTimes.push({ kind: e.kind, life: game.time - e.bornAt });
+  // Âmes (PERMANENTES, profil) : jamais dans l'arène d'essai, jamais pour une invocation.
+  if (!game.sandbox && !game.practice && !e.summoned && !e.boss) {
+    const souls = e.eliteMod ? t.progression.souls.elite : t.progression.souls.kill;
+    game.meta.souls += souls;
+    game.meta.stats.kills++;
+    tel.soulsEarned += souls;
+    if (e.eliteMod) emit(game, 'souls', { x: e.x, y: e.y, amount: souls });
+  }
   emit(game, 'kill', { id: e.id, x: e.x, y: e.y, r: e.r, enemy: e.kind, elite: !!e.eliteMod, boss: !!e.boss, kind: src?.kind ?? 'none' });
 
   // Butin d'or (les boss ont leur propre récompense, gérée par la salle).

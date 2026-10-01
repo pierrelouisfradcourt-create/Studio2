@@ -158,6 +158,25 @@
   .slider output { font-variant-numeric: tabular-nums; color: var(--gold); }
   .slider input { grid-column: 1 / -1; width: 100%; accent-color: var(--ember); }
   .slider.changed span { color: var(--gold); }
+  /* Ville (hub) : en-tête, onglets défilants, corps qui défile ; tient sur 390 px de haut. */
+  .panel.town { width: min(1080px, 100%); height: 100%; overflow: hidden; gap: 8px; }
+  .town-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+  .town-wallet { display: flex; flex-wrap: wrap; gap: 4px 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .souls { color: #9ff4ff; }
+  .gold { color: var(--gold); }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; flex: none; scrollbar-width: none; }
+  .tabs .btn { flex: none; }
+  .btn.tab.on { border-color: var(--gold); color: var(--gold); background: rgba(255, 210, 60, 0.08); }
+  .town-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
+  .town-body .row { justify-content: flex-start; }
+  h3 { font-family: var(--display); font-size: 16px; letter-spacing: 0.05em; margin: 6px 0 0; }
+  .small { font-size: 12px; }
+  p.small { margin: 0; }
+  .row.wrap { flex-wrap: wrap; justify-content: flex-start; }
+  .card .btn { margin-top: 6px; }
+  .recap { width: 100%; text-align: left; }
+  .pause.lab { width: min(620px, 100%); }
+  .pause.lab .row { justify-content: flex-start; }
   @media (prefers-reduced-motion: reduce) { .panel { animation: none; } }
   @media (max-height: 430px) {
     .panel { padding: 12px 14px; gap: 8px; }
@@ -425,6 +444,110 @@ function easeInQuad(t) {
 
 return { TAU, clamp, lerp, len, dist, dist2, normalizeInto, approach, angleDiff, inSector, circlesOverlap, pointSegDist2, closestOnRect, pushCircleOutOfRect, pushCircleOutOfCircle, easeOutCubic, easeInQuad };
 })();
+// ---- src/sim/kits.mjs
+__mod["src/sim/kits.mjs"] = (() => {
+// KITS DU HÉROS — classes, armes, compétences, gadgets, Supers (données de tuning).
+//
+// Le kit ÉQUIPÉ est « résolu » à la création de la partie (loadout.mjs) : les blocs
+// actifs de la copie de tuning de la partie (`combo`, `dashStrike`, `skill`, `gadget`, `super`)
+// deviennent des RÉFÉRENCES vers l'entrée choisie ici. Toute la simulation (et les tests)
+// continue de lire `tuning.combo`, `tuning.skill`… : le Revenant armé de la Lame, avec la Lance,
+// la Nova et la Colère, reproduit EXACTEMENT le kit d'avant les classes.
+//
+// Unités : comme config.mjs (u, s, degrés). `kind` choisit le code qui joue l'entrée.
+
+// ---------------------------------------------------------------- armes (jeux de coups)
+
+// Lame du Revenant : le combo historique (valeurs inchangées).
+const LAME_COMBO = [
+  { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 10, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
+  { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 11, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
+  { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.45 },
+];
+const LAME_STRIKE = { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.35 };
+
+const WEAPONS = {
+  lame: {
+    name: 'Lame du Revenant', kind: 'melee', className: 'revenant',
+    text: 'Combo de 3 coups équilibré ; le 3e balaie large.',
+    starterName: 'Épée rouillée', // exemplaire de départ / forgé en Ville
+    bases: ['Lame', 'Fauchon', 'Glaive', 'Épée'], // noms des armes de ce type trouvées en donjon
+    baseMult: 1, // dégâts de base W de ce type d'arme (× tuning.weaponBase)
+    combo: LAME_COMBO,
+    dashStrike: LAME_STRIKE,
+  },
+};
+
+// ---------------------------------------------------------------- compétences (bouton Lance)
+
+const SKILLS = {
+  // Lance infernale — projectile perforant, visée glissée ou auto (valeurs inchangées).
+  lance: {
+    name: 'Lance infernale', kind: 'lance', text: 'Projectile qui transperce 3 ennemis.',
+    cooldown: 4.0, damage: 30, speed: 900, radius: 12, range: 540, pierce: 3, knockback: 300, hitstop: 0.05, castTime: 0.08,
+  },
+};
+
+// ---------------------------------------------------------------- gadgets (charges par section)
+
+const GADGETS = {
+  // Nova de cendres — onde qui repousse et étourdit (valeurs inchangées).
+  nova: {
+    name: 'Nova de cendres', kind: 'nova', text: 'Onde qui repousse, étourdit et efface les projectiles.',
+    chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 20, knockback: 900, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4,
+  },
+};
+
+// ---------------------------------------------------------------- Supers (jauge remplie en frappant)
+
+const SUPERS = {
+  // Colère — tourbillon invulnérable (valeurs inchangées).
+  colere: {
+    name: 'Colère', kind: 'colere', text: 'Tourbillon invulnérable de 1,4 s.',
+    startCharge: 0.4, chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1,
+  },
+};
+
+// ---------------------------------------------------------------- classes
+
+// stats : bonus permanents de la classe, ajoutés aux statistiques du héros (stats.mjs).
+// weapons / skills / gadgets : ce que la classe peut équiper (le 1er = celui de départ).
+const CLASSES = {
+  revenant: {
+    name: 'Revenant', text: 'Damné en fuite. Lame équilibrée, dash vif : le kit de référence du feel.',
+    stats: {},
+    weapons: ['lame'],
+    skills: ['lance'],
+    gadgets: ['nova'],
+    super: 'colere',
+  },
+};
+
+const DEFAULT_LOADOUT = { classId: 'revenant', skillId: 'lance', gadgetId: 'nova' };
+
+return { WEAPONS, SKILLS, GADGETS, SUPERS, CLASSES, DEFAULT_LOADOUT };
+})();
+// ---- src/sim/town_data.mjs
+__mod["src/sim/town_data.mjs"] = (() => {
+// VILLE — améliorations permanentes du Sanctuaire (payées en Âmes, jamais perdues).
+//
+// stat : statistique du héros modifiée (voir state.baseStats) ; perLevel : gain par niveau ;
+// costs[n] : prix du niveau n+1. Les valeurs visent une progression testable en 20-40 min.
+
+const UPGRADES = {
+  vitalite: { name: 'Vitalité', text: '+10 PV max par niveau.', stat: 'maxHpBonus', perLevel: 10, max: 5, costs: [15, 30, 50, 75, 105] },
+  celerite: { name: 'Célérité', text: 'Recharge du dash −6 % par niveau.', stat: 'dashRechargeMult', perLevel: -0.06, max: 3, costs: [25, 50, 90] },
+  ferocite: { name: 'Férocité', text: '+5 % de dégâts par niveau.', stat: 'damageMult', perLevel: 0.05, max: 4, costs: [20, 40, 70, 110] },
+  arsenal: { name: 'Arsenal', text: '+1 charge de gadget par section.', stat: 'gadgetChargesBonus', perLevel: 1, max: 1, costs: [60] },
+  fortune: { name: 'Fortune', text: '+15 % d\'or trouvé par niveau.', stat: 'goldFindMult', perLevel: 0.15, max: 3, costs: [15, 30, 55] },
+  avidite: { name: 'Avidité de Charon', text: 'Charon prélève 15 % de moins à chaque mort.', stat: 'deathGoldKeepBonus', perLevel: 0.15, max: 2, costs: [30, 60] },
+};
+
+// Âmes rendues par le recyclage d'un objet du coffre, selon sa rareté.
+const SALVAGE_SOULS = { commun: 1, magique: 3, rare: 8, legendaire: 20 };
+
+return { UPGRADES, SALVAGE_SOULS };
+})();
 // ---- src/sim/config.mjs
 __mod["src/sim/config.mjs"] = (() => {
 // TUNING — tous les nombres du jeu, au même endroit. Aucune règle de la simulation ne porte
@@ -433,6 +556,8 @@ __mod["src/sim/config.mjs"] = (() => {
 //
 // Unités : 1 u = 1 px à l'échelle de référence (caméra ~ 960 × 540 u en paysage).
 // Temps en secondes, angles en degrés dans ce fichier (convertis à l'usage), simulation à 60 Hz.
+const { WEAPONS, SKILLS, GADGETS, SUPERS, CLASSES } = __mod["src/sim/kits.mjs"];
+const { UPGRADES, SALVAGE_SOULS } = __mod["src/sim/town_data.mjs"];
 
 const SIM_HZ = 60;
 const DT = 1 / SIM_HZ;
@@ -450,6 +575,7 @@ const DEFAULT_TUNING = {
     attackMoveMult: 0.5,
     hurtIframes: 0.6, // invulnérabilité après un coup reçu
     hurtHitstop: 0.083, // gel global quand le héros est touché : il DOIT le sentir
+    cancelMult: 1, // D9 : multiplie la part de récupération à jouer avant le coup suivant
     inputBuffer: 0.15, // une action pressée trop tôt reste en mémoire
     // Attaque et Lance tapées pendant un coup engagé : le finisher verrouille 0,32 s, un tampon
     // de 0,15 s y perdait un tap sur trois (revue « feel »). Dash et Super gardent 0,15 s.
@@ -463,6 +589,7 @@ const DEFAULT_TUNING = {
   // Gel d'impact plafonné : au plus `bank` secondes de gel, rechargées à `refill` par seconde.
   // Sans plafond, une mêlée de 6 ennemis transforme le combat en diaporama.
   hitstopBank: { max: 0.22, refill: 0.22 },
+  hitstopMode: 'global', // D8 : global | local (écrit par lab.mjs selon lab.hitstop)
   killHitstop: { elite: 0.1, boss: 0.2, lastEnemy: 0.13 },
   dash: {
     distance: 165,
@@ -477,27 +604,37 @@ const DEFAULT_TUNING = {
     perfectDodgeSuper: 0.06, // fraction de jauge de Super
     perfectDodgeRefund: 0.5, // s retirées à la recharge en cours
   },
-  // Combo de 3 coups. arc en degrés. lunge = petit déplacement vers l'avant au début de l'actif.
-  combo: [
-    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 10, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
-    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 11, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
-    { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.45 },
-  ],
+  // Combo ACTIF (arc en degrés ; lunge = petit déplacement vers l'avant au début de l'actif).
+  // Référence vers l'arme équipée (kits.mjs) : par défaut la Lame du Revenant.
+  combo: WEAPONS.lame.combo,
   comboResetTime: 0.32, // au-delà, le prochain coup repart du coup 1
   // Fraction de la récupération à jouer avant que le coup suivant puisse partir (le dash, lui,
   // annule tout). Le finisher (coup 3) engage davantage ; le dash reste la sortie rapide.
   comboCancelFrom: { hits: [0.3, 0.3, 0.6], strike: 0.3 },
-  dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.35 },
+  dashStrike: WEAPONS.lame.dashStrike, // frappe de dash de l'arme équipée
   wallSlam: { minSpeed: 380, damage: 8, stun: 0.45, hitstop: 0.05 },
   // Visée assistée : la mêlée ne se tourne que vers ce qu'elle peut atteindre ; la Lance voit loin.
   autoAim: { range: 160, skillRange: 520, coneDeg: 80, movePreference: 0.35 },
 
-  // Compétence : Lance infernale — projectile perforant, visée glissée ou auto.
-  skill: { cooldown: 4.0, damage: 30, speed: 900, radius: 12, range: 540, pierce: 3, knockback: 300, hitstop: 0.05, castTime: 0.08 },
-  // Gadget (charges, façon Brawl Stars) : Nova de cendres — onde qui repousse et étourdit.
-  gadget: { chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 20, knockback: 900, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4 },
-  // Super : Colère — se remplit en infligeant des dégâts ; tourbillon invulnérable.
-  super: { startCharge: 0.4, chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1 },
+  // Kit ACTIF (références vers le kit équipé, résolu par loadout.mjs) : compétence (bouton
+  // Lance), gadget (charges par section, façon Brawl Stars), Super (jauge remplie en frappant).
+  skill: SKILLS.lance,
+  gadget: GADGETS.nova,
+  super: SUPERS.colere,
+  // Tous les kits disponibles (classes, armes, compétences, gadgets, Supers).
+  classes: CLASSES,
+  weapons: WEAPONS,
+  skills: SKILLS,
+  gadgets: GADGETS,
+  supers: SUPERS,
+
+  // LABORATOIRE DU FEEL (D5 / D8 / D9) : variantes à comparer en jouant, jamais tranchées ici.
+  // Chaque variante est appliquée par lab.mjs sur la copie de tuning de la partie.
+  lab: {
+    dashStrike: 'fin', // D5 : fin | toutDash | apresDash — quand une attaque devient frappe de dash
+    hitstop: 'global', // D8 : global | local — gel de toute la scène, ou seulement des belligérants
+    comboMobility: 'mobile', // D9 : ancre | mobile | fluide — vitesse et annulations pendant le combo
+  },
 
   enemies: {
     imp: {
@@ -577,17 +714,40 @@ const DEFAULT_TUNING = {
     healOrbAmount: 12,
   },
 
-  // Structure des 666 étages : sections de 6 (le 6e = boss checkpoint) ; 9 Cercles de
-  // 72 étages (12 sections) = 648, puis la finale de 18 étages (3 sections) = 666.
+  // Structure des 666 étages : sections de 18 (le 18e = Gardien, checkpoint et téléportation) ;
+  // 9 Cercles de 72 étages (4 sections) = 648, puis la finale de 18 étages (1 section) = 666.
+  // 37 sections, donc 37 Gardiens (rotation des modèles : bosses.mjs).
   floors: {
     total: 666,
-    sectionLength: 6,
+    sectionLength: 18,
     circleLength: 72,
     circleNames: ['Limbes', 'Luxure', 'Gourmandise', 'Avarice', 'Colère', 'Hérésie', 'Violence', 'Fraude', 'Trahison'],
     finaleName: 'L\'Abîme',
     // Scaling (spec §5.5) : L = niveau d'objet, B = saturation du build, C = dérive, D = dégâts.
     itemGrowth: 0.05, buildCap: 2, buildScale: 100, driftAt666: 0.5, dmgCurve: 0.6, dmgScale: 150,
   },
+
+  // PLAN D'UNE SECTION (18 étages), composé à partir de types d'étages réutilisables.
+  // Les portes de sortie annoncent la récompense de l'étage suivant (façon Hades) ; certains
+  // index de la section imposent leurs portes.
+  section: {
+    fixedDoors: { 9: ['shop', 'event'], 17: ['shop', 'event'] }, // mi-section et antichambre du Gardien
+    eliteAt: [6, 12], // une des deux portes mène forcément à une épreuve d'élite
+    gadgetRefillEvery: 6, // charges de gadget rendues aux étages 1, 7 et 13 de la section
+    // Vagues par étage selon l'index dans la section (1..17) : courtes au début, assauts à la fin.
+    waves: [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3],
+  },
+  // Budget de menace d'une vague : (base + perIndex × index) × densité de l'étage.
+  encounter: { baseBudget: 5, perIndex: 0.45, lastWaveMult: 1.2, strayEliteChance: 0.15 },
+  // Rotation des Gardiens sur les 37 sections (le 1er de la liste garde la section 1).
+  guardians: { rotation: ['gardien'] },
+
+  // PROGRESSION PERMANENTE (profil) : Âmes gagnées pendant la descente, jamais perdues.
+  progression: {
+    souls: { kill: 1, elite: 6, guardian: 60, guardianPerSection: 15 },
+  },
+  // VILLE : améliorations du Sanctuaire et recyclage du coffre (town_data.mjs).
+  town: { upgrades: UPGRADES, salvageSouls: SALVAGE_SOULS },
 
   economy: {
     goldPerRoom: [8, 14], shopHealPrice: 40, shopBoonPrice: 70, shopItemPrice: [60, 140],
@@ -664,6 +824,8 @@ function baseStats() {
     knockbackMult: 1,
     weaponDamage: 0, // dégâts de base de l'arme portée (W)
     armorHp: 0, // PV apportés par l'armure portée
+    dashDistanceMult: 1, // classe : longueur du dash
+    deathGoldKeepBonus: 0, // Sanctuaire : part de la bourse épargnée par Charon à la mort
   };
 }
 
@@ -698,6 +860,7 @@ function createPlayer(tuning, x, y) {
     dashT: 0,
     strikeWindow: 0,
     iframes: 0,
+    freeze: 0, // gel d'impact LOCAL restant (D8, mode local) ; le mode global gèle toute la scène
     dodgeIframes: 0, // part des i-frames qui vient d'un dash (sert l'événement « esquive »)
     hurtFlash: 0,
     skillCd: 0,
@@ -738,6 +901,7 @@ function createTelemetry() {
     roomTimes: [],
     killTimes: [], // durée de vie (s) des ennemis tués, par type
     deathCauses: {},
+    soulsEarned: 0, // Âmes gagnées pendant ce run (permanentes)
   };
 }
 
@@ -928,9 +1092,21 @@ const PROC_SOURCES = new Set(['melee', 'strike', 'skill', 'gadget', 'super']);
 const NO_SUPER_CHARGE = new Set(['super', 'burn', 'blast', 'chain']);
 const ARMOR_CAP = 0.6;
 
-/** Gel d'impact des coups du héros, puisé dans une réserve qui se recharge (anti-diaporama). */
-function applyHitstop(game, h) {
+/**
+ * Gel d'impact des coups du héros, puisé dans une réserve qui se recharge (anti-diaporama).
+ * D8 (lab.mjs) : en mode GLOBAL toute la scène se fige (game.hitstop) ; en mode LOCAL seuls le
+ * héros et la cible touchée se figent (player.freeze, e.freeze), le reste du monde continue.
+ */
+function applyHitstop(game, h, target = null) {
   const allowed = Math.min(h, game.hitstopBank);
+  if (game.tuning.hitstopMode === 'local') {
+    const p = game.player;
+    if (target && allowed > (target.freeze ?? 0)) target.freeze = allowed;
+    if (allowed <= p.freeze) return;
+    game.hitstopBank -= allowed - p.freeze;
+    p.freeze = allowed;
+    return;
+  }
   if (allowed <= game.hitstop) return;
   game.hitstopBank -= allowed - game.hitstop;
   game.hitstop = allowed;
@@ -938,6 +1114,10 @@ function applyHitstop(game, h) {
 
 /** Gel imposé (héros touché, mort d'un élite, d'un boss) : hors réserve, toujours ressenti. */
 function forceHitstop(game, h) {
+  if (game.tuning.hitstopMode === 'local') {
+    game.player.freeze = Math.max(game.player.freeze, h);
+    return;
+  }
   game.hitstop = Math.max(game.hitstop, h);
 }
 
@@ -1009,7 +1189,7 @@ function damageEnemy(game, e, src) {
     e.state = 'stunned';
     e.stateTime = 0;
   }
-  if (src.hitstop) applyHitstop(game, e.boss ? Math.min(src.hitstop, t.boss[e.kind].hitstopCap) : src.hitstop);
+  if (src.hitstop) applyHitstop(game, e.boss ? Math.min(src.hitstop, t.boss[e.kind].hitstopCap) : src.hitstop, e);
 
   const tel = game.telemetry;
   tel.damageDealt += amount;
@@ -1095,6 +1275,14 @@ function killEnemy(game, e, src) {
   const tel = game.telemetry;
   tel.kills++;
   tel.killTimes.push({ kind: e.kind, life: game.time - e.bornAt });
+  // Âmes (PERMANENTES, profil) : jamais dans l'arène d'essai, jamais pour une invocation.
+  if (!game.sandbox && !game.practice && !e.summoned && !e.boss) {
+    const souls = e.eliteMod ? t.progression.souls.elite : t.progression.souls.kill;
+    game.meta.souls += souls;
+    game.meta.stats.kills++;
+    tel.soulsEarned += souls;
+    if (e.eliteMod) emit(game, 'souls', { x: e.x, y: e.y, amount: souls });
+  }
   emit(game, 'kill', { id: e.id, x: e.x, y: e.y, r: e.r, enemy: e.kind, elite: !!e.eliteMod, boss: !!e.boss, kind: src?.kind ?? 'none' });
 
   // Butin d'or (les boss ont leur propre récompense, gérée par la salle).
@@ -1432,7 +1620,10 @@ function canAttack(game) {
   // Le coup suivant n'annule qu'une PARTIE de la récupération (le finisher engage) ; seul le
   // dash annule tout, tout de suite.
   const a = p.attack;
-  const from = a.strike ? game.tuning.comboCancelFrom.strike : game.tuning.comboCancelFrom.hits[a.index] ?? 1;
+  const t = game.tuning;
+  // Part de récupération propre au coup (armes) ou celle de la Lame ; D9 l'allonge ou l'abrège.
+  const base = a.strike ? t.comboCancelFrom.strike : a.def.cancelFrom ?? t.comboCancelFrom.hits[a.index] ?? 1;
+  const from = Math.min(1, base * (t.player.cancelMult ?? 1));
   return a.t >= a.dur.recovery * from;
 }
 
@@ -1491,6 +1682,11 @@ function readInput(game, input) {
 function updatePlayer(game, dt) {
   const p = game.player;
   const t = game.tuning;
+  if (p.freeze > 0) {
+    // Gel d'impact LOCAL (D8) : le héros se fige comme en mode global, mais seul.
+    p.freeze = Math.max(0, p.freeze - dt);
+    return;
+  }
   p.stateTime += dt;
   if (p.state === 'dead') {
     p.vx *= 0.85;
@@ -1792,7 +1988,7 @@ function dashNova(game, pr) {
 function updateDash(game, dt) {
   const p = game.player;
   const t = game.tuning;
-  const speed = t.dash.distance / t.dash.duration;
+  const speed = (t.dash.distance * (p.stats.dashDistanceMult ?? 1)) / t.dash.duration;
   p.vx = p.dashDirX * speed;
   p.vy = p.dashDirY * speed;
   p.dashT -= dt;
@@ -1947,11 +2143,15 @@ return { maxDashCharges, canDash, readInput, updatePlayer, useGadget };
 })();
 // ---- src/sim/floors.mjs
 __mod["src/sim/floors.mjs"] = (() => {
-// Structure des 666 étages — fonctions pures sur le numéro d'étage (1..666).
+// Structure des 666 étages — fonctions pures sur le numéro d'étage (1..666). Aucun étage n'est
+// écrit à la main : chaque étage est COMPOSÉ à la volée à partir de briques réutilisables
+// (plan de section → type d'étage et portes, run.mjs ; disposition et vagues, room.mjs ;
+// archétypes et élites, enemies.mjs ; Gardien de la section, ci-dessous et bosses).
 //
-//   section  = 6 étages ; le 6e est un BOSS, et le battre ouvre un checkpoint (téléportation).
-//   Cercle   = 72 étages (12 sections) — 9 Cercles de l'Enfer = 648 étages,
-//   finale   = 18 étages (3 sections) « Le Trône » = 666.
+//   section  = 18 étages (tuning.floors.sectionLength) ; le 18e est un GARDIEN : le battre
+//              ouvre un checkpoint et un point de téléportation (l'étage suivant).
+//   Cercle   = 72 étages (4 sections) — 9 Cercles de l'Enfer = 648 étages,
+//   finale   = 18 étages (1 section) « L'Abîme » = 666. Soit 37 sections, 37 Gardiens.
 
 function floorInfo(tuning, floor) {
   const f = tuning.floors;
@@ -2001,7 +2201,24 @@ function floorScaling(tuning, floor) {
   return { hp: L * B * C, damage: L * D, density: D };
 }
 
-return { floorInfo, checkpointAfterBoss, floorScaling };
+/**
+ * Modèle de Gardien qui garde la section `section` (1..37) : rotation des modèles connus
+ * (tuning.guardians.rotation). Un même modèle revient plus loin, plus coriace (floorScaling).
+ */
+function guardianFor(tuning, section) {
+  const rot = tuning.guardians.rotation.filter((k) => tuning.boss[k]);
+  if (rot.length === 0) return Object.keys(tuning.boss)[0];
+  return rot[(Math.max(1, section) - 1) % rot.length];
+}
+
+/** Étage du Gardien de la section, et checkpoint qu'il ouvre. */
+function sectionBounds(tuning, section) {
+  const len = tuning.floors.sectionLength;
+  const last = Math.min(tuning.floors.total, section * len);
+  return { first: (section - 1) * len + 1, guardian: last, checkpoint: checkpointAfterBoss(tuning, last) };
+}
+
+return { floorInfo, checkpointAfterBoss, floorScaling, guardianFor, sectionBounds };
 })();
 // ---- src/sim/spawns.mjs
 __mod["src/sim/spawns.mjs"] = (() => {
@@ -2052,35 +2269,18 @@ function findSpawnPoint(game, r, minPlayerDist, near) {
 
 return { queueSpawn, findSpawnPoint };
 })();
-// ---- src/sim/boss.mjs
-__mod["src/sim/boss.mjs"] = (() => {
-// Boss de fin de section : « Charon, le Passeur » (premier Gardien, à l'entrée des Limbes).
-// Patterns enchaînés, chacun télégraphié :
-//   slam   — trois impacts circulaires successifs, posés là où se trouve le héros
-//   charge — ligne télégraphiée puis ruée ; s'il percute un mur, il reste sonné (punition)
-//   ring   — anneaux de projectiles avec des brèches : lire, se placer, dasher à travers
-//   summon — (phase 2) invoque des diablotins via des cercles d'invocation
-// Trois phases (66 % et 33 % de PV) : plus de patterns et moins de pauses, jamais de
-// télégraphe raccourci. Chaque transition : invulnérable 1,5 s, projectiles effacés, renforts.
-const { rand, randRange, pick } = __mod["src/core/rng.mjs"];
-const { dist2 } = __mod["src/core/math.mjs"];
-const { emit } = __mod["src/sim/state.mjs"];
-const { moveCircle } = __mod["src/sim/physics.mjs"];
-const { damagePlayer, spawnHazard, spawnPickup } = __mod["src/sim/combat.mjs"];
-const { spawnProjectile } = __mod["src/sim/projectiles.mjs"];
-const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
+// ---- src/sim/boss_common.mjs
+__mod["src/sim/boss_common.mjs"] = (() => {
+// Briques communes à tous les Gardiens (module feuille, sans import de boss.mjs) : états,
+// visée, repos. Chaque modèle de Gardien vit dans son fichier src/sim/boss_<modèle>.mjs.
 
-// Patterns disponibles par phase : la charge arrive en phase 2, les invocations en phase 3.
-const CHARGE_HIT_PAD = 4; // u ajoutés au contact boss/héros pendant la charge
-
-const PATTERNS = { 1: ['slam', 'ring'], 2: ['slam', 'ring', 'charge'], 3: ['slam', 'ring', 'charge', 'summon'] };
-
-function def(game, e) {
+function bossDef(game, e) {
   return game.tuning.boss[e.kind];
 }
 
+/** Les télégraphes d'un Gardien ne raccourcissent JAMAIS (équité, spec §4.1). */
 function wmult() {
-  return 1; // les télégraphes du boss ne raccourcissent jamais (équité, spec §4.1)
+  return 1;
 }
 
 function toPlayer(game, e) {
@@ -2098,86 +2298,32 @@ function setState(e, s) {
   e.patternT = 0;
 }
 
-function nextPattern(game, e) {
-  const list = PATTERNS[e.phase];
-  let choice = pick(game.rng.ai, list);
-  // Jamais deux fois de suite le même pattern.
-  for (let i = 0; i < 4 && choice === e.pattern; i++) choice = pick(game.rng.ai, list);
-  e.pattern = choice;
-  e.secondCharge = false;
-  setState(e, choice);
-}
-
-/** Changement de phase : invulnérable un instant, projectiles effacés, renforts, orbe de soin. */
-function enterPhase(game, e, d) {
-  e.phase++;
-  e.tele = null;
-  e.invuln = d.transition;
-  for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
-  for (const h of game.hazards) if (h.hitsPlayer) h.done = true;
-  for (const kind of d.reinforcements[e.phase] ?? []) {
-    const pt = findSpawnPoint(game, 14, 180, { x: e.x, y: e.y, minR: e.r + 60, maxR: e.r + 260 });
-    if (pt) queueSpawn(game, kind, pt.x, pt.y, { summoned: true });
-  }
-  spawnPickup(game, 'heal', e.x, e.y + e.r + 30, d.phaseHealOrb);
-  emit(game, 'bossPhase', { id: e.id, x: e.x, y: e.y, phase: e.phase });
-  setState(e, 'roar');
-  e.restFor = d.transition;
-}
-
-function updateBoss(game, e, dt) {
-  const d = def(game, e);
-  e.invuln = Math.max(0, (e.invuln ?? 0) - dt);
-  const threshold = e.phase === 1 ? d.phase2At : e.phase === 2 ? d.phase3At : -1;
-  if (threshold > 0 && e.hp <= e.maxHp * threshold) {
-    enterPhase(game, e, d);
-    return;
-  }
-  const speed = d.speed * d.speedMultByPhase[e.phase - 1];
-  switch (e.state) {
-    case 'roar':
-      if (e.stateTime >= e.restFor) {
-        e.restFor = undefined;
-        nextPattern(game, e);
-      }
-      break;
-    case 'chase':
-    case 'rest': {
-      if (e.restFor === undefined) e.restFor = randRange(game.rng.ai, d.restBetween[0], d.restBetween[1]) * d.restMultByPhase[e.phase - 1];
-      const tp = toPlayer(game, e);
-      if (tp.d > 160) {
-        e.vx = tp.dx * speed;
-        e.vy = tp.dy * speed;
-      }
-      if (e.stateTime >= e.restFor) {
-        e.restFor = undefined;
-        nextPattern(game, e);
-      }
-      break;
-    }
-    case 'slam':
-      slam(game, e, d, dt, speed);
-      break;
-    case 'charge':
-      charge(game, e, d, dt);
-      break;
-    case 'ring':
-      ring(game, e, d, dt);
-      break;
-    case 'summon':
-      summon(game, e, d);
-      break;
-    case 'stunned':
-      break;
-    default:
-      setState(e, 'rest');
-  }
-}
-
+/** Fin de pattern : l'alerte disparaît, le Gardien souffle (fenêtre de punition). */
 function toRest(game, e) {
   e.tele = null;
   setState(e, 'rest');
 }
+
+return { bossDef, wmult, toPlayer, setState, toRest };
+})();
+// ---- src/sim/boss_charon.mjs
+__mod["src/sim/boss_charon.mjs"] = (() => {
+// Gardien « Charon, le Passeur » (modèle `gardien`, section 1 puis en rotation).
+// Patterns enchaînés, chacun télégraphié :
+//   slam   — trois impacts circulaires successifs, posés là où se trouve le héros
+//   charge — ligne télégraphiée puis ruée ; s'il percute un mur, il reste sonné (punition)
+//   ring   — anneaux de projectiles avec des brèches : lire, se placer, dasher à travers
+//   summon — (phase 3) invoque des diablotins via des cercles d'invocation (alerte inoffensive)
+const { rand } = __mod["src/core/rng.mjs"];
+const { dist2 } = __mod["src/core/math.mjs"];
+const { emit } = __mod["src/sim/state.mjs"];
+const { moveCircle } = __mod["src/sim/physics.mjs"];
+const { damagePlayer, spawnHazard } = __mod["src/sim/combat.mjs"];
+const { spawnProjectile } = __mod["src/sim/projectiles.mjs"];
+const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
+const { wmult, toPlayer, setState, toRest } = __mod["src/sim/boss_common.mjs"];
+
+const CHARGE_HIT_PAD = 4; // u ajoutés au contact boss/héros pendant la charge
 
 function slam(game, e, d, dt, speed) {
   const s = d.slam;
@@ -2300,7 +2446,110 @@ function summon(game, e, d) {
   toRest(game, e);
 }
 
-return { updateBoss };
+// Patterns disponibles par phase : la charge arrive en phase 2, les invocations en phase 3.
+const CHARON = {
+  byPhase: { 1: ['slam', 'ring'], 2: ['slam', 'ring', 'charge'], 3: ['slam', 'ring', 'charge', 'summon'] },
+  patterns: { slam, charge, ring, summon },
+};
+
+return { slam, charge, ring, summon, CHARON };
+})();
+// ---- src/sim/boss.mjs
+__mod["src/sim/boss.mjs"] = (() => {
+// MOTEUR DES GARDIENS (boss de fin de section, tous les 18 étages).
+// Commun à tous les modèles : trois phases (seuils de PV en tuning), transitions invulnérables
+// (projectiles effacés, renforts, orbe de soin), repos entre deux patterns (fenêtre de
+// punition), patterns jamais répétés deux fois de suite, télégraphes JAMAIS raccourcis.
+// Chaque modèle (src/sim/boss_<modèle>.mjs) fournit ses patterns et leur ordre par phase.
+const { randRange, pick } = __mod["src/core/rng.mjs"];
+const { emit } = __mod["src/sim/state.mjs"];
+const { spawnPickup } = __mod["src/sim/combat.mjs"];
+const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
+const { bossDef, toPlayer, setState } = __mod["src/sim/boss_common.mjs"];
+const { CHARON } = __mod["src/sim/boss_charon.mjs"];
+
+// Registre des modèles de Gardien : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn},
+// rest?(game, e, d, dt, speed) }. La clé est le `kind` de l'ennemi (= clé de tuning.boss).
+const BOSS_MODELS = {
+  gardien: CHARON,
+};
+
+function modelOf(e) {
+  return BOSS_MODELS[e.kind] ?? CHARON;
+}
+
+function nextPattern(game, e) {
+  const list = modelOf(e).byPhase[e.phase];
+  let choice = pick(game.rng.ai, list);
+  // Jamais deux fois de suite le même pattern.
+  for (let i = 0; i < 4 && choice === e.pattern; i++) choice = pick(game.rng.ai, list);
+  e.pattern = choice;
+  e.secondCharge = false;
+  setState(e, choice);
+}
+
+/** Changement de phase : invulnérable un instant, projectiles effacés, renforts, orbe de soin. */
+function enterPhase(game, e, d) {
+  e.phase++;
+  e.tele = null;
+  e.invuln = d.transition;
+  for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
+  for (const h of game.hazards) if (h.hitsPlayer) h.done = true;
+  for (const kind of d.reinforcements[e.phase] ?? []) {
+    const pt = findSpawnPoint(game, 14, 180, { x: e.x, y: e.y, minR: e.r + 60, maxR: e.r + 260 });
+    if (pt) queueSpawn(game, kind, pt.x, pt.y, { summoned: true });
+  }
+  spawnPickup(game, 'heal', e.x, e.y + e.r + 30, d.phaseHealOrb);
+  emit(game, 'bossPhase', { id: e.id, x: e.x, y: e.y, phase: e.phase });
+  setState(e, 'roar');
+  e.restFor = d.transition;
+}
+
+function updateBoss(game, e, dt) {
+  const d = bossDef(game, e);
+  const model = modelOf(e);
+  e.invuln = Math.max(0, (e.invuln ?? 0) - dt);
+  const threshold = e.phase === 1 ? d.phase2At : e.phase === 2 ? d.phase3At : -1;
+  if (threshold > 0 && e.hp <= e.maxHp * threshold) {
+    enterPhase(game, e, d);
+    return;
+  }
+  const speed = d.speed * d.speedMultByPhase[e.phase - 1];
+  switch (e.state) {
+    case 'roar':
+      if (e.stateTime >= e.restFor) {
+        e.restFor = undefined;
+        nextPattern(game, e);
+      }
+      break;
+    case 'chase':
+    case 'rest': {
+      if (e.restFor === undefined) e.restFor = randRange(game.rng.ai, d.restBetween[0], d.restBetween[1]) * d.restMultByPhase[e.phase - 1];
+      if (model.rest) model.rest(game, e, d, dt, speed);
+      else {
+        const tp = toPlayer(game, e);
+        if (tp.d > 160) {
+          e.vx = tp.dx * speed;
+          e.vy = tp.dy * speed;
+        }
+      }
+      if (e.stateTime >= e.restFor) {
+        e.restFor = undefined;
+        nextPattern(game, e);
+      }
+      break;
+    }
+    case 'stunned':
+      break;
+    default: {
+      const fn = model.patterns[e.state];
+      if (fn) fn(game, e, d, dt, speed);
+      else setState(e, 'rest');
+    }
+  }
+}
+
+return { BOSS_MODELS, updateBoss };
 })();
 // ---- src/sim/nav.mjs
 __mod["src/sim/nav.mjs"] = (() => {
@@ -2405,6 +2654,105 @@ function navDirection(game, x, y, out) {
 
 return { buildNav, updateNav, navDirection };
 })();
+// ---- src/sim/ai_common.mjs
+__mod["src/sim/ai_common.mjs"] = (() => {
+// Briques d'IA partagées par tous les archétypes d'ennemis (module feuille : n'importe pas
+// enemies.mjs, pour que chaque archétype vive dans son propre fichier sans import circulaire).
+const { emit } = __mod["src/sim/state.mjs"];
+const { lineOfSight } = __mod["src/sim/physics.mjs"];
+const { navDirection } = __mod["src/sim/nav.mjs"];
+
+// Archétypes qui prennent un JETON D'ATTAQUE de mêlée (au plus combat.maxAttackers à la fois).
+const MELEE_KINDS = new Set(['imp', 'brute', 'charger']);
+// Archétypes qui prennent un jeton de TIR (au plus combat.maxShooters à la fois).
+const SHOOTER_KINDS = new Set(['archer']);
+
+function speedOf(game, e, def) {
+  let s = def.speed;
+  if (e.eliteMod === 'rapide') s *= game.tuning.elite.mods.rapide.speedMult;
+  if (e.chill > 0) s *= e.chillMult;
+  return s;
+}
+
+function windupOf(game, e, base) {
+  return e.eliteMod === 'rapide' ? base * game.tuning.elite.mods.rapide.windupMult : base;
+}
+
+function activeAttackers(game) {
+  let n = 0;
+  for (const o of game.enemies) {
+    if (!o.dead && MELEE_KINDS.has(o.kind) && (o.state === 'windup' || o.state === 'strike' || o.state === 'charge')) n++;
+  }
+  return n;
+}
+
+function activeShooters(game) {
+  let n = 0;
+  for (const o of game.enemies) if (!o.dead && SHOOTER_KINDS.has(o.kind) && o.state === 'windup') n++;
+  return n;
+}
+
+function setState(e, s) {
+  e.state = s;
+  e.stateTime = 0;
+}
+
+function toPlayer(game, e) {
+  const p = game.player;
+  const dx = p.x - e.x;
+  const dy = p.y - e.y;
+  const d = Math.max(1e-6, Math.sqrt(dx * dx + dy * dy));
+  return { dx: dx / d, dy: dy / d, d };
+}
+
+const navOut = { x: 0, y: 0 };
+
+/** Se dirige vers (x, y) ; sans ligne de vue, suit le champ de navigation (contourne). */
+function steer(game, e, x, y, speed) {
+  const dx = x - e.x;
+  const dy = y - e.y;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  if (d < 4) return;
+  if (!lineOfSight(game.room, e.x, e.y, x, y) && navDirection(game, e.x, e.y, navOut)) {
+    e.vx = navOut.x * speed;
+    e.vy = navOut.y * speed;
+    return;
+  }
+  e.vx = (dx / d) * speed;
+  e.vy = (dy / d) * speed;
+}
+
+/** Fait suivre la direction visée jusqu'au verrouillage, puis la fige (équité). */
+function trackUntilLock(game, e, lockFraction, windup) {
+  if (e.stateTime < windup * lockFraction) {
+    const tp = toPlayer(game, e);
+    e.dirX = tp.dx;
+    e.dirY = tp.dy;
+  }
+}
+
+/** Nombre d'ennemis vivants d'un archétype (plafonds d'invocation, etc.). */
+function countAlive(game, kind) {
+  let n = 0;
+  for (const o of game.enemies) if (!o.dead && o.kind === kind) n++;
+  return n;
+}
+
+
+
+return { MELEE_KINDS, SHOOTER_KINDS, speedOf, windupOf, activeAttackers, activeShooters, setState, toPlayer, steer, trackUntilLock, countAlive, emit };
+})();
+// ---- src/sim/foes.mjs
+__mod["src/sim/foes.mjs"] = (() => {
+// Registre des archétypes d'ennemis AJOUTÉS hors de enemies.mjs (un fichier par archétype :
+// src/sim/foe_<archétype>.mjs — src/sim reste À PLAT, un test protégé lit ce dossier sans récursion).
+// Chaque entrée : { kind, ai(game, e, def, dt), melee?: bool, shooter?: bool }.
+// Les données (PV, vitesses, télégraphes…) vivent dans tuning.enemies[kind] (config.mjs).
+
+const EXTRA_FOES = [];
+
+return { EXTRA_FOES };
+})();
 // ---- src/sim/enemies.mjs
 __mod["src/sim/enemies.mjs"] = (() => {
 // Ennemis : création, IA par archétype, statuts, knockback, collisions.
@@ -2420,9 +2768,9 @@ const { damageEnemy, damagePlayer, spawnHazard } = __mod["src/sim/combat.mjs"];
 const { spawnProjectile } = __mod["src/sim/projectiles.mjs"];
 const { floorScaling } = __mod["src/sim/floors.mjs"];
 const { updateBoss } = __mod["src/sim/boss.mjs"];
-const { navDirection } = __mod["src/sim/nav.mjs"];
+const { MELEE_KINDS, SHOOTER_KINDS, speedOf, windupOf, activeAttackers, activeShooters, setState, toPlayer, steer, trackUntilLock } = __mod["src/sim/ai_common.mjs"];
+const { EXTRA_FOES } = __mod["src/sim/foes.mjs"];
 
-const MELEE_KINDS = new Set(['imp', 'brute', 'charger']);
 const BURN_TICK = 0.25;
 
 function createEnemy(game, kind, x, y, opts = {}) {
@@ -2473,6 +2821,7 @@ function createEnemy(game, kind, x, y, opts = {}) {
     atkId: 0,
     summoned: !!opts.summoned,
     lastHitAt: -1,
+    freeze: 0, // gel d'impact LOCAL restant (D8) : l'ennemi touché se fige, le reste continue
     // État propre au boss (patterns), ignoré par les autres.
     phase: 1,
     pattern: null,
@@ -2484,41 +2833,21 @@ function createEnemy(game, kind, x, y, opts = {}) {
   return e;
 }
 
-function speedOf(game, e, def) {
-  let s = def.speed;
-  if (e.eliteMod === 'rapide') s *= game.tuning.elite.mods.rapide.speedMult;
-  if (e.chill > 0) s *= e.chillMult;
-  return s;
-}
 
-function windupOf(game, e, base) {
-  return e.eliteMod === 'rapide' ? base * game.tuning.elite.mods.rapide.windupMult : base;
-}
 
-function activeAttackers(game) {
-  let n = 0;
-  for (const o of game.enemies) {
-    if (!o.dead && MELEE_KINDS.has(o.kind) && (o.state === 'windup' || o.state === 'strike' || o.state === 'charge')) n++;
-  }
-  return n;
-}
 
-function activeShooters(game) {
-  let n = 0;
-  for (const o of game.enemies) if (!o.dead && o.kind === 'archer' && o.state === 'windup') n++;
-  return n;
-}
 
-function setState(e, s) {
-  e.state = s;
-  e.stateTime = 0;
-}
 
 function updateEnemies(game, dt) {
   const t = game.tuning;
   const p = game.player;
   for (const e of game.enemies) {
     if (e.dead) continue;
+    if (e.freeze > 0) {
+      // Gel LOCAL : figé dans la pose d'impact ; son recul part au dégel (élan conservé).
+      e.freeze = Math.max(0, e.freeze - dt);
+      continue;
+    }
     e.stateTime += dt;
     e.flash = Math.max(0, e.flash - dt);
     if (e.spawnT > 0) {
@@ -2633,39 +2962,8 @@ function separate(game) {
   }
 }
 
-function toPlayer(game, e) {
-  const p = game.player;
-  const dx = p.x - e.x;
-  const dy = p.y - e.y;
-  const d = Math.max(1e-6, Math.sqrt(dx * dx + dy * dy));
-  return { dx: dx / d, dy: dy / d, d };
-}
 
-const navOut = { x: 0, y: 0 };
 
-/** Se dirige vers (x, y) ; sans ligne de vue, suit le champ de navigation (contourne). */
-function steer(game, e, x, y, speed) {
-  const dx = x - e.x;
-  const dy = y - e.y;
-  const d = Math.sqrt(dx * dx + dy * dy);
-  if (d < 4) return;
-  if (!lineOfSight(game.room, e.x, e.y, x, y) && navDirection(game, e.x, e.y, navOut)) {
-    e.vx = navOut.x * speed;
-    e.vy = navOut.y * speed;
-    return;
-  }
-  e.vx = (dx / d) * speed;
-  e.vy = (dy / d) * speed;
-}
-
-/** Fait suivre la direction visée jusqu'au verrouillage, puis la fige (équité). */
-function trackUntilLock(game, e, lockFraction, windup) {
-  if (e.stateTime < windup * lockFraction) {
-    const tp = toPlayer(game, e);
-    e.dirX = tp.dx;
-    e.dirY = tp.dy;
-  }
-}
 
 const AI = {
   imp(game, e, def, dt) {
@@ -2899,13 +3197,22 @@ const AI = {
   },
 };
 
+// Archétypes ajoutés (un fichier chacun : src/sim/foe_<archétype>.mjs) : branchés dans la même table.
+for (const f of EXTRA_FOES) {
+  AI[f.kind] = f.ai;
+  if (f.melee) MELEE_KINDS.add(f.kind);
+  if (f.shooter) SHOOTER_KINDS.add(f.kind);
+}
+
+
+
 function aliveEnemies(game) {
   let n = 0;
   for (const e of game.enemies) if (!e.dead) n++;
   return n;
 }
 
-return { createEnemy, windupOf, updateEnemies, aliveEnemies };
+return { createEnemy, updateEnemies, aliveEnemies, windupOf };
 })();
 // ---- src/sim/room.mjs
 __mod["src/sim/room.mjs"] = (() => {
@@ -3020,15 +3327,18 @@ function refillSandboxWaves(game) {
 }
 
 function planWaves(game, info, elite) {
-  const scale = floorScaling(game.tuning, info.floor);
+  const t = game.tuning;
+  const scale = floorScaling(t, info.floor);
   const idx = info.indexInSection;
-  // Premier étage d'une section : plus court ; la densité monte vers le boss.
-  const waveCount = idx <= 1 ? 2 : 3;
-  const budget = (5 + 1.4 * idx) * scale.density;
-  const pool = ROSTER.filter((r) => r.minIndex <= Math.max(idx, info.section > 1 ? 3 : 1));
+  // Plan de section : étages courts au début, assauts avant le Gardien (tuning.section.waves).
+  const waveCount = t.section.waves[Math.min(idx, t.section.waves.length) - 1] ?? 2;
+  const enc = t.encounter;
+  const budget = (enc.baseBudget + enc.perIndex * idx) * scale.density;
+  // Les archétypes entrent progressivement dans la 1re section ; ensuite tous sont là.
+  const pool = ROSTER.filter((r) => r.minIndex <= (info.section > 1 ? t.floors.sectionLength : idx) && t.enemies[r.kind]);
   const waves = [];
   for (let w = 0; w < waveCount; w++) {
-    let b = budget * (w === waveCount - 1 ? 1.2 : 1);
+    let b = budget * (w === waveCount - 1 ? enc.lastWaveMult : 1);
     const wave = [];
     let guard = 0;
     while (b >= 1 && guard++ < 40) {
@@ -3043,7 +3353,7 @@ function planWaves(game, info, elite) {
     // Salle d'élite : un champion (modificateur façon Diablo) dans la dernière vague.
     const kinds = ['brute', 'charger', 'imp', 'archer'];
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, kinds), elite: pick(game.rng.gen, ELITE_MODS) });
-  } else if (info.floor > 2 && rand(game.rng.gen) < 0.15) {
+  } else if (info.floor > 2 && rand(game.rng.gen) < enc.strayEliteChance) {
     waves[waves.length - 1].push({ kind: pick(game.rng.gen, ['imp', 'archer']), elite: pick(game.rng.gen, ELITE_MODS) });
   }
   return waves;
@@ -3062,9 +3372,10 @@ function launchNextWave(game) {
   return true;
 }
 
-function spawnBoss(game) {
+/** Gardien de la section (modèle tiré de la rotation, floors.guardianFor). */
+function spawnBoss(game, kind = 'gardien') {
   const room = game.room;
-  createEnemy(game, 'gardien', room.w / 2, room.h * 0.35, { boss: true, spawnT: 1.2 });
+  createEnemy(game, kind, room.w / 2, room.h * 0.35, { boss: true, spawnT: 1.2 });
 }
 
 function updateSpawns(game, dt) {
@@ -3276,6 +3587,55 @@ function randomFamily(game) {
 
 return { FAMILIES, RARITIES, BOONS, DUOS, boonDef, boonValue, boonText, rollBoonOffer, addBoon, randomFamily };
 })();
+// ---- src/sim/loadout.mjs
+__mod["src/sim/loadout.mjs"] = (() => {
+// Résolution du KIT équipé : classe + arme portée + compétence + gadget + Super.
+//
+// Les blocs actifs de la copie de tuning de la partie deviennent des RÉFÉRENCES vers l'entrée
+// choisie (tuning.combo === tuning.weapons[type].combo, etc.). Le reste de la simulation lit
+// toujours tuning.combo / tuning.skill / tuning.gadget / tuning.super, sans connaître les classes.
+
+const DEFAULT_WEAPON = 'lame';
+
+function classOf(game) {
+  const t = game.tuning;
+  return t.classes[game.meta.loadout?.classId] ?? t.classes[Object.keys(t.classes)[0]];
+}
+
+function classIdOf(game) {
+  const t = game.tuning;
+  const id = game.meta.loadout?.classId;
+  return t.classes[id] ? id : Object.keys(t.classes)[0];
+}
+
+/** Type d'arme porté : celui de l'objet d'arme équipé, sinon l'arme de départ de la classe. */
+function weaponTypeOf(game) {
+  const t = game.tuning;
+  const wt = game.run.items.arme?.weaponType;
+  if (wt && t.weapons[wt]) return wt;
+  return classOf(game).weapons[0] ?? DEFAULT_WEAPON;
+}
+
+/** (Re)branche le kit actif. Appelé à la création de la partie et à chaque changement d'arme. */
+function resolveKit(game) {
+  const t = game.tuning;
+  const c = classOf(game);
+  const l = game.meta.loadout ?? {};
+  const w = t.weapons[weaponTypeOf(game)];
+  t.combo = w.combo;
+  t.dashStrike = w.dashStrike;
+  t.weapon = w;
+  const skillId = c.skills.includes(l.skillId) && t.skills[l.skillId] ? l.skillId : c.skills[0];
+  const gadgetId = c.gadgets.includes(l.gadgetId) && t.gadgets[l.gadgetId] ? l.gadgetId : c.gadgets[0];
+  t.skill = t.skills[skillId];
+  t.gadget = t.gadgets[gadgetId];
+  t.super = t.supers[c.super] ?? t.super;
+  game.kit = { classId: classIdOf(game), weaponType: weaponTypeOf(game), skillId, gadgetId, superId: c.super };
+  return game.kit;
+}
+
+return { classOf, classIdOf, weaponTypeOf, resolveKit };
+})();
 // ---- src/sim/loot.mjs
 __mod["src/sim/loot.mjs"] = (() => {
 // Butin façon Diablo : raretés colorées, préfixes/suffixes, objets légendaires à pouvoir.
@@ -3283,6 +3643,7 @@ __mod["src/sim/loot.mjs"] = (() => {
 // mort (progression persistante) ; les bénédictions, elles, sont perdues.
 const { rand, randInt, pick, shuffle, weightedPick } = __mod["src/core/rng.mjs"];
 const { newId } = __mod["src/sim/state.mjs"];
+const { classOf, weaponTypeOf } = __mod["src/sim/loadout.mjs"];
 
 // baseMult : multiplicateur de la valeur de base (dégâts d'arme, PV d'armure) par rareté.
 const ITEM_RARITIES = [
@@ -3368,8 +3729,20 @@ function rollRarity(game, bonus = 1) {
   return r.id;
 }
 
-function generateItem(game, { slot, rarity, floor } = {}) {
+/**
+ * Type d'arme d'un objet trouvé : une arme que la classe jouée sait manier ET dont le type est
+ * débloqué en Ville. Une seule possibilité : aucun tirage (la graine reste stable).
+ */
+function rollWeaponType(game) {
+  const unlocked = game.meta.unlocked?.weapons ?? [];
+  const pool = classOf(game).weapons.filter((w) => unlocked.includes(w) && game.tuning.weapons[w]);
+  if (pool.length === 0) return weaponTypeOf(game);
+  return pool.length === 1 ? pool[0] : pick(game.rng.gen, pool);
+}
+
+function generateItem(game, { slot, rarity, floor, weaponType } = {}) {
   const s = slot ?? pick(game.rng.gen, SLOTS);
+  const wt = s === 'arme' ? weaponType ?? rollWeaponType(game) : null;
   const rar = rarity ?? rollRarity(game);
   const rdef = ITEM_RARITIES.find((r) => r.id === rar);
   const lvl = floor ?? game.run.floor;
@@ -3380,7 +3753,7 @@ function generateItem(game, { slot, rarity, floor } = {}) {
     const value = roundStat(format === 'flat' ? raw * scale : raw * Math.sqrt(scale), format);
     return { stat, value, prefix, suffix, format };
   });
-  const base = pick(game.rng.gen, BASES[s]);
+  const base = pick(game.rng.gen, wt ? game.tuning.weapons[wt].bases ?? BASES.arme : BASES[s]);
   let name = base;
   if (affixes[0]) name = `${base} ${affixes[0].prefix}`;
   if (affixes[1]) name = `${name} ${affixes[1].suffix}`;
@@ -3389,7 +3762,8 @@ function generateItem(game, { slot, rarity, floor } = {}) {
     power = pick(game.rng.gen, LEGENDARY_POWERS).id;
     name = `${base} ${LEGENDARY_POWERS.find((p) => p.id === power).name}`;
   }
-  const item = { id: newId(game), slot: s, rarity: rar, name, level: lvl, affixes, power, base: baseValues(game, s, lvl, rdef.baseMult) };
+  const item = { id: newId(game), slot: s, rarity: rar, name, level: lvl, affixes, power, base: baseValues(game, s, lvl, rdef.baseMult * (wt ? game.tuning.weapons[wt].baseMult ?? 1 : 1)) };
+  if (wt) item.weaponType = wt;
   item.score = itemScore(item);
   return item;
 }
@@ -3402,10 +3776,12 @@ function baseValues(game, slot, level, mult) {
   return {};
 }
 
-/** Équipement de départ : arme et armure communes, sans affixe. */
+/** Équipement de départ : arme (celle de la classe) et armure communes, sans affixe. */
 function starterItems(game) {
+  const wt = classOf(game).weapons[0];
+  const w = game.tuning.weapons[wt];
   return {
-    arme: { id: newId(game), slot: 'arme', rarity: 'commun', name: 'Épée rouillée', level: 1, affixes: [], power: null, base: { damage: game.tuning.weaponBase }, score: 0 },
+    arme: { id: newId(game), slot: 'arme', weaponType: wt, rarity: 'commun', name: w.starterName ?? w.name, level: 1, affixes: [], power: null, base: { damage: game.tuning.weaponBase * (w.baseMult ?? 1) }, score: 0 },
     armure: { id: newId(game), slot: 'armure', rarity: 'commun', name: 'Haillons de pèlerin', level: 1, affixes: [], power: null, base: { hp: game.tuning.armorBase }, score: 0 },
     talisman: null,
   };
@@ -3459,6 +3835,7 @@ __mod["src/sim/stats.mjs"] = (() => {
 const { baseStats } = __mod["src/sim/state.mjs"];
 const { boonDef, boonValue } = __mod["src/sim/boons.mjs"];
 const { LEGENDARY_POWERS } = __mod["src/sim/loot.mjs"];
+const { resolveKit, classOf } = __mod["src/sim/loadout.mjs"];
 
 const LEVEL_STEP = 0.5; // chaque niveau supplémentaire d'une bénédiction : +50 % de sa valeur
 
@@ -3477,6 +3854,14 @@ function recomputeStats(game) {
   const procs = [];
 
   const t = game.tuning;
+  // Kit équipé (classe, arme portée, compétence, gadget, Super) : l'arme peut avoir changé.
+  resolveKit(game);
+  // PERMANENT : bonus de la classe et améliorations du Sanctuaire (profil).
+  for (const [k, v] of Object.entries(classOf(game).stats ?? {})) addStat(st, k, v);
+  for (const [id, lv] of Object.entries(game.meta.upgrades ?? {})) {
+    const up = t.town?.upgrades?.[id];
+    if (up && lv > 0) addStat(st, up.stat, up.perLevel * lv);
+  }
   st.weaponDamage = run.items.arme?.base?.damage ?? t.weaponBase;
   st.armorHp = run.items.armure ? run.items.armure.base?.hp ?? t.armorBase : 0;
   for (const item of Object.values(run.items)) {
@@ -3532,16 +3917,290 @@ function recomputeStats(game) {
 
 return { recomputeStats };
 })();
+// ---- src/sim/profile.mjs
+__mod["src/sim/profile.mjs"] = (() => {
+// PROFIL PERMANENT — tout ce que la mort ne reprend JAMAIS.
+//
+//   PERMANENT (ce fichier)            TEMPORAIRE (game.run, remis à zéro à la mort)
+//   classe, armes, équipement,        bénédictions (bonus, pouvoirs, améliorations,
+//   coffre, compétences, gadgets,     synergies de build), PV, charges, étage courant
+//   déblocages de la Ville, Âmes,
+//   checkpoints / points de TP
+//
+// L'or est la bourse du héros : elle le suit d'un run à l'autre, mais Charon prélève sa part
+// à chaque mort (economy.deathGoldKeep). Les Âmes, elles, ne se perdent jamais.
+//
+// Fonctions PURES sur des objets JSON (aucun DOM) : la Ville (src/ui/town.mjs) appelle ces
+// opérations, main.mjs sauvegarde le résultat. Chaque opération rend { ok, reason? }.
+
+const PROFILE_SCHEMA = 3;
+const STASH_MAX = 24;
+const EQUIP_SLOTS = ['arme', 'armure', 'talisman'];
+
+/** Profil d'un nouveau joueur. `tuning` : pour connaître le kit de départ. */
+function createProfile(tuning) {
+  const start = startingKit(tuning);
+  return {
+    schema: PROFILE_SCHEMA,
+    checkpoints: [1], // étages où l'on peut (re)partir : 1, puis l'étage qui suit chaque Gardien
+    bestFloor: 1,
+    souls: 0, // Âmes : monnaie permanente de la Ville
+    gold: 0, // bourse (taxée à la mort)
+    unlocked: {
+      classes: [start.classId],
+      weapons: [start.weaponType],
+      skills: [start.skillId],
+      gadgets: [start.gadgetId],
+    },
+    upgrades: {}, // id du Sanctuaire -> niveau
+    loadout: { classId: start.classId, skillId: start.skillId, gadgetId: start.gadgetId },
+    equipment: { arme: null, armure: null, talisman: null }, // rempli par starterItems à la 1re partie
+    stash: [],
+    itemSeq: 1,
+    guardians: {}, // modèle de Gardien -> victoires
+    stats: { runs: 0, deaths: 0, kills: 0, guardianKills: 0 },
+  };
+}
+
+function startingKit(tuning) {
+  const classId = Object.keys(tuning.classes)[0];
+  const c = tuning.classes[classId];
+  return { classId, weaponType: c.weapons[0], skillId: c.skills[0], gadgetId: c.gadgets[0] };
+}
+
+const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+const intIn = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+const idList = (v, known) => (Array.isArray(v) ? [...new Set(v.filter((id) => typeof id === 'string' && known.includes(id)))] : []);
+
+/** Objet d'équipement lisible (forme minimale ; la forme évolue pendant le prototype). */
+function isItem(it) {
+  return isObj(it) && EQUIP_SLOTS.includes(it.slot) && Array.isArray(it.affixes) && typeof it.name === 'string' && isObj(it.base);
+}
+
+/**
+ * Profil validé champ par champ : une sauvegarde ancienne (schéma 1-2 : {checkpoints,
+ * bestFloor, items, snapshots}) ou corrompue retombe sur des défauts au lieu de bloquer.
+ * Les « instantanés de build » des anciennes versions sont abandonnés : le temporaire ne
+ * survit plus à la mort.
+ */
+function sanitizeProfile(raw, tuning) {
+  const def = createProfile(tuning);
+  if (!isObj(raw)) return def;
+  const total = tuning.floors.total;
+  const out = def;
+  const cps = Array.isArray(raw.checkpoints) ? raw.checkpoints.filter((f) => intIn(f, 1, total)) : [];
+  out.checkpoints = [...new Set([1, ...cps])].sort((a, b) => a - b);
+  out.bestFloor = intIn(raw.bestFloor, 1, total) ? raw.bestFloor : 1;
+  out.souls = Number.isFinite(raw.souls) && raw.souls >= 0 ? Math.floor(raw.souls) : 0;
+  out.gold = Number.isFinite(raw.gold) && raw.gold >= 0 ? Math.floor(raw.gold) : 0;
+  const u = isObj(raw.unlocked) ? raw.unlocked : {};
+  const known = {
+    classes: Object.keys(tuning.classes),
+    weapons: Object.keys(tuning.weapons),
+    skills: Object.keys(tuning.skills),
+    gadgets: Object.keys(tuning.gadgets),
+  };
+  for (const k of Object.keys(known)) out.unlocked[k] = [...new Set([...def.unlocked[k], ...idList(u[k], known[k])])];
+  if (isObj(raw.upgrades)) {
+    for (const [id, lv] of Object.entries(raw.upgrades)) {
+      const up = tuning.town?.upgrades?.[id];
+      if (up && intIn(lv, 0, up.max)) out.upgrades[id] = lv;
+    }
+  }
+  if (isObj(raw.loadout)) {
+    const l = raw.loadout;
+    if (out.unlocked.classes.includes(l.classId)) out.loadout.classId = l.classId;
+    if (out.unlocked.skills.includes(l.skillId)) out.loadout.skillId = l.skillId;
+    if (out.unlocked.gadgets.includes(l.gadgetId)) out.loadout.gadgetId = l.gadgetId;
+  }
+  // Ancien schéma : l'équipement vivait dans `items`.
+  const eq = isObj(raw.equipment) ? raw.equipment : isObj(raw.items) ? raw.items : {};
+  for (const s of EQUIP_SLOTS) out.equipment[s] = isItem(eq[s]) && eq[s].slot === s ? eq[s] : null;
+  out.stash = Array.isArray(raw.stash) ? raw.stash.filter(isItem).slice(0, STASH_MAX) : [];
+  out.itemSeq = intIn(raw.itemSeq, 1, 1e9) ? raw.itemSeq : 1;
+  for (const it of [...Object.values(out.equipment), ...out.stash]) if (it) ensureUid(out, it);
+  if (isObj(raw.guardians)) {
+    for (const [k, n] of Object.entries(raw.guardians)) if (tuning.boss[k] && intIn(n, 0, 1e6)) out.guardians[k] = n;
+  }
+  if (isObj(raw.stats)) for (const k of Object.keys(out.stats)) if (intIn(raw.stats[k], 0, 1e9)) out.stats[k] = raw.stats[k];
+  fixLoadout(out, tuning);
+  return out;
+}
+
+/** Identifiant stable d'un objet dans le profil (les `id` de partie se recyclent). */
+function ensureUid(profile, item) {
+  if (!item.uid) item.uid = `i${profile.itemSeq++}`;
+  return item.uid;
+}
+
+/** La compétence, le gadget et l'arme équipés doivent appartenir à la classe choisie. */
+function fixLoadout(profile, tuning) {
+  const c = tuning.classes[profile.loadout.classId] ?? tuning.classes[Object.keys(tuning.classes)[0]];
+  const l = profile.loadout;
+  const firstOwned = (list, owned) => list.find((id) => owned.includes(id)) ?? list[0];
+  if (!c.skills.includes(l.skillId) || !profile.unlocked.skills.includes(l.skillId)) l.skillId = firstOwned(c.skills, profile.unlocked.skills);
+  if (!c.gadgets.includes(l.gadgetId) || !profile.unlocked.gadgets.includes(l.gadgetId)) l.gadgetId = firstOwned(c.gadgets, profile.unlocked.gadgets);
+  const w = profile.equipment.arme;
+  if (w && !c.weapons.includes(w.weaponType ?? 'lame')) {
+    // Arme d'une autre classe : elle retourne au coffre, la meilleure arme compatible la remplace.
+    stashPush(profile, w);
+    profile.equipment.arme = takeBestFromStash(profile, 'arme', (it) => c.weapons.includes(it.weaponType ?? 'lame'));
+  }
+}
+
+function stashPush(profile, item) {
+  ensureUid(profile, item);
+  profile.stash.push(item);
+  // Coffre plein : le moins bon part (jamais l'objet qu'on vient d'y ranger).
+  while (profile.stash.length > STASH_MAX) {
+    let worst = 0;
+    for (let i = 1; i < profile.stash.length - 1; i++) if ((profile.stash[i].score ?? 0) < (profile.stash[worst].score ?? 0)) worst = i;
+    profile.stash.splice(worst, 1);
+  }
+}
+
+function takeBestFromStash(profile, slot, ok = () => true) {
+  let best = -1;
+  for (let i = 0; i < profile.stash.length; i++) {
+    const it = profile.stash[i];
+    if (it.slot !== slot || !ok(it)) continue;
+    if (best < 0 || (it.score ?? 0) > (profile.stash[best].score ?? 0)) best = i;
+  }
+  return best < 0 ? null : profile.stash.splice(best, 1)[0];
+}
+
+// ---------------------------------------------------------------- opérations de la Ville
+
+/** Prix de déblocage d'une entrée de contenu (0 = possédée d'office). */
+function unlockCost(tuning, kind, id) {
+  const table = { classes: tuning.classes, weapons: tuning.weapons, skills: tuning.skills, gadgets: tuning.gadgets }[kind];
+  return table?.[id]?.cost ?? 0;
+}
+
+function unlock(profile, tuning, kind, id) {
+  const table = { classes: tuning.classes, weapons: tuning.weapons, skills: tuning.skills, gadgets: tuning.gadgets }[kind];
+  if (!table?.[id]) return { ok: false, reason: 'inconnu' };
+  if (profile.unlocked[kind].includes(id)) return { ok: false, reason: 'déjà débloqué' };
+  const cost = unlockCost(tuning, kind, id);
+  if (profile.souls < cost) return { ok: false, reason: 'Âmes insuffisantes' };
+  profile.souls -= cost;
+  profile.unlocked[kind].push(id);
+  if (kind === 'weapons') {
+    // Une arme débloquée est forgée aussitôt en exemplaire commun, rangé au coffre.
+    stashPush(profile, starterWeapon(tuning, id));
+  }
+  return { ok: true };
+}
+
+/** Exemplaire commun d'un type d'arme (sans affixe), pour la Forge et le départ. */
+function starterWeapon(tuning, weaponType) {
+  const w = tuning.weapons[weaponType];
+  return {
+    slot: 'arme', weaponType, rarity: 'commun', name: w.starterName ?? w.name, level: 1,
+    affixes: [], power: null, base: { damage: tuning.weaponBase * (w.baseMult ?? 1) }, score: 0,
+  };
+}
+
+function upgradeCost(tuning, id, level) {
+  const up = tuning.town?.upgrades?.[id];
+  if (!up || level >= up.max) return null;
+  return up.costs[level] ?? null;
+}
+
+function buyUpgrade(profile, tuning, id) {
+  const lv = profile.upgrades[id] ?? 0;
+  const cost = upgradeCost(tuning, id, lv);
+  if (cost === null) return { ok: false, reason: 'niveau maximal' };
+  if (profile.souls < cost) return { ok: false, reason: 'Âmes insuffisantes' };
+  profile.souls -= cost;
+  profile.upgrades[id] = lv + 1;
+  return { ok: true };
+}
+
+function selectClass(profile, tuning, classId) {
+  if (!profile.unlocked.classes.includes(classId)) return { ok: false, reason: 'classe verrouillée' };
+  profile.loadout.classId = classId;
+  const c = tuning.classes[classId];
+  if (!c.weapons.includes(profile.equipment.arme?.weaponType ?? 'lame')) {
+    if (profile.equipment.arme) stashPush(profile, profile.equipment.arme);
+    profile.equipment.arme = takeBestFromStash(profile, 'arme', (it) => c.weapons.includes(it.weaponType ?? 'lame'));
+    // Aucune arme de la classe au coffre : on forge l'arme de départ (toujours disponible).
+    if (!profile.equipment.arme) {
+      const wt = c.weapons.find((w) => profile.unlocked.weapons.includes(w)) ?? c.weapons[0];
+      if (!profile.unlocked.weapons.includes(wt)) profile.unlocked.weapons.push(wt);
+      profile.equipment.arme = starterWeapon(tuning, wt);
+      ensureUid(profile, profile.equipment.arme);
+    }
+  }
+  fixLoadout(profile, tuning);
+  return { ok: true };
+}
+
+function selectSkill(profile, tuning, skillId) {
+  const c = tuning.classes[profile.loadout.classId];
+  if (!profile.unlocked.skills.includes(skillId) || !c.skills.includes(skillId)) return { ok: false, reason: 'indisponible' };
+  profile.loadout.skillId = skillId;
+  return { ok: true };
+}
+
+function selectGadget(profile, tuning, gadgetId) {
+  const c = tuning.classes[profile.loadout.classId];
+  if (!profile.unlocked.gadgets.includes(gadgetId) || !c.gadgets.includes(gadgetId)) return { ok: false, reason: 'indisponible' };
+  profile.loadout.gadgetId = gadgetId;
+  return { ok: true };
+}
+
+/** Équipe un objet du coffre ; l'objet porté prend sa place au coffre. */
+function equipFromStash(profile, tuning, uid) {
+  const i = profile.stash.findIndex((it) => it.uid === uid);
+  if (i < 0) return { ok: false, reason: 'objet introuvable' };
+  const item = profile.stash[i];
+  if (item.slot === 'arme') {
+    const c = tuning.classes[profile.loadout.classId];
+    if (!c.weapons.includes(item.weaponType ?? 'lame')) return { ok: false, reason: `arme réservée à une autre classe` };
+  }
+  profile.stash.splice(i, 1);
+  const cur = profile.equipment[item.slot];
+  profile.equipment[item.slot] = item;
+  if (cur) stashPush(profile, cur);
+  return { ok: true };
+}
+
+/** Recycle un objet du coffre en Âmes. */
+function salvageFromStash(profile, tuning, uid) {
+  const i = profile.stash.findIndex((it) => it.uid === uid);
+  if (i < 0) return { ok: false, reason: 'objet introuvable' };
+  const [item] = profile.stash.splice(i, 1);
+  profile.souls += salvageSouls(tuning, item);
+  return { ok: true };
+}
+
+function salvageSouls(tuning, item) {
+  const table = tuning.town?.salvageSouls ?? { commun: 1, magique: 3, rare: 8, legendaire: 20 };
+  return table[item.rarity] ?? 1;
+}
+
+/** Un objet trouvé en donjon qu'on ne porte pas file au coffre (il n'est jamais perdu). */
+function stashLoot(profile, item) {
+  stashPush(profile, item);
+}
+
+return { PROFILE_SCHEMA, STASH_MAX, EQUIP_SLOTS, createProfile, isItem, sanitizeProfile, ensureUid, fixLoadout, unlockCost, unlock, starterWeapon, upgradeCost, buyUpgrade, selectClass, selectSkill, selectGadget, equipFromStash, salvageFromStash, salvageSouls, stashLoot };
+})();
 // ---- src/sim/run.mjs
 __mod["src/sim/run.mjs"] = (() => {
 // Le run : descente étage par étage, portes à récompense, choix (bénédiction, butin,
-// marchand, autel), checkpoints de boss, mort et reprise.
+// marchand, autel), Gardiens, checkpoints et téléportation, mort et reprise.
 //
-// Persistance (recommandation des deux concepteurs ; décision finale : Pierre) :
-//   - un Gardien vaincu prend un INSTANTANÉ du build (bénédictions + or) pour son checkpoint ;
-//   - à la mort, on reprend au checkpoint choisi avec SON instantané : on ne perd que la
-//     section en cours. L'équipement, lui, n'est jamais perdu (progression façon Diablo).
-//   - sans instantané (étage 1) : bénédictions remises à zéro, moitié de l'or.
+// PERMANENT vs TEMPORAIRE (demande de Pierre, V2) :
+//   - TEMPORAIRE (game.run) : bénédictions — bonus, pouvoirs, améliorations, synergies. La mort
+//     les remet TOUJOURS à zéro : aucun instantané de build n'est figé au Gardien.
+//   - PERMANENT (game.meta = profil) : classe, armes, équipement (tout objet trouvé est équipé
+//     ou rangé au coffre, jamais perdu), compétences, déblocages de la Ville, Âmes, checkpoints.
+//   - La bourse (or) suit le héros, mais Charon en prélève une part à chaque mort.
+//   - Mort : retour au DERNIER checkpoint (ou en Ville), le temporaire repart de zéro.
+//   - Gardien vaincu (tous les 18 étages) : checkpoint + point de téléportation ; deux portes,
+//     « section suivante » (le run continue, build conservé) ou « Ville » (fin du run).
 const { rand, pick, weightedPick } = __mod["src/core/rng.mjs"];
 const { emit } = __mod["src/sim/state.mjs"];
 const { floorInfo, checkpointAfterBoss } = __mod["src/sim/floors.mjs"];
@@ -3550,6 +4209,8 @@ const { spawnPickup, healPlayer, forceHitstop } = __mod["src/sim/combat.mjs"];
 const { FAMILIES, rollBoonOffer, addBoon, boonDef, boonText, randomFamily, RARITIES } = __mod["src/sim/boons.mjs"];
 const { generateItem, rollRarity, salvageValue, affixText, baseText, LEGENDARY_POWERS, ITEM_RARITIES, randomShopItem, priceOf, SLOT_NAMES } = __mod["src/sim/loot.mjs"];
 const { recomputeStats } = __mod["src/sim/stats.mjs"];
+const { stashLoot } = __mod["src/sim/profile.mjs"];
+const { guardianFor } = __mod["src/sim/floors.mjs"];
 
 const DOOR_WEIGHTS = [
   { reward: 'boon', weight: 40 },
@@ -3568,6 +4229,7 @@ const REWARD_LABELS = {
   shop: 'Marchand',
   event: 'Autel',
   boss: 'Gardien',
+  town: 'Ville',
 };
 
 const EVENTS = [
@@ -3610,10 +4272,16 @@ function createRun(startFloor) {
     floor: startFloor,
     gold: 0,
     boons: [],
-    items: { arme: null, armure: null, talisman: null },
+    items: { arme: null, armure: null, talisman: null }, // = équipement du PROFIL (game.mjs)
     roomsThisRun: 0,
     startedAt: 0,
+    deathRecap: null, // ce que la dernière mort a pris (bénédictions, or) : écran de mort
   };
+}
+
+/** La bourse du run est celle du profil : on la recopie à chaque moment clé. */
+function syncPurse(game) {
+  game.meta.gold = game.run.gold;
 }
 
 /** Plan de la salle d'un étage à partir de la récompense annoncée sur la porte choisie. */
@@ -3632,6 +4300,7 @@ function enterFloor(game, floor, door) {
   const plan = planFor(info, door);
   game.run.floor = info.floor;
   game.meta.bestFloor = Math.max(game.meta.bestFloor, info.floor);
+  syncPurse(game);
   game.enemies.length = 0;
   game.projectiles.length = 0;
   game.hazards.length = 0;
@@ -3650,17 +4319,15 @@ function enterFloor(game, floor, door) {
   p.state = 'free';
   p.facing = -Math.PI / 2;
   p.buffer.action = null;
-  if (info.indexInSection === 1) {
+  // Gadget : charges rendues toutes les `gadgetRefillEvery` étages de la section.
+  if ((info.indexInSection - 1) % (t.section.gadgetRefillEvery ?? t.floors.sectionLength) === 0) {
     p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
   }
   game.run.roomsThisRun++;
   emit(game, 'floorEnter', { floor: info.floor, circle: info.circle, circleName: info.circleName, section: info.section, indexInSection: info.indexInSection, kind: plan.kind, reward: plan.reward, isBoss: info.isBoss });
 
   if (plan.kind === 'boss') {
-    // Instantané d'entrée : mourir face au Gardien permet de le réessayer aussitôt,
-    // sans rejouer toute la section (sessions courtes).
-    game.run.bossEntry = { floor: info.floor, boons: game.run.boons.map((b) => ({ ...b })), gold: game.run.gold };
-    spawnBoss(game);
+    spawnBoss(game, guardianFor(t, info.section));
   } else if (plan.kind === 'combat' || plan.kind === 'elite') {
     launchNextWave(game);
   } else {
@@ -3688,14 +4355,32 @@ function onRoomClear(game) {
   const { x: cx, y: cy } = rewardSpot(room);
   const plan = room.plan;
 
-  if (room.kind === 'boss') {
-    const cp = checkpointAfterBoss(t, game.run.floor);
-    if (!game.meta.checkpoints.includes(cp)) game.meta.checkpoints.push(cp);
-    game.meta.checkpoints.sort((a, b) => a - b);
-    game.meta.snapshots = game.meta.snapshots ?? {};
-    game.meta.snapshots[cp] = { boons: game.run.boons.map((b) => ({ ...b })), gold: game.run.gold };
+  if (room.kind === 'boss' && game.practice) {
+    // Entraînement : aucune récompense ; une seule porte, retour en Ville.
     healPlayer(game, p.maxHp * 0.5, true);
-    emit(game, 'checkpoint', { floor: cp });
+    emit(game, 'checkpoint', { floor: game.run.floor, practice: true });
+    makeDoors(game, [{ reward: 'town' }]);
+    emit(game, 'doorsOpen', { count: 1 });
+    return;
+  }
+  if (room.kind === 'boss') {
+    // Gardien vaincu : checkpoint + point de téléportation (PERMANENTS), Âmes, soin.
+    // Le build TEMPORAIRE n'est PAS figé : il ne survivra pas à la prochaine mort.
+    const cp = checkpointAfterBoss(t, game.run.floor);
+    const meta = game.meta;
+    if (!meta.checkpoints.includes(cp)) meta.checkpoints.push(cp);
+    meta.checkpoints.sort((a, b) => a - b);
+    const kind = guardianFor(t, game.info.section);
+    meta.guardians[kind] = (meta.guardians[kind] ?? 0) + 1;
+    meta.stats.guardianKills++;
+    const souls = t.progression.souls.guardian + t.progression.souls.guardianPerSection * (game.info.section - 1);
+    if (!game.sandbox) {
+      meta.souls += souls;
+      game.telemetry.soulsEarned += souls;
+    }
+    healPlayer(game, p.maxHp * 0.5, true);
+    syncPurse(game);
+    emit(game, 'checkpoint', { floor: cp, guardian: kind, souls });
     if (game.info.isFinal) {
       game.mode = 'victory';
       emit(game, 'victory', { floor: game.run.floor });
@@ -3730,21 +4415,30 @@ function onRoomClear(game) {
   prepareDoors(game, !room.interact);
 }
 
+/**
+ * Portes de sortie, composées par le PLAN DE SECTION (tuning.section) : Gardien au 18e étage,
+ * portes imposées à mi-section et dans l'antichambre, épreuve d'élite garantie à certains
+ * index, sinon deux récompenses tirées au hasard. Après un Gardien : « section suivante » ou
+ * « Ville » (téléportation, fin du run).
+ */
 function prepareDoors(game, openNow) {
-  const next = floorInfo(game.tuning, game.run.floor + 1);
+  const t = game.tuning;
+  const next = floorInfo(t, game.run.floor + 1);
+  const fixed = t.section.fixedDoors[next.indexInSection];
   let rewards;
   if (next.isBoss) {
     rewards = [{ reward: 'boss' }];
-  } else if (next.indexInSection === 5) {
-    // Antichambre du boss : préparation (marchand ou autel).
-    rewards = [{ reward: 'shop' }, { reward: 'event' }];
+  } else if (fixed) {
+    rewards = fixed.map((reward) => ({ reward }));
   } else {
     const first = weightedPick(game.rng.gen, DOOR_WEIGHTS, (d) => d.weight).reward;
     let second = first;
     let guard = 0;
     while (second === first && guard++ < 20) second = weightedPick(game.rng.gen, DOOR_WEIGHTS, (d) => d.weight).reward;
     rewards = [{ reward: first }, { reward: second }];
+    if (t.section.eliteAt.includes(next.indexInSection) && first !== 'elite' && second !== 'elite') rewards[1] = { reward: 'elite' };
   }
+  if (game.room.kind === 'boss' && !game.sandbox) rewards = [rewards[0], { reward: 'town' }];
   for (const r of rewards) if (r.reward === 'boon') r.family = randomFamily(game);
   makeDoors(game, rewards);
   for (const d of game.room.doors) d.open = openNow;
@@ -3769,7 +4463,7 @@ function openInteract(game) {
     const offers = it.offers ?? (it.offers = rollBoonOffer(game, it.family));
     choice = { kind: 'boon', family: it.family, familyName: FAMILIES[it.family].name, color: FAMILIES[it.family].color, options: offers.map((o) => describeBoon(o)) };
   } else if (it.kind === 'loot') {
-    choice = { kind: 'loot', item: describeItem(it.item), equipped: describeItem(run.items[it.item.slot]), salvage: salvageValue(it.item) };
+    choice = { kind: 'loot', item: describeItem(it.item), equipped: describeItem(run.items[it.item.slot]), salvage: salvageValue(it.item), wieldable: canWield(game, it.item) };
   } else if (it.kind === 'shop') {
     choice = { kind: 'shop', gold: run.gold, offers: it.offers.map((o) => ({ ...o, item: o.item ? describeItem(o.item) : null, equipped: o.item ? describeItem(run.items[o.item.slot]) : null })) };
   } else if (it.kind === 'event') {
@@ -3803,6 +4497,13 @@ function describeBoon(o) {
   };
 }
 
+/** Une arme ne se manie que par sa classe (le coffre la garde pour plus tard). */
+function canWield(game, item) {
+  if (item.slot !== 'arme') return true;
+  const c = game.tuning.classes[game.kit?.classId] ?? game.tuning.classes[Object.keys(game.tuning.classes)[0]];
+  return c.weapons.includes(item.weaponType ?? 'lame');
+}
+
 function describeItem(item) {
   if (!item) return null;
   const rar = ITEM_RARITIES.find((r) => r.id === item.rarity);
@@ -3811,6 +4512,7 @@ function describeItem(item) {
     id: item.id,
     slot: item.slot,
     slotName: SLOT_NAMES[item.slot],
+    weaponType: item.weaponType ?? null,
     name: item.name,
     rarity: item.rarity,
     rarityName: rar.name,
@@ -3837,7 +4539,14 @@ function rollShop(game) {
 
 function applyCommand(game, cmd) {
   if (cmd.type === 'respawn') return respawn(game, cmd.floor);
-  if (cmd.type === 'retryBoss') return retryBoss(game);
+  if (cmd.type === 'returnToTown') return returnToTown(game);
+  if (cmd.type === 'abandon') {
+    // Abandonner = mourir : Charon prend sa part, le temporaire est perdu, retour en Ville.
+    if (game.mode !== 'play' && game.mode !== 'choice') return false;
+    onDeath(game);
+    game.mode = 'play';
+    return returnToTown(game);
+  }
   if (game.mode !== 'choice' || !game.choice) return false;
   const it = game.room.interact;
   const ch = game.choice;
@@ -3853,9 +4562,18 @@ function applyCommand(game, cmd) {
   }
   if (ch.kind === 'loot') {
     if (cmd.type === 'equip') {
+      if (!canWield(game, it.item)) return false;
+      // L'objet porté n'est jamais perdu : il part au coffre (Ville).
+      const old = run.items[it.item.slot];
+      if (old) stashLoot(game.meta, old);
       run.items[it.item.slot] = it.item;
       recomputeStats(game);
       emit(game, 'equip', { slot: it.item.slot, rarity: it.item.rarity });
+      return closeChoice(game);
+    }
+    if (cmd.type === 'stash') {
+      stashLoot(game.meta, it.item);
+      emit(game, 'stash', { slot: it.item.slot, rarity: it.item.rarity });
       return closeChoice(game);
     }
     if (cmd.type === 'salvage') {
@@ -3874,7 +4592,14 @@ function applyCommand(game, cmd) {
     offer.sold = true;
     if (offer.kind === 'heal') healPlayer(game, p.maxHp * 0.4, true);
     if (offer.kind === 'boon') addBoon(run, offer.boon);
-    if (offer.kind === 'item') run.items[offer.item.slot] = offer.item;
+    if (offer.kind === 'item') {
+      if (canWield(game, offer.item)) {
+        const old = run.items[offer.item.slot];
+        if (old) stashLoot(game.meta, old);
+        run.items[offer.item.slot] = offer.item;
+      } else stashLoot(game.meta, offer.item);
+    }
+    syncPurse(game);
     recomputeStats(game);
     emit(game, 'buy', { kind: offer.kind });
     openShopRefresh(game);
@@ -3956,11 +4681,38 @@ function closeChoice(game) {
   return true;
 }
 
-// ---------------------------------------------------------------- mort et reprise
+// ---------------------------------------------------------------- mort, reprise, Ville
 
-/** Vrai si la mort a eu lieu face à un Gardien dont on a l'instantané d'entrée. */
-function canRetryBoss(game) {
-  return game.mode === 'dead' && !!game.run.bossEntry && game.info?.isBoss && game.run.bossEntry.floor === game.run.floor;
+/**
+ * Mort du héros (appelé une fois, quand l'écran de mort s'ouvre) : Charon prélève sa part de
+ * la bourse, le récapitulatif dit ce qui est PERDU (temporaire) et ce qui est GARDÉ (permanent).
+ */
+function onDeath(game) {
+  const run = game.run;
+  const meta = game.meta;
+  const keep = Math.min(1, game.tuning.economy.deathGoldKeep + (game.player.stats.deathGoldKeepBonus ?? 0));
+  const before = run.gold;
+  if (!game.sandbox && !game.practice) {
+    run.gold = Math.floor(run.gold * keep);
+    meta.stats.deaths++;
+  }
+  run.deathRecap = {
+    floor: run.floor,
+    boonsLost: run.boons.length,
+    boonNames: run.boons.map((b) => boonDef(b.id)?.name ?? b.id),
+    goldLost: before - run.gold,
+    gold: run.gold,
+    souls: meta.souls,
+    soulsEarned: game.telemetry.soulsEarned,
+    checkpoint: lastCheckpoint(game),
+  };
+  syncPurse(game);
+}
+
+/** Dernier checkpoint débloqué (point de reprise par défaut). */
+function lastCheckpoint(game) {
+  const cps = game.meta.checkpoints;
+  return cps[cps.length - 1] ?? 1;
 }
 
 function revive(game) {
@@ -3973,28 +4725,22 @@ function revive(game) {
   p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus;
   p.skillCd = 0;
   p.iframes = 1.0;
+  p.freeze = 0;
   p.state = 'free';
   game.mode = 'play';
   game.choice = null;
   game.deathT = 0;
 }
 
-/** Réessayer le Gardien : retour à l'entrée de sa salle avec le build qu'on avait en y entrant. */
-function retryBoss(game) {
-  if (!canRetryBoss(game)) return false;
-  const entry = game.run.bossEntry;
-  game.run.boons = entry.boons.map((b) => ({ ...b }));
-  game.run.gold = entry.gold;
-  revive(game);
-  emit(game, 'respawn', { floor: entry.floor, boss: true });
-  enterFloor(game, entry.floor, null);
-  return true;
-}
-
+/**
+ * Reprise après la mort : au checkpoint demandé (s'il est débloqué), sinon au DERNIER.
+ * Le TEMPORAIRE repart de zéro (bénédictions vidées) ; le PERMANENT reste (équipement, classe,
+ * kit, Âmes, déblocages). La bourse a déjà payé Charon (onDeath).
+ */
 function respawn(game, floor) {
   if (game.mode !== 'dead') return false;
   const cps = game.meta.checkpoints;
-  const target = cps.includes(floor) ? floor : cps[cps.length - 1];
+  const target = cps.includes(floor) ? floor : lastCheckpoint(game);
   const run = game.run;
   if (game.sandbox) {
     // Arène d'essai : on recommence l'arène, jamais un checkpoint profond.
@@ -4003,22 +4749,113 @@ function respawn(game, floor) {
     enterFloor(game, 1, { reward: 'boon' });
     return true;
   }
-  const snap = game.meta.snapshots?.[target];
-  if (snap) {
-    run.boons = snap.boons.map((b) => ({ ...b }));
-    // Jamais plus d'or qu'on n'en a : sinon mourir après le marchand rembourserait l'achat.
-    run.gold = Math.min(snap.gold, run.gold);
-  } else {
+  if (game.practice) {
+    // Entraînement : le même Gardien, aussitôt.
     run.boons = [];
-    run.gold = Math.floor(run.gold * game.tuning.economy.deathGoldKeep);
+    revive(game);
+    emit(game, 'respawn', { floor: run.floor });
+    enterFloor(game, run.floor, null);
+    return true;
   }
+  run.boons = [];
   revive(game);
-  emit(game, 'respawn', { floor: target });
+  emit(game, 'respawn', { floor: target, boonsLost: run.deathRecap?.boonsLost ?? 0 });
   enterFloor(game, target, { reward: 'boon', family: randomFamily(game) });
   return true;
 }
 
-return { DOOR_WEIGHTS, REWARD_LABELS, EVENTS, createRun, planFor, enterFloor, onRoomClear, openInteract, describeBoon, describeItem, applyCommand, canRetryBoss, retryBoss, respawn };
+/**
+ * Fin du run et retour en Ville : depuis l'écran de mort, ou par le portail qui suit un
+ * Gardien. Le temporaire est abandonné avec la partie ; main sauvegarde le profil.
+ */
+function returnToTown(game) {
+  if (game.mode !== 'dead' && game.mode !== 'play') return false;
+  syncPurse(game);
+  game.mode = 'town';
+  game.choice = null;
+  emit(game, 'returnTown', { floor: game.run.floor, checkpoint: lastCheckpoint(game) });
+  return true;
+}
+
+return { DOOR_WEIGHTS, REWARD_LABELS, EVENTS, createRun, syncPurse, planFor, enterFloor, onRoomClear, openInteract, describeBoon, canWield, describeItem, applyCommand, onDeath, lastCheckpoint, respawn, returnToTown };
+})();
+// ---- src/sim/lab.mjs
+__mod["src/sim/lab.mjs"] = (() => {
+// LABORATOIRE DU FEEL — D5, D8, D9 restent OUVERTES : le prototype permet de les comparer.
+//
+//   D5  lab.dashStrike    : quand une attaque devient FRAPPE DE DASH
+//         fin        — attaquer dans la fin du dash (dernier 45 %) coupe la ruée, ou juste après
+//         toutDash   — attaquer à N'IMPORTE QUEL moment du dash coupe la ruée en frappe
+//         apresDash  — la ruée va toujours au bout ; seule une attaque juste APRÈS devient frappe
+//   D8  lab.hitstop       : gel d'impact
+//         global     — toute la scène se fige (projectiles, autres ennemis compris)
+//         local      — seuls l'attaquant et la ou les cibles se figent ; le reste du monde continue
+//   D9  lab.comboMobility : mobilité pendant le combo
+//         ancre      — 20 % de la vitesse, annulations tardives : chaque coup engage
+//         mobile     — 50 %, annulations actuelles (réglage de référence)
+//         fluide     — 75 %, annulations très tôt : on danse en frappant
+//
+// Chaque variante écrit des clés ordinaires du tuning de la partie : le code de combat ne
+// connaît pas le labo. La variante par défaut de chaque axe redonne EXACTEMENT les valeurs
+// de config.mjs (aucun test ni réglage existant ne bouge tant qu'on ne choisit rien).
+
+const LAB_AXES = {
+  dashStrike: {
+    label: 'D5 · Frappe de dash',
+    options: {
+      fin: { label: 'Fin du dash', text: 'Attaquer dans le dernier 45 % du dash ou juste après.', set: { 'dash.strikeCancelFrom': 0.45, 'dash.strikeWindow': 0.3 } },
+      toutDash: { label: 'Tout le dash', text: 'Attaquer à n\'importe quel moment du dash le coupe en frappe.', set: { 'dash.strikeCancelFrom': 1, 'dash.strikeWindow': 0.3 } },
+      apresDash: { label: 'Après le dash', text: 'Le dash va au bout ; une attaque juste après devient frappe.', set: { 'dash.strikeCancelFrom': 0, 'dash.strikeWindow': 0.3 } },
+    },
+  },
+  hitstop: {
+    label: 'D8 · Gel d\'impact',
+    options: {
+      global: { label: 'Global', text: 'Toute la scène se fige à l\'impact.', set: { hitstopMode: 'global' } },
+      local: { label: 'Local', text: 'Seuls le héros et ses cibles se figent ; le reste continue.', set: { hitstopMode: 'local' } },
+    },
+  },
+  comboMobility: {
+    label: 'D9 · Mobilité du combo',
+    options: {
+      ancre: { label: 'Ancré', text: '20 % de vitesse, annulations tardives.', set: { 'player.attackMoveMult': 0.2, 'player.cancelMult': 1.6 } },
+      mobile: { label: 'Mobile', text: '50 % de vitesse, annulations de référence.', set: { 'player.attackMoveMult': 0.5, 'player.cancelMult': 1 } },
+      fluide: { label: 'Fluide', text: '75 % de vitesse, annulations très tôt.', set: { 'player.attackMoveMult': 0.75, 'player.cancelMult': 0.35 } },
+    },
+  },
+};
+
+function setPath(obj, path, value) {
+  const keys = path.split('.');
+  const last = keys.pop();
+  let o = obj;
+  for (const k of keys) o = o[k];
+  o[last] = value;
+}
+
+/** Applique les variantes choisies (tuning.lab) au tuning de la partie. Idempotent. */
+function applyLab(tuning) {
+  for (const [axis, def] of Object.entries(LAB_AXES)) {
+    const choice = tuning.lab?.[axis];
+    const opt = def.options[choice] ?? def.options[Object.keys(def.options)[0]];
+    for (const [path, v] of Object.entries(opt.set)) setPath(tuning, path, v);
+  }
+  return tuning;
+}
+
+/** Change une variante en cours de partie (pause → Labo) ; rend false si inconnue. */
+function setLab(tuning, axis, choice) {
+  if (!LAB_AXES[axis]?.options[choice]) return false;
+  tuning.lab[axis] = choice;
+  applyLab(tuning);
+  return true;
+}
+
+function labSummary(tuning) {
+  return Object.entries(LAB_AXES).map(([axis, def]) => ({ axis, label: def.label, choice: tuning.lab[axis], choiceLabel: def.options[tuning.lab[axis]]?.label ?? '?' }));
+}
+
+return { LAB_AXES, applyLab, setLab, labSummary };
 })();
 // ---- src/sim/game.mjs
 __mod["src/sim/game.mjs"] = (() => {
@@ -4038,11 +4875,14 @@ const { updateEnemies } = __mod["src/sim/enemies.mjs"];
 const { updateNav } = __mod["src/sim/nav.mjs"];
 const { updateProjectiles, updateHazards, compact } = __mod["src/sim/projectiles.mjs"];
 const { updateSpawns, updateWaves, doorTouched, refillSandboxWaves } = __mod["src/sim/room.mjs"];
-const { createRun, enterFloor, onRoomClear, openInteract, applyCommand: runCommand } = __mod["src/sim/run.mjs"];
+const { createRun, enterFloor, onRoomClear, openInteract, onDeath, returnToTown, applyCommand: runCommand } = __mod["src/sim/run.mjs"];
 const { recomputeStats } = __mod["src/sim/stats.mjs"];
 const { moveCircle } = __mod["src/sim/physics.mjs"];
 const { healPlayer } = __mod["src/sim/combat.mjs"];
 const { starterItems } = __mod["src/sim/loot.mjs"];
+const { createProfile, sanitizeProfile } = __mod["src/sim/profile.mjs"];
+const { resolveKit } = __mod["src/sim/loadout.mjs"];
+const { applyLab } = __mod["src/sim/lab.mjs"];
 
 
 const DEATH_DELAY = 1.4; // s de ralenti/agonie avant l'écran de mort
@@ -4057,15 +4897,17 @@ function emptyInput() {
 }
 
 /**
- * options : { seed, tuning (surcharges partielles), startFloor, meta, godMode, items, sandbox }
- * meta    : progression persistante {checkpoints: [1, ...], bestFloor}
+ * options : { seed, tuning (surcharges partielles), startFloor, meta, godMode, items, sandbox, practice }
+ * meta    : le PROFIL PERMANENT (profile.mjs) — classe et kit choisis, équipement, coffre,
+ *           déblocages, Âmes, bourse, checkpoints. Une forme ancienne ({checkpoints, bestFloor})
+ *           est complétée. La partie en garde une COPIE (game.meta) que main sauvegarde.
+ * Tout ce qui vit dans game.run est TEMPORAIRE : la mort le remet à zéro (run.mjs, respawn).
  */
 function createGame(options = {}) {
   const seed = (options.seed ?? 1) >>> 0;
   const tuning = createTuning(options.tuning);
-  const meta = options.meta ? structuredClone(options.meta) : { checkpoints: [1], bestFloor: 1, snapshots: {} };
-  meta.snapshots = meta.snapshots ?? {};
-  if (!meta.checkpoints?.length) meta.checkpoints = [1];
+  applyLab(tuning);
+  const meta = options.meta ? sanitizeProfile(structuredClone(options.meta), tuning) : createProfile(tuning);
   const game = {
     seed,
     tuning,
@@ -4076,18 +4918,20 @@ function createGame(options = {}) {
       combat: createRng(hashSeed(seed, 2)),
       ai: createRng(hashSeed(seed, 3)),
     },
-    mode: 'play', // play | choice | dead | victory
+    mode: 'play', // play | choice | dead | victory | town (run terminé : retour en Ville)
     choice: null,
     hitstop: 0,
     hitstopBank: tuning.hitstopBank.max,
     deathT: 0,
     godMode: !!options.godMode,
     sandbox: !!options.sandbox, // arène d'essai : vagues sans fin, ni portes ni récompenses
+    practice: !!options.practice, // entraînement contre un Gardien : ni Âmes, ni checkpoint, ni taxe
     nextId: 1,
     events: [],
     telemetry: createTelemetry(),
     meta,
     run: createRun(options.startFloor ?? 1),
+    kit: null, // kit résolu (loadout.mjs) : classe, arme, compétence, gadget, Super
     player: null,
     room: null,
     info: null,
@@ -4097,15 +4941,17 @@ function createGame(options = {}) {
     pickups: [],
     spawns: [],
   };
+  // Équipement PERMANENT : celui du profil (complété par l'équipement de départ à la toute
+  // première partie), puis d'éventuelles surcharges explicites. run.items EST l'équipement du
+  // profil (même objet) : ce qu'on équipe en donjon est conservé.
+  const starters = starterItems(game);
+  for (const slot of Object.keys(starters)) if (!meta.equipment[slot] && starters[slot]) meta.equipment[slot] = starters[slot];
+  Object.assign(meta.equipment, options.items ?? {});
+  game.run.items = meta.equipment;
+  game.run.gold = meta.gold; // la bourse suit le héros d'un run à l'autre
+  if (!game.sandbox && !game.practice) meta.stats.runs++;
+  resolveKit(game);
   game.player = createPlayer(tuning, 0, 0);
-  Object.assign(game.run.items, starterItems(game), options.items ?? {});
-  // Reprise à un checkpoint (relance de l'appli, écran titre) : même build que la reprise
-  // après une mort — l'instantané pris en battant le Gardien.
-  const snap = !options.sandbox ? meta.snapshots?.[options.startFloor ?? 1] : null;
-  if (snap) {
-    game.run.boons = snap.boons.map((b) => ({ ...b }));
-    game.run.gold = snap.gold;
-  }
   recomputeStats(game);
   game.player.hp = game.player.maxHp;
   enterFloor(game, options.startFloor ?? 1, { reward: 'boon', family: 'colere' });
@@ -4117,6 +4963,8 @@ function stepGame(game, input) {
   const dt = DT;
   game.tick++;
   const dashWanted = readInput(game, input ?? emptyInput());
+  // Gel LOCAL (D8) : le dash l'interrompt aussi, sans attendre.
+  if (game.player.freeze > 0 && dashWanted && game.tuning.dash.cancelsHitstop && canDash(game)) game.player.freeze = 0;
   if (game.hitstop > 0) {
     // Le dash interrompt le gel d'impact : la réactivité passe avant l'emphase.
     if (dashWanted && game.tuning.dash.cancelsHitstop && canDash(game)) {
@@ -4178,6 +5026,7 @@ function updateFlow(game, dt) {
     game.deathT += dt;
     if (game.deathT >= DEATH_DELAY) {
       game.mode = 'dead';
+      onDeath(game);
       emit(game, 'gameOver', { floor: game.run.floor });
     }
     return;
@@ -4193,7 +5042,9 @@ function updateFlow(game, dt) {
   const door = doorTouched(game);
   if (door >= 0) {
     const chosen = room.doors[door];
-    enterFloor(game, game.run.floor + 1, chosen);
+    // Portail du checkpoint : retour en Ville (fin du run, le temporaire est abandonné).
+    if (chosen.reward === 'town') returnToTown(game);
+    else enterFloor(game, game.run.floor + 1, chosen);
   }
 }
 
@@ -4919,6 +5770,7 @@ const REWARD_COLORS = {
   shop: '#7fe8ff',
   event: '#b98cff',
   boss: '#ff3b3b',
+  town: '#9ff4ff', // portail vers la Ville (après un Gardien)
 };
 
 return { PAL, ELITE_COLORS, ELITE_NAMES, CIRCLE_TINTS, REWARD_COLORS };
@@ -5689,6 +6541,11 @@ function drawRewardIcon(ctx, reward, x, y, r, color, time) {
       ctx.lineTo(r * 0.6, -r * 1.4);
       ctx.lineTo(r * 0.2, -r * 0.6);
       break;
+    case 'town':
+      // Portail : anneau (téléportation vers la Ville).
+      ctx.arc(0, 0, r, 0, TAU);
+      ctx.arc(0, 0, r * 0.55, 0, TAU, true);
+      break;
     default:
       ctx.rect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6);
   }
@@ -6030,7 +6887,7 @@ function drawEnemy(ctx, e, game, time) {
     // Touché : tremblement le long de l'axe du coup pendant le gel (principe de Sakurai),
     // puis écrasement dans l'axe (aire conservée).
     const a = Math.atan2(e.hitDirY, e.hitDirX);
-    const jitter = game.hitstop > 0 ? (Math.floor(time * 60) % 2 === 0 ? 2 : -2) : 0;
+    const jitter = game.hitstop > 0 || e.freeze > 0 ? (Math.floor(time * 60) % 2 === 0 ? 2 : -2) : 0;
     ctx.translate(Math.cos(a) * jitter, Math.sin(a) * jitter);
     if (!e.boss) {
       ctx.rotate(a);
@@ -6543,6 +7400,8 @@ function drawTopRight(ctx, game, w, safe) {
   ctx.fillStyle = PAL.gold;
   ctx.fillRect(-5, -5, 10, 10);
   ctx.restore();
+  // Âmes (PERMANENTES) sous la bourse : on les voit monter pendant la descente.
+  if (!game.sandbox && !game.practice) text(ctx, `◆ ${game.meta.souls}`, x + 8, y + 20, 12, '#9ff4ff', 'right', 800);
   // Bouton pause (zone gérée par main).
   ctx.fillStyle = 'rgba(255,255,255,0.12)';
   ctx.beginPath();
@@ -8172,13 +9031,11 @@ const ROUTED_EVENTS = Object.keys(ROUTES);
 
 return { SILENT_EVENTS, createAudio, SOUND_KEYS, ROUTED_EVENTS };
 })();
-// ---- src/ui/menus.mjs
-__mod["src/ui/menus.mjs"] = (() => {
-// Menus DOM par-dessus le canvas : écran titre, choix (bénédiction, butin, marchand, autel),
-// mort et reprise au checkpoint, pause et réglages, panneau de tuning du feel.
-// AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.
+// ---- src/ui/dom.mjs
+__mod["src/ui/dom.mjs"] = (() => {
+// Briques DOM partagées par les menus, la Ville et le panneau de réglages : création
+// d'éléments, activation robuste au doigt (pointerup du même doigt), armement anti-martelage.
 
-const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Lance', passive: 'Passif', super: 'Super' };
 const ARM_MS = 350; // un panneau ne répond qu'après ce délai : jamais de choix « à l'aveugle »
 // Panneaux de choix (bénédiction, butin, autel, marchand) : plus long, et chaque tap reçu pendant
 // l'armement le relance. Un dash martelé à 3-4 Hz qui ouvre le panneau ne choisit donc rien.
@@ -8262,6 +9119,258 @@ function itemCard(item, title) {
   return card;
 }
 
+
+return { ARM_MS, ARM_CHOICE_MS, arming, armed, el, onActivate, button, itemCard };
+})();
+// ---- src/ui/town.mjs
+__mod["src/ui/town.mjs"] = (() => {
+// LA VILLE (hub) — Dité, dernière cité avant la descente. Écran DOM, pensé pour le pouce.
+//
+// Elle ne contient AUCUNE règle : chaque bouton appelle une action de `actions` (main.mjs), qui
+// applique l'opération pure correspondante du profil (src/sim/profile.mjs) puis sauvegarde.
+// Tout ce qui s'achète ou se choisit ici est PERMANENT ; les bénédictions du donjon, elles,
+// meurent avec le run.
+const { el, button, itemCard } = __mod["src/ui/dom.mjs"];
+const { floorInfo, guardianFor } = __mod["src/sim/floors.mjs"];
+const { unlockCost, upgradeCost, salvageSouls } = __mod["src/sim/profile.mjs"];
+const { describeItem } = __mod["src/sim/run.mjs"];
+const { LAB_AXES } = __mod["src/sim/lab.mjs"];
+
+const TOWN_TABS = [
+  { id: 'portail', label: 'Portail' },
+  { id: 'classe', label: 'Classe' },
+  { id: 'armurerie', label: 'Armurerie' },
+  { id: 'equipement', label: 'Coffre' },
+  { id: 'grimoire', label: 'Grimoire' },
+  { id: 'sanctuaire', label: 'Sanctuaire' },
+  { id: 'labo', label: 'Labo du feel' },
+];
+
+/**
+ * view    : { profile, tuning (registre du contenu), tab, lab (choix D5/D8/D9), touch }
+ * actions : { setTab, depart(floor), arena(), practice(kind), selectClass, unlock(kind, id),
+ *             selectSkill, selectGadget, equip(uid), salvage(uid), buyUpgrade(id), setLab(axis, c) }
+ */
+function buildTown(p, view, actions) {
+  p.className = 'panel town';
+  const { profile, tuning } = view;
+  const head = el('div', 'town-head');
+  head.appendChild(el('div', 'kicker', 'Dité · la cité des damnés'));
+  const cls = tuning.classes[profile.loadout.classId];
+  const wallet = el('div', 'town-wallet');
+  wallet.appendChild(el('span', 'souls', `◆ ${profile.souls} Âmes`));
+  wallet.appendChild(el('span', 'gold', `● ${profile.gold} or`));
+  wallet.appendChild(el('span', 'dim', `${cls?.name ?? '?'} · record étage ${profile.bestFloor}`));
+  head.appendChild(wallet);
+  p.appendChild(head);
+
+  const tabs = el('div', 'tabs');
+  for (const t of TOWN_TABS) {
+    const b = button(t.label, `small tab${t.id === view.tab ? ' on' : ''}`, () => actions.setTab(t.id));
+    b.dataset.tab = t.id;
+    tabs.appendChild(b);
+  }
+  p.appendChild(tabs);
+  const body = el('div', 'town-body');
+  (TAB_BUILDERS[view.tab] ?? TAB_BUILDERS.portail)(body, view, actions);
+  p.appendChild(body);
+}
+
+function note(body, text) {
+  body.appendChild(el('p', 'dim small', text));
+}
+
+function statusButton({ owned, selected, cost, souls }, onSelect, onUnlock) {
+  if (selected) return button('Équipé', 'small', () => {}, true);
+  if (owned) return button('Choisir', 'small primary', onSelect);
+  return button(`Débloquer · ◆ ${cost}`, 'small', onUnlock, souls < cost);
+}
+
+const TAB_BUILDERS = {
+  portail(body, view, actions) {
+    const { profile, tuning } = view;
+    note(body, 'Repartez du dernier checkpoint, ou de n\'importe quel point de téléportation déjà ouvert. Les bénédictions repartent de zéro à chaque descente.');
+    const list = el('div', 'cards');
+    const cps = profile.checkpoints.slice().sort((a, b) => b - a);
+    cps.forEach((f, i) => {
+      const info = floorInfo(tuning, f);
+      const card = el('div', 'card');
+      card.appendChild(el('div', 'card-kicker', i === 0 ? 'Dernier checkpoint' : 'Téléportation'));
+      card.appendChild(el('div', 'card-title', `Étage ${f}`));
+      card.appendChild(el('div', 'card-sub', `${info.circleName} · section ${info.section} / ${info.sectionCount}`));
+      const g = tuning.boss[guardianFor(tuning, info.section)];
+      card.appendChild(el('div', 'card-text', `Gardien de la section : ${g?.name ?? '?'} (étage ${info.section * tuning.floors.sectionLength})`));
+      const b = button(i === 0 ? 'Descendre' : 'Se téléporter', i === 0 ? 'primary' : '', () => actions.depart(f));
+      if (i === 0) b.id = 'depart';
+      card.appendChild(b);
+      list.appendChild(card);
+    });
+    body.appendChild(list);
+    const row = el('div', 'row');
+    row.appendChild(button('Arène d\'essai', '', () => actions.arena()));
+    body.appendChild(row);
+    // Entraînement : rejouer un Gardien déjà rencontré, sans récompense ni risque.
+    const met = Object.keys(tuning.boss).filter((k) => (profile.guardians[k] ?? 0) > 0 || view.allGuardians);
+    if (met.length) {
+      body.appendChild(el('h3', '', 'Entraînement · Gardiens'));
+      const r2 = el('div', 'row wrap');
+      for (const k of met) r2.appendChild(button(`Défier ${tuning.boss[k].name}`, 'small', () => actions.practice(k)));
+      body.appendChild(r2);
+    }
+  },
+
+  classe(body, view, actions) {
+    const { profile, tuning } = view;
+    note(body, 'La classe fixe les armes, compétences et gadgets disponibles, et son Super. Changer de classe est gratuit une fois débloquée.');
+    const list = el('div', 'cards');
+    for (const [id, c] of Object.entries(tuning.classes)) {
+      const card = el('div', 'card');
+      card.appendChild(el('div', 'card-kicker', `Super : ${tuning.supers[c.super]?.name ?? '?'}`));
+      card.appendChild(el('div', 'card-title', c.name));
+      card.appendChild(el('div', 'card-text', c.text));
+      const owned = profile.unlocked.classes.includes(id);
+      card.appendChild(statusButton(
+        { owned, selected: profile.loadout.classId === id, cost: unlockCost(tuning, 'classes', id), souls: profile.souls },
+        () => actions.selectClass(id),
+        () => actions.unlock('classes', id),
+      ));
+      list.appendChild(card);
+    }
+    body.appendChild(list);
+  },
+
+  armurerie(body, view, actions) {
+    const { profile, tuning } = view;
+    const c = tuning.classes[profile.loadout.classId];
+    note(body, `Armes du ${c.name}. Débloquer un type d'arme forge un exemplaire commun (rangé au coffre) et l'ajoute au butin du donjon.`);
+    const list = el('div', 'cards');
+    for (const wt of c.weapons) {
+      const w = tuning.weapons[wt];
+      if (!w) continue;
+      const card = el('div', 'card');
+      card.appendChild(el('div', 'card-kicker', w.kind === 'ranged' ? 'Arme à distance' : 'Arme de mêlée'));
+      card.appendChild(el('div', 'card-title', w.name));
+      card.appendChild(el('div', 'card-text', w.text ?? ''));
+      const owned = profile.unlocked.weapons.includes(wt);
+      const worn = (profile.equipment.arme?.weaponType ?? 'lame') === wt;
+      if (owned) {
+        const best = profile.stash.filter((it) => it.slot === 'arme' && (it.weaponType ?? 'lame') === wt).sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
+        card.appendChild(worn ? button('Portée', 'small', () => {}, true) : button('Prendre la meilleure', 'small primary', () => actions.equip(best?.uid), !best));
+      } else {
+        const cost = unlockCost(tuning, 'weapons', wt);
+        card.appendChild(button(`Forger · ◆ ${cost}`, 'small', () => actions.unlock('weapons', wt), profile.souls < cost));
+      }
+      list.appendChild(card);
+    }
+    body.appendChild(list);
+    const worn = describeItem(profile.equipment.arme);
+    if (worn) {
+      body.appendChild(el('h3', '', 'Arme portée'));
+      const cards = el('div', 'cards two');
+      cards.appendChild(itemCard(worn, 'Portée'));
+      body.appendChild(cards);
+    }
+  },
+
+  equipement(body, view, actions) {
+    const { profile, tuning } = view;
+    note(body, 'Tout objet trouvé en donjon est conservé : équipé, ou rangé ici. Recycler rend des Âmes.');
+    const worn = el('div', 'cards');
+    for (const slot of ['arme', 'armure', 'talisman']) worn.appendChild(itemCard(describeItem(profile.equipment[slot]), `Porté · ${slot}`));
+    body.appendChild(worn);
+    body.appendChild(el('h3', '', `Coffre (${profile.stash.length})`));
+    if (!profile.stash.length) note(body, 'Vide. Les trésors du donjon arrivent ici.');
+    const c = tuning.classes[profile.loadout.classId];
+    const list = el('div', 'cards');
+    for (const it of profile.stash.slice().sort((a, b) => (b.score ?? 0) - (a.score ?? 0))) {
+      const card = itemCard(describeItem(it), it.slot === 'arme' ? `Arme · ${tuning.weapons[it.weaponType ?? 'lame']?.name ?? '?'}` : 'Coffre');
+      const row = el('div', 'row');
+      const wield = it.slot !== 'arme' || c.weapons.includes(it.weaponType ?? 'lame');
+      row.appendChild(button(wield ? 'Équiper' : 'Autre classe', 'small primary', () => actions.equip(it.uid), !wield));
+      row.appendChild(button(`Recycler · ◆ ${salvageSouls(tuning, it)}`, 'small', () => actions.salvage(it.uid)));
+      card.appendChild(row);
+      list.appendChild(card);
+    }
+    body.appendChild(list);
+  },
+
+  grimoire(body, view, actions) {
+    const { profile, tuning } = view;
+    const c = tuning.classes[profile.loadout.classId];
+    note(body, `Compétence (bouton Lance) et gadget (charges par section) du ${c.name}. Super : ${tuning.supers[c.super]?.name ?? '?'} — ${tuning.supers[c.super]?.text ?? ''}`);
+    for (const [kind, title, ids, current, select] of [
+      ['skills', 'Compétences', c.skills, profile.loadout.skillId, actions.selectSkill],
+      ['gadgets', 'Gadgets', c.gadgets, profile.loadout.gadgetId, actions.selectGadget],
+    ]) {
+      body.appendChild(el('h3', '', title));
+      const list = el('div', 'cards');
+      for (const id of ids) {
+        const d = tuning[kind][id];
+        if (!d) continue;
+        const card = el('div', 'card');
+        card.appendChild(el('div', 'card-title', d.name));
+        card.appendChild(el('div', 'card-text', d.text ?? ''));
+        card.appendChild(statusButton(
+          { owned: profile.unlocked[kind].includes(id), selected: current === id, cost: unlockCost(tuning, kind, id), souls: profile.souls },
+          () => select(id),
+          () => actions.unlock(kind, id),
+        ));
+        list.appendChild(card);
+      }
+      body.appendChild(list);
+    }
+  },
+
+  sanctuaire(body, view, actions) {
+    const { profile, tuning } = view;
+    note(body, 'Améliorations permanentes, payées en Âmes. Elles s\'appliquent à toutes les classes.');
+    const list = el('div', 'cards');
+    for (const [id, up] of Object.entries(tuning.town.upgrades)) {
+      const lv = profile.upgrades[id] ?? 0;
+      const cost = upgradeCost(tuning, id, lv);
+      const card = el('div', 'card');
+      card.appendChild(el('div', 'card-kicker', `Niveau ${lv} / ${up.max}`));
+      card.appendChild(el('div', 'card-title', up.name));
+      card.appendChild(el('div', 'card-text', up.text));
+      card.appendChild(cost === null ? button('Maximum', 'small', () => {}, true) : button(`Améliorer · ◆ ${cost}`, 'small primary', () => actions.buyUpgrade(id), profile.souls < cost));
+      list.appendChild(card);
+    }
+    body.appendChild(list);
+  },
+
+  labo(body, view, actions) {
+    note(body, 'D5, D8 et D9 restent ouvertes : comparez les variantes en jouant (arène d\'essai conseillée). Le choix vaut pour toutes les parties, et se change aussi en pause.');
+    buildLabControls(body, view.lab, actions.setLab);
+  },
+};
+
+/** Boutons des trois axes du labo (aussi utilisés par le panneau de pause). */
+function buildLabControls(body, lab, setLab) {
+  for (const [axis, def] of Object.entries(LAB_AXES)) {
+    body.appendChild(el('h3', '', def.label));
+    const row = el('div', 'row wrap');
+    for (const [id, opt] of Object.entries(def.options)) {
+      const on = lab[axis] === id;
+      const b = button(opt.label, `small${on ? ' primary' : ''}`, () => setLab(axis, id));
+      b.dataset.lab = `${axis}:${id}`;
+      row.appendChild(b);
+    }
+    body.appendChild(row);
+    body.appendChild(el('p', 'dim small', def.options[lab[axis]]?.text ?? ''));
+  }
+}
+
+return { TOWN_TABS, buildTown, buildLabControls };
+})();
+// ---- src/ui/menus.mjs
+__mod["src/ui/menus.mjs"] = (() => {
+// Menus DOM par-dessus le canvas : écran titre, choix (bénédiction, butin, marchand, autel),
+// mort et reprise au checkpoint, pause et réglages, panneau de tuning du feel.
+// AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.
+const { el, button, onActivate, itemCard, arming, armed, ARM_MS, ARM_CHOICE_MS } = __mod["src/ui/dom.mjs"];
+const { buildTown, buildLabControls } = __mod["src/ui/town.mjs"];
+
+const SLOT_LABELS = { attack: 'Attaque', dash: 'Dash', skill: 'Compétence', passive: 'Passif', super: 'Super' };
 function createUI(root, handlers) {
   // #overlay / .hidden / #restart : vocabulaire du PLAYABLE_CONTRACT du studio.
   const panel = el('div', 'panel hidden');
@@ -8294,7 +9403,7 @@ function createUI(root, handlers) {
     // Armement : l'écran titre et les rafraîchissements du marchand répondent tout de suite.
     const refresh = key.startsWith('choice:shop') && shownKind === 'shop';
     shownKind = key.split(':')[1] ?? key;
-    arming.noDelay = key.startsWith('title') || key.startsWith('pause') || key === 'tuning' || refresh;
+    arming.noDelay = key.startsWith('title') || key.startsWith('pause') || key.startsWith('town') || key.startsWith('lab') || key === 'tuning' || refresh;
     arming.ms = key.startsWith('choice') ? ARM_CHOICE_MS : ARM_MS;
     arming.shownAt = performance.now();
     if (!arming.noDelay) startArming();
@@ -8321,11 +9430,13 @@ function createUI(root, handlers) {
     p.className = 'panel title-screen';
     p.appendChild(el('div', 'kicker', 'Descente vers l\'Enfer'));
     p.appendChild(el('h1', 'logo', 'DUNGEON 666'));
-    p.appendChild(el('p', 'lede', '666 étages. Un Gardien tous les six. Chaque Gardien vaincu devient un point de reprise.'));
+    p.appendChild(el('p', 'lede', '666 étages. Un Gardien tous les dix-huit. Chaque Gardien vaincu ouvre un checkpoint et un portail vers la Ville.'));
     const row = el('div', 'row');
     const cps = meta.checkpoints.slice().sort((a, b) => b - a);
-    row.appendChild(button(cps[0] > 1 ? `Reprendre · étage ${cps[0]}` : 'Descendre', 'primary', () => handlers.start(cps[0])));
-    if (cps[0] > 1) row.appendChild(button('Recommencer · étage 1', '', () => handlers.start(1)));
+    const go = button('Entrer dans Dité', 'primary', () => handlers.openTown());
+    go.id = 'enter-town';
+    row.appendChild(go);
+    row.appendChild(button(`Descendre · étage ${cps[0]}`, '', () => handlers.start(cps[0])));
     row.appendChild(button('Arène d\'essai', '', () => handlers.start(1, true)));
     p.appendChild(row);
     const help = el('div', 'help');
@@ -8359,13 +9470,15 @@ function createUI(root, handlers) {
   function buildLoot(p, ch) {
     p.className = 'panel choice';
     p.appendChild(el('h2', '', 'Trésor'));
+    p.appendChild(el('p', 'dim small', 'Équipement PERMANENT : l\'objet remplacé, ou celui que vous gardez, part au coffre de la Ville.'));
     const cols = el('div', 'cards two');
     cols.appendChild(itemCard(ch.item, 'Trouvé'));
-    cols.appendChild(itemCard(ch.equipped, 'Équipé'));
+    cols.appendChild(itemCard(ch.equipped, 'Porté'));
     p.appendChild(cols);
     const row = el('div', 'row');
-    row.appendChild(button('Équiper', 'primary', () => handlers.command({ type: 'equip' })));
-    row.appendChild(button(`Récupérer · +${ch.salvage} or`, '', () => handlers.command({ type: 'salvage' })));
+    row.appendChild(button(ch.wieldable === false ? 'Arme d\'une autre classe' : 'Équiper', 'primary', () => handlers.command({ type: 'equip' }), ch.wieldable === false));
+    row.appendChild(button('Garder au coffre', '', () => handlers.command({ type: 'stash' })));
+    row.appendChild(button(`Vendre · +${ch.salvage} or`, '', () => handlers.command({ type: 'salvage' })));
     p.appendChild(row);
   }
 
@@ -8406,28 +9519,37 @@ function createUI(root, handlers) {
     p.appendChild(el('h1', 'logo red', 'VOUS ÊTES MORT'));
     const t = game.telemetry;
     p.appendChild(el('p', 'lede', `Étage ${game.run.floor} · ${t.kills} démons abattus · ${t.dodges} esquives au dash`));
-    p.appendChild(el('p', 'dim', 'Vous reprenez au checkpoint avec le build que vous aviez en battant son Gardien. Votre équipement vous suit toujours.'));
     const col = el('div', 'col');
-    if (game.sandbox) {
-      const b = button('Recommencer l\'arène', 'primary', () => handlers.command({ type: 'respawn', floor: 1 }));
+    if (game.sandbox || game.practice) {
+      const b = button(game.practice ? 'Réessayer le Gardien' : 'Recommencer l\'arène', 'primary', () => handlers.command({ type: 'respawn', floor: game.run.floor }));
       b.id = 'restart';
       col.appendChild(b);
+      col.appendChild(button('Retour à la Ville', '', () => handlers.command({ type: 'returnToTown' })));
       p.appendChild(col);
       return;
     }
-    const retry = handlers.canRetryBoss(game);
-    if (retry) {
-      const b = button(`Réessayer le Gardien · étage ${game.run.floor}`, 'primary', () => handlers.command({ type: 'retryBoss' }));
-      b.id = 'restart';
-      col.appendChild(b);
-    }
-    const cps = game.meta.checkpoints.slice().sort((a, b) => b - a).slice(0, 4);
-    cps.forEach((f, i) => {
-      const first = i === 0 && !retry;
-      const b = button(`Reprendre · étage ${f}`, first ? 'primary' : '', () => handlers.command({ type: 'respawn', floor: f }));
-      if (first) b.id = 'restart';
-      col.appendChild(b);
-    });
+    // Récapitulatif : la boucle de reset doit se LIRE.
+    const r = game.run.deathRecap ?? { boonsLost: 0, boonNames: [], goldLost: 0, souls: game.meta.souls, soulsEarned: 0, checkpoint: 1 };
+    const recap = el('div', 'cards two recap');
+    const lost = el('div', 'card');
+    lost.style.setProperty('--accent', '#c0304a');
+    lost.appendChild(el('div', 'card-kicker', 'Perdu · temporaire'));
+    lost.appendChild(el('div', 'card-title', `${r.boonsLost} bénédiction${r.boonsLost > 1 ? 's' : ''}`));
+    if (r.boonNames.length) lost.appendChild(el('div', 'card-text', r.boonNames.join(' · ')));
+    lost.appendChild(el('div', 'card-text', `Charon a prélevé ${r.goldLost} or.`));
+    const kept = el('div', 'card');
+    kept.style.setProperty('--accent', '#2fc7ff');
+    kept.appendChild(el('div', 'card-kicker', 'Gardé · permanent'));
+    kept.appendChild(el('div', 'card-title', `◆ ${r.souls} Âmes (+${r.soulsEarned})`));
+    kept.appendChild(el('div', 'card-text', 'Classe, armes, équipement et coffre, compétences, améliorations de la Ville, checkpoints.'));
+    recap.append(lost, kept);
+    p.appendChild(recap);
+    const b = button(`Repartir du checkpoint · étage ${r.checkpoint}`, 'primary', () => handlers.command({ type: 'respawn', floor: r.checkpoint }));
+    b.id = 'restart';
+    col.appendChild(b);
+    const town = button('Retour à la Ville', '', () => handlers.command({ type: 'returnToTown' }));
+    town.id = 'to-town';
+    col.appendChild(town);
     p.appendChild(col);
   }
 
@@ -8445,17 +9567,31 @@ function createUI(root, handlers) {
     col.appendChild(button(`Son : ${settings.sound ? 'oui' : 'non'}`, '', () => handlers.setSetting('sound', !settings.sound)));
     col.appendChild(button(`Vibrations : ${settings.haptics ? 'oui' : 'non'}`, '', () => handlers.setSetting('haptics', !settings.haptics)));
     col.appendChild(button(`Tremblement : ${Math.round(settings.shake * 100)} %`, '', () => handlers.setSetting('shake', settings.shake >= 1 ? 0.5 : settings.shake > 0 ? 0 : 1)));
+    col.appendChild(button('Labo du feel (D5 · D8 · D9)', '', () => handlers.openLab()));
     col.appendChild(button('Réglages du feel', '', () => handlers.openTuning()));
-    col.appendChild(button('Retour au titre', 'ghost', () => handlers.quit()));
+    col.appendChild(button('Abandonner · retour à la Ville', 'ghost', () => handlers.abandon()));
     p.appendChild(col);
+  }
+
+  function buildLabPanel(p, lab) {
+    p.className = 'panel pause lab';
+    p.appendChild(el('h2', '', 'Labo du feel'));
+    p.appendChild(el('p', 'dim small', 'Change la variante tout de suite, dans cette partie et les suivantes.'));
+    buildLabControls(p, lab, handlers.setLab);
+    p.appendChild(button('Retour', 'primary', () => handlers.closeLab()));
   }
 
   // -------------------------------------------------------------- synchronisation
 
   /** Appelée à chaque image : affiche le bon panneau selon l'état. */
   function sync(game, app) {
-    if (app.screen === 'title') return show((p) => buildTitle(p, app.meta), `title:${app.meta.bestFloor}:${app.meta.checkpoints.length}`);
+    if (app.screen === 'title') return show((p) => buildTitle(p, app.profile), `title:${app.profile.bestFloor}:${app.profile.checkpoints.length}`);
+    if (app.screen === 'town') {
+      const view = handlers.townView();
+      return show((p) => buildTown(p, view, handlers.townActions), `town:${view.tab}:${view.rev}`);
+    }
     if (app.screen === 'tuning') return show((p) => handlers.buildTuning(p), 'tuning');
+    if (app.screen === 'lab') return show((p) => buildLabPanel(p, app.settings.lab), `lab:${JSON.stringify(app.settings.lab)}`);
     if (app.paused) return show((p) => buildPause(p, app.settings), `pause:${JSON.stringify(app.settings)}`);
     if (!game) return hide();
     if (game.mode === 'choice' && game.choice) {
@@ -8472,11 +9608,11 @@ function createUI(root, handlers) {
   return { sync, hide, get visible() { return !panel.hidden; } };
 }
 
-return { onActivate, createUI };
+return { createUI };
 })();
 // ---- src/ui/tuning.mjs
 __mod["src/ui/tuning.mjs"] = (() => {
-const { onActivate } = __mod["src/ui/menus.mjs"];
+const { onActivate } = __mod["src/ui/dom.mjs"];
 
 // Panneau de réglage du feel, pour le playtest : chaque curseur modifie `game.tuning` en
 // direct (la copie de la partie, jamais les valeurs par défaut). Les réglages sont gardés
@@ -8698,8 +9834,10 @@ __mod["src/main.mjs"] = (() => {
 //
 // Paramètres d'URL (playtest) : ?seed=123  ?floor=6  ?god=1  ?autostart=1  ?tune=0
 const { createGame, stepGame, applyCommand, DT } = __mod["src/sim/game.mjs"];
-const { canRetryBoss } = __mod["src/sim/run.mjs"];
-const { DEFAULT_TUNING } = __mod["src/sim/config.mjs"];
+const { DEFAULT_TUNING, createTuning } = __mod["src/sim/config.mjs"];
+const { sanitizeProfile, unlock, selectClass, selectSkill, selectGadget, equipFromStash, salvageFromStash, buyUpgrade } = __mod["src/sim/profile.mjs"];
+const { setLab, LAB_AXES } = __mod["src/sim/lab.mjs"];
+const { guardianFor, sectionBounds } = __mod["src/sim/floors.mjs"];
 const { createInput } = __mod["src/input/input.mjs"];
 const { createCamera, fitCamera, updateCamera, applyCamera, worldToScreen, resetCamera } = __mod["src/render/camera.mjs"];
 const { createFx, handleFxEvents, updateFx, clearFx } = __mod["src/render/fx.mjs"];
@@ -8720,7 +9858,7 @@ const DEGRADE_AFTER = 2; // s de surcharge avant de baisser d'un cran
 const UPGRADE_AFTER = 10; // s de marge avant de remonter d'un cran
 const QUALITY_MIN = 0.6;
 const QUALITY_STEP = 0.2;
-const META_KEY = 'dungeon666.meta.v1';
+const META_KEY = 'dungeon666.meta.v1'; // le PROFIL permanent (schéma 3 ; migre les anciens)
 const SETTINGS_KEY = 'dungeon666.settings.v1';
 const SLOWMO = {
   roomClear: { scale: 0.3, dur: 0.45 },
@@ -8742,39 +9880,17 @@ function load(key, fallback) {
   }
 }
 
-const META_SCHEMA = 2; // à incrémenter quand la forme des objets sauvegardés change
-const SLOTS = ['arme', 'armure', 'talisman'];
+// Registre du contenu (classes, armes, compétences…) pour les opérations de la Ville.
+const CONTENT = createTuning();
+const DEFAULT_LAB = { dashStrike: 'fin', hitstop: 'global', comboMobility: 'mobile' };
 
-function isItem(it) {
-  return !!it && typeof it === 'object' && SLOTS.includes(it.slot) && Array.isArray(it.affixes) && typeof it.name === 'string';
-}
-
-/**
- * Méta validée champ par champ : une sauvegarde ancienne ou corrompue retombe sur des défauts
- * au lieu de bloquer le jeu (la forme des objets évolue pendant le prototype).
- */
-function sanitizeMeta(m) {
-  const cps = Array.isArray(m.checkpoints) ? m.checkpoints.filter((f) => Number.isInteger(f) && f >= 1 && f <= 666) : [];
-  if (!cps.includes(1)) cps.unshift(1);
-  const sameSchema = m.schema === META_SCHEMA;
-  let items = null;
-  if (sameSchema && m.items && typeof m.items === 'object') {
-    items = {};
-    for (const s of SLOTS) items[s] = isItem(m.items[s]) && m.items[s].slot === s ? m.items[s] : null;
+/** Choix du labo validés (une variante inconnue retombe sur celle de référence). */
+function sanitizeLab(lab) {
+  const out = { ...DEFAULT_LAB };
+  if (lab && typeof lab === 'object') {
+    for (const axis of Object.keys(LAB_AXES)) if (LAB_AXES[axis].options[lab[axis]]) out[axis] = lab[axis];
   }
-  const snapshots = {};
-  if (sameSchema && m.snapshots && typeof m.snapshots === 'object') {
-    for (const [f, snap] of Object.entries(m.snapshots)) {
-      if (snap && Array.isArray(snap.boons) && Number.isFinite(snap.gold)) snapshots[f] = snap;
-    }
-  }
-  return {
-    schema: META_SCHEMA,
-    checkpoints: [...new Set(cps)].sort((a, b) => a - b),
-    bestFloor: Number.isInteger(m.bestFloor) && m.bestFloor >= 1 ? m.bestFloor : 1,
-    items,
-    snapshots,
-  };
+  return out;
 }
 
 function save(key, value) {
@@ -8793,15 +9909,19 @@ const uiRoot = document.getElementById('ui');
 const safeProbe = document.getElementById('safe');
 
 const app = {
-  screen: 'title', // title | game | tuning
+  screen: 'title', // title | town | game | tuning | lab
   paused: false,
-  meta: sanitizeMeta(load(META_KEY, { checkpoints: [1], bestFloor: 1, items: null, snapshots: {} })),
-  settings: load(SETTINGS_KEY, { sound: true, haptics: true, shake: 1 }),
+  profile: sanitizeProfile(load(META_KEY, {}), CONTENT),
+  townTab: 'portail',
+  townRev: 0, // incrémenté à chaque action de la Ville (reconstruit l'écran)
+  settings: load(SETTINGS_KEY, { sound: true, haptics: true, shake: 1, lab: DEFAULT_LAB }),
   game: null,
   view: { w: 1, h: 1, dpr: 1, safe: { top: 0, right: 0, bottom: 0, left: 0 } },
   quality: 1,
   slowmo: { scale: 1, t: 0, last: -99 },
 };
+
+app.settings.lab = sanitizeLab(app.settings.lab);
 
 const camera = createCamera();
 const fx = createFx();
@@ -8840,10 +9960,54 @@ async function enterImmersive() {
 
 const ui = createUI(uiRoot, {
   isTouch: () => input.usingTouch || matchMedia('(pointer: coarse)').matches,
-  canRetryBoss: (g) => canRetryBoss(g),
   start: (floor, sandbox = false) => {
     enterImmersive();
     startRun(floor, sandbox);
+  },
+  openTown: () => {
+    enterImmersive();
+    openTown();
+  },
+  townView: () => ({ profile: app.profile, tuning: CONTENT, tab: app.townTab, lab: app.settings.lab, rev: app.townRev, allGuardians: params.get('lab') === '1' }),
+  townActions: {
+    setTab: (tab) => {
+      app.townTab = tab;
+      app.townRev++;
+    },
+    depart: (floor) => {
+      enterImmersive();
+      startRun(floor);
+    },
+    arena: () => {
+      enterImmersive();
+      startRun(1, true);
+    },
+    practice: (kind) => {
+      enterImmersive();
+      startPractice(kind);
+    },
+    selectClass: (id) => townOp(selectClass, id),
+    unlock: (kind, id) => townOp(unlock, kind, id),
+    selectSkill: (id) => townOp(selectSkill, id),
+    selectGadget: (id) => townOp(selectGadget, id),
+    equip: (uid) => townOp(equipFromStash, uid),
+    salvage: (uid) => townOp(salvageFromStash, uid),
+    buyUpgrade: (id) => townOp(buyUpgrade, id),
+    setLab: (axis, choice) => setLabChoice(axis, choice),
+  },
+  openLab: () => {
+    app.screen = 'lab';
+  },
+  closeLab: () => {
+    app.screen = app.game ? 'game' : 'town';
+  },
+  setLab: (axis, choice) => setLabChoice(axis, choice),
+  abandon: () => {
+    app.paused = false;
+    if (app.game) {
+      applyCommand(app.game, { type: 'abandon' });
+      afterCommand();
+    }
   },
   command: (cmd) => {
     if (app.game) {
@@ -8856,7 +10020,7 @@ const ui = createUI(uiRoot, {
   },
   quit: () => {
     app.paused = false;
-    app.screen = 'title';
+    app.screen = 'town';
     app.game = null;
   },
   setSetting: (k, v) => {
@@ -8873,26 +10037,25 @@ const ui = createUI(uiRoot, {
     getTuning: () => app.game?.tuning ?? DEFAULT_TUNING,
     defaults: DEFAULT_TUNING,
     onClose: () => {
-      app.screen = app.game ? 'game' : 'title';
+      app.screen = app.game ? 'game' : 'town';
     },
   }),
 });
 
 // ------------------------------------------------------------------ partie
 
-function startRun(floor, sandbox = false) {
+function startRun(floor, sandbox = false, practice = false) {
   const seed = params.has('seed') ? Number(params.get('seed')) : (Math.random() * 2 ** 31) >>> 0;
-  const startFloor = params.has('floor') ? Number(params.get('floor')) : floor;
-  const meta = { checkpoints: app.meta.checkpoints, bestFloor: app.meta.bestFloor, snapshots: app.meta.snapshots ?? {} };
+  const startFloor = params.has('floor') && !practice ? Number(params.get('floor')) : floor;
   const tune = params.get('tune') === '0' ? {} : loadTuningOverrides();
-  const opts = { seed, startFloor: sandbox ? 1 : startFloor, meta, godMode: params.get('god') === '1', items: app.meta.items ?? undefined, sandbox };
+  const opts = { seed, startFloor: sandbox ? 1 : startFloor, meta: app.profile, godMode: params.get('god') === '1', sandbox, practice, tuning: { lab: { ...app.settings.lab } } };
   try {
     app.game = createGame(opts);
   } catch {
-    // Équipement sauvegardé illisible : on repart avec l'équipement de départ plutôt que de bloquer.
-    app.meta.items = null;
-    save(META_KEY, app.meta);
-    app.game = createGame({ ...opts, items: undefined });
+    // Profil illisible (forme d'objet ancienne…) : on repart d'un profil neuf plutôt que de bloquer.
+    app.profile = sanitizeProfile({}, CONTENT);
+    save(META_KEY, app.profile);
+    app.game = createGame({ ...opts, meta: app.profile });
   }
   applyOverrides(app.game.tuning, tune);
   // Réglages partageables par lien : ?t.player.speed=320&t.dash.distance=190
@@ -8909,16 +10072,52 @@ function startRun(floor, sandbox = false) {
   requestWakeLock();
 }
 
+/** Recopie le PROFIL de la partie (permanent) et le sauvegarde. */
 function persistMeta() {
   const g = app.game;
-  if (!g) return;
-  app.meta = { schema: META_SCHEMA, checkpoints: g.meta.checkpoints.slice(), bestFloor: g.meta.bestFloor, items: g.run.items, snapshots: g.meta.snapshots };
-  save(META_KEY, app.meta);
+  if (!g || g.sandbox || g.practice) return;
+  app.profile = structuredClone(g.meta);
+  save(META_KEY, app.profile);
 }
 
 function afterCommand() {
   flushEvents();
   persistMeta();
+  // Fin du run (portail du checkpoint, écran de mort, abandon) : retour en Ville.
+  if (app.game?.mode === 'town') {
+    app.game = null;
+    openTown();
+  }
+}
+
+function openTown() {
+  app.screen = 'town';
+  app.paused = false;
+  app.game = null;
+  app.townRev++;
+}
+
+/** Opération de la Ville sur le profil (pure, profile.mjs), puis sauvegarde. */
+function townOp(fn, ...args) {
+  const res = fn(app.profile, CONTENT, ...args);
+  if (res?.ok) save(META_KEY, app.profile);
+  app.townRev++;
+  return res;
+}
+
+function setLabChoice(axis, choice) {
+  if (!LAB_AXES[axis]?.options[choice]) return;
+  app.settings.lab = { ...app.settings.lab, [axis]: choice };
+  save(SETTINGS_KEY, app.settings);
+  if (app.game) setLab(app.game.tuning, axis, choice);
+  app.townRev++;
+}
+
+/** Entraînement : le Gardien choisi, à l'étage de sa première section, sans récompense ni risque. */
+function startPractice(kind) {
+  let section = 1;
+  while (section <= CONTENT.floors.total / CONTENT.floors.sectionLength && guardianFor(CONTENT, section) !== kind) section++;
+  startRun(sectionBounds(CONTENT, section).guardian, false, true);
 }
 
 function flushEvents() {
@@ -8934,7 +10133,7 @@ function flushEvents() {
     if (ev.type === 'roomClear') setSlowmo(ev.boss ? SLOWMO.bossKill : SLOWMO.roomClear);
     else if (ev.type === 'playerDeath') setSlowmo(SLOWMO.playerDeath);
     else if (ev.type === 'dodge') setSlowmo(SLOWMO.dodge);
-    if (ev.type === 'checkpoint' || ev.type === 'equip' || ev.type === 'gameOver' || ev.type === 'floorEnter') persistMeta();
+    if (ev.type === 'checkpoint' || ev.type === 'equip' || ev.type === 'stash' || ev.type === 'gameOver' || ev.type === 'floorEnter' || ev.type === 'returnTown') persistMeta();
   }
   g.events.length = 0;
 }
@@ -9108,7 +10307,7 @@ function render() {
   ctx.fillStyle = '#07040a';
   ctx.fillRect(0, 0, w, h);
   const g = app.game;
-  if (!g || app.screen === 'title') {
+  if (!g || app.screen === 'title' || app.screen === 'town') {
     drawTitleBackdrop(w, h);
     return;
   }

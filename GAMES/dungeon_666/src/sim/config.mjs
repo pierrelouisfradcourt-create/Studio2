@@ -5,6 +5,9 @@
 // Unités : 1 u = 1 px à l'échelle de référence (caméra ~ 960 × 540 u en paysage).
 // Temps en secondes, angles en degrés dans ce fichier (convertis à l'usage), simulation à 60 Hz.
 
+import { WEAPONS, SKILLS, GADGETS, SUPERS, CLASSES } from './kits.mjs';
+import { UPGRADES, SALVAGE_SOULS } from './town_data.mjs';
+
 export const SIM_HZ = 60;
 export const DT = 1 / SIM_HZ;
 
@@ -21,6 +24,7 @@ export const DEFAULT_TUNING = {
     attackMoveMult: 0.5,
     hurtIframes: 0.6, // invulnérabilité après un coup reçu
     hurtHitstop: 0.083, // gel global quand le héros est touché : il DOIT le sentir
+    cancelMult: 1, // D9 : multiplie la part de récupération à jouer avant le coup suivant
     inputBuffer: 0.15, // une action pressée trop tôt reste en mémoire
     // Attaque et Lance tapées pendant un coup engagé : le finisher verrouille 0,32 s, un tampon
     // de 0,15 s y perdait un tap sur trois (revue « feel »). Dash et Super gardent 0,15 s.
@@ -34,6 +38,7 @@ export const DEFAULT_TUNING = {
   // Gel d'impact plafonné : au plus `bank` secondes de gel, rechargées à `refill` par seconde.
   // Sans plafond, une mêlée de 6 ennemis transforme le combat en diaporama.
   hitstopBank: { max: 0.22, refill: 0.22 },
+  hitstopMode: 'global', // D8 : global | local (écrit par lab.mjs selon lab.hitstop)
   killHitstop: { elite: 0.1, boss: 0.2, lastEnemy: 0.13 },
   dash: {
     distance: 165,
@@ -48,27 +53,37 @@ export const DEFAULT_TUNING = {
     perfectDodgeSuper: 0.06, // fraction de jauge de Super
     perfectDodgeRefund: 0.5, // s retirées à la recharge en cours
   },
-  // Combo de 3 coups. arc en degrés. lunge = petit déplacement vers l'avant au début de l'actif.
-  combo: [
-    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 10, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
-    { startup: 0.05, active: 0.07, recovery: 0.12, range: 84, arc: 140, damage: 11, knockback: 240, lunge: 36, hitstop: 0.04, shake: 0.2 },
-    { startup: 0.09, active: 0.09, recovery: 0.24, range: 104, arc: 220, damage: 22, knockback: 560, lunge: 64, hitstop: 0.085, shake: 0.45 },
-  ],
+  // Combo ACTIF (arc en degrés ; lunge = petit déplacement vers l'avant au début de l'actif).
+  // Référence vers l'arme équipée (kits.mjs) : par défaut la Lame du Revenant.
+  combo: WEAPONS.lame.combo,
   comboResetTime: 0.32, // au-delà, le prochain coup repart du coup 1
   // Fraction de la récupération à jouer avant que le coup suivant puisse partir (le dash, lui,
   // annule tout). Le finisher (coup 3) engage davantage ; le dash reste la sortie rapide.
   comboCancelFrom: { hits: [0.3, 0.3, 0.6], strike: 0.3 },
-  dashStrike: { startup: 0.04, active: 0.08, recovery: 0.16, range: 96, arc: 120, damage: 18, knockback: 420, lunge: 90, hitstop: 0.06, shake: 0.35 },
+  dashStrike: WEAPONS.lame.dashStrike, // frappe de dash de l'arme équipée
   wallSlam: { minSpeed: 380, damage: 8, stun: 0.45, hitstop: 0.05 },
   // Visée assistée : la mêlée ne se tourne que vers ce qu'elle peut atteindre ; la Lance voit loin.
   autoAim: { range: 160, skillRange: 520, coneDeg: 80, movePreference: 0.35 },
 
-  // Compétence : Lance infernale — projectile perforant, visée glissée ou auto.
-  skill: { cooldown: 4.0, damage: 30, speed: 900, radius: 12, range: 540, pierce: 3, knockback: 300, hitstop: 0.05, castTime: 0.08 },
-  // Gadget (charges, façon Brawl Stars) : Nova de cendres — onde qui repousse et étourdit.
-  gadget: { chargesPerSection: 3, chargeOnEliteKill: 1, radius: 150, damage: 20, knockback: 900, stun: 0.9, iframes: 0.25, hitstop: 0.07, shake: 0.4 },
-  // Super : Colère — se remplit en infligeant des dégâts ; tourbillon invulnérable.
-  super: { startCharge: 0.4, chargeDamage: 900, duration: 1.4, tickInterval: 0.12, radius: 130, damagePerTick: 9, knockback: 260, speedMult: 0.85, shakePerTick: 0.1 },
+  // Kit ACTIF (références vers le kit équipé, résolu par loadout.mjs) : compétence (bouton
+  // Lance), gadget (charges par section, façon Brawl Stars), Super (jauge remplie en frappant).
+  skill: SKILLS.lance,
+  gadget: GADGETS.nova,
+  super: SUPERS.colere,
+  // Tous les kits disponibles (classes, armes, compétences, gadgets, Supers).
+  classes: CLASSES,
+  weapons: WEAPONS,
+  skills: SKILLS,
+  gadgets: GADGETS,
+  supers: SUPERS,
+
+  // LABORATOIRE DU FEEL (D5 / D8 / D9) : variantes à comparer en jouant, jamais tranchées ici.
+  // Chaque variante est appliquée par lab.mjs sur la copie de tuning de la partie.
+  lab: {
+    dashStrike: 'fin', // D5 : fin | toutDash | apresDash — quand une attaque devient frappe de dash
+    hitstop: 'global', // D8 : global | local — gel de toute la scène, ou seulement des belligérants
+    comboMobility: 'mobile', // D9 : ancre | mobile | fluide — vitesse et annulations pendant le combo
+  },
 
   enemies: {
     imp: {
@@ -148,17 +163,40 @@ export const DEFAULT_TUNING = {
     healOrbAmount: 12,
   },
 
-  // Structure des 666 étages : sections de 6 (le 6e = boss checkpoint) ; 9 Cercles de
-  // 72 étages (12 sections) = 648, puis la finale de 18 étages (3 sections) = 666.
+  // Structure des 666 étages : sections de 18 (le 18e = Gardien, checkpoint et téléportation) ;
+  // 9 Cercles de 72 étages (4 sections) = 648, puis la finale de 18 étages (1 section) = 666.
+  // 37 sections, donc 37 Gardiens (rotation des modèles : bosses.mjs).
   floors: {
     total: 666,
-    sectionLength: 6,
+    sectionLength: 18,
     circleLength: 72,
     circleNames: ['Limbes', 'Luxure', 'Gourmandise', 'Avarice', 'Colère', 'Hérésie', 'Violence', 'Fraude', 'Trahison'],
     finaleName: 'L\'Abîme',
     // Scaling (spec §5.5) : L = niveau d'objet, B = saturation du build, C = dérive, D = dégâts.
     itemGrowth: 0.05, buildCap: 2, buildScale: 100, driftAt666: 0.5, dmgCurve: 0.6, dmgScale: 150,
   },
+
+  // PLAN D'UNE SECTION (18 étages), composé à partir de types d'étages réutilisables.
+  // Les portes de sortie annoncent la récompense de l'étage suivant (façon Hades) ; certains
+  // index de la section imposent leurs portes.
+  section: {
+    fixedDoors: { 9: ['shop', 'event'], 17: ['shop', 'event'] }, // mi-section et antichambre du Gardien
+    eliteAt: [6, 12], // une des deux portes mène forcément à une épreuve d'élite
+    gadgetRefillEvery: 6, // charges de gadget rendues aux étages 1, 7 et 13 de la section
+    // Vagues par étage selon l'index dans la section (1..17) : courtes au début, assauts à la fin.
+    waves: [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3],
+  },
+  // Budget de menace d'une vague : (base + perIndex × index) × densité de l'étage.
+  encounter: { baseBudget: 5, perIndex: 0.45, lastWaveMult: 1.2, strayEliteChance: 0.15 },
+  // Rotation des Gardiens sur les 37 sections (le 1er de la liste garde la section 1).
+  guardians: { rotation: ['gardien'] },
+
+  // PROGRESSION PERMANENTE (profil) : Âmes gagnées pendant la descente, jamais perdues.
+  progression: {
+    souls: { kill: 1, elite: 6, guardian: 60, guardianPerSection: 15 },
+  },
+  // VILLE : améliorations du Sanctuaire et recyclage du coffre (town_data.mjs).
+  town: { upgrades: UPGRADES, salvageSouls: SALVAGE_SOULS },
 
   economy: {
     goldPerRoom: [8, 14], shopHealPrice: 40, shopBoonPrice: 70, shopItemPrice: [60, 140],

@@ -4,6 +4,7 @@
 
 import { rand, randInt, pick, shuffle, weightedPick } from '../core/rng.mjs';
 import { newId } from './state.mjs';
+import { classOf, weaponTypeOf } from './loadout.mjs';
 
 // baseMult : multiplicateur de la valeur de base (dégâts d'arme, PV d'armure) par rareté.
 export const ITEM_RARITIES = [
@@ -89,8 +90,20 @@ export function rollRarity(game, bonus = 1) {
   return r.id;
 }
 
-export function generateItem(game, { slot, rarity, floor } = {}) {
+/**
+ * Type d'arme d'un objet trouvé : une arme que la classe jouée sait manier ET dont le type est
+ * débloqué en Ville. Une seule possibilité : aucun tirage (la graine reste stable).
+ */
+function rollWeaponType(game) {
+  const unlocked = game.meta.unlocked?.weapons ?? [];
+  const pool = classOf(game).weapons.filter((w) => unlocked.includes(w) && game.tuning.weapons[w]);
+  if (pool.length === 0) return weaponTypeOf(game);
+  return pool.length === 1 ? pool[0] : pick(game.rng.gen, pool);
+}
+
+export function generateItem(game, { slot, rarity, floor, weaponType } = {}) {
   const s = slot ?? pick(game.rng.gen, SLOTS);
+  const wt = s === 'arme' ? weaponType ?? rollWeaponType(game) : null;
   const rar = rarity ?? rollRarity(game);
   const rdef = ITEM_RARITIES.find((r) => r.id === rar);
   const lvl = floor ?? game.run.floor;
@@ -101,7 +114,7 @@ export function generateItem(game, { slot, rarity, floor } = {}) {
     const value = roundStat(format === 'flat' ? raw * scale : raw * Math.sqrt(scale), format);
     return { stat, value, prefix, suffix, format };
   });
-  const base = pick(game.rng.gen, BASES[s]);
+  const base = pick(game.rng.gen, wt ? game.tuning.weapons[wt].bases ?? BASES.arme : BASES[s]);
   let name = base;
   if (affixes[0]) name = `${base} ${affixes[0].prefix}`;
   if (affixes[1]) name = `${name} ${affixes[1].suffix}`;
@@ -110,7 +123,8 @@ export function generateItem(game, { slot, rarity, floor } = {}) {
     power = pick(game.rng.gen, LEGENDARY_POWERS).id;
     name = `${base} ${LEGENDARY_POWERS.find((p) => p.id === power).name}`;
   }
-  const item = { id: newId(game), slot: s, rarity: rar, name, level: lvl, affixes, power, base: baseValues(game, s, lvl, rdef.baseMult) };
+  const item = { id: newId(game), slot: s, rarity: rar, name, level: lvl, affixes, power, base: baseValues(game, s, lvl, rdef.baseMult * (wt ? game.tuning.weapons[wt].baseMult ?? 1 : 1)) };
+  if (wt) item.weaponType = wt;
   item.score = itemScore(item);
   return item;
 }
@@ -123,10 +137,12 @@ function baseValues(game, slot, level, mult) {
   return {};
 }
 
-/** Équipement de départ : arme et armure communes, sans affixe. */
+/** Équipement de départ : arme (celle de la classe) et armure communes, sans affixe. */
 export function starterItems(game) {
+  const wt = classOf(game).weapons[0];
+  const w = game.tuning.weapons[wt];
   return {
-    arme: { id: newId(game), slot: 'arme', rarity: 'commun', name: 'Épée rouillée', level: 1, affixes: [], power: null, base: { damage: game.tuning.weaponBase }, score: 0 },
+    arme: { id: newId(game), slot: 'arme', weaponType: wt, rarity: 'commun', name: w.starterName ?? w.name, level: 1, affixes: [], power: null, base: { damage: game.tuning.weaponBase * (w.baseMult ?? 1) }, score: 0 },
     armure: { id: newId(game), slot: 'armure', rarity: 'commun', name: 'Haillons de pèlerin', level: 1, affixes: [], power: null, base: { hp: game.tuning.armorBase }, score: 0 },
     talisman: null,
   };

@@ -125,6 +125,8 @@ function drawTopRight(ctx, game, w, safe) {
   ctx.fillStyle = PAL.gold;
   ctx.fillRect(-5, -5, 10, 10);
   ctx.restore();
+  // Âmes (PERMANENTES) sous la bourse : on les voit monter pendant la descente.
+  if (!game.sandbox && !game.practice) text(ctx, `◆ ${game.meta.souls}`, x + 8, y + 20, 12, '#9ff4ff', 'right', 800);
   // Bouton pause (zone gérée par main).
   ctx.fillStyle = 'rgba(255,255,255,0.12)';
   ctx.beginPath();

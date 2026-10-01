@@ -15,11 +15,14 @@ import { updateEnemies } from './enemies.mjs';
 import { updateNav } from './nav.mjs';
 import { updateProjectiles, updateHazards, compact } from './projectiles.mjs';
 import { updateSpawns, updateWaves, doorTouched, refillSandboxWaves } from './room.mjs';
-import { createRun, enterFloor, onRoomClear, openInteract, applyCommand as runCommand } from './run.mjs';
+import { createRun, enterFloor, onRoomClear, openInteract, onDeath, returnToTown, applyCommand as runCommand } from './run.mjs';
 import { recomputeStats } from './stats.mjs';
 import { moveCircle } from './physics.mjs';
 import { healPlayer } from './combat.mjs';
 import { starterItems } from './loot.mjs';
+import { createProfile, sanitizeProfile } from './profile.mjs';
+import { resolveKit } from './loadout.mjs';
+import { applyLab } from './lab.mjs';
 
 export { DT };
 export const DEATH_DELAY = 1.4; // s de ralenti/agonie avant l'écran de mort
@@ -34,15 +37,17 @@ export function emptyInput() {
 }
 
 /**
- * options : { seed, tuning (surcharges partielles), startFloor, meta, godMode, items, sandbox }
- * meta    : progression persistante {checkpoints: [1, ...], bestFloor}
+ * options : { seed, tuning (surcharges partielles), startFloor, meta, godMode, items, sandbox, practice }
+ * meta    : le PROFIL PERMANENT (profile.mjs) — classe et kit choisis, équipement, coffre,
+ *           déblocages, Âmes, bourse, checkpoints. Une forme ancienne ({checkpoints, bestFloor})
+ *           est complétée. La partie en garde une COPIE (game.meta) que main sauvegarde.
+ * Tout ce qui vit dans game.run est TEMPORAIRE : la mort le remet à zéro (run.mjs, respawn).
  */
 export function createGame(options = {}) {
   const seed = (options.seed ?? 1) >>> 0;
   const tuning = createTuning(options.tuning);
-  const meta = options.meta ? structuredClone(options.meta) : { checkpoints: [1], bestFloor: 1, snapshots: {} };
-  meta.snapshots = meta.snapshots ?? {};
-  if (!meta.checkpoints?.length) meta.checkpoints = [1];
+  applyLab(tuning);
+  const meta = options.meta ? sanitizeProfile(structuredClone(options.meta), tuning) : createProfile(tuning);
   const game = {
     seed,
     tuning,
@@ -53,18 +58,20 @@ export function createGame(options = {}) {
       combat: createRng(hashSeed(seed, 2)),
       ai: createRng(hashSeed(seed, 3)),
     },
-    mode: 'play', // play | choice | dead | victory
+    mode: 'play', // play | choice | dead | victory | town (run terminé : retour en Ville)
     choice: null,
     hitstop: 0,
     hitstopBank: tuning.hitstopBank.max,
     deathT: 0,
     godMode: !!options.godMode,
     sandbox: !!options.sandbox, // arène d'essai : vagues sans fin, ni portes ni récompenses
+    practice: !!options.practice, // entraînement contre un Gardien : ni Âmes, ni checkpoint, ni taxe
     nextId: 1,
     events: [],
     telemetry: createTelemetry(),
     meta,
     run: createRun(options.startFloor ?? 1),
+    kit: null, // kit résolu (loadout.mjs) : classe, arme, compétence, gadget, Super
     player: null,
     room: null,
     info: null,
@@ -74,15 +81,17 @@ export function createGame(options = {}) {
     pickups: [],
     spawns: [],
   };
+  // Équipement PERMANENT : celui du profil (complété par l'équipement de départ à la toute
+  // première partie), puis d'éventuelles surcharges explicites. run.items EST l'équipement du
+  // profil (même objet) : ce qu'on équipe en donjon est conservé.
+  const starters = starterItems(game);
+  for (const slot of Object.keys(starters)) if (!meta.equipment[slot] && starters[slot]) meta.equipment[slot] = starters[slot];
+  Object.assign(meta.equipment, options.items ?? {});
+  game.run.items = meta.equipment;
+  game.run.gold = meta.gold; // la bourse suit le héros d'un run à l'autre
+  if (!game.sandbox && !game.practice) meta.stats.runs++;
+  resolveKit(game);
   game.player = createPlayer(tuning, 0, 0);
-  Object.assign(game.run.items, starterItems(game), options.items ?? {});
-  // Reprise à un checkpoint (relance de l'appli, écran titre) : même build que la reprise
-  // après une mort — l'instantané pris en battant le Gardien.
-  const snap = !options.sandbox ? meta.snapshots?.[options.startFloor ?? 1] : null;
-  if (snap) {
-    game.run.boons = snap.boons.map((b) => ({ ...b }));
-    game.run.gold = snap.gold;
-  }
   recomputeStats(game);
   game.player.hp = game.player.maxHp;
   enterFloor(game, options.startFloor ?? 1, { reward: 'boon', family: 'colere' });
@@ -94,6 +103,8 @@ export function stepGame(game, input) {
   const dt = DT;
   game.tick++;
   const dashWanted = readInput(game, input ?? emptyInput());
+  // Gel LOCAL (D8) : le dash l'interrompt aussi, sans attendre.
+  if (game.player.freeze > 0 && dashWanted && game.tuning.dash.cancelsHitstop && canDash(game)) game.player.freeze = 0;
   if (game.hitstop > 0) {
     // Le dash interrompt le gel d'impact : la réactivité passe avant l'emphase.
     if (dashWanted && game.tuning.dash.cancelsHitstop && canDash(game)) {
@@ -155,6 +166,7 @@ function updateFlow(game, dt) {
     game.deathT += dt;
     if (game.deathT >= DEATH_DELAY) {
       game.mode = 'dead';
+      onDeath(game);
       emit(game, 'gameOver', { floor: game.run.floor });
     }
     return;
@@ -170,7 +182,9 @@ function updateFlow(game, dt) {
   const door = doorTouched(game);
   if (door >= 0) {
     const chosen = room.doors[door];
-    enterFloor(game, game.run.floor + 1, chosen);
+    // Portail du checkpoint : retour en Ville (fin du run, le temporaire est abandonné).
+    if (chosen.reward === 'town') returnToTown(game);
+    else enterFloor(game, game.run.floor + 1, chosen);
   }
 }
 

@@ -38,6 +38,8 @@ export function baseStats() {
     knockbackMult: 1,
     weaponDamage: 0, // dégâts de base de l'arme portée (W)
     armorHp: 0, // PV apportés par l'armure portée
+    dashDistanceMult: 1, // classe : longueur du dash
+    deathGoldKeepBonus: 0, // Sanctuaire : part de la bourse épargnée par Charon à la mort
   };
 }
 
@@ -72,6 +74,7 @@ export function createPlayer(tuning, x, y) {
     dashT: 0,
     strikeWindow: 0,
     iframes: 0,
+    freeze: 0, // gel d'impact LOCAL restant (D8, mode local) ; le mode global gèle toute la scène
     dodgeIframes: 0, // part des i-frames qui vient d'un dash (sert l'événement « esquive »)
     hurtFlash: 0,
     skillCd: 0,
@@ -112,5 +115,6 @@ export function createTelemetry() {
     roomTimes: [],
     killTimes: [], // durée de vie (s) des ennemis tués, par type
     deathCauses: {},
+    soulsEarned: 0, // Âmes gagnées pendant ce run (permanentes)
   };
 }
