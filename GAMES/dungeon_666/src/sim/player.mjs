@@ -1,6 +1,14 @@
 // Le héros : machine à états (free | attack | dash | cast | super | dead), tampon d'input,
 // annulations (cancels). Règle de feel n°1 : le DASH annule presque tout, tout de suite.
 //
+// KITS : le code est choisi par le `kind` de l'entrée équipée (kits.mjs). Le kit d'origine
+// (Lame, Lance, Nova, Colère) est joué ICI, à l'identique ; les autres par kit_*.mjs :
+//   arme 'ranged'      -> kit_shots.fireWeaponShots (traits au début de l'actif, pas de balayage)
+//   compétence ≠ lance -> kit_skills (chain, bond, brasier, volee)
+//   gadget ≠ nova      -> kit_gadgets (bombe, piege, totem)
+//   Super ≠ colere     -> kit_supers (sentence, nuee)
+// Les tirs et zones posés par le héros vivent dans la salle (kit_common.kitStore).
+//
 // InputFrame attendu (produit par src/input, ou par un bot) :
 //   { moveX, moveY,            // [-1, 1], norme <= 1 (analogique)
 //     aimX, aimY,              // visée manuelle (0, 0 = visée assistée)
@@ -15,6 +23,11 @@ import { computeAim } from './aim.mjs';
 import { moveCircle } from './physics.mjs';
 import { damageEnemy } from './combat.mjs';
 import { spawnProjectile, destroyEnemyProjectilesInCircle } from './projectiles.mjs';
+import { fireWeaponShots, updateShots } from './kit_shots.mjs';
+import { updateZones } from './kit_zones.mjs';
+import { beginKitSkill, updateLeap, releaseKitSkill } from './kit_skills.mjs';
+import { useKitGadget } from './kit_gadgets.mjs';
+import { startKitSuper, tickKitSuper } from './kit_supers.mjs';
 
 const PRIORITY = ['dash', 'super', 'skill', 'attack'];
 const DASH_CHAIN_FRACTION = 0.35; // on peut re-dasher quand il reste moins de 35 % du dash
@@ -113,6 +126,11 @@ export function readInput(game, input) {
 export function updatePlayer(game, dt) {
   const p = game.player;
   const t = game.tuning;
+  // Tirs et zones posés par le héros (kits) : ils continuent pendant un gel LOCAL (D8).
+  if (game.room?.kitFx) {
+    updateShots(game, dt);
+    updateZones(game, dt);
+  }
   if (p.freeze > 0) {
     // Gel d'impact LOCAL (D8) : le héros se fige comme en mode global, mais seul.
     p.freeze = Math.max(0, p.freeze - dt);
@@ -235,6 +253,15 @@ function locomotion(game, dt, speed) {
 
 // ---------------------------------------------------------------- attaque (combo / frappe de dash)
 
+/**
+ * Part de la vitesse gardée pendant un coup : player.attackMoveMult (D9), modulée par l'arme
+ * (moveMult : dagues et arc mobiles, hache et maillet lourds), jamais au-delà de la course.
+ */
+function attackMoveFactor(t) {
+  const m = t.weapon?.moveMult;
+  return m === undefined ? t.player.attackMoveMult : Math.min(1, t.player.attackMoveMult * m);
+}
+
 function phaseDurations(def, speedMult) {
   return { startup: def.startup / speedMult, active: def.active / speedMult, recovery: def.recovery / speedMult };
 }
@@ -250,7 +277,8 @@ function startAttack(game) {
     else if (p.comboTimer <= t.comboResetTime) index = p.comboIndex;
   }
   const def = strike ? t.dashStrike : t.combo[index];
-  const aim = computeAim(game, p.manualAimX, p.manualAimY);
+  // Visée assistée : portée de l'arme à distance (aimRange), sinon celle de la mêlée.
+  const aim = computeAim(game, p.manualAimX, p.manualAimY, t.weapon?.aimRange);
   p.attack = {
     def,
     index,
@@ -285,19 +313,21 @@ function updateAttack(game, dt) {
   const a = p.attack;
   a.t += dt;
   // Mouvement résiduel + élan (lunge) pendant l'actif.
-  const slow = t.player.speed * p.stats.moveSpeedMult * t.player.attackMoveMult;
+  const slow = t.player.speed * p.stats.moveSpeedMult * attackMoveFactor(t);
   let vx = p.moveX * slow;
   let vy = p.moveY * slow;
   if (a.phase === 'startup' && a.t >= a.dur.startup) {
     a.phase = 'active';
     a.t -= a.dur.startup;
     a.lungeV = lungeDistance(game, a) / Math.max(1e-3, a.dur.active);
-    emit(game, 'swing', { x: p.x, y: p.y, angle: a.angle, arc: a.def.arc * DEG, range: a.def.range, index: a.index, strike: a.strike });
+    emit(game, 'swing', { x: p.x, y: p.y, angle: a.angle, arc: a.def.arc * DEG, range: a.def.range, index: a.index, strike: a.strike, weapon: game.kit?.weaponType, ranged: !!a.def.shot });
+    // Arme à distance : les traits partent au début de l'actif (pas de balayage ni de parade).
+    if (a.def.shot) fireWeaponShots(game, a);
   }
   if (a.phase === 'active') {
     vx += a.dirX * a.lungeV;
     vy += a.dirY * a.lungeV;
-    sweepHits(game, a);
+    if (!a.def.shot) sweepHits(game, a);
     if (a.t >= a.dur.active) {
       a.phase = 'recovery';
       a.t -= a.dur.active;
@@ -320,7 +350,8 @@ function updateAttack(game, dt) {
 function lungeDistance(game, a) {
   const p = game.player;
   const base = a.def.lunge;
-  if (!a.targetId) return base;
+  // Arme à distance : élan fixe (souvent un léger recul), jamais aimanté vers la cible.
+  if (!a.targetId || a.def.shot) return base;
   const e = game.enemies.find((o) => o.id === a.targetId);
   if (!e || e.dead) return base;
   const gap = Math.sqrt(dist2(p.x, p.y, e.x, e.y)) - p.r - e.r - 6;
@@ -351,6 +382,7 @@ function sweepHits(game, a) {
       hitstop: def.hitstop,
       canCrit: true,
       shake: def.shake,
+      stun: def.stun, // coups lourds (hache, maillet) : étourdissement des ennemis ordinaires
     });
   }
   // Parade : un coup détruit les projectiles ennemis qu'il balaie.
@@ -380,7 +412,7 @@ function startDash(game) {
     dy = Math.sin(p.facing);
   }
   if (p.state === 'attack') emit(game, 'cancel', { from: 'attack' });
-  if (p.state === 'cast') releaseLance(game);
+  if (p.state === 'cast') releaseSkill(game);
   p.attack = null;
   p.dashCharges--;
   p.dodgedIds.length = 0; // chaque dash compte ses esquives parfaites, une fois par coup
@@ -435,14 +467,15 @@ function updateDash(game, dt) {
   }
 }
 
-// ---------------------------------------------------------------- compétence (Lance infernale)
+// ---------------------------------------------------------------- compétence (Lance infernale, kits)
 
 function startCast(game, aimX, aimY) {
   const p = game.player;
   const s = game.tuning.skill;
   const mx = aimX || p.manualAimX;
   const my = aimY || p.manualAimY;
-  const aim = computeAim(game, mx, my, game.tuning.autoAim.skillRange);
+  // La Lance voit loin (autoAim.skillRange) ; les autres compétences visent à leur portée.
+  const aim = computeAim(game, mx, my, s.kind === 'lance' ? game.tuning.autoAim.skillRange : s.range);
   if (p.state === 'attack') emit(game, 'cancel', { from: 'attack' });
   p.attack = null;
   p.castDirX = aim.x;
@@ -453,19 +486,34 @@ function startCast(game, aimX, aimY) {
   p.state = 'cast';
   p.stateTime = 0;
   emit(game, 'castStart', { angle: p.facing });
+  if (s.kind !== 'lance') beginKitSkill(game, s, aim);
 }
 
 function updateCast(game, dt) {
   const p = game.player;
   const t = game.tuning;
+  if (t.skill.kind === 'bond') {
+    // Bond : l'état 'cast' EST le saut (vitesse imposée, invulnérable) ; il finit à l'atterrissage.
+    if (updateLeap(game, dt)) {
+      p.state = 'free';
+      p.stateTime = 0;
+    }
+    return;
+  }
   const slow = t.player.speed * p.stats.moveSpeedMult * t.player.attackMoveMult;
   p.vx = p.moveX * slow;
   p.vy = p.moveY * slow;
   p.castT -= dt;
   if (p.castT > 0) return;
-  releaseLance(game);
+  releaseSkill(game);
   p.state = 'free';
   p.stateTime = 0;
+}
+
+/** Effet de la compétence équipée (fin du lancer, ou interruption par un dash / Super). */
+function releaseSkill(game) {
+  if (game.tuning.skill.kind === 'lance') releaseLance(game);
+  else releaseKitSkill(game);
 }
 
 /** Tire la Lance préparée. Appelé à la fin du lancer, ou AVANT un dash/Super qui l'interrompt :
@@ -494,12 +542,13 @@ function releaseLance(game) {
   emit(game, 'skill', { x: p.x, y: p.y, angle: Math.atan2(p.castDirY, p.castDirX) });
 }
 
-// ---------------------------------------------------------------- gadget (Nova de cendres)
+// ---------------------------------------------------------------- gadget (Nova de cendres, kits)
 
 export function useGadget(game) {
   const p = game.player;
   const g = game.tuning.gadget;
   if (p.state === 'dead' || p.state === 'super' || p.gadgetCharges <= 0) return false;
+  if (g.kind !== 'nova') return useKitGadget(game, g);
   p.gadgetCharges--;
   p.iframes = Math.max(p.iframes, g.iframes);
   for (const e of game.enemies) {
@@ -521,21 +570,22 @@ export function useGadget(game) {
   return true;
 }
 
-// ---------------------------------------------------------------- Super (Colère)
+// ---------------------------------------------------------------- Super (Colère, kits)
 
 function startSuper(game) {
   const p = game.player;
   const s = game.tuning.super;
   if (p.state === 'attack' || p.state === 'dash') emit(game, 'cancel', { from: p.state });
-  if (p.state === 'cast') releaseLance(game);
+  if (p.state === 'cast') releaseSkill(game);
   p.attack = null;
   p.superCharge = 0;
   p.superT = s.duration + (p.stats.superDurationBonus ?? 0);
   p.superTick = 0;
+  if (s.kind !== 'colere') startKitSuper(game);
   p.state = 'super';
   p.stateTime = 0;
   game.telemetry.superUses++;
-  emit(game, 'super', { x: p.x, y: p.y, r: s.radius });
+  emit(game, 'super', { x: p.x, y: p.y, r: s.radius, super: s.kind });
 }
 
 function updateSuper(game, dt) {
@@ -544,6 +594,18 @@ function updateSuper(game, dt) {
   const s = t.super;
   locomotion(game, dt, t.player.speed * p.stats.moveSpeedMult * s.speedMult);
   p.superT -= dt;
+  if (s.kind !== 'colere') tickKitSuper(game, dt, s);
+  else colereTick(game, dt, s);
+  if (p.superT <= 0) {
+    p.state = 'free';
+    p.stateTime = 0;
+    emit(game, 'superEnd', { x: p.x, y: p.y });
+  }
+}
+
+/** Colère : tourbillon qui frappe tout autour à intervalle fixe et efface les projectiles. */
+function colereTick(game, dt, s) {
+  const p = game.player;
   p.superTick -= dt;
   if (p.superTick <= 0) {
     p.superTick += s.tickInterval;
@@ -562,10 +624,5 @@ function updateSuper(game, dt) {
     }
     destroyEnemyProjectilesInCircle(game, p.x, p.y, s.radius);
     emit(game, 'superTick', { x: p.x, y: p.y, r: s.radius });
-  }
-  if (p.superT <= 0) {
-    p.state = 'free';
-    p.stateTime = 0;
-    emit(game, 'superEnd', { x: p.x, y: p.y });
   }
 }

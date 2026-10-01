@@ -100,8 +100,21 @@ export function handleFxEvents(fx, cam, events, game) {
   }
 }
 
+// Effets des kits (héros) : teintes FROIDES, jamais le rouge des dangers.
+const SUPER_START_RING = 140; // u : onde de départ d'un Super à longue portée (Nuée)
+const HERO_BLAST = { bombe: { color: PAL.lance, trauma: 0.45, zoom: 0.03 }, piege: { color: PAL.heroCape, trauma: 0.2, zoom: 0 }, bond: { color: PAL.lance, trauma: 0.55, zoom: 0.04 }, brasier: { color: '#3fb8ff', trauma: 0.15, zoom: 0 } };
+
 const HANDLERS = {
   swing(fx, cam, ev) {
+    if (ev.ranged) {
+      // Arme à distance : éclat de départ du trait, pas de taillade.
+      const p = { x: ev.x + Math.cos(ev.angle) * 20, y: ev.y + Math.sin(ev.angle) * 20 };
+      burst(fx, p.x, p.y, ev.strike || ev.index > 0 ? 7 : 4, 260, 0.18, 2, PAL.lance, { dir: ev.angle, spread: 0.6, streak: 1, drag: 8 });
+      kick(cam, -Math.cos(ev.angle), -Math.sin(ev.angle), 1);
+      fx.swingT = 0.04;
+      fx.swingAngle = ev.angle;
+      return;
+    }
     addEffect(fx, { type: 'slash', angle: ev.angle, arc: ev.arc, range: ev.range, index: ev.index, strike: ev.strike, life: 0.15, max: 0.15 });
     kick(cam, Math.cos(ev.angle), Math.sin(ev.angle), 1.5);
     fx.swingT = 0.05;
@@ -178,7 +191,25 @@ const HANDLERS = {
     addTrauma(cam, ev.kind === 'sinBlast' ? 0.06 : 0.28);
   },
   explode(fx, cam, ev) {
+    if (ev.hero) {
+      // Bombe, piège, atterrissage du Bond, pot du Brasier : onde froide du héros.
+      const st = HERO_BLAST[ev.kind] ?? HERO_BLAST.bombe;
+      addEffect(fx, { type: 'shock', x: ev.x, y: ev.y, r: ev.r, life: 0.3, max: 0.3, color: st.color, edge: '#e8fbff' });
+      burst(fx, ev.x, ev.y, 18, ev.r * 3.5, 0.45, 3, st.color, { drag: 5, streak: 1 });
+      burst(fx, ev.x, ev.y, 10, ev.r * 2, 0.6, 4, '#4a5a64', { drag: 4 });
+      addTrauma(cam, st.trauma);
+      if (st.zoom) zoomKick(cam, st.zoom);
+      return;
+    }
     burst(fx, ev.x, ev.y, 26, 420, 0.6, 4, PAL.exploder, { drag: 3.5 });
+  },
+  hook(fx, cam, ev) {
+    addEffect(fx, { type: 'bolt', x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, life: 0.2, max: 0.2, seed: Math.random() * 1000, color: '#cfe9f5' });
+    addText(fx, ev.x1, ev.y1 - 30, ev.boss ? 'ACCROCHÉ' : 'HARPONNÉ', '#cfe9f5', 13, 0.6);
+    addTrauma(cam, 0.15);
+  },
+  kitPulse(fx, cam, ev) {
+    addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 12, r1: ev.r, color: '#bff8ff', width: 3, life: 0.3, max: 0.3 });
   },
   deflect(fx, cam, ev) {
     burst(fx, ev.x, ev.y, 6, 260, 0.25, 2, '#ffffff', { streak: 1, drag: 8 });
@@ -186,21 +217,57 @@ const HANDLERS = {
   },
   skill(fx, cam, ev, game) {
     const p = game.player;
-    burst(fx, p.x + Math.cos(ev.angle) * 22, p.y + Math.sin(ev.angle) * 22, 10, 300, 0.25, 2.5, PAL.lance, { dir: ev.angle, spread: 0.9, streak: 1, drag: 6 });
+    if (ev.skill === 'bond') {
+      // Envol du Bond : poussière au décollage.
+      burst(fx, ev.x, ev.y, 14, 200, 0.4, 3.5, '#5a4a52', { drag: 5 });
+      addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 10, r1: 50, color: PAL.heroCape, width: 3, life: 0.2, max: 0.2 });
+      addTrauma(cam, 0.12);
+      return;
+    }
+    const spread = ev.skill === 'volee' ? 1.4 : 0.9;
+    burst(fx, p.x + Math.cos(ev.angle) * 22, p.y + Math.sin(ev.angle) * 22, 10, 300, 0.25, 2.5, PAL.lance, { dir: ev.angle, spread, streak: 1, drag: 6 });
     addTrauma(cam, 0.1);
   },
   gadget(fx, cam, ev) {
+    if (ev.gadget === 'cri') {
+      // Cri du bourreau : onde large et froide, sans souffle de cendres (il ne repousse pas).
+      addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 20, r1: ev.r, color: PAL.heroCape, width: 6, life: 0.35, max: 0.35 });
+      addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 10, r1: ev.r * 0.7, color: '#e8fbff', width: 3, life: 0.25, max: 0.25 });
+      addTrauma(cam, 0.35);
+      zoomKick(cam, 0.02);
+      return;
+    }
+    if (ev.gadget && ev.gadget !== 'nova') {
+      // Bombe lancée, piège ou totem posé : petit anneau froid (l'effet vient à l'impact).
+      addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 8, r1: 40, color: PAL.heroCape, width: 2.5, life: 0.2, max: 0.2 });
+      burst(fx, ev.x, ev.y, 6, 140, 0.3, 2.5, PAL.lance, { drag: 6 });
+      return;
+    }
     addEffect(fx, { type: 'nova', x: ev.x, y: ev.y, r: ev.r, life: 0.35, max: 0.35, color: '#ffb36a' });
     burst(fx, ev.x, ev.y, 30, ev.r * 4, 0.5, 3.5, '#8a7a80', { drag: 5 });
     addTrauma(cam, 0.4);
     zoomKick(cam, 0.03);
   },
   super(fx, cam, ev) {
-    addEffect(fx, { type: 'nova', x: ev.x, y: ev.y, r: ev.r * 1.3, life: 0.4, max: 0.4, color: PAL.superBar });
+    // Onde de départ : la Nuée a une grande portée de tir, mais son départ reste autour du héros.
+    const r = ev.super === 'nuee' ? SUPER_START_RING : ev.r * 1.3;
+    addEffect(fx, { type: 'nova', x: ev.x, y: ev.y, r, life: 0.4, max: 0.4, color: PAL.superBar });
     addTrauma(cam, 0.5);
     fx.flash = 0.5;
   },
   superTick(fx, cam, ev) {
+    if (ev.super === 'sentence') {
+      // Exécution : immense taillade dorée (le 3e coup fait le tour complet).
+      addEffect(fx, { type: 'slash', angle: ev.angle, arc: ev.arc, range: ev.r, index: ev.step === 2 ? 1 : 0, strike: true, life: 0.22, max: 0.22, color: PAL.superBar });
+      burst(fx, ev.x + Math.cos(ev.angle) * ev.r * 0.6, ev.y + Math.sin(ev.angle) * ev.r * 0.6, 14, 420, 0.35, 3, PAL.superBar, { dir: ev.angle, spread: Math.min(TAU, ev.arc), streak: 1, drag: 6 });
+      addTrauma(cam, ev.arc >= TAU - 1e-3 ? 0.7 : 0.4);
+      zoomKick(cam, ev.arc >= TAU - 1e-3 ? 0.06 : 0.025);
+      return;
+    }
+    if (ev.super === 'nuee') {
+      burst(fx, ev.x + Math.cos(ev.angle) * 18, ev.y + Math.sin(ev.angle) * 18, 3, 240, 0.15, 2, PAL.superBar, { dir: ev.angle, spread: 0.5, streak: 1, drag: 8 });
+      return;
+    }
     addEffect(fx, { type: 'swirl', x: ev.x, y: ev.y, r: ev.r, life: 0.16, max: 0.16, a0: Math.random() * TAU });
     burst(fx, ev.x, ev.y, 4, ev.r * 3, 0.3, 2.5, PAL.superBar, { drag: 6, streak: 1 });
   },
@@ -373,7 +440,7 @@ export function drawEffects(ctx, fx, game, ground = false) {
         ctx.globalAlpha = a * 0.35;
         ctx.fill();
         ctx.globalAlpha = a;
-        ctx.strokeStyle = '#ffd0a0';
+        ctx.strokeStyle = e.edge ?? '#ffd0a0';
         ctx.lineWidth = 4 * a + 1;
         ctx.stroke();
         break;
@@ -438,7 +505,7 @@ function drawSlash(ctx, px, py, e, t, a) {
   const a0 = -half * dir;
   const a1 = a0 + e.arc * dir * sweep;
   ctx.globalAlpha = a * 0.95;
-  ctx.fillStyle = e.strike ? PAL.slashStrike : PAL.slash;
+  ctx.fillStyle = e.color ?? (e.strike ? PAL.slashStrike : PAL.slash);
   ctx.beginPath();
   ctx.arc(0, 0, r, Math.min(a0, a1), Math.max(a0, a1));
   ctx.arc(0, 0, r * (heavy ? 0.45 : 0.6), Math.max(a0, a1), Math.min(a0, a1), true);
@@ -457,7 +524,7 @@ function drawSlash(ctx, px, py, e, t, a) {
 
 function drawBolt(ctx, e, a) {
   ctx.globalAlpha = a;
-  ctx.strokeStyle = '#bff8ff';
+  ctx.strokeStyle = e.color ?? '#bff8ff';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(e.x0, e.y0);

@@ -146,6 +146,8 @@ export const SILENT_EVENTS = Object.freeze([
   'stash', // objet rangé au coffre : le clic du menu suffit
   'returnTown', // fin du run : la Ville (DOM) prend le relais
   'bossShield', // chaînes du Colosse levées / brisées : retour visuel (chaînes, barre de vie)
+  'hook', // crochet de la Chaîne d'Enfer qui harponne : le son d'impact (hit) le porte
+  'kitPulse', // impulsion d'un Totem de givre : les coups (hit) qu'elle inflige portent le son
 ]);
 
 /** Vibration (ms) demandée par une entrée annotée ; 0 = aucune. */

@@ -194,10 +194,226 @@ const ICONS = {
     ctx.quadraticCurveTo(-r * 0.45, -r * 0.05, 0, -r * 0.5);
     ctx.fill();
   },
+  // ---- pictogrammes des kits (champ `icon` des entrées de kits.mjs)
+  daggers(ctx, r) {
+    for (const s of [-1, 1]) {
+      ctx.save();
+      ctx.rotate(s * Math.PI / 5);
+      ctx.fillRect(-r * 0.06, -r * 0.5, r * 0.12, r * 0.55);
+      ctx.fillRect(-r * 0.18, r * 0.05, r * 0.36, r * 0.08);
+      ctx.fillRect(-r * 0.05, r * 0.13, r * 0.1, r * 0.2);
+      ctx.restore();
+    }
+  },
+  axe(ctx, r) {
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillRect(-r * 0.05, -r * 0.5, r * 0.1, r * 1.0);
+    ctx.beginPath();
+    ctx.moveTo(r * 0.05, -r * 0.45);
+    ctx.quadraticCurveTo(r * 0.55, -r * 0.35, r * 0.45, r * 0.05);
+    ctx.lineTo(r * 0.05, -r * 0.1);
+    ctx.closePath();
+    ctx.fill();
+  },
+  hammer(ctx, r) {
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillRect(-r * 0.05, -r * 0.3, r * 0.1, r * 0.85);
+    ctx.fillRect(-r * 0.36, -r * 0.55, r * 0.72, r * 0.3);
+  },
+  bow(ctx, r) {
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = r * 0.1;
+    ctx.beginPath();
+    ctx.arc(-r * 0.25, 0, r * 0.55, -1.1, 1.1);
+    ctx.stroke();
+    ctx.lineWidth = r * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.25 + Math.cos(1.1) * r * 0.55, Math.sin(1.1) * r * 0.55);
+    ctx.lineTo(-r * 0.25 + Math.cos(-1.1) * r * 0.55, Math.sin(-1.1) * r * 0.55);
+    ctx.stroke();
+    ctx.fillRect(-r * 0.3, -r * 0.035, r * 0.75, r * 0.07);
+    ctx.beginPath();
+    ctx.moveTo(r * 0.55, 0);
+    ctx.lineTo(r * 0.38, -r * 0.12);
+    ctx.lineTo(r * 0.38, r * 0.12);
+    ctx.closePath();
+    ctx.fill();
+  },
+  crossbow(ctx, r) {
+    ctx.fillRect(-r * 0.45, -r * 0.06, r * 0.9, r * 0.12);
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = r * 0.1;
+    ctx.beginPath();
+    ctx.arc(r * 0.05, r * 0.45, r * 0.55, -Math.PI * 0.8, -Math.PI * 0.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(r * 0.55, 0);
+    ctx.lineTo(r * 0.38, -r * 0.13);
+    ctx.lineTo(r * 0.38, r * 0.13);
+    ctx.closePath();
+    ctx.fill();
+  },
+  chain(ctx, r) {
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = r * 0.09;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.ellipse(-r * 0.36 + i * r * 0.3, r * 0.2 - i * r * 0.2, r * 0.17, r * 0.1, -Math.PI / 4, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(r * 0.38, -r * 0.3, r * 0.2, Math.PI * 0.9, Math.PI * 2.1);
+    ctx.stroke();
+  },
+  leap(ctx, r) {
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = r * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.5, r * 0.3);
+    ctx.quadraticCurveTo(0, -r * 0.75, r * 0.4, r * 0.15);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(r * 0.5, r * 0.35);
+    ctx.lineTo(r * 0.22, r * 0.18);
+    ctx.lineTo(r * 0.5, r * 0.02);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillRect(-r * 0.55, r * 0.42, r * 1.1, r * 0.08);
+  },
+  fire(ctx, r) {
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.55);
+    ctx.quadraticCurveTo(r * 0.5, -r * 0.1, r * 0.3, r * 0.35);
+    ctx.quadraticCurveTo(r * 0.15, r * 0.5, 0, r * 0.5);
+    ctx.quadraticCurveTo(-r * 0.15, r * 0.5, -r * 0.3, r * 0.35);
+    ctx.quadraticCurveTo(-r * 0.45, 0, -r * 0.1, -r * 0.2);
+    ctx.quadraticCurveTo(-r * 0.05, -r * 0.35, 0, -r * 0.55);
+    ctx.fill();
+  },
+  fan(ctx, r) {
+    for (let i = 0; i < 5; i++) {
+      ctx.save();
+      ctx.rotate(-Math.PI / 2 + (i - 2) * 0.32);
+      ctx.fillRect(0, -r * 0.035, r * 0.55, r * 0.07);
+      ctx.beginPath();
+      ctx.moveTo(r * 0.62, 0);
+      ctx.lineTo(r * 0.48, -r * 0.09);
+      ctx.lineTo(r * 0.48, r * 0.09);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  },
+  bomb(ctx, r) {
+    ctx.beginPath();
+    ctx.arc(-r * 0.05, r * 0.1, r * 0.36, 0, TAU);
+    ctx.fill();
+    ctx.fillRect(r * 0.12, -r * 0.38, r * 0.14, r * 0.2);
+    ctx.beginPath();
+    ctx.arc(r * 0.32, -r * 0.48, r * 0.09, 0, TAU);
+    ctx.fill();
+  },
+  trap(ctx, r) {
+    ctx.beginPath();
+    ctx.arc(0, r * 0.1, r * 0.45, Math.PI, 0);
+    ctx.lineTo(r * 0.45, r * 0.18);
+    ctx.lineTo(-r * 0.45, r * 0.18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(20, 10, 16, 0.9)';
+    for (let i = 0; i < 4; i++) {
+      const x = -r * 0.3 + i * r * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(x - r * 0.07, r * 0.1);
+      ctx.lineTo(x, -r * 0.12);
+      ctx.lineTo(x + r * 0.07, r * 0.1);
+      ctx.closePath();
+      ctx.fill();
+    }
+  },
+  roar(ctx, r) {
+    // Gueule ouverte et ondes du cri.
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.5, -r * 0.2);
+    ctx.lineTo(-r * 0.05, -r * 0.05);
+    ctx.lineTo(-r * 0.5, r * 0.2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = r * 0.08;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(-r * 0.15, 0, r * (0.28 + i * 0.16), -0.7, 0.7);
+      ctx.stroke();
+    }
+  },
+  totem(ctx, r) {
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.55);
+    ctx.lineTo(r * 0.2, -r * 0.15);
+    ctx.lineTo(r * 0.12, r * 0.45);
+    ctx.lineTo(-r * 0.12, r * 0.45);
+    ctx.lineTo(-r * 0.2, -r * 0.15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = r * 0.05;
+    ctx.beginPath();
+    ctx.ellipse(0, r * 0.45, r * 0.5, r * 0.14, 0, 0, TAU);
+    ctx.stroke();
+  },
+  sentence(ctx, r) {
+    // Couperet de bourreau, lame vers le bas.
+    ctx.fillRect(-r * 0.05, -r * 0.55, r * 0.1, r * 0.5);
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.4, -r * 0.1);
+    ctx.lineTo(r * 0.4, -r * 0.1);
+    ctx.quadraticCurveTo(r * 0.45, r * 0.35, 0, r * 0.5);
+    ctx.quadraticCurveTo(-r * 0.45, r * 0.35, -r * 0.4, -r * 0.1);
+    ctx.fill();
+  },
+  rain(ctx, r) {
+    for (const [x, y] of [[-0.3, -0.2], [0, 0.05], [0.3, -0.2], [-0.15, 0.35], [0.15, 0.35]]) {
+      ctx.save();
+      ctx.translate(x * r, y * r);
+      ctx.rotate(Math.PI / 2);
+      ctx.fillRect(-r * 0.25, -r * 0.03, r * 0.35, r * 0.06);
+      ctx.beginPath();
+      ctx.moveTo(r * 0.18, 0);
+      ctx.lineTo(r * 0.08, -r * 0.08);
+      ctx.lineTo(r * 0.08, r * 0.08);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  },
 };
+
+/** Pictogramme du bouton selon le kit équipé (champ `icon`) ; défaut : celui du bouton. */
+function kitIcon(game, id) {
+  const t = game.tuning;
+  switch (id) {
+    case 'attack':
+      return t.weapon?.icon;
+    case 'skill':
+      return t.skill?.icon;
+    case 'gadget':
+      return t.gadget?.icon;
+    case 'super':
+      return t.super?.icon;
+    default:
+      return undefined;
+  }
+}
 
 /** État d'un bouton d'aptitude, lu dans la simulation. ready ∈ [0, 1]. */
 function abilityState(game, id) {
+  const st = baseAbilityState(game, id);
+  st.icon = kitIcon(game, id);
+  return st;
+}
+
+function baseAbilityState(game, id) {
   const p = game.player;
   const t = game.tuning;
   switch (id) {
@@ -248,7 +464,7 @@ function drawButton(ctx, b, st, time) {
   }
   ctx.fillStyle = ready ? (b.id === 'super' ? PAL.superBar : PAL.text) : 'rgba(243,233,228,0.4)';
   ctx.save();
-  ICONS[b.id](ctx, b.r);
+  (ICONS[st.icon] ?? ICONS[b.id])(ctx, b.r);
   ctx.restore();
   if (b.id === 'super') {
     ctx.strokeStyle = PAL.superBar;
