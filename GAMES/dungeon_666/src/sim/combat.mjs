@@ -73,6 +73,7 @@ export function damageEnemy(game, e, src) {
   if (e.eliteMod === 'blinde') amount *= t.elite.mods.blinde.damageTakenMult;
   if (e.stun > 0) amount *= t.combat.stunDamageTakenMult;
   if (e.vuln > 0) amount *= 1 + e.vulnMult;
+  if (e.exposed > 0) amount *= 1 + e.exposedMult; // point faible d'un Gardien (boss_common.expose)
 
   let crit = false;
   if (src.canCrit) {

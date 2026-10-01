@@ -7,8 +7,12 @@
 //   - tout télégraphe (windup, delay, step…) dure au moins GUARDIAN_MIN_TELE s ;
 //   - les phases changent le NOMBRE de coups, les pauses et la vitesse, JAMAIS la durée d'un
 //     télégraphe ; la profondeur (floorScaling) ne touche qu'aux PV et aux dégâts ;
-//   - les frappes qu'on doit TRAVERSER (bandes, ondes, poings) restent plus étroites que la
-//     portée du dash (165 u) ; les autres se quittent à pied (cercles posés sous le héros, sceau).
+//   - toute zone frappe en UN instant, à la fin de son télégraphe, sur la forme DESSINÉE (bord
+//     rouge = bord qui touche, corps du héros compris) ; on l'évite à pied grâce au télégraphe
+//     (brèche, bande ou onde déjà passée, dos du Gardien, sortie du cercle) ou on la TRAVERSE en
+//     calant les i-frames du dash (0,18 s) sur l'impact — la largeur à franchir ne compte pas
+//     (bande de 139-150 u + corps du héros = 171-182 u, plus que la course du dash, 165 u :
+//     on ne la saute pas d'un bord à l'autre, on encaisse l'instant d'impact en i-frames).
 //   Unités : u, secondes, degrés ; *ByPhase = valeurs des phases 1, 2, 3.
 //
 // GUARDIAN_ROTATION : ordre des modèles sur les 37 sections (section 1 = premier de la liste).
@@ -42,6 +46,8 @@ export const EXTRA_BOSSES = {
     morsures: {
       windup: 0.55, lockAt: 0.7, bites: 3, strikeSpeed: 640, strikeTime: 0.18, recover: 0.28, finalRecover: 0.9,
       damage: 14, arcDeg: 60, exposedMult: 0.5, engageFrac: 0.8, approachMult: 1.5, approachMax: 1.2,
+      hitPad: 8, // u : portée de la gueule au-delà du contact des corps (même règle que le diablotin)
+      telePad: 14, // u : le cône dessiné couvre la ruée + le corps + cette marge (la touche reste DANS le cône)
     },
     // Hurlement (phase 3) : couronne de flammes autour du héros, brèche de `gaps` flammes, puis
     // bond au centre (cercle du bond) à `leapDelay` s.
@@ -99,7 +105,10 @@ export const EXTRA_BOSSES = {
     },
     geoliers: {
       windup: 0.9, telePad: 30, kind: 'archer', countByPhase: [0, 2, 3], minR: 120, maxR: 340, minPlayerDist: 160,
-      shieldMax: 12, shieldHold: 0.1,
+      // Bouclier : au plus shieldMax s, UN appel par phase (callsPerPhase) — mesuré au bot skilled à
+      // l'étage 72 : ~15 % du combat sous bouclier (31 % quand il se recyclait sans limite).
+      shieldMax: 8, shieldHold: 0.1,
+      callsPerPhase: 1,
     },
   },
 };

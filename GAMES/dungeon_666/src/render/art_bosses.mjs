@@ -3,7 +3,8 @@
 //   Cerbère  — trois têtes en éventail, crinière en pointes ; en l'air pendant un bond ;
 //   Minos    — mitre dorée, robe indigo, queue de serpent enroulée ; en filigrane quand il se dissout ;
 //   Éphialte — bloc de pierre fissuré, deux poings énormes, chaînes (qui brillent sous bouclier).
-// Commun : un POINT FAIBLE doré pulse quand le Gardien est exposé (e.vuln), là où frapper.
+// Commun : un POINT FAIBLE doré pulse quand le Gardien est exposé (e.exposed : fenêtre de punition
+// d'un pattern, jamais une simple bénédiction de vulnérabilité), là où frapper.
 
 const TAU = Math.PI * 2;
 const OUTLINE = '#140507';
@@ -115,7 +116,7 @@ function cerbere(ctx, r, face, body, e, time) {
     }
     eyePair(ctx, hx, hy, hr, a, frenzy ? '#ff3a1a' : '#ffb03a', 0.55);
   }
-  if (e.vuln > 0) weakPoint(ctx, -Math.cos(face) * r * 0.35, -Math.sin(face) * r * 0.35, r * 0.3, time);
+  if (e.exposed > 0) weakPoint(ctx, -Math.cos(face) * r * 0.35, -Math.sin(face) * r * 0.35, r * 0.3, time);
   ctx.restore();
 }
 
@@ -169,7 +170,7 @@ function minos(ctx, r, face, body, e, time) {
   ctx.arc(0, -r * 0.85, r * 0.1, 0, TAU);
   ctx.fill();
   eyePair(ctx, Math.cos(face) * r * 0.12, Math.sin(face) * r * 0.12, r * 0.62, face, '#f3f0ff', 0.45);
-  if (e.vuln > 0) weakPoint(ctx, 0, r * 0.35, r * 0.28, time);
+  if (e.exposed > 0) weakPoint(ctx, 0, r * 0.35, r * 0.28, time);
   ctx.restore();
 }
 
@@ -211,7 +212,7 @@ function colosse(ctx, r, face, body, e, time) {
   ctx.fill();
   ctx.stroke();
   // Fissures (la lave affleure quand le point faible est exposé).
-  const exposed = e.vuln > 0;
+  const exposed = e.exposed > 0;
   ctx.strokeStyle = exposed ? '#ff8a2a' : '#2a201c';
   ctx.lineWidth = exposed ? 3 : 2;
   ctx.beginPath();

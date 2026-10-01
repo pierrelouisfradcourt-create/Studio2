@@ -1,6 +1,6 @@
 // Projectiles (héros et ennemis) et zones de danger télégraphiées.
 
-import { dist2, pointSegDist2 } from '../core/math.mjs';
+import { dist2, pointSegDist2, pointBandDist2 } from '../core/math.mjs';
 import { emit, newId } from './state.mjs';
 import { damageEnemy, damagePlayer } from './combat.mjs';
 import { pointBlocked } from './physics.mjs';
@@ -84,11 +84,12 @@ function inHazard(h, x, y, r) {
     const d = Math.sqrt(dist2(x, y, h.x, h.y));
     return d < h.r + r && d > h.inner - r;
   }
-  // 'line' : segment partant de (x, y) dans la direction `angle`, sur `length`, épaisseur `width`.
-  const ex = h.x + Math.cos(h.angle) * h.length;
-  const ey = h.y + Math.sin(h.angle) * h.length;
-  const hw = h.width / 2 + r;
-  return pointSegDist2(x, y, h.x, h.y, ex, ey) < hw * hw;
+  // 'line' : RECTANGLE partant de (x, y) dans la direction `angle`, long de `length`, large de
+  // `width` — exactement ce que dessine le rendu (render.mjs drawLine). Un corps de rayon r est
+  // touché s'il mord sur ce rectangle, pas au-delà : le bord dessiné est le bord qui touche
+  // (une brèche dessinée est une vraie brèche, le dos d'une frappe en ligne est sûr).
+  const d2 = pointBandDist2(x, y, h.x, h.y, h.angle, h.length, h.width);
+  return d2 === 0 || d2 < r * r;
 }
 
 export function updateHazards(game, dt) {

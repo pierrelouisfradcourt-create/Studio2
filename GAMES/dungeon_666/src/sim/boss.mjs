@@ -8,16 +8,19 @@ import { randRange, pick } from '../core/rng.mjs';
 import { emit } from './state.mjs';
 import { spawnPickup } from './combat.mjs';
 import { queueSpawn, findSpawnPoint } from './spawns.mjs';
-import { bossDef, toPlayer, setState } from './boss_common.mjs';
+import { bossDef, toPlayer, setState, holdVulnFlag } from './boss_common.mjs';
 import { CHARON } from './boss_charon.mjs';
 import { EXTRA_BOSS_MODELS } from './boss_models.mjs';
 
 // Registre des modèles de Gardien : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn},
-// rest?(game, e, d, dt, speed), tick?(game, e, d, dt), available?(game, e, d, nom) }.
-// La clé est le `kind` de l'ennemi (= clé de tuning.boss).
+// rest?(game, e, d, dt, speed), tick?(game, e, d, dt), available?(game, e, d, nom),
+// onPhase?(game, e, d) }. La clé est le `kind` de l'ennemi (= clé de tuning.boss).
 //   tick      — appelé à chaque pas, quel que soit le pattern (zones persistantes, bouclier) ;
 //   available — filtre les patterns utilisables maintenant (ex. pas de nouveaux renforts tant que
-//               les précédents vivent). Un modèle sans ces crochets (Charon) n'en voit aucun effet.
+//               les précédents vivent) ;
+//   onPhase   — appelé au changement de phase, APRÈS l'effacement des menaces : le modèle y
+//               éteint ce qu'il rejouerait lui-même (ex. braises qui pulsent).
+// Un modèle sans ces crochets (Charon) n'en voit aucun effet.
 export const BOSS_MODELS = {
   gardien: CHARON,
   ...EXTRA_BOSS_MODELS,
@@ -50,6 +53,8 @@ function enterPhase(game, e, d) {
   e.invuln = d.transition;
   for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
   for (const h of game.hazards) if (h.hitsPlayer) h.done = true;
+  const model = modelOf(e);
+  if (model.onPhase) model.onPhase(game, e, d);
   for (const kind of d.reinforcements[e.phase] ?? []) {
     const pt = findSpawnPoint(game, 14, 180, { x: e.x, y: e.y, minR: e.r + 60, maxR: e.r + 260 });
     if (pt) queueSpawn(game, kind, pt.x, pt.y, { summoned: true });
@@ -64,6 +69,11 @@ export function updateBoss(game, e, dt) {
   const d = bossDef(game, e);
   const model = modelOf(e);
   e.invuln = Math.max(0, (e.invuln ?? 0) - dt);
+  // Point faible exposé (boss_common.expose) : décompté sur l'horloge du Gardien (figé avec lui).
+  if (e.exposed > 0) {
+    e.exposed = Math.max(0, e.exposed - dt);
+    holdVulnFlag(e);
+  }
   if (model.tick) model.tick(game, e, d, dt);
   const threshold = e.phase === 1 ? d.phase2At : e.phase === 2 ? d.phase3At : -1;
   if (threshold > 0 && e.hp <= e.maxHp * threshold) {

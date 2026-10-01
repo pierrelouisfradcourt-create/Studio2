@@ -88,6 +88,23 @@ export function pointSegDist2(px, py, ax, ay, bx, by) {
   return dist2(px, py, qx, qy);
 }
 
+/**
+ * Distance au carré d'un point à une BANDE : rectangle orienté qui part de (ax, ay) dans la
+ * direction `angle`, long de `length`, large de `width` (centré sur son axe). 0 à l'intérieur.
+ * C'est la forme que dessine le rendu pour une zone 'line' (rectangle, pas capsule).
+ */
+export function pointBandDist2(px, py, ax, ay, angle, length, width) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const dx = px - ax;
+  const dy = py - ay;
+  const u = dx * c + dy * s; // le long de l'axe
+  const v = Math.abs(-dx * s + dy * c); // en travers
+  const du = u < 0 ? -u : u > length ? u - length : 0;
+  const dv = v > width / 2 ? v - width / 2 : 0;
+  return du * du + dv * dv;
+}
+
 /** Point de l'AABB [x0,y0,x1,y1] le plus proche de (px, py), écrit dans out. */
 export function closestOnRect(out, px, py, x0, y0, x1, y1) {
   out.x = clamp(px, x0, x1);
