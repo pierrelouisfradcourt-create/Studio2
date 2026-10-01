@@ -64,7 +64,8 @@ export function sectionPlan(tuning, seed, section) {
   const rhythmId = s === 1 || sec.rhythms.length === 1 ? 0 : Math.floor(rand(rng) * sec.rhythms.length);
   const rhythm = sec.rhythms[rhythmId];
   const featured = drawFeatured(rng, tuning, theme);
-  const halteDoors = drawDistinct(rng, sec.halte.pool, sec.halte.doors);
+  const fixedHalte = sec.halte.fixed ?? [];
+  const halteDoors = [...fixedHalte, ...drawDistinct(rng, sec.halte.pool, sec.halte.doors - fixedHalte.length)];
   const treasureAt = drawTreasureIndex(rng, sec, rhythm);
   const guardian = guardianFor(tuning, s);
   const doorWeights = doorWeightsFor(tuning, theme);

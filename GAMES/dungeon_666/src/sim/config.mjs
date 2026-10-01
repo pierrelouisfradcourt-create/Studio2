@@ -225,8 +225,10 @@ export const DEFAULT_TUNING = {
     },
     calmPace: 'court', // une halte ou une antichambre jouée en combat (reprise, départ à cet étage)
     eliteAt: [6, 12], // une des deux portes mène forcément à une épreuve d'élite
-    halte: { doors: 2, pool: { shop: 3, event: 3, rest: 2, treasure: 2 } }, // portes distinctes tirées par section
-    antichambre: ['shop', 'rest'], // avant le Gardien : marchand ou fontaine de repos
+    // Halte de mi-section : la fontaine de repos y est TOUJOURS proposée (la seule de la section,
+    // l'antichambre gardant marchand ou autel), face à une porte tirée parmi le pool.
+    halte: { fixed: ['rest'], doors: 2, pool: { shop: 3, event: 3, treasure: 2 } },
+    antichambre: ['shop', 'event'], // avant le Gardien : marchand ou autel (règle d'origine, test logic « portes »)
     treasure: { from: 3, to: 15 }, // une porte de chambre forte garantie à un index de cet intervalle
     // Poids des portes tirées (multipliés par le thème du Cercle, tuning.circles[].doors).
     doorWeights: { boon: 40, loot: 24, gold: 14, elite: 12, heal: 10, treasure: 2, rest: 0 },

@@ -208,7 +208,9 @@ test('portes imposées : Gardien au 18e, halte et antichambre imposées, élite 
         if (e.slot === 'halte') {
           assert.equal(e.doors.length, sec.halte.doors);
           assert.equal(new Set(e.doors).size, sec.halte.doors, 'portes distinctes');
-          assert.ok(e.doors.every((r) => sec.halte.pool[r] > 0));
+          const fixed = sec.halte.fixed ?? [];
+          assert.ok(fixed.every((r) => e.doors.includes(r)), 'la halte propose toujours ses portes fixes (repos)');
+          assert.ok(e.doors.every((r) => sec.halte.pool[r] > 0 || fixed.includes(r)));
         } else if (e.slot === 'antichambre') {
           assert.deepEqual(e.doors, sec.antichambre);
         } else if (e.slot !== 'gardien') {
