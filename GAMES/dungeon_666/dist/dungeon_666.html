@@ -6501,6 +6501,7 @@ __mod["src/sim/profile.mjs"] = (() => {
 //
 // Fonctions PURES sur des objets JSON (aucun DOM) : la Ville (src/ui/town.mjs) appelle ces
 // opérations, main.mjs sauvegarde le résultat. Chaque opération rend { ok, reason? }.
+const { floorInfo } = __mod["src/sim/floors.mjs"];
 
 const PROFILE_SCHEMA = 3;
 const STASH_MAX = 24;
@@ -6578,7 +6579,9 @@ function sanitizeProfile(raw, tuning) {
   if (!isObj(raw)) return def;
   const total = tuning.floors.total;
   const out = def;
-  const cps = Array.isArray(raw.checkpoints) ? raw.checkpoints.filter((f) => intIn(f, 1, total)) : [];
+  // Un checkpoint est le 1er étage d'une section (l'étage qui suit un Gardien). Ceux d'avant la
+  // V2 (Gardien tous les 6 étages : 7, 13…) ne sont plus des points de reprise et sont écartés.
+  const cps = Array.isArray(raw.checkpoints) ? raw.checkpoints.filter((f) => intIn(f, 1, total) && floorInfo(tuning, f).indexInSection === 1) : [];
   out.checkpoints = [...new Set([1, ...cps])].sort((a, b) => a - b);
   out.bestFloor = intIn(raw.bestFloor, 1, total) ? raw.bestFloor : 1;
   out.souls = Number.isFinite(raw.souls) && raw.souls >= 0 ? Math.floor(raw.souls) : 0;
@@ -6592,6 +6595,7 @@ function sanitizeProfile(raw, tuning) {
   };
   for (const k of Object.keys(known)) out.unlocked[k] = [...new Set([...def.unlocked[k], ...idList(u[k], known[k])])];
   for (const c of out.unlocked.classes) grantClassStarters(out, tuning, c);
+  for (const id of out.unlocked.classes) grantStarterKit(out, tuning, id);
   if (isObj(raw.upgrades)) {
     for (const [id, lv] of Object.entries(raw.upgrades)) {
       const up = tuning.town?.upgrades?.[id];
@@ -6677,11 +6681,25 @@ function unlock(profile, tuning, kind, id) {
   profile.souls -= cost;
   profile.unlocked[kind].push(id);
   if (kind === 'classes') grantClassStarters(profile, tuning, id);
+  if (kind === 'classes') grantStarterKit(profile, tuning, id);
   if (kind === 'weapons') {
     // Une arme débloquée est forgée aussitôt en exemplaire commun, rangé au coffre.
     stashPush(profile, starterWeapon(tuning, id));
   }
   return { ok: true };
+}
+
+/**
+ * Kit de départ d'une classe (1re arme, 1re compétence, 1er gadget) : possédé dès que la classe
+ * l'est. Sans cela, la classe choisie équipait une compétence encore « à débloquer » au Grimoire.
+ */
+function grantStarterKit(profile, tuning, classId) {
+  const c = tuning.classes[classId];
+  if (!c) return;
+  for (const [kind, list] of [['weapons', c.weapons], ['skills', c.skills], ['gadgets', c.gadgets]]) {
+    const id = list?.[0];
+    if (id && !profile.unlocked[kind].includes(id)) profile.unlocked[kind].push(id);
+  }
 }
 
 /** Exemplaire commun d'un type d'arme (sans affixe), pour la Forge et le départ. */
@@ -7477,7 +7495,13 @@ function rollShop(game) {
 
 function applyCommand(game, cmd) {
   if (cmd.type === 'respawn') return respawn(game, cmd.floor);
-  if (cmd.type === 'returnToTown') return returnToTown(game);
+  if (cmd.type === 'returnToTown') {
+    // Depuis l'écran de mort (Charon a déjà pris sa part), ou au portail ouvert après un Gardien.
+    // Jamais en plein combat : quitter un run en cours, c'est « abandon » (taxé comme une mort).
+    const portal = game.mode === 'play' && game.room.doors.some((d) => d.reward === 'town' && d.open);
+    if (game.mode !== 'dead' && !portal) return false;
+    return returnToTown(game);
+  }
   if (cmd.type === 'abandon') {
     // Abandonner = mourir : Charon prend sa part, le temporaire est perdu, retour en Ville.
     if (game.mode !== 'play' && game.mode !== 'choice') return false;
@@ -7751,6 +7775,7 @@ __mod["src/sim/lab.mjs"] = (() => {
 const LAB_AXES = {
   dashStrike: {
     label: 'D5 · Frappe de dash',
+    reference: 'fin', // = valeurs d'origine de config.mjs
     options: {
       fin: { label: 'Fin du dash', text: 'Attaquer dans le dernier 45 % du dash ou juste après.', set: { 'dash.strikeCancelFrom': 0.45, 'dash.strikeWindow': 0.3 } },
       toutDash: { label: 'Tout le dash', text: 'Attaquer à n\'importe quel moment du dash le coupe en frappe.', set: { 'dash.strikeCancelFrom': 1, 'dash.strikeWindow': 0.3 } },
@@ -7759,6 +7784,7 @@ const LAB_AXES = {
   },
   hitstop: {
     label: 'D8 · Gel d\'impact',
+    reference: 'global',
     options: {
       global: { label: 'Global', text: 'Toute la scène se fige à l\'impact.', set: { hitstopMode: 'global' } },
       local: { label: 'Local', text: 'Seuls le héros et ses cibles se figent ; le reste continue.', set: { hitstopMode: 'local' } },
@@ -7766,6 +7792,7 @@ const LAB_AXES = {
   },
   comboMobility: {
     label: 'D9 · Mobilité du combo',
+    reference: 'mobile',
     options: {
       ancre: { label: 'Ancré', text: '20 % de vitesse, annulations tardives.', set: { 'player.attackMoveMult': 0.2, 'player.cancelMult': 1.6 } },
       mobile: { label: 'Mobile', text: '50 % de vitesse, annulations de référence.', set: { 'player.attackMoveMult': 0.5, 'player.cancelMult': 1 } },
@@ -7782,11 +7809,15 @@ function setPath(obj, path, value) {
   o[last] = value;
 }
 
-/** Applique les variantes choisies (tuning.lab) au tuning de la partie. Idempotent. */
+/**
+ * Applique les variantes choisies (tuning.lab) au tuning de la partie. Idempotent. Un axe absent
+ * ou une variante inconnue retombe sur la RÉFÉRENCE de l'axe (jamais sur la 1re option listée :
+ * pour D9, ce serait « Ancré », pas les valeurs d'origine).
+ */
 function applyLab(tuning) {
   for (const [axis, def] of Object.entries(LAB_AXES)) {
     const choice = tuning.lab?.[axis];
-    const opt = def.options[choice] ?? def.options[Object.keys(def.options)[0]];
+    const opt = def.options[choice] ?? def.options[def.reference];
     for (const [path, v] of Object.entries(opt.set)) setPath(tuning, path, v);
   }
   return tuning;
@@ -7795,13 +7826,17 @@ function applyLab(tuning) {
 /** Change une variante en cours de partie (pause → Labo) ; rend false si inconnue. */
 function setLab(tuning, axis, choice) {
   if (!LAB_AXES[axis]?.options[choice]) return false;
+  if (!tuning.lab || typeof tuning.lab !== 'object') tuning.lab = {};
   tuning.lab[axis] = choice;
   applyLab(tuning);
   return true;
 }
 
 function labSummary(tuning) {
-  return Object.entries(LAB_AXES).map(([axis, def]) => ({ axis, label: def.label, choice: tuning.lab[axis], choiceLabel: def.options[tuning.lab[axis]]?.label ?? '?' }));
+  return Object.entries(LAB_AXES).map(([axis, def]) => {
+    const choice = def.options[tuning.lab?.[axis]] ? tuning.lab[axis] : def.reference;
+    return { axis, label: def.label, choice, choiceLabel: def.options[choice].label };
+  });
 }
 
 return { LAB_AXES, applyLab, setLab, labSummary };
@@ -14820,6 +14855,14 @@ window.__d666 = {
     if (!g) return;
     g.player.x = x;
     g.player.y = y;
+  },
+  // Âmes offertes (e2e : tester un achat de la Ville sans jouer vingt minutes). Profil sauvegardé.
+  giveSouls(n) {
+    const amount = Math.max(0, Math.floor(Number(n) || 0));
+    app.profile.souls += amount;
+    if (app.game) app.game.meta.souls += amount;
+    save(META_KEY, app.profile);
+    app.townRev++;
   },
 };
 window.__game_debug = {

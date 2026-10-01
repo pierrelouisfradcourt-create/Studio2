@@ -45,16 +45,51 @@ Aucune dépendance : Node 18+ suffit pour le serveur et les tests. Playwright ne
 
 En jeu : **pause → Réglages du feel**. Ce panneau règle en direct la vitesse, le dash, les dégâts, le gel d'impact, la visée auto, les télégraphes… Le bouton « Copier les réglages » produit le JSON à rapporter.
 
-## Structure des 666 étages
+## Boucle V2 (demande de Pierre du 2026-10-01 : « GO prototype complet »)
 
-Section de 6 étages, le 6ᵉ est un **Gardien**. Le vaincre ouvre un **checkpoint** et fige le build
-du moment (bénédictions + or). À la mort, on repart du dernier checkpoint avec ce build figé et
-tout son **équipement** : on ne perd que la section en cours (l'or ne remonte jamais au-dessus de
-celui qu'on avait en mourant). Mort face au Gardien : **« Réessayer le Gardien »** relance
-directement le combat, avec le build qu'on avait en entrant dans sa salle.
-9 Cercles de 72 étages (Limbes → Trahison), puis la finale de 18 étages, « Le Trône ».
-Après chaque salle, deux portes annoncent la récompense de la suivante : bénédiction (les 7
-péchés capitaux), trésor, or, élite, soin. Le 5ᵉ étage propose un marchand ou un autel.
+**Ville → équipement/classe/armes/compétences → donjon → combats → bonus temporaires → Gardien → checkpoint/TP → nouvelle section.**
+
+- **Ville de Dité** (écran titre → « Entrer dans Dité ») :
+  - **Portail** : descendre depuis le dernier checkpoint ou se téléporter ; arène d'essai ; entraînement contre un Gardien déjà rencontré (`?lab=1` les montre tous).
+  - **Classe**, **Armurerie**, **Coffre**, **Grimoire** et **Sanctuaire** : améliorations payées en Âmes.
+  - **Labo du feel**.
+- **Permanent** (profil, `src/sim/profile.mjs`) :
+  - classe ;
+  - armes (objets typés) ;
+  - équipement et coffre (tout objet trouvé y est gardé) ;
+  - compétences et gadgets ;
+  - améliorations du Sanctuaire ;
+  - Âmes ;
+  - checkpoints.
+- **Temporaire** (`game.run`) : bénédictions des 7 péchés (bonus, pouvoirs, améliorations, synergies).
+- **Mort** : retour au **dernier checkpoint** (ou en Ville). Les bénédictions sont **remises à zéro**, tout le permanent est gardé, et Charon prélève une part de l'or. L'écran de mort montre ce qui est perdu et ce qui est gardé.
+- **666 étages** : sections de **18** étages, avec un **Gardien** au 18ᵉ, soit 37 sections. Le Gardien ouvre un checkpoint et un point de téléportation. À la sortie, deux portes : « section suivante » (le build est conservé) ou portail vers la Ville. Les étages sont **composés** à partir d'un plan de section (`src/sim/sections.mjs`), de dispositions, du bestiaire et des thèmes des 9 Cercles + finale.
+- **Classes** :
+  - **Revenant** : Lame, Dagues ;
+  - **Bourreau** : Hache, Maillet ;
+  - **Chasseresse** : Arc, Arbalète.
+
+  Il y a 5 compétences, 5 gadgets, et un Super par classe (`src/sim/kits.mjs`).
+- **Bestiaire** :
+  - diablotin (mêlée rapide) ;
+  - brute (mêlée lourde) ;
+  - archer (distance) ;
+  - bélier (chargeur) ;
+  - **Pyromancienne** (zone : flaques persistantes) ;
+  - **Nécromancien** (invocateur) ;
+  - possédé (kamikaze) ;
+  - 6 modificateurs d'élite.
+- **Gardiens** : **Charon**, **Cerbère**, **Minos**, **Éphialte le Colosse**. Leurs patterns sont distincts, en rotation sur les 37 sections.
+- **D5 / D8 / D9 restent ouvertes** : on les teste dans le **Labo du feel** (en Ville ou en pause).
+  - frappe de dash : fin / tout le dash / après le dash ;
+  - gel d'impact : global / **local** ;
+  - mobilité du combo : ancré / mobile / fluide.
+
+  La mesure par les bots est dans [`reports/lab.md`](reports/lab.md). Elle ne remplace pas le jugement en main.
+
+## Reprise sous Godot
+
+La simulation (`src/sim/`) est isolée, déterministe à 60 Hz, sans DOM, et tous ses nombres sont dans des fichiers de données (`config.mjs`, `kits.mjs`, `foe_data.mjs`, `boss_data.mjs`, `town_data.mjs`). C'est la **spécification exécutable** à porter. Les tests `tests/*.test.mjs` décrivent les règles une par une ; ce sont les oracles à reproduire côté Godot. Le feel reste à valider en main **avant** le portage (charte).
 
 ## Code
 
@@ -81,7 +116,7 @@ entièrement déterminée par sa graine et la suite de ses `InputFrame`.
 
 ```
 node run-oracle.mjs        # tout : règles, propriétés, audio, bundle, solvabilité, e2e, playtest
-node --test tests/*.test.mjs
+node --test tests/*.test.mjs   # 239 tests (dont tests/v2_*.test.mjs)
 node solvability.mjs       # un bot bat la section 1 ; mesure la « valeur du dash »
 node e2e.mjs               # Chromium réel : doigts tactiles (CDP), clavier, souris, file://
 node tools/playtest.mjs    # rapport de feel des bots → reports/playtest.md
