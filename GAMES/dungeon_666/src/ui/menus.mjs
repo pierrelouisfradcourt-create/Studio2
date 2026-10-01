@@ -1,5 +1,6 @@
-// Menus DOM par-dessus le canvas : écran titre, choix (bénédiction, butin, marchand, autel),
-// mort et reprise au checkpoint, pause et réglages, panneau de tuning du feel.
+// Menus DOM par-dessus le canvas : écran titre, choix (bénédiction, butin, marchand, autel,
+// chambre forte, fontaine de repos), mort et reprise au checkpoint, pause et réglages,
+// panneau de tuning du feel.
 // AUCUNE règle de jeu ici : chaque bouton émet une commande que la simulation valide.
 
 import { el, button, onActivate, itemCard, arming, armed, ARM_MS, ARM_CHOICE_MS } from './dom.mjs';
@@ -149,6 +150,32 @@ export function createUI(root, handlers) {
     p.appendChild(col);
   }
 
+  /**
+   * Salles calmes du plan de section (chambre forte, fontaine de repos) : trois cartes, une
+   * seule à prendre. Le panneau annonce tout (objet, somme, famille, bénédiction approfondie).
+   */
+  function buildCalm(p, ch) {
+    p.className = 'panel choice';
+    const h = el('h2', '', ch.title);
+    h.style.color = ch.color;
+    p.appendChild(h);
+    p.appendChild(el('p', 'lede', ch.text));
+    const list = el('div', 'cards');
+    ch.options.forEach((o, i) => {
+      const card = el('button', 'card calm');
+      card.type = 'button';
+      card.disabled = !!o.disabled;
+      if (o.disabled) card.style.opacity = '0.45';
+      card.style.setProperty('--accent', o.color ?? ch.color);
+      card.appendChild(el('div', 'card-kicker', o.kicker));
+      card.appendChild(el('div', 'card-title', o.label));
+      card.appendChild(el('div', 'card-text', o.text));
+      onActivate(card, () => handlers.command({ type: 'choose', index: i }));
+      list.appendChild(card);
+    });
+    p.appendChild(list);
+  }
+
   function buildDeath(p, game) {
     p.className = 'panel death';
     p.appendChild(el('h1', 'logo red', 'VOUS ÊTES MORT'));
@@ -232,7 +259,7 @@ export function createUI(root, handlers) {
     if (game.mode === 'choice' && game.choice) {
       const ch = game.choice;
       const key = `choice:${ch.kind}:${game.room.interact?.x}:${game.run.gold}:${ch.offers?.map((o) => o.sold).join()}:${game.tick}`;
-      const builders = { boon: buildBoon, loot: buildLoot, shop: buildShop, event: buildEvent };
+      const builders = { boon: buildBoon, loot: buildLoot, shop: buildShop, event: buildEvent, treasure: buildCalm, rest: buildCalm };
       return show((p) => builders[ch.kind](p, ch), ch.kind === 'shop' ? key : `choice:${ch.kind}:${game.tick}`);
     }
     if (game.mode === 'dead') return show((p) => buildDeath(p, game), `dead:${game.tick}`);

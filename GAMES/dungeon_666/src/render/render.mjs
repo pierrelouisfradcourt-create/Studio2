@@ -20,6 +20,8 @@ const HERO_VISUAL = 1.18;
 const ENEMY_SHOT_VISUAL = 1.3;
 const WALL_OVERDRAW = 1200; // u de mur peints autour de la salle (la caméra peut déborder)
 const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+// Salles calmes du plan de section (calm_rooms.mjs) : couleur de leur porte et de leur objet.
+const CALM_COLORS = { treasure: '#ffb43c', rest: '#6dd8ff' };
 
 // ------------------------------------------------------------------ textures mises en cache
 
@@ -184,7 +186,7 @@ function drawWalls(ctx, room, tint, time) {
 }
 
 function drawDoor(ctx, d, time) {
-  const color = d.reward === 'boon' && d.family ? FAMILIES[d.family].color : REWARD_COLORS[d.reward] ?? '#ffffff';
+  const color = d.reward === 'boon' && d.family ? FAMILIES[d.family].color : REWARD_COLORS[d.reward] ?? CALM_COLORS[d.reward] ?? '#ffffff';
   const cx = d.x + d.w / 2;
   // Arche : fond noir, voûte arrondie en haut.
   const archPath = () => {
@@ -271,6 +273,20 @@ function drawRewardIcon(ctx, reward, x, y, r, color, time) {
       // Portail : anneau (téléportation vers la Ville).
       ctx.arc(0, 0, r, 0, TAU);
       ctx.arc(0, 0, r * 0.55, 0, TAU, true);
+      break;
+    case 'treasure':
+      // Coffre : caisse et couvercle bombé.
+      ctx.rect(-r, -r * 0.2, r * 2, r);
+      ctx.moveTo(-r, -r * 0.2);
+      ctx.quadraticCurveTo(0, -r * 1.3, r, -r * 0.2);
+      ctx.closePath();
+      break;
+    case 'rest':
+      // Goutte d'eau (fontaine).
+      ctx.moveTo(0, -r * 1.2);
+      ctx.quadraticCurveTo(r, 0, r * 0.7, r * 0.45);
+      ctx.arc(0, r * 0.2, r * 0.75, 0.35, Math.PI - 0.35);
+      ctx.quadraticCurveTo(-r, 0, 0, -r * 1.2);
       break;
     default:
       ctx.rect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6);
@@ -528,6 +544,14 @@ function drawInteract(ctx, game, time) {
     ctx.lineWidth = 2;
     ctx.strokeRect(it.x - 30, it.y - 14, 60, 28);
     drawGlow(ctx, it.x, it.y - 10, 60, color, 0.35 + 0.15 * Math.sin(time * 3));
+  } else if (it.kind === 'treasure') {
+    color = CALM_COLORS.treasure;
+    label = 'Chambre forte';
+    drawChest(ctx, it.x, it.y, color, time);
+  } else if (it.kind === 'rest') {
+    color = CALM_COLORS.rest;
+    label = 'Fontaine du Léthé';
+    drawFountain(ctx, it.x, it.y, color, time);
   }
   ctx.font = `700 14px ${FONT}`;
   ctx.textAlign = 'center';
@@ -537,6 +561,69 @@ function drawInteract(ctx, game, time) {
   ctx.strokeText(label, it.x, it.y + 40);
   ctx.fillStyle = color;
   ctx.fillText(label, it.x, it.y + 40);
+}
+
+/** Coffre scellé de la chambre forte : caisse, couvercle, ferrures et sceau qui pulse. */
+function drawChest(ctx, x, y, color, time) {
+  drawGlow(ctx, x, y - 6, 70, color, 0.3 + 0.1 * Math.sin(time * 2.5));
+  ctx.fillStyle = PAL.shadow;
+  ctx.fillRect(x - 30, y + 12, 64, 10);
+  ctx.fillStyle = '#4a2a1a';
+  ctx.fillRect(x - 32, y - 8, 64, 26);
+  ctx.beginPath();
+  ctx.moveTo(x - 32, y - 8);
+  ctx.quadraticCurveTo(x, y - 34, x + 32, y - 8);
+  ctx.closePath();
+  ctx.fillStyle = '#5e3620';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(x - 32, y - 8, 64, 26);
+  ctx.beginPath();
+  ctx.moveTo(x - 32, y - 8);
+  ctx.quadraticCurveTo(x, y - 34, x + 32, y - 8);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 6, y - 12, 12, 14);
+  ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 4);
+  ctx.fillStyle = '#fff4c0';
+  ctx.fillRect(x - 2, y - 8, 4, 6);
+  ctx.globalAlpha = 1;
+}
+
+/** Fontaine du repos : vasque de pierre, eau claire qui ondule (jamais rouge : rien ne blesse). */
+function drawFountain(ctx, x, y, color, time) {
+  drawGlow(ctx, x, y - 4, 80, color, 0.3 + 0.1 * Math.sin(time * 2));
+  ctx.fillStyle = PAL.shadow;
+  ctx.beginPath();
+  ctx.ellipse(x + 4, y + 16, 40, 12, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#3a3440';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 4, 38, 18, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.75;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 2, 30, 12, 0, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = '#e8fbff';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 2; i++) {
+    const k = (time * 0.8 + i * 0.5) % 1;
+    ctx.globalAlpha = 1 - k;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 2, 6 + 22 * k, 2 + 9 * k, 0, 0, TAU);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#5a5262';
+  ctx.fillRect(x - 5, y - 26, 10, 26);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y - 28, 5 + Math.sin(time * 5), 0, TAU);
+  ctx.fill();
 }
 
 function drawItemGlyph(ctx, slot, x, y, color) {

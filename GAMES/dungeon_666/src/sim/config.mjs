@@ -176,22 +176,71 @@ export const DEFAULT_TUNING = {
     circleLength: 72,
     circleNames: ['Limbes', 'Luxure', 'Gourmandise', 'Avarice', 'Colère', 'Hérésie', 'Violence', 'Fraude', 'Trahison'],
     finaleName: 'L\'Abîme',
-    // Scaling (spec §5.5) : L = niveau d'objet, B = saturation du build, C = dérive, D = dégâts.
-    itemGrowth: 0.05, buildCap: 2, buildScale: 100, driftAt666: 0.5, dmgCurve: 0.6, dmgScale: 150,
+    // Scaling (floors.mjs floorScaling) : L = niveau d'objet ; Bp = progression permanente ;
+    // Bs = build temporaire depuis le checkpoint (dents de scie : 1 en début de section) ;
+    // C = dérive ; H·D = dégâts (part des PV d'un héros équipé à niveau) ; densité des vagues.
+    // Calés pour que la section 1 garde les valeurs d'avant (PV ×2,46 et dégâts ×1,97 au Gardien).
+    itemGrowth: 0.05,
+    permBuildCap: 0.35, permBuildScale: 150,
+    sectionBuildCap: 0.265,
+    driftAt666: 0.5,
+    dmgCurve: 0.85, dmgScale: 33,
+    densityCurve: 0.6, densityScale: 150,
+    // Début de section ABORDABLE (tests/v2_floors.test.mjs) : face au seul équipement permanent,
+    // temps pour tuer et part des PV par coup au plus ces multiples de l'étage 1.
+    sectionStartMax: { toughness: 2.2, lethality: 2 },
   },
 
-  // PLAN D'UNE SECTION (18 étages), composé à partir de types d'étages réutilisables.
-  // Les portes de sortie annoncent la récompense de l'étage suivant (façon Hades) ; certains
-  // index de la section imposent leurs portes.
+  // PLAN D'UNE SECTION (18 étages), composé à partir de types d'étages réutilisables
+  // (sections.mjs sectionPlan). Les portes de sortie annoncent la récompense de l'étage suivant
+  // (façon Hades) ; certains index de la section imposent leurs portes.
   section: {
-    fixedDoors: { 9: ['shop', 'event'], 17: ['shop', 'event'] }, // mi-section et antichambre du Gardien
+    // Rythme : emplacement de chaque index 1..18. Combat court (1 vague), normal (2), assaut (3),
+    // halte (portes imposées tirées dans `halte`), antichambre (portes `antichambre`), Gardien.
+    // La section 1 joue toujours le premier rythme ; les suivantes en tirent un (graine).
+    rhythms: [
+      ['court', 'court', 'normal', 'normal', 'court', 'normal', 'normal', 'assaut', 'halte', 'court', 'normal', 'normal', 'normal', 'assaut', 'normal', 'assaut', 'antichambre', 'gardien'],
+      ['court', 'normal', 'court', 'normal', 'normal', 'normal', 'court', 'assaut', 'halte', 'normal', 'court', 'normal', 'assaut', 'normal', 'court', 'assaut', 'antichambre', 'gardien'],
+      ['court', 'court', 'normal', 'court', 'normal', 'normal', 'assaut', 'normal', 'halte', 'court', 'normal', 'normal', 'normal', 'assaut', 'court', 'assaut', 'antichambre', 'gardien'],
+    ],
+    paces: {
+      court: { waves: 1, budgetMult: 1.1 },
+      normal: { waves: 2, budgetMult: 1 },
+      assaut: { waves: 3, budgetMult: 0.95 },
+    },
+    calmPace: 'court', // une halte ou une antichambre jouée en combat (reprise, départ à cet étage)
     eliteAt: [6, 12], // une des deux portes mène forcément à une épreuve d'élite
+    halte: { doors: 2, pool: { shop: 3, event: 3, rest: 2, treasure: 2 } }, // portes distinctes tirées par section
+    antichambre: ['shop', 'rest'], // avant le Gardien : marchand ou fontaine de repos
+    treasure: { from: 3, to: 15 }, // une porte de chambre forte garantie à un index de cet intervalle
+    // Poids des portes tirées (multipliés par le thème du Cercle, tuning.circles[].doors).
+    doorWeights: { boon: 40, loot: 24, gold: 14, elite: 12, heal: 10, treasure: 2, rest: 0 },
     gadgetRefillEvery: 6, // charges de gadget rendues aux étages 1, 7 et 13 de la section
-    // Vagues par étage selon l'index dans la section (1..17) : courtes au début, assauts à la fin.
-    waves: [1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3],
+    sandbox: { floor: 4, eliteChance: 0.35 }, // arène d'essai : vagues d'un étage de début de section
+    // Session mobile visée : une section en 10-14 min au plus. Estimation à partir du bot
+    // (tests/v2_floors.test.mjs) : temps de sim × humanPace + menus × menuSeconds.
+    session: { maxMinutes: 14, humanPace: 1.5, menuSeconds: 6 },
   },
-  // Budget de menace d'une vague : (base + perIndex × index) × densité de l'étage.
-  encounter: { baseBudget: 5, perIndex: 0.45, lastWaveMult: 1.2, strayEliteChance: 0.15 },
+  // Budget de menace d'une vague : (base + perIndex × index) × rythme × thème × densité de l'étage.
+  // costRef : coût de référence du biais de coût des thèmes (poids × (coût / costRef)^costBias).
+  // strayEliteFrom : premier étage où un élite égaré peut se glisser dans un combat ordinaire.
+  encounter: { baseBudget: 5, perIndex: 0.45, lastWaveMult: 1.2, strayEliteChance: 0.15, strayEliteFrom: 3, costRef: 1.5 },
+  // THÈMES des Cercles (index = Cercle − 1, le 10e = finale). Jamais de nom d'archétype : le
+  // bestiaire est pondéré par COÛT (costBias > 0 : lourds ; < 0 : nuées) et `featured`
+  // archétypes tirés par section dans tout le bestiaire présent sont multipliés par featuredMult.
+  // layouts : dispositions permises et poids ; doors : multiplicateurs des poids de portes.
+  circles: [
+    { id: 'limbes', costBias: 0, featured: 0, featuredMult: 1, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1 }, doors: {} },
+    { id: 'luxure', costBias: -0.5, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 2, pillars: 1, center: 1, lanes: 1, bastions: 0.5, scatter: 2, ring: 2 }, doors: { boon: 1.2 } },
+    { id: 'gourmandise', costBias: -0.3, featured: 1, featuredMult: 2, budgetMult: 1.05, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 2, lanes: 1, bastions: 1, scatter: 1, cross: 2 }, doors: { heal: 1.5 } },
+    { id: 'avarice', costBias: 0, featured: 1, featuredMult: 2, budgetMult: 1, strayEliteMult: 1, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 2, scatter: 1, alcoves: 2 }, doors: { gold: 1.6, treasure: 3 } },
+    { id: 'colere', costBias: 0.6, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 2, pillars: 1, center: 1, lanes: 2, bastions: 1, scatter: 1, cross: 1, ring: 1 }, doors: { elite: 1.3 } },
+    { id: 'heresie', costBias: 0.2, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.2, layouts: { open: 1, pillars: 2, center: 1, lanes: 1, bastions: 1, scatter: 1, ring: 1, alcoves: 2 }, doors: { loot: 1.2 } },
+    { id: 'violence', costBias: 0.8, featured: 2, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 2, ring: 1 }, doors: { elite: 1.5 } },
+    { id: 'fraude', costBias: 0, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 1.4, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 2, ring: 2, alcoves: 2 }, doors: { loot: 1.3, treasure: 2 } },
+    { id: 'trahison', costBias: 0.4, featured: 2, featuredMult: 2, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1 }, doors: { elite: 1.6 } },
+    { id: 'abime', costBias: 0.3, featured: 3, featuredMult: 1.8, budgetMult: 1, strayEliteMult: 2, layouts: { open: 1, pillars: 1, center: 1, lanes: 1, bastions: 1, scatter: 1, cross: 1, ring: 1, alcoves: 1 }, doors: {} },
+  ],
   // Rotation des Gardiens sur les 37 sections (le 1er de la liste garde la section 1).
   guardians: { rotation: GUARDIAN_ROTATION },
 
@@ -205,6 +254,10 @@ export const DEFAULT_TUNING = {
   economy: {
     goldPerRoom: [8, 14], shopHealPrice: 40, shopBoonPrice: 70, shopItemPrice: [60, 140],
     deathGoldKeep: 0.5,
+    // Salles calmes (calm_rooms.mjs). Chambre forte : un choix parmi objet, bourse, relique.
+    treasure: { gold: [45, 70], rarityBonus: 2, minRarity: 'magique', goldPickups: 8 },
+    // Fontaine de repos : un choix parmi boire (soin), méditer (+1 niveau), fioles (pouvoirs).
+    rest: { heal: 0.5, superCharge: 0.5 },
   },
 
   loot: {
