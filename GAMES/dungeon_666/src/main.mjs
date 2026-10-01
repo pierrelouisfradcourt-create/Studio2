@@ -569,6 +569,14 @@ window.__d666 = {
     g.player.x = x;
     g.player.y = y;
   },
+  // Âmes offertes (e2e : tester un achat de la Ville sans jouer vingt minutes). Profil sauvegardé.
+  giveSouls(n) {
+    const amount = Math.max(0, Math.floor(Number(n) || 0));
+    app.profile.souls += amount;
+    if (app.game) app.game.meta.souls += amount;
+    save(META_KEY, app.profile);
+    app.townRev++;
+  },
 };
 window.__game_debug = {
   hit: () => window.__d666.hurt(99999), // défaite forcée

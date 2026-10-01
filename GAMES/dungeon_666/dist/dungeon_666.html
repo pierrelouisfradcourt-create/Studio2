@@ -371,6 +371,23 @@ function pointSegDist2(px, py, ax, ay, bx, by) {
   return dist2(px, py, qx, qy);
 }
 
+/**
+ * Distance au carré d'un point à une BANDE : rectangle orienté qui part de (ax, ay) dans la
+ * direction `angle`, long de `length`, large de `width` (centré sur son axe). 0 à l'intérieur.
+ * C'est la forme que dessine le rendu pour une zone 'line' (rectangle, pas capsule).
+ */
+function pointBandDist2(px, py, ax, ay, angle, length, width) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const dx = px - ax;
+  const dy = py - ay;
+  const u = dx * c + dy * s; // le long de l'axe
+  const v = Math.abs(-dx * s + dy * c); // en travers
+  const du = u < 0 ? -u : u > length ? u - length : 0;
+  const dv = v > width / 2 ? v - width / 2 : 0;
+  return du * du + dv * dv;
+}
+
 /** Point de l'AABB [x0,y0,x1,y1] le plus proche de (px, py), écrit dans out. */
 function closestOnRect(out, px, py, x0, y0, x1, y1) {
   out.x = clamp(px, x0, x1);
@@ -442,7 +459,7 @@ function easeInQuad(t) {
   return t * t;
 }
 
-return { TAU, clamp, lerp, len, dist, dist2, normalizeInto, approach, angleDiff, inSector, circlesOverlap, pointSegDist2, closestOnRect, pushCircleOutOfRect, pushCircleOutOfCircle, easeOutCubic, easeInQuad };
+return { TAU, clamp, lerp, len, dist, dist2, normalizeInto, approach, angleDiff, inSector, circlesOverlap, pointSegDist2, pointBandDist2, closestOnRect, pushCircleOutOfRect, pushCircleOutOfCircle, easeOutCubic, easeInQuad };
 })();
 // ---- src/sim/kits.mjs
 __mod["src/sim/kits.mjs"] = (() => {
@@ -835,8 +852,12 @@ __mod["src/sim/boss_data.mjs"] = (() => {
 //   - tout télégraphe (windup, delay, step…) dure au moins GUARDIAN_MIN_TELE s ;
 //   - les phases changent le NOMBRE de coups, les pauses et la vitesse, JAMAIS la durée d'un
 //     télégraphe ; la profondeur (floorScaling) ne touche qu'aux PV et aux dégâts ;
-//   - les frappes qu'on doit TRAVERSER (bandes, ondes, poings) restent plus étroites que la
-//     portée du dash (165 u) ; les autres se quittent à pied (cercles posés sous le héros, sceau).
+//   - toute zone frappe en UN instant, à la fin de son télégraphe, sur la forme DESSINÉE (bord
+//     rouge = bord qui touche, corps du héros compris) ; on l'évite à pied grâce au télégraphe
+//     (brèche, bande ou onde déjà passée, dos du Gardien, sortie du cercle) ou on la TRAVERSE en
+//     calant les i-frames du dash (0,18 s) sur l'impact — la largeur à franchir ne compte pas
+//     (bande de 139-150 u + corps du héros = 171-182 u, plus que la course du dash, 165 u :
+//     on ne la saute pas d'un bord à l'autre, on encaisse l'instant d'impact en i-frames).
 //   Unités : u, secondes, degrés ; *ByPhase = valeurs des phases 1, 2, 3.
 //
 // GUARDIAN_ROTATION : ordre des modèles sur les 37 sections (section 1 = premier de la liste).
@@ -870,6 +891,8 @@ const EXTRA_BOSSES = {
     morsures: {
       windup: 0.55, lockAt: 0.7, bites: 3, strikeSpeed: 640, strikeTime: 0.18, recover: 0.28, finalRecover: 0.9,
       damage: 14, arcDeg: 60, exposedMult: 0.5, engageFrac: 0.8, approachMult: 1.5, approachMax: 1.2,
+      hitPad: 8, // u : portée de la gueule au-delà du contact des corps (même règle que le diablotin)
+      telePad: 14, // u : le cône dessiné couvre la ruée + le corps + cette marge (la touche reste DANS le cône)
     },
     // Hurlement (phase 3) : couronne de flammes autour du héros, brèche de `gaps` flammes, puis
     // bond au centre (cercle du bond) à `leapDelay` s.
@@ -927,7 +950,10 @@ const EXTRA_BOSSES = {
     },
     geoliers: {
       windup: 0.9, telePad: 30, kind: 'archer', countByPhase: [0, 2, 3], minR: 120, maxR: 340, minPlayerDist: 160,
-      shieldMax: 12, shieldHold: 0.1,
+      // Bouclier : au plus shieldMax s, UN appel par phase (callsPerPhase) — mesuré au bot skilled à
+      // l'étage 72 : ~15 % du combat sous bouclier (31 % quand il se recyclait sans limite).
+      shieldMax: 8, shieldHold: 0.1,
+      callsPerPhase: 1,
     },
   },
 };
@@ -1616,6 +1642,7 @@ function damageEnemy(game, e, src) {
   if (e.eliteMod === 'blinde') amount *= t.elite.mods.blinde.damageTakenMult;
   if (e.stun > 0) amount *= t.combat.stunDamageTakenMult;
   if (e.vuln > 0) amount *= 1 + e.vulnMult;
+  if (e.exposed > 0) amount *= 1 + e.exposedMult; // point faible d'un Gardien (boss_common.expose)
 
   let crit = false;
   if (src.canCrit) {
@@ -2304,7 +2331,7 @@ return { pickEliteMod, updateEliteMod, foeDealt };
 // ---- src/sim/projectiles.mjs
 __mod["src/sim/projectiles.mjs"] = (() => {
 // Projectiles (héros et ennemis) et zones de danger télégraphiées.
-const { dist2, pointSegDist2 } = __mod["src/core/math.mjs"];
+const { dist2, pointSegDist2, pointBandDist2 } = __mod["src/core/math.mjs"];
 const { emit, newId } = __mod["src/sim/state.mjs"];
 const { damageEnemy, damagePlayer } = __mod["src/sim/combat.mjs"];
 const { pointBlocked } = __mod["src/sim/physics.mjs"];
@@ -2405,11 +2432,12 @@ function inHazard(h, x, y, r) {
     const d = Math.sqrt(dist2(x, y, h.x, h.y));
     return d < h.r + r && d > h.inner - r;
   }
-  // 'line' : segment partant de (x, y) dans la direction `angle`, sur `length`, épaisseur `width`.
-  const ex = h.x + Math.cos(h.angle) * h.length;
-  const ey = h.y + Math.sin(h.angle) * h.length;
-  const hw = h.width / 2 + r;
-  return pointSegDist2(x, y, h.x, h.y, ex, ey) < hw * hw;
+  // 'line' : RECTANGLE partant de (x, y) dans la direction `angle`, long de `length`, large de
+  // `width` — exactement ce que dessine le rendu (render.mjs drawLine). Un corps de rayon r est
+  // touché s'il mord sur ce rectangle, pas au-delà : le bord dessiné est le bord qui touche
+  // (une brèche dessinée est une vraie brèche, le dos d'une frappe en ligne est sûr).
+  const d2 = pointBandDist2(x, y, h.x, h.y, h.angle, h.length, h.width);
+  return d2 === 0 || d2 < r * r;
 }
 
 /**
@@ -3936,6 +3964,7 @@ function toPlayer(game, e) {
 }
 
 function setState(e, s) {
+  endExposure(e);
   e.state = s;
   e.stateTime = 0;
   e.patternStep = 0;
@@ -3974,10 +4003,36 @@ function bossHazard(game, e, h) {
   return spawnHazard(game, { sourceId: e.id, hitsPlayer: true, hitsEnemies: false, ...h, damage: h.damage * e.dmgScale });
 }
 
-/** Point faible exposé : dégâts reçus majorés de `mult` pendant `duration` s (statut e.vuln). */
+/**
+ * Point faible exposé : dégâts reçus majorés de `mult` pendant `duration` s. Statut PROPRE
+ * (e.exposed / e.exposedMult : appliqué par combat.damageEnemy, décompté par le moteur, éteint
+ * dès que le pattern s'achève — setState), distinct de la vulnérabilité générique des
+ * bénédictions et gadgets (e.vuln / e.vulnMult, ex. Charme fatal). Les deux majorations se
+ * cumulent sans que l'une prolonge l'autre, et seul e.exposed fait dessiner le point faible.
+ */
 function expose(e, duration, mult) {
-  e.vuln = Math.max(e.vuln, duration);
-  e.vulnMult = Math.max(e.vulnMult, mult);
+  e.exposed = Math.max(e.exposed ?? 0, duration);
+  e.exposedMult = Math.max(e.exposedMult ?? 0, mult);
+  holdVulnFlag(e);
+}
+
+/**
+ * Le statut générique « vulnérable » (e.vuln > 0) reste vrai pendant toute l'exposition, mais
+ * SANS majoration propre : s'il était retombé, on le relève avec vulnMult = 0 ; une
+ * vulnérabilité de bénédiction en cours n'est ni prolongée ni modifiée.
+ */
+function holdVulnFlag(e) {
+  if (!(e.exposed > 0) || e.vuln > 0) return;
+  e.vuln = e.exposed;
+  e.vulnMult = 0;
+}
+
+/** Fin d'exposition (pattern terminé ou interrompu) : rien ne survit à la fenêtre de punition. */
+function endExposure(e) {
+  if (!(e.exposed > 0) && !e.exposedMult) return;
+  e.exposed = 0;
+  e.exposedMult = 0;
+  if (!(e.vulnMult > 0)) e.vuln = 0; // drapeau levé par l'exposition seule
 }
 
 /**
@@ -4022,7 +4077,7 @@ function summonedAlive(game) {
   return n;
 }
 
-return { bossDef, wmult, toPlayer, setState, toRest, setSub, holdStill, bossHazard, expose, exposedRecovery, roomPoint, summonedAlive };
+return { bossDef, wmult, toPlayer, setState, toRest, setSub, holdStill, bossHazard, expose, holdVulnFlag, exposedRecovery, roomPoint, summonedAlive };
 })();
 // ---- src/sim/boss_charon.mjs
 __mod["src/sim/boss_charon.mjs"] = (() => {
@@ -4178,23 +4233,24 @@ __mod["src/sim/boss_cerbere.mjs"] = (() => {
 // Bête RAPIDE qui ne laisse pas respirer : au repos elle RÔDE en cercle autour du héros au lieu de
 // marcher sur lui, et attaque par séries de trois (trois têtes). Patterns, tous télégraphiés :
 //   bond      — bonds annoncés par le CERCLE D'ATTERRISSAGE posé sous le héros (1 / 2 / 3 bonds
-//               selon la phase) ; en phase 3, le dernier atterrissage libère une onde (anneau) :
-//               rester dans le cercle qui vient de frapper, ou dasher à travers. Après la série,
-//               il est ESSOUFFLÉ : immobile, point faible exposé — la fenêtre de punition.
+//               selon la phase) ; dès la phase 2 (bond.shockFromPhase), le dernier atterrissage
+//               libère une onde (anneau) : rester dans le cercle qui vient de frapper, ou caler
+//               les i-frames d'un dash sur l'onde. Après la série, il est ESSOUFFLÉ : immobile,
+//               point faible exposé — la fenêtre de punition.
 //   souffle   — les trois têtes crachent l'une après l'autre trois jets de flammes en éventail
-//               (lignes) ; son DOS est sûr. Deux salves, ordre inversé, dès la phase 2.
-//   morsures  — trois ruées (cônes) enchaînées, chacune re-visée ; la dernière le laisse exposé.
+//               (bandes qui partent de son centre) ; son DOS est sûr. Deux salves, ordre inversé,
+//               dès la phase 2.
+//   morsures  — trois ruées enchaînées, chacune re-visée et annoncée par un cône ; une ruée ne
+//               mord QUE dans son cône dessiné (corps du héros compris). La dernière l'expose.
 //   hurlement — (phase 3, frénésie) un cercle de flammes se referme autour du héros, avec une
 //               brèche, puis Cerbère bondit en son centre : sortir par la brèche, ou dasher.
 const { rand } = __mod["src/core/rng.mjs"];
-const { dist2, clamp, TAU } = __mod["src/core/math.mjs"];
+const { dist2, clamp, inSector, TAU } = __mod["src/core/math.mjs"];
 const { emit, newId } = __mod["src/sim/state.mjs"];
 const { damagePlayer } = __mod["src/sim/combat.mjs"];
 const { toPlayer, toRest, setSub, holdStill, bossHazard, exposedRecovery, roomPoint } = __mod["src/sim/boss_common.mjs"];
 
 const DEG = Math.PI / 180;
-const BITE_HIT_PAD = 8; // u ajoutés au contact pendant une ruée (même règle que le diablotin)
-const BITE_TELE_PAD = 14; // u : le cône dessiné couvre la ruée + le contact
 const LEAP_STATES = new Set(['bond', 'hurlement']);
 
 /** Cri d'attaque : le son porte le timbre du Gardien (recipes.mjs, ENEMY_ATTACK.cerbere). */
@@ -4302,8 +4358,9 @@ function souffle(game, e, d) {
 
 // ---------------------------------------------------------------- morsures
 
+/** Portée du cône dessiné : la course de la ruée + le corps + la marge (morsures.telePad). */
 function biteRange(e, m) {
-  return m.strikeSpeed * m.strikeTime + e.r + BITE_TELE_PAD;
+  return m.strikeSpeed * m.strikeTime + e.r + m.telePad;
 }
 
 function morsures(game, e, d, dt, speed) {
@@ -4341,15 +4398,21 @@ function morsures(game, e, d, dt, speed) {
         e.tele = null;
         e.hitPlayer = false;
         e.atkId = newId(game);
+        // Origine du cône dessiné : la ruée ne mordra que dedans.
+        e.biteX = e.x;
+        e.biteY = e.y;
         setSub(e, 'strike');
         bark(game, e);
       }
       break;
     }
-    case 'strike':
+    case 'strike': {
       e.vx = e.dirX * m.strikeSpeed;
       e.vy = e.dirY * m.strikeSpeed;
-      if (!e.hitPlayer && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + BITE_HIT_PAD) ** 2) {
+      // Contact de la gueule (morsures.hitPad) ET corps du héros dans le cône annoncé : la ruée
+      // ne déborde jamais du télégraphe (près de l'apex, le contact seul dépasserait du cône).
+      const inCone = inSector(p.x, p.y, e.biteX, e.biteY, biteRange(e, m), Math.atan2(e.dirY, e.dirX), m.arcDeg * DEG, p.r);
+      if (!e.hitPlayer && inCone && dist2(e.x, e.y, p.x, p.y) < (e.r + p.r + m.hitPad) ** 2) {
         e.hitPlayer = true;
         damagePlayer(game, m.damage * e.dmgScale, { kind: 'cerbereBite', id: e.atkId, x: e.x, y: e.y });
       }
@@ -4358,6 +4421,7 @@ function morsures(game, e, d, dt, speed) {
         setSub(e, 'gap');
       }
       break;
+    }
     default: // 'gap' : souffle court entre deux morsures
       holdStill(e);
       if (e.subT >= m.recover) setSub(e, 'windup');
@@ -4421,7 +4485,8 @@ function tick(game, e) {
   }
 }
 
-// Bonds et morsures d'emblée ; le souffle en phase 2 ; la frénésie (hurlement) en phase 3.
+// Bonds, morsures et souffle d'emblée (le souffle double sa salve dès la phase 2) ; la frénésie
+// (hurlement) s'ajoute en phase 3.
 const CERBERE = {
   byPhase: { 1: ['bond', 'morsures', 'souffle'], 2: ['bond', 'morsures', 'souffle'], 3: ['bond', 'morsures', 'souffle', 'hurlement'] },
   patterns: { bond, souffle, morsures, hurlement },
@@ -4685,8 +4750,10 @@ __mod["src/sim/boss_colosse.mjs"] = (() => {
 //              l'autre : entrer dans l'onde déjà passée (vers lui !) ou dasher à travers.
 //   eboulis  — rochers télégraphiés autour du héros (l'un tombe sur lui) ; dès la phase 2, chaque
 //              rocher laisse une BRAISE qui pulse (cercle rejoué, durée bornée) : l'arène rétrécit.
-//   geoliers — (phase 2+) il appelle ses geôliers (archers) ; tant qu'ils vivent, ses chaînes le
-//              rendent INVULNÉRABLE (bouclier visible, borné dans le temps) : les adds d'abord.
+//   geoliers — (phase 2+, UNE fois par phase : geoliers.callsPerPhase) il appelle ses geôliers
+//              (archers) ; tant qu'ils vivent, ses chaînes le rendent INVULNÉRABLE (bouclier
+//              visible, borné dans le temps) : les adds d'abord.
+// Changement de phase : les braises s'éteignent avec les autres zones (crochet onPhase).
 const { rand } = __mod["src/core/rng.mjs"];
 const { clamp, TAU } = __mod["src/core/math.mjs"];
 const { emit } = __mod["src/sim/state.mjs"];
@@ -4824,6 +4891,8 @@ function geoliers(game, e, d, dt) {
     }
     e.shieldT = g.shieldMax;
     e.shielded = true;
+    if (!e.jailerCalls) e.jailerCalls = {};
+    e.jailerCalls[e.phase] = (e.jailerCalls[e.phase] ?? 0) + 1;
     emit(game, 'bossSummon', { id: e.id, x: e.x, y: e.y });
     emit(game, 'bossShield', { id: e.id, x: e.x, y: e.y, up: true });
     setSub(e, 'done');
@@ -4850,10 +4919,21 @@ function tick(game, e, d, dt) {
   tickPools(game, e, d.eboulis);
 }
 
-/** Pas de nouvel appel tant que des serviteurs vivent ou que le bouclier tient. */
+/**
+ * Geôliers : au plus `callsPerPhase` appels par phase (sans quoi le bouclier se recyclerait dès
+ * la chute des archers et le Colosse deviendrait un sac à PV), et jamais tant que des serviteurs
+ * vivent ou que le bouclier tient.
+ */
 function available(game, e, d, name) {
   if (name !== 'geoliers') return true;
-  return d.geoliers.countByPhase[e.phase - 1] > 0 && !e.shielded && summonedAlive(game) === 0;
+  const g = d.geoliers;
+  const calls = e.jailerCalls?.[e.phase] ?? 0;
+  return g.countByPhase[e.phase - 1] > 0 && calls < g.callsPerPhase && !e.shielded && summonedAlive(game) === 0;
+}
+
+/** Changement de phase : les braises s'éteignent (les zones viennent d'être effacées par le moteur). */
+function onPhase(game, e) {
+  e.pools = [];
 }
 
 // Poing, séisme et éboulis d'emblée ; les geôliers (et les braises) à partir de la phase 2.
@@ -4862,6 +4942,7 @@ const COLOSSE = {
   patterns: { poing, seisme, eboulis, geoliers },
   tick,
   available,
+  onPhase,
 };
 
 return { poing, seisme, eboulis, geoliers, COLOSSE };
@@ -4895,16 +4976,19 @@ const { randRange, pick } = __mod["src/core/rng.mjs"];
 const { emit } = __mod["src/sim/state.mjs"];
 const { spawnPickup } = __mod["src/sim/combat.mjs"];
 const { queueSpawn, findSpawnPoint } = __mod["src/sim/spawns.mjs"];
-const { bossDef, toPlayer, setState } = __mod["src/sim/boss_common.mjs"];
+const { bossDef, toPlayer, setState, holdVulnFlag } = __mod["src/sim/boss_common.mjs"];
 const { CHARON } = __mod["src/sim/boss_charon.mjs"];
 const { EXTRA_BOSS_MODELS } = __mod["src/sim/boss_models.mjs"];
 
 // Registre des modèles de Gardien : { byPhase: {1: [...], 2: [...], 3: [...]}, patterns: {nom: fn},
-// rest?(game, e, d, dt, speed), tick?(game, e, d, dt), available?(game, e, d, nom) }.
-// La clé est le `kind` de l'ennemi (= clé de tuning.boss).
+// rest?(game, e, d, dt, speed), tick?(game, e, d, dt), available?(game, e, d, nom),
+// onPhase?(game, e, d) }. La clé est le `kind` de l'ennemi (= clé de tuning.boss).
 //   tick      — appelé à chaque pas, quel que soit le pattern (zones persistantes, bouclier) ;
 //   available — filtre les patterns utilisables maintenant (ex. pas de nouveaux renforts tant que
-//               les précédents vivent). Un modèle sans ces crochets (Charon) n'en voit aucun effet.
+//               les précédents vivent) ;
+//   onPhase   — appelé au changement de phase, APRÈS l'effacement des menaces : le modèle y
+//               éteint ce qu'il rejouerait lui-même (ex. braises qui pulsent).
+// Un modèle sans ces crochets (Charon) n'en voit aucun effet.
 const BOSS_MODELS = {
   gardien: CHARON,
   ...EXTRA_BOSS_MODELS,
@@ -4937,6 +5021,8 @@ function enterPhase(game, e, d) {
   e.invuln = d.transition;
   for (const pr of game.projectiles) if (pr.owner === 'enemy') pr.dead = true;
   for (const h of game.hazards) if (h.hitsPlayer) h.done = true;
+  const model = modelOf(e);
+  if (model.onPhase) model.onPhase(game, e, d);
   for (const kind of d.reinforcements[e.phase] ?? []) {
     const pt = findSpawnPoint(game, 14, 180, { x: e.x, y: e.y, minR: e.r + 60, maxR: e.r + 260 });
     if (pt) queueSpawn(game, kind, pt.x, pt.y, { summoned: true });
@@ -4951,6 +5037,11 @@ function updateBoss(game, e, dt) {
   const d = bossDef(game, e);
   const model = modelOf(e);
   e.invuln = Math.max(0, (e.invuln ?? 0) - dt);
+  // Point faible exposé (boss_common.expose) : décompté sur l'horloge du Gardien (figé avec lui).
+  if (e.exposed > 0) {
+    e.exposed = Math.max(0, e.exposed - dt);
+    holdVulnFlag(e);
+  }
   if (model.tick) model.tick(game, e, d, dt);
   const threshold = e.phase === 1 ? d.phase2At : e.phase === 2 ? d.phase3At : -1;
   if (threshold > 0 && e.hp <= e.maxHp * threshold) {
@@ -8649,6 +8740,7 @@ __mod["src/render/fx.mjs"] = (() => {
 // tremblement et coups de zoom. Présentation pure : Math.random autorisé ici.
 const { PAL } = __mod["src/render/palette.mjs"];
 const { addTrauma, zoomKick, kick } = __mod["src/render/camera.mjs"];
+const { pointBandDist2 } = __mod["src/core/math.mjs"];
 
 const MAX_PARTICLES = 700;
 const MAX_TEXTS = 48;
@@ -8671,7 +8763,7 @@ const P = {
 };
 
 function createFx() {
-  return { texts: [], effects: [], quality: 1, shakeScale: 1, healAcc: 0, healT: 0, banner: null, hurtFlash: 0, flash: 0, ghosts: [], landT: 0, swingT: 0, swingAngle: 0 };
+  return { texts: [], effects: [], quality: 1, shakeScale: 1, healAcc: 0, healT: 0, banner: null, hurtFlash: 0, flash: 0, ghosts: [], landT: 0, swingT: 0, swingAngle: 0, hazardTrauma: 0 };
 }
 
 function spawnParticle(fx, x, y, vx, vy, life, size, color, drag = 4, streak = 0) {
@@ -8737,8 +8829,41 @@ const BANNER_CUT = 0.3; // s de fondu restantes quand le combat démarre
 
 const ENEMY_COLORS = { imp: PAL.imp, archer: PAL.archer, brute: PAL.brute, charger: PAL.charger, exploder: PAL.exploder, gardien: PAL.boss };
 
+// Tremblement des ZONES qui frappent (les Gardiens en font frapper beaucoup à la fois : bandes,
+// damier, ondes, braises). Une zone secoue pleinement près du héros, de moins en moins loin de
+// lui ; toutes zones confondues, un lot d'événements ne secoue pas plus qu'une zone (un balayage
+// de 12 bandes = une secousse) ; les braises qui pulsent (terrain) ne secouent pas. Un coup
+// REÇU garde sa propre secousse (playerHurt) : la menace qui compte se sent toujours.
+const HAZARD_TRAUMA = 0.28;
+const HAZARD_TRAUMA_BATCH_CAP = 0.28;
+const HAZARD_NEAR = 90; // u entre le héros et le bord de la zone : secousse pleine en deçà
+const HAZARD_FAR = 480; // u : secousse minimale au-delà
+const HAZARD_FAR_MULT = 0.2;
+const HAZARD_TRAUMA_BY_KIND = { sinBlast: 0.06, colosseEmber: 0 };
+const HAZARD_PARTICLES_BY_KIND = { colosseEmber: 0.25 }; // fraction des particules d'impact
+
+/** Distance du héros au bord de la zone qui frappe (0 dedans ; un anneau compte comme un disque). */
+function hazardGap(ev, game) {
+  const p = game?.player;
+  if (!p) return 0;
+  if (ev.shape === 'line') return Math.sqrt(pointBandDist2(p.x, p.y, ev.x, ev.y, ev.angle, ev.length, ev.width));
+  return Math.max(0, Math.hypot(p.x - ev.x, p.y - ev.y) - (ev.r ?? 0));
+}
+
+function hazardTrauma(fx, ev, game) {
+  const base = HAZARD_TRAUMA_BY_KIND[ev.kind] ?? HAZARD_TRAUMA;
+  if (base <= 0) return 0;
+  const k = Math.min(1, Math.max(0, (hazardGap(ev, game) - HAZARD_NEAR) / (HAZARD_FAR - HAZARD_NEAR)));
+  const want = base * (1 - k * (1 - HAZARD_FAR_MULT));
+  const add = Math.min(want, HAZARD_TRAUMA_BATCH_CAP - fx.hazardTrauma);
+  if (add <= 0) return 0;
+  fx.hazardTrauma += add;
+  return add;
+}
+
 /** Traduit les événements de l'image en effets. `cam` reçoit le tremblement. */
 function handleFxEvents(fx, cam, events, game) {
+  fx.hazardTrauma = 0;
   for (const ev of events) {
     const h = HANDLERS[ev.type];
     if (h) h(fx, cam, ev, game);
@@ -8824,16 +8949,18 @@ const HANDLERS = {
     addTrauma(cam, 1);
     zoomKick(cam, 0.12);
   },
-  hazardFire(fx, cam, ev) {
+  hazardFire(fx, cam, ev, game) {
     if (ev.shape === 'line') {
       addEffect(fx, { type: 'streak', x: ev.x, y: ev.y, angle: ev.angle, length: ev.length, width: ev.width, life: 0.25, max: 0.25, color: PAL.danger });
     } else {
       addEffect(fx, { type: 'shock', x: ev.x, y: ev.y, r: ev.r, life: 0.32, max: 0.32, color: ev.kind === 'sinBlast' ? '#ff8ae0' : '#ff6a3a' });
       if (ev.kind === 'bossSlam') zoomKick(cam, 0.02);
-      burst(fx, ev.x, ev.y, 16, ev.r * 3, 0.5, 4, '#4a3036', { drag: 4 });
-      burst(fx, ev.x, ev.y, 10, ev.r * 4, 0.35, 2.5, PAL.lava, { drag: 5, streak: 1 });
+      const n = HAZARD_PARTICLES_BY_KIND[ev.kind] ?? 1;
+      burst(fx, ev.x, ev.y, Math.round(16 * n), ev.r * 3, 0.5, 4, '#4a3036', { drag: 4 });
+      burst(fx, ev.x, ev.y, Math.round(10 * n), ev.r * 4, 0.35, 2.5, PAL.lava, { drag: 5, streak: 1 });
     }
-    addTrauma(cam, ev.kind === 'sinBlast' ? 0.06 : 0.28);
+    const trauma = hazardTrauma(fx, ev, game);
+    if (trauma > 0) addTrauma(cam, trauma);
   },
   explode(fx, cam, ev) {
     if (ev.hero) {
@@ -9342,7 +9469,8 @@ __mod["src/render/art_bosses.mjs"] = (() => {
 //   Cerbère  — trois têtes en éventail, crinière en pointes ; en l'air pendant un bond ;
 //   Minos    — mitre dorée, robe indigo, queue de serpent enroulée ; en filigrane quand il se dissout ;
 //   Éphialte — bloc de pierre fissuré, deux poings énormes, chaînes (qui brillent sous bouclier).
-// Commun : un POINT FAIBLE doré pulse quand le Gardien est exposé (e.vuln), là où frapper.
+// Commun : un POINT FAIBLE doré pulse quand le Gardien est exposé (e.exposed : fenêtre de punition
+// d'un pattern, jamais une simple bénédiction de vulnérabilité), là où frapper.
 
 const TAU = Math.PI * 2;
 const OUTLINE = '#140507';
@@ -9454,7 +9582,7 @@ function cerbere(ctx, r, face, body, e, time) {
     }
     eyePair(ctx, hx, hy, hr, a, frenzy ? '#ff3a1a' : '#ffb03a', 0.55);
   }
-  if (e.vuln > 0) weakPoint(ctx, -Math.cos(face) * r * 0.35, -Math.sin(face) * r * 0.35, r * 0.3, time);
+  if (e.exposed > 0) weakPoint(ctx, -Math.cos(face) * r * 0.35, -Math.sin(face) * r * 0.35, r * 0.3, time);
   ctx.restore();
 }
 
@@ -9508,7 +9636,7 @@ function minos(ctx, r, face, body, e, time) {
   ctx.arc(0, -r * 0.85, r * 0.1, 0, TAU);
   ctx.fill();
   eyePair(ctx, Math.cos(face) * r * 0.12, Math.sin(face) * r * 0.12, r * 0.62, face, '#f3f0ff', 0.45);
-  if (e.vuln > 0) weakPoint(ctx, 0, r * 0.35, r * 0.28, time);
+  if (e.exposed > 0) weakPoint(ctx, 0, r * 0.35, r * 0.28, time);
   ctx.restore();
 }
 
@@ -9550,7 +9678,7 @@ function colosse(ctx, r, face, body, e, time) {
   ctx.fill();
   ctx.stroke();
   // Fissures (la lave affleure quand le point faible est exposé).
-  const exposed = e.vuln > 0;
+  const exposed = e.exposed > 0;
   ctx.strokeStyle = exposed ? '#ff8a2a' : '#2a201c';
   ctx.lineWidth = exposed ? 3 : 2;
   ctx.beginPath();

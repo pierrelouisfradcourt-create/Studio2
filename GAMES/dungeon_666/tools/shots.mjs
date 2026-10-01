@@ -4,6 +4,9 @@
 // erreurs JavaScript et les images/s, et on capture des images de vraies situations de jeu
 // (pour la revue visuelle et le rapport de playtest).
 //
+// Flux V2 : la Ville d'abord (titre → « Entrer dans Dité » → chaque onglet capturé → « Descendre »),
+// puis une descente jouée par le bot, puis le Gardien de la section 1 (étage 18).
+//
 // Usage : node tools/shots.mjs [--seconds 90] [--boss-seconds 45] [--out dossier] [--seed 21]
 
 import { mkdir, readFile } from 'node:fs/promises';
@@ -21,6 +24,48 @@ const SEED = Number(args.seed ?? 21);
 const PORT = Number.parseInt(process.env.DUNGEON_666_SHOTS_PORT ?? '4668', 10);
 const PHONE = { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 };
 const SHOT_EVERY = 6; // s entre deux captures
+const GUARDIAN_FLOOR = 18; // Gardien de la section 1 (tuning.floors.sectionLength)
+const TOWN_TABS = ['portail', 'classe', 'armurerie', 'equipement', 'grimoire', 'sanctuaire', 'labo'];
+const UI_SETTLE_MS = 250; // le panneau DOM se redessine à l'image suivante
+
+function watchErrors(page) {
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => {
+    // Polices optionnelles, certificats du proxy, avis d'intervention tactile de Chrome : pas des erreurs du jeu.
+    if (m.type() === 'error' && !/fonts\.|ERR_CERT|net::ERR_|Ignored attempt to cancel a touch/.test(m.text())) errors.push(m.text());
+  });
+  return errors;
+}
+
+/** La Ville, onglet par onglet, à la souris (titre → Ville → onglets → « Descendre »). */
+async function townSession(browser, base) {
+  const ctx = await browser.newContext(PHONE);
+  const page = await ctx.newPage();
+  const errors = watchErrors(page);
+  await page.goto(`${base}/?seed=${SEED}&tune=0`);
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: join(OUT, 'ville_00_titre.png') });
+  await page.click('#enter-town');
+  await page.waitForTimeout(UI_SETTLE_MS);
+  for (const [i, tab] of TOWN_TABS.entries()) {
+    await page.click(`#overlay [data-tab="${tab}"]`);
+    await page.waitForTimeout(UI_SETTLE_MS);
+    await page.screenshot({ path: join(OUT, `ville_${String(i + 1).padStart(2, '0')}_${tab}.png`) });
+  }
+  await page.click('#overlay [data-tab="portail"]');
+  await page.waitForTimeout(UI_SETTLE_MS);
+  await page.click('#depart');
+  await page.waitForTimeout(1500);
+  const fps = [await page.evaluate(() => window.__d666.fps())];
+  const state = await page.evaluate(() => {
+    const g = window.__d666.game;
+    return { floor: g?.run.floor ?? 0, mode: g?.mode ?? window.__d666.app.screen, tel: { kills: 0, dashes: 0, dodges: 0, deaths: 0 } };
+  });
+  await page.screenshot({ path: join(OUT, 'ville_99_descente.png') });
+  await ctx.close();
+  return { label: 'ville', errors, fps, state };
+}
 
 async function injectBot(page) {
   await page.addScriptTag({
@@ -38,11 +83,7 @@ async function injectBot(page) {
 async function session(browser, base, label, url, seconds) {
   const ctx = await browser.newContext(PHONE);
   const page = await ctx.newPage();
-  const errors = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => {
-    if (m.type() === 'error' && !/fonts\.|ERR_CERT|net::ERR_/.test(m.text())) errors.push(m.text());
-  });
+  const errors = watchErrors(page);
   // Le serveur du jeu ne sert pas tools/ : on livre le bot et ses dépendances à la page.
   await page.route('**/tools/bots.mjs', async (route) => route.fulfill({ contentType: 'text/javascript', body: await readFile(join(GAME_DIR, 'tools', 'bots.mjs'), 'utf8') }));
   await page.goto(`${base}${url}`);
@@ -70,8 +111,9 @@ async function main() {
   const base = `http://localhost:${PORT}`;
   try {
     const runs = [
+      await townSession(browser, base),
       await session(browser, base, 'descente', `/?seed=${SEED}&autostart=1&tune=0`, SECONDS),
-      await session(browser, base, 'gardien', `/?seed=${SEED}&autostart=1&floor=6&tune=0`, BOSS_SECONDS),
+      await session(browser, base, 'gardien', `/?seed=${SEED}&autostart=1&floor=${GUARDIAN_FLOOR}&tune=0`, BOSS_SECONDS),
     ];
     let ok = true;
     for (const r of runs) {

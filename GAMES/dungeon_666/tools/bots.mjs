@@ -16,6 +16,10 @@
 //             punit les béliers sonnés, gère compétence / gadget / Super.
 //   noDash  — identique mais n'utilise JAMAIS le dash ni le gadget : mesure la valeur du dash.
 //   masher  — fonce sur l'ennemi le plus proche et tape sans arrêt, dash aléatoire rare.
+//
+// Options posées par l'appelant dans la mémoire (jamais lues dans la partie) :
+//   mem.wantTown   — prendre le portail de la Ville quand il s'ouvre (sinon : jamais) ;
+//   mem.dashAttack — taper l'attaque au début de chaque dash (mesure du labo D5).
 
 import { DT, emptyInput, applyCommand } from '../src/sim/game.mjs';
 import { hazardProgress, lingerLeft } from '../src/sim/projectiles.mjs';
@@ -849,14 +853,22 @@ function nearest(p, list) {
   return best;
 }
 
+/**
+ * Porte choisie (mémorisée pour la salle). Le portail de la Ville (après un Gardien) termine le
+ * run : il n'est JAMAIS pris, sauf demande explicite (mem.wantTown, posé par l'appelant). Rend
+ * null si aucune porte n'est acceptable (entraînement sans demande : le bot reste dans la salle).
+ */
 function chooseDoor(game, mem) {
   const p = game.player;
   const doors = game.room.doors;
-  if (mem.doorFloor === game.run.floor && mem.doorRoom === game.room) return doors[mem.door];
+  if (mem.doorFloor === game.run.floor && mem.doorRoom === game.room) return doors[mem.door] ?? null;
+  const town = doors.findIndex((d) => d.reward === 'town');
+  if (mem.wantTown && town >= 0) return rememberDoor(game, mem, town);
   const hpFrac = p.hp / p.maxHp;
-  let best = 0;
+  let best = -1;
   let bestScore = -Infinity;
   doors.forEach((d, i) => {
+    if (d.reward === 'town') return;
     let s = DOOR_PREFS[d.reward] ?? 1;
     if (d.reward === 'heal' && hpFrac < HEAL_DOOR_HP) s += DOOR_URGENT_HEAL;
     if (d.reward === 'shop' && hpFrac < LOW_HP_SHOP) s += DOOR_URGENT_SHOP;
@@ -867,10 +879,14 @@ function chooseDoor(game, mem) {
       best = i;
     }
   });
+  return rememberDoor(game, mem, best);
+}
+
+function rememberDoor(game, mem, index) {
   mem.doorFloor = game.run.floor;
   mem.doorRoom = game.room;
-  mem.door = best;
-  return doors[best];
+  mem.door = index;
+  return game.room.doors[index] ?? null;
 }
 
 function toward(game, x, y) {
@@ -902,6 +918,7 @@ function exploreIntent(game, mem) {
   const open = room.doors.some((d) => d.open);
   if (!open) return base;
   const door = chooseDoor(game, mem);
+  if (!door) return base;
   return { ...base, ...toward(game, door.x + door.w / 2, door.h / 2) };
 }
 
@@ -967,6 +984,13 @@ function tactical(game, mem, opts) {
   if (p.state === 'dash') {
     input.moveX = p.dashDirX;
     input.moveY = p.dashDirY;
+    // Habitude « dash puis frappe » (mesure du labo D5, sur demande : mem.dashAttack) : le pouce
+    // tape l'attaque dès le début de chaque ruée, comme un joueur pressé ; la variante D5 décide
+    // quand ce tap devient frappe de dash (et s'il coupe la ruée).
+    if (mem.dashAttack && mem.dashAttackSeq !== game.telemetry.dashes && visibleEnemies(game).length) {
+      input.attackPressed = true;
+      mem.dashAttackSeq = game.telemetry.dashes;
+    }
     return input;
   }
   const enemies = visibleEnemies(game);
