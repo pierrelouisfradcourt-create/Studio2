@@ -425,6 +425,13 @@ function frame(now) {
     }
   }
   if (g) flushEvents();
+  if (g && g.mode === 'town') {
+    // Portail du checkpoint franchi pendant la partie : fin du run, retour en Ville.
+    persistMeta();
+    openTown();
+    ui.sync(null, app);
+    return;
+  }
   // Positions interpolées le temps de la caméra, des effets et du dessin, puis rétablies.
   const alpha = g && g.mode === 'play' && !app.paused ? Math.min(1, acc / DT) : 1;
   if (g) applyInterp(g, alpha);
