@@ -29,6 +29,8 @@ export const PAL = {
   dangerFill: 'rgba(255, 45, 45, 0.16)',
   dangerFillHot: 'rgba(255, 60, 40, 0.42)',
   enemyOutline: '#140507',
+  enemyFlash: '#ffc9b0', // flash d'impact : chaud, jamais le blanc froid du héros
+  impactRing: '#ffd2a8',
   arrow: '#ff8a2a',
   bossOrb: '#ff3cbe',
 

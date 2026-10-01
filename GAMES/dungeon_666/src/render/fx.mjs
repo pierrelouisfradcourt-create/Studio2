@@ -56,7 +56,27 @@ function burst(fx, x, y, count, speed, life, size, color, opts = {}) {
 
 export function addText(fx, x, y, text, color, size = 15, life = 0.7) {
   if (fx.texts.length >= MAX_TEXTS) fx.texts.shift();
-  fx.texts.push({ x: x + (Math.random() - 0.5) * 10, y, vy: -70, text, color, size, life, max: life });
+  const t = { x: x + (Math.random() - 0.5) * 10, y, vy: -70, text, color, size, life, max: life, target: 0, amount: 0 };
+  fx.texts.push(t);
+  return t;
+}
+
+const MERGE_WINDOW = 0.3; // s : un coup sur la même cible dans cet intervalle s'ajoute au chiffre
+
+/** Chiffre de dégâts : s'additionne au chiffre récent de la même cible, et le relance. */
+function addDamageText(fx, ev, color, size, life) {
+  for (const t of fx.texts) {
+    if (t.target === ev.id && t.max - t.life < MERGE_WINDOW && t.color === color) {
+      t.amount += ev.amount;
+      t.text = String(t.amount);
+      t.size = Math.max(t.size, size);
+      t.life = t.max;
+      return;
+    }
+  }
+  const t = addText(fx, ev.x, ev.y - 18, String(ev.amount), color, size, life);
+  t.target = ev.id;
+  t.amount = ev.amount;
 }
 
 function addEffect(fx, e) {
@@ -64,9 +84,11 @@ function addEffect(fx, e) {
   fx.effects.push(e);
 }
 
-export function setBanner(fx, title, sub, color = PAL.text, life = 2.2) {
-  fx.banner = { title, sub, color, life, max: life };
+export function setBanner(fx, title, sub, color = PAL.text, life = 2.2, untilFight = false) {
+  fx.banner = { title, sub, color, life, max: life, untilFight };
 }
+
+const BANNER_CUT = 0.3; // s de fondu restantes quand le combat démarre
 
 const ENEMY_COLORS = { imp: PAL.imp, archer: PAL.archer, brute: PAL.brute, charger: PAL.charger, exploder: PAL.exploder, gardien: PAL.boss };
 
@@ -94,13 +116,14 @@ const HANDLERS = {
     const heavy = ev.amount >= 20 || ev.crit;
     if (ev.kind === 'burn') {
       burst(fx, ev.x, ev.y, 2, 60, 0.4, 2.5, PAL.lava, { drag: 2 });
-      addText(fx, ev.x, ev.y - 14, String(ev.amount), '#ff9a5a', 11, 0.5);
+      addDamageText(fx, ev, '#ff9a5a', 11, 0.5);
       return;
     }
     burst(fx, ev.x, ev.y, heavy ? 12 : 7, heavy ? 520 : 380, 0.28, 2.2, PAL.slash, { dir, spread: 1.4, streak: 1, drag: 7 });
     burst(fx, ev.x, ev.y, heavy ? 9 : 5, 220, 0.45, 3.2, color, { dir, spread: 2.2, drag: 4 });
-    addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 6, r1: heavy ? 46 : 30, color: '#ffffff', width: heavy ? 4 : 2.5, life: 0.14, max: 0.14 });
-    addText(fx, ev.x, ev.y - 18, ev.crit ? `${ev.amount}!` : String(ev.amount), ev.crit ? PAL.crit : PAL.text, ev.crit ? 21 : heavy ? 17 : 14, ev.crit ? 0.85 : 0.6);
+    addEffect(fx, { type: 'ring', x: ev.x, y: ev.y, r0: 6, r1: heavy ? 46 : 30, color: PAL.impactRing, width: heavy ? 4 : 2.5, life: 0.14, max: 0.14 });
+    if (ev.crit) addText(fx, ev.x, ev.y - 18, `${ev.amount}!`, PAL.crit, 21, 0.85);
+    else addDamageText(fx, ev, PAL.text, heavy ? 17 : 14, 0.6);
     const shake = ev.shake || (ev.kind === 'skill' ? 0.14 : ev.kind === 'gadget' ? 0.05 : ev.kind === 'super' ? 0.04 : 0.08);
     addTrauma(cam, ev.crit ? shake + 0.08 : shake, true);
     if (ev.kind === 'melee' || ev.kind === 'strike') kick(cam, ev.dirX, ev.dirY, heavy ? 5 : 3);
@@ -174,7 +197,6 @@ const HANDLERS = {
   },
   super(fx, cam, ev) {
     addEffect(fx, { type: 'nova', x: ev.x, y: ev.y, r: ev.r * 1.3, life: 0.4, max: 0.4, color: PAL.superBar });
-    setBanner(fx, 'COLÈRE', '', PAL.superBar, 0.9);
     addTrauma(cam, 0.5);
     fx.flash = 0.5;
   },
@@ -213,7 +235,7 @@ const HANDLERS = {
   },
   floorEnter(fx, cam, ev) {
     const where = ev.isBoss ? 'Gardien de la section' : `${ev.circleName} · section ${ev.section}`;
-    setBanner(fx, `ÉTAGE ${ev.floor}`, where, ev.isBoss ? PAL.danger : PAL.text, 2.0);
+    setBanner(fx, `ÉTAGE ${ev.floor}`, where, ev.isBoss ? PAL.danger : PAL.text, 1.2, true);
   },
   roomClear(fx, cam, ev) {
     setBanner(fx, ev.boss ? 'GARDIEN VAINCU' : 'SALLE NETTOYÉE', ev.boss ? 'Un checkpoint s\'éveille' : '', ev.boss ? PAL.gold : PAL.text, 1.6);
@@ -266,6 +288,7 @@ export function updateFx(fx, dt, game) {
   for (const e of fx.effects) e.life -= dt;
   fx.effects = fx.effects.filter((e) => e.life > 0);
   if (fx.banner) {
+    if (fx.banner.untilFight && game?.enemies.some((e) => !e.dead && !(e.spawnT > 0))) fx.banner.life = Math.min(fx.banner.life, BANNER_CUT);
     fx.banner.life -= dt;
     if (fx.banner.life <= 0) fx.banner = null;
   }
@@ -320,9 +343,14 @@ export function drawParticles(ctx) {
   ctx.globalAlpha = 1;
 }
 
-export function drawEffects(ctx, fx, game) {
+// Effets « de sol » : dessinés sous les ennemis et le héros (ils ne les ternissent pas).
+const GROUND_EFFECTS = new Set(['nova', 'shock']);
+
+/** ground = true : seulement les effets de sol ; false : tous les autres. */
+export function drawEffects(ctx, fx, game, ground = false) {
   const p = game.player;
   for (const e of fx.effects) {
+    if (GROUND_EFFECTS.has(e.type) !== ground) continue;
     const t = 1 - e.life / e.max; // 0 -> 1
     const a = e.life / e.max;
     switch (e.type) {
@@ -350,7 +378,7 @@ export function drawEffects(ctx, fx, game) {
         ctx.stroke();
         break;
       case 'nova':
-        ctx.globalAlpha = a * 0.5;
+        ctx.globalAlpha = a * 0.12;
         ctx.fillStyle = e.color;
         ctx.beginPath();
         ctx.arc(e.x, e.y, e.r * t, 0, TAU);
@@ -385,7 +413,7 @@ export function drawEffects(ctx, fx, game) {
         break;
       case 'death':
         ctx.globalAlpha = a;
-        ctx.fillStyle = t < 0.35 ? '#ffffff' : e.color;
+        ctx.fillStyle = t < 0.35 ? PAL.impactRing : e.color;
         ctx.beginPath();
         ctx.arc(e.x, e.y, Math.max(0.5, e.r * (1 + 0.3 * t) * (1 - t * t)), 0, TAU);
         ctx.fill();

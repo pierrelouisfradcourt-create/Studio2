@@ -27,8 +27,10 @@ const BUTTONS = [
 ];
 const ATTACK_MARGIN_X = 118;
 const ATTACK_MARGIN_Y = 112;
-// Portrait (toléré) : l'éventail monte au-dessus de l'attaque pour laisser la place au pouce gauche.
-const PORTRAIT_FAN = { dash: [250, 100], skill: [215, 110], super: [285, 112], gadget: [322, 84] };
+// Portrait (toléré) : deux rangées au-dessus de l'attaque, dans une colonne étroite qui laisse
+// ~48 % de la largeur au pouce gauche. Aucun bouton (anneau de charges compris) n'en chevauche
+// un autre ; dash et Lance près du pouce, Super et gadget (plus rares) au-dessus.
+const PORTRAIT_FAN = { dash: [248, 108], skill: [294, 118], super: [255, 197], gadget: [288, 194] };
 const PORTRAIT_MARGIN_X = 95;
 const PORTRAIT_MARGIN_Y = 115;
 const TOUCH_SLOP = 1.35; // zone de toucher = rayon dessiné × 1,35 (tolérance du pouce)

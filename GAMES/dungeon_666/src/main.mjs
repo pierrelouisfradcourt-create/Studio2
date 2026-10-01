@@ -269,6 +269,18 @@ function readSafe() {
   };
 }
 
+const INSET_GAP = 16; // px entre le groupe de boutons et la zone de jeu réservée
+
+/** Paysage tactile : largeur occupée à droite par le groupe de boutons (0 sinon). */
+function buttonsInset() {
+  const touch = input.touchUI();
+  const { w, h } = app.view;
+  if (!touch.visible || w <= h) return 0;
+  let left = w;
+  for (const b of touch.buttons) left = Math.min(left, b.x - b.r);
+  return Math.max(0, w - left + INSET_GAP);
+}
+
 function resize() {
   const w = Math.max(1, window.innerWidth);
   const h = Math.max(1, window.innerHeight);
@@ -355,6 +367,7 @@ function frame(now) {
   if (g) applyInterp(g, alpha);
   try {
     if (g && (g.mode === 'play' || g.mode === 'dead')) {
+      camera.rightInsetPx = buttonsInset();
       updateCamera(camera, g, realDt);
       updateFx(fx, realDt, g);
     }

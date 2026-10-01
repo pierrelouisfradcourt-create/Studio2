@@ -26,7 +26,7 @@ const THUMB_BAND = 0.1; // fraction de la vue « hors salle » permise en bas (p
 const THUMB_BAND_PORTRAIT = 0.4; // idem en portrait
 
 export function createCamera() {
-  return { x: 0, y: 0, scale: 1, viewW: 900, viewH: 506, trauma: 0, shakeX: 0, shakeY: 0, rot: 0, zoom: 1, zoomTarget: 1, t: 0, shakeScale: 1, snapped: false, kickX: 0, kickY: 0, bossFrame: 0, baseZoom: 1 };
+  return { x: 0, y: 0, scale: 1, viewW: 900, viewH: 506, trauma: 0, shakeX: 0, shakeY: 0, rot: 0, zoom: 1, zoomTarget: 1, t: 0, shakeScale: 1, snapped: false, kickX: 0, kickY: 0, bossFrame: 0, baseZoom: 1, rightInsetPx: 0 };
 }
 
 /** Échelle px CSS par unité, selon la taille d'écran. */
@@ -81,7 +81,10 @@ export function updateCamera(cam, game, dt) {
     ax = Math.cos(p.facing);
     ay = Math.sin(p.facing);
   }
-  let tx = p.x + ax * LOOK_AHEAD;
+  // Paysage tactile : la bande droite est occupée par les boutons. Le héros est cadré au centre
+  // de la zone libre, et la caméra peut dépasser le mur droit pour qu'il n'y passe jamais dessous.
+  const inset = cam.viewW > cam.viewH ? (cam.rightInsetPx || 0) / (cam.scale * cam.zoom) : 0;
+  let tx = p.x + ax * LOOK_AHEAD + inset / 2;
   const thumb = cam.viewH > cam.viewW ? THUMB_OFFSET_PORTRAIT : THUMB_OFFSET;
   let ty = p.y + ay * LOOK_AHEAD + cam.viewH * thumb;
   // Combat de boss : on cadre le duel (héros + Gardien) et on recule un peu.
@@ -96,7 +99,7 @@ export function updateCamera(cam, game, dt) {
   // Bornes : la salle reste cadrée ; si elle est plus petite que la vue, on la centre.
   const halfW = cam.viewW / (2 * cam.zoom);
   const halfH = cam.viewH / (2 * cam.zoom);
-  tx = room.w + 2 * MARGIN_SIDE <= 2 * halfW ? room.w / 2 : Math.max(halfW - MARGIN_SIDE, Math.min(room.w + MARGIN_SIDE - halfW, tx));
+  tx = room.w + 2 * MARGIN_SIDE + inset <= 2 * halfW ? (room.w + inset) / 2 : Math.max(halfW - MARGIN_SIDE, Math.min(room.w + MARGIN_SIDE + inset - halfW, tx));
   // Sous la salle, la caméra peut montrer du mur : c'est là que les pouces couvrent l'écran.
   const bottom = MARGIN_BOTTOM + cam.viewH * (cam.viewH > cam.viewW ? THUMB_BAND_PORTRAIT : THUMB_BAND);
   ty = room.h + MARGIN_TOP + bottom <= 2 * halfH ? room.h / 2 : Math.max(halfH - MARGIN_TOP, Math.min(room.h + bottom - halfH, ty));

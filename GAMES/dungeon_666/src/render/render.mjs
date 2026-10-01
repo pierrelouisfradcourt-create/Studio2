@@ -369,6 +369,46 @@ function drawTelegraphs(ctx, game) {
   }
 }
 
+/** Contours seuls des télégraphes, retracés au-dessus du héros et des ennemis : le bord reste lisible. */
+function drawTelegraphEdges(ctx, game) {
+  ctx.strokeStyle = PAL.danger;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (const h of game.hazards) {
+    if (!h.hitsPlayer) continue;
+    if (h.shape === 'line') lineEdge(ctx, h.x, h.y, h.angle, h.length, h.width);
+    else {
+      ctx.moveTo(h.x + h.r, h.y);
+      ctx.arc(h.x, h.y, h.r, 0, TAU);
+    }
+  }
+  for (const e of game.enemies) {
+    const t = e.tele;
+    if (!t || e.dead) continue;
+    if (t.shape === 'cone') {
+      const a0 = t.angle - t.arc / 2;
+      ctx.moveTo(e.x + Math.cos(a0) * t.range, e.y + Math.sin(a0) * t.range);
+      ctx.arc(e.x, e.y, t.range, a0, t.angle + t.arc / 2);
+    } else if (t.shape === 'line') lineEdge(ctx, e.x, e.y, t.angle, t.length, t.width);
+    else {
+      ctx.moveTo(e.x + t.r, e.y);
+      ctx.arc(e.x, e.y, t.r, 0, TAU);
+    }
+  }
+  ctx.stroke();
+}
+
+function lineEdge(ctx, x, y, angle, length, width) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const hw = width / 2;
+  ctx.moveTo(x - s * hw, y + c * hw);
+  ctx.lineTo(x + c * length - s * hw, y + s * length + c * hw);
+  ctx.lineTo(x + c * length + s * hw, y + s * length - c * hw);
+  ctx.lineTo(x + s * hw, y - c * hw);
+  ctx.closePath();
+}
+
 function drawSpawnWarns(ctx, game, time) {
   for (const s of game.spawns) {
     const k = 1 - s.t / s.warn;
@@ -560,7 +600,7 @@ function drawEnemy(ctx, e, game, time) {
       ctx.rotate(-a);
     }
   }
-  const body = e.flash > 0 ? '#ffffff' : ENEMY_BODY[e.kind] ?? PAL.imp;
+  const body = e.flash > 0 ? PAL.enemyFlash : ENEMY_BODY[e.kind] ?? PAL.imp;
   KIND_DRAW[e.kind]?.(ctx, r, face, body, e, time);
   ctx.restore();
   ctx.globalAlpha = 1;
@@ -632,9 +672,9 @@ const KIND_DRAW = {
   },
   archer(ctx, r, face, body, e) {
     outlineCircle(ctx, r, body);
-    ctx.fillStyle = '#2a2026';
+    ctx.fillStyle = '#5b4436';
     ctx.beginPath();
-    ctx.arc(-Math.cos(face) * r * 0.25, -Math.sin(face) * r * 0.25, r * 0.7, 0, TAU);
+    ctx.arc(-Math.cos(face) * r * 0.2, -Math.sin(face) * r * 0.2, r * 0.48, 0, TAU);
     ctx.fill();
     eyes(ctx, r, face, '#ff3b3b', 0.4, 0.4);
     // Arc tendu pendant la visée.
@@ -722,25 +762,38 @@ function drawEnemyHp(ctx, e, r) {
   ctx.fillRect(x, y, (w * Math.max(0, e.hp)) / e.maxHp, 5);
 }
 
-function drawPlayer(ctx, game, fx, time) {
+function playerAlpha(p, time) {
+  if (p.state === 'dead') return Math.max(0, 1 - p.stateTime);
+  if (p.iframes > 0 && p.state !== 'dash' && p.hurtFlash <= 0 && Math.floor(time * 15) % 2 === 0) return 0.4;
+  return 1;
+}
+
+/**
+ * Traînées de dash, ombre et halos du héros : dessinés SOUS les télégraphes, sinon leur
+ * mélange additif délave le rouge exactement là où l'attaque va frapper.
+ */
+function drawPlayerUnderlay(ctx, game, fx, time) {
   const p = game.player;
   const pr = p.r * HERO_VISUAL;
   for (const g of fx.ghosts) {
     ctx.globalAlpha = (g.life / g.max) * 0.45;
     ctx.fillStyle = PAL.heroCape;
     ctx.beginPath();
-    ctx.arc(g.x, g.y, p.r * HERO_VISUAL * 0.95, 0, TAU);
+    ctx.arc(g.x, g.y, pr * 0.95, 0, TAU);
     ctx.fill();
   }
-  ctx.globalAlpha = 1;
-  if (p.state === 'dead') {
-    ctx.globalAlpha = Math.max(0, 1 - p.stateTime);
-  } else if (p.iframes > 0 && p.state !== 'dash' && p.hurtFlash <= 0 && Math.floor(time * 15) % 2 === 0) {
-    ctx.globalAlpha = 0.4;
-  }
+  const a = playerAlpha(p, time);
+  ctx.globalAlpha = a;
   drawShadow(ctx, p.x, p.y, pr);
-  drawGlow(ctx, p.x, p.y, 60, PAL.heroGlow, 0.9);
-  if (p.state === 'super') drawGlow(ctx, p.x, p.y, 150, PAL.superBar, 0.4 + 0.2 * Math.sin(time * 18));
+  drawGlow(ctx, p.x, p.y, 60, PAL.heroGlow, 0.9 * a);
+  if (p.state === 'super') drawGlow(ctx, p.x, p.y, 150, PAL.superBar, (0.4 + 0.2 * Math.sin(time * 18)) * a);
+  ctx.globalAlpha = 1;
+}
+
+function drawPlayer(ctx, game, fx, time) {
+  const p = game.player;
+  const pr = p.r * HERO_VISUAL;
+  ctx.globalAlpha = playerAlpha(p, time);
   ctx.save();
   ctx.translate(p.x, p.y);
   const f = p.facing;
@@ -770,8 +823,8 @@ function drawPlayer(ctx, game, fx, time) {
     ctx.rotate(-axis);
   }
   ctx.fillStyle = p.hurtFlash > 0 ? PAL.heroHurt : PAL.hero;
-  ctx.strokeStyle = '#0d2a36';
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = PAL.heroCape; // liseré propre au héros : on ne le confond avec aucun ennemi flashé
+  ctx.lineWidth = 3.5;
   ctx.beginPath();
   ctx.arc(0, 0, pr, 0, TAU);
   ctx.fill();
@@ -905,16 +958,19 @@ function drawAimHints(ctx, game, touch) {
 /** Dessine toute la salle. ctx est déjà transformé par la caméra. */
 export function drawWorld(ctx, game, fx, time, touch) {
   drawRoom(ctx, game, time);
+  drawPlayerUnderlay(ctx, game, fx, time);
   drawSpawnWarns(ctx, game, time);
   drawTelegraphs(ctx, game);
+  drawEffects(ctx, fx, game, true);
   drawPickups(ctx, game, time);
   drawInteract(ctx, game, time);
   drawAimHints(ctx, game, touch);
   const sorted = game.enemies.slice().sort((a, b) => a.y - b.y);
   for (const e of sorted) if (!e.dead) drawEnemy(ctx, e, game, time);
   drawPlayer(ctx, game, fx, time);
+  drawTelegraphEdges(ctx, game);
   drawProjectiles(ctx, game);
-  drawEffects(ctx, fx, game);
+  drawEffects(ctx, fx, game, false);
   drawParticles(ctx);
   drawTexts(ctx, fx);
 }

@@ -91,6 +91,14 @@ function drawTopCenter(ctx, game, w, safe) {
     return;
   }
   text(ctx, `ÉTAGE ${info.floor} / 666`, cx, y, 15, info.isBoss ? PAL.danger : PAL.text, 'center', 800);
+  const boss = game.enemies.find((e) => e.boss && !e.dead);
+  if (boss) {
+    // Combat de Gardien : bande haute réduite (titre + barre portant le nom), l'arène reste visible.
+    const bw = Math.min(420, w * 0.5);
+    bar(ctx, cx - bw / 2, y + 14, bw, 14, boss.hp / boss.maxHp, boss.phase === 1 ? '#c0304a' : '#ff4a1a');
+    text(ctx, game.tuning.boss[boss.kind].name, cx, y + 21, 10, PAL.bossTrim, 'center', 800);
+    return;
+  }
   // Six pastilles = la section ; la dernière est le Gardien.
   const n = game.tuning.floors.sectionLength;
   const step = 16;
@@ -105,12 +113,6 @@ function drawTopCenter(ctx, game, w, safe) {
     ctx.fill();
   }
   text(ctx, info.circleName, cx, y + 33, 11, PAL.textDim, 'center', 600);
-  const boss = game.enemies.find((e) => e.boss && !e.dead);
-  if (boss) {
-    const bw = Math.min(420, w * 0.5);
-    bar(ctx, cx - bw / 2, y + 46, bw, 12, boss.hp / boss.maxHp, boss.phase === 2 ? '#ff4a1a' : '#c0304a');
-    text(ctx, game.tuning.boss[boss.kind].name, cx, y + 68, 12, PAL.bossTrim, 'center', 800);
-  }
 }
 
 function drawTopRight(ctx, game, w, safe) {
@@ -250,28 +252,36 @@ function drawButton(ctx, b, st, time) {
     ctx.arc(0, 0, b.r + 4, -Math.PI / 2, -Math.PI / 2 + TAU * st.ready);
     ctx.stroke();
   }
-  if (st.max) drawPips(ctx, b.r, st.charges, st.max, st.partial ?? 0, b.id === 'dash' ? PAL.dashPip : PAL.gold);
+  if (st.max) drawChargeRing(ctx, b.r, st.charges, st.max, st.partial ?? 0, b.id === 'dash' ? PAL.dashPip : PAL.gold);
   ctx.restore();
 }
 
-function drawPips(ctx, r, charges, max, partial, color) {
+const RING_GAP = 0.14; // rad entre deux segments de charge
+const RING_WIDTH = 4;
+
+/**
+ * Charges en segments sur l'anneau du bouton (comme la jauge du Super) : rien ne dépasse du
+ * bouton, donc aucun bouton voisin ne peut cacher la charge qui se recharge.
+ */
+function drawChargeRing(ctx, r, charges, max, partial, color) {
+  const seg = TAU / max;
+  const rr = r + RING_WIDTH;
+  const gap = max > 1 ? RING_GAP : 0;
+  ctx.lineWidth = RING_WIDTH;
   for (let i = 0; i < max; i++) {
-    const a = -Math.PI / 2 + (i - (max - 1) / 2) * 0.42;
-    const x = Math.cos(a) * (r + 9);
-    const y = Math.sin(a) * (r + 9);
-    ctx.fillStyle = i < charges ? color : 'rgba(0,0,0,0.6)';
-    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.lineWidth = 1.5;
+    const a0 = -Math.PI / 2 + i * seg + gap / 2;
+    const a1 = a0 + seg - gap;
+    ctx.strokeStyle = i < charges ? color : 'rgba(255,255,255,0.18)';
     ctx.beginPath();
-    ctx.arc(x, y, 5, 0, TAU);
-    ctx.fill();
+    ctx.arc(0, 0, rr, a0, a1);
     ctx.stroke();
     if (i === charges && partial > 0) {
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.55;
       ctx.beginPath();
-      ctx.arc(x, y, 5, -Math.PI / 2, -Math.PI / 2 + TAU * partial);
+      ctx.arc(0, 0, rr, a0, a0 + (a1 - a0) * Math.min(1, partial));
       ctx.stroke();
+      ctx.globalAlpha = 1;
     }
   }
 }
@@ -318,16 +328,31 @@ function drawAbilityBar(ctx, game, w, h, safe, time) {
 
 // ------------------------------------------------------------------ indicateurs et bannières
 
-function drawOffscreen(ctx, game, cam, w, h) {
-  const margin = 26;
+const ARROW_MARGIN = 26; // px des bords de la zone utile
+const HUD_BAND = 60; // px : hauteur de la bande haute du HUD (hors combat de Gardien)
+const HUD_BAND_BOSS = 52;
+
+function drawOffscreen(ctx, game, cam, touch, w, h, safe) {
+  const boss = game.enemies.some((e) => e.boss && !e.dead);
+  const top = EDGE + safe.top + (boss ? HUD_BAND_BOSS : HUD_BAND);
+  // Coin du groupe de boutons : une flèche n'y est jamais posée.
+  let gx = w;
+  let gy = h;
+  if (touch.visible) {
+    for (const b of touch.buttons) {
+      gx = Math.min(gx, b.x - b.r);
+      gy = Math.min(gy, b.y - b.r);
+    }
+  }
   const point = (x, y, color, size) => {
     worldToScreen(cam, w, h, x, y, tmp);
-    if (tmp.x > 0 && tmp.x < w && tmp.y > 0 && tmp.y < h) return;
+    if (tmp.x > 0 && tmp.x < w && tmp.y > top && tmp.y < h) return;
     const cx = w / 2;
     const cy = h / 2;
     const a = Math.atan2(tmp.y - cy, tmp.x - cx);
-    const ex = Math.max(margin, Math.min(w - margin, tmp.x));
-    const ey = Math.max(margin, Math.min(h - margin, tmp.y));
+    const ey = Math.max(top + 10, Math.min(h - ARROW_MARGIN - safe.bottom, tmp.y));
+    const right = ey > gy - ARROW_MARGIN ? gx - 14 : w - ARROW_MARGIN - safe.right;
+    const ex = Math.max(ARROW_MARGIN + safe.left, Math.min(right, tmp.x));
     ctx.save();
     ctx.translate(ex, ey);
     ctx.rotate(a);
@@ -369,17 +394,18 @@ function drawOccluded(ctx, game, cam, touch, w, h) {
   }
 }
 
-function drawBanner(ctx, fx, w, h) {
+const BANNER_ALPHA = 0.75;
+const BANNER_Y = 92; // px sous le bord haut sûr : juste sous la bande du HUD, au-dessus de l'action
+
+function drawBanner(ctx, fx, w, safe) {
   const b = fx.banner;
   if (!b) return;
   const t = 1 - b.life / b.max;
   const a = t < 0.15 ? t / 0.15 : b.life < 0.4 ? b.life / 0.4 : 1;
-  const y = h * 0.3;
-  ctx.globalAlpha = a;
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.fillRect(0, y - 34, w, b.sub ? 74 : 56);
-  text(ctx, b.title, w / 2, y - 6, Math.min(40, w / 14), b.color, 'center', 900);
-  if (b.sub) text(ctx, b.sub, w / 2, y + 26, 14, PAL.textDim, 'center', 600);
+  const y = EDGE + safe.top + BANNER_Y;
+  ctx.globalAlpha = a * BANNER_ALPHA;
+  text(ctx, b.title, w / 2, y, Math.min(26, w / 16), b.color, 'center', 900);
+  if (b.sub) text(ctx, b.sub, w / 2, y + 22, 12, PAL.textDim, 'center', 600);
   ctx.globalAlpha = 1;
 }
 
@@ -445,12 +471,12 @@ export function drawHud(ctx, game, fx, cam, touch, view, time, dt = 1 / 60) {
   // Dégradé sombre derrière la bande haute du HUD : le texte reste lisible sur tout fond.
   ctx.drawImage(layers.top, 0, 0);
   drawVignettes(ctx, game, fx, w, h, time);
-  drawOffscreen(ctx, game, cam, w, h);
   drawOccluded(ctx, game, cam, touch, w, h);
   drawTopLeft(ctx, game, safe, w);
   drawTopCenter(ctx, game, w, safe);
   drawTopRight(ctx, game, w, safe);
-  if (game.mode !== 'choice') drawBanner(ctx, fx, w, h);
+  drawOffscreen(ctx, game, cam, touch, w, h, safe);
+  if (game.mode !== 'choice') drawBanner(ctx, fx, w, safe);
   drawHints(ctx, game, w, h, safe, touch.visible);
   if (touch.visible) drawTouchControls(ctx, game, touch, time);
   else drawAbilityBar(ctx, game, w, h, safe, time);
