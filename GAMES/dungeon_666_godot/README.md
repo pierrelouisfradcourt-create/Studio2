@@ -30,9 +30,9 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
 1. **import** — Godot enregistre ses classes ;
 2. **données** — chaque fichier de `data/` contre son schéma (types, bornes, un télégraphe
    d'ennemi d'au moins 0,4 s), et se réécrit sans rien perdre ;
-3. **règles** — `tests/regles/*.gd` : 342 tests, dont les références croisées des données
+3. **règles** — `tests/regles/*.gd` : 347 tests, dont les références croisées des données
    (`donnees.gd`) ;
-4. **références** — les 70 parties de `references/parties/` sont rejouées, 10 728 points de
+4. **références** — les 70 parties de `references/parties/` sont rejouées, 10 712 points de
    contrôle comparés ;
 5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème) ;
 6. **jouabilité** (sur demande) — un bot bat la section 1, le dash compte, chaque classe se joue.

@@ -16,7 +16,7 @@ verts après). Références réenregistrées une fois : voir plus bas.
 | 2a | Autel de sang : rareté forcée à « rare » | **corrigé** (`sim/run.gd`, `sim/boons.gd` : `best_rarity`) | Un tirage épique devenait rare. Après : la meilleure des deux (commun → rare, rare → rare, épique → épique). | « défaut 2 · … meilleure rareté… » |
 | 2b | Autel de sang proposé à 1 PV | **corrigé** (`sim/run.gd`, `_option_blocked`) | À 1 PV l'offrande ne coûtait rien et donnait la bénédiction. Après : option grisée (`disabled`) et refusée quand elle ne retirerait aucun PV — le même mécanisme que les autres options impossibles. Tant qu'elle coûte au moins 1 PV elle reste acceptée (jamais mortelle, comme avant). | « défaut 2 · … à 1 PV… » |
 | 3 | `prepare_doors` : deux portes identiques après 20 retirages | **corrigé** (`sim/run.gd`, `_other_reward`) | Après le garde-fou, la seconde porte gardait la récompense de la première. Après : repli sur la première récompense possible (poids > 0) différente, dans l'ordre des poids, sans tirage de plus. Une seule récompense possible : deux portes identiques, comme avant. | « défaut 3 · portes… » |
-| 4 | `buy_upgrade` : « niveau maximal » pour une amélioration inconnue | **NON corrigé** — bloqué par un test existant | `tests/regles/v2_loop.gd`, ligne 603, attend exactement `{"ok": false, "reason": "niveau maximal"}` pour l'identifiant « inconnue » : la correction le ferait rougir, et un test existant ne se modifie qu'avec l'accord de Pierre. Correction prête : dans `buy_upgrade`, avant le calcul du prix, rendre `{"ok": false, "reason": "inconnu"}` (la raison que `unlock` donne déjà) si `tuning.town.upgrades` n'a pas l'identifiant ; puis changer la ligne 603 du test. | aucun (il ne pourrait pas verdir) |
+| 4 | `buy_upgrade` : « niveau maximal » pour une amélioration inconnue | **corrigé au second lot** (voir plus bas) ; d'abord bloqué par un test existant | `tests/regles/v2_loop.gd`, ligne 603, attend exactement `{"ok": false, "reason": "niveau maximal"}` pour l'identifiant « inconnue » : la correction le ferait rougir, et un test existant ne se modifie qu'avec l'accord de Pierre. Correction prête : dans `buy_upgrade`, avant le calcul du prix, rendre `{"ok": false, "reason": "inconnu"}` (la raison que `unlock` donne déjà) si `tuning.town.upgrades` n'a pas l'identifiant ; puis changer la ligne 603 du test. | aucun (il ne pourrait pas verdir) |
 | 5 | `sanitize_profile` : `uid` ni typés ni uniques | **corrigé** (`sim/profile.gd`, `_fix_uids`) | Deux objets pouvaient porter le même `uid` (recycler l'un visait le premier trouvé), un `uid` pouvait être un nombre. Après : chaque objet a un identifiant texte, non vide, unique ; le premier porteur garde le sien, les autres sont réattribués, aucun objet n'est perdu ; `itemSeq` passe au-delà de tout « i<n> » présent. | « défaut 5 · profil… » |
 | 6 | Charon, charge au mur : `patternStep` / `patternT` non remis à zéro | **corrigé** (`sim/boss_charon.gd`) — sans effet observable | Vérifié : rien ne lit ces deux champs pendant l'étourdissement ni le repos, et le pattern suivant les remet à zéro. Ni l'empreinte des références ni `state_hash` ne les contiennent. Corrigé quand même (l'état sonné passe par `D6BossCommon.set_state`) pour qu'un futur lecteur n'y trouve pas une valeur périmée. | « défaut 6 · Charon… » |
 | 7 | Étourdi pendant sa récupération, un ennemi ré-attaque plus tôt | **corrigé** (`sim/ai_common.gd` : `stun`, `recharge_of` ; appelés par `sim/combat.gd`) | La recharge n'était posée qu'à la FIN de la récupération : étourdi avant, l'ennemi repartait avec 0,3 s de recharge. Mesuré sur un diablotin : 2e attaque à l'image 99 étourdi, 161 sans. Après : ce qu'il lui restait à attendre (fin de récupération + recharge) passe dans sa recharge au moment de l'étourdissement ; valable pour tout le bestiaire (diablotin, archer, brute, bélier, pyromancien, nécromancien, pavois, traqueur). | « défaut 7 · étourdir… » |
@@ -57,6 +57,25 @@ correction :
 - point 9 : aucune (les noms ne sont pas dans l'empreinte).
 
 10 728 points de contrôle (10 729 avant).
+
+## Second lot (2026-10-02, sur décision de Pierre)
+
+Garde : `tests/regles/v3_defauts_2.gd` (5 tests, tous rouges avant, verts après).
+
+| # | Défaut | Correction | Avant → après |
+|---|---|---|---|
+| 4 | `buy_upgrade` : « niveau maximal » pour une amélioration inconnue | `sim/profile.gd` ; la ligne 603 de `tests/regles/v2_loop.gd` (test préexistant) est changée avec l'accord de Pierre | Refus `{"ok": false, "reason": "inconnu"}`, rien n'est débité. |
+| 10 | À 1 PV, les options d'autel payées en PV étaient gratuites (registre des âmes, clepsydre, coffre maudit) | `sim/run.gd`, `_option_blocked` : grisées et refusées quand il ne reste que `MIN_HP` | À 1 PV : refus, rien n'est donné. À 2 PV : permise, coûte 1 PV (jamais mortelle, comme avant). |
+| 11 | Le corps du héros arrêtait la ruée de Charon et du Bélier, qui n'atteignaient jamais le mur | `sim/enemies.gd`, `_rushing` : pendant la RUÉE (pas le télégraphe), le héros ne repousse plus le chargeur | La ruée touche le héros une fois au passage, le traverse et finit sa course ; au mur, le chargeur est sonné (la fenêtre de punition existe enfin quand on encaisse ou qu'on esquive sur place). |
+| 12 | Un Bélier qui percute un mur ré-attaquait après 1,7 s, contre 2,2 s sans rien percuter | `sim/enemies.gd`, `_charger_charge` : au mur, sa recharge vaut récupération + recharge et court pendant qu'il est sonné | Mesuré : 102 images avant, 132 après (2,2 s dans les deux cas ; au mur il en passe 1,4 sonné). |
+
+Références réenregistrées une seconde fois : **32 parties sur 70 ont changé**, 10 712 points de
+contrôle. Attribution vérifiée : avec les corrections 11 et 12 désactivées (4 et 10 gardées), les
+70 parties se rejouaient sans aucun écart ; tout l'écart vient donc des ruées et du Bélier au mur.
+Jouabilité après correction (20 et 20 graines) : solvabilité et classes PASS.
+
+Reste de la même famille, NON corrigé (équilibrage) : étourdir un ennemi pendant son TÉLÉGRAPHE
+annule le coup et lui rend une recharge de 0,3 s.
 
 ## Vu en passant, non corrigé
 

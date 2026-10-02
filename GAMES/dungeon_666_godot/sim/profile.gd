@@ -333,6 +333,8 @@ static func upgrade_cost(tuning: Dictionary, id, level: float):
 	return up.costs[int(level)]
 
 static func buy_upgrade(profile: Dictionary, tuning: Dictionary, id) -> Dictionary:
+	if not tuning.town.upgrades.has(id):
+		return {"ok": false, "reason": "inconnu"}
 	var lv: float = D6Js.nz(profile.upgrades.get(id), 0.0)
 	var cost = upgrade_cost(tuning, id, lv)
 	if cost == null:

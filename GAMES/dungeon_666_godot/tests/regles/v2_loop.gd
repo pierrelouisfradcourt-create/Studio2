@@ -600,7 +600,7 @@ static func _ville_sanctuaire(h) -> void:
 	var up: Dictionary = t.town.upgrades.vitalite
 	var p: Dictionary = D6Profile.create_profile(t)
 	h.egal(D6Profile.buy_upgrade(p, t, "vitalite"), {"ok": false, "reason": "Âmes insuffisantes"})
-	h.egal(D6Profile.buy_upgrade(p, t, "inconnue"), {"ok": false, "reason": "niveau maximal"})
+	h.egal(D6Profile.buy_upgrade(p, t, "inconnue"), {"ok": false, "reason": "inconnu"})
 	var total := 0.0
 	for c in up.costs:
 		total += c

@@ -227,8 +227,9 @@ static func _separate(game: Dictionary) -> void:
 			b.x += dx * push * wb
 			b.y += dy * push * wb
 		# Le héros est « infiniment lourd » : il repousse les ennemis, jamais l'inverse
-		# (déplacement net garanti). Pendant un dash, on traverse.
-		if p.state != "dash" and p.state != "dead":
+		# (déplacement net garanti). Pendant un dash, on traverse ; un ennemi en pleine ruée
+		# (Bélier, Charon) traverse aussi : il touche au passage et finit sa course, au mur s'il y en a un.
+		if p.state != "dash" and p.state != "dead" and not _rushing(a):
 			var pdx: float = a.x - p.x
 			var pdy: float = a.y - p.y
 			var prr: float = a.r + p.r
@@ -237,6 +238,11 @@ static func _separate(game: Dictionary) -> void:
 				var pd: float = sqrt(pd2)
 				a.x = p.x + (pdx / pd) * prr
 				a.y = p.y + (pdy / pd) * prr
+
+## Vrai pendant la RUÉE d'une charge (pas pendant son télégraphe : un Gardien garde l'état
+## « charge » dès le télégraphe, étape 0).
+static func _rushing(e: Dictionary) -> bool:
+	return e.state == "charge" and (not D6Js.truthy(e.get("boss")) or e.patternStep >= 1.0)
 
 # ---------------------------------------------------------------- table des IA
 
@@ -447,8 +453,11 @@ static func _charger_charge(game: Dictionary, e: Dictionary, def: Dictionary, dt
 	e.vx = 0.0
 	e.vy = 0.0
 	if res.hitWall:
-		# Mur percuté : longue fenêtre de punition.
+		# Mur percuté : longue fenêtre de punition. Sa recharge court pendant qu'il est sonné et
+		# vaut ce qu'une charge dans le vide lui aurait coûté (récupération + recharge) : percuter
+		# un mur ne le fait jamais ré-attaquer plus tôt.
 		e.stun = def.wallStun
+		e.cooldown = maxf(e.cooldown, def.recover + D6AiCommon.recharge_of(game, e, def))
 		D6AiCommon.set_state(e, "stunned")
 		game.telemetry.wallSlams += 1.0
 		D6State.emit(game, "chargerWall", {"id": e.id, "x": e.x, "y": e.y})

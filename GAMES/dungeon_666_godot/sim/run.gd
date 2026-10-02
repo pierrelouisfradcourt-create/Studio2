@@ -18,6 +18,7 @@ extends RefCounted
 
 const DOOR_GUARD := 20.0 # garde-fou du tirage de la seconde porte
 const BLOOD_COST := 0.25 # autel de sang : part des PV max offerte (le libellé de data/autels.json dit « 25 % »)
+const MIN_HP := 1.0 # un paiement en PV n'est jamais mortel : il laisse au moins ceci
 const BLOOD_RARITY := "rare" # autel de sang : rareté promise, au moins
 
 static func create_run(start_floor) -> Dictionary:
@@ -364,7 +365,9 @@ static func _option_blocked(game: Dictionary, o: Dictionary) -> bool:
 		"superToHp":
 			return p.superCharge < o.need / 100.0
 		"hpToSuper":
-			return p.superCharge >= 1.0
+			return p.superCharge >= 1.0 or p.hp <= MIN_HP
+		"bloodSouls", "cursedChest":
+			return p.hp <= MIN_HP # plus de PV à donner : l'option serait gratuite
 		"reforge":
 			return forge_targets(game) == null
 		"pact":
