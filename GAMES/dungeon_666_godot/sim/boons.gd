@@ -69,8 +69,8 @@ static func _eligible_duos(owned: Array, fams: Array, family) -> Array:
 			and d.families.all(func(f): return fams.has(f) or f == family) \
 			and d.families.any(func(f): return fams.has(f) and f != family))
 
-## 3 offres d'une famille (ou un duo éligible en tête). Jamais une bénédiction déjà possédée
-## marquée `unique`.
+## Les offres d'une famille : boons.offerSize bénédictions ; un duo éligible prend la dernière
+## place avec la probabilité boons.duoChance. Jamais une bénédiction déjà possédée marquée `unique`.
 static func roll_boon_offer(game: Dictionary, family) -> Array:
 	var run: Dictionary = game.run
 	var owned: Array = run.boons.map(func(b): return b.id)
@@ -78,9 +78,11 @@ static func roll_boon_offer(game: Dictionary, family) -> Array:
 	var candidates: Array = _t().BOONS.filter(func(b):
 		return b.family == family and not (D6Js.truthy(b.get("unique")) and owned.has(b.id)))
 	D6Rng.shuffle(game.rng.gen, candidates)
-	var picks: Array = candidates.slice(0, 3)
+	# Réglages de la partie ; les défauts pour un appelant qui n'a qu'un run et un générateur.
+	var tb: Dictionary = D6Js.nz(game.get("tuning"), D6Data.default_tuning()).boons
+	var picks: Array = candidates.slice(0, int(tb.offerSize))
 	var duos := _eligible_duos(owned, fams, family)
-	if duos.size() > 0 and D6Rng.rand(game.rng.gen) < 0.6:
+	if duos.size() > 0 and D6Rng.rand(game.rng.gen) < tb.duoChance:
 		if picks.size() > 0: # tableau vide : JavaScript écrit la clé « -1 », que map ignore
 			picks[picks.size() - 1] = duos[0]
 	var rarities: Array = _t().RARITIES

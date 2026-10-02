@@ -3,7 +3,7 @@ extends "res://jeu/monde/creatures/calque.gd"
 ## d'un bond reste au sol, plus petite et plus pâle, pendant que le corps monte), halos des élites
 ## et des Gardiens, lueur du possédé qui va exploser, fils violets qui relient un porte-étendard
 ## à ceux qu'il protège, traînée de cape du dash, aura chaude de l'élan.
-## Tout est ici en rectangles texturés et en traits simples : le moteur les regroupe.
+## Tout part en un seul lot (pinceau.gd) : un appel de dessin pour le sol de toutes les créatures.
 
 const ELAN := Color("#ffb02e") # l'aura de l'élan : or chaud, jamais le rouge du danger
 const ELAN_FONDU := 0.4 # s : l'aura s'éteint sur la fin de l'élan
@@ -12,12 +12,13 @@ func _draw() -> void:
 	var g = jeu()
 	if g == null:
 		return
+	p.commencer(self)
 	for e in g.enemies:
 		if D6Js.truthy(e.get("dead")) or (D6Js.truthy(e.get("hidden")) and not D6Js.truthy(e.boss)):
 			continue
 		_sol_ennemi(e, g)
 	_sol_heros(g)
-	p.alpha = 1.0
+	p.finir()
 
 ## Ombre : une tache aux bords fondus, un peu en dessous du corps (la lumière vient du haut).
 func _ombre(pos: Vector2, r: float, haut: float, force: float = 1.0) -> void:
@@ -52,10 +53,10 @@ func _presence(e: Dictionary, g: Dictionary) -> float:
 ## Fil de protection : un trait violet ténu de l'étendard vers le protégé, et une perle qui le
 ## parcourt dans ce sens — on lit QUI protège QUI.
 func _fil(protege: Vector2, porteur: Vector2, graine: float) -> void:
-	draw_line(porteur, protege, Color(PAL.summon, 0.3 * p.alpha), 1.5)
+	p.segment(porteur, protege, Color(PAL.summon, 0.3 * p.alpha), 1.5)
 	var k := fposmod(temps() * 0.9 + graine * 0.37, 1.0)
 	var perle := porteur.lerp(protege, k)
-	draw_rect(Rect2(perle - Vector2(2.0, 2.0), Vector2(4.0, 4.0)), Color(PAL.summon, 0.8 * sin(PI * k) * p.alpha))
+	p.rect(Rect2(perle - Vector2(2.0, 2.0), Vector2(4.0, 4.0)), Color(PAL.summon, 0.8 * sin(PI * k) * p.alpha))
 
 ## Le halo d'un Gardien dit sa phase : sombre, puis rouge, puis braise.
 func _teinte_phase(e: Dictionary) -> Color:
@@ -94,7 +95,7 @@ func _trainee(pos: Vector2, pr: float, en_dash: bool) -> void:
 			break
 		var kb: float = (1.0 if i == n else pts[i].vie / entites.TRAINEE_VIE) * float(i) / n
 		var cote := (b - a).orthogonal().normalized() * pr
-		draw_primitive(PackedVector2Array([a + cote * (0.25 + 0.6 * ka), b + cote * (0.25 + 0.6 * kb), b - cote * (0.25 + 0.6 * kb), a - cote * (0.25 + 0.6 * ka)]),
-			PackedColorArray([Color(PAL.heroCape, 0.55 * ka), Color(PAL.heroCape, 0.55 * kb), Color(PAL.heroCape, 0.55 * kb), Color(PAL.heroCape, 0.55 * ka)]), PackedVector2Array())
+		p.primitive(PackedVector2Array([a + cote * (0.25 + 0.6 * ka), b + cote * (0.25 + 0.6 * kb), b - cote * (0.25 + 0.6 * kb), a - cote * (0.25 + 0.6 * ka)]),
+			PackedColorArray([Color(PAL.heroCape, 0.55 * ka), Color(PAL.heroCape, 0.55 * kb), Color(PAL.heroCape, 0.55 * kb), Color(PAL.heroCape, 0.55 * ka)]))
 		a = b
 		ka = kb

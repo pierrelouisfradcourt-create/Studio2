@@ -24,16 +24,8 @@ extends RefCounted
 const PROC_SOURCES := ["melee", "strike", "skill", "gadget", "super"]
 # Sources qui ne remplissent pas la jauge de Super (sinon le Super se recharge lui-même).
 const NO_SUPER_CHARGE := ["super", "burn", "blast", "chain"]
-const ARMOR_CAP := 0.6
 const HIT_FLASH := 0.1 # s : éclat d'un ennemi touché
 const HURT_FLASH := 0.35 # s : éclat du héros touché
-const BOSS_KNOCKBACK_MULT := 0.15
-const PROC_BLAST_DELAY := 0.12 # s : télégraphe d'une explosion déclenchée par un proc « blast »
-const NOVA_CHILL_MULT := 0.5 # ralentissement posé par une déflagration qui gèle
-const PICKUP_SPEED_MIN := 80.0
-const PICKUP_SPEED_SPAN := 120.0
-const GOLD_RADIUS := 6.0
-const PICKUP_RADIUS := 10.0
 
 ## Champ numérique optionnel : absent ou null → 0 (en JavaScript, `undefined > 0` est faux).
 static func _num(d: Dictionary, key: String) -> float:
@@ -145,7 +137,7 @@ static func _apply_impact(game: Dictionary, e: Dictionary, src: Dictionary) -> v
 		if e.get("eliteMod") == "blinde":
 			kb *= t.elite.mods.blinde.knockbackMult
 		if is_boss:
-			kb *= BOSS_KNOCKBACK_MULT
+			kb *= t.guardians.knockbackMult
 		var cur2: float = e.kvx * e.kvx + e.kvy * e.kvy
 		if kb * kb > cur2:
 			e.kvx = _or_nan(src.get("dirX")) * kb
@@ -348,7 +340,7 @@ static func _apply_target_effect(game: Dictionary, effect, pr: Dictionary, e, sr
 			D6AiCommon.stun(game, e, pr.value)
 		"blast":
 			spawn_hazard(game, {
-				"shape": "circle", "x": e.x, "y": e.y, "r": pr.radius, "delay": PROC_BLAST_DELAY, "damage": pr.value,
+				"shape": "circle", "x": e.x, "y": e.y, "r": pr.radius, "delay": game.tuning.combat.procBlastDelay, "damage": pr.value,
 				"hitsPlayer": false, "hitsEnemies": true, "kind": "sinBlast", "sourceId": 0.0,
 			})
 		"cull":
@@ -374,7 +366,7 @@ static func _hero_nova(game: Dictionary, pr: Dictionary) -> void:
 			if D6Js.truthy(pr.get("chill")):
 				e.chill = maxf(e.chill, pr.chill)
 				var cur: float = e.chillMult if D6Js.truthy(e.get("chillMult")) else 1.0
-				e.chillMult = minf(cur, NOVA_CHILL_MULT)
+				e.chillMult = minf(cur, game.tuning.combat.novaChillMult)
 	D6State.emit(game, "dashNova", {"x": p.x, "y": p.y, "r": pr.radius})
 
 ## Onde sans dégâts autour du héros : pose l'effet de cible `apply` sur tout ennemi dans le rayon.
@@ -533,7 +525,7 @@ static func damage_player(game: Dictionary, amount: float, src: Dictionary) -> b
 		_dodge(game, src)
 		return false
 	var src_kind = src.get("kind")
-	var armor := D6Geo.clampv(p.stats.armor, 0.0, ARMOR_CAP)
+	var armor := D6Geo.clampv(p.stats.armor, 0.0, t.combat.armorCap)
 	var dmg := maxf(1.0, D6Js.jround(amount * (1.0 - armor)))
 	p.hp -= dmg
 	p.iframes = t.player.hurtIframes
@@ -563,10 +555,11 @@ static func damage_player(game: Dictionary, amount: float, src: Dictionary) -> b
 
 static func spawn_pickup(game: Dictionary, kind, x: float, y: float, value, extra = null) -> Dictionary:
 	var a: float = D6Rng.rand(game.rng.gen) * PI * 2.0
-	var s: float = PICKUP_SPEED_MIN + D6Rng.rand(game.rng.gen) * PICKUP_SPEED_SPAN
+	var room: Dictionary = game.tuning.room
+	var s: float = room.pickupSpeed + D6Rng.rand(game.rng.gen) * room.pickupSpeedSpread
 	var pk := {
 		"id": D6State.new_id(game), "kind": kind, "x": x, "y": y, "vx": D6Trig.cos(a) * s, "vy": D6Trig.sin(a) * s,
-		"r": GOLD_RADIUS if kind == "gold" else PICKUP_RADIUS, "value": value, "age": 0.0,
+		"r": room.goldRadius if kind == "gold" else room.pickupRadius, "value": value, "age": 0.0,
 	}
 	if extra != null:
 		pk.merge(extra, true)

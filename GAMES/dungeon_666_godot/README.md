@@ -30,9 +30,9 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
 1. **import** — Godot enregistre ses classes ;
 2. **données** — chaque fichier de `data/` contre son schéma (types, bornes, un télégraphe
    d'ennemi d'au moins 0,4 s), et se réécrit sans rien perdre ;
-3. **règles** — `tests/regles/*.gd` : 347 tests, dont les références croisées des données
+3. **règles** — `tests/regles/*.gd` : 359 tests, dont les références croisées des données
    (`donnees.gd`) ;
-4. **références** — les 70 parties de `references/parties/` sont rejouées, 10 712 points de
+4. **références** — les 70 parties de `references/parties/` sont rejouées, 10 714 points de
    contrôle comparés ;
 5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème) ;
 6. **jouabilité** (sur demande) — un bot bat la section 1, le dash compte, chaque classe se joue.
@@ -75,7 +75,10 @@ moitié de la comparaison.
 Tout est dans `data/`, un fichier par domaine : `heros`, `classes` (armes, compétences, gadgets,
 Supers), `bestiaire`, `gardiens`, `salles`, `etages` (sections, Cercles), `benedictions`, `butin`,
 `autels`, `ville`, `labo`. Chaque nombre n'y est écrit **qu'une fois** ; une clé en minuscules est
-un bloc de réglages, une clé en MAJUSCULES une table, `_note` dit à quoi sert le fichier.
+un bloc de réglages, une clé en MAJUSCULES une table, `_note` dit à quoi sert le fichier. Le libellé
+d'une option d'autel reprend ses nombres par `{champ}` (`"Boire — rend {pct} % des PV"`, `"pct": 40`) :
+il ne s'écrit jamais en chiffres. Ce qui reste en constantes dans `sim/` est technique (tolérances,
+garde-fous, marges de contact) : liste et raisons dans `DEFAUTS.md`, troisième lot.
 
 1. Modifier le nombre dans le fichier (JSON ordinaire : `0.42`, pas de forme codée).
 2. Le validateur dit tout de suite si la donnée tient debout :

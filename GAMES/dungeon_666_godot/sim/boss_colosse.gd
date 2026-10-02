@@ -151,21 +151,34 @@ static func geoliers(game: Dictionary, e: Dictionary, d: Dictionary, dt: float, 
 		if e.subT < g.windup:
 			return
 		e.tele = null
-		var count: float = g.countByPhase[int(e.phase) - 1]
-		for i in range(int(count)):
-			var pt = D6Spawns.find_spawn_point(game, 14.0, g.minPlayerDist, {"x": e.x, "y": e.y, "minR": e.r + g.minR, "maxR": e.r + g.maxR})
-			if pt != null:
-				D6Spawns.queue_spawn(game, g.kind, pt.x, pt.y, {"summoned": true})
-		e.shieldT = g.shieldMax
-		e.shielded = true
-		if e.get("jailerCalls") == null:
-			e.jailerCalls = {}
-		var key := D6Js.num_str(e.phase)
-		e.jailerCalls[key] = e.jailerCalls.get(key, 0.0) + 1.0
-		D6State.emit(game, "bossSummon", {"id": e.id, "x": e.x, "y": e.y})
-		D6State.emit(game, "bossShield", {"id": e.id, "x": e.x, "y": e.y, "up": true})
+		if _call_jailers(game, e, g) > 0.0:
+			_raise_shield(game, e, g)
 		D6BossCommon.set_sub(e, "done")
 	D6BossCommon.to_rest(game, e)
+
+## Ouvre les cercles d'invocation des geôliers de la phase ; rend le nombre de geôliers appelés
+## (moins que prévu, voire aucun, si la salle n'a plus de point d'apparition libre).
+static func _call_jailers(game: Dictionary, e: Dictionary, g: Dictionary) -> float:
+	var called := 0.0
+	var count: float = g.countByPhase[int(e.phase) - 1]
+	for i in range(int(count)):
+		var pt = D6Spawns.find_spawn_point(game, 14.0, g.minPlayerDist, {"x": e.x, "y": e.y, "minR": e.r + g.minR, "maxR": e.r + g.maxR})
+		if pt != null:
+			D6Spawns.queue_spawn(game, g.kind, pt.x, pt.y, {"summoned": true})
+			called += 1.0
+	return called
+
+## Des geôliers arrivent : le bouclier se lève et l'appel de la phase est compté. Un appel qui ne
+## fait venir personne ne passe pas ici : il ne consomme rien, le Colosse pourra rappeler.
+static func _raise_shield(game: Dictionary, e: Dictionary, g: Dictionary) -> void:
+	e.shieldT = g.shieldMax
+	e.shielded = true
+	if e.get("jailerCalls") == null:
+		e.jailerCalls = {}
+	var key := D6Js.num_str(e.phase)
+	e.jailerCalls[key] = e.jailerCalls.get(key, 0.0) + 1.0
+	D6State.emit(game, "bossSummon", {"id": e.id, "x": e.x, "y": e.y})
+	D6State.emit(game, "bossShield", {"id": e.id, "x": e.x, "y": e.y, "up": true})
 
 ## Bouclier de chaînes : tenu tant qu'un serviteur vit (et au plus shieldMax s).
 static func _tick_shield(game: Dictionary, e: Dictionary, g: Dictionary, dt: float) -> void:

@@ -6,6 +6,7 @@ extends Control
 ## Gardien dissous garde la sienne (il reste dessiné, en filigrane).
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
+const Triangles = preload("res://jeu/theme/triangles.gd")
 const MARGE := 26.0 # px des bords de la zone utile
 const TAILLE := 8.0
 const TAILLE_FORTE := 11.0 # Gardien, élite, objet à activer
@@ -42,8 +43,8 @@ func _pointer(ecran: Vector2, couleur: Color, taille: float) -> void:
 	_pointes.append({"pos": Vector2(x, y), "angle": (ecran - size / 2.0).angle(), "couleur": couleur, "taille": taille})
 
 func _draw() -> void:
+	var lot := Triangles.new() # toutes les flèches en un appel de dessin
 	for p in _pointes:
 		var t: float = p.taille
-		draw_set_transform(p.pos, p.angle)
-		draw_colored_polygon(PackedVector2Array([Vector2(t, 0.0), Vector2(-t * 0.6, -t * 0.7), Vector2(-t * 0.6, t * 0.7)]), p.couleur)
-	draw_set_transform(Vector2.ZERO)
+		lot.polygone(PackedVector2Array([Vector2(t, 0.0), Vector2(-t * 0.6, -t * 0.7), Vector2(-t * 0.6, t * 0.7)]), p.couleur, Transform2D(p.angle, p.pos))
+	lot.tracer(self)

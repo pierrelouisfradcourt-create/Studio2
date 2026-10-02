@@ -18,7 +18,8 @@ Principal (Node)            jeu/principal.gd     flux titre → Ville → descen
 │       ├─ Debout (y_sort)                           trié du fond vers l'avant, tous ensemble :
 │       │   ├─ Piliers      jeu/monde/piliers.gd     un nœud par pilier, dessiné une fois par salle
 │       │   ├─ Ennemis                               un nœud par corps
-│       │   └─ Heros                                 devant tout, sauf derrière un pilier au nord duquel il est
+│       │   ├─ Heros                                 devant tout, sauf derrière un pilier au nord duquel il est
+│       │   └─ Objets       jeu/monde/objets.gd      relais : l'objet d'interaction, les ramassables masqués
 │       └─ Statuts                                   barres de vie, statuts : jamais cachés
 ├─ Effets (Node2D)          jeu/effets/effets.tscn   particules, chiffres de dégâts, éclairs, flashs
 ├─ Son (Node)               jeu/son/son.tscn         bruitages procéduraux, vibrations
@@ -125,9 +126,53 @@ L'ombre d'un pilier reste au sol (`Murs`). Ce qui doit toujours se lire reste au
 groupe : `Statuts` (barres de vie), puis `Contours` (bords des dangers) et `Tirs`. Le remplissage
 d'un télégraphe est au sol : un pilier le cache là où il se dresse, son bord jamais.
 
+Le rang d'un nœud du groupe est le y de son POINT AU SOL, jamais celui de son dessin : un Gardien
+qui bondit (Cerbère) garde son nœud au sol, seul son dessin monte (`corps.envol`). Les ramassables
+(or, soin) restent au sol, sous les pieds de qui passe ; celui qui tombe juste au nord d'un pilier
+serait caché par son dessus : il est repeint juste devant ce pilier, parce qu'un ramassable doit se
+LIRE. L'objet d'interaction (butin, marchand, coffre…) se dresse au rang de son pied : un pilier
+plus au nord ne recouvre ni son corps ni sa colonne de lumière. Ses runes et ses halos restent au sol.
+
 Une seule main dessine chaque chose : la taillade d'un coup et la traînée du dash sont au calque
 du héros (`jeu/monde/creatures/`, à la portée réelle du coup) ; `Effets` n'ajoute que les éclats,
 les ondes, les chiffres, et la grande taillade dorée de l'Exécution (un Super).
+
+## Coût du dessin
+
+En rendu Compatibility (téléphone), ce qui coûte est l'APPEL DE DESSIN. Mesuré : un rectangle,
+une ligne non lissée, une primitive partent par lots ; mais chaque polygone coûte 1 appel, chaque
+disque lissé 2, chaque trait, arc ou cercle lissé 3 (le moteur trace à part ses franges de
+lissage). Un corps fait de vingt formes cernées coûtait ainsi 35 à 60 appels, le HUD 150.
+
+La règle : **un dessin = un lot de triangles** (`jeu/theme/triangles.gd`). On y ajoute les formes
+(`disque`, `cercle`, `polygone`, `polyligne`, `contour`, `arc`, `ligne`, `rect`, `vignette`…), puis
+`tracer(self)` les envoie en UN appel. Le lot fabrique les mêmes triangles que les gestes du
+moteur (mêmes points, même frange) : l'image ne change pas. Il garde en mémoire les formes déjà
+vues : les redessiner ne coûte que des recopies.
+
+- Créatures : tout passe par le pinceau (`jeu/monde/creatures/pinceau.gd`), entre `commencer(ci)`
+  et `finir()`. Lueurs et ombres vivent dans une même texture (l'atlas) et partent avec le lot ;
+  seul un texte le coupe. Un corps d'ennemi = 1 appel ; le sol de toutes les créatures = 1 appel ;
+  leurs statuts = 1 appel, plus leurs textes ; le héros = 1 appel.
+- Un corps d'ennemi n'est REPEINT que si sa pose change, ou vingt fois par seconde (`corps.gd`) ;
+  entre deux, le moteur rejoue son lot sous un nouveau repère. Un Gardien est repeint à chaque image.
+- HUD : chaque commande, le fil des étages, les bénédictions, les flèches = 1 appel chacun.
+- Ne pas appeler `draw_circle`, `draw_arc`, `draw_polyline` ou `draw_colored_polygon` en boucle
+  dans un `_draw` qui vit à chaque image : passer par un lot.
+
+Mesurer (vraie fenêtre, hors écran) : `jeu/monde/mesure.gd` sur le banc `jeu/essai/cout.tscn`
+(`D666_ENNEMIS`, `D666_GARDIEN`), simulation arrêtée. Repères au 2026-10-02, 960 × 540, banc de coût :
+
+| Scène | Appels avant | Appels après | ms / image avant | après |
+|---|---|---|---|---|
+| 0 ennemi | 228 | 48 | 2,1 | 1,3 |
+| 10 ennemis | 741 | 63 | 3,5 | 1,9 |
+| 20 ennemis | 1240 | 74 | 5,1 | 2,4 |
+| 10 ennemis + Cerbère | 820 | 71 | 4,0 | 2,1 |
+
+Preuve d'image : `_dev/captures/lot_cout/` (`capturer.sh`, `comparer.sh`) — mêmes scènes figées,
+horloge fixe, avant et après : aucun pixel n'y diffère de plus de 2 / 255, hors des trois cas
+de profondeur corrigés le même jour (ramassables, objet d'interaction, Gardien qui bondit).
 
 ## Règles de maison
 
@@ -147,7 +192,8 @@ les ondes, les chiffres, et la grande taillade dorée de l'Exécution (un Super)
   `ThemeJeu.OPACITE_GRISE`. Les cibles : `ThemeJeu.CIBLE` (44 px) et `CIBLE_GRANDE` (48 px).
 - Briques communes, sous `jeu/theme/` : `carte.tscn` (LA carte, pour les écrans comme pour la
   Ville : `carte.decrire({...})`), `filet.gd` (filet d'ornement sous un grand titre),
-  `titre_relief.gd` (relief d'un titre d'apparat), `couches.gd` (ordre des couches).
+  `titre_relief.gd` (relief d'un titre d'apparat), `couches.gd` (ordre des couches),
+  `triangles.gd` (le lot de triangles : un dessin en un appel, voir « Coût du dessin »).
 - Petite fenêtre (téléphone en paysage, 844 × 390) : chaque vue agrandit sa racine de
   `ThemeJeu.echelle(vue, fenetre)` pour garder la taille de référence (cibles ≥ 44 px), et demande
   un texte net par `ThemeJeu.nettete(viewport, echelle)`.
@@ -170,6 +216,9 @@ Le thème commun, l'ordre des couches et les réglages du feel ont leur vérific
 L'ordre de profondeur du Monde, le Traqueur disparu et la durée de l'élan aussi :
 `res://jeu/monde/test_profondeur.gd` (finit par « PROFONDEUR : OK ») ; pour les juger à l'écran,
 le banc `res://jeu/essai/profondeur.tscn` pose le cas voulu dans le vrai jeu (`D666_CAS`).
+Le lot de triangles, le rang des ramassables, de l'objet d'interaction et du Gardien qui bondit :
+`res://jeu/monde/test_finitions.gd` (finit par « FINITIONS : OK ») ; à l'écran, le banc
+`res://jeu/essai/cout.tscn` (`D666_RAMASSABLES`, `D666_OBJET`, `D666_BOND`).
 
 `capture.gd` lance une scène dans une vraie fenêtre (hors écran), la laisse vivre, et enregistre
 des PNG : c'est la preuve d'une vue. Chaque lot écrit sa scène de banc `jeu/<lot>/banc.tscn`

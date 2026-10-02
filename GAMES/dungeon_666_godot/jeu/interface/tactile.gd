@@ -5,6 +5,7 @@ extends Control
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
 const Etats = preload("res://jeu/interface/etat_commandes.gd")
+const Triangles = preload("res://jeu/theme/triangles.gd")
 const COURSE := 58.0 # rayon de la base du joystick
 const POUCE := 26.0
 const DEGAGEMENT := 24.0 # px autour du groupe de boutons
@@ -39,8 +40,10 @@ func _draw() -> void:
 	var encre: Color = Couleurs.UI["void"]
 	var pouce := Vector2(_manette.knobX, _manette.knobY)
 	# Cerne sombre puis trait clair : le joystick se lit sur un sol clair comme sur un sol noir.
-	draw_circle(base, COURSE, Color(encre, 0.22), true, -1.0, true)
-	draw_arc(base, COURSE + 0.5, 0.0, TAU, 48, Color(encre, 0.45), 4.5, true)
-	draw_arc(base, COURSE, 0.0, TAU, 48, Color(blanc, 0.45), 2.0, true)
-	draw_circle(pouce, POUCE + 1.5, Color(encre, 0.45), true, -1.0, true)
-	draw_circle(pouce, POUCE, Color(blanc, 0.5), true, -1.0, true)
+	var lot := Triangles.new()
+	lot.disque(base, COURSE, Color(encre, 0.22))
+	lot.arc(base, COURSE + 0.5, 0.0, TAU, 48, Color(encre, 0.45), 4.5)
+	lot.arc(base, COURSE, 0.0, TAU, 48, Color(blanc, 0.45), 2.0)
+	lot.disque(pouce, POUCE + 1.5, Color(encre, 0.45))
+	lot.disque(pouce, POUCE, Color(blanc, 0.5))
+	lot.tracer(self)

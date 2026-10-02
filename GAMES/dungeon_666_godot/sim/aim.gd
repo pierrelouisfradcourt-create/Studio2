@@ -3,15 +3,12 @@ extends RefCounted
 ## Portage de src/sim/aim.mjs.
 ## Visée assistée — décisive sur mobile : un tap sur « attaque » vise l'ennemi le plus
 ## pertinent (proche ET dans la direction où l'on se déplace). La visée manuelle (souris,
-## joystick d'attaque glissé) l'emporte toujours.
+## joystick d'attaque glissé) l'emporte toujours. Réglages : tuning.autoAim (stickyTime : s pendant
+## lesquelles la cible précédente reste privilégiée ; stickyBonus, threatBonus, eliteBonus : u
+## retirées au score de la cible précédente, d'un ennemi qui prépare une attaque, d'un champion).
 
-const STICKY_TIME := 0.4 # s : la cible précédente reste privilégiée (pas de saut de cible)
-const STICKY_BONUS := 60.0 # u retirés au score de la cible précédente
-const THREAT_BONUS := 40.0 # u retirés à un ennemi qui prépare une attaque
-const ELITE_BONUS := 25.0
 const MANUAL_DEADZONE := 0.15 # en deçà, la visée manuelle est ignorée
 const MOVE_DEADZONE := 0.2 # en deçà, le mouvement ne donne pas la direction de préférence
-const OUT_OF_CONE_PENALTY := 0.6
 const NEVER_TARGETED := -99.0
 const TINY := 1e-6
 
@@ -65,7 +62,7 @@ static func _best_target(game: Dictionary, px: float, py: float, max_range: floa
 	var best = null
 	var best_score := INF
 	var best_d := 0.0
-	var sticky = p.lastTargetId if game.time - D6Js.nz(p.get("lastTargetAt"), NEVER_TARGETED) < STICKY_TIME else 0.0
+	var sticky = p.lastTargetId if game.time - D6Js.nz(p.get("lastTargetAt"), NEVER_TARGETED) < a.stickyTime else 0.0
 	for e in game.enemies:
 		if e.dead or e.spawnT > 0.0:
 			continue
@@ -80,14 +77,14 @@ static func _best_target(game: Dictionary, px: float, py: float, max_range: floa
 			continue
 		var c := (dx * px + dy * py) / d if d > TINY else 1.0
 		# Hors du cône préféré : pénalité, mais pas exclusion (on vise quand même si seul).
-		var angle_penalty: float = 1.0 + a.movePreference * (1.0 - c) + (OUT_OF_CONE_PENALTY if c < cos_cone else 0.0)
+		var angle_penalty: float = 1.0 + a.movePreference * (1.0 - c) + (a.outOfConePenalty if c < cos_cone else 0.0)
 		var score: float = (d - e.r) * angle_penalty
 		if e.id == sticky:
-			score -= STICKY_BONUS
+			score -= a.stickyBonus
 		if e.state == "windup":
-			score -= THREAT_BONUS
+			score -= a.threatBonus
 		if D6Js.truthy(e.get("eliteMod")):
-			score -= ELITE_BONUS
+			score -= a.eliteBonus
 		if score < best_score:
 			best_score = score
 			best = e

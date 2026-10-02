@@ -23,7 +23,9 @@
   `e.stateTime`, `game.rng.combat`. On y accède par le point. Pas de classes d'entités : l'état
   doit rester copiable (`D6Js.clone`), comparable clé par clé et lisible par une empreinte
   (`references/partie.gd`, `digest`). Les vues de `jeu/` lisent ces mêmes clés.
-- **Constantes de module** : `const BURN_TICK := 0.25`, nommées, avec leur unité en commentaire.
+- **Constantes de module** : `const MIN_STEP := 4.0 # u`, nommées, avec leur unité en commentaire —
+  pour ce qui est TECHNIQUE (tolérance, garde-fou, pas d'un calcul). Un réglage de jeu n'est pas une
+  constante : il vit dans `data/` (ci-dessous).
 - **Tables de données** (`BOONS`, `ROSTER`, `LAYOUTS`, `LAB_AXES`…) : jamais recopiées dans le
   code, lues dans `D6Data.tables().<module>.<NOM>`. Partagées : ne pas les modifier ;
   `D6Js.clone(x)` avant d'écrire dans une copie.

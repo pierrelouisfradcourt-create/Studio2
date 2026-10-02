@@ -118,10 +118,10 @@ static func apply_calm(game: Dictionary, it: Dictionary, index):
 	var room: Dictionary = game.room
 	match opt.id:
 		"objet":
-			room.interact = {"kind": "loot", "x": it.x, "y": it.y, "r": 30.0, "used": false, "item": it.item}
+			room.interact = {"kind": "loot", "x": it.x, "y": it.y, "r": game.tuning.room.rewardRadius, "used": false, "item": it.item}
 			return "replaced"
 		"relique":
-			room.interact = {"kind": "boon", "x": it.x, "y": it.y, "r": 30.0, "used": false, "family": it.family}
+			room.interact = {"kind": "boon", "x": it.x, "y": it.y, "r": game.tuning.room.rewardRadius, "used": false, "family": it.family}
 			return "replaced"
 		"bourse":
 			var n: float = game.tuning.economy.treasure.goldPickups

@@ -427,7 +427,7 @@ static func salvage_souls(tuning: Dictionary, item: Dictionary) -> float:
 	var town = tuning.get("town")
 	var table = town.get("salvageSouls") if town is Dictionary else null
 	if table == null:
-		table = {"commun": 1.0, "magique": 3.0, "rare": 8.0, "legendaire": 20.0}
+		table = D6Data.default_tuning().town.salvageSouls # réglages partiels : la table par défaut
 	return D6Js.nz(table.get(item.get("rarity")), 1.0)
 
 ## Un objet trouvé en donjon qu'on ne porte pas file au coffre (il n'est jamais perdu).

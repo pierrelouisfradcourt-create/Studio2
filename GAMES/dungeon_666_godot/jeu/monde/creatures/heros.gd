@@ -118,6 +118,7 @@ func _draw() -> void:
 	var pos := lieu_heros(g) - position
 	var pr: float = h.r * HEROS_VISUEL
 	var classe: String = _classe(g)
+	p.commencer(self)
 	p.alpha = 1.0 if h.state != "dead" else alpha_heros(h)
 	p.poser(Transform2D(0.0, pos))
 	_coup(h)
@@ -141,8 +142,7 @@ func _draw() -> void:
 	_lancer(g, h, pr, m)
 	p.poser(m)
 	_coquille(h, pr, elan)
-	p.alpha = 1.0
-	p.lever()
+	p.finir()
 
 func _classe(g: Dictionary) -> String:
 	var kit = g.get("kit")
@@ -224,8 +224,8 @@ func _taillade(portee: float, a0: float, a1: float, epais: float, teinte: Color,
 func _estoc(angle: float, portee: float, force: float) -> void:
 	var d := Vector2.from_angle(angle)
 	var c := Color(PAL.lance, 0.75 * force)
-	draw_primitive(PackedVector2Array([d.orthogonal() * 9.0, d * portee * 1.04, -d.orthogonal() * 9.0]),
-		PackedColorArray([Color(c, 0.0), c, Color(c, 0.0)]), PackedVector2Array())
+	p.primitive(PackedVector2Array([d.orthogonal() * 9.0, d * portee * 1.04, -d.orthogonal() * 9.0]),
+		PackedColorArray([Color(c, 0.0), c, Color(c, 0.0)]))
 
 ## Super en cours, sous le héros. Colère : le tourbillon à sa portée réelle. Sentence : l'arc d'or
 ## de la prochaine exécution se charge, à sa portée et à son ouverture réelles. Nuée : une ronde
@@ -265,7 +265,7 @@ func _annonce_sentence(h: Dictionary, s: Dictionary) -> void:
 	if demi < PI - 0.01:
 		for s2: float in [-1.0, 1.0]:
 			var d := Vector2.from_angle(h.facing + demi * s2)
-			draw_line(d * coups[rang].range * 0.55, d * coups[rang].range, teinte, 1.5)
+			p.segment(d * coups[rang].range * 0.55, d * coups[rang].range, teinte, 1.5)
 
 # ------------------------------------------------------------------ corps
 
@@ -378,8 +378,8 @@ func _lancer(g: Dictionary, h: Dictionary, pr: float, m: Transform2D) -> void:
 	p.lueur(main, pr * (1.4 + 1.4 * k), PAL.lance, 0.9 * k)
 	if _geste > 0.0:
 		var c := Color(PAL.lance, 0.8 * k)
-		draw_primitive(PackedVector2Array([main + Vector2(0.0, -6.0), main + Vector2(pr * 4.5 * k, 0.0), main + Vector2(0.0, 6.0)]),
-			PackedColorArray([Color(c, 0.0), c, Color(c, 0.0)]), PackedVector2Array())
+		p.primitive(PackedVector2Array([main + Vector2(0.0, -6.0), main + Vector2(pr * 4.5 * k, 0.0), main + Vector2(0.0, 6.0)]),
+			PackedColorArray([Color(c, 0.0), c, Color(c, 0.0)]))
 	p.etoile(main + Vector2(pr * 0.3, 0.0), pr * 0.55 * k, PAL.lance, temps() * 8.0, Pinceau.SANS)
 	p.disque(main, pr * 0.22, PAL.hero, NUIT, 1.5)
 

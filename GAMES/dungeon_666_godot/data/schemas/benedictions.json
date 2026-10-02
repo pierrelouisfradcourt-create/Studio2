@@ -1,6 +1,6 @@
 {
   "type": "objet",
-  "requis": ["FAMILIES", "RARITIES", "BOONS", "DUOS", "PACTS"],
+  "requis": ["FAMILIES", "RARITIES", "BOONS", "DUOS", "PACTS", "boons"],
   "fermé": true,
   "champs": {
     "_note": { "type": "texte" },
@@ -202,6 +202,16 @@
           },
           "family": { "type": "texte", "min": 1 }
         }
+      }
+    },
+    "boons": {
+      "type": "objet",
+      "requis": ["offerSize", "duoChance", "levelStep"],
+      "fermé": true,
+      "champs": {
+        "offerSize": { "type": "entier", "min": 1 },
+        "duoChance": { "type": "nombre", "min": 0, "max": 1 },
+        "levelStep": { "type": "nombre", "min": 0 }
       }
     }
   }

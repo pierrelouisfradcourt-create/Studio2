@@ -109,6 +109,7 @@
     "baseBudget": 5,
     "perIndex": 0.45,
     "lastWaveMult": 1.2,
+    "nextWaveAt": 0.25,
     "strayEliteChance": 0.15,
     "strayEliteFrom": 3,
     "costRef": 1.5

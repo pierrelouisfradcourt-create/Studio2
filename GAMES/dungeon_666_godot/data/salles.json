@@ -6,8 +6,17 @@
     "wallPad": 24,
     "spawnWarn": 0.75,
     "spawnMinPlayerDist": 220,
+    "spawnTime": 0.25,
+    "rewardRadius": 30,
+    "calmRadius": 34,
     "pickupMagnetRange": 120,
     "pickupMagnetSpeed": 700,
+    "pickupSettle": 0.35,
+    "pickupFriction": 6,
+    "pickupSpeed": 80,
+    "pickupSpeedSpread": 120,
+    "pickupRadius": 10,
+    "goldRadius": 6,
     "healOrbAmount": 12
   },
   "LAYOUTS": {

@@ -20,7 +20,6 @@ extends RefCounted
 ##     skillAimX, skillAimY }   // visée de la compétence au relâcher (0, 0 = assistée)
 
 const PRIORITY := ["dash", "super", "skill", "attack"]
-const DASH_CHAIN_FRACTION := 0.35 # on peut re-dasher quand il reste moins de 35 % du dash
 
 ## `ids.includes(id)` : comparaison par `==` (Array.has distingue 1 de 1.0, JavaScript non).
 static func _has_id(ids: Array, id) -> bool:
@@ -50,7 +49,7 @@ static func can_dash(game: Dictionary) -> bool:
 	if p.state == "free" or p.state == "attack" or p.state == "cast":
 		return true
 	if p.state == "dash":
-		return p.dashT <= game.tuning.dash.duration * DASH_CHAIN_FRACTION
+		return p.dashT <= game.tuning.dash.duration * game.tuning.dash.chainFrom # re-dash quand il reste moins de cette part du dash
 	return false
 
 static func _can_attack(game: Dictionary) -> bool:
@@ -366,7 +365,7 @@ static func _lunge_distance(game: Dictionary, a: Dictionary) -> float:
 	if e == null or e.dead:
 		return base
 	var gap: float = sqrt(D6Geo.dist2(p.x, p.y, e.x, e.y)) - p.r - e.r - 6.0
-	return maxf(0.0, minf(base * 1.5, gap))
+	return maxf(0.0, minf(base * game.tuning.player.lungeStretch, gap))
 
 static func _sweep_hits(game: Dictionary, a: Dictionary) -> void:
 	var p: Dictionary = game.player

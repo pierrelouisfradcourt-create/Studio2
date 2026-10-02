@@ -94,7 +94,7 @@ static func _build_tuning(f: Dictionary) -> Dictionary:
 		"combat": h.combat, "room": f.salles.room,
 		"floors": e.floors, "section": e.section, "encounter": e.encounter, "circles": e.circles,
 		"guardians": f.gardiens.guardians, "progression": f.ville.progression, "town": f.ville.town,
-		"economy": f.butin.economy, "loot": f.butin.loot,
+		"economy": f.butin.economy, "loot": f.butin.loot, "boons": f.benedictions.boons,
 	}
 
 ## Les tables, par module et dans l'ordre d'origine. Ce qui répète un réglage en est une COPIE
@@ -118,7 +118,7 @@ static func _build_tables(f: Dictionary, t: Dictionary) -> Dictionary:
 			"EXTRA_ENEMIES": _without(t.enemies, BASE_KINDS),
 			"EXTRA_ROSTER": D6Js.clone(b.ROSTER.filter(func(r): return not BASE_KINDS.has(r.kind))),
 		},
-		"game": {"DEATH_DELAY": D6Game.DEATH_DELAY, "DT": DT},
+		"game": {"DEATH_DELAY": t.player.deathDelay, "DT": DT},
 		"kits": {
 			"CLASSES": D6Js.clone(t.classes), "DEFAULT_LOADOUT": f.classes.DEFAULT_LOADOUT, "GADGETS": D6Js.clone(t.gadgets),
 			"SKILLS": D6Js.clone(t.skills), "SUPERS": D6Js.clone(t.supers), "WEAPONS": D6Js.clone(t.weapons),

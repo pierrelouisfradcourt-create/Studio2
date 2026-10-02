@@ -15,6 +15,22 @@ const BOSS_TELEGRAPHS := ["windup", "secondWindup", "delay", "delayMin", "leapDe
 const AFFIX_FORMATS := ["pct", "flat", "pctNeg"]
 const STARTER := {"weapons": "lame", "skills": "lance", "gadgets": "nova", "supers": "colere"} # D6Data.create_tuning
 const ROOM_SLACK := 1.0 # u : marge d'arrondi d'un obstacle contre le bord de la salle
+## Champs qu'un effet d'autel lit dans son option (sim/run.gd, _apply_event et _option_blocked).
+const ALTAR_FIELDS := {
+	"none": [], "bloodBoon": ["pct", "rarity"], "heal": ["pct"], "gadgetCharge": ["gain"],
+	"cursedChest": ["hp", "rarity"], "mammonBoon": ["cost", "family"], "gold": ["gain"],
+	"soulBoon": ["souls", "rarity"], "bloodSouls": ["hp", "gain"], "reforge": ["levels"], "pact": ["pact"],
+	"superToHp": ["need", "pct"], "hpToSuper": ["hp"],
+}
+const ALTAR_ITEM_EFFECTS := ["cursedChest"] # leur « rarity » est une rareté d'OBJET ; ailleurs, de bénédiction
+## Réglages que l'IA d'un archétype d'origine lit sans repli (sim/enemies.gd) : absents, l'ennemi plante.
+const BASE_AI_FIELDS := {
+	"imp": ["attackRange", "circleDist", "circleWithin", "flankSpeed", "windup", "lockAt", "strikeTime", "strikeSpeed", "recover", "cooldown"],
+	"archer": ["preferredDist", "fleeDist", "approachSlack", "fireRangeFrac", "strafeMult", "strafeFlip", "windup", "lockAt", "recover", "cooldown", "projSpeed", "projRadius", "projRange", "teleLength"],
+	"brute": ["attackRange", "triggerFrac", "windup", "slamRadius", "recover", "cooldown"],
+	"charger": ["attackRange", "windup", "lockAt", "chargeSpeed", "chargeMaxTime", "wallStun", "recover", "cooldown"],
+	"exploder": ["triggerRange", "windup", "blastRadius"],
+}
 
 static func _t() -> Dictionary:
 	return D6Data.default_tuning()
@@ -317,6 +333,85 @@ static func _recomposed(h) -> void:
 	for kind in tb.foe_data.EXTRA_ENEMIES:
 		h.ok(not D6Data.BASE_KINDS.has(kind) and t.enemies.has(kind))
 
+## Chaque effet d'autel trouve dans son option les champs qu'il lit ; raretés et familles existent.
+static func _altar_fields(h) -> void:
+	var boons: Dictionary = _tb().boons
+	for ev in _tb().run.EVENTS:
+		for o in ev.options:
+			h.ok(ALTAR_FIELDS.has(o.effect), "autel %s : effet « %s » inconnu de sim/run.gd" % [ev.id, o.effect])
+			for field in ALTAR_FIELDS.get(o.effect, []):
+				h.ok(o.has(field), "autel %s, effet %s : le champ « %s » manque" % [ev.id, o.effect, field])
+			if o.has("rarity"):
+				var known: Array = _ids(_tb().loot.ITEM_RARITIES if ALTAR_ITEM_EFFECTS.has(o.effect) else boons.RARITIES)
+				_all_in(h, [o.rarity], known, "autel %s, effet %s, rareté" % [ev.id, o.effect])
+			if o.has("family"):
+				_all_in(h, [o.family], boons.FAMILIES.keys(), "autel %s, famille" % ev.id)
+
+## Un nombre d'option que le libellé ne reprend pas serait un nombre que le joueur ne voit pas — et
+## un nombre écrit en dur dans le libellé pourrait mentir : tout chiffre d'un libellé vient d'un {champ}.
+static func _altar_labels(h) -> void:
+	var digits := RegEx.create_from_string("[0-9]")
+	for ev in _tb().run.EVENTS:
+		for o in ev.options:
+			var bare: String = o.label
+			for k in o:
+				if o[k] is float:
+					h.ok(("{%s}" % k) in o.label, "autel %s : le nombre « %s » (%s) n'est pas dit par le libellé « %s »" % [ev.id, k, str(o[k]), o.label])
+					bare = bare.replace("{%s}" % k, "")
+			h.ok(digits.search(bare) == null, "autel %s : nombre écrit en dur dans le libellé « %s »" % [ev.id, o.label])
+	h.ok(true)
+
+static func _base_ai_fields(h) -> void:
+	var t := _t()
+	_same_set(h, BASE_AI_FIELDS.keys(), D6Data.BASE_KINDS, "BASE_AI_FIELDS : une entrée par archétype d'origine")
+	for kind in BASE_AI_FIELDS:
+		for field in BASE_AI_FIELDS[kind]:
+			h.ok(t.enemies.get(kind, {}).get(field) is float, "%s.%s : réglage lu par son IA, absent ou non numérique" % [kind, field])
+
+## Les couples [minimum, maximum] et les distances qui s'emboîtent.
+static func _ranges(h) -> void:
+	var t := _t()
+	for kind in t.enemies:
+		var e: Dictionary = t.enemies[kind]
+		if e.has("cooldownJitter"):
+			h.ok(e.cooldownJitter[0] > 0.0 and e.cooldownJitter[0] <= e.cooldownJitter[1], "%s.cooldownJitter : attendu 0 < minimum <= maximum" % kind)
+		if e.has("fleeDist") and e.has("preferredDist"):
+			h.ok(e.fleeDist <= e.preferredDist, "%s : fleeDist (%s) au-delà de preferredDist (%s)" % [kind, str(e.fleeDist), str(e.preferredDist)])
+	h.ok(t.enemies.imp.circleDist <= t.enemies.imp.circleWithin, "imp : l'anneau d'encerclement (circleDist) sort de la zone où il s'applique (circleWithin)")
+	for where in [["guardians.reinforce", t.guardians.reinforce], ["boss.gardien.summon", t.boss.gardien.summon]]:
+		h.ok(where[1].minR <= where[1].maxR, "%s : minR > maxR" % where[0])
+	h.ok(t.combat.minChillMult <= t.combat.novaChillMult, "combat : novaChillMult sous le plancher minChillMult")
+	h.egal(_tb().game.DEATH_DELAY, t.player.deathDelay, "table game.DEATH_DELAY : le réglage player.deathDelay")
+
+## Entre un obstacle et un mur (ou un autre obstacle), soit rien ne passe (obstacle collé), soit le
+## plus gros corps de la salle passe : jamais un couloir plus étroit qu'un corps, où la collision le
+## renverrait d'un bord à l'autre.
+static func _passages(h) -> void:
+	var t := _t()
+	var room: Dictionary = t.room
+	var widest := 0.0
+	for kind in t.enemies:
+		widest = maxf(widest, 2.0 * t.enemies[kind].radius * t.elite.sizeMult)
+	var widest_boss := 0.0
+	for id in t.boss:
+		widest_boss = maxf(widest_boss, 2.0 * t.boss[id].radius)
+	var all: Dictionary = _tb().room.LAYOUTS.duplicate()
+	all["BOSS_LAYOUT"] = _tb().room.BOSS_LAYOUT
+	for id in all:
+		var need: float = maxf(widest, widest_boss) if id == "BOSS_LAYOUT" else widest
+		var rects: Array = all[id].map(func(o): return [o[0] * room.width - o[2] / 2.0, o[1] * room.height - o[3] / 2.0, o[0] * room.width + o[2] / 2.0, o[1] * room.height + o[3] / 2.0])
+		for i in rects.size():
+			var r: Array = rects[i]
+			for gap in [r[0] - room.wallPad, r[1] - room.wallPad, room.width - room.wallPad - r[2], room.height - room.wallPad - r[3]]:
+				h.ok(gap <= ROOM_SLACK or gap >= need, "disposition %s, obstacle %d : %s u entre lui et le mur (collé, ou au moins %s u)" % [id, i, str(gap), str(need)])
+			for j in range(i + 1, rects.size()):
+				var q: Array = rects[j]
+				var dx: float = maxf(0.0, maxf(q[0] - r[2], r[0] - q[2]))
+				var dy: float = maxf(0.0, maxf(q[1] - r[3], r[1] - q[3]))
+				var between: float = sqrt(dx * dx + dy * dy)
+				h.ok(between <= ROOM_SLACK or between >= need, "disposition %s, obstacles %d et %d : %s u entre eux (collés, ou au moins %s u)" % [id, i, j, str(between), str(need)])
+	h.ok(true)
+
 ## Compte les valeurs de `v` qui ne sont pas à la forme que lit la simulation.
 static func _bad_values(v) -> int:
 	if v is int:
@@ -362,3 +457,8 @@ static func tests(h) -> void:
 	h.test("labo : chaque variante règle un nombre qui existe, la référence décrit le défaut", func(): _lab(h))
 	h.test("données : chaque nombre n'existe qu'une fois, tables et réglages recomposés se répondent", func(): _recomposed(h))
 	h.test("données : tout nombre est un float, la forme exacte reste lue", func(): _shape(h))
+	h.test("autels : chaque effet a dans son option les champs qu'il lit ; raretés et familles connues", func(): _altar_fields(h))
+	h.test("autels : tout chiffre d'un libellé vient d'un {champ} de l'option, et tout nombre d'option y est dit", func(): _altar_labels(h))
+	h.test("bestiaire : chaque archétype d'origine a les réglages que son IA lit", func(): _base_ai_fields(h))
+	h.test("réglages : minimum <= maximum, distances emboîtées", func(): _ranges(h))
+	h.test("salles : entre un obstacle et un mur ou un autre obstacle, rien ne passe ou le plus gros corps passe", func(): _passages(h))

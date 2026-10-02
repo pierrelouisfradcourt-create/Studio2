@@ -10,8 +10,6 @@ extends RefCounted
 ## mises à l'échelle ; format : 'pct', 'pctNeg', 'flat'), STAT_LABELS, LEGENDARY_POWERS :
 ## D6Data.tables().loot (jamais modifiées).
 
-const FLOOR_SCALE := 0.012
-
 static func _t() -> Dictionary:
 	return D6Data.tables().loot
 
@@ -90,7 +88,7 @@ static func generate_item(game: Dictionary, opts: Dictionary = {}) -> Dictionary
 ## Affixes de l'objet : le bassin de l'emplacement est mélangé, puis chaque affixe retenu tire
 ## sa valeur (même ordre de tirages que le JavaScript).
 static func _roll_affixes(game: Dictionary, slot, rdef: Dictionary, lvl: float) -> Array:
-	var scale := 1.0 + FLOOR_SCALE * (lvl - 1.0)
+	var scale: float = 1.0 + game.tuning.loot.affixFloorScale * (lvl - 1.0)
 	var pool: Array = D6Rng.shuffle(game.rng.gen, _t().AFFIXES[slot].duplicate())
 	var affixes: Array = []
 	for a in pool.slice(0, int(rdef.affixes)):
@@ -136,9 +134,12 @@ static func item_score(item: Dictionary) -> float:
 		s += 2.0
 	return D6Js.jround(s * 100.0) / 100.0
 
-static func salvage_value(item: Dictionary) -> float:
+## Or rendu par un objet recyclé en donjon (economy.salvage) : une base, plus un montant par rang
+## de rareté, plus 1 or tous les `levelsPerGold` niveaux d'objet.
+static func salvage_value(game: Dictionary, item: Dictionary) -> float:
+	var s: Dictionary = game.tuning.economy.salvage
 	var idx := _rarity_index(item.get("rarity"))
-	return 5.0 + idx * 10.0 + floorf(item.level / 3.0)
+	return s.base + idx * s.perRarity + floorf(item.level / s.levelsPerGold)
 
 static func base_text(item: Dictionary):
 	var damage = _base_field(item, "damage")
@@ -158,11 +159,11 @@ static func affix_text(a: Dictionary) -> String:
 	return "+%s %% %s" % [D6Js.num_str(D6Js.jround(a.value * 1000.0) / 10.0), label]
 
 static func random_shop_item(game: Dictionary) -> Dictionary:
-	var rarity := "rare" if D6Rng.rand(game.rng.gen) < 0.25 else "magique"
+	var rarity := "rare" if D6Rng.rand(game.rng.gen) < game.tuning.economy.shopRareChance else "magique"
 	return generate_item(game, {"rarity": rarity})
 
 static func price_of(game: Dictionary, item: Dictionary) -> float:
 	var lo: float = game.tuning.economy.shopItemPrice[0]
 	var hi: float = game.tuning.economy.shopItemPrice[1]
 	var idx := _rarity_index(item.get("rarity"))
-	return D6Js.jround(lo + ((hi - lo) * idx) / (_t().ITEM_RARITIES.size() - 1.0)) + D6Rng.rand_int(game.rng.gen, 0.0, 9.0)
+	return D6Js.jround(lo + ((hi - lo) * idx) / (_t().ITEM_RARITIES.size() - 1.0)) + D6Rng.rand_int(game.rng.gen, 0.0, game.tuning.economy.shopPriceJitter)

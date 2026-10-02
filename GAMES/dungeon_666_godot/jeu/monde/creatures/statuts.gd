@@ -20,6 +20,7 @@ func _draw() -> void:
 	if g == null:
 		return
 	var heros := lieu_heros(g)
+	p.commencer(self)
 	for e in vivants(g):
 		if D6Js.truthy(e.get("hidden")):
 			continue
@@ -28,8 +29,7 @@ func _draw() -> void:
 		_afflictions(e)
 		_pouvoirs_elite(e, g, heros - pos)
 		_jauges(e)
-	p.alpha = 1.0
-	p.lever()
+	p.finir()
 
 func _afflictions(e: Dictionary) -> void:
 	var r: float = e.r
@@ -99,12 +99,12 @@ func _chevron(pointe: Vector2) -> void:
 
 func _barre_vie(e: Dictionary, y: float, largeur: float) -> void:
 	var x := -largeur * 0.5
-	draw_rect(Rect2(x - 1.5, y - 6.5, largeur + 3.0, 8.0), Pinceau.ENCRE)
-	draw_rect(Rect2(x, y - 5.0, largeur, 5.0), PAL.hpBack)
+	p.rect(Rect2(x - 1.5, y - 6.5, largeur + 3.0, 8.0), Pinceau.ENCRE)
+	p.rect(Rect2(x, y - 5.0, largeur, 5.0), PAL.hpBack)
 	var plein: float = largeur * clampf(e.hp / e.maxHp, 0.0, 1.0)
 	var teinte: Color = Couleurs.ELITE_COLORS[e.eliteMod] if D6Js.truthy(e.eliteMod) else PAL.hpBar
-	draw_rect(Rect2(x, y - 5.0, plein, 5.0), teinte)
-	draw_rect(Rect2(x, y - 5.0, plein, 1.5), teinte.lightened(0.35))
+	p.rect(Rect2(x, y - 5.0, plein, 5.0), teinte)
+	p.rect(Rect2(x, y - 5.0, plein, 1.5), teinte.lightened(0.35))
 
 func _etoiles(centre: Vector2, rayon: float) -> void:
 	for i in 3:
@@ -140,7 +140,7 @@ func _drain(e: Dictionary, vers_heros: Vector2, k: float) -> void:
 	var dir := vers_heros / maxf(1.0, longueur)
 	var d := longueur - fmod(temps() * 120.0, 16.0)
 	while d > 10.0:
-		draw_line(dir * d, dir * (d - 10.0), teinte, 2.0 + 4.0 * k, true)
+		p.segment(dir * d, dir * (d - 10.0), teinte, 2.0 + 4.0 * k, true)
 		d -= 16.0
 	p.lueur(Vector2.ZERO, e.r * 2.4, PAL.eliteVampirique, 0.55 * k)
 

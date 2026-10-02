@@ -14,20 +14,44 @@
       "transition": 1.5,
       "reinforcements": { "2": ["imp", "imp", "imp", "imp"], "3": ["archer", "archer", "exploder", "exploder"] },
       "phaseHealOrb": 15,
-      "slam": { "windup": 0.75, "radius": 120, "count": 3, "interval": 0.45, "damage": 20 },
-      "charge": { "windup": 0.8, "speed": 820, "maxTime": 1, "damage": 22, "wallStun": 1.6, "width": 88 },
+      "slam": {
+        "windup": 0.75,
+        "radius": 120,
+        "count": 3,
+        "interval": 0.45,
+        "damage": 20,
+        "approachMult": 0.5
+      },
+      "charge": {
+        "windup": 0.8,
+        "lockAt": 0.7,
+        "speed": 820,
+        "maxTime": 1,
+        "damage": 22,
+        "wallStun": 1.6,
+        "width": 88
+      },
       "ring": {
         "windup": 0.7,
         "bullets": 18,
         "gapCount": 3,
         "speed": 260,
         "radius": 9,
+        "range": 1400,
         "damage": 12,
         "waves": 2,
         "waveInterval": 0.5,
         "teleRadius": 90
       },
-      "summon": { "windup": 0.9, "count": 3, "kind": "imp" },
+      "summon": {
+        "windup": 0.9,
+        "count": 3,
+        "kind": "imp",
+        "teleRadius": 70,
+        "minPlayerDist": 150,
+        "minR": 40,
+        "maxR": 160
+      },
       "restBetween": [0.6, 1.1],
       "restMultByPhase": [1, 0.8, 0.6],
       "speedMultByPhase": [1, 1.05, 1.15],
@@ -209,6 +233,13 @@
       }
     }
   },
-  "guardians": { "rotation": ["gardien", "cerbere", "minos", "colosse"] },
+  "guardians": {
+    "rotation": ["gardien", "cerbere", "minos", "colosse"],
+    "spawnTime": 1.2,
+    "clearHeal": 0.5,
+    "knockbackMult": 0.15,
+    "restApproachDist": 160,
+    "reinforce": { "minPlayerDist": 180, "minR": 60, "maxR": 260 }
+  },
   "GUARDIAN_MIN_TELE": 0.5
 }

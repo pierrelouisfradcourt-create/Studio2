@@ -20,8 +20,8 @@ static func slam(game: Dictionary, e: Dictionary, d: Dictionary, dt: float, spee
 	var p: Dictionary = game.player
 	e.patternT -= dt
 	var tp := D6BossCommon.to_player(game, e)
-	e.vx = tp.dx * speed * 0.5
-	e.vy = tp.dy * speed * 0.5
+	e.vx = tp.dx * speed * s.approachMult
+	e.vy = tp.dy * speed * s.approachMult
 	if e.patternStep < s.count and e.patternT <= 0.0:
 		D6Combat.spawn_hazard(game, {
 			"shape": "circle", "x": p.x, "y": p.y, "r": s.radius, "delay": s.windup * D6BossCommon.wmult(),
@@ -40,9 +40,9 @@ static func charge(game: Dictionary, e: Dictionary, d: Dictionary, dt: float, _s
 		return
 	_charge_rush(game, e, c, dt)
 
-## Charge, étape 0 : la ligne suit le héros (70 % du télégraphe), puis se fige.
+## Charge, étape 0 : la ligne suit le héros (la part `lockAt` du télégraphe), puis se fige.
 static func _charge_windup(game: Dictionary, e: Dictionary, c: Dictionary, windup: float) -> void:
-	if e.stateTime < windup * 0.7:
+	if e.stateTime < windup * c.lockAt:
 		var tp := D6BossCommon.to_player(game, e)
 		e.dirX = tp.dx
 		e.dirY = tp.dy
@@ -121,7 +121,7 @@ static func _ring_wave(game: Dictionary, e: Dictionary, r: Dictionary) -> void:
 		D6Projectiles.spawn_projectile(game, {
 			"owner": "enemy", "kind": "bossOrb", "x": e.x + D6Trig.cos(a) * e.r, "y": e.y + D6Trig.sin(a) * e.r,
 			"vx": D6Trig.cos(a) * r.speed, "vy": D6Trig.sin(a) * r.speed, "r": r.radius, "damage": r.damage * e.dmgScale,
-			"range": 1400.0, "sourceId": e.id,
+			"range": r.range, "sourceId": e.id,
 		})
 	D6State.emit(game, "enemyAttack", {"id": e.id, "x": e.x, "y": e.y, "enemy": "bossRing"})
 
@@ -129,11 +129,11 @@ static func summon(game: Dictionary, e: Dictionary, d: Dictionary, _dt: float = 
 	var s: Dictionary = d.summon
 	if e.patternStep == 0:
 		# Invocation : alerte inoffensive, dessinée autrement que le rouge « ça fait mal ».
-		e.tele = {"shape": "circle", "r": 70.0, "progress": e.stateTime / s.windup, "harmless": true}
+		e.tele = {"shape": "circle", "r": s.teleRadius, "progress": e.stateTime / s.windup, "harmless": true}
 		if e.stateTime >= s.windup:
 			e.tele = null
 			for i in range(int(s.count)):
-				var pt = D6Spawns.find_spawn_point(game, 14.0, 150.0, {"x": e.x, "y": e.y, "minR": e.r + 40.0, "maxR": e.r + 160.0})
+				var pt = D6Spawns.find_spawn_point(game, 14.0, s.minPlayerDist, {"x": e.x, "y": e.y, "minR": e.r + s.minR, "maxR": e.r + s.maxR})
 				if pt != null:
 					D6Spawns.queue_spawn(game, s.kind, pt.x, pt.y, {"summoned": true})
 			e.patternStep = 1.0

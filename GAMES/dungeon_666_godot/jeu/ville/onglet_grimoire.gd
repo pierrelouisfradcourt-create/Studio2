@@ -2,7 +2,8 @@ extends "res://jeu/ville/onglet.gd"
 ## Grimoire : les compétences et les gadgets de la classe équipée (équipé, à choisir, à débloquer),
 ## et le Super de la classe, rappelé (il ne se choisit pas : il vient avec la classe).
 
-const NOTE := "Compétence (bouton Lance) et gadget (charges par section) du %s."
+## Le texte nomme ce qui est RÉELLEMENT équipé (lu dans le profil), jamais une compétence en dur.
+const NOTE := "%s — compétence équipée : %s ; gadget équipé : %s (charges par section)."
 
 @onready var _note: Label = $Note
 @onready var _competences: GridContainer = $Competences
@@ -11,7 +12,7 @@ const NOTE := "Compétence (bouton Lance) et gadget (charges par section) du %s.
 
 func _dessiner() -> void:
 	var c: Dictionary = app.contenu.classes[app.profil.loadout.classId]
-	_note.text = NOTE % c.name
+	_note.text = NOTE % [c.name, _nom(app.contenu.skills, app.profil.loadout.skillId), _nom(app.contenu.gadgets, app.profil.loadout.gadgetId)]
 	_lister(_competences, "skills", "Compétence", c.skills, app.profil.loadout.skillId, "select_skill")
 	_lister(_gadgets, "gadgets", "Gadget", c.gadgets, app.profil.loadout.gadgetId, "select_gadget")
 	_vider(_super)

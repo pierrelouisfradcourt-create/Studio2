@@ -31,7 +31,9 @@
         "cancelMult",
         "inputBuffer",
         "attackBuffer",
-        "innateHp"
+        "innateHp",
+        "lungeStretch",
+        "deathDelay"
       ],
       "fermé": true,
       "champs": {
@@ -46,7 +48,9 @@
         "cancelMult": { "type": "nombre", "min": 0 },
         "inputBuffer": { "type": "nombre", "min": 0, "max": 1 },
         "attackBuffer": { "type": "nombre", "min": 0, "max": 1 },
-        "innateHp": { "type": "nombre", "min": 0 }
+        "innateHp": { "type": "nombre", "min": 0 },
+        "lungeStretch": { "type": "nombre", "min": 1 },
+        "deathDelay": { "type": "nombre", "min": 0 }
       }
     },
     "weaponBase": { "type": "nombre", "min": 0 },
@@ -80,7 +84,8 @@
         "strikeCancelFrom",
         "cancelsHitstop",
         "perfectDodgeSuper",
-        "perfectDodgeRefund"
+        "perfectDodgeRefund",
+        "chainFrom"
       ],
       "fermé": true,
       "champs": {
@@ -93,7 +98,8 @@
         "strikeCancelFrom": { "type": "nombre", "min": 0, "max": 1 },
         "cancelsHitstop": { "type": "booleen" },
         "perfectDodgeSuper": { "type": "nombre", "min": 0, "max": 1 },
-        "perfectDodgeRefund": { "type": "nombre", "min": 0, "max": 1 }
+        "perfectDodgeRefund": { "type": "nombre", "min": 0, "max": 1 },
+        "chainFrom": { "type": "nombre", "min": 0, "max": 1 }
       }
     },
     "comboResetTime": { "type": "nombre", "min": 0 },
@@ -119,13 +125,28 @@
     },
     "autoAim": {
       "type": "objet",
-      "requis": ["range", "skillRange", "coneDeg", "movePreference"],
+      "requis": [
+        "range",
+        "skillRange",
+        "coneDeg",
+        "movePreference",
+        "outOfConePenalty",
+        "stickyTime",
+        "stickyBonus",
+        "threatBonus",
+        "eliteBonus"
+      ],
       "fermé": true,
       "champs": {
         "range": { "type": "nombre", "min": 0 },
         "skillRange": { "type": "nombre", "min": 0 },
         "coneDeg": { "type": "nombre", "min": 0, "max": 360 },
-        "movePreference": { "type": "nombre", "min": 0, "max": 1 }
+        "movePreference": { "type": "nombre", "min": 0, "max": 1 },
+        "outOfConePenalty": { "type": "nombre", "min": 0 },
+        "stickyTime": { "type": "nombre", "min": 0 },
+        "stickyBonus": { "type": "nombre", "min": 0 },
+        "threatBonus": { "type": "nombre", "min": 0 },
+        "eliteBonus": { "type": "nombre", "min": 0 }
       }
     },
     "combat": {
@@ -140,7 +161,19 @@
         "stunDamageTakenMult",
         "stunGuard",
         "stunGuardSources",
-        "minChillMult"
+        "minChillMult",
+        "novaChillMult",
+        "armorCap",
+        "minDashRechargeMult",
+        "minSkillCooldownMult",
+        "maxCritChance",
+        "maxLifesteal",
+        "firstAttackDelay",
+        "firstAttackSpread",
+        "stunExitCooldown",
+        "burnTick",
+        "procBlastDelay",
+        "blastKnockback"
       ],
       "fermé": true,
       "champs": {
@@ -153,7 +186,19 @@
         "stunDamageTakenMult": { "type": "nombre", "min": 1 },
         "stunGuard": { "type": "nombre", "min": 0 },
         "stunGuardSources": { "type": "liste", "elements": { "type": "texte", "min": 1 } },
-        "minChillMult": { "type": "nombre", "min": 0, "max": 1 }
+        "minChillMult": { "type": "nombre", "min": 0, "max": 1 },
+        "novaChillMult": { "type": "nombre", "min": 0, "max": 1 },
+        "armorCap": { "type": "nombre", "min": 0, "max": 1 },
+        "minDashRechargeMult": { "type": "nombre", "min": 0.05, "max": 1 },
+        "minSkillCooldownMult": { "type": "nombre", "min": 0.05, "max": 1 },
+        "maxCritChance": { "type": "nombre", "min": 0, "max": 1 },
+        "maxLifesteal": { "type": "nombre", "min": 0, "max": 1 },
+        "firstAttackDelay": { "type": "nombre", "min": 0 },
+        "firstAttackSpread": { "type": "nombre", "min": 0 },
+        "stunExitCooldown": { "type": "nombre", "min": 0 },
+        "burnTick": { "type": "nombre", "min": 0.02 },
+        "procBlastDelay": { "type": "nombre", "min": 0 },
+        "blastKnockback": { "type": "nombre", "min": 0 }
       }
     }
   }

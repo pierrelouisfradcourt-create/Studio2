@@ -25,7 +25,24 @@
               "fermé": true,
               "champs": {
                 "label": { "type": "texte", "min": 1 },
-                "effect": { "type": "texte", "min": 1 },
+                "effect": {
+                  "type": "texte",
+                  "valeurs": [
+                    "none",
+                    "bloodBoon",
+                    "heal",
+                    "gadgetCharge",
+                    "cursedChest",
+                    "mammonBoon",
+                    "gold",
+                    "soulBoon",
+                    "bloodSouls",
+                    "reforge",
+                    "pact",
+                    "superToHp",
+                    "hpToSuper"
+                  ]
+                },
                 "cost": { "type": "nombre", "min": 0 },
                 "souls": { "type": "nombre", "min": 0 },
                 "hp": { "type": "nombre", "min": 0 },
@@ -33,8 +50,11 @@
                 "levels": { "type": "entier", "min": 1 },
                 "pct": { "type": "nombre", "min": 0, "max": 100 },
                 "need": { "type": "nombre", "min": 0, "max": 100 },
-                "pact": { "type": "texte", "ref": "pactes" }
-              }
+                "pact": { "type": "texte", "ref": "pactes" },
+                "rarity": { "type": "texte", "min": 1 },
+                "family": { "type": "texte", "min": 1 }
+              },
+              "_note": "Les champs qu'un effet lit, et leur présence dans le libellé ({champ}), sont gardés par tests/regles/donnees.gd."
             }
           }
         }

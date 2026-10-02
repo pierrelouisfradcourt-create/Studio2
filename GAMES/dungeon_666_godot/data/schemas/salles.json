@@ -14,7 +14,16 @@
         "spawnMinPlayerDist",
         "pickupMagnetRange",
         "pickupMagnetSpeed",
-        "healOrbAmount"
+        "healOrbAmount",
+        "spawnTime",
+        "rewardRadius",
+        "calmRadius",
+        "pickupSettle",
+        "pickupFriction",
+        "pickupSpeed",
+        "pickupSpeedSpread",
+        "pickupRadius",
+        "goldRadius"
       ],
       "fermé": true,
       "champs": {
@@ -25,7 +34,16 @@
         "spawnMinPlayerDist": { "type": "nombre", "min": 0 },
         "pickupMagnetRange": { "type": "nombre", "min": 0 },
         "pickupMagnetSpeed": { "type": "nombre", "min": 0 },
-        "healOrbAmount": { "type": "nombre", "min": 0 }
+        "healOrbAmount": { "type": "nombre", "min": 0 },
+        "spawnTime": { "type": "nombre", "min": 0 },
+        "rewardRadius": { "type": "nombre", "min": 1 },
+        "calmRadius": { "type": "nombre", "min": 1 },
+        "pickupSettle": { "type": "nombre", "min": 0 },
+        "pickupFriction": { "type": "nombre", "min": 0 },
+        "pickupSpeed": { "type": "nombre", "min": 0 },
+        "pickupSpeedSpread": { "type": "nombre", "min": 0 },
+        "pickupRadius": { "type": "nombre", "min": 1 },
+        "goldRadius": { "type": "nombre", "min": 1 }
       }
     },
     "LAYOUTS": { "type": "objet", "min": 1, "chaque": { "type": "liste", "elements": { "type": "rect" } } },

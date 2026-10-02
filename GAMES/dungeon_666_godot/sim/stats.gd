@@ -4,8 +4,6 @@ extends RefCounted
 ## Statistiques dérivées du héros : base + équipement + bénédictions. Recalculées à chaque
 ## changement de build (jamais à chaque image). Produit aussi la liste des procs.
 
-const LEVEL_STEP := 0.5 # chaque niveau supplémentaire d'une bénédiction : +50 % de sa valeur
-
 static func _add_stat(st: Dictionary, stat: String, v: float) -> void:
 	if stat.ends_with("Mult"):
 		# multiplicateurs additifs entre eux (1 + somme) ; clé absente : undefined + v = NaN
@@ -27,10 +25,11 @@ static func recompute_stats(game: Dictionary) -> void:
 	_add_boons(game, st, procs)
 
 	# Bornes de sécurité : aucune combinaison ne peut casser la boucle de jeu.
-	st.dashRechargeMult = maxf(0.35, st.dashRechargeMult)
-	st.skillCooldownMult = maxf(0.35, st.skillCooldownMult)
-	st.critChance = minf(0.75, st.critChance)
-	st.lifesteal = minf(0.15, st.lifesteal)
+	var caps: Dictionary = game.tuning.combat
+	st.dashRechargeMult = maxf(caps.minDashRechargeMult, st.dashRechargeMult)
+	st.skillCooldownMult = maxf(caps.minSkillCooldownMult, st.skillCooldownMult)
+	st.critChance = minf(caps.maxCritChance, st.critChance)
+	st.lifesteal = minf(caps.maxLifesteal, st.lifesteal)
 	_apply_to_player(game, st, procs)
 
 ## PERMANENT : bonus de la classe et améliorations du Sanctuaire (profil).
@@ -99,8 +98,9 @@ static func _add_boons(game: Dictionary, st: Dictionary, procs: Array) -> void:
 		var def = D6Boons.boon_def(b.id)
 		if def == null:
 			continue
-		# Une bénédiction `noScale` vaut sa valeur entière quel que soit son niveau (jamais 1,5 charge de dash).
-		var lv: float = 1.0 if D6Js.truthy(def.get("noScale")) else 1.0 + LEVEL_STEP * (b.level - 1.0)
+		# Une bénédiction `noScale` vaut sa valeur entière quel que soit son niveau (jamais 1,5 charge de dash) ;
+		# les autres gagnent boons.levelStep de leur valeur par niveau supplémentaire.
+		var lv: float = 1.0 if D6Js.truthy(def.get("noScale")) else 1.0 + game.tuning.boons.levelStep * (b.level - 1.0)
 		var raw: float = D6Boons.boon_value(def, b.rarity) * lv
 		var pct: bool = D6Js.truthy(def.get("pct"))
 		var v: float = raw / 100.0 if pct else raw

@@ -4,6 +4,7 @@ extends Control
 ## quand la largeur manque. Tables lues dans D6Data.tables().boons, jamais recopiées.
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
+const Triangles = preload("res://jeu/theme/triangles.gd")
 const PAS := 16.0
 const DEMI := 6.0 # demi-diagonale d'un losange
 const LIGNE := 16.0
@@ -49,12 +50,14 @@ func _dimensionner() -> void:
 
 func _draw() -> void:
 	var n := _par_ligne()
+	var lot := Triangles.new() # tous les losanges en un appel de dessin
 	for i in range(_couleurs.size()):
 		var c := Vector2((i % n) * PAS + DEMI + 1.0, (i / n) * LIGNE + LIGNE / 2.0)
 		var cols: Array = _couleurs[i]
 		var haut := c + Vector2(0.0, -DEMI)
 		var bas := c + Vector2(0.0, DEMI)
 		var contour := PackedVector2Array([haut, c + Vector2(DEMI, 0.0), bas, c + Vector2(-DEMI, 0.0), haut])
-		draw_colored_polygon(PackedVector2Array([haut, bas, c + Vector2(-DEMI, 0.0)]), cols[0])
-		draw_colored_polygon(PackedVector2Array([haut, c + Vector2(DEMI, 0.0), bas]), cols[cols.size() - 1])
-		draw_polyline(contour, Color(Couleurs.UI["void"], 0.85), 1.5, true)
+		lot.polygone(PackedVector2Array([haut, bas, c + Vector2(-DEMI, 0.0)]), cols[0])
+		lot.polygone(PackedVector2Array([haut, c + Vector2(DEMI, 0.0), bas]), cols[cols.size() - 1])
+		lot.polyligne(contour, Color(Couleurs.UI["void"], 0.85), 1.5)
+	lot.tracer(self)

@@ -5,7 +5,8 @@ extends "res://jeu/monde/creatures/calque.gd"
 ## des corps à jour et PEINDRE un corps quand son nœud le demande : marque d'élite, puis le dessin
 ## de son archétype (archetypes.gd, nouveaux.gd) ou de son modèle de Gardien (gardiens.gd).
 ## Coût : un corps n'est repeint que si sa pose change ou vingt fois par seconde ; entre deux, le
-## moteur rejoue ses commandes sous un nouveau repère.
+## moteur rejoue ses commandes sous un nouveau repère. Et un corps est UN lot de triangles (le
+## pinceau, pinceau.gd) : 1 appel de dessin, lueurs comprises.
 
 const Corps = preload("res://jeu/monde/creatures/corps.gd")
 const Archetypes = preload("res://jeu/monde/creatures/archetypes.gd")
@@ -62,13 +63,15 @@ func _rendre(vus: Dictionary) -> void:
 			_noeuds.erase(id)
 
 ## Dessin d'un corps, dans SON repère (origine au centre, x = devant lui). Appelé par son nœud.
+## Un corps en plein bond est peint plus haut que son nœud, qui garde le rang de son point au sol.
 func peindre(n: Node2D) -> void:
 	var g = jeu()
 	if g == null:
 		return
 	var e: Dictionary = n.e
-	p.ci = n
-	p.alpha = 1.0
+	p.commencer(n)
+	if n.envol > 0.0:
+		p.poser(Transform2D(0.0, n.transform.affine_inverse().basis_xform(Vector2(0.0, -n.envol))))
 	var r: float = e.r
 	if D6Js.truthy(e.eliteMod):
 		_marque_elite(e, r)
@@ -80,7 +83,7 @@ func peindre(n: Node2D) -> void:
 		_nouveaux.dessiner(e, r, corps, g, n, temps())
 	else:
 		_bestiaire.dessiner(e, r, corps, g, n, temps())
-	p.alpha = 1.0
+	p.finir()
 	p.ci = self
 
 ## Champion : anneau en tirets de sa couleur, qui tourne, et trois pointes de la même couleur

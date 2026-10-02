@@ -53,34 +53,41 @@
           "champs": {
             "slam": {
               "type": "objet",
-              "requis": ["windup", "damage"],
+              "requis": ["windup", "damage", "approachMult"],
               "champs": {
                 "windup": { "type": "nombre", "min": 0.5 },
-                "damage": { "type": "nombre", "min": 0 }
+                "damage": { "type": "nombre", "min": 0 },
+                "approachMult": { "type": "nombre", "min": 0, "max": 1 }
               }
             },
             "charge": {
               "type": "objet",
-              "requis": ["windup", "damage"],
+              "requis": ["windup", "damage", "lockAt"],
               "champs": {
                 "windup": { "type": "nombre", "min": 0.5 },
-                "damage": { "type": "nombre", "min": 0 }
+                "damage": { "type": "nombre", "min": 0 },
+                "lockAt": { "type": "nombre", "min": 0, "max": 1 }
               }
             },
             "ring": {
               "type": "objet",
-              "requis": ["windup", "damage"],
+              "requis": ["windup", "damage", "range"],
               "champs": {
                 "windup": { "type": "nombre", "min": 0.5 },
-                "damage": { "type": "nombre", "min": 0 }
+                "damage": { "type": "nombre", "min": 0 },
+                "range": { "type": "nombre", "min": 1 }
               }
             },
             "summon": {
               "type": "objet",
-              "requis": ["windup", "kind"],
+              "requis": ["windup", "kind", "teleRadius", "minPlayerDist", "minR", "maxR"],
               "champs": {
                 "windup": { "type": "nombre", "min": 0.5 },
-                "kind": { "type": "texte", "ref": "ennemis" }
+                "kind": { "type": "texte", "ref": "ennemis" },
+                "teleRadius": { "type": "nombre", "min": 0 },
+                "minPlayerDist": { "type": "nombre", "min": 0 },
+                "minR": { "type": "nombre", "min": 0 },
+                "maxR": { "type": "nombre", "min": 0 }
               }
             }
           }
@@ -215,9 +222,25 @@
     },
     "guardians": {
       "type": "objet",
-      "requis": ["rotation"],
+      "requis": ["rotation", "spawnTime", "clearHeal", "knockbackMult", "restApproachDist", "reinforce"],
       "fermé": true,
-      "champs": { "rotation": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } } }
+      "champs": {
+        "rotation": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
+        "spawnTime": { "type": "nombre", "min": 0 },
+        "clearHeal": { "type": "nombre", "min": 0, "max": 1 },
+        "knockbackMult": { "type": "nombre", "min": 0, "max": 1 },
+        "restApproachDist": { "type": "nombre", "min": 0 },
+        "reinforce": {
+          "type": "objet",
+          "requis": ["minPlayerDist", "minR", "maxR"],
+          "fermé": true,
+          "champs": {
+            "minPlayerDist": { "type": "nombre", "min": 0 },
+            "minR": { "type": "nombre", "min": 0 },
+            "maxR": { "type": "nombre", "min": 0 }
+          }
+        }
+      }
     },
     "GUARDIAN_MIN_TELE": { "type": "nombre", "min": 0.4 }
   }

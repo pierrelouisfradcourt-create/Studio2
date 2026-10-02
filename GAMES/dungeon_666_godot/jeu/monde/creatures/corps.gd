@@ -9,6 +9,7 @@ extends Node2D
 ##   détente           il s'étire en avant à l'instant où le coup part
 ##   impact            écrasé puis étiré dans l'axe du coup reçu (e.flash, e.hitDirX/Y)
 ##   étourdissement    il vacille
+##   bond (Cerbère)    il grossit ; le dessin monte, le nœud reste au sol (`envol`)
 ## Repère du dessin : origine au centre, x = devant lui. Le nœud ne modifie jamais la partie.
 
 const CADENCE := 0.05 # s entre deux dessins d'un corps dont la pose ne change pas
@@ -27,6 +28,9 @@ var face := 0.0
 var allure := 0.0 # 0 immobile .. 1 à sa vitesse de marche
 var marche := 0.0 # phase du pas (rad), avance avec la distance parcourue
 var anticipation := 0.0 # 0..1 : part du télégraphe écoulée
+## Hauteur du bond en cours (u, vers le haut de l'écran). Le NŒUD reste au sol : son rang de
+## profondeur est celui de son point d'appui ; seul le dessin monte (ennemis.gd, peindre).
+var envol := 0.0
 
 var _cle := ""
 var _prochain := 0.0
@@ -137,7 +141,8 @@ func _repere(g: Dictionary, pos: Vector2, t: float, boss: bool) -> Transform2D:
 		d *= d * (0.5 if boss else 1.0)
 		ech *= Vector2(1.0 + 0.3 * d, 1.0 - 0.17 * d)
 		avance += 0.32 * e.r * d
-	var o := pos - Vector2(0.0, haut * e.r * 1.3)
+	envol = haut * e.r * 1.3
+	var o := pos
 	if e.stun > 0.0 and not boss:
 		angle += sin(t * 6.5 + e.id) * 0.26
 		o += Vector2(cos(t * 5.0 + e.id), sin(t * 5.0 + e.id) * 0.5) * 1.6

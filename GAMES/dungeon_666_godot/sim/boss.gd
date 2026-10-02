@@ -67,8 +67,9 @@ static func _enter_phase(game: Dictionary, e: Dictionary, d: Dictionary) -> void
 		model.onPhase.call(game, e, d)
 	var kinds = d.reinforcements.get(D6Js.num_str(e.phase))
 	if kinds != null:
+		var r: Dictionary = game.tuning.guardians.reinforce
 		for kind in kinds:
-			var pt = D6Spawns.find_spawn_point(game, 14.0, 180.0, {"x": e.x, "y": e.y, "minR": e.r + 60.0, "maxR": e.r + 260.0})
+			var pt = D6Spawns.find_spawn_point(game, 14.0, r.minPlayerDist, {"x": e.x, "y": e.y, "minR": e.r + r.minR, "maxR": e.r + r.maxR})
 			if pt != null:
 				D6Spawns.queue_spawn(game, kind, pt.x, pt.y, {"summoned": true})
 	D6Combat.spawn_pickup(game, "heal", e.x, e.y + e.r + 30.0, d.phaseHealOrb)
@@ -117,7 +118,7 @@ static func _rest(game: Dictionary, e: Dictionary, d: Dictionary, model: Diction
 		model.rest.call(game, e, d, dt, speed)
 	else:
 		var tp := D6BossCommon.to_player(game, e)
-		if tp.d > 160.0:
+		if tp.d > game.tuning.guardians.restApproachDist:
 			e.vx = tp.dx * speed
 			e.vy = tp.dy * speed
 	if e.stateTime >= e.restFor:

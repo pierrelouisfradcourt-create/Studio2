@@ -1,12 +1,17 @@
 {
-  "_note": "Les autels (salles d'événement) : texte et options. L'effet de chaque option est codé dans sim/run.gd ; ses nombres (coût, PV, Âmes) sont ici.",
+  "_note": "Les autels (salles d'événement) : texte et options. L'effet de chaque option est codé dans sim/run.gd ; TOUS ses nombres (coût, PV, Âmes, pourcentages) sont ici, et le libellé les reprend par {champ} : il ne peut pas dire autre chose que la règle.",
   "EVENTS": [
     {
       "id": "autel_sang",
       "title": "Autel de sang",
       "text": "Le sang frais coule encore sur la pierre. L'autel réclame une offrande.",
       "options": [
-        { "label": "Offrir 25 % de vos PV — recevoir une bénédiction rare", "effect": "bloodBoon" },
+        {
+          "label": "Offrir {pct} % de vos PV — recevoir une bénédiction rare",
+          "effect": "bloodBoon",
+          "pct": 25,
+          "rarity": "rare"
+        },
         { "label": "Passer votre chemin", "effect": "none" }
       ]
     },
@@ -15,8 +20,12 @@
       "title": "Fontaine des âmes",
       "text": "Une eau noire et tiède murmure des noms oubliés.",
       "options": [
-        { "label": "Boire — rend 40 % des PV", "effect": "heal40" },
-        { "label": "Remplir une fiole — +1 charge de gadget", "effect": "gadget1" }
+        { "label": "Boire — rend {pct} % des PV", "effect": "heal", "pct": 40 },
+        {
+          "label": "Remplir une fiole — +{gain} charge de gadget",
+          "effect": "gadgetCharge",
+          "gain": 1
+        }
       ]
     },
     {
@@ -24,7 +33,12 @@
       "title": "Coffre maudit",
       "text": "Des runes brûlantes scellent un coffre. Quelque chose y respire.",
       "options": [
-        { "label": "Forcer le coffre — objet rare, mais perdre 20 PV", "effect": "cursedChest" },
+        {
+          "label": "Forcer le coffre — objet rare, mais perdre {hp} PV",
+          "effect": "cursedChest",
+          "hp": 20,
+          "rarity": "rare"
+        },
         { "label": "Le laisser dormir", "effect": "none" }
       ]
     },
@@ -33,8 +47,13 @@
       "title": "Sanctuaire de Mammon",
       "text": "Une statue d'or tend la main. Elle sait ce que vous portez.",
       "options": [
-        { "label": "Donner 40 or — bénédiction d'Avarice", "effect": "mammonBoon", "cost": 40 },
-        { "label": "Prier — recevoir 25 or", "effect": "gold25" }
+        {
+          "label": "Donner {cost} or — bénédiction d'Avarice",
+          "effect": "mammonBoon",
+          "cost": 40,
+          "family": "avarice"
+        },
+        { "label": "Prier — recevoir {gain} or", "effect": "gold", "gain": 25 }
       ]
     },
     {
@@ -45,7 +64,8 @@
         {
           "label": "Céder {souls} Âmes (permanent) — recevoir une bénédiction épique",
           "effect": "soulBoon",
-          "souls": 40
+          "souls": 40,
+          "rarity": "epique"
         },
         {
           "label": "Vendre votre sang — perdre {hp} PV, gagner {gain} Âmes (permanent)",

@@ -4,6 +4,7 @@ extends Control
 ## écrite ici ; un liseré sombre la détache du sol.
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
+const Triangles = preload("res://jeu/theme/triangles.gd")
 const LISERE := 1.5
 
 ## Vrai : un disque (pièce d'or) au lieu d'un losange.
@@ -21,11 +22,13 @@ func _draw() -> void:
 	var c := size / 2.0
 	var d := minf(size.x, size.y) / 2.0
 	var encre := Color(Couleurs.UI["void"], 0.85)
-	if disque:
-		draw_circle(c, d + LISERE, encre, true, -1.0, true)
-		draw_circle(c, d, couleur, true, -1.0, true)
-		draw_arc(c, d * 0.55, 0.0, TAU, 16, couleur.darkened(0.3), 1.0, true)
-		return
+	var lot := Triangles.new()
 	var g := d + LISERE
-	draw_colored_polygon(PackedVector2Array([c + Vector2(0, -g), c + Vector2(g, 0), c + Vector2(0, g), c + Vector2(-g, 0)]), encre)
-	draw_colored_polygon(PackedVector2Array([c + Vector2(0, -d), c + Vector2(d, 0), c + Vector2(0, d), c + Vector2(-d, 0)]), couleur)
+	if disque:
+		lot.disque(c, d + LISERE, encre)
+		lot.disque(c, d, couleur)
+		lot.arc(c, d * 0.55, 0.0, TAU, 16, couleur.darkened(0.3), 1.0)
+	else:
+		lot.polygone(PackedVector2Array([c + Vector2(0, -g), c + Vector2(g, 0), c + Vector2(0, g), c + Vector2(-g, 0)]), encre)
+		lot.polygone(PackedVector2Array([c + Vector2(0, -d), c + Vector2(d, 0), c + Vector2(0, d), c + Vector2(-d, 0)]), couleur)
+	lot.tracer(self)

@@ -3,6 +3,7 @@ extends SceneTree
 ## coupée, et imprime images par seconde, temps d'image, appels de dessin et primitives du canevas.
 ##   <godot> --position -3000,-3000 --resolution 960x540 --path . --script res://jeu/monde/mesure.gd -- <scene.tscn> [secondes=8] [echauffement=2]
 ##   D666_CACHER=Entites,Murs : cache ces nœuds avant de mesurer (ce que coûte un calque = la différence).
+##   Scène de référence : res://jeu/essai/cout.tscn (troupe figée ; D666_ENNEMIS=20, D666_GARDIEN=cerbere).
 ## Outil d'essai (comme outils/capture.gd, dont il reprend le pilote) : jamais appelé par le jeu.
 
 var _scene: Node

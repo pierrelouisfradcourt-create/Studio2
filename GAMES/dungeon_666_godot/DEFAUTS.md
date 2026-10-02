@@ -77,6 +77,89 @@ Jouabilité après correction (20 et 20 graines) : solvabilité et classes PASS.
 Reste de la même famille, NON corrigé (équilibrage) : étourdir un ennemi pendant son TÉLÉGRAPHE
 annule le coup et lui rend une recharge de 0,3 s.
 
+## Troisième lot (2026-10-02) : une seule source pour les nombres, reste du tableau d'origine
+
+### Partie 1 — les nombres de réglage quittent le code (aucun changement de comportement)
+
+Preuve : `bash outils/verifier.sh` VERT avec les 70 parties de référence **inchangées** (0 en écart,
+10 712 points, sans réenregistrer). En plus, mesuré avant / après sur une copie du code d'avant :
+les 245 textes vus par le joueur (libellés d'autel dans deux états du héros, marchand, salles
+calmes, objets, bénédictions) sont identiques ; l'effet de chaque option de chaque autel et de
+l'élixir du marchand est identique sur 12 graines et deux états (468 cas) ; chacun des 71 nombres
+déplacés vaut, au bit près, le littéral qu'il remplace.
+
+**Autels d'origine** (`data/autels.json`, `sim/run.gd`). Leurs nombres sont dans l'option, le
+libellé les reprend par `{champ}` comme pour les autels ajoutés, le code n'en écrit plus aucun :
+autel de sang `pct` 25 et `rarity` rare ; fontaine `pct` 40 et `gain` 1 ; coffre maudit `hp` 20 et
+`rarity` rare ; Mammon `cost` 40, `family` avarice, `gain` 25 ; Registre `rarity` epique. Trois
+effets changent de nom (ils portaient un nombre) : `heal40` → `heal`, `gadget1` → `gadgetCharge`,
+`gold25` → `gold`. `_apply_event` (61 lignes) est découpée : `_apply_event`, `_event_boon`,
+`_event_chest`. Aucun libellé ne mentait. Gardes ajoutées à `tests/regles/donnees.gd` : chaque effet a
+les champs qu'il lit, raretés et familles existent, tout chiffre d'un libellé vient d'un `{champ}`
+et tout nombre d'option y est dit ; le schéma liste les effets connus.
+
+**Nombres déplacés vers `data/`** (71, autels à part) :
+
+| Fichier | Réglages (valeur) |
+|---|---|
+| `bestiaire.json` | archer : `cooldownJitter` [0,85 ; 1,25], `approachSlack` 60, `strafeMult` 0,7, `strafeFlip` 0,01, `fireRangeFrac` 0,9 (son déplacement passe par `D6AiCommon.keep_distance`, comme les archétypes ajoutés) ; diablotin : `lockAt` 0,7, `circleDist` 1,25, `circleWithin` 1,6, `flankSpeed` 0,6 ; brute : `triggerFrac` 0,85 ; bélier : `lockAt` 0,7 ; `elite.massMult` 1,5 |
+| `heros.json` | `player.lungeStretch` 1,5, `player.deathDelay` 1,4 ; `dash.chainFrom` 0,35 ; `autoAim` : `outOfConePenalty` 0,6, `stickyTime` 0,4, `stickyBonus` 60, `threatBonus` 40, `eliteBonus` 25 ; `combat` : `novaChillMult` 0,5, `armorCap` 0,6, `minDashRechargeMult` 0,35, `minSkillCooldownMult` 0,35, `maxCritChance` 0,75, `maxLifesteal` 0,15, `firstAttackDelay` 0,4, `firstAttackSpread` 0,8, `stunExitCooldown` 0,3, `burnTick` 0,25, `procBlastDelay` 0,12, `blastKnockback` 260 |
+| `gardiens.json` | Charon : `slam.approachMult` 0,5, `charge.lockAt` 0,7, `ring.range` 1400, `summon` : `teleRadius` 70, `minPlayerDist` 150, `minR` 40, `maxR` 160 ; `guardians` : `spawnTime` 1,2, `clearHeal` 0,5, `knockbackMult` 0,15, `restApproachDist` 160, `reinforce` {180, 60, 260} |
+| `salles.json` | `room` : `spawnTime` 0,25, `rewardRadius` 30, `calmRadius` 34, `pickupSettle` 0,35, `pickupFriction` 6, `pickupSpeed` 80, `pickupSpeedSpread` 120, `pickupRadius` 10, `goldRadius` 6 |
+| `etages.json` | `encounter.nextWaveAt` 0,25 |
+| `butin.json` | `economy` : `goldReward` {×3, 6 pièces}, `healReward` 0,3, `shopHeal` 0,4 (le texte « Rend 40 % des PV. » de l'élixir en est tiré), `shopPriceJitter` 9, `shopRareChance` 0,25, `salvage` {5, 10, 3} ; `loot` : `bossLegendaryChance` 0,2, `affixFloorScale` 0,012 |
+| `benedictions.json` | bloc `boons` (nouveau, `tuning.boons`) : `offerSize` 3, `duoChance` 0,6, `levelStep` 0,5 |
+
+`stunExitCooldown` (0,3 s) est la recharge rendue après un étourdissement : la valeur n'a pas
+changé, c'est une décision de Pierre ; elle est seulement devenue réglable. `D6Profile.salvage_souls`
+n'a plus sa copie de la table des Âmes (elle lit `town.salvageSouls`). `D6Loot.salvage_value` prend
+maintenant la partie en premier argument (appelée seulement par `sim/run.gd`).
+
+**Laissés dans le code**, et pourquoi :
+
+| Nombres | Raison |
+|---|---|
+| Recul de la Lance (120, `player.gd`) | **Bloqué par un test existant** : `tests/regles/v2_kits.gd`, ligne 132, compare la Lance à un dictionnaire exact ; y ajouter `recoil` le fait rougir. À déplacer dans `skills.lance.recoil` (le champ existe pour d'autres compétences) quand la ligne pourra être changée. |
+| Tolérances et sentinelles : `1e-6`, `1e-9`, `1e-3`, `TINY`, `EPS`, `MIN_DIR`, `NEVER_TARGETED`, `COMBO_EXPIRED` (99), `UNREACHED`, `NEVER`, bornes de `sanitize_profile` (1e6, 1e9), arrondis d'affichage (×10, ×100, ×1000), seuil d'un tic de brûlure (0,5 PV) | Technique : aucun n'est un réglage. |
+| Garde-fous : `DOOR_GUARD`, `WAVE_GUARD`, `PLACEMENT_TRIES`, 4 retirages d'attaque de Gardien, `ROOM_POINT_STEPS` | Bornes de boucles. |
+| Résolution des calculs : `MIN_STEP`, `STEP_RADIUS_FRAC` (physique), `CELL`, `INFLATE`, `REFRESH_TICKS` (navigation), `THROW_STEP`, `SIM_HZ`, `DT`, sels et constantes d'empreinte | Technique. |
+| Marges de contact et de dessin d'un télégraphe : +4, +8, +10, +14 u, arc 0,9 du diablotin, `CHARGE_HIT_PAD`, bouche d'un tir (`MUZZLE`, rayon + 4), `LAND_OVERLAP`, `CLEARANCE`, marge d'allonge (6 u) | Géométrie d'équité (« esquiver au pixel le bord rouge suffit ») liée au dessin, pas un réglage d'équilibre. |
+| Placement : `REWARD_CLEARANCE`, `PLACEMENT_MARGIN`, `CROWD_DIST`, rayon 14 / 30 passé à la recherche d'un point d'apparition, spirale de la récompense, entrée du héros (−70 u), place du Gardien (35 % de la hauteur), répartition des portes (32 % + 36 %), orbe de phase (+30 u), `DOOR_W`, `DOOR_H` | Mise en place de la salle. `DOOR_H` est recopié dans `jeu/monde/portes.gd` (`SEUIL`) : le déplacer seul ne ferait pas une source unique. |
+| Seuils d'entrée : `MANUAL_DEADZONE` 0,15, `MOVE_DEADZONE` 0,2 (`aim.gd`), et leurs jumeaux écrits en dur dans `player.gd` (0,15 ; 0,04 = 0,2² ; 0,2 ; 0,0001) | Lecture des commandes. Les réunir changerait un bit (0,2 × 0,2 ≠ 0,04) : pas sans décision. |
+| Axe du recul : `KNOCK_AXIS` 0,7 (`kit_common.gd`) et 0,7 / 0,3 (`player.gd`) | Forme d'une formule, écrite deux fois ; 1 − 0,7 ≠ 0,3 au dernier bit, les réunir changerait les parties. |
+| Poids du score d'objet (`item_score` : /2, /12, /25, ×8, +2) | Formule de comparaison « mieux / moins bien », pas un réglage de jeu — mais voir le point 15 plus bas. |
+| `HIT_FLASH` 0,1, `HURT_FLASH` 0,35, frein du corps mort (0,85), hauteur de cloche d'un lancer | Retour visuel : aucune règle ne les lit. |
+| `MIN_HP` 1 (`run.gd`) | Une règle (« un paiement en PV n'est jamais mortel »), pas un réglage. |
+| Pile ou face (`< 0,5`) | Tirages équiprobables. |
+
+### Partie 2 — défauts restants du tableau d'origine
+
+Garde : `tests/regles/v3_defauts_3.gd` (7 tests : 5 rouges sur le code d'avant, verts après ; 2 témoins).
+
+| # | Point | Verdict | Avant → après | Test |
+|---|---|---|---|---|
+| 13 | `boss_minos`, `_sweep` : un tirage pour rien | **défaut, corrigé** | Dès la phase 2 (une brèche par bande), la brèche commune était tirée puis jetée : 9 tirages au lieu de 8 pour un balayage de 6 bandes. Après : elle n'est tirée que si elle sert. Rien ne change pour le joueur, sauf la suite des tirages. | « défaut 13 » |
+| 14 | `boss_colosse`, `geoliers` : appel consommé sans geôlier | **défaut, corrigé** | Sans point d'apparition libre, l'appel de la phase était compté, le bouclier levé puis aussitôt retombé, « invocation » et « bouclier » annoncés pour rien. Après : un appel qui ne fait venir personne ne compte pas et n'annonce rien ; le Colosse pourra rappeler. Un appel partiel (un geôlier sur deux) compte. `geoliers` est découpée (`_call_jailers`, `_raise_shield`). | « défaut 14 » |
+| 15 | `profile`, `_stash_push` : à scores égaux le plus ancien part | **départage laissé tel quel ; un vrai problème en amont, à trancher par Pierre** | Mesuré sur 300 coffres de 24 objets trouvés : dans 292, le plus bas score est partagé — le départage joue presque à chaque éviction. La raison : 20 % des objets trouvés ont un score de 0 (talismans communs, sans base ni affixe), et les exemplaires forgés (arme de départ, arme débloquée en Ville) ainsi que l'armure de départ portent un score de 0 **écrit en dur**. Conséquence mesurée : les « Dagues ébréchées » forgées au déblocage (payé en Âmes) quittent un coffre plein avant des amulettes vides plus récentes, et ne se reforgent pas (« déjà débloqué »). Le départage n'en est pas la cause (n'importe quel ordre perdrait un objet de score 0) ; la corriger demande un choix — donner aux exemplaires forgés leur vrai score (5 pour une arme de base : change les comparaisons affichées), ou protéger le dernier exemplaire d'un type débloqué. Non corrigé. | « point 15 » (témoin) |
+| 16 | `game`, `create_game` : deux identifiants pris à chaque partie | **pas un défaut, non corrigé** | Les identifiants de l'équipement de départ sont pris même si le profil a déjà son équipement. Seul effet : la numérotation commence à 3. C'est ce qui fait qu'une même graine donne la même partie (mêmes identifiants, même empreinte) avec un profil neuf ou repris ; ne plus les prendre décalerait tous les identifiants selon le profil et changerait les 70 références sans rien apporter. | « point 16 » (témoin) |
+| 17 | `physics`, obstacles résolus après les murs | **défaut de la physique, corrigé par précaution** | Les salles « alcoves » et « goulet » ont des obstacles collés au mur. Un corps dont le centre est DANS un tel obstacle, plus près du mur que des autres bords, en était sorti… dans le mur, et y retombait à chaque image (reproduit : diablotin rendu en x = 11, hors de la salle). Après : sortie par le bord le plus proche qui reste dans la salle. **Aucun chemin de jeu trouvé pour y arriver** : les déplacements sont sous-découpés, et la seule poussée sans collision (le héros qui repousse un ennemi) n'y mène pas — 62,9 millions de couples héros/ennemi valides essayés autour de ces obstacles, 0 cas. Correction sans effet sur les références (0 partie). Garde de données ajoutée (`donnees.gd`) : entre un obstacle et un mur, rien ne passe ou le plus gros corps passe. | « défaut 17 » |
+| 18 | `physics`, ligne de vue échantillonnée tous les 16 u ; tirs testés au point d'arrivée | **défaut, corrigé** | Regard : sur 20 000 regards au hasard entre deux points libres, 0,6 à 2 % selon la salle passaient à travers un coin de pilier (corde de moins de 16 u entre deux échantillons) : un ennemi « voyait » le héros et marchait, tirait ou chargeait droit dans le coin ; la visée assistée prenait une cible cachée. Tir : la collision ne regardait que le point d'arrivée de l'image ; une flèche (6,3 u par image), une Lance (15 u), un carreau d'arbalète (1400 u/s : 23,3 u) traversaient un coin (5 flèches sur 12 dans le test). Après : test exact du segment contre chaque obstacle (`D6Physics.segment_hits_obstacle`), pour les regards (`line_of_sight`) et pour les tirs (`shot_blocked` : projectiles et tirs du héros). Raser un bord ou toucher un coin n'est pas traverser. | « défaut 18 » (deux tests) |
+
+Références réenregistrées une fois : **64 parties sur 70 ont changé**, 10 714 points de contrôle
+(10 712 avant). Six sont identiques au bit près : `arene`, `entrainement_cerbere`, `gardien_36_hache`,
+`gardien_54_arc`, `gardien_54_sans_dash`, `gardien_72_lame`. Attribution vérifiée avant de
+réenregistrer, sur onze copies du projet (une seule correction active, puis toutes sauf une) :
+
+- aucune correction : 0 partie en écart ;
+- 13 seule : 1 partie (`phases_minos`, image 2440 : un tirage de moins dans le générateur de l'IA) ;
+- 14 seule, 17 seule : 0 partie ;
+- 18, regards seuls : 63 parties (ex. `etage_14_martele`, image 70 : un diablotin en (768, 136)
+  voyait le héros en (451, 619) à travers le coin haut-gauche du pilier central, corde de 7,8 u ;
+  il le contourne maintenant) ;
+- 18, tirs seuls : 13 parties, dont une que les regards ne touchent pas (`gardien_final_666`,
+  image 2052 : un orbe de Charon passait le coin d'un pilier de l'arène, il s'y arrête) ;
+- les cinq ensemble : 64 parties, exactement la réunion des précédentes.
+
 ## Vu en passant, non corrigé
 
 | Où | Constat | Pourquoi non corrigé |
@@ -84,7 +167,14 @@ annule le coup et lui rend une recharge de 0,3 s.
 | `sim/run.gd`, autels `bloodSouls`, `hpToSuper`, `cursedChest` | Même famille que le point 2b : à 1 PV, « Vendre votre sang » donne 20 Âmes PERMANENTES sans rien coûter, « Briser la clepsydre » remplit la jauge sans rien coûter, le coffre maudit ne coûte rien. | Hors de la liste ; `v2_contenu_autels.gd` (« jamais mortel ») décrit le paiement partiel comme voulu. Décision de Pierre. |
 | `sim/enemies.gd`, `_separate` ; `sim/boss_charon.gd`, charge | Le corps du héros arrête la charge de Charon : le héros « infiniment lourd » repousse le Gardien à chaque image, qui reste collé à lui jusqu'à la fin de la ruée et n'atteint jamais le mur (mesuré : parti à 240 u, arrêté à 56 u du héros). Probablement pareil pour le Bélier. | Ressenti de combat : décision de Pierre. |
 | `data/bestiaire.json`, Bélier | Un Bélier qui percute un mur peut ré-attaquer après 1,4 s (étourdi) + 0,3 s ; un Bélier qui ne percute rien, après 0,6 s + 1,6 s. Rater le mur est donc plus lent que le percuter. De même, étourdir un ennemi pendant son télégraphe annule le coup et lui rend une recharge de 0,3 s. | Équilibrage (hors du point 7, qui ne vise que la récupération). |
-| `sim/run.gd`, `_apply_event` | Les nombres des autels d'origine (25 % de PV, 40 % de soin, 20 PV, 25 or) sont dans le code ET dans les libellés de `data/autels.json` : deux sources. La fonction fait 61 lignes (limite : 50). | Hors de la liste ; les autels ajoutés lisent déjà leurs nombres dans les données. |
-| `sim/ai_common.gd` | La variation de recharge de l'archer (×0,85 à ×1,25) est une constante du code ; les archétypes ajoutés ont la leur en données (`cooldownJitter`). | Déplacer un nombre vers `data/` change le schéma : à faire à part. |
+| `sim/run.gd`, `_apply_event` ; `sim/ai_common.gd` | Nombres des autels d'origine et variation de recharge de l'archer écrits dans le code. | **Fait au troisième lot** (partie 1). |
 | `jeu/ville/onglet_grimoire.gd`, ligne 5 | « Compétence (bouton Lance) » : le même défaut que le point 9, côté affichage. | `jeu/` appartient à un autre chantier. |
-| Reste du tableau d'origine | Portes ouvertes dès la mort du Gardien, `starterItems` et ses deux identifiants, `stashPush` à scores égaux, tirage perdu de `boss_minos.sweep`, appel perdu de `boss_colosse.geoliers`, obstacles résolus après les murs, recul départagé au dernier bit. | Hors de la liste de cette passe (design, ou sans effet connu). |
+| Reste du tableau d'origine | `starterItems`, `stashPush`, `boss_minos.sweep`, `boss_colosse.geoliers`, obstacles et murs : **traités au troisième lot** (points 13 à 18). Restent : portes ouvertes dès la mort du Gardien, recul départagé au dernier bit. | Design (décision de Pierre) ; sans effet connu. |
+| `sim/profile.gd`, `sim/loot.gd` : score des objets forgés | Arme de départ, arme débloquée en Ville et armure de départ portent `score: 0.0` écrit en dur, comme un talisman commun vide : premiers évincés d'un coffre plein, et toujours « moins bien » dans les comparaisons. Détail : point 15. | Choix de règle (vrai score, ou dernier exemplaire protégé) : décision de Pierre. |
+| `data/autels.json`, mots des libellés | Les nombres d'un libellé viennent des champs ; les MOTS non : « bénédiction rare », « épique », « objet rare », « d'Avarice » sont écrits à la main à côté des champs `rarity` et `family`. Changer le champ sans le mot ferait mentir le libellé. « +{gain} charge » ne s'accorde pas au pluriel. | Demande un libellé composé de noms (raretés, familles) : à décider. |
+| `data/autels.json`, Miroir d'orgueil | `hp` 20 et `pct` 25 de l'option redisent les nombres du pacte `reflet_brise` (`data/benedictions.json`) : deux sources, tenues égales par `tests/regles/v2_contenu_autels.gd` (« le libellé et le pacte disent les mêmes… »). | Le test existant lit ces deux champs : les retirer le ferait rougir. |
+| `tests/regles/v2_contenu_autels.gd`, Forge | Le test écrit `0.5` en dur pour le gain par niveau, maintenant réglable (`boons.levelStep`) : changer le réglage le fera rougir. | Test existant. |
+| `data/butin.json`, `loot.bossGuaranteedRare` | Réglage que rien ne lit : après un Gardien, l'objet est « rare » (ou légendaire) par le code de `sim/run.gd`, quel que soit ce booléen. | Le brancher ou le retirer : à décider (le schéma l'exige). |
+| `sim/boss*.gd` | Les invocations de Gardien cherchent un point d'apparition pour un corps de 14 u, quel que soit l'ennemi invoqué (un renfort plus gros qu'un archer apparaîtrait trop près d'un obstacle). | Sans effet avec les renforts actuels (rayons 12 à 14). |
+| `sim/projectiles.gd`, `sim/kit_shots.gd` | Un tir arrêté par un coin garde sa position d'arrivée (au plus un pas après le coin) : l'impact s'affiche là, pas sur le pilier. | Affichage ; le point d'entrée exact demanderait de le calculer. |
+| `sim/state.gd`, `create_player` | 51 lignes (limite : 50) : un seul dictionnaire. | Hors de la liste. |

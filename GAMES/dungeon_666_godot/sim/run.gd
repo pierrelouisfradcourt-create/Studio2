@@ -17,9 +17,7 @@ extends RefCounted
 ## REWARD_LABELS et EVENTS se lisent dans D6Data.tables().run.
 
 const DOOR_GUARD := 20.0 # garde-fou du tirage de la seconde porte
-const BLOOD_COST := 0.25 # autel de sang : part des PV max offerte (le libellé de data/autels.json dit « 25 % »)
 const MIN_HP := 1.0 # un paiement en PV n'est jamais mortel : il laisse au moins ceci
-const BLOOD_RARITY := "rare" # autel de sang : rareté promise, au moins
 
 static func create_run(start_floor) -> Dictionary:
 	return {
@@ -96,7 +94,7 @@ static func _place_player(game: Dictionary, info: Dictionary) -> void:
 static func _enter_calm_room(game: Dictionary, plan: Dictionary) -> void:
 	game.room.cleared = true
 	var spot: Dictionary = D6Room.reward_spot(game.room)
-	game.room.interact = {"kind": plan.kind, "x": spot.x, "y": spot.y, "r": 34.0, "used": false}
+	game.room.interact = {"kind": plan.kind, "x": spot.x, "y": spot.y, "r": game.tuning.room.calmRadius, "used": false}
 	if plan.kind == "shop":
 		game.room.interact.offers = _roll_shop(game)
 	if plan.kind == "event":
@@ -151,7 +149,7 @@ static func _cancel_enemy_attacks(game: Dictionary) -> void:
 
 ## Entraînement : aucune récompense ; une seule porte, retour en Ville.
 static func _clear_practice(game: Dictionary) -> void:
-	D6Combat.heal_player(game, game.player.maxHp * 0.5, true)
+	D6Combat.heal_player(game, game.player.maxHp * game.tuning.guardians.clearHeal, true)
 	D6State.emit(game, "checkpoint", {"floor": game.run.floor, "practice": true})
 	D6Room.make_doors(game, [{"reward": "town"}])
 	D6State.emit(game, "doorsOpen", {"count": 1.0})
@@ -175,15 +173,15 @@ static func _clear_boss(game: Dictionary, cx: float, cy: float) -> void:
 	if not game.sandbox:
 		meta.souls += souls
 		game.telemetry.soulsEarned += souls
-	D6Combat.heal_player(game, game.player.maxHp * 0.5, true)
+	D6Combat.heal_player(game, game.player.maxHp * game.tuning.guardians.clearHeal, true)
 	sync_purse(game)
 	D6State.emit(game, "checkpoint", {"floor": cp, "guardian": kind, "souls": souls})
 	if D6Js.truthy(game.info.isFinal):
 		game.mode = "victory"
 		D6State.emit(game, "victory", {"floor": game.run.floor})
 		return
-	var rar := "legendaire" if D6Rng.rand(game.rng.gen) < 0.2 else "rare"
-	room.interact = {"kind": "loot", "x": cx, "y": cy, "r": 30.0, "used": false, "item": D6Loot.generate_item(game, {"rarity": rar})}
+	var rar := "legendaire" if D6Rng.rand(game.rng.gen) < t.loot.bossLegendaryChance else "rare"
+	room.interact = {"kind": "loot", "x": cx, "y": cy, "r": t.room.rewardRadius, "used": false, "item": D6Loot.generate_item(game, {"rarity": rar})}
 	_prepare_doors(game, true)
 
 ## Récompense de fin de salle de combat, selon le plan (porte choisie).
@@ -197,17 +195,17 @@ static func _clear_reward(game: Dictionary, cx: float, cy: float) -> void:
 			var family = plan.get("family")
 			if family == null:
 				family = D6Boons.random_family(game)
-			room.interact = {"kind": "boon", "x": cx, "y": cy, "r": 30.0, "used": false, "family": family}
+			room.interact = {"kind": "boon", "x": cx, "y": cy, "r": t.room.rewardRadius, "used": false, "family": family}
 		"loot":
 			var bonus: float = t.loot.eliteRarityBonus if D6Js.truthy(plan.get("elite")) else 1.0
-			room.interact = {"kind": "loot", "x": cx, "y": cy, "r": 30.0, "used": false, "item": D6Loot.generate_item(game, {"rarity": D6Loot.roll_rarity(game, bonus)})}
+			room.interact = {"kind": "loot", "x": cx, "y": cy, "r": t.room.rewardRadius, "used": false, "item": D6Loot.generate_item(game, {"rarity": D6Loot.roll_rarity(game, bonus)})}
 		"gold":
-			var total: float = D6Js.jround(D6Room.random_gold(game) * 3.0 * p.stats.goldFindMult)
-			var n := 6.0
+			var total: float = D6Js.jround(D6Room.random_gold(game) * t.economy.goldReward.mult * p.stats.goldFindMult)
+			var n: float = t.economy.goldReward.pickups
 			for i in range(int(n)):
 				D6Combat.spawn_pickup(game, "gold", cx, cy, maxf(1.0, D6Js.jround(total / n)))
 		"heal":
-			D6Combat.spawn_pickup(game, "heal", cx, cy, D6Js.jround(p.maxHp * 0.3))
+			D6Combat.spawn_pickup(game, "heal", cx, cy, D6Js.jround(p.maxHp * t.economy.healReward))
 
 ## Portes de sortie, composées par le PLAN DE SECTION (sections) de l'étage suivant : portes
 ## imposées (Gardien au 18e, halte, antichambre), sinon deux récompenses tirées selon les poids
@@ -297,7 +295,7 @@ static func _choice_for(game: Dictionary, it: Dictionary):
 			described.append(describe_boon(o))
 		return {"kind": "boon", "family": it.family, "familyName": fam.name, "color": fam.color, "options": described}
 	if it.kind == "loot":
-		return {"kind": "loot", "item": describe_item(it.item), "equipped": describe_item(run.items.get(it.item.slot)), "salvage": D6Loot.salvage_value(it.item), "wieldable": can_wield(game, it.item)}
+		return {"kind": "loot", "item": describe_item(it.item), "equipped": describe_item(run.items.get(it.item.slot)), "salvage": D6Loot.salvage_value(game, it.item), "wieldable": can_wield(game, it.item)}
 	if it.kind == "shop":
 		var shown: Array = []
 		for o in it.offers:
@@ -359,8 +357,8 @@ static func _option_blocked(game: Dictionary, o: Dictionary) -> bool:
 		return true
 	match o.effect:
 		"bloodBoon":
-			return _blood_hp(p) >= p.hp # à 1 PV il n'y a plus de sang à offrir
-		"gadget1":
+			return _blood_hp(p, o) >= p.hp # à 1 PV il n'y a plus de sang à offrir
+		"gadgetCharge":
 			return p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus
 		"superToHp":
 			return p.superCharge < o.need / 100.0
@@ -377,9 +375,9 @@ static func _option_blocked(game: Dictionary, o: Dictionary) -> bool:
 			return false
 	return false
 
-## PV du héros après l'offrande de l'autel de sang : jamais mortelle.
-static func _blood_hp(p: Dictionary) -> float:
-	return maxf(1.0, D6Js.jround(p.hp - p.maxHp * BLOOD_COST))
+## PV du héros après l'offrande de l'autel de sang (`o.pct` % de ses PV max) : jamais mortelle.
+static func _blood_hp(p: Dictionary, o: Dictionary) -> float:
+	return maxf(MIN_HP, D6Js.jround(p.hp - p.maxHp * (o.pct / 100.0)))
 
 ## String.replace de JavaScript avec un motif texte : seule la 1re occurrence est remplacée.
 static func _replace_first(text: String, what: String, by: String) -> String:
@@ -389,7 +387,8 @@ static func _replace_first(text: String, what: String, by: String) -> String:
 	return text.substr(0, at) + by + text.substr(at + what.length())
 
 ## Libellé d'une option d'autel : chaque {champ} est remplacé par le nombre du même nom dans
-## l'option ; {lost} et {gained} par les bénédictions que la Forge fondrait et approfondirait.
+## l'option (celui que lit son effet : _apply_event) ; {lost} et {gained} par les bénédictions que
+## la Forge fondrait et approfondirait.
 static func _option_label(game: Dictionary, o: Dictionary) -> String:
 	var label: String = o.label
 	for k in o:
@@ -493,7 +492,7 @@ static func _roll_shop(game: Dictionary) -> Array:
 	var boon = D6Boons.roll_boon_offer(game, fam)[0]
 	var bd: Dictionary = describe_boon(boon)
 	return [
-		{"kind": "heal", "price": e.shopHealPrice, "label": "Élixir de sang", "text": "Rend 40 % des PV.", "sold": false},
+		{"kind": "heal", "price": e.shopHealPrice, "label": "Élixir de sang", "text": "Rend %s %% des PV." % D6Js.num_str(D6Js.jround(e.shopHeal * 100.0)), "sold": false},
 		{"kind": "boon", "price": e.shopBoonPrice, "label": bd.name, "text": bd.text, "boon": boon, "color": D6Data.tables().boons.FAMILIES[fam].color, "sold": false},
 		{"kind": "item", "price": D6Loot.price_of(game, item), "label": item.name, "text": "", "item": item, "sold": false},
 	]
@@ -607,8 +606,8 @@ static func _apply_loot(game: Dictionary, it: Dictionary, type: String) -> bool:
 		D6State.emit(game, "stash", {"slot": it.item.slot, "rarity": it.item.rarity})
 		return _close_choice(game)
 	if type == "salvage":
-		run.gold += D6Loot.salvage_value(it.item)
-		D6State.emit(game, "gold", {"x": p.x, "y": p.y, "amount": D6Loot.salvage_value(it.item)})
+		run.gold += D6Loot.salvage_value(game, it.item)
+		D6State.emit(game, "gold", {"x": p.x, "y": p.y, "amount": D6Loot.salvage_value(game, it.item)})
 		return _close_choice(game)
 	return false
 
@@ -626,7 +625,7 @@ static func _apply_shop(game: Dictionary, it: Dictionary, type: String, index) -
 	run.gold -= offer.price
 	offer.sold = true
 	if offer.kind == "heal":
-		D6Combat.heal_player(game, p.maxHp * 0.4, true)
+		D6Combat.heal_player(game, p.maxHp * game.tuning.economy.shopHeal, true)
 	if offer.kind == "boon":
 		D6Boons.add_boon(run, offer.boon)
 	if offer.kind == "item":
@@ -648,49 +647,28 @@ static func _open_shop_refresh(game: Dictionary) -> void:
 	game.room.interact.used = false
 	open_interact(game)
 
-## Effet d'une option d'autel. Rend true si un butin a été posé (le menu se ferme sans ouvrir
-## les portes).
+## Effet d'une option d'autel. Tous ses nombres sont dans l'option (data/autels.json), que son
+## libellé reprend par {champ} : aucun n'est écrit ici. Rend true si un butin a été posé (le menu
+## se ferme sans ouvrir les portes).
 static func _apply_event(game: Dictionary, opt: Dictionary) -> bool:
 	var run: Dictionary = game.run
 	var p: Dictionary = game.player
 	match opt.effect:
-		"bloodBoon":
-			p.hp = _blood_hp(p)
-			var fam = D6Boons.random_family(game)
-			var offer = D6Boons.roll_boon_offer(game, fam)[0]
-			offer.rarity = D6Boons.best_rarity(offer.rarity, BLOOD_RARITY) # au moins rare ; un tirage épique le reste
-			D6Boons.add_boon(run, offer)
-			D6State.emit(game, "boonGain", {"id": offer.id, "rarity": offer.rarity})
-		"heal40":
-			D6Combat.heal_player(game, p.maxHp * 0.4, true)
-		"gadget1":
-			p.gadgetCharges += 1.0
+		"bloodBoon", "mammonBoon", "soulBoon":
+			_event_boon(game, opt)
+		"heal":
+			D6Combat.heal_player(game, p.maxHp * (opt.pct / 100.0), true)
+		"gadgetCharge":
+			p.gadgetCharges += opt.gain
 		"cursedChest":
-			p.hp = maxf(1.0, p.hp - 20.0)
-			var item = D6Loot.generate_item(game, {"rarity": "rare"})
-			var spot: Dictionary = D6Room.reward_spot(game.room)
-			game.room.interact = {"kind": "loot", "x": spot.x, "y": spot.y, "r": 30.0, "used": false, "item": item}
-			D6Stats.recompute_stats(game)
+			_event_chest(game, opt)
 			return true
-		"mammonBoon":
-			run.gold -= opt.cost
-			var offer = D6Boons.roll_boon_offer(game, "avarice")[0]
-			D6Boons.add_boon(run, offer)
-			D6State.emit(game, "boonGain", {"id": offer.id, "rarity": offer.rarity})
-		"gold25":
-			run.gold += 25.0
-			D6State.emit(game, "gold", {"x": p.x, "y": p.y, "amount": 25.0})
-		"soulBoon":
-			# Le PERMANENT paie le TEMPORAIRE : des Âmes du profil contre une bénédiction épique.
-			game.meta.souls -= opt.souls
-			var fam = D6Boons.random_family(game)
-			var offer = D6Boons.roll_boon_offer(game, fam)[0]
-			offer.rarity = "epique"
-			D6Boons.add_boon(run, offer)
-			D6State.emit(game, "boonGain", {"id": offer.id, "rarity": offer.rarity})
+		"gold":
+			run.gold += opt.gain
+			D6State.emit(game, "gold", {"x": p.x, "y": p.y, "amount": opt.gain})
 		"bloodSouls":
-			# … et l'inverse : des PV de ce run contre des Âmes qui resteront.
-			p.hp = maxf(1.0, p.hp - opt.hp)
+			# Des PV de ce run contre des Âmes qui resteront (l'inverse du Registre : _event_boon).
+			p.hp = maxf(MIN_HP, p.hp - opt.hp)
 			game.meta.souls += opt.gain
 			game.telemetry.soulsEarned += opt.gain
 			D6State.emit(game, "souls", {"x": p.x, "y": p.y, "amount": opt.gain})
@@ -707,11 +685,42 @@ static func _apply_event(game: Dictionary, opt: Dictionary) -> bool:
 			p.superCharge = 0.0
 			D6Combat.heal_player(game, p.maxHp * (opt.pct / 100.0), true)
 		"hpToSuper":
-			p.hp = maxf(1.0, p.hp - opt.hp)
+			p.hp = maxf(MIN_HP, p.hp - opt.hp)
 			p.superCharge = 1.0
 			D6State.emit(game, "superReady")
 	D6Stats.recompute_stats(game)
 	return false
+
+## Autels qui donnent une bénédiction contre un prix : le prix d'abord — une part des PV (autel de
+## sang), de l'or (Mammon) ou des Âmes du profil (Registre : le PERMANENT paie le TEMPORAIRE) —,
+## puis un tirage dans la famille de l'option (au hasard si elle n'en nomme pas), relevé à la
+## rareté promise par l'option : un tirage meilleur le reste.
+static func _event_boon(game: Dictionary, opt: Dictionary) -> void:
+	var run: Dictionary = game.run
+	match opt.effect:
+		"bloodBoon":
+			game.player.hp = _blood_hp(game.player, opt)
+		"mammonBoon":
+			run.gold -= opt.cost
+		"soulBoon":
+			game.meta.souls -= opt.souls
+	var fam = opt.get("family")
+	if fam == null:
+		fam = D6Boons.random_family(game)
+	var offer = D6Boons.roll_boon_offer(game, fam)[0]
+	if opt.get("rarity") != null:
+		offer.rarity = D6Boons.best_rarity(offer.rarity, opt.rarity)
+	D6Boons.add_boon(run, offer)
+	D6State.emit(game, "boonGain", {"id": offer.id, "rarity": offer.rarity})
+
+## Coffre maudit : des PV contre un objet de la rareté de l'option, posé à ramasser.
+static func _event_chest(game: Dictionary, opt: Dictionary) -> void:
+	var p: Dictionary = game.player
+	p.hp = maxf(MIN_HP, p.hp - opt.hp)
+	var item = D6Loot.generate_item(game, {"rarity": opt.rarity})
+	var spot: Dictionary = D6Room.reward_spot(game.room)
+	game.room.interact = {"kind": "loot", "x": spot.x, "y": spot.y, "r": game.tuning.room.rewardRadius, "used": false, "item": item}
+	D6Stats.recompute_stats(game)
 
 static func _close_choice(game: Dictionary) -> bool:
 	game.mode = "play"

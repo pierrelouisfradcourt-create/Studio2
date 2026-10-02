@@ -4,7 +4,6 @@ extends RefCounted
 ## Projectiles (héros et ennemis) et zones de danger télégraphiées.
 
 const TINY := 1e-6
-const BLAST_KNOCKBACK := 260.0 # recul infligé aux ennemis pris dans une explosion
 
 ## Champ numérique optionnel : absent ou null → 0 (en JavaScript, `undefined > 0` est faux).
 static func _num(d: Dictionary, key: String) -> float:
@@ -94,7 +93,7 @@ static func update_projectiles(game: Dictionary, dt: float) -> void:
 		pr.y += pr.vy * dt
 		pr.traveled += sqrt(pr.vx * pr.vx + pr.vy * pr.vy) * dt
 		var max_travel = pr.get("range")
-		if (max_travel != null and pr.traveled > max_travel) or D6Physics.point_blocked(room, pr.x, pr.y, 0.0):
+		if (max_travel != null and pr.traveled > max_travel) or D6Physics.shot_blocked(room, ox, oy, pr.x, pr.y):
 			pr.dead = true
 			D6State.emit(game, "projectileEnd", {"x": pr.x, "y": pr.y, "owner": pr.get("owner"), "kind": pr.get("kind")})
 			continue
@@ -178,7 +177,7 @@ static func _fire_hazard(game: Dictionary, h: Dictionary) -> void:
 				# Une explosion d'ENNEMI (Possédé) ne profite ni de l'arme ni des bonus du héros.
 				D6Combat.damage_enemy(game, e, {
 					"kind": "enemyBlast" if D6Js.truthy(owner_id) else "blast", "amount": h.get("damage"),
-					"dirX": dx / l, "dirY": dy / l, "knockback": BLAST_KNOCKBACK, "canCrit": false,
+					"dirX": dx / l, "dirY": dy / l, "knockback": game.tuning.combat.blastKnockback, "canCrit": false,
 				})
 
 static func update_hazards(game: Dictionary, dt: float) -> void:

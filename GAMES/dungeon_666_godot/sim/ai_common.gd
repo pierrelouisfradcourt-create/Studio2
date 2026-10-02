@@ -16,10 +16,6 @@ static var _shooter_kinds = null
 # garde le sien de sa dissolution à sa frappe (foe_stalker), sinon il resurgirait en surnombre.
 const TOKEN_STATES := ["windup", "strike", "charge", "fade", "ambush"]
 
-# Recharge de l'archer : ×0,85 à ×1,25. Les archétypes ajoutés portent la leur en données (cooldownJitter).
-const ARCHER_KIND := "archer"
-const ARCHER_JITTER := [0.85, 1.25]
-
 # Objet partagé de module (const navOut = { x: 0, y: 0 }).
 static var _nav_out: Dictionary = {"x": 0.0, "y": 0.0}
 
@@ -69,11 +65,10 @@ static func set_state(e: Dictionary, s: String) -> void:
 	e.stateTime = 0.0
 
 ## Recharge d'un ennemi qui sort de sa récupération : def.cooldown, variée par def.cooldownJitter
-## ([min, max], un tirage dans game.rng.ai) pour les archétypes qui ne doivent pas être des métronomes.
-static func recharge_of(game: Dictionary, e: Dictionary, def: Dictionary) -> float:
+## ([min, max], un tirage dans game.rng.ai) pour les archétypes qui ne doivent pas être des
+## métronomes (archer, pyromancienne, nécromancien, traqueur).
+static func recharge_of(game: Dictionary, _e: Dictionary, def: Dictionary) -> float:
 	var jitter = def.get("cooldownJitter")
-	if jitter == null and e.kind == ARCHER_KIND:
-		jitter = ARCHER_JITTER
 	if jitter == null:
 		return def.cooldown
 	return def.cooldown * D6Rng.rand_range(game.rng.ai, jitter[0], jitter[1])
@@ -131,7 +126,7 @@ static func count_alive(game: Dictionary, kind) -> float:
 ## Garde ses distances (archétypes à distance : zone, invocateur) : fuit sous `def.fleeDist`,
 ## se rapproche au-delà de `def.preferredDist + def.approachSlack` ou sans ligne de vue, sinon
 ## tourne autour du héros (`def.strafeMult` de la vitesse ; change parfois de sens, avec la
-## probabilité `def.strafeFlip` par image). Le comportement de l'archer, mis en données.
+## probabilité `def.strafeFlip` par image). L'archer s'en sert aussi (enemies).
 static func keep_distance(game: Dictionary, e: Dictionary, def: Dictionary, tp: Dictionary, sees: bool, speed: float) -> void:
 	# On ne fuit que ce qu'on voit : derrière un obstacle, fuite et approche s'annulaient à chaque
 	# image et le tireur, vibrant sur place, n'attaquait plus jamais.

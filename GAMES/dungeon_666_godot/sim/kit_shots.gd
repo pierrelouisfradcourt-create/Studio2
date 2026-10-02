@@ -97,7 +97,7 @@ static func update_shots(game: Dictionary, dt: float) -> void:
 		s.x += s.vx * dt
 		s.y += s.vy * dt
 		s.traveled += speed * dt
-		if s.traveled > s.range or D6Physics.point_blocked(room, s.x, s.y, 0.0):
+		if s.traveled > s.range or D6Physics.shot_blocked(room, ox, oy, s.x, s.y):
 			s.dead = true
 			continue
 		_shot_hits(game, s, ox, oy, speed)

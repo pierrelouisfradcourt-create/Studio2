@@ -7,8 +7,6 @@ extends RefCounted
 ## (e.tele ou une zone de danger) d'une durée >= au seuil de réaction, et un nombre limité
 ## d'ennemis de mêlée attaque en même temps (jetons d'attaque).
 
-const BURN_TICK := 0.25
-
 # Table des IA par archétype (const AI = {...}), construite une fois.
 static var _ai_table: Dictionary = {}
 
@@ -26,7 +24,7 @@ static func create_enemy(game: Dictionary, kind: String, x: float, y: float, opt
 	# Effets de bord du littéral JavaScript, dans l'ordre du texte : id, puis trois tirages dans
 	# game.rng.ai (cooldown, strafe, flank).
 	var id = D6State.new_id(game)
-	var cooldown: float = 0.4 + D6Rng.rand(game.rng.ai) * 0.8 # désynchronise les premières attaques
+	var cooldown: float = t.combat.firstAttackDelay + D6Rng.rand(game.rng.ai) * t.combat.firstAttackSpread # désynchronise les premières attaques
 	var strafe: float = -1.0 if D6Rng.rand(game.rng.ai) < 0.5 else 1.0
 	var flank: float = D6Rng.rand(game.rng.ai) * PI * 2.0
 	var e: Dictionary = {
@@ -42,7 +40,7 @@ static func create_enemy(game: Dictionary, kind: String, x: float, y: float, opt
 		"r": def.radius * size_mult,
 		"hp": hp,
 		"maxHp": hp,
-		"mass": def.mass * (1.5 if is_elite else 1.0),
+		"mass": def.mass * (t.elite.massMult if is_elite else 1.0),
 		"dmgScale": scale.damage * (t.elite.damageMult if is_elite else 1.0),
 		"eliteMod": elite,
 		"state": "chase",
@@ -71,7 +69,7 @@ static func _enemy_rest(game: Dictionary, opts: Dictionary, strafe: float, flank
 		"chillMult": 1.0,
 		"vuln": 0.0,
 		"vulnMult": 0.0,
-		"spawnT": D6Js.nz(opts.get("spawnT"), 0.25),
+		"spawnT": D6Js.nz(opts.get("spawnT"), game.tuning.room.spawnTime),
 		"bornAt": game.time,
 		"dead": false,
 		"strafe": strafe,
@@ -138,7 +136,7 @@ static func _update_enemy(game: Dictionary, e: Dictionary, dt: float, t: Diction
 		e.tele = null
 		if e.stun <= 0.0:
 			D6AiCommon.set_state(e, "chase")
-			e.cooldown = maxf(e.cooldown, 0.3)
+			e.cooldown = maxf(e.cooldown, t.combat.stunExitCooldown)
 			e.guard = t.combat.stunGuard
 	elif p.state != "dead":
 		e.guard = maxf(0.0, e.guard - dt)
@@ -165,7 +163,7 @@ static func _tick_statuses(game: Dictionary, e: Dictionary, dt: float) -> void:
 	if e.burn > 0.0:
 		e.burn -= dt
 		e.burnAcc += e.burnDps * dt
-		if e.burnAcc >= e.burnDps * BURN_TICK or e.burn <= 0.0:
+		if e.burnAcc >= e.burnDps * game.tuning.combat.burnTick or e.burn <= 0.0:
 			var amount: float = e.burnAcc
 			e.burnAcc = 0.0
 			if amount >= 0.5:
@@ -303,14 +301,14 @@ static func _imp_chase(game: Dictionary, e: Dictionary, def: Dictionary, dt: flo
 	# Sans jeton (ou en recharge) : on encercle à distance au lieu de s'empiler sur le héros.
 	# Avec le droit de frapper, on fonce : sinon l'anneau (85 u) restait hors de portée (68 u)
 	# et un diablotin n'attaquait plus jamais un héros immobile.
-	var ring: float = reach * 1.25 if (not can_strike and tp.d < reach * 1.6) else 0.0
+	var ring: float = reach * def.circleDist if (not can_strike and tp.d < reach * def.circleWithin) else 0.0
 	var tx: float = p.x + D6Trig.cos(e.flank) * ring
 	var ty: float = p.y + D6Trig.sin(e.flank) * ring
 	D6AiCommon.steer(game, e, tx, ty, D6AiCommon.speed_of(game, e, def))
-	e.flank += e.strafe * dt * 0.6
+	e.flank += e.strafe * dt * def.flankSpeed
 
 static func _imp_windup(game: Dictionary, e: Dictionary, def: Dictionary, windup: float) -> void:
-	D6AiCommon.track_until_lock(game, e, 0.7, windup)
+	D6AiCommon.track_until_lock(game, e, def.lockAt, windup)
 	e.tele = {"shape": "cone", "angle": D6Trig.atan2(e.dirY, e.dirX), "range": def.strikeSpeed * def.strikeTime + e.r + 14.0, "arc": 0.9, "progress": e.stateTime / windup}
 	if e.stateTime >= windup:
 		D6AiCommon.set_state(e, "strike")
@@ -336,7 +334,7 @@ static func _archer(game: Dictionary, e: Dictionary, def: Dictionary, _dt = null
 	var sees: bool = D6Physics.line_of_sight(game.room, e.x, e.y, p.x, p.y)
 	match e.state:
 		"chase":
-			_archer_chase(game, e, def, p, tp, sees)
+			_archer_chase(game, e, def, tp, sees)
 		"windup":
 			_archer_windup(game, e, def, windup)
 		"recover":
@@ -346,24 +344,15 @@ static func _archer(game: Dictionary, e: Dictionary, def: Dictionary, _dt = null
 		_:
 			D6AiCommon.set_state(e, "chase")
 
-static func _archer_chase(game: Dictionary, e: Dictionary, def: Dictionary, p: Dictionary, tp: Dictionary, sees: bool) -> void:
+static func _archer_chase(game: Dictionary, e: Dictionary, def: Dictionary, tp: Dictionary, sees: bool) -> void:
 	var speed := D6AiCommon.speed_of(game, e, def)
-	if e.cooldown <= 0.0 and sees and tp.d < def.projRange * 0.9 and D6AiCommon.active_shooters(game) < game.tuning.combat.maxShooters:
+	if e.cooldown <= 0.0 and sees and tp.d < def.projRange * def.fireRangeFrac and D6AiCommon.active_shooters(game) < game.tuning.combat.maxShooters:
 		D6AiCommon.set_state(e, "windup")
 		e.dirX = tp.dx
 		e.dirY = tp.dy
 		return
-	if tp.d < def.fleeDist and sees: # on ne fuit que ce qu'on voit (ai_common.keepDistance)
-		e.vx = -tp.dx * speed
-		e.vy = -tp.dy * speed
-	elif tp.d > def.preferredDist + 60.0 or not sees:
-		D6AiCommon.steer(game, e, p.x, p.y, speed)
-	else:
-		# Strafe perpendiculaire, change de sens de temps en temps.
-		e.vx = -tp.dy * speed * 0.7 * e.strafe
-		e.vy = tp.dx * speed * 0.7 * e.strafe
-		if D6Rng.rand(game.rng.ai) < 0.01:
-			e.strafe = -e.strafe
+	# Fuit ce qu'il voit de trop près, se rapproche de loin, sinon tourne autour du héros.
+	D6AiCommon.keep_distance(game, e, def, tp, sees, speed)
 
 static func _archer_windup(game: Dictionary, e: Dictionary, def: Dictionary, windup: float) -> void:
 	D6AiCommon.track_until_lock(game, e, def.lockAt, windup)
@@ -387,7 +376,7 @@ static func _brute(game: Dictionary, e: Dictionary, def: Dictionary, _dt = null)
 	var windup := D6AiCommon.windup_of(game, e, def.windup)
 	match e.state:
 		"chase":
-			if tp.d < def.attackRange * 0.85 + p.r and e.cooldown <= 0.0 and D6AiCommon.active_attackers(game) < game.tuning.combat.maxAttackers:
+			if tp.d < def.attackRange * def.triggerFrac + p.r and e.cooldown <= 0.0 and D6AiCommon.active_attackers(game) < game.tuning.combat.maxAttackers:
 				D6AiCommon.set_state(e, "windup")
 				D6Combat.spawn_hazard(game, {
 					"shape": "circle", "x": e.x, "y": e.y, "r": def.slamRadius * (game.tuning.elite.sizeMult if D6Js.truthy(e.eliteMod) else 1.0),
@@ -434,7 +423,7 @@ static func _charger_chase(game: Dictionary, e: Dictionary, def: Dictionary, p: 
 	D6AiCommon.steer(game, e, p.x, p.y, D6AiCommon.speed_of(game, e, def))
 
 static func _charger_windup(game: Dictionary, e: Dictionary, def: Dictionary, windup: float) -> void:
-	D6AiCommon.track_until_lock(game, e, 0.7, windup)
+	D6AiCommon.track_until_lock(game, e, def.lockAt, windup)
 	e.tele = {"shape": "line", "angle": D6Trig.atan2(e.dirY, e.dirX), "length": def.chargeSpeed * def.chargeMaxTime, "width": e.r * 2.0 + 10.0, "progress": e.stateTime / windup}
 	if e.stateTime >= windup:
 		e.tele = null

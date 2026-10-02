@@ -3,6 +3,7 @@ extends Control
 ## plus gros et rouge. Portage des pastilles de `drawTopCenter` (src/render/hud.mjs).
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
+const Triangles = preload("res://jeu/theme/triangles.gd")
 const PAS := 16.0 # écart entre deux pastilles (réduit si la place manque)
 const RAYON := 3.5
 const RAYON_GARDIEN := 5.0
@@ -12,6 +13,7 @@ const BATTEMENT := 4.0 # rad/s : la pastille en cours respire
 var _index := 1
 var _nombre := 18
 var _temps := 0.0
+var _lot := Triangles.new() # toutes les pastilles en un appel de dessin
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -52,5 +54,6 @@ func _draw() -> void:
 			col = pal.gold
 		if ici:
 			var souffle := 0.5 + 0.5 * sin(_temps * BATTEMENT)
-			draw_arc(c, (RAYON_GARDIEN if gardien else RAYON) + 2.5 + souffle, 0.0, TAU, 20, Color(col, 0.55), 1.5, true)
-		draw_circle(c, RAYON_GARDIEN if gardien else RAYON, col, true, -1.0, true)
+			_lot.arc(c, (RAYON_GARDIEN if gardien else RAYON) + 2.5 + souffle, 0.0, TAU, 20, Color(col, 0.55), 1.5)
+		_lot.disque(c, RAYON_GARDIEN if gardien else RAYON, col)
+	_lot.tracer(self)

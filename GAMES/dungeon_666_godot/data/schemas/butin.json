@@ -23,7 +23,13 @@
         "shopItemPrice",
         "deathGoldKeep",
         "treasure",
-        "rest"
+        "rest",
+        "goldReward",
+        "healReward",
+        "shopHeal",
+        "shopPriceJitter",
+        "shopRareChance",
+        "salvage"
       ],
       "fermé": true,
       "champs": {
@@ -51,17 +57,45 @@
             "heal": { "type": "nombre", "min": 0, "max": 1 },
             "superCharge": { "type": "nombre", "min": 0, "max": 1 }
           }
+        },
+        "goldReward": {
+          "type": "objet",
+          "requis": ["mult", "pickups"],
+          "fermé": true,
+          "champs": { "mult": { "type": "nombre", "min": 0 }, "pickups": { "type": "entier", "min": 1 } }
+        },
+        "healReward": { "type": "nombre", "min": 0, "max": 1 },
+        "shopHeal": { "type": "nombre", "min": 0, "max": 1 },
+        "shopPriceJitter": { "type": "entier", "min": 0 },
+        "shopRareChance": { "type": "nombre", "min": 0, "max": 1 },
+        "salvage": {
+          "type": "objet",
+          "requis": ["base", "perRarity", "levelsPerGold"],
+          "fermé": true,
+          "champs": {
+            "base": { "type": "nombre", "min": 0 },
+            "perRarity": { "type": "nombre", "min": 0 },
+            "levelsPerGold": { "type": "nombre", "min": 1 }
+          }
         }
       }
     },
     "loot": {
       "type": "objet",
-      "requis": ["rarityWeights", "eliteRarityBonus", "bossGuaranteedRare"],
+      "requis": [
+        "rarityWeights",
+        "eliteRarityBonus",
+        "bossGuaranteedRare",
+        "bossLegendaryChance",
+        "affixFloorScale"
+      ],
       "fermé": true,
       "champs": {
         "rarityWeights": { "type": "objet", "min": 1, "chaque": { "type": "nombre", "min": 0 } },
         "eliteRarityBonus": { "type": "nombre", "min": 0 },
-        "bossGuaranteedRare": { "type": "booleen" }
+        "bossGuaranteedRare": { "type": "booleen" },
+        "bossLegendaryChance": { "type": "nombre", "min": 0, "max": 1 },
+        "affixFloorScale": { "type": "nombre", "min": 0 }
       }
     },
     "SLOTS": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },

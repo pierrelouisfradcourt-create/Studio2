@@ -218,7 +218,7 @@ static func _wave_at(room: Dictionary, index):
 ## Gardien de la section (modèle du plan : rotation floors.guardian_for).
 static func spawn_boss(game: Dictionary, kind = "gardien") -> void:
 	var room: Dictionary = game.room
-	D6Enemies.create_enemy(game, kind, room.w / 2.0, room.h * 0.35, {"boss": true, "spawnT": 1.2})
+	D6Enemies.create_enemy(game, kind, room.w / 2.0, room.h * 0.35, {"boss": true, "spawnT": game.tuning.guardians.spawnTime})
 
 static func update_spawns(game: Dictionary, dt: float) -> void:
 	var spawns: Array = game.spawns
@@ -250,7 +250,7 @@ static func update_waves(game: Dictionary) -> bool:
 	if room.waveIndex < room.waves.size() - 1:
 		var cur = _wave_at(room, room.waveIndex)
 		var cur_size: float = 0.0 if cur == null else float(cur.size())
-		var threshold: float = maxf(0.0, floorf(cur_size * 0.25))
+		var threshold: float = maxf(0.0, floorf(cur_size * game.tuning.encounter.nextWaveAt))
 		if alive + pending <= threshold:
 			launch_next_wave(game)
 		return false

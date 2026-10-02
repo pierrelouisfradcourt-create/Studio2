@@ -1,5 +1,6 @@
 {
-  "_note": "Les bénédictions des sept péchés (BOONS), leurs duos (DUOS), les pactes (PACTS) et les raretés. {v} dans un texte = la valeur, multipliée par la rareté.",
+  "_note": "Les bénédictions des sept péchés (BOONS), leurs duos (DUOS), les pactes (PACTS) et les raretés. {v} dans un texte = la valeur, multipliée par la rareté. boons : taille d'une offre, chance qu'un duo éligible y entre, gain par niveau (+50 % de la valeur).",
+  "boons": { "offerSize": 3, "duoChance": 0.6, "levelStep": 0.5 },
   "FAMILIES": {
     "colere": { "name": "Colère", "color": "#ff5a3c" },
     "paresse": { "name": "Paresse", "color": "#5ab8ff" },

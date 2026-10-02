@@ -2,9 +2,15 @@
   "_note": "L'or et les objets : économie d'une partie (economy), tirage des raretés (loot), affixes ([stat, minimum, maximum, préfixe, suffixe, format]) et pouvoirs légendaires.",
   "economy": {
     "goldPerRoom": [8, 14],
+    "goldReward": { "mult": 3, "pickups": 6 },
+    "healReward": 0.3,
     "shopHealPrice": 40,
+    "shopHeal": 0.4,
     "shopBoonPrice": 70,
     "shopItemPrice": [60, 140],
+    "shopPriceJitter": 9,
+    "shopRareChance": 0.25,
+    "salvage": { "base": 5, "perRarity": 10, "levelsPerGold": 3 },
     "deathGoldKeep": 0.5,
     "treasure": { "gold": [45, 70], "rarityBonus": 2, "minRarity": "magique", "goldPickups": 8 },
     "rest": { "heal": 0.5, "superCharge": 0.5 }
@@ -12,6 +18,8 @@
   "loot": {
     "rarityWeights": { "commun": 60, "magique": 28, "rare": 10, "legendaire": 2 },
     "eliteRarityBonus": 1.8,
+    "bossLegendaryChance": 0.2,
+    "affixFloorScale": 0.012,
     "bossGuaranteedRare": true
   },
   "SLOTS": ["arme", "armure", "talisman"],

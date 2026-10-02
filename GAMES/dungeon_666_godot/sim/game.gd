@@ -10,9 +10,6 @@ extends RefCounted
 ##   game.events                            # événements de l'image, à vider par l'appelant
 
 const DT := 1.0 / 60.0
-const DEATH_DELAY := 1.4 # s de ralenti/agonie avant l'écran de mort
-const PICKUP_SETTLE := 0.35 # s avant qu'un butin au sol ne soit aimanté ni ramassé
-const PICKUP_FRICTION := 6.0
 const HASH_BASIS := 2166136261
 const HASH_PRIME := 16777619
 
@@ -131,7 +128,8 @@ static func step_game(game: Dictionary, input = null) -> void:
 static func _update_pickups(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player
 	var t: Dictionary = game.tuning.room
-	var friction := D6Trig.exp(-PICKUP_FRICTION * dt)
+	# Un butin tombé glisse (room.pickupFriction) ; il n'est aimanté ni ramassé avant room.pickupSettle s.
+	var friction := D6Trig.exp(-t.pickupFriction * dt)
 	var pickups: Array = game.pickups
 	var i := 0
 	while i < pickups.size():
@@ -139,7 +137,7 @@ static func _update_pickups(game: Dictionary, dt: float) -> void:
 		i += 1
 		pk.age += dt
 		var d2 := D6Geo.dist2(pk.x, pk.y, p.x, p.y)
-		var settle: bool = pk.age > PICKUP_SETTLE
+		var settle: bool = pk.age > t.pickupSettle
 		if settle and p.state != "dead" and d2 < t.pickupMagnetRange * t.pickupMagnetRange:
 			var d := sqrt(d2)
 			if d == 0.0 or is_nan(d):
@@ -166,7 +164,7 @@ static func _update_flow(game: Dictionary, dt: float) -> void:
 	var room: Dictionary = game.room
 	if p.state == "dead":
 		game.deathT += dt
-		if game.deathT >= DEATH_DELAY:
+		if game.deathT >= game.tuning.player.deathDelay: # s de ralenti/agonie avant l'écran de mort
 			game.mode = "dead"
 			D6Run.on_death(game)
 			D6State.emit(game, "gameOver", {"floor": game.run.floor})

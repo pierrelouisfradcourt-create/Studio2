@@ -64,14 +64,21 @@
           "count": { "type": "entier", "min": 1 },
           "maxMinions": { "type": "entier", "min": 1 },
           "guardSources": { "type": "liste", "elements": { "type": "texte", "min": 1 } },
-          "backAngles": { "type": "liste", "min": 1, "elements": { "type": "nombre" } }
+          "backAngles": { "type": "liste", "min": 1, "elements": { "type": "nombre" } },
+          "approachSlack": { "type": "nombre", "min": 0 },
+          "strafeMult": { "type": "nombre", "min": 0 },
+          "fireRangeFrac": { "type": "nombre", "min": 0, "max": 1 },
+          "triggerFrac": { "type": "nombre", "min": 0, "max": 1 },
+          "circleDist": { "type": "nombre", "min": 0 },
+          "circleWithin": { "type": "nombre", "min": 0 },
+          "flankSpeed": { "type": "nombre" }
         },
         "_note": "PILIER DU JEU : tout coup ennemi est télégraphié au moins 0,4 s. D'où le minimum de windup, castTime, channel, slashWindup et pyre.delay."
       }
     },
     "elite": {
       "type": "objet",
-      "requis": ["hpMult", "damageMult", "sizeMult", "goldMult", "mods"],
+      "requis": ["hpMult", "damageMult", "sizeMult", "goldMult", "mods", "massMult"],
       "fermé": true,
       "champs": {
         "hpMult": { "type": "nombre", "min": 1 },
@@ -103,7 +110,8 @@
             },
             "_note": "Un champion ne raccourcit jamais un télégraphe (windupMult >= 1) ; ses propres annonces (deathBlastDelay, warn, channel) durent au moins 0,4 s."
           }
-        }
+        },
+        "massMult": { "type": "nombre", "min": 0.1 }
       }
     },
     "ROSTER": {

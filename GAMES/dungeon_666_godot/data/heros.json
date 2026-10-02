@@ -12,7 +12,9 @@
     "cancelMult": 1,
     "inputBuffer": 0.15,
     "attackBuffer": 0.35,
-    "innateHp": 45
+    "innateHp": 45,
+    "lungeStretch": 1.5,
+    "deathDelay": 1.4
   },
   "weaponBase": 10,
   "armorBase": 55,
@@ -22,6 +24,7 @@
   "dash": {
     "distance": 165,
     "duration": 0.15,
+    "chainFrom": 0.35,
     "iframes": 0.18,
     "charges": 2,
     "recharge": 0.9,
@@ -34,7 +37,17 @@
   "comboResetTime": 0.32,
   "comboCancelFrom": { "hits": [0.3, 0.3, 0.6], "strike": 0.3 },
   "wallSlam": { "minSpeed": 380, "damage": 8, "stun": 0.45, "hitstop": 0.05 },
-  "autoAim": { "range": 160, "skillRange": 520, "coneDeg": 80, "movePreference": 0.35 },
+  "autoAim": {
+    "range": 160,
+    "skillRange": 520,
+    "coneDeg": 80,
+    "movePreference": 0.35,
+    "outOfConePenalty": 0.6,
+    "stickyTime": 0.4,
+    "stickyBonus": 60,
+    "threatBonus": 40,
+    "eliteBonus": 25
+  },
   "combat": {
     "critChance": 0.05,
     "critMult": 1.75,
@@ -45,6 +58,18 @@
     "stunDamageTakenMult": 1.5,
     "stunGuard": 1.5,
     "stunGuardSources": ["melee", "strike"],
-    "minChillMult": 0.35
+    "minChillMult": 0.35,
+    "novaChillMult": 0.5,
+    "armorCap": 0.6,
+    "minDashRechargeMult": 0.35,
+    "minSkillCooldownMult": 0.35,
+    "maxCritChance": 0.75,
+    "maxLifesteal": 0.15,
+    "firstAttackDelay": 0.4,
+    "firstAttackSpread": 0.8,
+    "stunExitCooldown": 0.3,
+    "burnTick": 0.25,
+    "procBlastDelay": 0.12,
+    "blastKnockback": 260
   }
 }

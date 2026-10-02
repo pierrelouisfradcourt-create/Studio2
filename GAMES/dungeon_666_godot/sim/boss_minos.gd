@@ -50,7 +50,8 @@ static func _sweep(game: Dictionary, e: Dictionary, s: Dictionary, horizontal: b
 	var along: float = room.w if horizontal else room.h
 	var band := span / n
 	var ref: float = p.x if horizontal else p.y
-	var shared := _breach_at(game, s, ref, along)
+	# La brèche commune n'est tirée que si elle sert (phase 1) : sinon, un tirage par bande, pas plus.
+	var shared: float = _breach_at(game, s, ref, along) if shared_breach else 0.0
 	for idx in range(int(n)):
 		var i := float(idx)
 		var rank := i if forward else n - 1.0 - i

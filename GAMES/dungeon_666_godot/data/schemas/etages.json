@@ -136,7 +136,15 @@
     },
     "encounter": {
       "type": "objet",
-      "requis": ["baseBudget", "perIndex", "lastWaveMult", "strayEliteChance", "strayEliteFrom", "costRef"],
+      "requis": [
+        "baseBudget",
+        "perIndex",
+        "lastWaveMult",
+        "strayEliteChance",
+        "strayEliteFrom",
+        "costRef",
+        "nextWaveAt"
+      ],
       "fermé": true,
       "champs": {
         "baseBudget": { "type": "nombre", "min": 0.5 },
@@ -144,7 +152,8 @@
         "lastWaveMult": { "type": "nombre", "min": 0.1 },
         "strayEliteChance": { "type": "nombre", "min": 0, "max": 1 },
         "strayEliteFrom": { "type": "entier", "min": 1 },
-        "costRef": { "type": "nombre", "min": 0.1 }
+        "costRef": { "type": "nombre", "min": 0.1 },
+        "nextWaveAt": { "type": "nombre", "min": 0, "max": 1 }
       }
     },
     "circles": {
