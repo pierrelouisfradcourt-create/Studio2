@@ -33,7 +33,7 @@
       ["attackSpeedMult", 0.06, 0.14, "vif", "de la Hâte", "pct"],
       ["critChance", 0.03, 0.07, "acéré", "de Précision", "pct"],
       ["critMult", 0.15, 0.4, "sanglant", "du Bourreau", "pct"],
-      ["skillDamageMult", 0.1, 0.25, "runique", "de la Lance", "pct"],
+      ["skillDamageMult", 0.1, 0.25, "runique", "des Runes", "pct"],
       ["knockbackMult", 0.1, 0.3, "lourd", "du Bélier", "pct"]
     ],
     "armure": [
@@ -56,14 +56,14 @@
     "attackSpeedMult": "vitesse d'attaque",
     "critChance": "chances de critique",
     "critMult": "dégâts critiques",
-    "skillDamageMult": "dégâts de la Lance",
+    "skillDamageMult": "dégâts de la compétence",
     "knockbackMult": "recul infligé",
     "maxHpBonus": "PV max",
     "armor": "réduction des dégâts",
     "moveSpeedMult": "vitesse de course",
     "healOnKill": "PV par ennemi tué",
     "dashRechargeMult": "recharge du dash",
-    "skillCooldownMult": "recharge de la Lance",
+    "skillCooldownMult": "recharge de la compétence",
     "superChargeMult": "charge du Super",
     "goldFindMult": "or trouvé",
     "lifesteal": "vol de vie"

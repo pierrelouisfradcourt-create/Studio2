@@ -85,6 +85,6 @@ static func _pyromancer_ai(game: Dictionary, e: Dictionary, def: Dictionary, _dt
 			if e.stateTime >= def.recover:
 				D6AiCommon.set_state(e, "chase")
 				# Le temps de recharge varie (def.cooldownJitter) : pas de métronome.
-				e.cooldown = def.cooldown * D6Rng.rand_range(game.rng.ai, def.cooldownJitter[0], def.cooldownJitter[1])
+				e.cooldown = D6AiCommon.recharge_of(game, e, def)
 		_:
 			D6AiCommon.set_state(e, "chase")

@@ -261,10 +261,10 @@ static func _ai() -> Dictionary:
 	return _ai_table
 
 # Fin de récupération commune à imp, brute et charger : retour en chase, recharge fixe.
-static func _recover(e: Dictionary, def: Dictionary) -> void:
+static func _recover(game: Dictionary, e: Dictionary, def: Dictionary) -> void:
 	if e.stateTime >= def.recover:
 		D6AiCommon.set_state(e, "chase")
-		e.cooldown = def.cooldown
+		e.cooldown = D6AiCommon.recharge_of(game, e, def)
 
 # ---------------------------------------------------------------- imp
 
@@ -280,7 +280,7 @@ static func _imp(game: Dictionary, e: Dictionary, def: Dictionary, dt: float) ->
 		"strike":
 			_imp_strike(game, e, def, p)
 		"recover":
-			_recover(e, def)
+			_recover(game, e, def)
 		_:
 			D6AiCommon.set_state(e, "chase")
 
@@ -336,7 +336,7 @@ static func _archer(game: Dictionary, e: Dictionary, def: Dictionary, _dt = null
 		"recover":
 			if e.stateTime >= def.recover:
 				D6AiCommon.set_state(e, "chase")
-				e.cooldown = def.cooldown * D6Rng.rand_range(game.rng.ai, 0.85, 1.25)
+				e.cooldown = D6AiCommon.recharge_of(game, e, def)
 		_:
 			D6AiCommon.set_state(e, "chase")
 
@@ -394,7 +394,7 @@ static func _brute(game: Dictionary, e: Dictionary, def: Dictionary, _dt = null)
 				D6AiCommon.set_state(e, "recover")
 				D6State.emit(game, "enemyAttack", {"id": e.id, "x": e.x, "y": e.y, "enemy": e.kind})
 		"recover":
-			_recover(e, def)
+			_recover(game, e, def)
 		_:
 			D6AiCommon.set_state(e, "chase")
 
@@ -412,7 +412,7 @@ static func _charger(game: Dictionary, e: Dictionary, def: Dictionary, dt: float
 		"charge":
 			_charger_charge(game, e, def, dt, p)
 		"recover":
-			_recover(e, def)
+			_recover(game, e, def)
 		_:
 			D6AiCommon.set_state(e, "chase")
 

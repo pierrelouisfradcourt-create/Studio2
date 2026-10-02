@@ -187,6 +187,15 @@ static func disque(c: CanvasItem, p: Vector2, r: float, fond: Color, cerne: Colo
 	if largeur > 0.0:
 		c.draw_circle(p, r, cerne, false, largeur, true)
 
+## Cadre d'un rectangle en quatre traits d'équerre non lissés (ils partent en lot) : murs, piliers.
+static func cadre(c: CanvasItem, r: Rect2, couleur: Color, largeur: float) -> void:
+	var demi := Vector2(largeur / 2.0, 0.0)
+	var bas := Vector2(0.0, r.size.y)
+	c.draw_line(r.position - demi, r.position + Vector2(r.size.x, 0.0) + demi, couleur, largeur)
+	c.draw_line(r.position + bas - demi, r.end + demi, couleur, largeur)
+	c.draw_line(r.position, r.position + bas, couleur, largeur)
+	c.draw_line(r.end - bas, r.end, couleur, largeur)
+
 ## Triangle à trois couleurs (primitive : part en lot avec ses voisines).
 static func triangle(c: CanvasItem, a: Vector2, b: Vector2, d: Vector2, ca: Color, cb: Color, cd: Color) -> void:
 	c.draw_primitive(PackedVector2Array([a, b, d]), PackedColorArray([ca, cb, cd]), PackedVector2Array())

@@ -17,6 +17,8 @@ extends RefCounted
 ## REWARD_LABELS et EVENTS se lisent dans D6Data.tables().run.
 
 const DOOR_GUARD := 20.0 # garde-fou du tirage de la seconde porte
+const BLOOD_COST := 0.25 # autel de sang : part des PV max offerte (le libellé de data/autels.json dit « 25 % »)
+const BLOOD_RARITY := "rare" # autel de sang : rareté promise, au moins
 
 static func create_run(start_floor) -> Dictionary:
 	return {
@@ -229,6 +231,8 @@ static func _prepare_doors(game: Dictionary, open_now: bool) -> void:
 			if not more:
 				break
 			second = D6Rng.weighted_pick(game.rng.gen, weights, weight_of).reward
+		if second == first:
+			second = _other_reward(weights, first)
 		rewards = [{"reward": first}, {"reward": second}]
 		var guarantee = next.get("guarantee")
 		if D6Js.truthy(guarantee) and first != guarantee and second != guarantee:
@@ -243,6 +247,14 @@ static func _prepare_doors(game: Dictionary, open_now: bool) -> void:
 		d.open = open_now
 	if open_now:
 		D6State.emit(game, "doorsOpen", {"count": float(game.room.doors.size())})
+
+## Repli du tirage des portes (garde-fou atteint) : la première récompense POSSIBLE (poids > 0)
+## autre que `first`, dans l'ordre des poids ; `first` s'il n'y en a pas d'autre. Aucun tirage.
+static func _other_reward(weights: Array, first):
+	for d in weights:
+		if d.weight > 0.0 and d.reward != first:
+			return d.reward
+	return first
 
 static func _open_doors(game: Dictionary) -> void:
 	var all_open := true
@@ -345,6 +357,8 @@ static func _option_blocked(game: Dictionary, o: Dictionary) -> bool:
 	if D6Js.truthy(souls) and game.meta.souls < souls:
 		return true
 	match o.effect:
+		"bloodBoon":
+			return _blood_hp(p) >= p.hp # à 1 PV il n'y a plus de sang à offrir
 		"gadget1":
 			return p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus
 		"superToHp":
@@ -359,6 +373,10 @@ static func _option_blocked(game: Dictionary, o: Dictionary) -> bool:
 					return true
 			return false
 	return false
+
+## PV du héros après l'offrande de l'autel de sang : jamais mortelle.
+static func _blood_hp(p: Dictionary) -> float:
+	return maxf(1.0, D6Js.jround(p.hp - p.maxHp * BLOOD_COST))
 
 ## String.replace de JavaScript avec un motif texte : seule la 1re occurrence est remplacée.
 static func _replace_first(text: String, what: String, by: String) -> String:
@@ -634,10 +652,10 @@ static func _apply_event(game: Dictionary, opt: Dictionary) -> bool:
 	var p: Dictionary = game.player
 	match opt.effect:
 		"bloodBoon":
-			p.hp = maxf(1.0, D6Js.jround(p.hp - p.maxHp * 0.25))
+			p.hp = _blood_hp(p)
 			var fam = D6Boons.random_family(game)
 			var offer = D6Boons.roll_boon_offer(game, fam)[0]
-			offer.rarity = "rare"
+			offer.rarity = D6Boons.best_rarity(offer.rarity, BLOOD_RARITY) # au moins rare ; un tirage épique le reste
 			D6Boons.add_boon(run, offer)
 			D6State.emit(game, "boonGain", {"id": offer.id, "rarity": offer.rarity})
 		"heal40":

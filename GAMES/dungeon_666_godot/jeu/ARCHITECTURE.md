@@ -14,6 +14,12 @@ Principal (Node)            jeu/principal.gd     flux titre → Ville → descen
 ├─ Partie (Node)            jeu/partie.gd        boucle à pas fixe, événements, interpolation     [fait]
 ├─ Monde (Node2D)           jeu/monde/monde.tscn     la salle, les zones, les tirs ; sa Camera2D
 │   └─ Entites (Node2D)     jeu/monde/entites.gd     le héros, les ennemis, les Gardiens
+│       ├─ Sol                                       ombres, halos : sous tout ce qui est debout
+│       ├─ Debout (y_sort)                           trié du fond vers l'avant, tous ensemble :
+│       │   ├─ Piliers      jeu/monde/piliers.gd     un nœud par pilier, dessiné une fois par salle
+│       │   ├─ Ennemis                               un nœud par corps
+│       │   └─ Heros                                 devant tout, sauf derrière un pilier au nord duquel il est
+│       └─ Statuts                                   barres de vie, statuts : jamais cachés
 ├─ Effets (Node2D)          jeu/effets/effets.tscn   particules, chiffres de dégâts, éclairs, flashs
 ├─ Son (Node)               jeu/son/son.tscn         bruitages procéduraux, vibrations
 ├─ Hud (CanvasLayer)        jeu/interface/hud.tscn   PV, étage, jauges, Gardien, bannières
@@ -113,6 +119,12 @@ Un fondu COUPE au noir puis éclaircit : l'écran d'arrivée est déjà là et r
 l'éclaircie. Aucun fondu, aucune apparition de panneau ne retarde un choix ; seul l'ARMEMENT d'un
 panneau (anti-martelage, `jeu/ecrans/ecrans.gd`) décide quand il répond.
 
+Profondeur : ce qui est DEBOUT (piliers, ennemis, héros) vit dans `Monde/Entites/Debout`, trié
+en y ; ce qui se tient au nord d'un pilier passe derrière lui, ce qui est au sud le recouvre.
+L'ombre d'un pilier reste au sol (`Murs`). Ce qui doit toujours se lire reste au-dessus du
+groupe : `Statuts` (barres de vie), puis `Contours` (bords des dangers) et `Tirs`. Le remplissage
+d'un télégraphe est au sol : un pilier le cache là où il se dresse, son bord jamais.
+
 Une seule main dessine chaque chose : la taillade d'un coup et la traînée du dash sont au calque
 du héros (`jeu/monde/creatures/`, à la portée réelle du coup) ; `Effets` n'ajoute que les éclats,
 les ondes, les chiffres, et la grande taillade dorée de l'Exécution (un Super).
@@ -155,6 +167,9 @@ G=C:/Users/Studio-Dev/Desktop/Godot_v4.6.3-stable_win64.exe/Godot_v4.6.3-stable_
 
 Le thème commun, l'ordre des couches et les réglages du feel ont leur vérification sans fenêtre :
 `"$G" --headless --path . --script res://jeu/theme/verifier.gd` (finit par « THEME : OK »).
+L'ordre de profondeur du Monde, le Traqueur disparu et la durée de l'élan aussi :
+`res://jeu/monde/test_profondeur.gd` (finit par « PROFONDEUR : OK ») ; pour les juger à l'écran,
+le banc `res://jeu/essai/profondeur.tscn` pose le cas voulu dans le vrai jeu (`D666_CAS`).
 
 `capture.gd` lance une scène dans une vraie fenêtre (hors écran), la laisse vivre, et enregistre
 des PNG : c'est la preuve d'une vue. Chaque lot écrit sa scène de banc `jeu/<lot>/banc.tscn`

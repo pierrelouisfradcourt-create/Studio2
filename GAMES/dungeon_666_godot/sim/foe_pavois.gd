@@ -68,6 +68,6 @@ static func _pavois_ai(game: Dictionary, e: Dictionary, def: Dictionary, dt: flo
 		"recover":
 			if e.stateTime >= def.recover:
 				D6AiCommon.set_state(e, "chase")
-				e.cooldown = def.cooldown
+				e.cooldown = D6AiCommon.recharge_of(game, e, def)
 		_:
 			D6AiCommon.set_state(e, "chase")

@@ -102,12 +102,15 @@ func _avancer(reel: float) -> void:
 		_acc = 0.0
 	alpha = minf(1.0, _acc / D6Data.DT) if game.mode == "play" else 1.0
 
+## Une entité DISPARUE (`hidden` : Traqueur en embuscade, Minos dissous) n'a pas de position
+## d'avant : elle resurgit d'un bloc là où elle est, sans glisser depuis l'endroit qu'elle a quitté.
 func _noter_avant() -> void:
 	_avant.clear()
 	_avant[0] = Vector2(game.player.x, game.player.y)
 	for liste in [game.enemies, game.projectiles, game.pickups]:
 		for e in liste:
-			_avant[e.id] = Vector2(e.x, e.y)
+			if not D6Js.truthy(e.get("hidden")):
+				_avant[e.id] = Vector2(e.x, e.y)
 
 ## Publie les événements de l'image, déclenche ralentis et enregistrements, puis vide la liste.
 func _publier() -> void:

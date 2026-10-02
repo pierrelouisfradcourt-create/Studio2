@@ -17,6 +17,7 @@ extends RefCounted
 ## PROFILE_SCHEMA, STASH_MAX, EQUIP_SLOTS : D6Data.tables().profile.
 
 const DEFAULT_WEAPON := "lame"
+const UID_PREFIX := "i" # identifiant d'objet du profil : « i » + numéro d'ordre (itemSeq)
 const KINDS := ["classes", "weapons", "skills", "gadgets"]
 
 static func _t() -> Dictionary:
@@ -178,14 +179,35 @@ static func _sanitize_items(out: Dictionary, raw: Dictionary) -> void:
 		out.equipment[s] = it if is_item(it) and it.slot == s else null
 	out.stash = raw.stash.filter(is_item).slice(0, int(_t().STASH_MAX)) if raw.get("stash") is Array else []
 	out.itemSeq = raw.itemSeq if _int_in(raw.get("itemSeq"), 1.0, 1e9) else 1.0
-	for it in out.equipment.values() + out.stash:
-		if it != null:
-			ensure_uid(out, it)
+	_fix_uids(out)
+
+## Chaque objet du profil porte un identifiant TEXTE, non vide et unique. Le premier porteur d'un
+## identifiant le garde (équipement, puis coffre) ; un identifiant absent, d'un autre type ou
+## déjà pris est réattribué. itemSeq passe au-delà de tout « i<n> » présent : les objets
+## suivants (ensure_uid) ne retombent jamais sur un identifiant pris.
+static func _fix_uids(profile: Dictionary) -> void:
+	var taken := {}
+	var pending: Array = []
+	for it in profile.equipment.values() + profile.stash:
+		if it == null:
+			continue
+		var uid = it.get("uid")
+		if (uid is String or uid is StringName) and String(uid) != "" and not taken.has(String(uid)):
+			it.uid = String(uid)
+			taken[it.uid] = true
+			var n := String(uid).substr(UID_PREFIX.length())
+			if String(uid).begins_with(UID_PREFIX) and n.is_valid_int() and float(n) >= profile.itemSeq:
+				profile.itemSeq = float(n) + 1.0
+		else:
+			pending.append(it)
+	for it in pending:
+		it.uid = UID_PREFIX + D6Js.num_str(profile.itemSeq)
+		profile.itemSeq += 1.0
 
 ## Identifiant stable d'un objet dans le profil (les `id` de partie se recyclent).
 static func ensure_uid(profile: Dictionary, item: Dictionary):
 	if not D6Js.truthy(item.get("uid")):
-		item.uid = "i" + D6Js.num_str(profile.itemSeq)
+		item.uid = UID_PREFIX + D6Js.num_str(profile.itemSeq)
 		profile.itemSeq += 1.0
 	return item.uid
 

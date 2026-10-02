@@ -8,6 +8,7 @@ extends RefCounted
 ## toujours tuning.combo / tuning.skill / tuning.gadget / tuning.super, sans connaître les classes.
 
 const DEFAULT_WEAPON := "lame"
+const COMBO_EXPIRED := 99.0 # s : valeur de départ de player.comboTimer (state), « aucun enchaînement en cours »
 
 ## game.meta.loadout?.<key> : null si le loadout ou la clé manque.
 static func _loadout_field(game: Dictionary, key: String):
@@ -34,11 +35,22 @@ static func weapon_type_of(game: Dictionary):
 	var weapons: Array = class_of(game).weapons
 	return weapons[0] if not weapons.is_empty() and weapons[0] != null else DEFAULT_WEAPON
 
+## Autre arme en main : l'enchaînement repart du coup 1. Sans cela, le rang gardé de l'ancienne
+## arme (comboIndex) peut dépasser le combo de la nouvelle (4 coups des Dagues -> 3 de la Lame).
+static func _reset_combo_if_changed(game: Dictionary, weapon: Dictionary) -> void:
+	var p = game.get("player")
+	var held = game.tuning.get("weapon")
+	if not (p is Dictionary) or held == null or is_same(held, weapon):
+		return
+	p.comboIndex = 0.0
+	p.comboTimer = COMBO_EXPIRED
+
 ## (Re)branche le kit actif. Appelé à la création de la partie et à chaque changement d'arme.
 static func resolve_kit(game: Dictionary) -> Dictionary:
 	var t: Dictionary = game.tuning
 	var c := class_of(game)
 	var w: Dictionary = t.weapons[weapon_type_of(game)]
+	_reset_combo_if_changed(game, w)
 	t.combo = w.combo
 	t.dashStrike = w.dashStrike
 	t.weapon = w

@@ -154,23 +154,19 @@ static func _apply_impact(game: Dictionary, e: Dictionary, src: Dictionary) -> v
 	var guarded: bool = _num(e, "guard") > 0.0 and t.combat.stunGuardSources.has(kind)
 	var stun = src.get("stun")
 	if D6Js.truthy(stun) and not is_boss and not guarded:
-		e.stun = maxf(e.stun, stun)
-		e.tele = null
-		e.state = "stunned"
-		e.stateTime = 0.0
+		D6AiCommon.stun(game, e, stun)
 	var hitstop = src.get("hitstop")
 	if D6Js.truthy(hitstop):
 		apply_hitstop(game, minf(hitstop, t.boss[e.kind].hitstopCap) if is_boss else hitstop, e)
 
 ## Jauge de Super remplie par un coup du héros (hors sources exclues, hors Super en cours).
-static func _charge_super(game: Dictionary, kind, amount: float, hp_before: float) -> void:
+## `effective` : les PV réellement retirés — achever un ennemi à 1 PV ne remplit pas la jauge.
+static func _charge_super(game: Dictionary, kind, effective: float) -> void:
 	var t: Dictionary = game.tuning
 	var p: Dictionary = game.player
 	var st: Dictionary = p.stats
 	if is_player_source(kind) and not NO_SUPER_CHARGE.has(kind) and p.state != "super":
 		var before: float = p.superCharge
-		# L'overkill ne compte pas : achever un ennemi à 1 PV ne remplit pas la jauge.
-		var effective := minf(amount, maxf(0.0, hp_before))
 		# chargeDamage est donné pour l'arme de base : mis à l'échelle de l'arme portée, comme les
 		# dégâts. Sans cela la jauge se remplissait en 90 coups à l'étage 1 et en 3 à l'étage 649
 		# (les PV ennemis suivent l'arme) : invulnérable 40 % du temps en profondeur.
@@ -224,12 +220,13 @@ static func damage_enemy(game: Dictionary, e: Dictionary, src: Dictionary) -> fl
 
 	_apply_impact(game, e, src)
 
-	var tel: Dictionary = game.telemetry
-	tel.damageDealt += amount
+	# L'overkill ne compte pas (télémétrie ET jauge de Super) : seuls les PV réellement retirés.
+	var effective := minf(amount, maxf(0.0, hp_before))
+	game.telemetry.damageDealt += effective
 	if kind == "melee" or kind == "strike":
-		tel.hitsLanded += 1.0
+		game.telemetry.hitsLanded += 1.0
 
-	_charge_super(game, kind, amount, hp_before)
+	_charge_super(game, kind, effective)
 	if st.lifesteal > 0.0 and PROC_SOURCES.has(kind):
 		heal_player(game, amount * st.lifesteal, false)
 
@@ -348,10 +345,7 @@ static func _apply_target_effect(game: Dictionary, effect, pr: Dictionary, e, sr
 				return
 			if _num(e, "guard") > 0.0 and src is Dictionary and game.tuning.combat.stunGuardSources.has(src.get("kind")):
 				return
-			e.stun = maxf(e.stun, pr.value)
-			e.tele = null
-			e.state = "stunned"
-			e.stateTime = 0.0
+			D6AiCommon.stun(game, e, pr.value)
 		"blast":
 			spawn_hazard(game, {
 				"shape": "circle", "x": e.x, "y": e.y, "r": pr.radius, "delay": PROC_BLAST_DELAY, "damage": pr.value,

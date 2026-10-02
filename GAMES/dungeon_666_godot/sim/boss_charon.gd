@@ -71,9 +71,9 @@ static func _charge_rush(game: Dictionary, e: Dictionary, c: Dictionary, dt: flo
 		e.hitPlayer = true
 		D6Combat.damage_player(game, c.damage * e.dmgScale, {"kind": "bossCharge", "id": e.atkId, "x": e.x, "y": e.y})
 	if res.hitWall:
+		# set_state : l'étape et le chronomètre de la ruée ne survivent pas au pattern interrompu.
+		D6BossCommon.set_state(e, "stunned")
 		e.stun = c.wallStun
-		e.state = "stunned"
-		e.stateTime = 0.0
 		game.telemetry.wallSlams += 1
 		D6State.emit(game, "chargerWall", {"id": e.id, "x": e.x, "y": e.y, "boss": true})
 	elif e.patternT >= c.maxTime:

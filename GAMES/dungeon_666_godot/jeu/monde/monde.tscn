@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://jeu/monde/monde.gd" id="1"]
 [ext_resource type="Script" path="res://jeu/monde/sol.gd" id="2"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://jeu/monde/camera.gd" id="11"]
 [ext_resource type="Script" path="res://jeu/monde/murs.gd" id="12"]
 [ext_resource type="Script" path="res://jeu/monde/braises.gd" id="13"]
+[ext_resource type="Script" path="res://jeu/monde/piliers.gd" id="14"]
 
 [sub_resource type="CanvasItemMaterial" id="additif"]
 blend_mode = 1
@@ -56,6 +57,13 @@ script = ExtResource("7")
 
 [node name="Entites" type="Node2D" parent="."]
 script = ExtResource("8")
+
+[node name="Debout" type="Node2D" parent="Entites"]
+y_sort_enabled = true
+
+[node name="Piliers" type="Node2D" parent="Entites/Debout"]
+y_sort_enabled = true
+script = ExtResource("14")
 
 [node name="Contours" type="Node2D" parent="."]
 script = ExtResource("9")

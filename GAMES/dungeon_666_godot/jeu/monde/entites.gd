@@ -4,10 +4,14 @@ extends Node2D
 ##
 ## Quatre calques, du sol vers le haut (un script par famille, sous jeu/monde/creatures/) :
 ##   Sol      ombres douces, halos, fils de protection, traînée de dash, aura d'élan
-##   Ennemis  les 10 archétypes et les 4 Gardiens : un nœud par corps, trié du fond vers l'avant
+##   Ennemis  les 10 archétypes et les 4 Gardiens : un nœud par corps
 ##   Heros    arc du coup, cape, corps, arme
 ##   Statuts  barres de vie, étourdissement, garde, froid, brûlure, vulnérabilité, élites, protégés
-## Les télégraphes au sol, les tirs, le sol et la caméra sont dessinés par le Monde.
+## Ennemis et Heros sont DEBOUT : ils vivent dans le groupe `Debout`, trié du fond vers l'avant
+## (y_sort ; des parents triés imbriqués trient ensemble leurs enfants). Le Monde y range aussi
+## ses piliers (monde.tscn, jeu/monde/piliers.gd) : ce qui est derrière un pilier est caché par
+## lui, ce qui est devant le recouvre. Sol reste dessous, Statuts dessus : une barre de vie n'est
+## jamais cachée. Les télégraphes au sol, les tirs, le sol et la caméra sont dessinés par le Monde.
 
 const Sol = preload("res://jeu/monde/creatures/sol.gd")
 const Ennemis = preload("res://jeu/monde/creatures/ennemis.gd")
@@ -30,13 +34,23 @@ var _calques: Array = []
 var _heros: Node2D
 var _gardes_t := 0.0
 
+## Le groupe trié en profondeur. monde.tscn le déclare (avec ses piliers) ; un banc sans décor
+## n'en a pas : il est alors créé ici.
+@onready var debout: Node2D = get_node_or_null("Debout")
+
 func _ready() -> void:
-	for famille in [["Sol", Sol], ["Ennemis", Ennemis], ["Heros", Heros], ["Statuts", Statuts]]:
+	if debout == null:
+		debout = Node2D.new()
+		debout.name = "Debout"
+		debout.y_sort_enabled = true
+		add_child(debout)
+	for famille in [["Sol", Sol, self], ["Ennemis", Ennemis, debout], ["Heros", Heros, debout], ["Statuts", Statuts, self]]:
 		var calque: Node2D = famille[1].new()
 		calque.name = famille[0]
 		calque.entites = self
-		add_child(calque)
+		famille[2].add_child(calque)
 		_calques.append(calque)
+	move_child(_calques[0], 0)
 	_heros = _calques[2]
 
 func brancher(p_app: Node, p_partie: Node) -> void:

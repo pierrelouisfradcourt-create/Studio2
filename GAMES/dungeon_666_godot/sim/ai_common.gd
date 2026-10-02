@@ -16,6 +16,10 @@ static var _shooter_kinds = null
 # garde le sien de sa dissolution à sa frappe (foe_stalker), sinon il resurgirait en surnombre.
 const TOKEN_STATES := ["windup", "strike", "charge", "fade", "ambush"]
 
+# Recharge de l'archer : ×0,85 à ×1,25. Les archétypes ajoutés portent la leur en données (cooldownJitter).
+const ARCHER_KIND := "archer"
+const ARCHER_JITTER := [0.85, 1.25]
+
 # Objet partagé de module (const navOut = { x: 0, y: 0 }).
 static var _nav_out: Dictionary = {"x": 0.0, "y": 0.0}
 
@@ -63,6 +67,28 @@ static func active_shooters(game: Dictionary) -> float:
 static func set_state(e: Dictionary, s: String) -> void:
 	e.state = s
 	e.stateTime = 0.0
+
+## Recharge d'un ennemi qui sort de sa récupération : def.cooldown, variée par def.cooldownJitter
+## ([min, max], un tirage dans game.rng.ai) pour les archétypes qui ne doivent pas être des métronomes.
+static func recharge_of(game: Dictionary, e: Dictionary, def: Dictionary) -> float:
+	var jitter = def.get("cooldownJitter")
+	if jitter == null and e.kind == ARCHER_KIND:
+		jitter = ARCHER_JITTER
+	if jitter == null:
+		return def.cooldown
+	return def.cooldown * D6Rng.rand_range(game.rng.ai, jitter[0], jitter[1])
+
+## Étourdit un ennemi `duration` s (l'appelant a déjà écarté Gardiens et ennemis en garde) : son
+## attaque en cours est annulée. S'il RÉCUPÉRAIT de son attaque, ce qu'il lui restait à attendre
+## avant de pouvoir ré-attaquer (fin de la récupération, puis recharge) passe dans sa recharge,
+## qui court pendant l'étourdissement : étourdir ne raccourcit jamais ce délai.
+static func stun(game: Dictionary, e: Dictionary, duration: float) -> void:
+	var def = game.tuning.enemies.get(e.kind)
+	if e.state == "recover" and def is Dictionary and def.get("recover") != null:
+		e.cooldown = maxf(e.cooldown, maxf(0.0, def.recover - e.stateTime) + recharge_of(game, e, def))
+	e.stun = maxf(e.stun, duration)
+	e.tele = null
+	set_state(e, "stunned")
 
 static func to_player(game: Dictionary, e: Dictionary) -> Dictionary:
 	var p: Dictionary = game.player

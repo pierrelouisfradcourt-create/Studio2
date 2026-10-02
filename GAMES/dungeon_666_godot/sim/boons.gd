@@ -100,13 +100,17 @@ static func add_boon(run: Dictionary, offer: Dictionary) -> void:
 	var existing = _find_boon(run, offer.id)
 	if existing != null:
 		existing.level += 1.0
-		existing.rarity = existing.rarity if _rank_rarity(existing.rarity) >= _rank_rarity(offer.rarity) else offer.rarity
+		existing.rarity = best_rarity(existing.rarity, offer.rarity)
 		return
 	if def.slot != "passive":
 		run.boons = run.boons.filter(func(b):
 			var d = boon_def(b.id)
 			return d == null or d.slot != def.slot)
 	run.boons.append({"id": offer.id, "rarity": offer.rarity, "level": 1.0})
+
+## La meilleure de deux raretés (rang dans RARITIES) ; `a` à égalité.
+static func best_rarity(a, b):
+	return a if _rank_rarity(a) >= _rank_rarity(b) else b
 
 static func _rank_rarity(id) -> int:
 	var rarities: Array = _t().RARITIES

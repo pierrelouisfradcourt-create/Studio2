@@ -6,10 +6,14 @@ extends "res://jeu/monde/creatures/calque.gd"
 ##   Revenant     cimier, longue cape
 ##   Bourreau     cagoule à deux pointes, épaulières, carrure large
 ##   Chasseresse  carquois dans le dos, natte, carrure fine
+## PROFONDEUR : le nœud est trié avec les ennemis et les piliers (groupe Debout d'entites.gd). Son
+## rang (le y du nœud, voir _rang) le garde DEVANT tout ennemi — il ne se perd jamais sous un
+## corps —, mais DERRIÈRE un pilier au nord duquel il se tient.
 ## Il a du POIDS : ses pieds courent à la vitesse RÉELLE, le buste se tord avec le coup, le corps
 ## s'étire dans l'axe du dash et s'écrase à l'arrivée, la cape traîne. Ce qui dit son état :
 ##   invulnérable   coquille : filet clair pendant le dash, tirets blancs après un coup reçu
-##   élan (surge)   flammes d'or autour de lui, arme chauffée, double chevron : « je frappe plus fort »
+##   élan (surge)   flammes d'or autour de lui, arme chauffée, double chevron : « je frappe plus fort » ;
+##                  un anneau d'or se VIDE autour de lui avec la durée qui reste : « plus pour longtemps »
 ##   Super          Colère : il tournoie ; Sentence : il annonce puis abat chaque exécution ;
 ##                  Nuée : des traits d'or tournent autour de lui
 
@@ -25,7 +29,10 @@ const ATTERRI := 0.1 # s d'écrasement à la sortie d'un dash
 const RECUP_VISIBLE := 0.14 # s : l'arc d'un coup s'efface au début de la récupération
 const GESTE := 0.22 # s : le bras reste tendu après le lancer d'une compétence
 const SURGE_FONDU := 0.4 # s : l'élan s'éteint sur sa fin
+const ANNEAU_ELAN := 1.42 # en rayons du héros : l'anneau de durée de l'élan, hors des flammes
 const SAUT := 150.0 # u : au-delà, c'est un changement de salle, pas un pas
+const EMPRISE := 3.0 # en rayons du héros : de part et d'autre d'un pilier, ce que son dessin peut toucher
+const RETRAIT := 0.5 # u : son rang passe juste derrière le pied du pilier
 
 var _armes: Armes
 var _elan := 0.0
@@ -75,7 +82,20 @@ func actualiser(delta: float) -> void:
 	var g = jeu()
 	if g != null:
 		_pas(g, delta)
+		position.y = _rang(g, lieu_heros(g))
 	queue_redraw()
+
+## Rang de profondeur du héros (le y du nœud ; le dessin est décalé d'autant, voir _draw) : devant
+## tout, sauf derrière les piliers dont il est juste au nord. En plein Bond il passe au-dessus.
+func _rang(g: Dictionary, pos: Vector2) -> float:
+	var rang: float = g.room.h
+	if envol_heros(g) > 0.0:
+		return rang
+	var portee: float = g.player.r * EMPRISE
+	for o in g.room.obstacles:
+		if pos.y < o.y0 and pos.x > o.x0 - portee and pos.x < o.x1 + portee:
+			rang = minf(rang, o.y1 - RETRAIT)
+	return rang
 
 ## Distance réellement parcourue depuis la dernière image : elle fait avancer le pas de course.
 func _pas(g: Dictionary, delta: float) -> void:
@@ -95,7 +115,7 @@ func _draw() -> void:
 	if g == null:
 		return
 	var h: Dictionary = g.player
-	var pos := lieu_heros(g)
+	var pos := lieu_heros(g) - position
 	var pr: float = h.r * HEROS_VISUEL
 	var classe: String = _classe(g)
 	p.alpha = 1.0 if h.state != "dead" else alpha_heros(h)
@@ -364,7 +384,7 @@ func _lancer(g: Dictionary, h: Dictionary, pr: float, m: Transform2D) -> void:
 	p.disque(main, pr * 0.22, PAL.hero, NUIT, 1.5)
 
 ## Invulnérable : une coquille autour de lui (filet clair étiré avec le dash ; tirets blancs qui
-## tournent après un coup reçu). En élan : anneau d'or et double chevron au-dessus de la tête.
+## tournent après un coup reçu). En élan : anneau de durée et double chevron au-dessus de la tête.
 func _coquille(h: Dictionary, pr: float, elan: float) -> void:
 	if h.state == "dead":
 		return
@@ -374,13 +394,35 @@ func _coquille(h: Dictionary, pr: float, elan: float) -> void:
 		p.pointille(Vector2.ZERO, pr * 1.55, Color(PAL.hero, 0.9), 2.0, 9.0, temps() * 5.0)
 	if elan <= 0.0:
 		return
-	p.anneau(Vector2.ZERO, pr * 1.3, Color(PAL.crit, 0.8 * elan), 2.0)
+	_anneau_elan(h, pr * ANNEAU_ELAN, elan)
 	var monte := fposmod(temps() * 1.6, 1.0) * 4.0
 	for i in 2:
 		var y := -pr * (2.0 + 0.42 * i) - monte
 		var pts := PackedVector2Array([Vector2(-6.0, y + 5.0), Vector2(0.0, y), Vector2(6.0, y + 5.0)])
 		p.filet(pts, Color(NUIT, elan), 5.5)
 		p.filet(pts, Color(PAL.crit, elan), 2.5)
+
+## L'élan se lit S'ÉPUISER : sa piste reste, sombre ; l'arc d'or cerné qui la recouvre se vide
+## dans le sens des aiguilles d'une montre (comme la flaque qui brûle, contours.gd) à mesure que
+## `player.surge` retombe, une perle claire à sa tête. Plein = la durée posée par la bénédiction.
+func _anneau_elan(h: Dictionary, rayon: float, elan: float) -> void:
+	var reste := clampf(nombre(h, "surge") / _elan_plein(h), 0.0, 1.0)
+	var a0 := -PI / 2.0
+	var a1 := a0 + TAU * reste
+	p.anneau(Vector2.ZERO, rayon, Color(NUIT, 0.45 * elan), 3.5)
+	p.anneau(Vector2.ZERO, rayon, Color(PAL.crit, 0.22 * elan), 1.5)
+	p.arc(Vector2.ZERO, rayon, a0, a1, Color(NUIT, elan), 6.0)
+	p.arc(Vector2.ZERO, rayon, a0, a1, Color(PAL.crit, elan), 3.0)
+	p.disque(Vector2.from_angle(a1) * rayon, 3.2, Color(PAL.hero, elan), Color(NUIT, elan), 1.5)
+
+## Durée pleine de l'élan (s) : la plus longue que posent les procs « surge » du héros, LUE dans
+## l'état (aucune durée recopiée ici) ; à défaut de proc, ce qu'il en reste : l'anneau est plein.
+func _elan_plein(h: Dictionary) -> float:
+	var plein := maxf(1e-3, nombre(h, "surge"))
+	for pr in h.get("procs", []):
+		if pr is Dictionary and pr.get("effect") == "surge":
+			plein = maxf(plein, nombre(pr, "duration"))
+	return plein
 
 ## Flammes de l'élan (« Représailles ») : des langues d'or montent autour de lui, sous le corps.
 func _flammes(pr: float, elan: float) -> void:

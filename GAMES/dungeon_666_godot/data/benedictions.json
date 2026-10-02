@@ -220,7 +220,7 @@
       "family": "luxure",
       "slot": "skill",
       "name": "Charme fatal",
-      "text": "La Lance rend vulnérable : +{v} % de dégâts subis, 4 s.",
+      "text": "Votre compétence rend vulnérable : +{v} % de dégâts subis, 4 s.",
       "value": 30,
       "pct": true,
       "proc": { "on": "hit", "sources": ["skill"], "effect": "vuln", "duration": 4, "chance": 1 }
@@ -277,7 +277,7 @@
       "family": "envie",
       "slot": "skill",
       "name": "Convoitise",
-      "text": "La Lance déclenche un éclair : {v} dégâts, 3 rebonds.",
+      "text": "Votre compétence déclenche un éclair : {v} dégâts, 3 rebonds.",
       "value": 14,
       "proc": {
         "on": "hit",
