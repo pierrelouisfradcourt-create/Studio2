@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://jeu/ville/onglet_grimoire.gd" id="1"]
 [ext_resource type="Script" path="res://jeu/ville/grille.gd" id="2"]
+[ext_resource type="Script" path="res://jeu/ville/arc_emplacements.gd" id="3"]
 
 [node name="Grimoire" type="VBoxContainer"]
 size_flags_horizontal = 3
@@ -14,38 +15,121 @@ theme_type_variation = &"TexteDoux"
 text = "Les trois emplacements d'action de la classe."
 autowrap_mode = 3
 
-[node name="TitreEmplacements" type="Label" parent="."]
+[node name="Haut" type="PanelContainer" parent="."]
+layout_mode = 2
+theme_type_variation = &"Carte"
+
+[node name="Marge" type="MarginContainer" parent="Haut"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="Rangee" type="HFlowContainer" parent="Haut/Marge"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 8
+
+[node name="Arc" type="Control" parent="Haut/Marge/Rangee"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("3")
+
+[node name="Legende" type="VBoxContainer" parent="Haut/Marge/Rangee"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 6
+
+[node name="Titre" type="Label" parent="Haut/Marge/Rangee/Legende"]
 layout_mode = 2
 theme_type_variation = &"TitreSection"
-text = "Emplacements"
+text = "Tes trois emplacements"
 
-[node name="Emplacements" type="GridContainer" parent="."]
+[node name="Aide" type="Label" parent="Haut/Marge/Rangee/Legende"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
-script = ExtResource("2")
-largeur_mini = 250.0
-colonnes_max = 3
+theme_type_variation = &"Texte"
+text = "Touche une compétence, puis l'emplacement où la placer (ou l'inverse)."
+autowrap_mode = 3
 
-[node name="TitreCompetences" type="Label" parent="."]
+[node name="Ligne1" type="HBoxContainer" parent="Haut/Marge/Rangee/Legende"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Choix1" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne1"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 1
+theme_type_variation = &"Onglet"
+toggle_mode = true
+text = "1 · Vide"
+alignment = 0
+
+[node name="Vider1" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne1"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 1
+theme_type_variation = &"BoutonDiscret"
+text = "Vider"
+
+[node name="Ligne2" type="HBoxContainer" parent="Haut/Marge/Rangee/Legende"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Choix2" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 1
+theme_type_variation = &"Onglet"
+toggle_mode = true
+text = "2 · Vide"
+alignment = 0
+
+[node name="Vider2" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 1
+theme_type_variation = &"BoutonDiscret"
+text = "Vider"
+
+[node name="Ligne3" type="HBoxContainer" parent="Haut/Marge/Rangee/Legende"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Choix3" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 1
+theme_type_variation = &"Onglet"
+toggle_mode = true
+text = "3 · Vide"
+alignment = 0
+
+[node name="Vider3" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 1
+theme_type_variation = &"BoutonDiscret"
+text = "Vider"
+
+[node name="TitreActions" type="Label" parent="."]
 layout_mode = 2
 theme_type_variation = &"TitreSection"
-text = "Compétences"
+text = "Compétences de la classe"
 
-[node name="Competences" type="GridContainer" parent="."]
-layout_mode = 2
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
-script = ExtResource("2")
-largeur_mini = 250.0
-colonnes_max = 3
-
-[node name="TitreGadgets" type="Label" parent="."]
-layout_mode = 2
-theme_type_variation = &"TitreSection"
-text = "Gadgets"
-
-[node name="Gadgets" type="GridContainer" parent="."]
+[node name="Actions" type="GridContainer" parent="."]
 layout_mode = 2
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
@@ -56,7 +140,7 @@ colonnes_max = 3
 [node name="TitreSuper" type="Label" parent="."]
 layout_mode = 2
 theme_type_variation = &"TitreSection"
-text = "Super"
+text = "Ultime"
 
 [node name="Super" type="GridContainer" parent="."]
 layout_mode = 2

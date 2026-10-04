@@ -6,10 +6,19 @@ extends RefCounted
 ## Les longueurs sont en « px CSS » dans la version web : ici elles sont multipliées par
 ## `echelle` (unités du viewport par px CSS) pour garder la même taille sous le pouce.
 ##
-## COMBAT V3 : les boutons « compétence », « gadget » et « Super » d'avant sont les emplacements
-## 1, 2 et 3 (skill1, skill2, skill3), au même endroit ; tous trois partent au RELÂCHER, visés si
-## le pouce a glissé. Bouton d'attaque : l'appui frappe, le tenir sans glisser tient l'attaque
-## (c'est ce qui arme l'ultime) ; GLISSER vise sans la tenir, et le coup part au relâcher.
+## COMBAT V3, disposition : le GROS bouton d'attaque en bas à droite, les trois emplacements
+## (skill1, skill2, skill3) en ARC autour de lui, à gauche et au-dessus, et le DASH à part, de
+## l'autre côté (à droite, contre le bord) : le pouce y va en se repliant, sans croiser l'arc.
+##
+## COMBAT V3, gestes. Bouton d'attaque (ou toucher flottant dans la moitié droite) :
+##   - appui BREF, relâché sans glisser : UN coup, au relâcher, visée assistée ;
+##   - GLISSER : vise sans rien lancer ; UN coup part au relâcher, dans la direction glissée ;
+##     revenir au centre avant de relâcher ANNULE ;
+##   - appui MAINTENU sans glisser (APPUI_BREF_MS passées) : le coup part, puis l'attaque est
+##     TENUE jusqu'au relâcher (elle enchaîne, et c'est ce qui arme l'ultime, jauge pleine).
+## Rien ne part donc à l'appui : c'est ce qui évite les deux coups d'un glisser.
+## Emplacements : tout part au RELÂCHER (tap = visée assistée, glisser = viser, retour au centre
+## = annuler). Dash : à l'appui.
 
 const RAYON_MANCHE := 58.0 # course du joystick de déplacement
 const MANCHE_MORT := 0.12 # fraction du rayon ignorée
@@ -20,23 +29,26 @@ const ZONE_DEPLACEMENT := 0.48 # moitié gauche (fraction de la largeur) réserv
 const TOLERANCE_POUCE := 1.35 # zone de toucher = rayon dessiné × 1,35
 const ECART_ZONE := 8.0 # entre la zone joystick et la zone de toucher du bouton le plus à gauche
 const MARGE_DESSIN := 12.0 # le DESSIN du joystick reste à cette distance des bords
+const APPUI_BREF_MS := 150.0 # pouce posé sans glisser plus longtemps : l'attaque est TENUE
 const AUCUN := -1 # aucun doigt
 
-## Disposition autour du bouton d'attaque (angles en degrés, y vers le bas). Le dash est le plus
-## gros et le plus proche du pouce : c'est le geste le plus important.
+## Disposition autour du bouton d'attaque (px CSS ; angles en degrés, y vers le bas : 180 = à
+## gauche, 270 = au-dessus). Les trois emplacements sur un même arc (rayon 106), de 45° en 45° :
+## cibles de 60 px, 21 px de vide entre deux voisins, 24 px entre eux et l'attaque. Le dash de
+## l'autre côté de l'attaque, un peu plus bas : là où le pouce arrive en se repliant.
 const BOUTONS := [
-	{"id": "attack", "rayon": 48.0, "angle": 0.0, "dist": 0.0, "visee": true},
-	{"id": "dash", "rayon": 40.0, "angle": 186.0, "dist": 112.0, "visee": false},
-	{"id": "skill1", "rayon": 33.0, "angle": 228.0, "dist": 112.0, "visee": true},
-	{"id": "skill3", "rayon": 35.0, "angle": 268.0, "dist": 116.0, "visee": true},
-	{"id": "skill2", "rayon": 27.0, "angle": 318.0, "dist": 98.0, "visee": true},
+	{"id": "attack", "rayon": 52.0, "angle": 0.0, "dist": 0.0, "visee": true},
+	{"id": "dash", "rayon": 38.0, "angle": 12.0, "dist": 106.0, "visee": false},
+	{"id": "skill1", "rayon": 30.0, "angle": 190.0, "dist": 106.0, "visee": true},
+	{"id": "skill2", "rayon": 30.0, "angle": 235.0, "dist": 106.0, "visee": true},
+	{"id": "skill3", "rayon": 30.0, "angle": 280.0, "dist": 106.0, "visee": true},
 ]
-const MARGE_ATTAQUE_X := 118.0
-const MARGE_ATTAQUE_Y := 112.0
-## Portrait (toléré) : deux rangées au-dessus de l'attaque, dans une colonne étroite qui laisse
-## ~48 % de la largeur au pouce gauche. [angle, distance].
-const EVENTAIL_PORTRAIT := {"dash": [248.0, 108.0], "skill1": [294.0, 118.0], "skill3": [255.0, 197.0], "skill2": [288.0, 194.0]}
-const MARGE_PORTRAIT_X := 95.0
+const MARGE_ATTAQUE_X := 168.0
+const MARGE_ATTAQUE_Y := 100.0
+## Portrait (toléré) : pas de place à droite de l'attaque ; le dash passe au-dessus de l'arc, dans
+## une colonne étroite qui laisse ~43 % de la largeur au pouce gauche. [angle, distance].
+const EVENTAIL_PORTRAIT := {"dash": [262.0, 200.0], "skill1": [185.0, 106.0], "skill2": [232.0, 106.0], "skill3": [279.0, 106.0]}
+const MARGE_PORTRAIT_X := 70.0
 const MARGE_PORTRAIT_Y := 115.0
 
 var largeur := 1.0
@@ -54,7 +66,7 @@ func _init(fronts: Dictionary) -> void:
 	_fronts = fronts
 	for modele: Dictionary in BOUTONS:
 		var b: Dictionary = modele.duplicate()
-		b.merge({"x": 0.0, "y": 0.0, "r": modele.rayon, "doigt": AUCUN, "ox": 0.0, "oy": 0.0, "dx": 0.0, "dy": 0.0, "glisse": false, "manuel": false})
+		b.merge({"x": 0.0, "y": 0.0, "r": modele.rayon, "doigt": AUCUN, "ox": 0.0, "oy": 0.0, "dx": 0.0, "dy": 0.0, "glisse": false, "manuel": false, "tenu": false, "pose_ms": 0.0})
 		boutons.append(b)
 
 ## Place les boutons pour un viewport de `taille`, des marges sûres {top, right, bottom, left}
@@ -117,9 +129,11 @@ func _prendre(b: Dictionary, doigt: int, p: Vector2, hors_bouton: bool) -> void:
 	b.dy = 0.0
 	b.glisse = false
 	b.manuel = false
-	# Un emplacement part au RELÂCHER ; l'attaque et le dash partent à l'appui.
-	if not _emplacement(b):
-		_fronts[b.id] = true
+	b.tenu = false
+	b.pose_ms = float(Time.get_ticks_msec())
+	# Seul le dash part à l'appui : l'attaque attend de savoir si le pouce tape, glisse ou tient.
+	if b.id == "dash":
+		_fronts.dash = true
 
 static func _emplacement(b: Dictionary) -> bool:
 	return String(b.id).begins_with("skill")
@@ -137,6 +151,7 @@ func glisser(doigt: int, p: Vector2) -> void:
 		if b.visee and d > VISEE_GLISSER_MIN * echelle:
 			b.glisse = true
 			b.manuel = true
+			b.tenu = false # viser n'est pas tenir : ni combo enchaîné, ni ultime armé
 		elif b.manuel and d < VISEE_ANNULER * echelle:
 			b.glisse = false # retour au centre : l'action est annulée au relâcher
 
@@ -147,19 +162,17 @@ func relacher(doigt: int, annule: bool = false) -> void:
 	for b in boutons:
 		if b.doigt != doigt:
 			continue
-		var perdu: bool = annule or (b.manuel and not b.glisse)
+		var perdu: bool = annule or (b.manuel and not b.glisse) # annulé par le système, ou ramené au centre
 		var l := sqrt(b.dx * b.dx + b.dy * b.dy)
 		var vise: bool = b.glisse and l > 0.0
-		if _emplacement(b) and not perdu:
-			# Emplacement : dans la direction glissée (ou assistée sur un tap).
-			_fronts[b.id + "AimX"] = b.dx / l if vise else 0.0
-			_fronts[b.id + "AimY"] = b.dy / l if vise else 0.0
+		# Un emplacement part toujours au relâcher ; l'attaque aussi, sauf si elle a été TENUE (ses
+		# coups sont déjà partis). Dans la direction glissée, ou assistée sur un tap.
+		var part: bool = _emplacement(b) or (b.id == "attack" and not b.tenu)
+		if part and not perdu:
+			var cle: String = "aim" if b.id == "attack" else b.id + "Aim"
+			_fronts[cle + "X"] = b.dx / l if vise else 0.0
+			_fronts[cle + "Y"] = b.dy / l if vise else 0.0
 			_fronts[b.id] = true
-		elif b.id == "attack" and vise and not annule:
-			# Attaque glissée : le coup part au relâcher, dans la direction visée.
-			_fronts.aimX = b.dx / l
-			_fronts.aimY = b.dy / l
-			_fronts.attack = true
 		_lacher_bouton(b)
 
 ## Perte du focus : plus aucun doigt ne tient rien.
@@ -177,6 +190,7 @@ func _lacher_bouton(b: Dictionary) -> void:
 	b.doigt = AUCUN
 	b.glisse = false
 	b.manuel = false
+	b.tenu = false
 	b.dx = 0.0
 	b.dy = 0.0
 
@@ -205,7 +219,7 @@ func _bouger_manche(x: float, y: float) -> void:
 	s.x = dx / l * force
 	s.y = dy / l * force
 
-## Pose dans l'InputFrame ce que les doigts tiennent : déplacement, attaque maintenue, visée.
+## Pose dans l'InputFrame ce que les doigts tiennent : déplacement, attaque TENUE, visée.
 ## Le pouce qui GLISSE sur l'attaque vise sans la tenir : ni combo enchaîné, ni ultime armé.
 func completer(f: Dictionary) -> void:
 	if manche.doigt != AUCUN:
@@ -214,22 +228,29 @@ func completer(f: Dictionary) -> void:
 	var atk := boutons[0]
 	if atk.doigt == AUCUN:
 		return
-	f.attack = not atk.glisse
 	if atk.glisse:
 		var l := sqrt(atk.dx * atk.dx + atk.dy * atk.dy)
 		if l == 0.0:
 			l = 1.0
 		f.aimX = atk.dx / l
 		f.aimY = atk.dy / l
+		return
+	# Pouce resté posé sans glisser : passé l'appui bref, le coup part et l'attaque est tenue.
+	if not atk.tenu and not atk.manuel and float(Time.get_ticks_msec()) - atk.pose_ms >= APPUI_BREF_MS:
+		atk.tenu = true
+		f.attackPressed = true
+	if atk.tenu:
+		f.attack = true
 
 ## La disposition pour le HUD (même forme que touchUI() du web), en unités du viewport.
 ## `stick.baseX/Y` est la base À DESSINER (recalée loin des bords), `knobX/Y` le pommeau à
-## dessiner ; `stick.r` est la course (58 px CSS à l'échelle).
+## dessiner ; `stick.r` est la course (58 px CSS à l'échelle). Un bouton : `pressed` (un doigt le
+## tient), `dragging` (il vise : dx, dy depuis son origine), `held` (attaque tenue).
 func interface(visible: bool) -> Dictionary:
 	var s := manche
 	var liste: Array = []
 	for b in boutons:
-		liste.append({"id": b.id, "x": b.x, "y": b.y, "r": b.r, "pressed": b.doigt != AUCUN, "dragging": b.glisse, "dx": b.dx, "dy": b.dy})
+		liste.append({"id": b.id, "x": b.x, "y": b.y, "r": b.r, "pressed": b.doigt != AUCUN, "dragging": b.glisse, "dx": b.dx, "dy": b.dy, "held": b.tenu})
 	var stick := {
 		"active": s.doigt != AUCUN,
 		"baseX": s.drawX, "baseY": s.drawY,

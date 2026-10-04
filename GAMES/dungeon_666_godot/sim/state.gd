@@ -41,7 +41,7 @@ static func base_stats() -> Dictionary:
 		"knockbackMult": 1.0,
 		"weaponDamage": 0.0, # dégâts de base de l'arme portée (W)
 		"armorHp": 0.0, # PV apportés par l'armure portée
-		"dashDistanceMult": 1.0, # classe : longueur du dash
+		"dashDistanceMult": 1.0, # classe : longueur du déplacement (dash, saut, roulade)
 		"deathGoldKeepBonus": 0.0, # Sanctuaire : part de la bourse épargnée par Charon à la mort
 	}
 
@@ -74,6 +74,7 @@ static func create_player(tuning: Dictionary, x, y) -> Dictionary:
 		"dashDirX": 0.0,
 		"dashDirY": -1.0,
 		"dashT": 0.0,
+		"dashDur": 0.0, # durée de vol prévue du déplacement en cours (raccourcie si l'arrivée tombait dans l'eau)
 		"strikeWindow": 0.0,
 		"iframes": 0.0,
 		"freeze": 0.0, # gel d'impact LOCAL restant (D8, mode local) ; le mode global gèle toute la scène
@@ -88,6 +89,7 @@ static func create_player(tuning: Dictionary, x, y) -> Dictionary:
 		"castDirY": -1.0,
 		"superCharge": D6Js.nz(tuning["super"].get("startCharge"), 0.0),
 		"superHold": 0.0, # s d'attaque maintenue, jauge pleine : à super.holdTime l'ultime part
+		"superArm": false, # l'appui d'attaque en cours a COMMENCÉ jauge pleine : lui seul arme l'ultime
 		"superT": 0.0,
 		"superTick": 0.0,
 		"surge": 0.0, # élan passager (proc « surge ») : secondes restantes…

@@ -15,7 +15,7 @@ const LARGEUR := 760.0
 const CARTE_MIN := 190.0
 const CARTE_OBJET_MIN := 220.0
 ## Libellés des emplacements d'une bénédiction (SLOT_LABELS de menus.mjs).
-const EMPLACEMENTS := {"attack": "Attaque", "dash": "Dash", "skill": "Compétence", "passive": "Passif", "super": "Super"}
+const EMPLACEMENTS := {"attack": "Attaque", "dash": "Dash", "skill": "Compétences", "passive": "Passif", "super": "Super"}
 const SEP := " · "
 const POUVOIR := "★ %s"
 

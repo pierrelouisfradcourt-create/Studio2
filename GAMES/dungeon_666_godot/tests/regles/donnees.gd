@@ -449,6 +449,58 @@ static func _hold_time(h) -> void:
 		durees.append(t.supers[id].get("holdTime"))
 	h.egal(durees.count(durees[0]), durees.size(), "holdTime : la même valeur pour tous les Supers (%s)" % str(durees))
 
+## Étape 1 bis : le DÉPLACEMENT d'une classe existe (table `moves`), et chaque déplacement a les
+## nombres que son geste lit (sim/player.gd). Un déplacement que personne n'utilise est une faute.
+static func _moves(h) -> void:
+	var t := _t()
+	var moves: Dictionary = t.moves
+	var used: Array = []
+	for id in t.classes:
+		var move = t.classes[id].get("move")
+		h.ok(moves.has(move), "classe %s : déplacement « %s » inconnu (connus : %s)" % [id, str(move), ", ".join(moves.keys())])
+		used.append(move)
+	_all_in(h, moves.keys(), used, "déplacement qu'aucune classe n'utilise")
+	h.ok(moves.values().any(func(m): return m.kind == "dash"), "un déplacement de sorte « dash » (le geste de référence)")
+	for id in moves:
+		var m: Dictionary = moves[id]
+		if m.kind == "dash":
+			for cle in m:
+				h.ok(["name", "kind", "icon", "text"].has(cle), "déplacement %s : le dash lit ses nombres dans data/heros.json (dash), pas ici (%s)" % [id, cle])
+		if m.kind == "saut":
+			for cle in ["duration", "iframes", "charges", "recharge", "shockRadius", "shockKnockback", "strikeCancelFrom", "chainFrom"]:
+				h.ok(m.has(cle), "déplacement %s (saut) : « %s » manque" % [id, cle])
+			if m.has("iframes") and m.has("duration"):
+				h.ok(m.iframes >= m.duration, "déplacement %s : invulnérable tout le vol (iframes %s >= duration %s)" % [id, str(m.iframes), str(m.duration)])
+		if m.has("iframes") and m.has("duration"):
+			h.ok(m.iframes >= m.duration * 0.5, "déplacement %s : des i-frames sur la moitié du geste au moins" % id)
+
+## Étape 1 bis : chaque TERRAIN bas appartient à une disposition dessinée ; une disposition à
+## terrain n'est pas tirée au tout début (ni COMBAT_LAYOUTS, ni avant room.terrainFrom) ; chaque
+## rectangle a une largeur et une hauteur ; une RIVIÈRE se franchit au plus court des trois
+## déplacements (sinon une classe ne passerait jamais).
+static func _terrains(h) -> void:
+	var t := _t()
+	var tb: Dictionary = _tb().room
+	h.ok(tb.has("TERRAINS"), "table TERRAINS")
+	_all_in(h, tb.TERRAINS.keys(), tb.LAYOUTS.keys(), "terrain d'une disposition")
+	h.ok(t.room.terrainFrom > 1.0, "terrainFrom : après le premier étage")
+	var shortest := INF # plus petit trajet de vol des trois déplacements (u)
+	for id in t.classes:
+		var c: Dictionary = t.classes[id]
+		var m: Dictionary = t.moves[c.move]
+		var duration: float = m.get("duration", t.dash.duration)
+		var dist: float = t.dash.distance * (1.0 + D6Js.nz(c.stats.get("dashDistanceMult"), 0.0))
+		var moves: float = ceilf(duration * D6Data.SIM_HZ) - 1.0 # pas de vol : le dernier pas se fait au sol
+		shortest = minf(shortest, dist / duration * D6Data.DT * moves)
+	for id in tb.TERRAINS:
+		h.ok(not tb.COMBAT_LAYOUTS.has(id), "disposition %s : du terrain dès le début du jeu" % id)
+		for key in tb.TERRAINS[id]:
+			for o in tb.TERRAINS[id][key]:
+				h.ok(o[2] > 0.0 and o[3] > 0.0, "terrain %s : rectangle vide %s" % [id, str(o)])
+				if key == "rivers":
+					var across: float = minf(o[2], o[3]) + 2.0 * t.player.radius
+					h.ok(across < shortest, "rivière de %s : %s u à franchir (corps compris), le plus court déplacement vole %s u" % [id, str(across), str(shortest)])
+
 static func tests(h) -> void:
 	h.test("combat V3 : holdTime existe pour chaque Super et vaut la même durée pour tous", func(): _hold_time(h))
 	h.test("classes : chaque arme, compétence, gadget et Super d'une classe existe, et l'arme nomme sa classe", func(): _classes(h))
@@ -477,3 +529,5 @@ static func tests(h) -> void:
 	h.test("bestiaire : chaque archétype d'origine a les réglages que son IA lit", func(): _base_ai_fields(h))
 	h.test("réglages : minimum <= maximum, distances emboîtées", func(): _ranges(h))
 	h.test("salles : entre un obstacle et un mur ou un autre obstacle, rien ne passe ou le plus gros corps passe", func(): _passages(h))
+	h.test("déplacements : chaque classe a le sien, chaque déplacement a ses nombres et sert à une classe", func(): _moves(h))
+	h.test("terrain : chaque terrain bas a sa disposition, n'entre pas au début du jeu, et chaque rivière se franchit avec le plus court déplacement", func(): _terrains(h))

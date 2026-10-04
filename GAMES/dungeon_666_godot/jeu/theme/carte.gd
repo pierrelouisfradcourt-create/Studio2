@@ -13,6 +13,7 @@ extends PanelContainer
 ##     "boutons": [{"nom": "debloquer", "texte": "Débloquer", "genre": "principal" | "danger" | "discret" | "petit" | "", "inactif": false, "cle": "classes:bourreau"}],
 ##     "a_choisir": true,   # toute la carte est un bouton (survol, appui, focus)
 ##     "grisee": true,      # lisible, mais on ne peut pas la prendre
+##     "picto": Control,    # un dessin déjà fait (pictogramme d'une action), posé en tête, à gauche
 ##   })
 ## Toute clé est facultative ; un champ vide ne prend pas de place.
 
@@ -39,6 +40,8 @@ const OPACITE_TITRE_VIDE := 0.55
 @onready var _prix: Label = %Prix
 @onready var _boutons: HFlowContainer = %Boutons
 
+var _picto: Control = null
+
 func _ready() -> void:
 	_fond.pressed.connect(func() -> void: choisie.emit())
 
@@ -46,6 +49,7 @@ func decrire(d: Dictionary) -> void:
 	var etat: String = d.get("etat", "")
 	var accent: Color = d.get("accent", ThemeJeu.accent(etat))
 	_bandeau.self_modulate = accent
+	_poser_picto(d.get("picto"))
 	_ecrire_tete(d, etat, accent)
 	_texte(_titre, d.get("titre", ""))
 	_titre.self_modulate = d.get("couleur_titre", Color.WHITE)
@@ -85,7 +89,18 @@ func _ecrire_tete(d: Dictionary, etat: String, accent: Color) -> void:
 		_surtitre.add_theme_color_override("font_color", accent)
 	_texte(_badge, d.get("badge", BADGES.get(etat, "")))
 	_badge.theme_type_variation = &"Badge" if etat == "equipe" else &"BadgeDoux"
-	_tete.visible = _surtitre.visible or _badge.visible
+	_tete.visible = _surtitre.visible or _badge.visible or _picto != null
+
+## Le dessin de tête (la carte en devient propriétaire) ; l'ancien, s'il y en a un, s'en va.
+func _poser_picto(picto) -> void:
+	if _picto != null:
+		_tete.remove_child(_picto)
+		_picto.queue_free()
+		_picto = null
+	if picto is Control:
+		_picto = picto
+		_tete.add_child(picto)
+		_tete.move_child(picto, 0)
 
 func _texte(label: Label, texte: String) -> void:
 	label.text = texte

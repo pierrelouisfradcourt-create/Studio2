@@ -10,9 +10,9 @@ const LARGEUR := 760.0
 const LOGO_PART := 0.11
 const LOGO_MIN := 40
 const LOGO_MAX := 84
-const CONTROLES_DOIGTS := "Pouce gauche : se déplacer. Pouce droit : attaquer (tapez = visée auto, glissez = visée manuelle). Le gros bouton à gauche de l'attaque : DASH — invulnérable pendant la ruée."
-const CONTROLES_CLAVIER := "ZQSD / WASD : se déplacer · Souris : viser · Clic gauche : attaquer · Espace : DASH (invulnérable) · Clic droit : compétence · E : gadget · F : Super · Échap : pause"
-const CONTROLES_MANETTE := "Manette — stick gauche : se déplacer · stick droit : viser · X / RT : attaquer · A / LB : DASH · B : compétence · Y : gadget · RB : Super · Start : pause"
+const CONTROLES_DOIGTS := "Pouce gauche : se déplacer. Pouce droit, le gros bouton : attaquer (tapez = visée auto ; glissez pour viser, relâchez pour frapper). Jauge pleine : gardez-le appuyé pour l'ultime. Les trois boutons autour : vos compétences. À droite de l'attaque : DASH — invulnérable pendant la ruée."
+const CONTROLES_CLAVIER := "ZQSD / WASD : se déplacer · Souris : viser · Clic gauche : attaquer (maintenu, jauge pleine : ultime) · Espace : DASH (invulnérable) · Clic droit, E, F : les trois compétences · Échap : pause"
+const CONTROLES_MANETTE := "Manette — stick gauche : se déplacer · stick droit : viser · X / RT : attaquer (maintenu, jauge pleine : ultime) · A / LB : DASH · B, Y, RB : les trois compétences · Start : pause"
 const RECORD := "Meilleur étage : %s. Paysage conseillé sur téléphone."
 const DESCENDRE := "Descendre · étage %s"
 

@@ -92,14 +92,15 @@ static func to_player(game: Dictionary, e: Dictionary) -> Dictionary:
 	var d: float = maxf(1e-6, sqrt(dx * dx + dy * dy))
 	return {"dx": dx / d, "dy": dy / d, "d": d}
 
-## Se dirige vers (x, y) ; sans ligne de vue, suit le champ de navigation (contourne).
+## Se dirige vers (x, y) ; si l'on ne peut pas y MARCHER tout droit (pilier, rivière, obstacle
+## bas sur le chemin), suit le champ de navigation (contourne, par les gués).
 static func steer(game: Dictionary, e: Dictionary, x: float, y: float, speed: float) -> void:
 	var dx: float = x - e.x
 	var dy: float = y - e.y
 	var d: float = sqrt(dx * dx + dy * dy)
 	if d < 4.0:
 		return
-	if not D6Physics.line_of_sight(game.room, e.x, e.y, x, y) and D6Nav.nav_direction(game, e.x, e.y, _nav_out):
+	if not D6Physics.walk_clear(game.room, e.x, e.y, x, y) and D6Nav.nav_direction(game, e.x, e.y, _nav_out):
 		e.vx = _nav_out.x * speed
 		e.vy = _nav_out.y * speed
 		return

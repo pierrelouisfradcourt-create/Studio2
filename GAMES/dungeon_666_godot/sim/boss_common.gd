@@ -100,7 +100,7 @@ static func room_point(game: Dictionary, x: float, y: float, r: float) -> Dictio
 	var room: Dictionary = game.room
 	var px := D6Geo.clampv(x, room.pad + r, room.w - room.pad - r)
 	var py := D6Geo.clampv(y, room.pad + r, room.h - room.pad - r)
-	if not D6Js.truthy(D6Physics.point_blocked(room, px, py, r)):
+	if not D6Js.truthy(D6Physics.ground_blocked(room, px, py, r)):
 		return {"x": px, "y": py}
 	# Sur un obstacle : on recule vers le centre de la salle jusqu'à trouver de la place.
 	var cx: float = room.w / 2.0
@@ -110,7 +110,7 @@ static func room_point(game: Dictionary, x: float, y: float, r: float) -> Dictio
 		var f := k / ROOM_POINT_STEPS
 		var qx := px + (cx - px) * f
 		var qy := py + (cy - py) * f
-		if not D6Js.truthy(D6Physics.point_blocked(room, qx, qy, r)):
+		if not D6Js.truthy(D6Physics.ground_blocked(room, qx, qy, r)):
 			return {"x": qx, "y": qy}
 		k += 1.0
 	return {"x": cx, "y": cy}

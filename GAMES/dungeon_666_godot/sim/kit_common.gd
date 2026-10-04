@@ -2,7 +2,9 @@ class_name D6KitCommon
 extends RefCounted
 ## Portage de src/sim/kit_common.mjs.
 ## Briques communes des kits (armes à distance, compétences, gadgets, Supers autres que le kit
-## d'origine) : registre des tirs et zones du héros, dégâts de zone, point de lancer, traction.
+## d'origine) : registre des tirs et zones du héros, dégâts de zone, point de lancer, traction ;
+## et le VOL du héros au-dessus du terrain bas, partagé par le déplacement de classe (dash, saut,
+## roulade : player) et le Bond du bourreau (kit_skills).
 ##
 ## Les tirs et zones du héros vivent DANS LA SALLE (game.room.kitFx) : un nouvel étage construit
 ## une nouvelle salle, et efface donc d'office tout ce que le héros y avait posé. Données pures ;
@@ -50,6 +52,47 @@ static func hit_circle(game: Dictionary, x: float, y: float, r: float, src: Dict
 		D6Combat.damage_enemy(game, e, hit)
 		n += 1.0
 	return n
+
+## Choc SANS dégât autour de (x, y) : chaque ennemi du cercle est repoussé depuis le centre
+## (D6Combat.push_enemy). Rend le nombre d'ennemis poussés.
+static func push_circle(game: Dictionary, x: float, y: float, r: float, knockback: float, stun: float = 0.0) -> float:
+	var n := 0.0
+	var enemies: Array = game.enemies
+	var i := 0
+	while i < enemies.size():
+		var e: Dictionary = enemies[i]
+		i += 1
+		if e.dead or e.spawnT > 0.0:
+			continue
+		var rr: float = r + e.r
+		var d2: float = D6Geo.dist2(x, y, e.x, e.y)
+		if d2 >= rr * rr:
+			continue
+		var l: float = maxf(1e-6, sqrt(d2))
+		D6Combat.push_enemy(game, e, (e.x - x) / l, (e.y - y) / l, knockback, stun)
+		n += 1.0
+	return n
+
+# ---------------------------------------------------------------- vol du héros
+
+## VOL du héros (déplacement de classe, Bond) : sur `moves` pas prévus à la vitesse (vx, vy), le
+## nombre de pas au bout desquels il se pose sur la TERRE FERME (D6Physics.fly_plan). Égal à
+## `moves` si l'arrivée est bonne ; plus petit si elle tombait dans une rivière ou sur un obstacle
+## bas : le geste est alors raccourci (jamais de chute). Salle sans terrain bas : `moves`, sans calcul.
+static func flight_moves(game: Dictionary, vx: float, vy: float, moves: int) -> int:
+	var low = game.room.get("low")
+	if low == null or low.is_empty():
+		return moves
+	var p: Dictionary = game.player
+	return D6Physics.fly_plan(game.room, p, vx * D6Data.DT, vy * D6Data.DT, moves)
+
+## Le geste raccourci se VOIT : d'où il part, vers où, ce qu'il devait parcourir (`reach`) et ce
+## qu'il parcourt (`done` ; 0 = sur place). L'affichage en fait un retour bref.
+static func flight_cut(game: Dictionary, vx: float, vy: float, moves: int, firm: int, move_kind) -> void:
+	var p: Dictionary = game.player
+	var step: float = sqrt(vx * vx + vy * vy) * D6Data.DT
+	var l: float = maxf(1e-6, sqrt(vx * vx + vy * vy))
+	D6State.emit(game, "moveShort", {"x": p.x, "y": p.y, "dirX": vx / l, "dirY": vy / l, "reach": step * float(moves), "done": step * float(firm), "move": move_kind})
 
 ## Dégâts à tous les ennemis d'un secteur (comme un coup de mêlée) ; les projectiles ennemis
 ## balayés sont détruits (parade). `arc` en radians. Rend le nombre d'ennemis touchés.

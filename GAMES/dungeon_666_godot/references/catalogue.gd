@@ -2,7 +2,8 @@ extends RefCounted
 ## Le CATALOGUE des parties de référence : ce que la garde rejoue (references/verifier.gd).
 ## Repris tel quel de la version web (tools/traces.mjs, figée le 2026-10-01) : mêmes parties,
 ## mêmes graines, mêmes bots — les 70 parties dont l'égalité exacte avec le web a été prouvée
-## ce jour-là (parite/LISEZ_MOI.md). Depuis, c'est Godot qui les enregistre.
+## ce jour-là (parite/LISEZ_MOI.md). Depuis, c'est Godot qui les enregistre ; les 8 parties
+## terrain_* (combat V3, étape 1 bis) n'ont jamais existé sur le web.
 ##
 ## Une spec : voir references/partie.gd. Ajouter une partie = ajouter une ligne ici, puis
 ## l'enregistrer (references/enregistrer.gd -- <nom>). Les graines sont choisies pour que ce que
@@ -24,10 +25,29 @@ static func all() -> Array:
 	out.append_array(_content())
 	out.append_array(_altars_and_layouts())
 	out.append_array(_bestiary())
+	out.append_array(_terrain())
 	return out
 
 static func names() -> Array:
 	return all().map(func(s): return s.name)
+
+## Combat V3, étape 1 bis : le TERRAIN À FRANCHIR (rivières, obstacles bas) et les trois
+## DÉPLACEMENTS DE CLASSE (dash du Revenant, saut du Bourreau, roulade de la Chasseresse).
+## Graines dont la PREMIÈRE salle est la disposition que le nom dit (gardé par
+## tests/regles/v3_terrain.gd, « références : les parties terrain_* »). Les bots y marchent par
+## les gués, le bot habile franchit, la politique « hasard » presse le déplacement n'importe où
+## (franchissements entiers et raccourcis au bord de l'eau).
+static func _terrain() -> Array:
+	return [
+		{"name": "terrain_gues_lame", "seed": 5016, "floor": 6, "kit": KITS[0], "slots": SLOTS_3.revenant, "policy": "skilled", "seconds": 60},
+		{"name": "terrain_barrieres_hache", "seed": 5003, "floor": 7, "kit": KITS[2], "slots": SLOTS_3.bourreau, "policy": "skilled", "seconds": 60},
+		{"name": "terrain_douve_arc", "seed": 5003, "floor": 80, "kit": KITS[4], "slots": SLOTS_3.chasseresse, "policy": "skilled", "seconds": 60, "godMode": true},
+		{"name": "terrain_fosse_sans_dash", "seed": 5003, "floor": 150, "policy": "noDash", "seconds": 60, "godMode": true},
+		{"name": "terrain_torrent_marteau_martele", "seed": 5004, "floor": 152, "kit": KITS[3], "policy": "masher", "seconds": 60, "godMode": true},
+		{"name": "terrain_gues_hasard_arbalete", "seed": 5021, "floor": 6, "kit": KITS[5], "slots": SLOTS_3.chasseresse, "policy": "hasard", "seconds": 60, "godMode": true},
+		{"name": "terrain_torrent_hasard_hache", "seed": 5003, "floor": 300, "kit": KITS[2], "slots": SLOTS_3.bourreau, "policy": "hasard", "seconds": 60, "godMode": true},
+		{"name": "terrain_barrieres_hasard_lame", "seed": 5004, "floor": 12, "policy": "hasard", "seconds": 60, "godMode": true},
+	]
 
 ## La spec d'une partie, ou null.
 static func find(name: String):

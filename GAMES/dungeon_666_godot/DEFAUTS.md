@@ -181,6 +181,40 @@ Hors des règles, le même jour :
 | `jeu/essai/assemblage.gd`, `cout.gd`, `profondeur.gd` | Ces trois bancs montent le VRAI jeu (`jeu/principal.tscn`) sans poser `D666_DONNEES` : ils comptaient sur `outils/capture.gd`. Ouverts seuls (scène lancée à la main, éditeur), ils lisaient et écrivaient le vrai `profil.json` et le vrai `reglages_jeu.json` du joueur (une descente y est lancée : le profil est enregistré dès l'entrée dans l'étage). | **Corrigé** : chacun pose son dossier d'essai (`user://essais`) s'il n'y en a pas, avant de monter le jeu. Les autres bancs et tests le faisaient déjà. |
 | `addons/studio_kit/ecran/transitions.gd`, `fondu` ; `jeu/ecrans/ecrans.gd`, `_fondre` | Message « ObjectDB instances leaked at exit » à la sortie des tests sans fenêtre. Ce qui reste : l'interpolation (`Tween`) et les coroutines (`GDScriptFunctionState`) d'un fondu d'écran coupé net, quand le nœud est libéré pendant le fondu (0,3 s). Reproduit hors du jeu en vingt lignes avec le seul `StudioTransitions`. Dans le jeu, cela n'arrive que si l'on ferme la fenêtre pendant un fondu, à l'instant où tout est rendu au système : rien ne s'accumule en jouant (le parcours le mesure). Dans les tests : à chaque `app.free()`. | **Tests corrigés** (`jeu/essai/fondus.gd` : laisser finir les fondus avant de libérer ; parcours, `test_ecrans.gd`, `test_accueil.gd`, `jeu/theme/verifier.gd`). **Cause laissée** : elle est dans le kit du studio (une coroutine qui attend `finished` d'une interpolation), à corriger là-bas. Restent : `test_ville.gd` (un son encore en lecture à la sortie) et `test_finitions.gd` (une coroutine), non traités ; le parcours a montré le message une fois sur huit lancements, cause non établie. |
 
+## Cinquième lot (2026-10-04) : combat V3, étape 1 bis — déplacement de classe, terrain à franchir
+
+Ce n'est pas une passe de défauts : c'est une règle neuve (`design/COMBAT_V3.md`, « Étape 1 bis »).
+Gardes : `tests/regles/v3_terrain.gd` (50 tests), `tests/regles/v3_combat.gd` (un test adapté, trois
+neufs : l'ultime ne s'arme que si l'appui a commencé jauge pleine), `tests/regles/donnees.gd` (deux
+tests ajoutés), `jeu/monde/test_terrain.gd`.
+
+Références réenregistrées une fois : **61 parties sur 70 ont changé**, 9 sont identiques au bit
+près (`arene`, `bestiaire_pavois_habile`, `entrainement_cerbere`, `gardien_36_sans_dash`,
+`gardien_54_sans_dash`, `gardien_72_sans_dash`, `hasard_lame`, `kit_dagues`, `kit_lame`) ; 8 parties
+`terrain_*` ajoutées (78 au total). Attribution vérifiée avant de réenregistrer, sur une copie du
+projet (le code du lot, une partie du changement désactivée) :
+
+- tout désactivé (ultime armé comme avant, les trois classes au dash, terrain jamais tiré) :
+  **0 partie** en écart — rien d'autre n'a changé (la physique, la navigation et les bots rendent
+  les mêmes parties dans une salle sans terrain) ;
+- l'ultime seul : 39 parties (le bot habile relâche un pas avant l'ultime, le bot qui martèle n'en
+  lance plus) ;
+- les déplacements de classe seuls : 19 parties, toutes de Bourreau ou de Chasseresse ;
+- le terrain seul : 48 parties (dès qu'une salle de combat est tirée à l'étage 5 ou plus, le
+  tirage des dispositions n'est plus le même ; ex. `etage_5_martele_ville`, image 0) ;
+- les trois ensemble : 61 parties, exactement la réunion des trois listes.
+
+Vu en faisant ce lot, non tranché :
+
+| Où | Constat | Pourquoi laissé |
+|---|---|---|
+| `data/classes.json`, Bourreau | Le **Bond du bourreau** (compétence) et le **saut** (déplacement) sont deux sauts invulnérables sur la même classe. Ils partagent le vol (`D6KitCommon.flight_moves`) mais pas le rôle : le Bond frappe (34 dégâts, étourdit, 260 u, 6 s), le saut repousse sans dégât (132 u, 1,3 s). | Double emploi partiel : décision de Pierre. Le Bond n'a pas été retiré. |
+| Jouabilité, Bourreau | Mesure des bots (20 graines) : la valeur du déplacement du Bourreau passe de ×10,2 et ×12,1 à ×2,1 et ×2,2 (seuil ×2) et sa section 1 battue de 100 % à 95 % (Hache) et 90 % (Maillet ; seuil 90 %). Une seule charge, plus lente à revenir : le bot esquive moins. | C'est la demande (« une seule charge, recharge plus longue ») ; les nombres sont à juger en main. Marge faible sur l'oracle : si le saut est encore ralenti, il rougira. |
+| `sim/kit_common.gd`, `throw_point` | Un objet LANCÉ (bombe, pot du Brasier) peut retomber sur une rivière : il passe au-dessus du terrain bas comme un tir. Le piège et le totem, posés aux pieds du héros, sont toujours sur la terre ferme. | Lisible (ça explose au-dessus de l'eau) ; un sol qui brûle sur l'eau est à juger à l'écran. |
+| `sim/enemies.gd`, `_separate` | Le héros « infiniment lourd » qui retombe contre un gros ennemi au bord de l'eau peut le pousser de quelques unités dans la rivière ; la collision de marche l'en ressort à l'image suivante, par le bord le plus proche (très rarement l'autre rive pour un champion). | Aucun cas trouvé par les tests (recul, contournement, 300 graines) ; pas de règle simple sans toucher à la séparation. |
+| `sim/boss_*.gd` | Les salles de Gardien n'ont pas de terrain. La ruée de Charon s'arrête pourtant au bord d'un terrain bas (testé), et le Traqueur franchit ; le bond de Cerbère n'a pas été adapté. | À faire si un jour une arène de Gardien reçoit une rivière. |
+| `jeu/` | Le point d'arrivée vert / rouge pendant la visée du déplacement (`design/COMBAT_V3.md`, §4) n'existe pas : le déplacement ne se vise pas, il part dans le sens de la marche. `D6Player.move_landing` donne déjà le point. | Lot « affichage des commandes ». |
+
 ## Vu en passant, non corrigé
 
 | Où | Constat | Pourquoi non corrigé |
@@ -198,8 +232,8 @@ Hors des règles, le même jour :
 | `data/butin.json`, `loot.bossGuaranteedRare` | Réglage que rien ne lit : après un Gardien, l'objet est « rare » (ou légendaire) par le code de `sim/run.gd`, quel que soit ce booléen. | Le brancher ou le retirer : à décider (le schéma l'exige). |
 | `sim/boss*.gd` | Les invocations de Gardien cherchent un point d'apparition pour un corps de 14 u, quel que soit l'ennemi invoqué (un renfort plus gros qu'un archer apparaîtrait trop près d'un obstacle). | Sans effet avec les renforts actuels (rayons 12 à 14). |
 | `sim/projectiles.gd`, `sim/kit_shots.gd` | Un tir arrêté par un coin garde sa position d'arrivée (au plus un pas après le coin) : l'impact s'affiche là, pas sur le pilier. | Affichage ; le point d'entrée exact demanderait de le calculer. |
-| `sim/state.gd`, `create_player` | 51 lignes (limite : 50) : un seul dictionnaire. 56 depuis le combat V3 (`slots`, `castSlot`, `superHold`). | Hors de la liste. |
-| Combat V3, étape 1 : ultime par maintien | Un joueur qui GARDE l'attaque enfoncée pour enchaîner voit l'ultime partir tout seul 0,4 s après que la jauge est pleine (le bot qui martèle lance ainsi 1 à 5 ultimes par partie, zéro avant). C'est la règle demandée, lue à la lettre. | À juger en main par Pierre ; variante décrite dans `design/COMBAT_V3.md`. |
+| `sim/state.gd`, `create_player` | 51 lignes (limite : 50) : un seul dictionnaire. 56 depuis le combat V3 (`slots`, `castSlot`, `superHold`), 58 depuis l'étape 1 bis (`superArm`, `dashDur`). | Hors de la liste. |
+| Combat V3, étape 1 : ultime par maintien | Un joueur qui GARDE l'attaque enfoncée pour enchaîner voyait l'ultime partir tout seul 0,4 s après que la jauge est pleine (le bot qui martèle lançait ainsi 1 à 5 ultimes par partie). | **Corrigé à l'étape 1 bis** sur décision de Pierre : l'ultime ne s'arme que si l'appui a COMMENCÉ jauge pleine (`player.superArm`). |
 | Combat V3, étape 1 : attaque glissée au doigt | Glisser sur le bouton d'attaque donne deux coups : un à l'appui (visée assistée), un au relâcher (visé). | Geste à trancher au lot « affichage » (frapper seulement au relâcher ?). |
 | `data/benedictions.json`, `data/butin.json`, `data/autels.json`, `sim/calm_rooms.gd` | Textes au singulier (« Votre compétence… », « charge de gadget », « Charges de gadget pleines ») alors que l'effet vaut maintenant pour toute compétence / tout gadget équipé. | Mots : au lot « affichage », ou à Pierre. |
 | `sim/player.gd`, tampon | Une seule action en attente : deux compétences pressées au même pas, seule la dernière part. | Règle du tampon d'origine ; à revoir si l'arc de trois boutons le rend gênant. |

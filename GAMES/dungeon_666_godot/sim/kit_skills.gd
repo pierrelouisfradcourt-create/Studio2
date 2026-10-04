@@ -4,7 +4,9 @@ extends RefCounted
 ## COMPÉTENCES autres que la Lance infernale, jouées selon `kind`. La compétence en cours est
 ## celle de l'emplacement player.castSlot (D6Loadout.cast_def) :
 ##   chain   — Chaîne d'Enfer : crochet qui harponne, étourdit et tire l'ennemi au contact
-##   bond    — Bond du bourreau : saut invulnérable vers la cible, impact à l'atterrissage
+##   bond    — Bond du bourreau : saut invulnérable vers la cible, impact à l'atterrissage. Il vole
+##             au-dessus du terrain bas comme le SAUT (déplacement de classe du Bourreau, player) :
+##             les deux partagent le vol (D6KitCommon.flight_moves) ; le Bond reste une attaque.
 ##   brasier — Brasier d'âmes : pot lancé sur la cible, impact puis sol qui brûle
 ##   volee   — Volée d'épines : éventail de traits
 ##
@@ -34,9 +36,24 @@ static func _begin_leap(game: Dictionary, s: Dictionary) -> void:
 	p.cast.vx = p.castDirX * speed
 	p.cast.vy = p.castDirY * speed
 	p.castT = s.leapTime
+	_plan_leap(game, s)
 	p.iframes = maxf(p.iframes, s.leapTime + s.iframesGrace)
 	game.telemetry.skillCasts += 1.0
 	D6State.emit(game, "skill", {"x": p.x, "y": p.y, "angle": D6Trig.atan2(p.castDirY, p.castDirX), "skill": "bond", "slot": p.castSlot})
+
+## Le Bond FRANCHIT le terrain bas comme le déplacement de classe (même vol : D6KitCommon.flight_moves)
+## et se pose sur la terre ferme : si l'arrivée tombait dans une rivière, il est raccourci.
+static func _plan_leap(game: Dictionary, s: Dictionary) -> void:
+	var p: Dictionary = game.player
+	var moves := 0
+	var left: float = s.leapTime
+	while left > 0.0: # les pas de update_leap : un déplacement tant que castT > 0
+		moves += 1
+		left -= D6Data.DT
+	var firm := D6KitCommon.flight_moves(game, p.cast.vx, p.cast.vy, moves)
+	if firm < moves:
+		p.castT = maxf(0.0, (float(firm) - 0.5) * D6Data.DT)
+		D6KitCommon.flight_cut(game, p.cast.vx, p.cast.vy, moves, firm, "bond")
 
 ## Un pas du Bond (état 'cast'). Rend true quand le héros a atterri.
 static func update_leap(game: Dictionary, dt: float) -> bool:

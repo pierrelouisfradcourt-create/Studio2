@@ -185,6 +185,7 @@ func _sans_ames() -> void:
 	await _images()
 
 ## Combat V3 : le Grimoire place les actions dans les TROIS emplacements (opération select_slot).
+## On touche une compétence PUIS un emplacement, ou l'inverse ; rien n'est écrit au premier toucher.
 func _emplacements() -> void:
 	print("[emplacements]")
 	await _ouvrir("grimoire")
@@ -192,20 +193,46 @@ func _emplacements() -> void:
 	_ok(avant.size() == 3 and avant[0] != null and avant[1] != null, "le profil porte trois emplacements (%s)" % str(avant))
 	var premiere: String = avant[0]
 	var cle := "%s:%s" % ["skills" if app.contenu.skills.has(premiere) else "gadgets", premiere]
-	_ok(_bouton(cle, "slot0") != null and _bouton(cle, "slot0").disabled, "l'action placée dans l'emplacement 1 : son bouton « → 1 » est grisé")
-	_ok(_appuyer(_bouton(cle, "slot2")), "…et « → 3 » s'appuie")
+	var arc: Control = ville.page("grimoire").get_node("%Arc")
+	_ok(_bouton("slots:0", "emplacement") == arc.bouton(0) and _bouton("slots:2", "emplacement") == arc.bouton(2), "les trois emplacements sont dessinés en arc, chacun est un bouton")
+	_ok(_texte_visible("● EMPLACEMENT 1") or _texte_visible("● Emplacement 1"), "l'action placée dans l'emplacement 1 est marquée « ● Emplacement 1 »")
+	# 1. Un emplacement d'abord : l'action qui y est déjà ne s'y replace pas.
+	var instantane := _instantane()
+	_ok(_appuyer(_bouton("slots:0", "emplacement")), "l'emplacement 1 se touche sur l'arc")
 	await _images()
-	_ok(app.profil.loadout.slots == [avant[2], avant[1], premiere], "« → 3 » : les emplacements 1 et 3 s'échangent (%s)" % str(app.profil.loadout.slots))
+	_ok(_instantane() == instantane and arc.bouton(0).button_pressed, "toucher un emplacement ne change pas le profil : il attend une compétence")
+	var deja := _bouton(cle, "")
+	_ok(deja != null and deja.disabled and deja.text == "Déjà dans l'emplacement 1", "l'action placée dans l'emplacement 1 : son bouton « Déjà dans l'emplacement 1 » est grisé")
+	_ok(_appuyer(_bouton("slots:0", "ligne")), "retoucher l'emplacement 1 (dans la légende) l'oublie")
+	await _images()
+	_ok(not arc.bouton(0).button_pressed and _bouton(cle, "choisir") != null, "plus rien n'est choisi : la carte propose « Choisir »")
+	# 2. Une compétence d'abord, puis l'emplacement 3 : elle y va (échange).
+	_ok(_appuyer(_bouton(cle, "choisir")), "« Choisir » la compétence s'appuie")
+	await _images()
+	_ok(_instantane() == instantane and _bouton(cle, "choisir").text.begins_with("Choisie"), "choisir une compétence ne change pas le profil : elle attend un emplacement (« %s »)" % _bouton(cle, "choisir").text)
+	_ok(_appuyer(_bouton("slots:2", "emplacement")), "…et l'emplacement 3 se touche")
+	await _images()
+	_ok(app.profil.loadout.slots == [avant[2], avant[1], premiere], "compétence puis emplacement 3 : les emplacements 1 et 3 s'échangent (%s)" % str(app.profil.loadout.slots))
+	_ok(_bouton(cle, "choisir") != null and _bouton(cle, "choisir").text == "Choisir" and not arc.bouton(2).button_pressed, "le choix est fini : plus rien n'attend")
 	_ok(_appuyer(_bouton("slots:2", "vider")), "l'emplacement 3, rempli, a un bouton « Vider »")
 	await _images()
-	_ok(app.profil.loadout.slots[2] == null and _bouton("slots:2", "vider") == null, "« Vider » : l'emplacement 3 est vide, et son bouton a disparu")
-	_ok(_appuyer(_bouton(cle, "slot0")), "l'action, plus placée nulle part, se replace dans l'emplacement 1")
+	_ok(app.profil.loadout.slots[2] == null and _bouton("slots:2", "vider").disabled, "« Vider » : l'emplacement 3 est vide, et son bouton est grisé")
+	# 3. L'inverse : l'emplacement 1 d'abord, puis la compétence.
+	_ok(_appuyer(_bouton("slots:0", "ligne")), "l'emplacement 1 (vide) se touche dans la légende")
+	await _images()
+	_ok(_appuyer(_bouton(cle, "placer")), "l'action, plus placée nulle part, propose « Placer dans l'emplacement 1 »")
 	await _images()
 	_ok(app.profil.loadout.slots[0] == premiere, "…elle y est")
 	var relu: Dictionary = Profil.charger(app.contenu)
 	_ok(relu.loadout.slots == app.profil.loadout.slots, "les emplacements sont relus du disque d'essai (%s)" % str(relu.loadout.slots))
 	var jeu: Dictionary = app.operation_ville("select_slot", [1.0, avant[1]])
 	_ok(jeu.get("ok") == true, "le second emplacement est remis")
+	# 4. Un choix à moitié fait ne survit pas à un changement d'onglet.
+	_appuyer(_bouton(cle, "choisir"))
+	await _images()
+	await _ouvrir("classe")
+	await _ouvrir("grimoire")
+	_ok(_bouton(cle, "choisir") != null and _bouton(cle, "choisir").text == "Choisir", "changer d'onglet oublie un choix à moitié fait")
 
 func _objet_du_coffre(emplacement: String, rarete: String = ""):
 	for objet in app.profil.stash:

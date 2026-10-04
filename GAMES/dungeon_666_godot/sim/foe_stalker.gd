@@ -11,7 +11,8 @@ extends RefCounted
 ##   ambush  — disparu `hiddenTime` s : e.hidden = true et e.spawnT > 0 (comme une apparition en
 ##             attente : ni ciblable, ni touchable, son IA ne tourne pas). À la première image où il
 ##             revient, il se pose DANS LE DOS du héros (à `backDist`, à l'opposé de player.facing ;
-##             si le point est dans un mur, on essaie les écarts `backAngles`), et sa frappe est
+##             si le point est dans un mur ou sur un terrain bas, on essaie les écarts `backAngles` ;
+##             il FRANCHIT ainsi rivières et obstacles bas, sans jamais y réapparaître), et sa frappe est
 ##             télégraphiée : cercle rouge de `slashRadius` autour de lui pendant `slashWindup` s.
 ##   windup  — il tient la pose pendant le télégraphe (zone liée à lui : le tuer ou l'étourdir
 ##             l'annule, projectiles), puis la zone frappe.
@@ -36,7 +37,7 @@ static func ambush_point(game: Dictionary, e: Dictionary, def: Dictionary) -> Di
 		var a: float = p.facing + PI + off
 		var x: float = p.x + D6Trig.cos(a) * def.backDist
 		var y: float = p.y + D6Trig.sin(a) * def.backDist
-		if not D6Physics.point_blocked(game.room, x, y, e.r + CLEARANCE):
+		if not D6Physics.ground_blocked(game.room, x, y, e.r + CLEARANCE):
 			return {"x": x, "y": y}
 	return {"x": e.x, "y": e.y}
 

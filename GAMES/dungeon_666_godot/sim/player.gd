@@ -4,6 +4,14 @@ extends RefCounted
 ## Le héros : machine à états (free | attack | dash | cast | super | dead), tampon d'input,
 ## annulations (cancels). Règle de feel n°1 : le DASH annule presque tout, tout de suite.
 ##
+## DÉPLACEMENT DE CLASSE (étape 1 bis) : le bouton de dash joue le geste de la classe, réglé par
+## tuning.dash (bloc actif, D6Loadout.resolve_kit) et son `kind` : 'dash' (Revenant, l'historique),
+## 'saut' (Bourreau : invulnérable en l'air, choc qui repousse à l'atterrissage, aucune annulation
+## en vol), 'roulade' (Chasseresse : longue, elle prépare le prochain tir). Les trois passent par
+## l'état 'dash' : tout ce qui parle du dash (charges, recharge, i-frames, esquive parfaite, frappe
+## de dash, procs) vaut pour les trois. Le geste FRANCHIT le terrain bas (rivière, obstacle bas) et
+## finit toujours sur la terre ferme (_plan_move) ; il ne s'annule pas au-dessus de l'eau.
+##
 ## KITS : le code est choisi par le `kind` de l'entrée équipée (kits). Le kit d'origine
 ## (Lame, Lance, Nova, Colère) est joué ICI, à l'identique ; les autres par kit_* :
 ##   arme 'ranged'      -> kit_shots.fire_weapon_shots (traits au début de l'actif, pas de balayage)
@@ -16,7 +24,8 @@ extends RefCounted
 ## compétence part par le tampon et l'état 'cast', avec SA recharge ; un gadget part tout de suite,
 ## sur SES charges. L'ULTIME n'a plus de bouton : jauge pleine, l'attaque MAINTENUE l'arme
 ## (player.superHold) et il part à super.holdTime ; relâcher annule. Pendant l'armement le coup en
-## cours se joue, aucun nouveau coup ne part (design/COMBAT_V3.md).
+## cours se joue, aucun nouveau coup ne part. Seul un appui COMMENCÉ jauge pleine arme
+## (player.superArm) : tenir l'attaque depuis avant enchaîne le combo (design/COMBAT_V3.md).
 ##
 ## InputFrame attendu (produit par l'entrée, ou par un bot) :
 ##   { moveX, moveY,            // [-1, 1], norme <= 1 (analogique)
@@ -41,6 +50,72 @@ static func _has_id(ids: Array, id) -> bool:
 static func max_dash_charges(game: Dictionary) -> float:
 	return game.tuning.dash.charges + game.player.stats.dashChargesBonus
 
+## Sorte du déplacement de classe actif : "dash", "saut" ou "roulade".
+static func move_kind(game: Dictionary) -> String:
+	return D6Js.nz(game.tuning.dash.get("kind"), D6Loadout.DEFAULT_MOVE)
+
+## Vrai tant que le héros FRANCHIT le terrain bas : déplacement de classe en cours, ou Bond en l'air.
+static func crossing(game: Dictionary) -> bool:
+	var p: Dictionary = game.player
+	if p.state == "dash":
+		return true
+	var cast = p.get("cast")
+	return p.state == "cast" and cast is Dictionary and cast.get("kind") == "bond"
+
+## Vrai si le héros est AU-DESSUS d'une rivière ou d'un obstacle bas (en plein franchissement) :
+## rien ne coupe alors son geste — ni frappe, ni second dash, ni ultime. On ne s'arrête pas dans l'eau.
+static func _over_low(game: Dictionary) -> bool:
+	var p: Dictionary = game.player
+	return crossing(game) and D6Physics.low_at(game.room, p.x, p.y, p.r)
+
+## Hauteur du héros en l'air, en cloche (0 au sol, 1 au sommet) : le SAUT du Bourreau. 0 pour un
+## dash ou une roulade (au ras du sol). L'affichage dessine le héros d'autant plus haut.
+static func air(game: Dictionary) -> float:
+	var p: Dictionary = game.player
+	if p.state != "dash" or move_kind(game) != "saut" or p.dashDur <= 0.0:
+		return 0.0
+	return D6Trig.sin(PI * D6Geo.clampv(1.0 - p.dashT / p.dashDur, 0.0, 1.0))
+
+## Où le déplacement de classe POSERAIT le héros s'il partait maintenant dans la direction (dx, dy),
+## unitaire : {x, y, time (s de vol), full (false = raccourci : l'arrivée tombait dans l'eau)}.
+## Lecture pure (rien ne bouge) : pour un retour de visée, ou un bot qui connaît son héros.
+static func move_landing(game: Dictionary, dx: float, dy: float) -> Dictionary:
+	var p: Dictionary = game.player
+	var speed := _dash_speed(game)
+	var moves := 0
+	var left: float = game.tuning.dash.duration
+	while true:
+		left -= D6Data.DT
+		if left <= 0.0:
+			break
+		moves += 1
+	var firm := D6Physics.fly_plan(game.room, p, dx * speed * D6Data.DT, dy * speed * D6Data.DT, moves)
+	return {"x": D6Physics.fly_end.x, "y": D6Physics.fly_end.y, "time": float(firm) * D6Data.DT, "full": firm == moves}
+
+## Ce que l'affichage lit du DÉPLACEMENT DE CLASSE (bouton, pictogramme), sans connaître l'intérieur :
+##   id, kind, name, icon, text : le déplacement de la classe (data/classes.json, `moves`)
+##   charges, maxCharges        : charges prêtes (entières) et maximum
+##   ready                      : une charge au moins
+##   rechargeFrac               : part de la recharge de la prochaine charge déjà faite (1 = toutes pleines)
+##   active                     : le geste est en cours ; air : hauteur du saut (0..1)
+static func move_view(game: Dictionary) -> Dictionary:
+	var p: Dictionary = game.player
+	var t: Dictionary = game.tuning
+	var id := D6Loadout.move_id(game)
+	var moves = t.get("moves")
+	var def = moves.get(id) if moves is Dictionary else null
+	var kind := move_kind(game)
+	var max_c := max_dash_charges(game)
+	var need: float = t.dash.recharge * p.stats.dashRechargeMult
+	return {
+		"id": id, "kind": kind,
+		"name": def.name if def is Dictionary else "Dash", "icon": D6Js.nz(def.get("icon"), kind) if def is Dictionary else kind,
+		"text": D6Js.nz(def.get("text"), "") if def is Dictionary else "",
+		"charges": floorf(p.dashCharges), "maxCharges": max_c, "ready": p.dashCharges >= 1.0,
+		"rechargeFrac": 1.0 if p.dashCharges >= max_c or need <= 0.0 else D6Geo.clampv(p.dashRecharge / need, 0.0, 1.0),
+		"active": p.state == "dash", "air": air(game),
+	}
+
 static func _buffer_action(p: Dictionary, action: String, t: float, aim_x: float = 0.0, aim_y: float = 0.0, slot: int = 0) -> void:
 	var cur = p.buffer.action
 	# Un dash en attente n'est jamais écrasé par une action moins prioritaire.
@@ -57,10 +132,13 @@ static func can_dash(game: Dictionary) -> bool:
 	var p: Dictionary = game.player
 	if p.dashCharges < 1.0:
 		return false
-	if p.state == "free" or p.state == "attack" or p.state == "cast":
+	if p.state == "free" or p.state == "attack":
 		return true
+	if p.state == "cast":
+		return not _over_low(game) # un Bond ne se coupe pas au-dessus d'une rivière
 	if p.state == "dash":
-		return p.dashT <= game.tuning.dash.duration * game.tuning.dash.chainFrom # re-dash quand il reste moins de cette part du dash
+		# re-dash quand il reste moins de cette part du dash — jamais au-dessus de l'eau
+		return p.dashT <= game.tuning.dash.duration * game.tuning.dash.chainFrom and not _over_low(game)
 	return false
 
 static func _can_attack(game: Dictionary) -> bool:
@@ -69,7 +147,7 @@ static func _can_attack(game: Dictionary) -> bool:
 		return true
 	# Frappe de dash : attaquer en fin de dash coupe la ruée et frappe tout de suite.
 	if p.state == "dash":
-		return p.dashT <= game.tuning.dash.duration * game.tuning.dash.strikeCancelFrom
+		return p.dashT <= game.tuning.dash.duration * game.tuning.dash.strikeCancelFrom and not _over_low(game)
 	if p.state != "attack" or p.attack.phase != "recovery":
 		return false
 	# Le coup suivant n'annule qu'une PARTIE de la récupération (le finisher engage) ; seul le
@@ -99,8 +177,11 @@ static func _can_skill(p: Dictionary, slot: int) -> bool:
 		return true
 	return p.state == "attack" and p.attack.phase == "recovery"
 
-static func _can_super(p: Dictionary) -> bool:
-	return p.superCharge >= 1.0 and (p.state == "free" or p.state == "attack" or p.state == "cast" or p.state == "dash")
+static func _can_super(game: Dictionary) -> bool:
+	var p: Dictionary = game.player
+	if p.superCharge < 1.0 or _over_low(game):
+		return false
+	return p.state == "free" or p.state == "attack" or p.state == "cast" or p.state == "dash"
 
 ## Une action ne mérite le tampon que si elle peut partir pendant sa fenêtre : marteler un dash
 ## sans charge, ou une compétence en recharge, ne doit JAMAIS avaler la frappe qui suit.
@@ -136,9 +217,15 @@ static func read_input(game: Dictionary, input: Dictionary) -> bool:
 	p.moveY = my
 	p.manualAimX = _num(input, "aimX")
 	p.manualAimY = _num(input, "aimY")
-	p.attackHeld = D6Js.truthy(input.get("attack"))
-	if not p.attackHeld:
+	var held: bool = D6Js.truthy(input.get("attack"))
+	# L'ultime ne s'arme que si l'APPUI A COMMENCÉ jauge pleine : un appui tenu depuis avant ne
+	# l'arme jamais, il faut relâcher et rappuyer.
+	if held and not p.attackHeld:
+		p.superArm = p.superCharge >= 1.0
+	p.attackHeld = held
+	if not held:
 		p.superHold = 0.0 # relâcher l'attaque annule l'armement de l'ultime
+		p.superArm = false
 	if D6Js.truthy(input.get("attackPressed")):
 		_buffer_action(p, "attack", lock_buf)
 	for i in D6Loadout.SLOTS:
@@ -186,19 +273,21 @@ static func update_player(game: Dictionary, dt: float) -> void:
 		_start_attack(game)
 	_tick_super_hold(game, dt)
 	_update_state(game, dt)
-	D6Physics.move_circle(game.room, p, p.vx * dt, p.vy * dt)
+	# Le déplacement de classe et le Bond franchissent le terrain bas ; la marche s'y arrête.
+	D6Physics.move_circle(game.room, p, p.vx * dt, p.vy * dt, crossing(game))
 
-## Ultime par MAINTIEN : jauge pleine et attaque tenue sans interruption, superHold monte (plafonné
-## à super.holdTime) ; arrivé là, l'ultime part dès qu'il le peut (_can_super), en coupant ce qui
-## reste du coup comme le faisait son bouton. Le relâcher est lu par read_input.
+## Ultime par MAINTIEN : un appui COMMENCÉ jauge pleine (player.superArm, posé par read_input) et
+## tenu sans interruption fait monter superHold (plafonné à super.holdTime) ; arrivé là, l'ultime
+## part dès qu'il le peut (_can_super), en coupant ce qui reste du coup comme le faisait son
+## bouton. Un appui commencé avant que la jauge soit pleine n'arme rien : il enchaîne le combo.
 static func _tick_super_hold(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player
-	if not p.attackHeld or p.superCharge < 1.0 or p.state == "super":
+	if not p.attackHeld or not p.superArm or p.superCharge < 1.0 or p.state == "super":
 		p.superHold = 0.0
 		return
 	var need: float = game.tuning["super"].holdTime
 	p.superHold = minf(need, p.superHold + dt)
-	if p.superHold >= need and _can_super(p):
+	if p.superHold >= need and _can_super(game):
 		_start_super(game)
 
 ## Le `switch (p.state)` de updatePlayer.
@@ -468,6 +557,8 @@ static func _start_dash(game: Dictionary) -> void:
 	p.dashDirX = dx
 	p.dashDirY = dy
 	p.dashT = t.duration
+	p.dashDur = t.duration
+	_plan_move(game)
 	p.iframes = maxf(p.iframes, t.iframes)
 	p.dodgeIframes = maxf(p.dodgeIframes, t.iframes)
 	p.facing = D6Trig.atan2(dy, dx)
@@ -478,10 +569,37 @@ static func _start_dash(game: Dictionary) -> void:
 	D6State.emit(game, "dash", {"x": p.x, "y": p.y, "dirX": dx, "dirY": dy, "charges": p.dashCharges})
 	D6Combat.fire_procs(game, "dash") # une charge de dash dépensée (déflagration, éclair… : combat)
 
+## Vitesse du déplacement de classe : sa distance (× la statistique de classe) sur sa durée.
+static func _dash_speed(game: Dictionary) -> float:
+	var t: Dictionary = game.tuning.dash
+	return (t.distance * D6Js.nz(game.player.stats.get("dashDistanceMult"), 1.0)) / t.duration
+
+## Le déplacement FRANCHIT le terrain bas et doit finir sur la terre ferme. On compte d'avance ses
+## pas de vol (ceux de _update_dash : un déplacement tant que dashT reste > 0 après décompte) ; si
+## l'arrivée tombait dans une rivière ou sur un obstacle bas, le geste est RACCOURCI au dernier pas
+## sur la terre ferme — au pire sur place : la charge est dépensée, l'esquive gardée, jamais de chute.
+static func _plan_move(game: Dictionary) -> void:
+	var p: Dictionary = game.player
+	var speed := _dash_speed(game)
+	var moves := 0
+	var left: float = p.dashT
+	while true:
+		left -= D6Data.DT
+		if left <= 0.0:
+			break
+		moves += 1
+	var vx: float = p.dashDirX * speed
+	var vy: float = p.dashDirY * speed
+	var firm := D6KitCommon.flight_moves(game, vx, vy, moves)
+	if firm < moves:
+		p.dashT = (float(firm) + 0.5) * D6Data.DT
+		p.dashDur = p.dashT
+		D6KitCommon.flight_cut(game, vx, vy, moves, firm, move_kind(game))
+
 static func _update_dash(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player
 	var t: Dictionary = game.tuning
-	var speed: float = (t.dash.distance * D6Js.nz(p.stats.get("dashDistanceMult"), 1.0)) / t.dash.duration
+	var speed := _dash_speed(game)
 	p.vx = p.dashDirX * speed
 	p.vy = p.dashDirY * speed
 	p.dashT -= dt
@@ -489,11 +607,44 @@ static func _update_dash(game: Dictionary, dt: float) -> void:
 		p.state = "free"
 		p.stateTime = 0.0
 		p.strikeWindow = t.dash.strikeWindow
-		# L'élan se prolonge à la vitesse de course : sortie de dash fluide, pas un arrêt sec.
-		var run: float = t.player.speed * p.stats.moveSpeedMult
-		p.vx = p.dashDirX * run
-		p.vy = p.dashDirY * run
+		if move_kind(game) == "saut":
+			_land_jump(game)
+		else:
+			# L'élan se prolonge à la vitesse de course : sortie de dash fluide, pas un arrêt sec.
+			var run: float = t.player.speed * p.stats.moveSpeedMult
+			p.vx = p.dashDirX * run
+			p.vy = p.dashDirY * run
 		D6State.emit(game, "dashEnd", {"x": p.x, "y": p.y})
+
+## Ce sur quoi le saut RETOMBE est chassé DEVANT lui (dans le sens du saut), au contact : le
+## Bourreau garde face à lui ce qu'il écrase, sa frappe d'atterrissage porte. Le corps déplacé
+## reste sur la terre ferme et hors des murs (collision de marche).
+static func _shove_ahead(game: Dictionary) -> void:
+	var p: Dictionary = game.player
+	var enemies: Array = game.enemies
+	var i := 0
+	while i < enemies.size():
+		var e: Dictionary = enemies[i]
+		i += 1
+		if e.dead or e.spawnT > 0.0:
+			continue
+		var rr: float = p.r + e.r
+		if D6Geo.dist2(p.x, p.y, e.x, e.y) >= rr * rr:
+			continue
+		e.x = p.x + p.dashDirX * rr
+		e.y = p.y + p.dashDirY * rr
+		D6Physics.move_circle(game.room, e, 0.0, 0.0)
+
+## Atterrissage du SAUT (Bourreau) : il se pose net, et le choc REPOUSSE ce qui l'entoure, sans
+## dégât (ce n'est pas une attaque : ni jauge, ni proc « au toucher »). Le Bond, lui, frappe.
+static func _land_jump(game: Dictionary) -> void:
+	var p: Dictionary = game.player
+	var m: Dictionary = game.tuning.dash
+	p.vx = 0.0
+	p.vy = 0.0
+	_shove_ahead(game)
+	var pushed := D6KitCommon.push_circle(game, p.x, p.y, m.shockRadius, m.shockKnockback, D6Js.nz(m.get("shockStun"), 0.0))
+	D6State.emit(game, "moveLand", {"x": p.x, "y": p.y, "r": m.shockRadius, "move": "saut", "pushed": pushed})
 
 # ---------------------------------------------------------------- compétence (Lance infernale, kits)
 
@@ -623,6 +774,7 @@ static func _start_super(game: Dictionary) -> void:
 	p.attack = null
 	p.superCharge = 0.0
 	p.superHold = 0.0
+	p.superArm = false # l'appui qui vient de lancer l'ultime n'en arme pas un second
 	p.superT = s.duration + D6Js.nz(p.stats.get("superDurationBonus"), 0.0)
 	p.superTick = 0.0
 	if s.kind != "colere":

@@ -90,6 +90,8 @@ const COUPS_COUVERTS := ["chain", "wall"]
 const SILENCIEUX := [
 	"spawn", "attackStart", "castStart", "cancel", "dashEnd", "projectileEnd", "hazard", "choiceClose", "wave",
 	"immune", # Gardien en transition de phase : retour visuel seulement
+	"moveShort", # déplacement raccourci au bord de l'eau : le son du dash est déjà parti, retour visuel seulement
+	"moveLand", # atterrissage du saut du Bourreau : onde visuelle seulement pour l'instant (un choc sourd reste à choisir)
 	"souls", # Âmes d'un élite : le son de mort de l'élite suffit
 	"stash", # objet rangé au coffre : le clic du menu suffit
 	"returnTown", # fin de la descente : la Ville prend le relais

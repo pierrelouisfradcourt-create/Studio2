@@ -17,6 +17,7 @@ Principal (Node)            jeu/principal.gd     flux titre → Ville → descen
 │       ├─ Sol                                       ombres, halos : sous tout ce qui est debout
 │       ├─ Debout (y_sort)                           trié du fond vers l'avant, tous ensemble :
 │       │   ├─ Piliers      jeu/monde/piliers.gd     un nœud par pilier, dessiné une fois par salle
+│       │   ├─ Barrieres    jeu/monde/barrieres.gd   un nœud par obstacle BAS (palissade), dessiné une fois par salle
 │       │   ├─ Ennemis                               un nœud par corps
 │       │   ├─ Heros                                 devant tout, sauf derrière un pilier au nord duquel il est
 │       │   └─ Objets       jeu/monde/objets.gd      relais : l'objet d'interaction, les ramassables masqués
@@ -52,6 +53,24 @@ C'est le SEUL point d'entrée d'une vue. Elle y garde `app` et `partie`, et s'ab
   `app.contenu` (réglages de référence : classes, armes, prix, pour la Ville), `app.ecran`
   (`titre` | `ville` | `jeu`), `app.vues` (les autres vues, par nom de scène : `app.vues.monde`…).
 - Tables : `D6Data.tables()` (bénédictions, raretés, libellés…), jamais recopiées.
+
+## Terrain à franchir et déplacement de classe (combat V3, étape 1 bis)
+
+- `game.room.low` : le terrain BAS de la salle, `[{x0, y0, x1, y1, kind}]` — `kind` `river` (rivière,
+  dessinée au sol par `jeu/monde/terrain.gd`, entre le sol et les murs) ou `barrier` (obstacle bas,
+  dressé par `jeu/monde/barrieres.gd` dans le groupe trié). Les deux calques ne sont redessinés
+  qu'au changement de salle. Ce qui coule dépend du Cercle (`Terrain.FLUIDE_DU_CERCLE`).
+- `D6Player.move_view(game)` : ce qu'un bouton de DÉPLACEMENT doit montrer —
+  `{id, kind ("dash" | "saut" | "roulade"), name, icon, text, charges, maxCharges, ready,
+  rechargeFrac, active, air}`. `icon` vaut `dash`, `saut` ou `roulade` (`data/classes.json`, `moves`).
+- `D6Player.air(game)` : hauteur du héros en l'air (0..1), le saut du Bourreau ; le calque du
+  héros s'en sert (`envol_heros`) comme pour le Bond.
+- `D6Player.move_landing(game, dx, dy)` : où le déplacement poserait le héros dans cette
+  direction — `{x, y, time, full}` (`full` faux : l'arrivée tombait dans l'eau, le geste sera
+  raccourci). Lecture pure, pour un retour de visée.
+- Événements : `moveShort` `{x, y, dirX, dirY, reach, done, move}` (déplacement raccourci ou fait sur
+  place : `jeu/effets/` dessine une croix rouge sur l'arrivée refusée) ; `moveLand` `{x, y, r, move,
+  pushed}` (atterrissage du saut : onde froide, sans dégât).
 
 ## Signaux
 
@@ -89,12 +108,16 @@ nombre au hasard qui influence la partie (`randf` est permis pour une particule,
   (la disposition des commandes tactiles, même forme que `touchUI()` de `src/input/input.mjs` :
   c'est le HUD qui les DESSINE), et le signal `pause_demandee`. Combat V3 : l'entrée porte TROIS
   emplacements d'action (`skill1`, `skill2`, `skill3`, chacun `…Pressed`, `…AimX`, `…AimY`) et plus
-  aucun bouton Super — clavier : clic droit / E / F ; manette : B / Y / RB ; tactile : les trois
-  boutons autour de l'attaque (ids `skill1`, `skill3`, `skill2` dans `interface_tactile()`), qui
-  partent au relâcher, visés si le pouce a glissé. L'attaque TENUE (clic gauche, J, X, gâchette,
-  pouce posé sans glisser) est ce qui lance l'ultime, jauge pleine : la règle est dans `sim/`, la
-  vue ne fait que dire « tenu ». Un pouce qui GLISSE sur l'attaque vise sans la tenir ; le coup
-  part au relâcher.
+  aucun bouton Super — clavier : clic droit / E / F (visés à la souris) ; manette : B / Y / RB
+  (visés au stick droit) ; tactile : le gros bouton d'attaque, les trois emplacements en ARC
+  autour de lui (ids `skill1`, `skill2`, `skill3` dans `interface_tactile()`), le dash à part, à
+  droite. C'est `jeu/entrees/tactile.gd` qui connaît les places ; le HUD, sa disposition de repli
+  (`jeu/interface/disposition.gd`) et le Grimoire les LISENT. Gestes au doigt : un emplacement
+  part au relâcher (tap = visée assistée, glisser = viser, retour au centre = annuler) ; sur
+  l'attaque, RIEN ne part à l'appui — appui bref = un coup au relâcher ; glisser = viser, un coup
+  au relâcher (ou annulé au centre), l'attaque n'étant jamais tenue ; pouce maintenu sans glisser
+  (150 ms) = attaque TENUE. L'attaque tenue (clic gauche, J, X, gâchette, pouce maintenu) est ce
+  qui lance l'ultime, jauge pleine : la règle est dans `sim/`, la vue ne fait que dire « tenu ».
   Elle demande la position du héros à l'écran à `app.vues.monde.monde_vers_ecran(...)`.
 - **Effets** et **Son** n'exposent rien : ils écoutent `partie.evenements`. Effets appelle la
   caméra du Monde pour les secousses.
@@ -104,9 +127,14 @@ nombre au hasard qui influence la partie (`randf` est permis pour une particule,
   Ses commandes : attaque, dash, et les trois emplacements (`skill1`…`skill3`), dont l'état vient de
   `jeu/interface/etat_commandes.gd`, qui lit `D6Loadout.slot_view(game, i)` sans connaître
   l'intérieur (recharge d'une compétence, charges d'un gadget, emplacement vide : bouton éteint,
-  sans pictogramme). Le bouton d'ATTAQUE porte la jauge d'ultime en anneau, et un second trait
-  pendant le maintien qui le lance (présentation minimale de l'étape 1 : le bouton-jauge et
-  l'arc de boutons du plan sont le lot suivant).
+  cerclé de tirets, sans pictogramme, qui ne réagit à aucun toucher). Même langage sur les trois
+  appareils (`jeu/interface/commande.gd`) : le bouton d'ATTAQUE est la jauge d'ultime (un niveau
+  monte dans le bouton ; pleine, il devient braise et bat ; maintenue, un anneau se ferme
+  autour), les trois emplacements sont groupés (arc au doigt, rangée au bureau), le dash est à
+  part. Au doigt, `jeu/interface/tactile.gd` trace aussi la LIGNE DE VISÉE, du héros vers où le
+  pouce glisse (attaque, ou emplacement dont l'action se vise) : une direction, pas une portée.
+  Le détail et les choix : `design/COMBAT_V3.md`, « Affichage — ce qui est FAIT » ; pour juger à
+  l'écran, le banc `res://jeu/interface/banc_v3.tscn` (chaque état, par variables `D666_…`).
 - **Ecrans** est seul à afficher des panneaux par-dessus le JEU (et l'écran titre) ; il met le jeu
   en pause quand il le faut et écoute `app.vues.entrees.pause_demandee`. **Ville** affiche la Ville
   quand `app.ecran == "ville"` et fournit `jeu/ville/panneau_labo.tscn` (racine avec

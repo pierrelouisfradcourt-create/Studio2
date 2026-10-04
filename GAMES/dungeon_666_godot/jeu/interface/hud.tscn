@@ -89,35 +89,35 @@ layout_mode = 0
 mouse_filter = 2
 script = ExtResource("9")
 id = "attack"
-rayon = 48.0
+rayon = 52.0
 
 [node name="Dash" type="Control" parent="Racine/Tactile"]
 layout_mode = 0
 mouse_filter = 2
 script = ExtResource("9")
 id = "dash"
-rayon = 40.0
+rayon = 38.0
 
-[node name="Competence" type="Control" parent="Racine/Tactile"]
+[node name="Emplacement1" type="Control" parent="Racine/Tactile"]
 layout_mode = 0
 mouse_filter = 2
 script = ExtResource("9")
 id = "skill1"
-rayon = 33.0
+rayon = 30.0
 
-[node name="Super" type="Control" parent="Racine/Tactile"]
-layout_mode = 0
-mouse_filter = 2
-script = ExtResource("9")
-id = "skill3"
-rayon = 35.0
-
-[node name="Gadget" type="Control" parent="Racine/Tactile"]
+[node name="Emplacement2" type="Control" parent="Racine/Tactile"]
 layout_mode = 0
 mouse_filter = 2
 script = ExtResource("9")
 id = "skill2"
-rayon = 27.0
+rayon = 30.0
+
+[node name="Emplacement3" type="Control" parent="Racine/Tactile"]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("9")
+id = "skill3"
+rayon = 30.0
 
 [node name="Marges" type="MarginContainer" parent="Racine"]
 layout_mode = 0
@@ -353,10 +353,83 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 16
+
+[node name="Emplacements" type="HBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
+layout_mode = 2
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Emplacement1" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements"]
+layout_mode = 2
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="CmdEmplacement1" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements/Emplacement1"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("9")
+id = "skill1"
+rayon = 22.0
+
+[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements/Emplacement1"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"Touche"
+text = "Clic D"
+horizontal_alignment = 1
+
+[node name="Emplacement2" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements"]
+layout_mode = 2
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="CmdEmplacement2" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements/Emplacement2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("9")
+id = "skill2"
+rayon = 22.0
+
+[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements/Emplacement2"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"Touche"
+text = "E"
+horizontal_alignment = 1
+
+[node name="Emplacement3" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements"]
+layout_mode = 2
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="CmdEmplacement3" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements/Emplacement3"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+script = ExtResource("9")
+id = "skill3"
+rayon = 22.0
+
+[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Emplacements/Emplacement3"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"Touche"
+text = "F"
+horizontal_alignment = 1
 
 [node name="Attaque" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
 layout_mode = 2
+size_flags_vertical = 8
 mouse_filter = 2
 theme_override_constants/separation = 0
 
@@ -367,7 +440,7 @@ size_flags_horizontal = 4
 mouse_filter = 2
 script = ExtResource("9")
 id = "attack"
-rayon = 22.0
+rayon = 30.0
 
 [node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Attaque"]
 layout_mode = 2
@@ -378,6 +451,7 @@ horizontal_alignment = 1
 
 [node name="Dash" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
 layout_mode = 2
+size_flags_vertical = 8
 mouse_filter = 2
 theme_override_constants/separation = 0
 
@@ -395,67 +469,4 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_type_variation = &"Touche"
 text = "Espace"
-horizontal_alignment = 1
-
-[node name="Competence" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 0
-
-[node name="CmdCompetence" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Competence"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 4
-mouse_filter = 2
-script = ExtResource("9")
-id = "skill1"
-rayon = 22.0
-
-[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Competence"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_type_variation = &"Touche"
-text = "Clic D"
-horizontal_alignment = 1
-
-[node name="Gadget" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 0
-
-[node name="CmdGadget" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Gadget"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 4
-mouse_filter = 2
-script = ExtResource("9")
-id = "skill2"
-rayon = 22.0
-
-[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Gadget"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_type_variation = &"Touche"
-text = "E"
-horizontal_alignment = 1
-
-[node name="Super" type="VBoxContainer" parent="Racine/Marges/Zone/Bas/Bureau"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 0
-
-[node name="CmdSuper" type="Control" parent="Racine/Marges/Zone/Bas/Bureau/Super"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 4
-mouse_filter = 2
-script = ExtResource("9")
-id = "skill3"
-rayon = 22.0
-
-[node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Super"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_type_variation = &"Touche"
-text = "F"
 horizontal_alignment = 1

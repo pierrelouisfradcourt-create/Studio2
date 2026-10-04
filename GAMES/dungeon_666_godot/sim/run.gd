@@ -783,6 +783,7 @@ static func _revive(game: Dictionary) -> void:
 	for st in p.slots:
 		st.cd = 0.0
 	p.superHold = 0.0
+	p.superArm = false
 	p.iframes = 1.0
 	p.freeze = 0.0
 	p.state = "free"

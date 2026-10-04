@@ -151,6 +151,14 @@ static func _apply_impact(game: Dictionary, e: Dictionary, src: Dictionary) -> v
 	if D6Js.truthy(hitstop):
 		apply_hitstop(game, minf(hitstop, t.boss[e.kind].hitstopCap) if is_boss else hitstop, e)
 
+## Pousse un ennemi SANS le blesser (choc d'atterrissage du saut) : recul et étourdissement suivent
+## les règles d'un coup (masse, blindé, Gardien, garde), mais rien n'est infligé — ni dégât, ni
+## jauge de Super, ni proc « au toucher ». Ce n'est pas une attaque.
+static func push_enemy(game: Dictionary, e: Dictionary, dir_x: float, dir_y: float, knockback: float, stun: float = 0.0) -> void:
+	if e.dead or e.spawnT > 0.0 or _num(e, "invuln") > 0.0:
+		return
+	_apply_impact(game, e, {"kind": "move", "dirX": dir_x, "dirY": dir_y, "knockback": knockback, "stun": stun})
+
 ## Jauge de Super remplie par un coup du héros (hors sources exclues, hors Super en cours).
 ## `effective` : les PV réellement retirés — achever un ennemi à 1 PV ne remplit pas la jauge.
 static func _charge_super(game: Dictionary, kind, effective: float) -> void:

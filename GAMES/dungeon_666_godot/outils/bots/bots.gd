@@ -16,16 +16,22 @@ extends RefCounted
 ## Politiques :
 ##   skilled — joue bien : lit les télégraphes, esquive au dernier moment (marche ou dash),
 ##             punit les béliers sonnés, gère ses trois emplacements (compétences, gadgets)
-##             et l'ultime (attaque TENUE quand la jauge est pleine ; sinon il frappe par appuis).
+##             et l'ultime : l'appui doit COMMENCER jauge pleine, il RELÂCHE donc l'attaque un pas
+##             puis rappuie et tient ; jauge pleine sans vouloir l'ultime, il frappe par appuis.
 ##   noDash  — identique mais n'utilise JAMAIS le dash ni le gadget : mesure la valeur du dash.
-##   masher  — fonce sur l'ennemi le plus proche et tient l'attaque sans arrêt, dash aléatoire
-##             rare. Combat V3 : attaque tenue + jauge pleine = l'ultime part tout seul.
+##   masher  — fonce sur l'ennemi le plus proche et martèle l'attaque (tenue ; jauge pleine : des
+##             appuis brefs), dash aléatoire rare. Il ne lance jamais l'ultime : un appui tenu
+##             depuis avant que la jauge soit pleine n'arme rien, et un appui bref non plus.
 ##
 ## Options posées par l'appelant dans la mémoire (jamais lues dans la partie) :
 ##   mem.wantTown   — prendre le portail de la Ville quand il s'ouvre (sinon : jamais) ;
 ##   mem.wantRewards — liste de récompenses de porte à préférer (« shop », « event »…) : la
 ##                    première porte qui y mène est prise (sinon : le choix habituel) ;
 ##   mem.dashAttack — taper l'attaque au début de chaque dash (mesure du labo D5).
+##
+## TERRAIN BAS (rivières, obstacles bas : room.low, dessiné) : les bots le voient. Ils marchent par
+## les gués (Base.walk_dir) ; le bot habile FRANCHIT au déplacement de classe quand le détour à
+## pied est long (Intention), et son esquive sait qu'un dash passe au-dessus de l'eau.
 ##
 ## Découpage : base.gd (utilitaires, navigation), perception.gd (menaces), anticipation.gd
 ## (esquive), intention.gd (combat, hors combat), menus.gd (mode 'choice').
@@ -141,11 +147,11 @@ static func _apply_unstick(game: Dictionary, mem: Dictionary, intent: Dictionary
 	mem.stuckY = p.y
 	mem.stuckT = now
 
-static func _intent_to_input(intent: Dictionary) -> Dictionary:
+static func _intent_to_input(intent: Dictionary, mem: Dictionary) -> Dictionary:
 	var input := D6Game.empty_input()
 	input.moveX = intent.mx
 	input.moveY = intent.my
-	_attack_input(intent, input)
+	_attack_input(intent, input, mem)
 	if D6Js.truthy(intent.get("aimX")) or D6Js.truthy(intent.get("aimY")):
 		input.aimX = intent.aimX
 		input.aimY = intent.aimY
@@ -156,6 +162,8 @@ static func _intent_to_input(intent: Dictionary) -> Dictionary:
 			input[D6Player.SLOT_AIM_X[i]] = slots[i].x
 			input[D6Player.SLOT_AIM_Y[i]] = slots[i].y
 	var dash = intent.get("dash")
+	if dash == null and D6Js.truthy(intent.get("crossOk")):
+		dash = intent.get("cross") # franchir une rivière pour rejoindre (bot qui dashe seulement)
 	if dash != null:
 		# Dash offensif (traverser un porte-pavois) : la direction du dash est celle de la marche.
 		input.moveX = dash.x
@@ -163,12 +171,17 @@ static func _intent_to_input(intent: Dictionary) -> Dictionary:
 		input.dashPressed = true
 	return input
 
-## Le bouton d'attaque d'une intention. L'ultime voulu : il est TENU. Jauge pleine sans le vouloir
-## (intent.tap) : des appuis brefs, jamais tenus — tenir le lancerait. Sinon : tenu, comme avant.
-static func _attack_input(intent: Dictionary, input: Dictionary) -> void:
+## Le bouton d'attaque d'une intention. L'ultime voulu : l'appui doit COMMENCER jauge pleine. Si le
+## pouce tenait déjà l'attaque (mem.held), il la RELÂCHE un pas ; puis il rappuie et tient
+## (mem.superPress) jusqu'à ce que l'ultime parte. Jauge pleine sans le vouloir (intent.tap) : des
+## appuis brefs, jamais tenus — un appui tenu qui commence là le lancerait. Sinon : tenu, comme avant.
+static func _attack_input(intent: Dictionary, input: Dictionary, mem: Dictionary) -> void:
 	if D6Js.truthy(intent.get("superP")):
-		input.attack = true
-	elif D6Js.truthy(intent.get("tap")):
+		input.attack = D6Js.truthy(mem.get("superPress")) or not D6Js.truthy(mem.get("held"))
+		mem.superPress = input.attack
+		return
+	mem.superPress = false
+	if D6Js.truthy(intent.get("tap")):
 		input.attack = false
 		input.attackPressed = D6Js.truthy(intent.get("attack"))
 	else:
@@ -186,7 +199,16 @@ static func _dashing_input(game: Dictionary, mem: Dictionary, input: Dictionary)
 		mem.dashAttackSeq = game.telemetry.dashes
 	return input
 
+## Une image d'entrées d'un bot tactique. La mémoire retient si le bouton d'attaque finit TENU
+## (mem.held) : c'est ce que le pouce sait de lui-même, et ce qui dit s'il faut relâcher avant l'ultime.
 static func _tactical(game: Dictionary, mem: Dictionary, opts: Dictionary) -> Dictionary:
+	var input := _tactical_input(game, mem, opts)
+	mem.held = D6Js.truthy(input.get("attack"))
+	if not mem.held:
+		mem.superPress = false
+	return input
+
+static func _tactical_input(game: Dictionary, mem: Dictionary, opts: Dictionary) -> Dictionary:
 	var input := D6Game.empty_input()
 	if game.mode != "play":
 		return input
@@ -200,6 +222,7 @@ static func _tactical(game: Dictionary, mem: Dictionary, opts: Dictionary) -> Di
 		return _dashing_input(game, mem, input)
 	var enemies := Base.visible_enemies(game)
 	var intent: Dictionary = Intention.engage_intent(game, mem, enemies, opts) if not enemies.is_empty() else Intention.explore_intent(game, mem)
+	intent.crossOk = opts.dash
 	_apply_unstick(game, mem, intent)
 	var threats := Perception.perceive_threats(game, mem)
 	if not threats.is_empty():
@@ -208,9 +231,9 @@ static func _tactical(game: Dictionary, mem: Dictionary, opts: Dictionary) -> Di
 			# On garde l'ultime s'il est voulu (il rend invulnérable) : l'attaque reste tenue ; et
 			# jauge pleine sans le vouloir, l'esquive ne tient pas l'attaque non plus.
 			var wanted: Dictionary = {"superP": intent.superP, "tap": intent.tap, "attack": evasive.attack}
-			_attack_input(wanted, evasive)
+			_attack_input(wanted, evasive, mem)
 			return evasive
-	return _intent_to_input(intent)
+	return _intent_to_input(intent, mem)
 
 # ---------------------------------------------------------------- politiques
 
@@ -234,13 +257,18 @@ static func masher(game: Dictionary, mem: Dictionary) -> Dictionary:
 	if not enemies.is_empty():
 		var e: Dictionary = Intention.nearest(p, enemies)
 		if Base.dist_to(p, e) > e.r + p.r + MASHER_CONTACT_GAP:
-			var d := Base.nav_dir(game.room, p.x, p.y, e.x, e.y, p.r)
+			var d := Base.walk_dir(game.room, p.x, p.y, e.x, e.y, p.r)
 			intent.mx = d.x
 			intent.my = d.y
 	_apply_unstick(game, mem, intent)
 	input.moveX = intent.mx
 	input.moveY = intent.my
-	input.attack = D6Js.truthy(intent.get("attack"))
+	# Il martèle : l'attaque tenue enchaîne ; jauge pleine (le bouton le montre), des appuis brefs
+	# — un appui tenu qui COMMENCERAIT là armerait l'ultime, qu'il ne cherche jamais à lancer.
+	if p.superCharge >= 1.0:
+		input.attackPressed = D6Js.truthy(intent.get("attack"))
+	else:
+		input.attack = D6Js.truthy(intent.get("attack"))
 	if D6Rng.rand(mem.rng) < MASHER_DASH_CHANCE:
 		var a := D6Rng.rand(mem.rng) * PI * 2.0
 		input.moveX = D6Trig.cos(a)

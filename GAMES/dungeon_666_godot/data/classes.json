@@ -1,9 +1,10 @@
 {
-  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd).",
+  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. DÉPLACEMENT DE CLASSE (`move` d'une classe, table `moves`) : même bouton que le dash, un geste par classe ; un déplacement autre que le dash RECOUVRE les nombres du dash de base (data/heros.json, `dash`) par les siens — durée du geste, i-frames, charges, recharge, fenêtre de frappe ; la distance reste celle du dash × la statistique de classe dashDistanceMult ; `shock*` = choc d'atterrissage du saut (repousse, sans dégât). Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd).",
   "classes": {
     "revenant": {
       "name": "Revenant",
       "text": "Damné en fuite. Lame équilibrée, dash vif : le kit de référence du feel.",
+      "move": "dash",
       "cost": 0,
       "passive": {
         "name": "Étalon",
@@ -17,11 +18,12 @@
     },
     "bourreau": {
       "name": "Bourreau",
-      "text": "Exécuteur des Cercles. Coups lents et massifs, carcasse épaisse, dash court.",
+      "text": "Exécuteur des Cercles. Coups lents et massifs, carcasse épaisse ; il saute par-dessus le danger.",
+      "move": "saut",
       "cost": 120,
       "passive": {
         "name": "Carcasse de fer",
-        "text": "+40 PV max, 10 % d'armure, recul infligé +25 % ; dash −20 % de distance, vitesse −6 %."
+        "text": "+40 PV max, 10 % d'armure, recul infligé +25 % ; saut −20 % de distance, vitesse −6 %."
       },
       "stats": {
         "maxHpBonus": 40,
@@ -37,11 +39,12 @@
     },
     "chasseresse": {
       "name": "Chasseresse",
-      "text": "Traqueuse des Limbes. Elle tire de loin, à pas lents, et dashe loin pour se replacer ; fragile.",
+      "text": "Traqueuse des Limbes. Elle tire de loin, à pas lents, et roule loin pour se replacer ; fragile.",
+      "move": "roulade",
       "cost": 120,
       "passive": {
         "name": "Pied léger",
-        "text": "Dash +30 % de distance, vitesse +8 %, critique +5 % ; −20 PV max."
+        "text": "Roulade +30 % de distance, vitesse +8 %, critique +5 % ; −20 PV max."
       },
       "stats": { "dashDistanceMult": 0.3, "moveSpeedMult": 0.08, "critChance": 0.05, "maxHpBonus": -20 },
       "weapons": ["arc", "arbalete"],
@@ -698,6 +701,41 @@
       "pierce": 1,
       "knockback": 150,
       "hitstop": 0
+    }
+  },
+  "moves": {
+    "dash": {
+      "name": "Dash",
+      "kind": "dash",
+      "icon": "dash",
+      "text": "Ruée brève : traverse les attaques, franchit rivières et obstacles bas. Deux charges."
+    },
+    "saut": {
+      "name": "Saut",
+      "kind": "saut",
+      "icon": "saut",
+      "text": "Il s'élève et retombe un peu plus loin : invulnérable en l'air, le choc de l'atterrissage repousse. Une seule charge, lente à revenir.",
+      "duration": 0.34,
+      "iframes": 0.4,
+      "charges": 1,
+      "recharge": 1.3,
+      "chainFrom": 0,
+      "strikeCancelFrom": 0,
+      "shockRadius": 80,
+      "shockKnockback": 420,
+      "shockStun": 0
+    },
+    "roulade": {
+      "name": "Roulade",
+      "kind": "roulade",
+      "icon": "roulade",
+      "text": "Longue roulade au ras du sol ; en sortie, son prochain tir est PRÊT : la frappe de dash de son arme, pendant 1,2 s.",
+      "duration": 0.26,
+      "iframes": 0.22,
+      "charges": 2,
+      "recharge": 1,
+      "strikeCancelFrom": 0,
+      "strikeWindow": 1.2
     }
   },
   "DEFAULT_LOADOUT": { "classId": "revenant", "slots": ["lance", "nova", null] }

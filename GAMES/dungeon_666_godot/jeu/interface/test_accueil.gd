@@ -207,11 +207,11 @@ func _competence_et_gadget() -> void:
 	var e: Dictionary = D6Enemies.create_enemy(g, "imp", g.player.x - LOIN, g.player.y, {})
 	e.spawnT = 0.0
 	verifier("compétence : apparaît au combat", _montree("competence"), accueil.montree())
-	_libelles("competence", {"clavier": "Lance ta compétence", "manette": "Lance ta compétence", "tactile": "Compétence : glisse pour viser, relâche"}, "skill1")
+	_libelles("competence", {"clavier": "Lance une compétence", "manette": "Lance une compétence", "tactile": "Compétence : glisse pour viser, relâche"}, "skill1")
 	_entree = {"skill1Pressed": true}
 	_acquise("competence")
 	verifier("gadget : apparaît ensuite", _montree("gadget"), accueil.montree())
-	_libelles("gadget", _trois("Utilise ton gadget"), "skill2")
+	_libelles("gadget", _trois("Utilise une compétence à charges"), "skill2")
 	_entree = {"skill2Pressed": true}
 	_acquise("gadget")
 	_calmer()
@@ -234,7 +234,7 @@ func _commandes_v3() -> void:
 	var g := _game()
 	var ids: Array = hud.commandes_bureau.map(func(c: Node) -> String: return c.id)
 	verifier("HUD : attaque, dash et les trois emplacements", ids == ["attack", "dash", "skill1", "skill2", "skill3"], ids)
-	verifier("HUD tactile : les mêmes cinq commandes", hud.tactile.get_children().map(func(c: Node) -> String: return c.id) == ["attack", "dash", "skill1", "skill3", "skill2"])
+	verifier("HUD tactile : les mêmes cinq commandes", hud.tactile.get_children().map(func(c: Node) -> String: return c.id) == ["attack", "dash", "skill1", "skill2", "skill3"])
 	verifier("profil neuf : compétence, gadget, emplacement vide", g.kit.slots[0] != null and g.kit.slots[1] != null and g.kit.slots[2] == null, g.kit.slots)
 	var vide: Dictionary = Etats.etat(g, "skill3")
 	verifier("emplacement vide : pas prêt, pas de pictogramme, et le HUD continue de tourner", vide.get("vide") == true and vide.pret == 0.0 and vide.icone == "", vide)
@@ -242,6 +242,10 @@ func _commandes_v3() -> void:
 	var gadget: Dictionary = Etats.etat(g, "skill2")
 	verifier("emplacement 1 : la compétence, son anneau de recharge", competence.get("recharge") == true and competence.icone == "skill", competence)
 	verifier("emplacement 2 : le gadget, ses charges", gadget.get("max", 0.0) >= 1.0 and gadget.charges <= gadget.max and gadget.icone == "gadget", gadget)
+	# L'ultime ne s'arme que si l'appui COMMENCE jauge pleine (règle de sim/player.gd) : on relâche
+	# d'abord l'attaque restée tenue depuis l'essai du Super, puis on rappuie.
+	_entree = {}
+	_pas(2)
 	g.player.superCharge = 1.0
 	_entree = {"attack": true}
 	_pas(12)
@@ -255,6 +259,44 @@ func _commandes_v3() -> void:
 		_appareil(appareil)
 		_pas(3)
 	verifier("les trois présentations se dessinent avec un emplacement vide", true)
+	_jauge_et_visee_v3(Etats)
+
+## Combat V3, affichage : le bouton d'attaque EST la jauge (elle se lit dans le bouton), la ligne
+## de visée part du héros quand le pouce glisse, et un emplacement vide ne réagit à rien.
+func _jauge_et_visee_v3(Etats: GDScript) -> void:
+	const Disposition = preload("res://jeu/interface/disposition.gd")
+	var g := _game()
+	for part: float in [0.0, 0.25, 0.5, 0.75]:
+		g.player.superCharge = part
+		var e: Dictionary = Etats.etat(g, "attack")
+		verifier("jauge à %d %% : le bouton d'attaque la porte, sans éclat ni maintien" % int(part * 100.0), e.jauge == part and not e.eclat and e.maintien == 0.0, e)
+	g.player.superCharge = 0.0
+	verifier("l'emplacement 1 (une compétence) se vise ; le vide ne se vise pas", Etats.etat(g, "skill1").get("visee") == true and not Etats.etat(g, "skill3").has("visee"))
+	_appareil("tactile")
+	var heros := Vector2(480.0, 270.0)
+	var ui: Dictionary = Disposition.calculer(hud.racine.size, Vector4.ZERO)
+	var poses := {}
+	for b in ui.buttons:
+		b.pressed = true
+		b.dragging = b.id != "dash"
+		b.dx = -40.0
+		b.dy = 0.0
+		poses[b.id] = Vector2(b.x, b.y)
+	hud.tactile.actualiser(g, {"stick": ui.stick, "buttons": ui.buttons.filter(func(b: Dictionary) -> bool: return b.id == "skill3")}, "", heros)
+	var vide: Node = hud.tactile.get_node("Emplacement3")
+	verifier("emplacement vide, pouce posé et glissé dessus : ni enfoncé, ni repère, ni ligne de visée", not vide._appuye and vide._visee == Vector2.ZERO and hud.tactile.visee().is_empty(), hud.tactile.visee())
+	hud.tactile.actualiser(g, {"stick": ui.stick, "buttons": ui.buttons.filter(func(b: Dictionary) -> bool: return b.id == "skill1")}, "", heros)
+	var ligne: Dictionary = hud.tactile.visee()
+	verifier("emplacement 1 glissé : la ligne de visée part du héros, dans la direction du pouce", ligne.get("de") == heros and ligne.get("dir", Vector2.ZERO).is_equal_approx(Vector2.LEFT) and hud.tactile.get_node("Emplacement1")._appuye, ligne)
+	hud.tactile.actualiser(g, {"stick": ui.stick, "buttons": ui.buttons.filter(func(b: Dictionary) -> bool: return b.id == "attack")}, "", heros)
+	verifier("attaque glissée : la ligne de visée part du héros", hud.tactile.visee().get("de") == heros and hud.tactile.visee().dir.is_equal_approx(Vector2.LEFT))
+	hud.tactile.actualiser(g, {"stick": ui.stick, "buttons": ui.buttons.filter(func(b: Dictionary) -> bool: return b.id == "dash")}, "", heros)
+	verifier("dash appuyé : aucune ligne de visée", hud.tactile.visee().is_empty())
+	hud.tactile.actualiser(g, ui, "", heros)
+	for id in poses:
+		var bouton: Control = hud.tactile._boutons[id]
+		verifier("le bouton « %s » est dessiné là où la disposition le place" % id, (bouton.position + bouton.size / 2.0).is_equal_approx(poses[id]), [bouton.position + bouton.size / 2.0, poses[id]])
+	_appareil("clavier")
 
 func _recompense_et_porte() -> void:
 	var g := _game()

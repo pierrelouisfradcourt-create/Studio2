@@ -1,6 +1,6 @@
 {
   "type": "objet",
-  "requis": ["classes", "weapons", "skills", "gadgets", "supers", "DEFAULT_LOADOUT"],
+  "requis": ["classes", "weapons", "skills", "gadgets", "supers", "moves", "DEFAULT_LOADOUT"],
   "fermé": true,
   "champs": {
     "_note": { "type": "texte" },
@@ -9,11 +9,12 @@
       "min": 1,
       "chaque": {
         "type": "objet",
-        "requis": ["name", "text", "cost", "passive", "stats", "weapons", "skills", "gadgets", "super"],
+        "requis": ["name", "text", "move", "cost", "passive", "stats", "weapons", "skills", "gadgets", "super"],
         "fermé": true,
         "champs": {
           "name": { "type": "texte", "min": 1 },
           "text": { "type": "texte", "min": 1 },
+          "move": { "type": "texte", "min": 1 },
           "cost": { "type": "nombre", "min": 0 },
           "passive": {
             "type": "objet",
@@ -26,6 +27,31 @@
           "skills": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
           "gadgets": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
           "super": { "type": "texte", "min": 1 }
+        }
+      }
+    },
+    "moves": {
+      "type": "objet",
+      "min": 1,
+      "chaque": {
+        "type": "objet",
+        "requis": ["name", "kind", "icon", "text"],
+        "fermé": true,
+        "champs": {
+          "name": { "type": "texte", "min": 1 },
+          "kind": { "type": "texte", "valeurs": ["dash", "saut", "roulade"] },
+          "icon": { "type": "texte", "min": 1 },
+          "text": { "type": "texte", "min": 1 },
+          "duration": { "type": "nombre", "min": 0.02, "max": 1 },
+          "iframes": { "type": "nombre", "min": 0, "max": 1.5 },
+          "charges": { "type": "entier", "min": 1, "max": 4 },
+          "recharge": { "type": "nombre", "min": 0, "max": 10 },
+          "chainFrom": { "type": "nombre", "min": 0, "max": 1 },
+          "strikeCancelFrom": { "type": "nombre", "min": 0, "max": 1 },
+          "strikeWindow": { "type": "nombre", "min": 0, "max": 5 },
+          "shockRadius": { "type": "nombre", "min": 0, "max": 300 },
+          "shockKnockback": { "type": "nombre", "min": 0, "max": 2000 },
+          "shockStun": { "type": "nombre", "min": 0, "max": 2 }
         }
       }
     },

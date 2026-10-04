@@ -56,6 +56,9 @@ const CAS: Array[Dictionary] = [
 	{"type": "bossPhase", "id": 9016.0, "phase": 2.0},
 	{"type": "boonGain", "id": "soif", "rarity": "rare"},
 	{"type": "immune"},
+	{"type": "moveShort", "dirX": 1.0, "dirY": 0.0, "reach": 150.0, "done": 30.0, "move": "dash"},
+	{"type": "moveShort", "dirX": 0.0, "dirY": -1.0, "reach": 130.0, "done": 0.0, "move": "saut"},
+	{"type": "moveLand", "r": 80.0, "move": "saut", "pushed": 2.0},
 ]
 
 ## Les cas dont le type est dans `types` (tous si vide), posés en grille autour de `centre`.

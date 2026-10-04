@@ -14,7 +14,7 @@ règles). Il ne se compare plus à lui : il se garde lui-même. L'histoire du pa
 | `sim/` | La simulation : les règles. Ne connaît pas Godot (ni nœud, ni scène). Conventions : `PORTAGE.md`. |
 | `data/` | Tous les nombres et tables du jeu, en JSON ordinaire, un fichier par domaine. `validation.json` + `schemas/` : leur garde. |
 | `tests/regles/` | Les tests de règles (une règle, un test), lancés par `tests/regles.gd`. Outils : `tests/harnais.gd`. |
-| `references/` | 70 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
+| `references/` | 78 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
 | `jeu/` | Ce qui se voit, s'entend, se touche (contrat : `jeu/ARCHITECTURE.md`), avec ses tests headless. |
 | `outils/` | `verifier.sh` (l'oracle), `jouabilite.sh` (bots : solvabilité, classes), `donnees.gd` (écriture des données), `capture.gd`. |
 | `parite/` | Héritage : les outils de comparaison au web, plus lancés (`comparer.gd` sert encore). |
@@ -30,10 +30,10 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
 1. **import** — Godot enregistre ses classes ;
 2. **données** — chaque fichier de `data/` contre son schéma (types, bornes, un télégraphe
    d'ennemi d'au moins 0,4 s), et se réécrit sans rien perdre ;
-3. **règles** — `tests/regles/*.gd` : 404 tests, dont les références croisées des données
+3. **règles** — `tests/regles/*.gd` : 459 tests, dont les références croisées des données
    (`donnees.gd`) ;
-4. **références** — les 70 parties de `references/parties/` sont rejouées, 10 719 points de
-   contrôle comparés ;
+4. **références** — les 78 parties de `references/parties/` sont rejouées, point de contrôle
+   par point de contrôle (un toutes les 30 images) ;
 5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème), et le
    **parcours** (`jeu/essai/test_parcours.gd`) : le vrai jeu assemblé, toutes ses vues montées,
    joué de bout en bout par le bot — titre, Ville, descentes des trois classes, menus (chambre
@@ -62,8 +62,26 @@ déplacement, la visée, l'attaque (tenue et front), le dash, et **trois emplace
 (sa recharge) ou un gadget (ses charges) de la classe : `profil.loadout.slots`, choisi au Grimoire
 (`D6Profile.select_slot`), lu en partie par `game.kit.slots` et, pour l'affichage, par
 `D6Loadout.slot_view`. **L'ultime n'a pas de bouton** : jauge pleine, garder l'attaque appuyée
-`super.holdTime` (0,4 s, `data/classes.json`) le lance ; relâcher annule. Clavier : clic gauche
+`super.holdTime` (0,4 s, `data/classes.json`) le lance ; relâcher annule. Seul un appui COMMENCÉ
+jauge pleine l'arme : tenir l'attaque depuis avant enchaîne le combo, sans ultime. Clavier : clic gauche
 attaque, Espace dash, clic droit / E / F les emplacements 1 / 2 / 3. Manette : X, A, B / Y / RB.
+
+## Le déplacement de classe et le terrain à franchir (combat V3, étape 1 bis)
+
+Le bouton du dash joue le DÉPLACEMENT de la classe (`data/classes.json` : `move` de la classe,
+table `moves`) : **dash** du Revenant, **saut** du Bourreau (invulnérable en l'air, choc qui
+repousse à l'atterrissage, une charge), **roulade** de la Chasseresse (la plus longue ; son
+prochain tir est prêt en sortie). Les trois partagent l'état `dash` du héros et le bloc de réglage
+actif `tuning.dash` : tout ce qui parle du dash (charges, recharge, esquive parfaite, frappe de
+dash, bénédictions) vaut pour les trois. L'affichage lit `D6Player.move_view(game)`.
+
+Les salles peuvent porter du TERRAIN BAS (`data/salles.json`, table `TERRAINS` ; en partie :
+`room.low`) : **rivières** et **obstacles bas**. On n'y marche pas ; les tirs et la vue passent
+au-dessus ; le déplacement de classe les franchit si l'arrivée est sur la terre ferme, sinon il
+est raccourci au bord (jamais de chute). Les ennemis qui marchent contournent par les gués ;
+chaque disposition reste finissable à pied. Le terrain entre à l'étage `room.terrainFrom` (5).
+Règles et choix : `design/COMBAT_V3.md`, « Étape 1 bis » ; gardes : `tests/regles/v3_terrain.gd`.
+Juger à l'écran : `jeu/essai/terrain.tscn` (banc ; mode d'emploi en tête de `jeu/essai/terrain.gd`).
 
 ## Changer une règle
 
@@ -77,7 +95,7 @@ attaque, Espace dash, clic droit / E / F les emplacements 1 / 2 / 3. Manette : X
    (« références réenregistrées : <la règle changée> »).
 
 ```
-bash references/enregistrer.sh          # 70 parties, ~20 s ; sans changement : mêmes fichiers au bit près
+bash references/enregistrer.sh          # 78 parties, ~20 s ; sans changement : mêmes fichiers au bit près
 bash outils/verifier.sh
 ```
 

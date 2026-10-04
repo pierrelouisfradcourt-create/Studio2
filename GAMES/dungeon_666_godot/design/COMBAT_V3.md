@@ -148,12 +148,12 @@ pleine : tenir l'attaque enchaîne le combo, comme avant. Choix pris :
   jusqu'au bout ; aucun NOUVEAU coup ne part tant que `superHold` monte. Arrivé à `holdTime`,
   l'ultime part aussitôt : s'il reste un bout du coup (une arme lente), il le coupe, comme le
   faisait l'ancien bouton. Avec la Lame, le coup 1 (0,24 s) finit avant.
-- **La jauge se remplit pendant que le joueur tient déjà l'attaque** : l'armement commence à ce
-  moment, sans relâcher. Conséquence À JUGER EN MAIN : un joueur qui garde le bouton enfoncé pour
-  enchaîner voit l'ultime partir 0,4 s après que la jauge est pleine. S'il veut garder son ultime,
-  il frappe par appuis. (Variante possible si cela gêne : n'armer que si l'appui a COMMENCÉ jauge
-  pleine. Un test le fixe aujourd'hui dans l'autre sens : `v3_combat`, « la jauge qui se remplit
-  pendant le maintien ».)
+- **La jauge se remplit pendant que le joueur tient déjà l'attaque** : RIEN ne s'arme (décision de
+  Pierre, étape 1 bis : « pas d'ambiguïté »). L'ultime ne s'arme que si l'APPUI A COMMENCÉ jauge
+  pleine (`player.superArm`) : qui garde le bouton enfoncé pour enchaîner continue son combo ;
+  pour l'ultime, il relâche et rappuie. L'appui qui vient de lancer un ultime n'en arme pas un
+  second. (Jusqu'à l'étape 1 bis, l'armement commençait sans relâcher : le bot qui martèle
+  lançait ainsi 1 à 5 ultimes par partie.)
 - **Au doigt** : poser le pouce frappe ; le garder posé sans glisser tient l'attaque (donc arme
   l'ultime) ; GLISSER vise sans tenir l'attaque, et le coup part au relâcher, dans la direction
   visée. Un glisser-relâcher ne lance donc jamais l'ultime. Effet de bord à juger : un
@@ -197,8 +197,185 @@ bénédictions (« Votre compétence… » au singulier).
 
 **Bots et références** : les bots lisent les trois boutons (`slot_view`) et tiennent l'attaque
 pour l'ultime ; jauge pleine sans vouloir l'ultime, ils frappent par appuis. Le bot qui martèle
-tient l'attaque : son ultime part tout seul. Les 70 parties sont réenregistrées (format 2 du
-codec) ; les parties `kit_*` et `hasard_*` jouent trois emplacements remplis.
+tient l'attaque : son ultime partait tout seul (plus depuis l'étape 1 bis : l'appui doit commencer
+jauge pleine). Les 70 parties sont réenregistrées (format 2 du codec) ; les parties `kit_*` et
+`hasard_*` jouent trois emplacements remplis.
+
+## Affichage — ce qui est FAIT (2026-10-04)
+
+L'affichage et les gestes de l'étape 1 (`jeu/interface/`, `jeu/entrees/`, `jeu/ville/`). Aucune
+règle ici : l'affichage LIT `slot_view`, `superCharge`, `superHold`, `holdTime` ; le geste ne
+produit que les champs de l'entrée d'un pas. Preuves à l'écran : `_dev/captures/lot_v3_affichage/`
+(`capturer.sh`, banc `jeu/interface/banc_v3.tscn`). TOUT ce qui suit est à juger par Pierre.
+
+**Disposition tactile** (`jeu/entrees/tactile.gd`, seule à connaître les places ; px à l'échelle
+960 × 540) :
+
+```
+              [C2]  [C3]
+          [C1]
+   (joystick)        [ATTAQUE]  [DASH]
+```
+
+- **Attaque** : le plus gros bouton (104 px), à 168 × 100 px du coin bas-droit.
+- **Trois emplacements** : cibles de 60 px, sur un même arc autour de l'attaque (rayon 106), de
+  45° en 45°, à gauche et au-dessus (190°, 235°, 280°) ; 21 px de vide entre deux voisins, 24 px
+  entre eux et l'attaque.
+- **Dash** (76 px) : À DROITE de l'attaque, un peu plus bas, contre le bord. Pourquoi là : c'est
+  le croquis du plan ci-dessus (`[ATTAQUE] [DASH]`) ; il est de l'autre côté de l'arc, donc un
+  dash d'urgence ne lance jamais une compétence par erreur (et l'inverse) ; le pouce y va en se
+  REPLIANT depuis l'attaque (16 px de vide), sans traverser un autre bouton ; il reste le bouton
+  le plus près du pouce au repos. Prix : l'attaque recule de 50 px vers le centre.
+- Portrait (toléré) : pas de place à droite, le dash passe au-dessus de l'arc.
+- Gaucher : aucun réglage de main n'existe dans le jeu, aucun n'a été inventé (piste : un
+  réglage « main » qui retourne `disposer()` ; tout le reste suit, puisque le HUD et le Grimoire
+  lisent les places).
+
+**Le bouton d'attaque est la jauge d'ultime** (`jeu/interface/commande.gd`) : un niveau braise
+monte DANS le bouton, du bas vers le haut, avec sa surface en trait clair ; trois petits repères
+au bord marquent le quart, la moitié, les trois quarts. Pleine : tout le disque devient braise, le
+pictogramme passe au sombre, le cercle à l'or, un halo bat. Maintenue jauge pleine : un anneau
+clair se FERME autour du bouton en `holdTime` (lu : `superHold / holdTime`) ; relâcher l'efface
+(la règle remet `superHold` à zéro). Rien n'est calculé ici.
+
+**Un emplacement** montre son pictogramme, sa recharge (balayage sombre qui se vide + anneau) OU
+ses charges (segments dorés, `charges` / `maxCharges`), l'état prêt (cercle et pictogramme
+clairs, une onde quand il le redevient). Vide : un socle éteint cerclé de tirets, sans
+pictogramme, qui ne réagit à aucun toucher.
+
+**Gestes** (`jeu/entrees/tactile.gd`). Sur l'attaque (ou un toucher dans la moitié droite, hors
+bouton) :
+
+- appui BREF = un coup, visée automatique. Il part AU RELÂCHER (plus à l'appui) ;
+- GLISSER (plus de 18 px) = une ligne de visée part du héros ; UN coup part au relâcher, dans
+  cette direction ; revenir au centre du bouton avant de relâcher ANNULE. L'attaque n'est jamais
+  « tenue » pendant un glisser : il ne lance jamais l'ultime ;
+- pouce MAINTENU sans glisser plus de 150 ms (`APPUI_BREF_MS`) = le coup part, puis l'attaque
+  est TENUE (elle enchaîne, et arme l'ultime jauge pleine). Tenir, puis glisser : on vise, et le
+  coup visé part au relâcher.
+- Le défaut « un glisser donne deux coups » est corrigé : rien ne part plus à l'appui. Prix, À
+  JUGER EN MAIN : un appui bref frappe à la levée du pouce, un appui maintenu frappe après
+  150 ms. Si cela se sent, baisser `APPUI_BREF_MS`.
+
+Sur un emplacement : tap = visée automatique ; glisser = viser (la ligne ne s'affiche que si
+l'action se vise, `aimed`) ; relâcher lance ; revenir au centre annule. Dash : à l'appui.
+
+**La ligne de visée** (`jeu/interface/tactile.gd`) part du héros, dans la direction du pouce.
+Elle montre une DIRECTION, pas la portée (longueur fixe) : la portée est une règle, l'affichage
+ne la calcule pas (piste : la lire dans le kit).
+
+**Clavier / souris et manette** : même langage, en rangée en bas — les trois emplacements
+groupés, le bouton d'attaque-jauge plus gros, le dash à part — avec les libellés (Clic D, E, F,
+Clic G, Espace ; B, Y, RB, X, A). Un emplacement vise où pointe la souris ; à la manette, où
+pointe le stick droit.
+
+**Grimoire** (`jeu/ville/onglet_grimoire.gd`, `arc_emplacements.gd`) : en haut, les trois
+emplacements dessinés comme en jeu (le même arc, lu de la même disposition, les mêmes
+pictogrammes ; attaque et dash en filigrane) et leur légende (« 1 · Lance infernale », Vider) ;
+dessous, les compétences de la classe avec leur pictogramme. On touche une compétence puis un
+emplacement, ou l'inverse ; rien n'est écrit au premier toucher ; une compétence placée est
+marquée « ● Emplacement N ». Opérations inchangées (`select_slot`).
+
+**Textes** : « compétences » au pluriel là où il y en a trois (écran titre, consignes,
+bénédictions : « Compétences ») ; les anciens gadgets sont dits « compétences à charges »
+(Grimoire, consigne). RESTENT FAUX, parce qu'ils viennent de `data/` (non touché) : « Votre
+compétence… » (`benedictions.json`), « charge de gadget » (`autels.json`, `butin.json`,
+`ville.json`), « dégâts / recharge de la compétence » (`butin.json`).
+
+**Coût de dessin** : inchangé. Banc du HUD, 960 × 540 : 39,2 appels au doigt et 51,1 au bureau,
+avant comme après ; banc de coût (10 ennemis) : 67,8 avant, 67,8 après. Chaque bouton reste un
+lot de triangles (un appel) ; la ligne de visée part dans l'appel du joystick.
+
+## Étape 1 bis « Déplacement de classe et terrain » — ce qui est FAIT (2026-10-04)
+
+Règles (`sim/`, `data/`), bots, affichage du terrain (`jeu/monde/`, `jeu/effets/`). L'affichage des
+COMMANDES (pictogramme du bouton de déplacement) n'est pas de ce lot : il lira `D6Player.move_view(game)`.
+
+**Réglage de l'ultime.** L'appui doit COMMENCER jauge pleine (voir « L'ultime par maintien »). Le
+bot habile relâche puis rappuie pour l'ultime ; le bot qui martèle n'en lance plus.
+
+**Un déplacement par classe, sur le bouton du dash** (`data/classes.json` : `move` de la classe,
+table `moves`). Les trois passent par le même état (`dash`) et le même bloc de réglage actif
+(`tuning.dash` : le dash de base de `data/heros.json`, recouvert par les nombres du déplacement
+de la classe) : charges, recharge, i-frames, esquive parfaite, frappe de dash, bénédictions et
+objets « de dash » valent donc pour les trois. Nombres PROPOSÉS, à juger en main :
+
+| | Revenant — **dash** | Bourreau — **saut** | Chasseresse — **roulade** |
+|---|---|---|---|
+| Distance (dash 165 u × statistique de classe) | 165 u | 132 u (−20 %) | 214 u (+30 %) |
+| Durée du geste | 0,15 s | 0,34 s | 0,26 s |
+| Invulnérable | 0,18 s | 0,40 s (tout le vol) | 0,22 s |
+| Charges / recharge | 2 / 0,9 s | 1 / 1,3 s | 2 / 1,0 s |
+| Coupé par une frappe ; enchaîné | oui (fin du dash) ; oui | non, non (rien ne coupe le vol) | non ; oui |
+| Fenêtre de frappe en sortie | 0,3 s | 0,3 s | **1,2 s** |
+| En plus | — | choc à l'atterrissage : repousse dans 80 u (recul 420), **aucun dégât** ; ce sur quoi il retombe est chassé devant lui | « tir prêt » : pendant 1,2 s son prochain tir est la frappe de dash de son arme |
+
+Choix pris :
+
+- **Effet de la roulade** — « elle prépare son prochain tir » : le plus simple qui se sente est
+  la règle qui existe déjà. En sortie de roulade, la fenêtre de frappe de dash dure 1,2 s au lieu
+  de 0,3 s : son prochain tir est le tir lourd de l'arme (trois flèches perçantes de l'Arc, le
+  carreau perçant de l'Arbalète). Elle ne peut pas couper la roulade par un tir.
+- **Le saut n'est pas une attaque** : son choc pousse (`D6Combat.push_enemy`) sans dégât, sans
+  jauge d'ultime, sans proc « au toucher ». Un ennemi projeté contre un mur prend le choc de mur
+  habituel. L'ennemi sur lequel le Bourreau retombe est posé DEVANT lui (dans le sens du saut) :
+  sa frappe d'atterrissage porte.
+- **Bond du bourreau et saut** : ils partagent le vol au-dessus du terrain (`D6KitCommon.flight_moves`,
+  `D6Physics.fly_plan`). Le Bond reste une compétence offensive (260 u, vise un ennemi, 34 dégâts,
+  étourdit, recharge 6 s) ; le saut est le déplacement (132 u, sans dégât, 1,3 s). **Ils font en
+  partie double emploi** (deux sauts invulnérables sur la même classe) : à trancher par Pierre —
+  le Bond n'a pas été retiré.
+- La statistique de classe `dashDistanceMult` règle la longueur des trois gestes : un test
+  existant (`v2_kits`, « statistiques appliquées ») mesure la distance du déplacement de chaque
+  classe à partir d'elle.
+
+**Terrain à franchir** (`data/salles.json` : table `TERRAINS`, par disposition `rivers` et
+`barriers` ; en partie : `room.low`).
+
+- À PIED, on ne traverse ni rivière ni obstacle bas (héros, ennemis, ramassables). Les tirs, les
+  lancers et la vue passent au-dessus. Piliers et murs : inchangés.
+- Le déplacement de classe (et le Bond) FRANCHIT si l'arrivée est sur la terre ferme. **Arrivée
+  dans l'eau : le geste est RACCOURCI** au dernier point de terre ferme de sa trajectoire (au pire
+  il se fait sur place) : la charge est dépensée et l'esquive (i-frames) gardée — refuser le geste
+  aurait privé le joueur d'une esquive au bord de l'eau. Jamais de chute, jamais de dégât du décor.
+  Événement `moveShort` : croix rouge sur l'arrivée refusée, barre au bord, « AU BORD » / « TROP LOIN ».
+- Rien ne coupe un geste au-dessus de l'eau : frappe de dash, second dash et ultime attendent la
+  terre ferme.
+- **Recul** : un ennemi projeté s'arrête au bord et glisse le long (pas de choc de mur).
+- **Ruées** (Bélier, Charon) : elles ne franchissent RIEN — au bord d'une rivière ou d'un obstacle
+  bas, la ruée s'arrête et le chargeur est SONNÉ, comme contre un mur (une seule règle : « ce qui
+  arrête une ruée la sonne »). Le Bélier ne charge que si la voie est libre à pied pour son corps ;
+  sinon il contourne.
+- **Ennemis qui marchent** : ils contournent par les gués (le champ de navigation connaît le
+  terrain). **Traqueur** : il franchit en réapparaissant dans le dos du héros, jamais dans l'eau.
+  **Cerbère** (bond) : il franchirait, mais **les salles de Gardien n'ont pas de terrain** — leurs
+  attaques sont écrites pour une arène dégagée.
+- Rien n'apparaît dans une rivière ni sur un obstacle bas : vagues, invocations, récompense,
+  entrée, ramassables.
+- **Toute salle reste finissable à pied** : chaque disposition a ses gués ou ses ponts ; un test
+  le prouve par remplissage de la grille de navigation, et un second qu'aucun endroit où le héros
+  tient debout n'est coupé de l'entrée.
+- **Cinq dispositions** (`data/salles.json`) : `gues` (rivière en travers, deux gués), `douve`
+  (îlot central entouré d'eau, deux ponts), `fosse` (fossé devant le fond de la salle, passages
+  sur les côtés), `barrieres` (palissades en chicane), `torrent` (rivière en long, deux
+  palissades). Rivières larges de 60 à 64 u : le plus court des trois déplacements les franchit
+  (gardé par `donnees.gd`). Elles entrent dans le tirage des Cercles par `data/etages.json`, **à
+  partir de l'étage 5** (`room.terrainFrom`) : les quatre premières salles restent sans terrain.
+- **Affichage** : rivière = canal creusé, liseré clair (« ici, on franchit »), eau noire, sang,
+  lave ou glace selon le Cercle ; obstacle bas = palissade de pieux, deux fois moins haute qu'un
+  pilier, même liseré, triée en profondeur avec les créatures. Le Bourreau en plein saut est
+  dessiné en l'air ; la Chasseresse fait un tour sur elle-même. Le terrain n'est redessiné qu'au
+  changement de salle. PAS FAIT : le point d'arrivée vert / rouge pendant la visée du déplacement
+  (le déplacement ne se vise pas : il part dans la direction de la marche).
+
+**Bots.** Ils voient le terrain : marche par les gués (champ de distance), esquive qui sait
+qu'un déplacement passe au-dessus de l'eau ; le bot habile franchit pour rejoindre quand le détour
+est long et la cible encore loin.
+
+**À juger en main par Pierre** : les nombres des trois déplacements ; le saut (trop lent ? une
+seule charge ?) ; la roulade et son « tir prêt » ; le geste raccourci plutôt que refusé ; la ruée
+sonnée au bord de l'eau ; les cinq dispositions et l'étage où elles entrent ; le dessin (couleurs
+de ce qui coule, palissades) ; le double emploi Bond / saut.
 
 ## Tests existants et combat V3
 

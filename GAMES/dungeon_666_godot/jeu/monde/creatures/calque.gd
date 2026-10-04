@@ -51,9 +51,12 @@ func alpha_heros(h: Dictionary) -> float:
 		return 0.4
 	return 1.0
 
-## Part du Bond déjà sautée, en cloche (0 au sol, 1 au sommet) ; 0 hors Bond.
+## Hauteur du héros en l'air, en cloche (0 au sol, 1 au sommet) : le Bond du bourreau, ou le SAUT
+## (déplacement de classe du Bourreau : D6Player.air). 0 le reste du temps.
 func envol_heros(g: Dictionary) -> float:
 	var h: Dictionary = g.player
+	if h.state == "dash":
+		return D6Player.air(g)
 	var lance = h.get("cast")
 	if h.state != "cast" or not (lance is Dictionary) or lance.get("kind") != "bond":
 		return 0.0

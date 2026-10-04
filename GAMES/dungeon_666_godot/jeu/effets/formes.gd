@@ -74,6 +74,7 @@ func _draw() -> void:
 			"bande": _bande(f, a)
 			"eclair": _dessiner_eclair(f, a)
 			"mort": _mort(f, t, a)
+			"refus": _refus(f, t, a)
 
 ## Croissant : l'arc balaie d'un bord à l'autre (dans l'autre sens pour le 2e coup).
 func _taillade(f: Dictionary, t: float, a: float) -> void:
@@ -115,6 +116,23 @@ func _dessiner_eclair(f: Dictionary, a: float) -> void:
 	_eclair[SEGMENTS_ECLAIR] = Vector2(f.x1, f.y1)
 	draw_polyline(_eclair, Color(f.couleur, a * 0.55), 5.0)
 	draw_polyline(_eclair, Color(1.0, 1.0, 1.0, a), 1.5)
+
+## Déplacement RACCOURCI ou refusé : une croix rouge là où le geste devait arriver (dans l'eau),
+## reliée par un pointillé à la barre où il s'arrête (le bord). Bref, et rouge : « pas par là ».
+func _refus(f: Dictionary, t: float, a: float) -> void:
+	var rouge := Color(Couleurs.PAL.danger, minf(1.0, a * 1.4))
+	var cible := Vector2(f.x1, f.y1)
+	var bord := Vector2(f.x, f.y)
+	var bras: float = 11.0 + 5.0 * t
+	draw_line(cible + Vector2(-bras, -bras), cible + Vector2(bras, bras), rouge, 4.0, true)
+	draw_line(cible + Vector2(-bras, bras), cible + Vector2(bras, -bras), rouge, 4.0, true)
+	draw_arc(cible, bras * 1.7, 0.0, TAU, 28, Color(rouge, rouge.a * 0.6), 2.0, true)
+	var d := cible - bord
+	if d.length() > 24.0:
+		draw_dashed_line(bord, cible - d.normalized() * bras * 1.7, Color(rouge, rouge.a * 0.7), 2.0, 9.0)
+	var rayon: float = f.rayon
+	var travers: Vector2 = d.orthogonal().normalized() * (rayon + 6.0)
+	draw_line(bord + d.normalized() * rayon - travers, bord + d.normalized() * rayon + travers, rouge, 3.0, true)
 
 ## Nombre pseudo-aléatoire stable dans [-1, 1] (l'éclair garde sa forme pendant sa courte vie).
 static func _hasard(graine: float) -> float:

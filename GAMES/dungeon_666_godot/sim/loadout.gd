@@ -5,7 +5,7 @@ extends RefCounted
 ##
 ## Les blocs actifs de la copie de tuning de la partie deviennent des RÉFÉRENCES vers l'entrée
 ## choisie (tuning.combo est tuning.weapons[type].combo, etc.). Le reste de la simulation lit
-## toujours tuning.combo / tuning.weapon / tuning.super, sans connaître les classes.
+## toujours tuning.combo / tuning.weapon / tuning.super / tuning.dash, sans connaître les classes.
 ##
 ## EMPLACEMENTS (game.kit.slots, trois identifiants ou null) : chacun porte une compétence (à
 ## recharge) ou un gadget (à charges) de la classe. Son état vit dans game.player.slots[i] :
@@ -15,6 +15,7 @@ extends RefCounted
 const DEFAULT_WEAPON := "lame"
 const COMBO_EXPIRED := 99.0 # s : valeur de départ de player.comboTimer (state), « aucun enchaînement en cours »
 const SLOTS := 3 # emplacements d'action
+const DEFAULT_MOVE := "dash" # déplacement d'une classe qui n'en nomme pas : le dash de base
 
 ## game.meta.loadout?.<key> : null si le loadout ou la clé manque.
 static func _loadout_field(game: Dictionary, key: String):
@@ -85,8 +86,32 @@ static func resolve_kit(game: Dictionary) -> Dictionary:
 	t.dashStrike = w.dashStrike
 	t.weapon = w
 	t["super"] = D6Js.nz(t.supers.get(c.get("super")), t.get("super"))
+	_resolve_move(t, c)
 	game.kit = {"classId": class_id_of(game), "weaponType": weapon_type_of(game), "slots": _slot_ids(game), "superId": c.get("super")}
 	return game.kit
+
+## Identifiant du déplacement de la classe jouée (clé de tuning.moves) ; le dash si elle n'en nomme pas.
+static func move_id(game: Dictionary) -> String:
+	var id = class_of(game).get("move")
+	var moves = game.tuning.get("moves")
+	return id if moves is Dictionary and moves.get(id) is Dictionary else DEFAULT_MOVE
+
+## DÉPLACEMENT DE CLASSE (même bouton que le dash, un geste par classe : t.moves, data/classes.json).
+## t.dash devient le bloc ACTIF : le dash de base (t.dashBase, gardé tel quel — c'est lui que les
+## surcharges de réglage visent), recouvert par les nombres du déplacement de la classe. Pour le
+## dash lui-même (Revenant), t.dash RESTE le bloc de base, sans copie.
+static func _resolve_move(t: Dictionary, c: Dictionary) -> void:
+	if t.get("dashBase") == null:
+		t.dashBase = t.dash
+	var id = c.get("move")
+	var moves = t.get("moves")
+	var m = moves.get(id) if moves is Dictionary and id != null else null
+	if not (m is Dictionary) or D6Js.nz(m.get("kind"), DEFAULT_MOVE) == DEFAULT_MOVE:
+		t.dash = t.dashBase
+		return
+	var active: Dictionary = t.dashBase.duplicate(true)
+	active.merge(m, true)
+	t.dash = active
 
 # ---------------------------------------------------------------- emplacements d'action
 

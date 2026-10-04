@@ -10,11 +10,18 @@ extends RefCounted
 ## Les tables exportées (LAYOUTS, LAYOUT_IDS, COMBAT_LAYOUTS, BOSS_LAYOUT, ROSTER) se lisent dans
 ## D6Data.tables().room : dispositions d'obstacles en fractions de la salle (cx, cy, w, h en
 ## unités) ; coût en « budget de vague » de chaque archétype et index d'apparition minimal.
+##
+## TERRAIN BAS (table TERRAINS : par disposition, `rivers` et `barriers`, mêmes rectangles) :
+## room.low = [{x0, y0, x1, y1, kind: 'river' | 'barrier'}]. On n'y marche pas, on tire et l'on
+## voit par-dessus, le déplacement de classe le franchit (D6Physics). Rien ne s'y pose : ni
+## apparition, ni récompense. Chaque disposition garde un chemin à pied entre toutes ses zones
+## (gués, ponts : prouvé par tests/regles/v3_terrain.gd).
 
 const DOOR_W := 120.0
 const DOOR_H := 40.0
 const REWARD_CLEARANCE := 60.0 # u libres autour d'une récompense (le héros doit pouvoir la toucher)
 const WAVE_GUARD := 40.0 # garde-fou du tirage d'une vague
+const LOW_KINDS := {"rivers": "river", "barriers": "barrier"} # clé de la table TERRAINS -> room.low[].kind
 const ELITE_BASE_KINDS := ["brute", "charger", "imp", "archer"]
 const STRAY_KINDS := ["imp", "archer"]
 
@@ -33,6 +40,7 @@ static func build_room(game: Dictionary, info: Dictionary, plan: Dictionary) -> 
 		"reward": plan.get("reward"), # boon | loot | gold | heal | shop | event | treasure | rest | boss
 		"layout": "open",
 		"obstacles": [],
+		"low": [], # terrain bas : rivières et obstacles bas (on n'y marche pas, on tire par-dessus)
 		"waves": [],
 		"waveIndex": -1.0,
 		"cleared": false,
@@ -58,10 +66,25 @@ static func build_room(game: Dictionary, info: Dictionary, plan: Dictionary) -> 
 		var cx: float = fx * room.w
 		var cy: float = fy * room.h
 		room.obstacles.append({"x0": cx - w / 2.0, "y0": cy - h / 2.0, "x1": cx + w / 2.0, "y1": cy + h / 2.0})
+	_lay_terrain(room, tables.get("TERRAINS"))
 	if plan.kind == "combat" or plan.kind == "elite":
 		room.waves = _plan_waves(game, info, plan)
 	room.nav = D6Nav.build_nav(room)
 	return room
+
+## Terrain bas de la disposition de la salle (table TERRAINS), s'il y en a : rivières puis obstacles bas.
+static func _lay_terrain(room: Dictionary, terrains) -> void:
+	var terrain = terrains.get(room.layout) if terrains is Dictionary else null
+	if not (terrain is Dictionary):
+		return
+	for key in LOW_KINDS:
+		var rects = terrain.get(key)
+		if not (rects is Array):
+			continue
+		for rect in rects:
+			var cx: float = rect[0] * room.w
+			var cy: float = rect[1] * room.h
+			room.low.append({"x0": cx - rect[2] / 2.0, "y0": cy - rect[3] / 2.0, "x1": cx + rect[2] / 2.0, "y1": cy + rect[3] / 2.0, "kind": LOW_KINDS[key]})
 
 ## Disposition tirée parmi celles du plan ([{id, weight}]) ; une seule = aucun tirage.
 static func _pick_layout(game: Dictionary, info: Dictionary, layouts) -> String:
@@ -81,11 +104,12 @@ static func _pick_layout(game: Dictionary, info: Dictionary, layouts) -> String:
 	return D6Rng.pick(game.rng.gen, tables.COMBAT_LAYOUTS)
 
 ## Point libre pour poser une récompense : le centre de la salle si possible, sinon le point
-## libre le plus proche sur une spirale. Jamais dans un obstacle (sinon : partie bloquée).
+## libre le plus proche sur une spirale. Jamais dans un obstacle ni sur un terrain bas (sinon :
+## partie bloquée).
 static func reward_spot(room: Dictionary) -> Dictionary:
 	var cx: float = room.w / 2.0
 	var cy: float = room.h * 0.45
-	if not D6Js.truthy(D6Physics.point_blocked(room, cx, cy, REWARD_CLEARANCE)):
+	if not D6Js.truthy(D6Physics.ground_blocked(room, cx, cy, REWARD_CLEARANCE)):
 		return {"x": cx, "y": cy}
 	for ring in range(1, 20):
 		var d: float = float(ring) * 30.0
@@ -93,7 +117,7 @@ static func reward_spot(room: Dictionary) -> Dictionary:
 			var a: float = (float(k) / 16.0) * PI * 2.0 + PI / 2.0 # commence sous l'obstacle
 			var x: float = cx + D6Trig.cos(a) * d
 			var y: float = cy + D6Trig.sin(a) * d
-			if not D6Js.truthy(D6Physics.point_blocked(room, x, y, REWARD_CLEARANCE)):
+			if not D6Js.truthy(D6Physics.ground_blocked(room, x, y, REWARD_CLEARANCE)):
 				return {"x": x, "y": y}
 	return player_start(room)
 

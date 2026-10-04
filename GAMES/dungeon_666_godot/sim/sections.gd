@@ -194,11 +194,15 @@ static func compose_floor(tuning: Dictionary, seed, floor, door = null) -> Dicti
 
 # ---------------------------------------------------------------- briques du plan
 
-## Dispositions permises à l'étage : le tout premier étage est ouvert (apprentissage).
-static func _layouts_for(_tuning: Dictionary, theme: Dictionary, floor: float) -> Array:
+## Dispositions permises à l'étage : le tout premier étage est ouvert (apprentissage), et le
+## terrain à franchir (rivières, obstacles bas : table TERRAINS) n'entre qu'à room.terrainFrom —
+## le premier joueur apprend d'abord à se battre.
+static func _layouts_for(tuning: Dictionary, theme: Dictionary, floor: float) -> Array:
 	if floor == 1.0:
 		return [{"id": "open", "weight": 1.0}]
 	var ids := _layout_ids()
+	var terrains = D6Data.tables().room.get("TERRAINS")
+	var terrain_from: float = D6Js.nz(tuning.room.get("terrainFrom"), 1.0)
 	var table = theme.get("layouts")
 	if table == null:
 		table = {}
@@ -207,6 +211,8 @@ static func _layouts_for(_tuning: Dictionary, theme: Dictionary, floor: float) -
 	var out: Array = []
 	for id in table:
 		var w = table[id]
+		if floor < terrain_from and terrains is Dictionary and terrains.has(id):
+			continue
 		if ids.has(id) and w != null and w > 0.0:
 			out.append({"id": id, "weight": w})
 	return out

@@ -1,7 +1,10 @@
 extends SceneTree
 ## Test headless des entrées : de vrais événements poussés dans le viewport (Viewport.push_input :
 ## `_input`, puis les Control, puis `_unhandled_input`), et l'InputFrame rendu par `lire()`.
-## Mêmes règles que l'e2e de la version web (GAMES/dungeon_666/e2e.mjs).
+## Mêmes règles que l'e2e de la version web (GAMES/dungeon_666/e2e.mjs), sauf la disposition et
+## les gestes du combat V3 (design/COMBAT_V3.md, « Affichage — ce qui est FAIT ») : rien ne part à
+## l'appui sur l'attaque ; un appui bref = un coup, un glisser-relâcher = un coup visé, un pouce
+## maintenu = attaque tenue. Les derniers essais rejouent ces gestes dans la VRAIE simulation.
 ##   godot --headless --path . --script res://jeu/entrees/test_entrees.gd   → sortie 0 = vert, 1 = rouge
 
 const SCENE := "res://jeu/entrees/entrees.tscn"
@@ -45,9 +48,9 @@ func _derouler() -> void:
 	root.size = Vector2i(1280, 720) # la fenêtre headless naît en 64 × 64 : on lui donne celle du projet
 	await process_frame
 	print("viewport %s · fenêtre %s · échelle %s" % [root.get_visible_rect().size, root.size, e._doigts.echelle])
-	for essai: Callable in [_forme, _joystick, _joystick_suiveur, _attaque_et_multi_doigts, _dash, _competence,
-			_tap_flottant, _tolerance_du_pouce, _control_qui_consomme, _clavier, _souris, _souris_inactive,
-			_manette, _vider_et_pause, _perte_du_focus, _zone_sure]:
+	for essai: Callable in [_forme, _arc, _joystick, _joystick_suiveur, _attaque_et_multi_doigts, _appui_bref, _glisser_relacher,
+			_maintien, _attaque_annulee, _trois_doigts, _dash, _competence, _tap_flottant, _tolerance_du_pouce, _control_qui_consomme, _clavier, _souris, _souris_inactive,
+			_manette, _manette_visee, _vider_et_pause, _perte_du_focus, _zone_sure]:
 		_a_zero()
 		essai.call()
 	_a_zero()
@@ -56,6 +59,8 @@ func _derouler() -> void:
 	await _hors_jeu()
 	_a_zero()
 	await _portrait()
+	_a_zero()
+	_gestes_dans_la_simulation()
 	print("%d vérifications, %d échec(s) — %s" % [_total, _echecs, "ROUGE" if _echecs > 0 else "VERT"])
 	quit(1 if _echecs > 0 else 0)
 
@@ -144,6 +149,21 @@ func centre(id: String) -> Vector2:
 func k() -> float:
 	return e._doigts.echelle
 
+## Le pouce posé sur l'attaque y est depuis plus longtemps qu'un appui bref : au prochain pas,
+## l'attaque est TENUE (même procédé que `dernier_mouvement_ms` pour la souris).
+func vieillir_appui() -> void:
+	e._doigts.boutons[0].pose_ms -= e._doigts.APPUI_BREF_MS + 50.0
+
+## `n` pas lus : {coups: fronts d'attaque, tenue: pas où l'attaque est tenue, dernier: le dernier InputFrame}.
+func lire_pas(n: int) -> Dictionary:
+	var bilan := {"coups": 0, "tenue": 0, "dernier": {}}
+	for i in n:
+		var f: Dictionary = e.lire()
+		bilan.coups += int(f.attackPressed)
+		bilan.tenue += int(f.attack)
+		bilan.dernier = f
+	return bilan
+
 ## Un point de la zone du joystick (fractions de la zone et de la hauteur).
 func gauche(fx: float, fy: float) -> Vector2:
 	return Vector2(e._doigts.zone_x * fx, root.get_visible_rect().size.y * fy)
@@ -155,16 +175,37 @@ func _forme() -> void:
 	verifier("interface_tactile : clés visible, stick, buttons", ui.has_all(["visible", "stick", "buttons"]))
 	verifier("interface_tactile : stick {active, baseX, baseY, knobX, knobY}", ui.stick.has_all(["active", "baseX", "baseY", "knobX", "knobY"]))
 	var ids: Array = ui.buttons.map(func(b: Dictionary) -> String: return b.id)
-	verifier("interface_tactile : 5 boutons attack, dash, skill1, skill3, skill2 (les trois emplacements)", ids == ["attack", "dash", "skill1", "skill3", "skill2"], ids)
-	verifier("interface_tactile : bouton {id, x, y, r, pressed, dragging, dx, dy}", ui.buttons[0].has_all(["id", "x", "y", "r", "pressed", "dragging", "dx", "dy"]))
+	verifier("interface_tactile : 5 boutons attack, dash, skill1, skill2, skill3 (les trois emplacements)", ids == ["attack", "dash", "skill1", "skill2", "skill3"], ids)
+	verifier("interface_tactile : bouton {id, x, y, r, pressed, dragging, dx, dy, held}", ui.buttons[0].has_all(["id", "x", "y", "r", "pressed", "dragging", "dx", "dy", "held"]))
 	var taille := root.get_visible_rect().size
 	var a := bouton("attack")
-	verifier("disposition : attaque à 118 × 112 px CSS du coin bas-droit", is_equal_approx(a.x, taille.x - 118.0 * k()) and is_equal_approx(a.y, taille.y - 112.0 * k()), [a.x, a.y])
-	verifier("disposition : rayon de l'attaque 48, du dash 40 (px CSS)", is_equal_approx(a.r, 48.0 * k()) and is_equal_approx(bouton("dash").r, 40.0 * k()))
-	verifier("disposition : la zone joystick s'arrête à 48 % de la largeur au plus, avant le dash", e._doigts.zone_x <= taille.x * 0.48 + 0.001 and e._doigts.zone_x < bouton("dash").x - bouton("dash").r * 1.35)
+	verifier("disposition : attaque à 168 × 100 px CSS du coin bas-droit", is_equal_approx(a.x, taille.x - 168.0 * k()) and is_equal_approx(a.y, taille.y - 100.0 * k()), [a.x, a.y])
+	verifier("disposition : rayon de l'attaque 52, du dash 38 (px CSS)", is_equal_approx(a.r, 52.0 * k()) and is_equal_approx(bouton("dash").r, 38.0 * k()))
+	verifier("disposition : la zone joystick s'arrête à 48 % de la largeur au plus, avant la zone de toucher de chaque bouton", e._doigts.zone_x <= taille.x * 0.48 + 0.001 and ui.buttons.all(func(b: Dictionary) -> bool: return e._doigts.zone_x < b.x - b.r * 1.35))
 	var f: Dictionary = e.lire()
 	verifier("InputFrame : mêmes clés que D6Game.empty_input()", f.keys() == D6Game.empty_input().keys(), f.keys())
 	verifier("InputFrame au repos : rien", f == D6Game.empty_input(), f)
+
+## Combat V3 : gros bouton d'attaque, les trois emplacements en arc autour, le dash à part.
+func _arc(taille: Vector2 = root.get_visible_rect().size) -> void:
+	var a := bouton("attack")
+	var dash := bouton("dash")
+	var boutons: Array = e.interface_tactile().buttons
+	var arc: Array = ["skill1", "skill2", "skill3"].map(func(id: String) -> Dictionary: return bouton(id))
+	verifier("arc : l'attaque est le plus gros bouton", boutons.all(func(b: Dictionary) -> bool: return b.id == "attack" or b.r < a.r))
+	verifier("arc : chaque emplacement est une cible d'au moins 56 px (diamètre, px CSS)", arc.all(func(b: Dictionary) -> bool: return 2.0 * b.r >= 56.0 * k() - 0.001), arc.map(func(b: Dictionary) -> float: return 2.0 * b.r / k()))
+	var rayons: Array = arc.map(func(b: Dictionary) -> float: return Vector2(b.x - a.x, b.y - a.y).length())
+	verifier("arc : les trois emplacements sont à la même distance de l'attaque", is_equal_approx(rayons[0], rayons[1]) and is_equal_approx(rayons[1], rayons[2]), rayons)
+	verifier("arc : à gauche et au-dessus de l'attaque, dans l'ordre 1, 2, 3", arc.all(func(b: Dictionary) -> bool: return b.y < a.y) and arc[0].x < arc[1].x and arc[1].x < arc[2].x and arc[0].y > arc[1].y and arc[1].y > arc[2].y and arc[0].x < a.x - a.r)
+	verifier("dash à part : de l'autre côté de l'attaque (à droite), hors de l'arc", dash.x > a.x + a.r and arc.all(func(b: Dictionary) -> bool: return b.x + b.r < dash.x - dash.r))
+	var vide_mini := INF
+	for i in boutons.size():
+		for j in range(i + 1, boutons.size()):
+			vide_mini = minf(vide_mini, Vector2(boutons[i].x - boutons[j].x, boutons[i].y - boutons[j].y).length() - boutons[i].r - boutons[j].r)
+	verifier("aucun bouton n'en touche un autre : au moins 12 px CSS de vide entre deux", vide_mini >= 12.0 * k(), vide_mini / k())
+	verifier("tous les boutons tiennent dans l'écran, anneau compris (9 px), à 8 px CSS du bord au moins", boutons.all(func(b: Dictionary) -> bool: return b.x - b.r - 9.0 > 0.0 and b.x + b.r + 9.0 <= taille.x - 8.0 * k() and b.y - b.r - 9.0 > 0.0 and b.y + b.r + 9.0 <= taille.y - 8.0 * k()))
+	# Chaque centre de bouton rend ce bouton-là (les zones de toucher se recouvrent : le plus proche gagne).
+	verifier("toucher le centre d'un bouton prend ce bouton", boutons.all(func(b: Dictionary) -> bool: return e._doigts.bouton_a(b.x, b.y).id == b.id))
 
 func _joystick() -> void:
 	# Pouce posé IMMOBILE au bord bas-gauche (là où il repose) : le héros ne doit pas bouger.
@@ -215,7 +256,12 @@ func _attaque_et_multi_doigts() -> void:
 	glisse(1, p + Vector2(58.0 * k(), 0.0))
 	doigt(2, centre("attack"), true)
 	var f: Dictionary = e.lire()
-	verifier("deux doigts : joystick + attaque dans le même pas", f.moveX == 1.0 and f.attack and f.attackPressed, f)
+	# Combat V3 : rien ne part à l'appui (le pouce peut encore glisser) ; le coup part quand on
+	# sait que le pouce tape (relâcher) ou tient (appui bref dépassé).
+	verifier("pouce posé sur l'attaque : rien ne part à l'appui, le joystick continue", f.moveX == 1.0 and not f.attack and not f.attackPressed and bouton("attack").pressed, f)
+	vieillir_appui()
+	f = e.lire()
+	verifier("deux doigts : joystick + attaque tenue dans le même pas", f.moveX == 1.0 and f.attack and f.attackPressed and bouton("attack").held, f)
 	verifier("attaque posée sans glisser : visée assistée (aim nul)", f.aimX == 0.0 and f.aimY == 0.0)
 	var maintenue := true
 	var fronts := 0
@@ -239,9 +285,95 @@ func _attaque_et_multi_doigts() -> void:
 	verifier("attaque glissée longtemps : jamais d'attaque tenue (un glisser n'arme pas l'ultime)", not tenue)
 	doigt(2, centre("attack"), false)
 	f = e.lire()
-	verifier("attaque glissée puis relâchée : le coup part au relâcher, dans la direction visée", f.attackPressed and not f.attack and absf(f.aimX) < 0.001 and is_equal_approx(f.aimY, -1.0), [f.attackPressed, f.aimX, f.aimY])
+	verifier("attaque tenue, puis glissée, puis relâchée : le coup visé part au relâcher, dans la direction visée", f.attackPressed and not f.attack and absf(f.aimX) < 0.001 and is_equal_approx(f.aimY, -1.0), [f.attackPressed, f.aimX, f.aimY])
 	f = e.lire()
 	verifier("attaque relâchée : attack faux, le joystick continue", not f.attack and not f.attackPressed and f.aimY == 0.0 and f.moveX == 1.0)
+	doigt(1, p, false)
+
+## Appui bref = exactement UN coup, visée assistée, jamais d'attaque tenue.
+func _appui_bref() -> void:
+	doigt(2, centre("attack"), true)
+	var avant := lire_pas(3) # trois pas passent, le pouce est encore posé (appui bref : moins de 150 ms)
+	doigt(2, centre("attack"), false)
+	var apres := lire_pas(40)
+	verifier("appui bref : rien avant le relâcher", avant.coups == 0 and avant.tenue == 0, avant)
+	verifier("appui bref : exactement un coup, au relâcher", apres.coups == 1, apres.coups)
+	verifier("appui bref : l'attaque n'est jamais tenue (il n'arme pas l'ultime)", apres.tenue == 0, apres.tenue)
+	var f: Dictionary
+	tap(2, centre("attack"))
+	f = e.lire()
+	verifier("appui bref : visée assistée (aim nul)", f.attackPressed and f.aimX == 0.0 and f.aimY == 0.0, [f.aimX, f.aimY])
+	tap(2, centre("attack"))
+	tap(2, centre("attack"))
+	verifier("deux appuis brefs entre deux pas : un front (les fronts ne se comptent pas)", lire_pas(5).coups == 1)
+
+## Glisser-relâcher = exactement UN coup, au relâcher, dans la direction visée ; l'attaque n'est
+## jamais tenue, aussi long que soit le glisser : il ne peut pas lancer l'ultime.
+func _glisser_relacher() -> void:
+	var c := centre("attack")
+	doigt(2, c, true)
+	glisse(2, c + Vector2(-50.0 * k(), 0.0))
+	vieillir_appui() # le pouce reste bien plus longtemps qu'un appui bref : il vise, il ne tient pas
+	var pendant := lire_pas(60) # 1 s : plus de deux fois le maintien de l'ultime (0,4 s)
+	verifier("glisser : aucun coup tant que le pouce vise", pendant.coups == 0, pendant.coups)
+	verifier("glisser : l'attaque n'est jamais tenue (jamais d'ultime)", pendant.tenue == 0, pendant.tenue)
+	verifier("glisser : la visée suit le pouce (à gauche)", is_equal_approx(pendant.dernier.aimX, -1.0) and absf(pendant.dernier.aimY) < 0.001 and bouton("attack").dragging, [pendant.dernier.aimX, pendant.dernier.aimY])
+	glisse(2, c + Vector2(0.0, 50.0 * k()))
+	doigt(2, c + Vector2(0.0, 50.0 * k()), false)
+	var f: Dictionary = e.lire()
+	verifier("glisser-relâcher : le coup part au relâcher, dans la DERNIÈRE direction visée (en bas)", f.attackPressed and not f.attack and absf(f.aimX) < 0.001 and is_equal_approx(f.aimY, 1.0), [f.attackPressed, f.aimX, f.aimY])
+	var apres := lire_pas(40)
+	verifier("glisser-relâcher : exactement un coup (aucun autre ensuite), attaque jamais tenue", apres.coups == 0 and apres.tenue == 0 and apres.dernier.aimX == 0.0 and apres.dernier.aimY == 0.0, apres)
+
+## Pouce maintenu sans glisser = attaque tenue SANS INTERRUPTION (c'est ce qui arme l'ultime).
+func _maintien() -> void:
+	doigt(2, centre("attack"), true)
+	vieillir_appui()
+	var bilan := lire_pas(60)
+	verifier("maintien : l'attaque est tenue à chaque pas, sans interruption", bilan.tenue == 60, bilan.tenue)
+	verifier("maintien : un seul front (le premier coup), la suite est l'enchaînement de l'attaque tenue", bilan.coups == 1, bilan.coups)
+	glisse(2, centre("attack") + Vector2(6.0 * k(), -4.0 * k())) # le pouce tremble : sous le seuil de visée (18 px)
+	bilan = lire_pas(30)
+	verifier("maintien : un pouce qui tremble (moins de 18 px) tient toujours l'attaque", bilan.tenue == 30 and bilan.coups == 0, bilan)
+	doigt(2, centre("attack"), false)
+	bilan = lire_pas(10)
+	verifier("maintien relâché : plus d'attaque tenue, et pas de coup de plus", bilan.tenue == 0 and bilan.coups == 0, bilan)
+
+## Comme pour un emplacement : viser puis revenir au centre du bouton ANNULE le coup.
+func _attaque_annulee() -> void:
+	var c := centre("attack")
+	doigt(2, c, true)
+	glisse(2, c + Vector2(60.0 * k(), 0.0))
+	glisse(2, c + Vector2(5.0 * k(), 0.0))
+	vieillir_appui()
+	var pendant := lire_pas(30)
+	verifier("attaque visée puis ramenée au centre : ni visée, ni attaque tenue", pendant.tenue == 0 and pendant.coups == 0 and pendant.dernier.aimX == 0.0 and not bouton("attack").dragging, pendant)
+	doigt(2, c + Vector2(5.0 * k(), 0.0), false)
+	verifier("attaque visée puis ramenée au centre : relâcher ne lance aucun coup", lire_pas(10).coups == 0)
+	doigt(2, c, true)
+	glisse(2, c + Vector2(60.0 * k(), 0.0))
+	doigt(2, c, false, true)
+	verifier("attaque visée, toucher annulé par le système : aucun coup", lire_pas(10).coups == 0)
+
+## Trois doigts à la fois : le joystick, l'attaque tenue, et un emplacement visé puis lancé.
+func _trois_doigts() -> void:
+	var p := gauche(0.4, 0.6)
+	doigt(1, p, true)
+	glisse(1, p + Vector2(0.0, 58.0 * k()))
+	doigt(2, centre("attack"), true)
+	vieillir_appui()
+	e.lire()
+	var c := centre("skill2")
+	doigt(3, c, true)
+	glisse(3, c + Vector2(-60.0 * k(), 0.0))
+	var f: Dictionary = e.lire()
+	verifier("trois doigts : joystick + attaque tenue + emplacement 2 qui vise, rien n'est lâché", f.moveY == 1.0 and f.attack and not f.attackPressed and not f.skill2Pressed and bouton("skill2").dragging and bouton("attack").held and e.interface_tactile().stick.active, f)
+	doigt(3, c + Vector2(-60.0 * k(), 0.0), false)
+	f = e.lire()
+	verifier("trois doigts : l'emplacement 2 part visé, dans le même pas que le déplacement et l'attaque tenue", f.moveY == 1.0 and f.attack and f.skill2Pressed and is_equal_approx(f.skill2AimX, -1.0) and not f.skill1Pressed and not f.skill3Pressed and not f.dashPressed, f)
+	f = e.lire()
+	verifier("trois doigts : le joystick et l'attaque tiennent toujours après le lancer", f.moveY == 1.0 and f.attack and not f.skill2Pressed and f.aimX == 0.0, f)
+	doigt(2, centre("attack"), false)
 	doigt(1, p, false)
 
 func _dash() -> void:
@@ -305,9 +437,14 @@ func _tap_flottant() -> void:
 	# Zone d'attaque flottante : un tap dans la moitié droite, hors des boutons, attaque.
 	var taille := root.get_visible_rect().size
 	var p := Vector2(taille.x * 0.6, taille.y * 0.3)
-	doigt(8, p, true)
+	tap(8, p)
 	var f: Dictionary = e.lire()
-	verifier("tap hors bouton dans la moitié droite : attaque", f.attack and f.attackPressed and f.moveX == 0.0, f)
+	# Combat V3 : comme sur le bouton, le coup d'un appui bref part au relâcher.
+	verifier("tap hors bouton dans la moitié droite : attaque (un coup, au relâcher)", f.attackPressed and not f.attack and f.moveX == 0.0 and not e.lire().attackPressed, f)
+	doigt(8, p, true)
+	vieillir_appui()
+	f = e.lire()
+	verifier("pouce maintenu hors bouton dans la moitié droite : attaque tenue", f.attack and f.attackPressed and f.moveX == 0.0, f)
 	glisse(8, p + Vector2(30.0 * k(), 0.0))
 	f = e.lire()
 	verifier("attaque flottante glissée : visée depuis le point de contact", is_equal_approx(f.aimX, 1.0) and absf(f.aimY) < 0.001, [f.aimX, f.aimY])
@@ -483,16 +620,36 @@ func _manette() -> void:
 	verifier("manette : le frémissement d'une autre manette ne prend pas la main", is_equal_approx(e.lire().moveX, 0.9))
 	pad_axe(JOY_AXIS_LEFT_X, 0.0)
 
+## Combat V3 : à la manette, un emplacement se vise au stick droit, comme l'attaque.
+func _manette_visee() -> void:
+	pad_axe(JOY_AXIS_RIGHT_X, -0.9)
+	pad_bouton(JOY_BUTTON_B, true)
+	pad_bouton(JOY_BUTTON_RIGHT_SHOULDER, true)
+	var f: Dictionary = e.lire()
+	pad_bouton(JOY_BUTTON_B, false)
+	pad_bouton(JOY_BUTTON_RIGHT_SHOULDER, false)
+	verifier("manette : un emplacement lancé vise où pointe le stick droit", f.skill1Pressed and f.skill3Pressed and is_equal_approx(f.skill1AimX, -0.9) and is_equal_approx(f.skill3AimX, -0.9) and f.skill2AimX == 0.0 and is_equal_approx(f.aimX, -0.9), [f.skill1AimX, f.skill3AimX])
+	pad_axe(JOY_AXIS_RIGHT_X, 0.0)
+	pad_bouton(JOY_BUTTON_Y, true)
+	f = e.lire()
+	pad_bouton(JOY_BUTTON_Y, false)
+	verifier("manette : stick droit au repos, l'emplacement part en visée assistée", f.skill2Pressed and f.skill2AimX == 0.0 and f.skill2AimY == 0.0)
+
 # ---------------------------------------------------------------- fronts, pause, disposition
 
 func _vider_et_pause() -> void:
+	# Combat V3 : le pouce TIENT l'attaque (passé l'appui bref) avant que les fronts s'accumulent.
+	doigt(2, centre("attack"), true)
+	vieillir_appui()
+	e.lire()
 	tap(3, centre("dash"))
 	touche(KEY_L, true)
 	pad_bouton(JOY_BUTTON_Y, true)
-	doigt(2, centre("attack"), true)
+	tap(6, centre("skill3"))
+	tap(8, Vector2(root.get_visible_rect().size.x * 0.6, 40.0)) # second doigt à droite : l'attaque est déjà prise
 	e.vider()
 	var f: Dictionary = e.lire()
-	verifier("vider() efface les fronts (doigt, clavier, manette)", not f.dashPressed and not f.skill1Pressed and not f.skill2Pressed and not f.attackPressed, f)
+	verifier("vider() efface les fronts (doigt, clavier, manette)", not f.dashPressed and not f.skill1Pressed and not f.skill2Pressed and not f.skill3Pressed and not f.attackPressed, f)
 	verifier("vider() ne lâche pas ce qui est tenu", f.attack)
 	doigt(2, centre("attack"), false)
 	touche(KEY_L, false)
@@ -513,6 +670,8 @@ func _perte_du_focus() -> void:
 	doigt(1, gauche(0.5, 0.5), true)
 	glisse(1, gauche(0.5, 0.5) + Vector2(58.0 * k(), 0.0))
 	doigt(2, centre("attack"), true)
+	vieillir_appui()
+	verifier("avant la perte du focus : le pouce tient l'attaque", e.lire().attack)
 	touche(KEY_D, true)
 	clic(MOUSE_BUTTON_LEFT, true, HEROS, MOUSE_BUTTON_MASK_LEFT)
 	pad_bouton(JOY_BUTTON_X, true)
@@ -527,11 +686,14 @@ func _zone_sure() -> void:
 	d.disposer(taille, {"top": 0.0, "right": 0.0, "bottom": 0.0, "left": 0.0}, 1.0)
 	var a := bouton("attack")
 	var dash := bouton("dash")
-	verifier("paysage 844 × 390 : mêmes positions que le web", is_equal_approx(a.x, 726.0) and is_equal_approx(a.y, 278.0) and absf(dash.x - 614.61) < 0.01 and absf(dash.y - 266.29) < 0.01, [a.x, a.y, dash.x, dash.y])
+	verifier("paysage 844 × 390 : les positions du combat V3 (attaque 676 × 290, dash 779,68 × 312,04)", is_equal_approx(a.x, 676.0) and is_equal_approx(a.y, 290.0) and absf(dash.x - 779.68) < 0.01 and absf(dash.y - 312.04) < 0.01, [a.x, a.y, dash.x, dash.y])
+	_arc(taille) # petit téléphone : mêmes exigences (cibles, vides, tout dans l'écran)
 	verifier("paysage 844 × 390 : zone joystick = 48 % de la largeur", is_equal_approx(d.zone_x, 844.0 * 0.48), d.zone_x)
 	d.disposer(taille, {"top": 0.0, "right": 44.0, "bottom": 21.0, "left": 44.0}, 1.0)
 	a = bouton("attack")
-	verifier("zone sûre : les boutons s'écartent de l'encoche et de la barre de gestes", is_equal_approx(a.x, 726.0 - 44.0) and is_equal_approx(a.y, 278.0 - 21.0), [a.x, a.y])
+	verifier("zone sûre : les boutons s'écartent de l'encoche et de la barre de gestes", is_equal_approx(a.x, 676.0 - 44.0) and is_equal_approx(a.y, 290.0 - 21.0), [a.x, a.y])
+	var boutons: Array = e.interface_tactile().buttons
+	verifier("zone sûre : aucun bouton (anneau compris) ne mord sur l'encoche ni sur la barre de gestes", boutons.all(func(b: Dictionary) -> bool: return b.x + b.r + 9.0 <= 844.0 - 44.0 and b.y + b.r + 9.0 <= 390.0 - 21.0))
 	doigt(1, Vector2(2.0, 388.0), true)
 	var s: Dictionary = e.interface_tactile().stick
 	doigt(1, Vector2(2.0, 388.0), false)
@@ -578,7 +740,7 @@ func _portrait() -> void:
 	await process_frame
 	var taille := root.get_visible_rect().size
 	print("portrait : viewport %s · fenêtre %s · échelle %s" % [taille, root.size, k()])
-	verifier("portrait : le viewport suit la fenêtre et la disposition est recalculée", taille.y > taille.x and is_equal_approx(bouton("attack").x, taille.x - 95.0 * k()), [taille, bouton("attack").x])
+	verifier("portrait : le viewport suit la fenêtre et la disposition est recalculée", taille.y > taille.x and is_equal_approx(bouton("attack").x, taille.x - 70.0 * k()), [taille, bouton("attack").x])
 	var libres := true
 	var boutons: Array = e.interface_tactile().buttons
 	for i in boutons.size():
@@ -597,3 +759,68 @@ func _portrait() -> void:
 	verifier("portrait : le dash répond à sa place", e.lire().dashPressed)
 	root.size = Vector2i(1280, 720)
 	await process_frame
+
+# ---------------------------------------------------------------- les gestes dans la VRAIE simulation
+
+## Une vraie partie (sim/), sans ennemi, jouée par les InputFrame de la vue : ce que le geste
+## DONNE en jeu. Profil neuf : compétence, gadget, emplacement 3 vide.
+func _partie_reelle() -> Dictionary:
+	var tuning: Dictionary = D6Data.create_tuning()
+	var g: Dictionary = D6Game.create_game({"seed": 7.0, "startFloor": 1.0, "meta": D6Profile.new_profile(tuning)})
+	g.godMode = true
+	for liste in [g.enemies, g.spawns, g.hazards, g.projectiles]:
+		liste.clear()
+	g.room.waves = []
+	g.events.clear()
+	return g
+
+## `n` pas de simulation joués par la vue ; rend le nombre d'événements de chaque type.
+func jouer(g: Dictionary, n: int) -> Dictionary:
+	var vus := {}
+	for i in n:
+		D6Game.step_game(g, e.lire())
+		for ev in g.events:
+			vus[ev.type] = vus.get(ev.type, 0) + 1
+		g.events.clear()
+	return vus
+
+func _gestes_dans_la_simulation() -> void:
+	var g := _partie_reelle()
+	var tenir: float = g.tuning["super"].holdTime
+	var longtemps := int(ceilf(tenir * 60.0)) * 3
+	var c := centre("attack")
+	verifier("simulation : profil neuf, l'emplacement 3 est vide", D6Loadout.slot_view(g, 2) == null and D6Loadout.slot_view(g, 0) != null)
+	# 1. Appui bref, jauge pleine : un coup, pas d'ultime.
+	g.player.superCharge = 1.0
+	tap(2, c)
+	var vus := jouer(g, longtemps)
+	verifier("simulation : un appui bref donne exactement un coup, jamais l'ultime (jauge pleine)", vus.get("attackStart", 0) == 1 and vus.get("super", 0) == 0 and g.player.superCharge == 1.0, vus)
+	# 2. Glisser-relâcher, jauge pleine : un coup, vers le haut, pas d'ultime.
+	jouer(g, 60)
+	doigt(2, c, true)
+	glisse(2, c + Vector2(0.0, -60.0 * k()))
+	vieillir_appui()
+	vus = jouer(g, longtemps)
+	verifier("simulation : pendant un glisser, aucun coup, aucun ultime, et l'armement ne monte pas", vus.get("attackStart", 0) == 0 and vus.get("super", 0) == 0 and g.player.superHold == 0.0, [vus, g.player.superHold])
+	doigt(2, c + Vector2(0.0, -60.0 * k()), false)
+	vus = jouer(g, 3)
+	var vers_le_haut: bool = absf(angle_difference(g.player.facing, -PI / 2.0)) < 0.01
+	vus.merge(jouer(g, longtemps))
+	verifier("simulation : glisser-relâcher donne exactement un coup, vers le haut, jamais l'ultime", vus.get("attackStart", 0) == 1 and vus.get("super", 0) == 0 and vers_le_haut and g.player.superCharge == 1.0, [vus, g.player.facing])
+	# 3. Emplacement vide : inerte.
+	jouer(g, 60)
+	var avant := JSON.stringify(g.player.slots)
+	tap(6, centre("skill3"))
+	var f: Dictionary = e.lire()
+	D6Game.step_game(g, f)
+	vus = jouer(g, 30)
+	verifier("simulation : toucher l'emplacement vide ne fait rien (aucun événement, aucun état changé, pas d'attaque)", f.skill3Pressed and not f.attackPressed and ["castStart", "skill", "gadget", "gadgetCharge", "attackStart", "super", "dash"].all(func(t: String) -> bool: return not vus.has(t)) and JSON.stringify(g.player.slots) == avant and g.player.state == "free", [vus, g.player.state])
+	# 4. Pouce maintenu, jauge pleine : l'ultime part, après le maintien.
+	doigt(2, c, true)
+	vieillir_appui()
+	vus = jouer(g, int(ceilf(tenir * 60.0)) - 2)
+	verifier("simulation : pouce maintenu jauge pleine, l'armement monte et l'ultime n'est pas encore parti", vus.get("super", 0) == 0 and g.player.superHold > 0.0, [vus, g.player.superHold])
+	vus = jouer(g, 30)
+	doigt(2, c, false)
+	verifier("simulation : le maintien lance l'ultime, une fois", vus.get("super", 0) == 1 and g.player.superCharge < 1.0, vus)
+

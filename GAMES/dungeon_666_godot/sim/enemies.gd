@@ -191,6 +191,13 @@ static func _integrate(game: Dictionary, e: Dictionary, dt: float) -> void:
 			if vn < 0.0:
 				e.kvx -= vn * res.nx
 				e.kvy -= vn * res.ny
+	elif res.hitLow:
+		# Bord d'une rivière ou d'un obstacle bas : le recul s'y arrête (personne n'est poussé dedans)
+		# et glisse le long. Ce n'est pas un mur : ni dégât, ni étourdissement.
+		var vl: float = e.kvx * res.nx + e.kvy * res.ny
+		if vl < 0.0:
+			e.kvx -= vl * res.nx
+			e.kvy -= vl * res.ny
 	e.kvx *= k
 	e.kvy *= k
 
@@ -412,7 +419,9 @@ static func _charger(game: Dictionary, e: Dictionary, def: Dictionary, dt: float
 			D6AiCommon.set_state(e, "chase")
 
 static func _charger_chase(game: Dictionary, e: Dictionary, def: Dictionary, p: Dictionary, tp: Dictionary) -> void:
-	var sees: bool = D6Physics.line_of_sight(game.room, e.x, e.y, p.x, p.y)
+	# Il ne charge que si la voie est libre À PIED pour son corps : une rivière entre lui et le
+	# héros, ou le coin d'un gué sur sa route, il contourne.
+	var sees: bool = D6Physics.walk_clear(game.room, e.x, e.y, p.x, p.y, e.r)
 	if tp.d < def.attackRange and sees and e.cooldown <= 0.0 and D6AiCommon.active_attackers(game) < game.tuning.combat.maxAttackers:
 		D6AiCommon.set_state(e, "windup")
 		e.dirX = tp.dx
@@ -441,8 +450,9 @@ static func _charger_charge(game: Dictionary, e: Dictionary, def: Dictionary, dt
 	var res: Dictionary = D6Physics.move_circle(game.room, e, e.vx * dt, e.vy * dt)
 	e.vx = 0.0
 	e.vy = 0.0
-	if res.hitWall:
-		# Mur percuté : longue fenêtre de punition. Sa recharge court pendant qu'il est sonné et
+	if res.hitWall or res.hitLow:
+		# Mur percuté — ou bord d'une rivière, d'un obstacle bas : la ruée ne franchit rien, elle s'y
+		# arrête comme à un mur. Longue fenêtre de punition. Sa recharge court pendant qu'il est sonné et
 		# vaut ce qu'une charge dans le vide lui aurait coûté (récupération + recharge) : percuter
 		# un mur ne le fait jamais ré-attaquer plus tôt.
 		e.stun = def.wallStun

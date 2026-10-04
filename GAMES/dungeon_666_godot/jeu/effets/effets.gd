@@ -82,7 +82,7 @@ func _ready() -> void:
 		"pickup": _sur_ramassage, "gold": _sur_or, "heal": _sur_soin, "souls": _sur_ames,
 		"wallSlam": _sur_mur, "chargerWall": _sur_chargeur_mur, "spawn": _sur_apparition,
 		"floorEnter": _sur_etage, "bossPhase": _sur_phase, "boonGain": _sur_benediction,
-		"immune": _sur_invulnerable,
+		"immune": _sur_invulnerable, "moveShort": _sur_geste_court, "moveLand": _sur_atterrissage,
 	}
 
 func brancher(p_app: Node, p_partie: Node) -> void:
@@ -253,6 +253,23 @@ func _sur_dash(ev: Dictionary, _g: Dictionary) -> void:
 ## Atterrissage du dash : un souffle de poussière au sol (sur le web, le héros s'écrase un instant).
 func _sur_fin_dash(ev: Dictionary, _g: Dictionary) -> void:
 	particules.gerbe(ev.x, ev.y, 4, 90.0, 0.25, 3.0, TEINTES.poussiere, 0.0, TAU, 6.0)
+
+## Déplacement de classe RACCOURCI (l'arrivée tombait dans une rivière) ou fait sur place : on
+## le VOIT — croix rouge sur l'arrivée refusée, barre au bord où le héros s'arrête, un mot bref.
+func _sur_geste_court(ev: Dictionary, g: Dictionary) -> void:
+	var bord := Vector2(ev.x + ev.dirX * ev.done, ev.y + ev.dirY * ev.done)
+	var cible := Vector2(ev.x + ev.dirX * ev.reach, ev.y + ev.dirY * ev.reach)
+	formes.ajouter({"type": "refus", "x": bord.x, "y": bord.y, "x1": cible.x, "y1": cible.y, "rayon": g.player.r, "vie": 0.55})
+	textes.ajouter(bord.x, bord.y - g.player.r - 18.0, "TROP LOIN" if ev.done <= 1.0 else "AU BORD", PAL.danger, 14, 0.7)
+	particules.gerbe(cible.x, cible.y, 6, 120.0, 0.3, 3.0, PAL.danger, 0.0, TAU, 6.0)
+
+## Atterrissage du SAUT du Bourreau : une onde froide qui repousse (aucun dégât : pas de rouge),
+## de la poussière, une petite secousse.
+func _sur_atterrissage(ev: Dictionary, _g: Dictionary) -> void:
+	formes.ajouter({"type": "choc", "x": ev.x, "y": ev.y, "r": ev.r, "couleur": PAL.heroCape, "bord": TEINTES.ecume, "vie": 0.26})
+	particules.gerbe(ev.x, ev.y, 14, ev.r * 3.0, 0.4, 3.5, TEINTES.poussiere, 0.0, TAU, 5.0)
+	particules.gerbe(ev.x, ev.y, 6, ev.r * 2.0, 0.5, 3.0, TEINTES.ardoise, 0.0, TAU, 4.0)
+	_secouer(0.3)
 
 func _sur_dash_nova(ev: Dictionary, _g: Dictionary) -> void:
 	formes.anneau(ev.x, ev.y, 10.0, ev.r, TEINTES.dash_nova, 4.0, 0.22)

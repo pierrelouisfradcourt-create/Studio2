@@ -16,6 +16,9 @@ extends SceneTree
 ##      opérations de chaque onglet, arène d'essai, entraînement contre un Gardien, puis une
 ##      descente profonde par classe (étages 19, 37, 55), finies par abandon ou par mort ;
 ##   4. des cycles titre → Ville → descente → mort → Ville : le nombre de nœuds ne monte pas.
+## En chemin, les salles à TERRAIN (rivières, obstacles bas : étape 1 bis du combat V3) sont jouées
+## par le bot comme les autres ; le parcours les compte et vérifie que le héros n'y est jamais posé
+## dans l'eau.
 ## Le temps : le test tient l'horloge. Il arrête le `_process` de la Partie et appelle sa boucle
 ## lui-même, un pas de 1/60 s par appel, PAS_PAR_IMAGE appels par image du moteur : la même
 ## partie à chaque lancement, quelle que soit la vitesse de la machine.
@@ -52,6 +55,7 @@ const DUREE_ESSAI := 20.0
 const MIN_SALLES := 30
 const MIN_ETAGES := 40
 const MIN_VERIFICATIONS := 400
+const MIN_SALLES_A_TERRAIN := 3 # le terrain à franchir entre à l'étage 5 (room.terrainFrom)
 ## Les nœuds se comptent au nœud près ; les objets (ressources, interpolations en cours) varient
 ## de quelques unités d'une mesure à l'autre : au-delà, quelque chose s'accumule.
 const TOLERANCE_OBJETS := 8
@@ -71,6 +75,8 @@ var _bilan := {"pauses": 0, "abandons": 0, "reprises": 0, "retours": 0, "gardien
 var _totaux := {"salles": 0, "gardiens": 0, "etages": 0, "morts": 0, "pas": 0, "etage_max": 0.0, "choix": {}, "commandes": {}}
 var _base := {}
 var _vrai_profil_avant := ""
+## Salles à terrain traversées : {« graine/étage » : disposition}, et pas passés au-dessus / posés dans le terrain.
+var _terrain := {"entrees": {}, "nettoyees": {}, "survols": 0, "noyades": 0}
 
 func _initialize() -> void:
 	OS.set_environment(Profil.ENV_DOSSIER, DOSSIER)
@@ -202,8 +208,28 @@ func _avancer() -> void:
 		return
 	app.partie._process(D6Data.DT)
 	_appels += 1
+	_observer_le_terrain()
 	if _appels % PAS_PAR_IMAGE == 0:
 		await process_frame
+
+## Terrain à franchir (combat V3, étape 1 bis) : chaque salle à rivière ou à obstacles bas que le
+## parcours traverse est notée — entrée, nettoyée — et le héros n'y est jamais POSÉ dans le terrain
+## (il le survole pendant son déplacement de classe, c'est tout).
+func _observer_le_terrain() -> void:
+	var g = app.partie.game
+	if g == null or g.room.get("low", []).is_empty():
+		return
+	var cle := "%s/%s" % [D6Js.num_str(g.seed), D6Js.num_str(g.run.floor)]
+	if not _terrain.entrees.has(cle):
+		_terrain.entrees[cle] = g.room.layout
+	if g.room.cleared and (g.room.kind == "combat" or g.room.kind == "elite"):
+		_terrain.nettoyees[cle] = g.room.layout
+	var h: Dictionary = g.player
+	if D6Physics.low_at(g.room, h.x, h.y, h.r):
+		if D6Player.crossing(g):
+			_terrain.survols += 1
+		else:
+			_terrain.noyades += 1
 
 ## Joue jusqu'à `condition` ; faux si elle n'arrive pas en `secondes` de boucle.
 func _jouer_jusqu_a(condition: Callable, secondes: float) -> bool:
@@ -610,6 +636,8 @@ func _gardes() -> void:
 	verifier("garde : %d cycles de fuite joués" % CYCLES, _bilan.cycles == CYCLES, _bilan.cycles)
 	for op in ["select_class", "unlock", "equip_from_stash", "buy_upgrade", "labo"]:
 		verifier("garde : opération de Ville « %s » acceptée" % op, _bilan.operations.get(op, 0) > 0, _bilan.operations)
+	verifier("garde : au moins %d salles à terrain (rivière, obstacles bas) nettoyées par le bot" % MIN_SALLES_A_TERRAIN, _terrain.nettoyees.size() >= MIN_SALLES_A_TERRAIN, _terrain.nettoyees)
+	verifier("terrain : le héros n'est jamais posé dans une rivière ni sur un obstacle bas", _terrain.noyades == 0, _terrain.noyades)
 	verifier("garde : au moins %d vérifications" % MIN_VERIFICATIONS, verifications >= MIN_VERIFICATIONS, verifications)
 
 func _conclure(duree_ms: int) -> void:
@@ -623,6 +651,7 @@ func _conclure(duree_ms: int) -> void:
 	var t := _totaux
 	print("RÉSUMÉ joué : %d salles, %d étages (max %s), %d morts, %d pas ; menus %s ; commandes %s" % [t.salles, t.etages, D6Js.num_str(t.etage_max), t.morts, t.pas, t.choix, t.commandes])
 	print("RÉSUMÉ gestes : %s ; écrans %s" % [_bilan, " ".join(PackedStringArray(_ecrans_vus))])
+	print("RÉSUMÉ terrain : %d salles à terrain entrées, %d nettoyées %s ; %d pas au-dessus du terrain (déplacement de classe), %d posé dedans" % [_terrain.entrees.size(), _terrain.nettoyees.size(), _terrain.nettoyees.values(), _terrain.survols, _terrain.noyades])
 	print("RÉSUMÉ empreintes : %s" % [_empreintes])
 	print("vrai profil (SHA-256) : %s — inchangé : %s" % [vrai_apres if vrai_apres != "" else "absent", vrai_apres == _vrai_profil_avant])
 	print("test_parcours : %d vérifications, %d échec(s), %d erreur(s) de script, %.1f s" % [verifications, echecs, temoin.nombre, duree_ms / 1000.0])

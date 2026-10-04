@@ -1,5 +1,5 @@
 {
-  "_note": "La salle (room) et ses dispositions d'obstacles (LAYOUTS : [centre x, centre y en fraction de la salle, largeur, hauteur en unités]). COMBAT_LAYOUTS : les dispositions du premier Cercle ; les Cercles suivants choisissent les leurs dans data/etages.json.",
+  "_note": "La salle (room) et ses dispositions d'obstacles (LAYOUTS : [centre x, centre y en fraction de la salle, largeur, hauteur en unités]). COMBAT_LAYOUTS : les dispositions du premier Cercle ; les Cercles suivants choisissent les leurs dans data/etages.json. TERRAINS : le terrain BAS d'une disposition (mêmes rectangles) — `rivers` (rivière, gouffre) et `barriers` (obstacle bas) : on n'y marche pas, on tire et l'on voit par-dessus, le déplacement de classe le franchit ; un rectangle qui touche un mur le DÉPASSE (aucun passage entre lui et le mur) ; chaque disposition garde un chemin à pied (gués, ponts) entre toutes ses zones. room.terrainFrom : premier étage où une disposition à terrain peut être tirée.",
   "room": {
     "width": 1400,
     "height": 880,
@@ -17,7 +17,8 @@
     "pickupSpeedSpread": 120,
     "pickupRadius": 10,
     "goldRadius": 6,
-    "healOrbAmount": 12
+    "healOrbAmount": 12,
+    "terrainFrom": 5
   },
   "LAYOUTS": {
     "open": [],
@@ -60,7 +61,32 @@
     ],
     "chicane": [[0.38, 0.33, 520, 40], [0.62, 0.66, 520, 40]],
     "goulet": [[0.1743, 0.5, 440, 180], [0.8257, 0.5, 440, 180]],
-    "ilots": [[0.3, 0.34, 220, 120], [0.7, 0.64, 220, 120]]
+    "ilots": [[0.3, 0.34, 220, 120], [0.7, 0.64, 220, 120]],
+    "gues": [[0.3, 0.3, 60, 60], [0.7, 0.3, 60, 60]],
+    "douve": [[0.18, 0.5, 56, 56], [0.82, 0.5, 56, 56]],
+    "fosse": [[0.3, 0.62, 60, 60], [0.7, 0.62, 60, 60]],
+    "barrieres": [],
+    "torrent": [[0.25, 0.45, 60, 60], [0.75, 0.45, 60, 60]]
+  },
+  "TERRAINS": {
+    "gues": { "rivers": [[0.1, 0.58, 280, 64], [0.5, 0.58, 560, 64], [0.9, 0.58, 280, 64]], "barriers": [] },
+    "douve": {
+      "rivers": [
+        [0.5, 0.3, 480, 60],
+        [0.5, 0.7, 480, 60],
+        [0.35, 0.38, 60, 96],
+        [0.35, 0.62, 60, 96],
+        [0.65, 0.38, 60, 96],
+        [0.65, 0.62, 60, 96]
+      ],
+      "barriers": []
+    },
+    "fosse": { "rivers": [[0.5, 0.34, 900, 60]], "barriers": [] },
+    "barrieres": {
+      "rivers": [],
+      "barriers": [[0.32, 0.36, 440, 32], [0.68, 0.64, 440, 32], [0.2, 0.66, 32, 180], [0.8, 0.34, 32, 180]]
+    },
+    "torrent": { "rivers": [[0.5, 0.45, 64, 400]], "barriers": [[0.25, 0.72, 200, 32], [0.75, 0.72, 200, 32]] }
   },
   "COMBAT_LAYOUTS": ["open", "pillars", "center", "lanes", "bastions", "scatter"],
   "BOSS_LAYOUT": [[0.15, 0.25, 64, 64], [0.85, 0.25, 64, 64], [0.15, 0.78, 64, 64], [0.85, 0.78, 64, 64]],

@@ -63,6 +63,11 @@ static func simulate_move(game: Dictionary, out: PackedFloat64Array, dx: float, 
 	var slow: float = run * minf(1.0, t.player.attackMoveMult * move_mult)
 	var dash_speed: float = (t.dash.distance * D6Js.nz(p.stats.get("dashDistanceMult"), 1.0)) / t.dash.duration # dash de la classe
 	var dash_dur: float = t.dash.duration
+	# Terrain bas : à pied on s'y arrête ; le déplacement de classe passe au-dessus et se pose sur
+	# la terre ferme (raccourci s'il le faut : le bot connaît son héros, D6Player.move_landing).
+	var low: bool = Base.has_low(room)
+	if low and dash:
+		dash_dur = D6Player.move_landing(game, dx, dy).time
 	var step := 1.0 / SAMPLE_HZ
 	var r: float = p.r
 	var lo: float = room.pad + r
@@ -79,7 +84,7 @@ static func simulate_move(game: Dictionary, out: PackedFloat64Array, dx: float, 
 			v = dash_speed
 		var nx := D6Geo.clampv(x + dx * v * step, lo, hi_x)
 		var ny := D6Geo.clampv(y + dy * v * step, lo, hi_y)
-		if not Base.inside_obstacle(room, nx, ny, r):
+		if not Base.inside_obstacle(room, nx, ny, r) and not (low and not (dash and tau < dash_dur) and Base.inside_low(room, nx, ny, r)):
 			x = nx
 			y = ny
 

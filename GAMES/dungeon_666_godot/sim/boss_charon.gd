@@ -70,7 +70,8 @@ static func _charge_rush(game: Dictionary, e: Dictionary, c: Dictionary, dt: flo
 	if not D6Js.truthy(e.get("hitPlayer")) and D6Geo.dist2(e.x, e.y, p.x, p.y) < reach * reach:
 		e.hitPlayer = true
 		D6Combat.damage_player(game, c.damage * e.dmgScale, {"kind": "bossCharge", "id": e.atkId, "x": e.x, "y": e.y})
-	if res.hitWall:
+	if res.hitWall or res.hitLow:
+		# Mur — ou bord d'un terrain bas : la ruée ne franchit rien.
 		# set_state : l'étape et le chronomètre de la ruée ne survivent pas au pattern interrompu.
 		D6BossCommon.set_state(e, "stunned")
 		e.stun = c.wallStun

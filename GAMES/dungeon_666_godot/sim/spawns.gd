@@ -39,7 +39,7 @@ static func find_spawn_point(game: Dictionary, r: float, min_player_dist: float,
 		else:
 			x = room.pad + r + D6Rng.rand(game.rng.gen) * (room.w - 2.0 * (room.pad + r))
 			y = room.pad + r + D6Rng.rand(game.rng.gen) * (room.h - 2.0 * (room.pad + r))
-		if D6Physics.point_blocked(room, x, y, r + PLACEMENT_MARGIN):
+		if D6Physics.ground_blocked(room, x, y, r + PLACEMENT_MARGIN): # ni mur, ni pilier, ni rivière, ni obstacle bas
 			continue
 		# La distance minimale au héros se relâche au fil des essais (salle encombrée).
 		var relax := 1.0 - attempt / PLACEMENT_TRIES

@@ -9,9 +9,9 @@ extends RefCounted
 ##   texte     : la phrase ; une seule pour tous les appareils, ou une par appareil
 ##               {clavier, manette, tactile} (à défaut d'une clé, celle du clavier)
 ##   commande  : la commande nommée (attack, dash, « move », ou « competence » / « gadget » : le
-##               premier emplacement qui en porte une — voir `commande()`) : son libellé (touche,
-##               bouton de manette) vient du HUD, son pictogramme du kit équipé, et son bouton bat
-##               à l'écran. Absente : la phrase seule. L'ultime nomme l'ATTAQUE : il part en la
+##               premier des TROIS emplacements qui en porte une — voir `commande()`) : son libellé
+##               (touche, bouton de manette) vient du HUD, son pictogramme du kit équipé, et son
+##               bouton bat à l'écran, là où il est (arc tactile, rangée du bureau). Absente : la phrase seule. L'ultime nomme l'ATTAQUE : il part en la
 ##               gardant appuyée (combat V3).
 ##   quand     : la lecture (plus bas) qui doit être vraie pour que la consigne se montre
 ##   fait      : les événements de simulation qui prouvent que le joueur a FAIT le geste
@@ -30,9 +30,9 @@ const TABLE := [
 	{"id": "rouge", "commande": "dash", "quand": "telegraphe", "fait": ["dash"], "contexte": true, "urgent": true, "patience": 10.0,
 		"texte": "Esquive le rouge"},
 	{"id": "competence", "commande": "competence", "quand": "competence_prete", "fait": ["castStart", "skill"], "patience": 14.0,
-		"texte": {"clavier": "Lance ta compétence", "tactile": "Compétence : glisse pour viser, relâche"}},
+		"texte": {"clavier": "Lance une compétence", "tactile": "Compétence : glisse pour viser, relâche"}},
 	{"id": "gadget", "commande": "gadget", "quand": "gadget_pret", "fait": ["gadget"], "patience": 14.0,
-		"texte": "Utilise ton gadget"},
+		"texte": "Utilise une compétence à charges"},
 	{"id": "super", "commande": "attack", "quand": "super_pret", "fait": ["super"], "urgent": true, "patience": 14.0,
 		"texte": "Jauge pleine : garde le bouton d'attaque appuyé"},
 	{"id": "recompense", "quand": "recompense", "fait": ["choiceOpen"], "urgent": true,

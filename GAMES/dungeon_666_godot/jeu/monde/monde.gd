@@ -1,7 +1,8 @@
 extends Node2D
 ## Le Monde : la salle et tout ce qui n'est pas une créature. Un calque par rôle, du sol aux tirs
 ## (voir monde.tscn) ; les créatures sont dessinées par le calque Entites (jeu/monde/entites.gd).
-## Les piliers sont debout comme elles : leur calque vit dans le groupe trié d'Entites (Debout).
+## Les piliers sont debout comme elles : leur calque vit dans le groupe trié d'Entites (Debout),
+## avec celui des obstacles bas (barrieres.gd) ; les rivières sont au sol (terrain.gd).
 ## Référence de ce qui doit se voir : GAMES/dungeon_666/src/render/render.mjs.
 ##
 ## Contrat (jeu/ARCHITECTURE.md) : `camera`, `monde_vers_ecran()`, `ecran_vers_monde()`.
@@ -26,7 +27,7 @@ var _salle_des_flambeaux = null
 @onready var camera: Camera2D = $Camera
 @onready var entites: Node2D = $Entites
 @onready var voile: CanvasLayer = $Voile
-@onready var _calques: Array[Node] = [$Sol, $Murs, $Lueurs, $Portes, $Objets, $ZonesHeros, $Dangers, $Entites/Debout/Piliers, $Contours, $Tirs, $Braises]
+@onready var _calques: Array[Node] = [$Sol, $Terrain, $Murs, $Lueurs, $Portes, $Objets, $ZonesHeros, $Dangers, $Entites/Debout/Piliers, $Entites/Debout/Barrieres, $Contours, $Tirs, $Braises]
 
 func brancher(p_app: Node, p_partie: Node) -> void:
 	app = p_app

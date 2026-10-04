@@ -45,7 +45,9 @@ static func default_tuning() -> Dictionary:
 ## partiel) y est fusionné. Les blocs ACTIFS sont les mêmes objets que l'entrée de kit qu'ils
 ## désignent (t.combo est t.weapons.lame.combo) : une surcharge de t.combo modifie aussi
 ## t.weapons.lame.combo. Compétences et gadgets n'ont pas de bloc actif : ils se lisent par
-## emplacement (D6Loadout.slot_def).
+## emplacement (D6Loadout.slot_def). t.dash est le bloc actif du DÉPLACEMENT DE CLASSE : le dash
+## de base (data/heros.json), que D6Loadout.resolve_kit complète par le déplacement de la classe
+## (t.moves, data/classes.json) quand ce n'est pas le dash.
 static func create_tuning(overrides = null) -> Dictionary:
 	var t: Dictionary = default_tuning().duplicate(true)
 	t.combo = t.weapons.lame.combo
@@ -94,6 +96,7 @@ static func _build_tuning(f: Dictionary) -> Dictionary:
 		"floors": e.floors, "section": e.section, "encounter": e.encounter, "circles": e.circles,
 		"guardians": f.gardiens.guardians, "progression": f.ville.progression, "town": f.ville.town,
 		"economy": f.butin.economy, "loot": f.butin.loot, "boons": f.benedictions.boons,
+		"moves": k.moves,
 	}
 
 ## Les tables, par module et dans l'ordre d'origine. Ce qui répète un réglage en est une COPIE
@@ -127,7 +130,7 @@ static func _build_tables(f: Dictionary, t: Dictionary) -> Dictionary:
 		"profile": {"EQUIP_SLOTS": D6Js.clone(f.butin.SLOTS), "PROFILE_SCHEMA": f.ville.PROFILE_SCHEMA, "STASH_MAX": f.ville.STASH_MAX},
 		"room": {
 			"BOSS_LAYOUT": s.BOSS_LAYOUT, "COMBAT_LAYOUTS": s.COMBAT_LAYOUTS, "LAYOUTS": s.LAYOUTS,
-			"LAYOUT_IDS": s.LAYOUTS.keys(), "ROSTER": b.ROSTER,
+			"LAYOUT_IDS": s.LAYOUTS.keys(), "ROSTER": b.ROSTER, "TERRAINS": s.TERRAINS,
 		},
 		"run": {"EVENTS": f.autels.EVENTS, "REWARD_LABELS": e.REWARD_LABELS},
 		"sections": _pick(e, ["FLOOR_TYPE_OF_REWARD"]),

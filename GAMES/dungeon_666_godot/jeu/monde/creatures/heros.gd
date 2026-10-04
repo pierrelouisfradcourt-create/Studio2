@@ -95,6 +95,10 @@ func _rang(g: Dictionary, pos: Vector2) -> float:
 	for o in g.room.obstacles:
 		if pos.y < o.y0 and pos.x > o.x0 - portee and pos.x < o.x1 + portee:
 			rang = minf(rang, o.y1 - RETRAIT)
+	# Les obstacles bas sont debout eux aussi (barrieres.gd) : au nord de l'un d'eux, il passe derrière.
+	for o in g.room.get("low", []):
+		if o.get("kind") == "barrier" and pos.y < o.y0 and pos.x > o.x0 - portee and pos.x < o.x1 + portee:
+			rang = minf(rang, o.y1 - RETRAIT)
 	return rang
 
 ## Distance réellement parcourue depuis la dernière image : elle fait avancer le pas de course.
@@ -126,6 +130,11 @@ func _draw() -> void:
 	p.alpha = alpha_heros(h)
 	var haut := envol_heros(g)
 	var m := _repere(h, pos - Vector2(0.0, haut * BOND_HAUTEUR))
+	if h.state == "dash" and D6Player.move_kind(g) == "roulade":
+		# La ROULADE de la Chasseresse : le corps fait un tour sur lui-même le temps du geste.
+		var part := clampf(1.0 - h.dashT / maxf(1e-3, h.get("dashDur", 0.0)), 0.0, 1.0)
+		m = m * Transform2D(TAU * part * (1.0 if h.dashDirX >= 0.0 else -1.0), Vector2.ZERO)
+		pr *= 0.86
 	pr *= 1.0 + 0.15 * haut
 	var elan: float = 0.0 if h.state == "dead" else minf(1.0, nombre(h, "surge") / SURGE_FONDU)
 	p.poser(m)

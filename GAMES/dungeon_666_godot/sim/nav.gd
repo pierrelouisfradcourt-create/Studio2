@@ -4,7 +4,8 @@ extends RefCounted
 ## Navigation : champ de distance (BFS) vers le héros sur une grille de la salle, recalculé
 ## quelques fois par seconde. Un ennemi sans ligne de vue suit la pente du champ et
 ## contourne les piliers au lieu de pousser contre eux. Déterministe, sans allocation
-## par image (tableaux typés réutilisés).
+## par image (tableaux typés réutilisés). Le champ connaît le TERRAIN BAS (room.low : rivières,
+## obstacles bas) : un ennemi qui marche le contourne par les gués.
 ##
 ## Les tableaux typés JavaScript (Uint8Array, Int16Array, Int32Array) deviennent des tableaux
 ## compacts ; `cols`, `rows` et les indices de case sont des ENTIERS (ils ne servent qu'à indexer).
@@ -29,6 +30,8 @@ static func build_nav(room: Dictionary) -> Dictionary:
 			for o in room.obstacles:
 				if x > o.x0 - INFLATE and x < o.x1 + INFLATE and y > o.y0 - INFLATE and y < o.y1 + INFLATE:
 					b = true
+			if not b and D6Physics.ground_blocked(room, x, y, INFLATE):
+				b = true # terrain bas : on n'y marche pas
 			blocked[cy * cols + cx] = 1 if b else 0
 	var dist := PackedInt32Array()
 	dist.resize(cols * rows)

@@ -1,6 +1,6 @@
 {
   "type": "objet",
-  "requis": ["room", "LAYOUTS", "COMBAT_LAYOUTS", "BOSS_LAYOUT", "CALM_KINDS"],
+  "requis": ["room", "LAYOUTS", "TERRAINS", "COMBAT_LAYOUTS", "BOSS_LAYOUT", "CALM_KINDS"],
   "fermé": true,
   "champs": {
     "_note": { "type": "texte" },
@@ -23,7 +23,8 @@
         "pickupSpeed",
         "pickupSpeedSpread",
         "pickupRadius",
-        "goldRadius"
+        "goldRadius",
+        "terrainFrom"
       ],
       "fermé": true,
       "champs": {
@@ -43,10 +44,23 @@
         "pickupSpeed": { "type": "nombre", "min": 0 },
         "pickupSpeedSpread": { "type": "nombre", "min": 0 },
         "pickupRadius": { "type": "nombre", "min": 1 },
-        "goldRadius": { "type": "nombre", "min": 1 }
+        "goldRadius": { "type": "nombre", "min": 1 },
+        "terrainFrom": { "type": "entier", "min": 2, "max": 666 }
       }
     },
     "LAYOUTS": { "type": "objet", "min": 1, "chaque": { "type": "liste", "elements": { "type": "rect" } } },
+    "TERRAINS": {
+      "type": "objet",
+      "chaque": {
+        "type": "objet",
+        "requis": ["rivers", "barriers"],
+        "fermé": true,
+        "champs": {
+          "rivers": { "type": "liste", "elements": { "type": "rect" } },
+          "barriers": { "type": "liste", "elements": { "type": "rect" } }
+        }
+      }
+    },
     "COMBAT_LAYOUTS": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } },
     "BOSS_LAYOUT": { "type": "liste", "elements": { "type": "rect" } },
     "CALM_KINDS": { "type": "liste", "min": 1, "elements": { "type": "texte", "min": 1 } }

@@ -2,8 +2,9 @@ extends RefCounted
 ## Portage de tools/bots.mjs — INTENTION : ce que le bot veut faire avant de regarder les menaces.
 ## En combat : choisir une cible, s'en approcher, frapper, lancer les actions des trois
 ## emplacements (compétences, gadgets) et l'ultime (attaque TENUE quand la jauge est pleine).
-## Une intention : {mx, my, attack, slots: [visée {x, y} ou null par emplacement], superP (tenir
-## l'attaque pour l'ultime), tap (jauge pleine sans vouloir l'ultime : frapper par appuis brefs)}.
+## Une intention : {mx, my, attack, slots: [visée {x, y} ou null par emplacement], superP (vouloir
+## l'ultime : relâcher puis tenir l'attaque), tap (jauge pleine sans vouloir l'ultime : frapper par
+## appuis brefs), cross (direction {x, y} d'un franchissement de rivière au déplacement de classe)}.
 ## Hors combat : attendre la vague, ramasser, toucher la récompense, choisir une porte.
 
 const Base = preload("res://outils/bots/base.gd")
@@ -40,6 +41,11 @@ const SHIELD_PENALTY := 600.0 # u : un Gardien enchaîné (bouclier visible) pas
 # en deçà de RANGED_TOO_CLOSE, et l'on ne tire que si la ligne de tir est dégagée.
 const RANGED_KEEP := 210.0
 const RANGED_TOO_CLOSE := 120.0
+# Franchir une rivière au déplacement de classe : seulement si le détour à pied dépasse le trajet
+# direct de CROSS_DETOUR u, et si l'arrivée rapproche d'au moins CROSS_GAIN u de marche.
+const CROSS_DETOUR := 200.0
+const CROSS_GAIN := 120.0
+const CROSS_SAFE := 220.0 # u : plus près de la cible, on garde le geste pour esquiver
 
 const PICKUP_WINDOW := 5.0 # s passées à ramasser l'or après le combat
 const SPAWN_WAIT_DIST := 160.0 # u : on attend la vague à cette distance des cercles d'invocation
@@ -202,10 +208,12 @@ static func _melee_intent(game: Dictionary, p: Dictionary, target: Dictionary, d
 	var standoff: float = target.r + p.r + STANDOFF_GAP
 	var reach: float = game.tuning.combo[0].range + target.r - REACH_MARGIN
 	if d > standoff:
-		var nav := Base.nav_dir(game.room, p.x, p.y, target.x, target.y, p.r)
+		var nav := Base.walk_dir(game.room, p.x, p.y, target.x, target.y, p.r)
 		intent.mx = nav.x
 		intent.my = nav.y
-	intent.attack = d <= reach
+		_cross_intent(game, target.x, target.y, intent, d)
+	# Un ennemi de l'autre côté d'une rivière est hors d'atteinte d'une lame : on ne frappe pas l'eau.
+	intent.attack = d <= reach and (not Base.has_low(game.room) or D6Physics.walk_clear(game.room, p.x, p.y, target.x, target.y))
 
 static func engage_intent(game: Dictionary, mem: Dictionary, enemies: Array, opts: Dictionary) -> Dictionary:
 	var p: Dictionary = game.player
@@ -255,7 +263,7 @@ static func _ranged_intent(game: Dictionary, p: Dictionary, target: Dictionary, 
 	var reach: float = game.tuning.combo[0].range + target.r - REACH_MARGIN
 	var shot := Base.clear_shot(game.room, p.x, p.y, target.x, target.y)
 	if gap > RANGED_KEEP or not shot:
-		var nav := Base.nav_dir(game.room, p.x, p.y, target.x, target.y, p.r)
+		var nav := Base.walk_dir(game.room, p.x, p.y, target.x, target.y, p.r)
 		intent.mx = nav.x
 		intent.my = nav.y
 	elif gap < RANGED_TOO_CLOSE:
@@ -342,10 +350,31 @@ static func _toward(game: Dictionary, intent: Dictionary, x: float, y: float) ->
 		intent.mx = 0.0
 		intent.my = 0.0
 		return intent
-	var d := Base.nav_dir(game.room, p.x, p.y, x, y, p.r)
+	var d := Base.walk_dir(game.room, p.x, p.y, x, y, p.r)
 	intent.mx = d.x
 	intent.my = d.y
 	return intent
+
+## FRANCHIR pour rejoindre : la cible est de l'autre côté d'une rivière ou d'un obstacle bas, le
+## chemin à pied fait un long détour, et le déplacement de classe poserait le héros de l'autre
+## côté, nettement plus près à pied. Le bot ne dépense que des charges PLEINES, et seulement tant
+## que la cible est encore loin (CROSS_SAFE) : de près, le geste sert à esquiver — surtout pour une
+## classe qui n'a qu'une charge. Il connaît son héros : D6Player.move_landing dit où le geste arrive.
+static func _cross_intent(game: Dictionary, tx: float, ty: float, intent: Dictionary, d: float) -> void:
+	var p: Dictionary = game.player
+	var room: Dictionary = game.room
+	if not Base.has_low(room) or p.state != "free" or p.dashCharges < D6Player.max_dash_charges(game) or d < CROSS_SAFE:
+		return
+	if Base.walk_clear(room, p.x, p.y, tx, ty, p.r):
+		return
+	Base.grid_field(room, tx, ty, p.r)
+	var here := Base.grid_distance(p.x, p.y)
+	var dir := Base.norm(tx - p.x, ty - p.y)
+	if dir.l <= 0.0 or here < dir.l + CROSS_DETOUR:
+		return
+	var land: Dictionary = D6Player.move_landing(game, dir.x, dir.y)
+	if land.full and Base.grid_distance(land.x, land.y) < here - CROSS_GAIN:
+		intent.cross = {"x": dir.x, "y": dir.y}
 
 static func _any_open(doors: Array) -> bool:
 	for d in doors:

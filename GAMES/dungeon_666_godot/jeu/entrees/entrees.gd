@@ -5,9 +5,12 @@ extends Control
 ## COMBAT V3 : trois emplacements d'action (skill1, skill2, skill3), chacun avec sa visée ; plus
 ## de bouton Super — l'ultime part quand l'ATTAQUE reste tenue, jauge pleine (règle : sim/player.gd).
 ## Clavier : clic droit = emplacement 1, E = 2, F = 3 ; clic gauche (ou J) tenu = attaque.
-## Manette : B, Y, RB. Tactile : les trois boutons autour de l'attaque (tap = visée assistée,
-## glisser = viser, relâcher = lancer) ; sur le bouton d'attaque, GLISSER vise sans tenir
-## l'attaque (le coup part au relâcher) : un glisser-relâcher n'arme jamais l'ultime.
+## Manette : B, Y, RB, visés au stick droit. Tactile (jeu/entrees/tactile.gd) : gros bouton
+## d'attaque, les trois emplacements en arc autour, le dash à part. Un emplacement part au
+## relâcher (tap = visée assistée, glisser = viser, retour au centre = annuler). Sur l'attaque :
+## appui bref = un coup au relâcher ; GLISSER vise sans tenir l'attaque et le coup part au
+## relâcher (un glisser-relâcher n'arme jamais l'ultime) ; pouce MAINTENU sans glisser = attaque
+## tenue.
 ##
 ## Les fronts (…Pressed) s'accumulent jusqu'à être consommés par le prochain pas : aucun tap
 ## perdu, même si l'affichage va plus vite que la simulation ou pendant un gel d'impact.
@@ -93,7 +96,7 @@ func tactile() -> bool:
 	return _tactile_actif
 
 ## La disposition des commandes tactiles pour le HUD, en unités du viewport :
-## {visible, stick: {active, baseX, baseY, knobX, knobY, r}, buttons: [{id, x, y, r, pressed, dragging, dx, dy}]}.
+## {visible, stick: {active, baseX, baseY, knobX, knobY, r}, buttons: [{id, x, y, r, pressed, dragging, dx, dy, held}]}.
 func interface_tactile() -> Dictionary:
 	return _doigts.interface(_tactile_actif)
 

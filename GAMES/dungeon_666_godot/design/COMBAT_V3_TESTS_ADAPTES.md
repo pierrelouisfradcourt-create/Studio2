@@ -100,3 +100,84 @@ nouveau système (`outils/bots/`).
 - `jeu/ville/test_ville.gd` : `_emplacements` (placer, échanger, vider, relire du disque d'essai).
 - `jeu/interface/test_accueil.gd` : `_commandes_v3` (trois emplacements au HUD, emplacement vide,
   jauge d'ultime et maintien sur le bouton d'attaque).
+
+## Lot « affichage et gestes » (2026-10-04) — vérifications adaptées
+
+Même règle : la vérification garde ce qu'elle prouve, seule la disposition ou le geste décrit
+change. Aucune n'est supprimée ; plusieurs sont durcies (signalé). Décompte : `test_entrees`
+108 → 157 vérifications, `test_ville` 65 → 76, `test_accueil` 191 → 205.
+
+### `jeu/entrees/test_entrees.gd`
+
+| Vérification | Ce qui a changé | Pourquoi |
+|---|---|---|
+| forme : « 5 boutons attack, dash, skill1, skill3, skill2 » | ordre `attack, dash, skill1, skill2, skill3` ; un bouton porte aussi `held` | l'arc range les emplacements 1, 2, 3 ; les places héritées (compétence, Super, gadget) n'existent plus |
+| « attaque à 118 × 112 px CSS du coin » | 168 × 100 | nouvelle disposition (le dash est à droite de l'attaque) |
+| « rayon de l'attaque 48, du dash 40 » | 52 et 38 | gros bouton d'attaque |
+| « la zone joystick s'arrête … avant le dash » | avant la zone de toucher de CHAQUE bouton (durcie) | le bouton le plus à gauche n'est plus le dash |
+| « deux doigts : joystick + attaque dans le même pas » (pouce posé : `attack` et `attackPressed` au même pas) | pouce posé : rien ne part ; passé l'appui bref (150 ms), `attack` et `attackPressed` dans le même pas, joystick tenu | nouveau geste : rien ne part à l'appui (sinon un glisser donne deux coups) |
+| « attaque glissée puis relâchée : le coup part au relâcher » | même attente, libellé précisé (« tenue, puis glissée, puis relâchée ») | la séquence du test commence par une attaque tenue |
+| « tap hors bouton dans la moitié droite : attaque » (à l'appui) | un tap = un coup au relâcher ; pouce maintenu = attaque tenue ; la suite (visée depuis le point de contact, second doigt) inchangée | même geste que sur le bouton |
+| « vider() efface les fronts » / « ne lâche pas ce qui est tenu » | l'attaque est tenue AVANT les fronts (passé l'appui bref) ; un front d'emplacement tactile et un second doigt s'ajoutent aux fronts à effacer (durcie) | poser le pouce ne tient plus l'attaque tout de suite |
+| « perte du focus : plus rien n'est tenu » | on vérifie d'abord que le pouce TIENT l'attaque (durcie) | idem |
+| « paysage 844 × 390 : mêmes positions que le web » | positions du combat V3 (attaque 676 × 290, dash 779,68 × 312,04), puis les exigences de l'arc rejouées dans ce format | la disposition n'est plus celle de la version web |
+| « zone sûre : les boutons s'écartent de l'encoche » | 676 − 44, 290 − 21 ; et aucun bouton, anneau compris, ne mord sur la zone (ajout) | nouvelles places |
+| « portrait : … disposition recalculée » | attaque à 70 px CSS du bord droit (95 avant) | éventail du portrait refait (le dash passe au-dessus de l'arc) |
+
+### `jeu/ville/test_ville.gd` — `_emplacements`
+
+| Vérification | Ce qui a changé | Pourquoi |
+|---|---|---|
+| « son bouton “→ 1” est grisé » | l'emplacement 1 touché, la carte de l'action qui y est dit « Déjà dans l'emplacement 1 », grisé | plus de boutons « → 1 / → 2 / → 3 » : on touche une compétence puis un emplacement, ou l'inverse |
+| « “→ 3” s'appuie », échange 1 ⇄ 3 | « Choisir » la compétence, puis toucher l'emplacement 3 sur l'arc ; même échange attendu | idem |
+| « “Vider” : … son bouton a disparu » | le bouton « Vider » de l'emplacement vide est grisé | la légende des trois emplacements est fixe |
+| « l'action se replace dans l'emplacement 1 » | l'inverse : l'emplacement 1 touché, puis « Placer dans l'emplacement 1 » | les deux ordres sont couverts |
+
+### `jeu/interface/test_accueil.gd`
+
+| Vérification | Ce qui a changé | Pourquoi |
+|---|---|---|
+| phrases des consignes compétence et gadget | « Lance une compétence », « Utilise une compétence à charges » | trois emplacements : plus « ta compétence », plus de « gadget » |
+| « HUD tactile : les mêmes cinq commandes » | ordre `attack, dash, skill1, skill2, skill3` | l'arc |
+| « bouton d'attaque : jauge pleine, le maintien monte » | l'attaque restée tenue depuis l'essai précédent est relâchée, PUIS on rappuie jauge pleine | À SIGNALER : cette vérification a rougi en cours de lot à cause d'un changement de RÈGLE fait en même temps dans `sim/player.gd` (l'ultime ne s'arme que si l'appui commence jauge pleine), pas à cause de l'affichage. Elle prouve toujours la même chose (le bouton montre le maintien qui monte, puis retombe au relâcher) |
+
+## Lot « affichage et gestes » — vérifications ajoutées
+
+- `test_entrees` : `_arc` (attaque plus gros bouton ; cibles ≥ 56 px ; même distance à l'attaque ;
+  ordre 1, 2, 3 à gauche et au-dessus ; dash de l'autre côté ; ≥ 12 px de vide entre deux boutons ;
+  tout dans l'écran à 8 px du bord, anneau compris ; le centre d'un bouton prend ce bouton), jouée
+  en 1280 × 720 et en 844 × 390 ; `_appui_bref` (rien avant le relâcher, exactement un coup,
+  jamais tenu, visée assistée) ; `_glisser_relacher` (aucun coup ni attaque tenue pendant 1 s de
+  glisser, un seul coup au relâcher, dans la dernière direction visée) ; `_maintien` (attaque
+  tenue 60 pas sur 60, un seul front, tient malgré un pouce qui tremble) ; `_attaque_annulee`
+  (retour au centre, toucher annulé par le système) ; `_trois_doigts` (joystick + attaque tenue +
+  emplacement visé puis lancé) ; `_manette_visee` (stick droit) ;
+  `_gestes_dans_la_simulation` : les mêmes gestes joués dans la VRAIE simulation (un appui bref =
+  un `attackStart`, zéro `super` ; un glisser-relâcher jauge pleine = un coup vers le haut, zéro
+  `super`, `superHold` resté à 0 ; emplacement vide touché = aucun événement, aucun état changé ;
+  pouce maintenu jauge pleine = l'ultime part, une fois).
+- `test_ville` : rien n'est écrit au premier toucher (emplacement, puis compétence) ; retoucher
+  oublie ; changer d'onglet oublie un choix à moitié fait ; les trois emplacements de l'arc sont
+  des boutons.
+- `test_accueil` : `_jauge_et_visee_v3` (la jauge lue à 0, 25, 50, 75 % ; `visee` d'un
+  emplacement ; emplacement vide touché et glissé : ni enfoncé, ni repère, ni ligne ; ligne de
+  visée depuis le héros pour un emplacement et pour l'attaque, aucune pour le dash ; chaque
+  bouton dessiné là où la disposition le place).
+
+## Étape 1 bis — réglage de l'ultime : un test adapté (`tests/regles/v3_combat.gd`)
+
+Demande de Pierre (2026-10-04, étape 1 bis) : « pas d'ambiguïté » — l'ultime ne s'arme que si
+l'APPUI A COMMENCÉ jauge pleine. C'est le seul test existant modifié par ce lot.
+
+| Test | Avant | Après | Pourquoi |
+|---|---|---|---|
+| « ultime : la jauge qui se remplit PENDANT le maintien l'arme sans relâcher » | attaque tenue, la jauge passe à 1 : l'ultime part après `holdTime`, sans relâcher | renommé « … ne l'arme PAS ; le combo continue » : attaque tenue 3 s de plus, jamais d'armement (`superHold` et `superArm` restent à zéro), aucun ultime, la jauge reste pleine, au moins 10 coups partent | la règle a changé : ce test fixait l'ancienne |
+| « emplacements : la reprise… » (`_e_reprise`) | `superHold` remis à zéro à la reprise | en plus : `superArm` posé avant la mort, remis à faux à la reprise | une affirmation AJOUTÉE, aucune retirée |
+
+Tests neufs du même réglage (`v3_combat.gd`) : « relâcher puis rappuyer l'arme et le lance à
+holdTime » ; « l'appui qui vient de le lancer n'en arme pas un second » ; « un front d'attaque
+répété sans relâcher n'arme rien ». `tests/harnais.gd` (`h.ultime`) n'a pas eu à changer : il
+commence son appui jauge pleine.
+
+Aucun autre test existant de `tests/**` n'a été modifié par l'étape 1 bis. `tests/regles/donnees.gd` :
+deux tests AJOUTÉS (déplacements, terrain), rien de retiré. Nouveau fichier : `tests/regles/v3_terrain.gd`.

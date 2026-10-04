@@ -6,6 +6,7 @@ extends RefCounted
 ##   recharge : vrai pour une compétence (anneau de recharge)      vide : emplacement sans action
 ##   jauge, maintien (attaque) : la jauge d'ultime 0..1 et l'avancement 0..1 du maintien qui le lance
 ##   eclat   : la commande brille (ultime prêt)      icone : nom du pictogramme (icones.gd)
+##   visee   : l'action de l'emplacement se VISE (slot_view.aimed) : glisser le pouce montre une ligne
 
 const Icones = preload("res://jeu/interface/icones.gd")
 const EMPLACEMENTS := {"skill1": 0, "skill2": 1, "skill3": 2}
@@ -37,8 +38,8 @@ static func _emplacement(game: Dictionary, index: int) -> Dictionary:
 	if vue == null:
 		return {"pret": 0.0, "vide": true}
 	if vue.charges != null:
-		return {"pret": 1.0 if vue.ready else 0.0, "charges": vue.charges, "max": vue.maxCharges, "partiel": 0.0}
-	return {"pret": 1.0 - vue.cooldownFrac, "recharge": true}
+		return {"pret": 1.0 if vue.ready else 0.0, "charges": vue.charges, "max": vue.maxCharges, "partiel": 0.0, "visee": vue.aimed}
+	return {"pret": 1.0 - vue.cooldownFrac, "recharge": true, "visee": vue.aimed}
 
 ## Pictogramme : celui de l'arme portée (attaque), de l'action équipée (emplacement) ; à défaut,
 ## celui du bouton. Un emplacement vide n'en a pas ("").

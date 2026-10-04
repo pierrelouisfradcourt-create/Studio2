@@ -1,6 +1,8 @@
 extends CanvasLayer
 ## Le HUD : tout ce que le joueur lit pendant le combat (vie, étage, or, Âmes, Gardien,
-## bannières, bénédictions) et le DESSIN des commandes (tactiles ou rangée du bureau).
+## bannières, bénédictions) et le DESSIN des commandes du combat V3, dans le même langage sur les
+## trois appareils : le bouton d'attaque qui est la jauge d'ultime, les trois emplacements
+## groupés, le dash à part (au doigt : en arc autour de l'attaque ; au bureau : en rangée).
 ## Visible seulement quand `app.ecran == "jeu"` et qu'une partie existe.
 ##
 ## Ce nœud ne fait que LIRE `partie.game` et répartir : chaque élément a son script sous
@@ -71,7 +73,7 @@ var _deplacement := "" # les lettres du déplacement sur ce clavier (lues une fo
 @onready var banniere: VBoxContainer = %Banniere
 @onready var indice: Label = %Indice
 @onready var bureau: HBoxContainer = %Bureau
-@onready var commandes_bureau: Array = [%CmdAttaque, %CmdDash, %CmdCompetence, %CmdGadget, %CmdSuper]
+@onready var commandes_bureau: Array = [%CmdAttaque, %CmdDash, %CmdEmplacement1, %CmdEmplacement2, %CmdEmplacement3]
 @onready var tactile: Control = $Racine/Tactile
 @onready var accueil: PanelContainer = %Accueil
 
@@ -272,7 +274,7 @@ func _actualiser_commandes(game: Dictionary, au_doigt: bool) -> void:
 	tactile.visible = au_doigt
 	var designee: String = accueil.commande(game) # la consigne de l'accueil nomme une commande : elle bat
 	if au_doigt:
-		tactile.actualiser(game, _interface_tactile(), designee)
+		tactile.actualiser(game, _interface_tactile(), designee, _heros_a_l_ecran(game))
 		return
 	for c in commandes_bureau:
 		c.montrer(Etats.etat(game, c.id))
@@ -287,6 +289,13 @@ func _actualiser_reperes(game: Dictionary, au_doigt: bool) -> void:
 	var monde = app.vues.get("monde") if app.vues is Dictionary else null
 	var haut := centre.get_global_rect().end.y + BANDE_UTILE
 	fleches.actualiser(game, monde, haut, _marges, tactile.coin() if au_doigt else racine.size)
+
+## Où le héros est dessiné à l'écran (départ de la ligne de visée) ; sans vue Monde, le centre.
+func _heros_a_l_ecran(game: Dictionary) -> Vector2:
+	var monde = app.vues.get("monde") if app.vues is Dictionary else null
+	if monde == null or not monde.has_method("monde_vers_ecran"):
+		return racine.size / 2.0
+	return monde.monde_vers_ecran(partie.position_dessin(game.player, true))
 
 func _porte_ouverte(room: Dictionary) -> bool:
 	for porte in room.get("doors", []):
@@ -307,7 +316,7 @@ func _tactile() -> bool:
 		return entrees.tactile()
 	return entrees == null and OS.has_feature("mobile")
 
-## Disposition donnée par la vue Entrees ; sans elle, celle de repli (identique à input.mjs).
+## Disposition donnée par la vue Entrees ; sans elle, celle de repli (la même, calculée à part).
 func _interface_tactile() -> Dictionary:
 	var entrees = _entrees()
 	if entrees != null and entrees.has_method("interface_tactile"):

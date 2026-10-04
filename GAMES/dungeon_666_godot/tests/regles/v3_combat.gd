@@ -1,6 +1,7 @@
 extends RefCounted
 ## COMBAT V3, étape 1 « Commandes » (design/COMBAT_V3.md) — les règles :
-##   - l'ULTIME part en GARDANT l'attaque appuyée quand la jauge est pleine (super.holdTime) ;
+##   - l'ULTIME part en GARDANT l'attaque appuyée quand la jauge est pleine (super.holdTime) —
+##     seulement si l'APPUI A COMMENCÉ jauge pleine (étape 1 bis : relâcher et rappuyer) ;
 ##   - TROIS emplacements d'action : compétences (chacune sa recharge) et gadgets (chacun ses charges) ;
 ##   - le profil porte `loadout.slots` (schéma 4), une sauvegarde du schéma 3 est migrée ;
 ##   - l'affichage lit D6Loadout.slot_view ; les événements d'un emplacement portent `slot` ;
@@ -103,7 +104,10 @@ static func _tests_ultime(h) -> void:
 	h.test("ultime : glisser pour viser puis relâcher frappe, sans jamais le lancer", func(): _u_glisser(h))
 	h.test("ultime : jauge non pleine, maintenir l'attaque enchaîne le combo comme avant", func(): _u_jauge_basse(h))
 	h.test("ultime : jauge pleine, le premier appui donne son coup, il finit, aucun autre ne part pendant l'armement", func(): _u_combo_arme(h))
-	h.test("ultime : la jauge qui se remplit PENDANT le maintien l'arme sans relâcher", func(): _u_remplie_en_tenant(h))
+	h.test("ultime : la jauge qui se remplit PENDANT le maintien ne l'arme PAS ; le combo continue", func(): _u_remplie_en_tenant(h))
+	h.test("ultime : après une jauge remplie en tenant, relâcher puis rappuyer l'arme et le lance à holdTime", func(): _u_relacher_rappuyer(h))
+	h.test("ultime : l'appui qui vient de le lancer n'en arme pas un second, même jauge de nouveau pleine", func(): _u_pas_deux_fois(h))
+	h.test("ultime : un front d'attaque répété sans relâcher (appui tenu depuis avant) n'arme rien", func(): _u_front_sans_relacher(h))
 	h.test("ultime : holdTime est un réglage lu dans les données, le même pour les trois Supers", func(): _u_reglage(h))
 	h.test("ultime : chaque classe lance SON Super par le maintien", func(): _u_par_classe(h))
 
@@ -193,17 +197,68 @@ static func _u_combo_arme(h) -> void:
 
 static func _u_remplie_en_tenant(h) -> void:
 	var g: Dictionary = h.bac_a_sable({"seed": 3.0})
-	var need: float = g.tuning["super"].holdTime
 	g.player.superCharge = 0.5
 	h.avancer(g, 30, {"attack": true})
 	h.egal(g.player.superHold, 0.0)
 	g.player.superCharge = 1.0 # la jauge se remplit (un coup qui porte) : le joueur tient toujours
+	# Il garde le bouton enfoncé trois secondes de plus : jamais d'armement, jamais d'ultime.
+	var evs: Array = []
+	var arme := false
+	for i in h.ticks(3.0):
+		evs.append_array(h.avancer(g, 1, {"attack": true}))
+		arme = arme or g.player.superHold > 0.0 or g.player.superArm
+	h.ok(not arme, "un appui commencé avant que la jauge soit pleine n'arme jamais")
+	h.egal(_de(evs, "super").size(), 0, "aucun ultime en gardant l'attaque enfoncée")
+	h.egal(g.telemetry.superUses, 0.0)
+	h.egal(g.player.superCharge, 1.0, "la jauge reste pleine")
+	h.ok(_de(evs, "attackStart").size() >= 10, "le combo continue de s'enchaîner (%d coups en 3 s)" % _de(evs, "attackStart").size())
+
+static func _u_relacher_rappuyer(h) -> void:
+	var g: Dictionary = h.bac_a_sable({"seed": 3.0})
+	var need: float = g.tuning["super"].holdTime
+	g.player.superCharge = 0.5
+	h.avancer(g, 30, {"attack": true})
+	g.player.superCharge = 1.0
+	h.avancer(g, 30, {"attack": true})
+	h.different(g.player.state, "super", "tenu depuis avant : rien")
+	h.avancer(g, 1) # il relâche un pas…
+	h.egal(g.player.superArm, false)
 	var pas := 0
-	while pas < h.ticks(need) + 4 and g.player.state != "super":
-		h.avancer(g, 1, {"attack": true})
+	while pas < h.ticks(need) + 30 and g.player.state != "super":
+		h.avancer(g, 1, {"attack": true}) # … et rappuie, jauge pleine
 		pas += 1
-	h.egal(g.player.state, "super", "l'ultime part sans relâcher")
-	h.ok(pas >= h.ticks(need) - 1, "…après un maintien entier compté depuis que la jauge est pleine (%d pas)" % pas)
+		if pas == 1:
+			h.egal(g.player.superArm, true, "l'appui commencé jauge pleine arme")
+	h.egal(g.player.state, "super", "l'ultime part")
+	h.ok(pas >= h.ticks(need) - 1, "… après un maintien entier compté depuis le nouvel appui (%d pas)" % pas)
+	h.egal(g.telemetry.superUses, 1.0)
+
+static func _u_pas_deux_fois(h) -> void:
+	var g: Dictionary = h.bac_a_sable({"seed": 3.0})
+	g.player.superCharge = 1.0
+	h.ultime(g)
+	h.egal(g.player.state, "super")
+	h.egal(g.player.superArm, false, "l'appui a servi")
+	# Il garde le bouton enfoncé pendant et après l'ultime ; la jauge se remplit de nouveau.
+	h.avancer(g, h.ticks(g.tuning["super"].duration) + 5, {"attack": true})
+	h.different(g.player.state, "super", "le premier ultime est fini")
+	g.player.superCharge = 1.0
+	var evs: Array = h.avancer(g, h.ticks(2.0), {"attack": true})
+	h.egal(_de(evs, "super").size(), 0, "pas de second ultime sans relâcher")
+	h.egal(g.telemetry.superUses, 1.0)
+	h.avancer(g, 1)
+	evs = h.ultime(g)
+	h.egal(_de(evs, "super").size(), 1, "relâcher puis rappuyer : le second part")
+
+static func _u_front_sans_relacher(h) -> void:
+	var g: Dictionary = h.bac_a_sable({"seed": 3.0})
+	g.player.superCharge = 0.5
+	h.avancer(g, 10, {"attack": true})
+	g.player.superCharge = 1.0
+	# Le bouton reste tenu ; un « front » arrive quand même à chaque pas (autre doigt, répétition clavier).
+	var evs: Array = h.avancer(g, h.ticks(1.5), {"attack": true, "attackPressed": true})
+	h.egal(_de(evs, "super").size(), 0, "seul un appui qui COMMENCE (bouton relâché avant) arme")
+	h.egal(g.player.superHold, 0.0)
 
 static func _u_reglage(h) -> void:
 	var t: Dictionary = D6Data.create_tuning()
@@ -397,6 +452,7 @@ static func _e_reprise(h) -> void:
 		st.charges = 0.0
 		st.cd = 3.0
 	g.player.superHold = 0.2
+	g.player.superArm = true
 	D6Combat.damage_player(g, 99999.0, {"kind": "test", "id": 1.0})
 	h.avancer(g, h.ticks(g.tuning.player.deathDelay) + 5)
 	h.egal(g.mode, "dead")
@@ -404,6 +460,7 @@ static func _e_reprise(h) -> void:
 	h.egal(_charges(g), [0.0, D6Loadout.max_charges(g, 1), D6Loadout.max_charges(g, 2)])
 	h.egal(_recharges(g), [0.0, 0.0, 0.0])
 	h.egal(g.player.superHold, 0.0)
+	h.egal(g.player.superArm, false, "la reprise ne garde pas un appui armé")
 
 # ---------------------------------------------------------------- profil : select_slot, slot_choices, migration
 

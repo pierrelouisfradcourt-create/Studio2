@@ -1,8 +1,10 @@
 extends RefCounted
 ## La manette. Portage de readPad() de GAMES/dungeon_666/src/input/input.mjs : mêmes zones
 ## mortes, même disposition (A / LB dash, X / RT attaque, Start pause) ; combat V3 : B, Y et RB
-## sont les emplacements 1, 2 et 3, et l'ultime part en gardant X ou RT enfoncé, jauge pleine. Le web SONDE la manette à chaque pas ; ici on écoute ses événements, et les
-## fronts s'accumulent comme ceux des doigts : un appui bref entre deux pas n'est jamais perdu.
+## sont les emplacements 1, 2 et 3 (visés au stick droit, comme l'attaque), et l'ultime part en
+## gardant X ou RT enfoncé, jauge pleine. Le web SONDE la manette à chaque pas ; ici on écoute ses
+## événements, et les fronts s'accumulent comme ceux des doigts : un appui bref entre deux pas
+## n'est jamais perdu.
 
 const ZONE_MORTE := 0.22 # stick gauche, par axe
 const VISEE_MIN := 0.35 # norme du stick droit en deçà de laquelle la visée reste assistée
@@ -13,6 +15,7 @@ const ACTIONS := {
 	JOY_BUTTON_A: "dash", JOY_BUTTON_LEFT_SHOULDER: "dash", JOY_BUTTON_B: "skill1",
 	JOY_BUTTON_X: "attack", JOY_BUTTON_Y: "skill2", JOY_BUTTON_RIGHT_SHOULDER: "skill3",
 }
+const EMPLACEMENTS := ["skill1", "skill2", "skill3"]
 const AUCUNE := -1
 
 ## La manette écoutée : celle du dernier appui franc (bouton, ou axe sorti de sa zone morte).
@@ -71,13 +74,18 @@ func completer(f: Dictionary) -> void:
 		f.moveY = ly
 	var rx: float = axes.get(JOY_AXIS_RIGHT_X, 0.0)
 	var ry: float = axes.get(JOY_AXIS_RIGHT_Y, 0.0)
-	if sqrt(rx * rx + ry * ry) > VISEE_MIN:
+	var vise := sqrt(rx * rx + ry * ry) > VISEE_MIN
+	if vise:
 		f.aimX = rx
 		f.aimY = ry
 	if tenus.has(BOUTON_ATTAQUE) or axes.get(JOY_AXIS_TRIGGER_RIGHT, 0.0) > SEUIL_GACHETTE:
 		f.attack = true
 	for action: String in fronts:
 		f[action + "Pressed"] = true
+		# Un emplacement lancé à la manette vise où pointe le stick droit.
+		if vise and action in EMPLACEMENTS:
+			f[action + "AimX"] = rx
+			f[action + "AimY"] = ry
 
 func _axe_gauche(index: JoyAxis) -> float:
 	var v: float = axes.get(index, 0.0)
