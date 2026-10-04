@@ -75,6 +75,15 @@ const ROUTES := {
 	"choiceOpen": "choiceOpen", "victory": "victory", "gameOver": "gameOver",
 	# Charge de gadget rendue par un élite abattu : même accord bref que « Super prêt ».
 	"gadgetCharge": "superReady",
+	# Les trois ultimes de classe (combat V3, étape 2), avec les recettes qui existent. Leur
+	# lancement est l'événement `super` (ci-dessus). Sentence capitale : le temps qui se fige sonne
+	# l'accord « prêt », le fracas est une explosion, chaque éclair un éclair. Forme du Damné : la
+	# ruée est un dash, le hurlement un choc, l'embrasement une explosion, la fin celle d'un Super.
+	# Meute des Limbes : l'apparition est une invocation ; un limier tué meurt, un limier qui s'en va
+	# à la fin de sa durée sonne la fin d'un Super.
+	"ultFreeze": "superReady", "ultStrike": "boom", "ultBolt": "chain",
+	"formRush": "dash", "formHowl": "slam", "formBurst": "boom", "formEnd": "superEnd",
+	"allySpawn": "bossSummon", "allyDeath": "kill", "allyGone": "superEnd",
 }
 ## Routes qui dépendent de l'événement : les clés possibles (la décision est dans `cle`).
 const ROUTES_CALCULEES := {
@@ -98,6 +107,9 @@ const SILENCIEUX := [
 	"bossShield", # chaînes du Colosse levées / brisées : retour visuel (chaînes, barre de vie)
 	"hook", # crochet de la Chaîne d'Enfer qui harponne : le son d'impact (hit) le porte
 	"kitPulse", # impulsion d'un Totem de givre : les coups (hit) qu'elle inflige portent le son
+	"formStart", # entrée dans la Forme du Damné : le son du lancement (`super`) la porte
+	"allyBite", # morsure d'un limier : le son d'impact (hit) la porte
+	"allyHurt", # limier blessé : retour visuel seulement (le son de blessure est réservé au héros)
 ]
 
 # ---------------------------------------------------------------- clé de son -> recettes

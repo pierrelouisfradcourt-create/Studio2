@@ -19,6 +19,7 @@ Principal (Node)            jeu/principal.gd     flux titre → Ville → descen
 │       │   ├─ Piliers      jeu/monde/piliers.gd     un nœud par pilier, dessiné une fois par salle
 │       │   ├─ Barrieres    jeu/monde/barrieres.gd   un nœud par obstacle BAS (palissade), dessiné une fois par salle
 │       │   ├─ Ennemis                               un nœud par corps
+│       │   ├─ Limiers      jeu/monde/creatures/limiers.gd  les alliés de la Meute des Limbes : un nœud par limier
 │       │   ├─ Heros                                 devant tout, sauf derrière un pilier au nord duquel il est
 │       │   └─ Objets       jeu/monde/objets.gd      relais : l'objet d'interaction, les ramassables masqués
 │       └─ Statuts                                   barres de vie, statuts : jamais cachés
@@ -72,6 +73,32 @@ C'est le SEUL point d'entrée d'une vue. Elle y garde `app` et `partie`, et s'ab
   place : `jeu/effets/` dessine une croix rouge sur l'arrivée refusée) ; `moveLand` `{x, y, r, move,
   pushed}` (atterrissage du saut : onde froide, sans dégât).
 
+## Ultimes de classe (combat V3, étape 2)
+
+- `D6Player.ultimate_view(game)` : ce qu'un HUD ou le Grimoire doit lire de l'ULTIME, sans connaître
+  l'intérieur — `{id, kind, name, icon, text, charge, ready, holdFrac, active, timeFrac, timeLeft, allies}` :
+  `kind` vaut `"forme"` (Revenant), `"magie"` (Bourreau) ou `"invocation"` (Chasseresse) ; `charge` la
+  jauge (0..1) ; `ready` jauge pleine ET lançable ; `holdFrac` l'avancement du maintien ; `active` un
+  ultime agit (geste, forme, limier vivant) ; `timeFrac` / `timeLeft` la part et les secondes qui
+  RESTENT ; `allies` les limiers vivants. `icon` : `forme`, `sentence`, `meute` (`jeu/interface/icones.gd`).
+- Pendant qu'une forme ou une meute agit, `player.superCharge` EST sa minuterie (elle se vide) : le
+  bouton d'attaque-jauge la montre sans rien changer.
+- Forme du Damné : `D6Loadout.slot_view` rend les trois ACTIONS DE FORME (`ruee`, `roar`, `burst` pour
+  pictogrammes ; `aimed` faux pour celles qui ne se visent pas) ; `game.tuning.weapon` est le bloc des
+  griffes. `D6KitSupers.form_of(game)` (non null = en forme) et `player.ult` `{t, max}` pour le dessin.
+- Meute des Limbes : `game.allies`, `[{id, kind: "limier", x, y, r, hp, maxHp, life, lifeMax, state
+  ("heel" | "chase" | "bite"), targetId, face, flash, dead}]`. Un ennemi accaparé porte `allyId`.
+- Événements : `super` `{x, y, r, super: "forme" | "magie" | "meute"}` au lancement ; Sentence capitale :
+  `ultFreeze` `{x, y, time}`, `ultStrike` `{x, y, r, hits, executed, shake}`, `ultBolt` `{id, x, y, r,
+  executed}` (un par ennemi touché) ; forme : `formStart` `{x, y, time}`, `formEnd` `{x, y, reason}`
+  (`temps`, `embrasement`, `mort`, `etage`, `reprise`), `formRush` `{x0, y0, x, y, width}`, `formHowl`
+  `{x, y, r}`, `formBurst` `{x, y, r, frac, amount}` ; meute : `allySpawn` `{id, x, y, life}`, `allyBite`
+  `{id, x, y, tx, ty, angle}`, `allyHurt` `{id, x, y, amount, source}`, `allyDeath`, `allyGone` `{…, reason}`.
+  Une morsure est aussi un `hit` de sorte `ally`. Effets : `jeu/effets/ultimes.gd` ; sons : `jeu/son/routage.gd`.
+- Dessin : le spectre de braise, les griffes, la lame levée sont au calque du héros
+  (`jeu/monde/creatures/heros.gd`, `armes.gd`) ; les limiers ont leur calque (`limiers.gd`), 1 appel
+  de dessin par limier, barre de vie et repère de durée compris. Banc : `jeu/essai/ultimes.tscn`.
+
 ## Signaux
 
 - `partie.evenements(liste: Array)` : les événements de simulation de l'image (`{type, tick, …}`),
@@ -119,6 +146,10 @@ nombre au hasard qui influence la partie (`randf` est permis pour une particule,
   (150 ms) = attaque TENUE. L'attaque tenue (clic gauche, J, X, gâchette, pouce maintenu) est ce
   qui lance l'ultime, jauge pleine : la règle est dans `sim/`, la vue ne fait que dire « tenu ».
   Elle demande la position du héros à l'écran à `app.vues.monde.monde_vers_ecran(...)`.
+  Pour l'AFFICHAGE seulement (le jeu, lui, lit `lire()`) : le signal `commande_enfoncee(id)` (une
+  touche, un bouton de souris ou de manette vient d'enfoncer la commande), `tenues() -> Dictionary`
+  ({id: true} des commandes tenues au clavier, à la souris, à la manette) et
+  `visee_bureau() -> Vector2` (stick droit, sinon souris ; ZERO en visée assistée).
 - **Effets** et **Son** n'exposent rien : ils écoutent `partie.evenements`. Effets appelle la
   caméra du Monde pour les secousses.
 - **Hud** laisse la zone des commandes tactiles libre (il lit `app.vues.entrees.tactile()`). Hors
@@ -133,6 +164,13 @@ nombre au hasard qui influence la partie (`randf` est permis pour une particule,
   autour), les trois emplacements sont groupés (arc au doigt, rangée au bureau), le dash est à
   part. Au doigt, `jeu/interface/tactile.gd` trace aussi la LIGNE DE VISÉE, du héros vers où le
   pouce glisse (attaque, ou emplacement dont l'action se vise) : une direction, pas une portée.
+  Le bouton « dash » est le DÉPLACEMENT DE CLASSE : pictogramme (`dash`, `saut`, `roulade`), nom,
+  charges et recharge viennent de `D6Player.move_view(game)`. Au clavier et à la manette, un bouton
+  se dessine ENFONCÉ tant que sa touche est tenue (0,14 s au moins : `enfoncer(id)`, branché sur
+  `commande_enfoncee` et `tenues()` d'Entrees), et une compétence visée tenue montre la même ligne
+  de visée (`visee_bureau()`). `jeu/interface/reperes.gd` (nœud `Reperes` du HUD) porte le tracé
+  commun de la ligne et le REPÈRE D'ARRIVÉE d'un déplacement qui serait raccourci par le terrain
+  bas (`D6Player.move_landing(...).full == false`, héros en marche) : le HUD lit, le nœud dessine.
   Le détail et les choix : `design/COMBAT_V3.md`, « Affichage — ce qui est FAIT » ; pour juger à
   l'écran, le banc `res://jeu/interface/banc_v3.tscn` (chaque état, par variables `D666_…`).
 - **Ecrans** est seul à afficher des panneaux par-dessus le JEU (et l'écran titre) ; il met le jeu
@@ -265,8 +303,10 @@ Le lot de triangles, le rang des ramassables, de l'objet d'interaction et du Gar
 
 L'ACCUEIL DU PREMIER JOUEUR (`jeu/interface/accueil.gd` + `accueil.tscn`, enfant du HUD, couche
 HUD) montre une consigne à la fois, sous le fil des étages ; elle s'efface dès que le geste est
-fait. La liste est une TABLE (`jeu/interface/consignes.gd` : identifiant, texte par appareil,
-quand elle se montre, quel événement la tient pour acquise). L'acquis vit dans les RÉGLAGES
+fait. La liste est une TABLE (`jeu/interface/consignes.gd` : identifiant, texte par appareil ou
+par DÉPLACEMENT DE CLASSE — « Dashe », « Saute », « Roule » —, quand elle se montre, quel
+événement ou quelle lecture de l'état la tient pour acquise ; la consigne `terrain` lit
+`room.low`, `D6Player.crossing` et `D6Physics.low_at`). L'acquis vit dans les RÉGLAGES
 (`reglages_jeu.json`, champ `accueil` : `actif`, `acquis`), jamais dans le profil de la
 simulation ; la pause permet de couper les consignes ou de les revoir. La vue ne lit que
 `partie.game` et `partie.evenements`, n'écrit rien dans la simulation, ne met jamais en pause ;

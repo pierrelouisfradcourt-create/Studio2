@@ -158,7 +158,7 @@ static func _t_defaut_valeurs(h) -> void:
 	h.egal(rev.weapons[0], "lame")
 	h.egal(rev.skills[0], "lance")
 	h.egal(rev.gadgets[0], "nova")
-	h.egal(rev["super"], "colere")
+	h.egal(rev["super"], "forme_damne") # combat V3, étape 2 : l'ultime du Revenant est la Forme du Damné
 	h.egal(k.WEAPONS.lame.combo, hist.combo)
 	h.egal(k.WEAPONS.lame.dashStrike, hist.dashStrike)
 	h.egal(k.WEAPONS.lame.baseMult, 1.0)
@@ -167,8 +167,11 @@ static func _t_defaut_valeurs(h) -> void:
 	h.egal(_without_cost(k.SKILLS.lance), hist.lance)
 	h.egal(_without_cost(k.GADGETS.nova), hist.nova)
 	# Combat V3 : la Colère a gagné `holdTime` (le maintien qui la lance) ; le reste est l'historique.
+	# Étape 2 : elle n'est plus l'ultime d'aucune classe (`reserve`) ; ses nombres n'ont pas bougé.
 	var colere: Dictionary = k.SUPERS.colere.duplicate()
 	h.ok(colere.erase("holdTime"), "la Colère porte holdTime")
+	h.egal(colere.get("reserve"), true, "la Colère est gardée en réserve")
+	colere.erase("reserve")
 	h.egal(colere, hist.colere)
 	# Le tuning par défaut pointe sur les entrées du kit (références, pas copies). Côté Godot, le
 	# registre (tables) et le tuning sont deux fichiers de données : la référence se juge DANS le
@@ -187,13 +190,13 @@ static func _t_defaut_valeurs(h) -> void:
 static func _t_defaut_references(h) -> void:
 	var g: Dictionary = h.partie({"seed": 3.0})
 	var t: Dictionary = g.tuning
-	h.egal(g.kit, {"classId": "revenant", "weaponType": "lame", "slots": ["lance", "nova", null], "superId": "colere"})
+	h.egal(g.kit, {"classId": "revenant", "weaponType": "lame", "slots": ["lance", "nova", null], "superId": "forme_damne"})
 	h.ok(is_same(t.combo, t.weapons.lame.combo), "combo")
 	h.ok(is_same(t.dashStrike, t.weapons.lame.dashStrike), "dashStrike")
 	h.ok(is_same(t.weapon, t.weapons.lame), "weapon")
 	h.ok(is_same(D6Loadout.slot_def(g, 0), t.skills.lance), "skill")
 	h.ok(is_same(D6Loadout.slot_def(g, 1), t.gadgets.nova), "gadget")
-	h.ok(is_same(t["super"], t.supers.colere), "super")
+	h.ok(is_same(t["super"], t.supers.forme_damne), "super")
 	h.egal(g.player.maxHp, 100.0)
 	h.egal(g.room.get("kitFx"), null, "le kit d'origine ne pose ni tir ni zone de kit")
 
@@ -216,7 +219,8 @@ static func _t_registre_listes(h) -> void:
 	h.ok(k.CLASSES.size() >= 3)
 	h.ok(k.SKILLS.size() >= 4)
 	h.ok(k.GADGETS.size() >= 3)
-	h.egal(k.SUPERS.size(), 3)
+	h.egal(k.SUPERS.size(), 6) # trois ultimes de classe, trois anciens Supers en réserve
+	h.egal(k.SUPERS.values().filter(func(s): return D6Js.truthy(s.get("reserve"))).size(), 3)
 	var supers: Array = []
 	for id in k.CLASSES:
 		var c: Dictionary = k.CLASSES[id]
@@ -294,7 +298,7 @@ static func _t_ville(h) -> void:
 	h.egal(g.kit.classId, "bourreau")
 	h.egal(g.kit.weaponType, "marteau")
 	h.ok(is_same(g.tuning.combo, g.tuning.weapons.marteau.combo), "combo du marteau")
-	h.ok(is_same(g.tuning["super"], g.tuning.supers.sentence), "Super du Bourreau")
+	h.ok(is_same(g.tuning["super"], g.tuning.supers.sentence_capitale), "Super du Bourreau")
 
 # ---------------------------------------------------------------- statistiques de classe
 
@@ -637,7 +641,8 @@ static func _t_totem(h) -> void:
 
 static func _t_sentence(h) -> void:
 	var sup: Dictionary = _kits().SUPERS.sentence
-	var g := _sandbox(h, _kit_meta("bourreau"))
+	# Combat V3, étape 2 : la Sentence n'est plus l'ultime du Bourreau ; elle est lancée directement.
+	var g := _sandbox(h, _kit_meta("bourreau"), {"tuning": {"classes": {"bourreau": {"super": "sentence"}}}})
 	var e := _dummy(g, 90.0, 0.0, "brute", 5000.0)
 	e.mass = 1000.0
 	var back := _dummy(g, -100.0, 0.0, "imp", 5000.0)
@@ -662,7 +667,8 @@ static func _t_sentence(h) -> void:
 	h.egal(g.player.superCharge, 0.0, "les coups du Super ne rechargent pas la jauge")
 
 static func _t_nuee(h) -> void:
-	var g := _sandbox(h, _kit_meta("chasseresse"))
+	# Combat V3, étape 2 : la Nuée n'est plus l'ultime de la Chasseresse ; elle est lancée directement.
+	var g := _sandbox(h, _kit_meta("chasseresse"), {"tuning": {"classes": {"chasseresse": {"super": "nuee"}}}})
 	var a := _dummy(g, 200.0, 0.0, "imp", 5000.0)
 	var b := _dummy(g, -200.0, 50.0, "imp", 5000.0)
 	g.player.superCharge = 1.0
@@ -705,7 +711,7 @@ static func _t_boons_attaque_competence(h) -> void:
 
 ## Premier coup de la Sentence, avec ou sans Gloire charnelle : {amount, superT}.
 static func _first_strike(h, boon: bool) -> Dictionary:
-	var g := _sandbox(h, _kit_meta("bourreau"))
+	var g := _sandbox(h, _kit_meta("bourreau"), {"tuning": {"classes": {"bourreau": {"super": "sentence"}}}}) # l'ancienne Sentence, lancée directement
 	if boon:
 		D6Boons.add_boon(g.run, {"id": "gloire_charnelle", "rarity": "commun"})
 		D6Stats.recompute_stats(g)

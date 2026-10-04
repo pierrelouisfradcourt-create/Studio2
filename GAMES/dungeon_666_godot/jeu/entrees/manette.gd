@@ -64,6 +64,20 @@ func tout_relacher() -> void:
 func vider() -> void:
 	fronts.clear()
 
+## Pour l'AFFICHAGE (retour « enfoncé » des boutons du HUD) : note dans `t` les commandes tenues.
+func noter_tenues(t: Dictionary) -> void:
+	for index in tenus:
+		if ACTIONS.has(index):
+			t[ACTIONS[index]] = true
+	if axes.get(JOY_AXIS_TRIGGER_RIGHT, 0.0) > SEUIL_GACHETTE:
+		t.attack = true
+
+## Pour l'AFFICHAGE (ligne de visée) : la direction du stick droit, unitaire ; ZERO en deçà de
+## VISEE_MIN (la visée reste assistée).
+func visee() -> Vector2:
+	var d := Vector2(axes.get(JOY_AXIS_RIGHT_X, 0.0), axes.get(JOY_AXIS_RIGHT_Y, 0.0))
+	return d.normalized() if appareil != AUCUNE and d.length() > VISEE_MIN else Vector2.ZERO
+
 func completer(f: Dictionary) -> void:
 	if appareil == AUCUNE:
 		return

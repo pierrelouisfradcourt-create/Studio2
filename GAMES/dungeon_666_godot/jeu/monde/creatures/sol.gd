@@ -8,6 +8,8 @@ extends "res://jeu/monde/creatures/calque.gd"
 const ELAN := Color("#ffb02e") # l'aura de l'élan : or chaud, jamais le rouge du danger
 const ELAN_FONDU := 0.4 # s : l'aura s'éteint sur la fin de l'élan
 
+const BRAISE := Color("#ff8a2a") # Forme du Damné (ultime du Revenant) : traînée et lueur de braise
+
 func _draw() -> void:
 	var g = jeu()
 	if g == null:
@@ -69,20 +71,23 @@ func _sol_heros(g: Dictionary) -> void:
 	var pr: float = h.r * HEROS_VISUEL
 	var pos := lieu_heros(g)
 	p.alpha = 1.0
-	_trainee(pos, pr, h.state == "dash")
+	var forme: bool = D6KitSupers.form_of(g) != null and h.state != "dead"
+	_trainee(pos, pr, h.state == "dash" or forme, BRAISE if forme else PAL.heroCape)
 	var haut := envol_heros(g)
 	p.alpha = alpha_heros(h)
 	_ombre(pos, pr, haut)
 	p.lueur(pos, 62.0, PAL.heroGlow, 0.9)
 	if h.state == "super":
 		p.lueur(pos, 150.0, PAL.superBar, 0.4 + 0.2 * sin(temps() * 18.0))
+	if forme:
+		p.lueur(pos, 120.0 + 10.0 * sin(temps() * 9.0), BRAISE, 0.6) # le spectre de braise éclaire le sol
 	var elan: float = nombre(h, "surge")
 	if elan > 0.0 and h.state != "dead":
 		p.lueur(pos, 84.0 + 8.0 * sin(temps() * 11.0), ELAN, 0.75 * minf(1.0, elan / ELAN_FONDU))
 
 ## Traînée du dash : un ruban de la couleur de la cape, plein près du héros, effilé et transparent
 ## vers le point de départ (les points viennent de entites.trainee, le dernier est le héros).
-func _trainee(pos: Vector2, pr: float, en_dash: bool) -> void:
+func _trainee(pos: Vector2, pr: float, en_dash: bool, teinte: Color = PAL.heroCape) -> void:
 	var pts: Array = entites.trainee
 	var n := pts.size()
 	if n < 2:
@@ -96,6 +101,6 @@ func _trainee(pos: Vector2, pr: float, en_dash: bool) -> void:
 		var kb: float = (1.0 if i == n else pts[i].vie / entites.TRAINEE_VIE) * float(i) / n
 		var cote := (b - a).orthogonal().normalized() * pr
 		p.primitive(PackedVector2Array([a + cote * (0.25 + 0.6 * ka), b + cote * (0.25 + 0.6 * kb), b - cote * (0.25 + 0.6 * kb), a - cote * (0.25 + 0.6 * ka)]),
-			PackedColorArray([Color(PAL.heroCape, 0.55 * ka), Color(PAL.heroCape, 0.55 * kb), Color(PAL.heroCape, 0.55 * kb), Color(PAL.heroCape, 0.55 * ka)]))
+			PackedColorArray([Color(teinte, 0.55 * ka), Color(teinte, 0.55 * kb), Color(teinte, 0.55 * kb), Color(teinte, 0.55 * ka)]))
 		a = b
 		ka = kb

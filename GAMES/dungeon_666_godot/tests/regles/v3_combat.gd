@@ -112,7 +112,9 @@ static func _tests_ultime(h) -> void:
 	h.test("ultime : chaque classe lance SON Super par le maintien", func(): _u_par_classe(h))
 
 static func _u_part(h) -> void:
-	var g: Dictionary = h.bac_a_sable({"seed": 3.0})
+	# Étape 2 : le geste du maintien se juge sur la Colère lancée directement (les trois ultimes de
+	# classe ont leurs tests dans v3_ultimes.gd, « chaque classe lance le SIEN par le maintien »).
+	var g: Dictionary = h.bac_a_sable({"seed": 3.0, "tuning": {"classes": {"revenant": {"super": "colere"}}}})
 	var need: float = g.tuning["super"].holdTime
 	h.egal(need, 0.4, "durée du maintien demandée")
 	g.player.superCharge = 1.0
@@ -234,7 +236,7 @@ static func _u_relacher_rappuyer(h) -> void:
 	h.egal(g.telemetry.superUses, 1.0)
 
 static func _u_pas_deux_fois(h) -> void:
-	var g: Dictionary = h.bac_a_sable({"seed": 3.0})
+	var g: Dictionary = h.bac_a_sable({"seed": 3.0, "tuning": {"classes": {"revenant": {"super": "colere"}}}}) # étape 2 : la Colère, lancée directement
 	g.player.superCharge = 1.0
 	h.ultime(g)
 	h.egal(g.player.state, "super")
@@ -265,7 +267,7 @@ static func _u_reglage(h) -> void:
 	for id in t.supers:
 		h.egal(t.supers[id].get("holdTime"), 0.4, "holdTime du Super %s" % id)
 	# Le réglage est LU : avec 1 s, l'ultime ne part pas à 0,5 s, il part à 1 s.
-	var g: Dictionary = h.bac_a_sable({"seed": 3.0, "tuning": {"supers": {"colere": {"holdTime": 1.0}}}})
+	var g: Dictionary = h.bac_a_sable({"seed": 3.0, "tuning": {"supers": {"forme_damne": {"holdTime": 1.0}}}}) # étape 2 : l'ultime du Revenant
 	g.player.superCharge = 1.0
 	h.avancer(g, h.ticks(0.5), {"attack": true})
 	h.different(g.player.state, "super")
@@ -431,7 +433,9 @@ static func _e_bombe_visee(h) -> void:
 	h.ok(z2.size() == 1 and absf(z2[0].tx - e.x) < 20.0, "tapée : sur l'ennemi")
 
 static func _e_gadget_refus(h) -> void:
-	var g := _bac(h, "revenant", ["lance", "nova", null])
+	# Étape 2 : « pendant l'ultime » se juge sur la Colère lancée directement (en Forme du Damné, les
+	# emplacements portent les actions de forme : v3_ultimes.gd).
+	var g := _bac(h, "revenant", ["lance", "nova", null], {"tuning": {"classes": {"revenant": {"super": "colere"}}}})
 	var plein: float = g.player.slots[1].charges
 	g.player.superCharge = 1.0
 	h.ultime(g)
@@ -568,7 +572,7 @@ static func _p_migration_reelle(h) -> void:
 	h.egal(D6Profile.sanitize_profile(D6Js.clone(p), t), p, "la migration est stable")
 	# Et la partie suivante se joue avec ce profil : ses trois emplacements, son arme, ses améliorations.
 	var g: Dictionary = D6Game.create_game({"seed": 12.0, "meta": D6Js.clone(PROFIL_SCHEMA_3), "startFloor": 127.0})
-	h.egal(g.kit, {"classId": "bourreau", "weaponType": "hache", "slots": ["bond", "cri", "chaine"], "superId": "sentence"})
+	h.egal(g.kit, {"classId": "bourreau", "weaponType": "hache", "slots": ["bond", "cri", "chaine"], "superId": "sentence_capitale"})
 	h.egal(g.player.slots[1].charges, g.tuning.gadgets.cri.chargesPerSection + 1.0, "Arsenal (+1 charge) vaut pour son gadget")
 	h.egal(g.meta.souls, PROFIL_SCHEMA_3.souls)
 

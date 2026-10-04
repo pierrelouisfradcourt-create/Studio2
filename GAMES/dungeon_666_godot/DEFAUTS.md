@@ -215,6 +215,34 @@ Vu en faisant ce lot, non tranché :
 | `sim/boss_*.gd` | Les salles de Gardien n'ont pas de terrain. La ruée de Charon s'arrête pourtant au bord d'un terrain bas (testé), et le Traqueur franchit ; le bond de Cerbère n'a pas été adapté. | À faire si un jour une arène de Gardien reçoit une rivière. |
 | `jeu/` | Le point d'arrivée vert / rouge pendant la visée du déplacement (`design/COMBAT_V3.md`, §4) n'existe pas : le déplacement ne se vise pas, il part dans le sens de la marche. `D6Player.move_landing` donne déjà le point. | Lot « affichage des commandes ». |
 
+## Sixième lot (2026-10-04) : combat V3, étape 2 — les trois ultimes de classe
+
+Règle neuve (`design/COMBAT_V3.md`, « Étape 2 »), pas une passe de défauts. Gardes :
+`tests/regles/v3_ultimes.gd` (57 tests), 14 tests existants adaptés (`design/COMBAT_V3_TESTS_ADAPTES.md`).
+
+Références réenregistrées une fois : **66 parties sur 78 ont changé**, 12 sont identiques au bit
+près (`bestiaire_pavois_marteau_martele`, `contenu_murs_marteau`, `entrainement_cerbere`,
+`etage_14_martele`, `etage_5_martele_ville`, `gardien_36_sans_dash`, `gardien_54_sans_dash`,
+`hasard_dagues`, `hasard_lame`, `section_marteau_martele`, `terrain_gues_hasard_arbalete`,
+`terrain_torrent_marteau_martele` : aucune n'y lance d'ultime) ; 7 parties `ultime_*` ajoutées (85 au
+total, 12 984 points de contrôle). Attribution vérifiée avant de réenregistrer : avec tout le code
+du lot en place mais les trois anciens Supers rebranchés sur les classes (un seul champ de données
+par classe), les 78 parties se rejouaient **sans aucun écart** — physique, navigation, combat et
+bots rendent les mêmes parties tant qu'aucun ultime neuf n'est lancé ; tout l'écart vient donc des
+trois ultimes. L'empreinte d'une partie ne porte les limiers (`al`) que s'il y en a.
+
+Vu en faisant ce lot, non tranché :
+
+| Où | Constat | Pourquoi laissé |
+|---|---|---|
+| `data/benedictions.json`, `data/butin.json`, `data/autels.json` | Les textes disent « le Super » (Ripaille, Passion brûlante, Gloire charnelle, Extase, Ivresse, Trop-plein, affixe « charge du Super », clepsydre) ; le jeu dit maintenant « l'ultime ». Les effets valent pour les trois ultimes (testé un par un). | Un mot à choisir une fois pour tout le jeu : à Pierre. |
+| Gloire charnelle, « dure 0,4 s de plus » | Sur la Sentence capitale, la durée allongée est celle du geste invulnérable (rien de plus ne frappe) ; sur la forme et la meute, 0,4 s sur 10 et 12 s. | Le bonus de dégâts, lui, compte pour les trois. À rééquilibrer avec l'arbre. |
+| Autel « Boire le temps » (vider la jauge contre des PV) | Pris pendant une forme ou une meute, il n'arriverait qu'en salle calme, où aucun ultime n'agit (ils finissent au changement de salle). | Sans effet aujourd'hui. |
+| `sim/ult_meute.gd` | Un ennemi de mêlée accaparé par un limier le frappe au contact SANS télégraphe (la règle « tout coup ennemi est télégraphié » protège le héros, pas ses invocations). Les tireurs et les Gardiens ne se détournent jamais. | Règle simple et lisible ; à juger en main. |
+| `sim/ult_forme.gd`, Ruée spectrale | Le héros est POSÉ à l'arrivée d'un trait (pas de vol image par image) : il traverse les ennemis et le terrain bas, un mur l'arrête. | Le plus simple qui se lise (un trait de braise) ; à juger à l'écran. |
+| Jouabilité, Revenant | Le bot sans dash bat la section 1 bien plus souvent qu'avant (voir le rapport du lot) : la forme soigne (vol de vie) et étourdit. | Nombres proposés : à juger en main, avant de toucher l'oracle. |
+| `jeu/partie.gd` | Les limiers ne sont pas interpolés entre deux pas de simulation (ils ne sont pas dans la table des positions d'avant) : à 60 images par seconde cela ne se voit pas. | Hors du périmètre du lot (`jeu/partie.gd`). |
+
 ## Vu en passant, non corrigé
 
 | Où | Constat | Pourquoi non corrigé |

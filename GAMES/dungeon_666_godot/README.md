@@ -14,7 +14,7 @@ règles). Il ne se compare plus à lui : il se garde lui-même. L'histoire du pa
 | `sim/` | La simulation : les règles. Ne connaît pas Godot (ni nœud, ni scène). Conventions : `PORTAGE.md`. |
 | `data/` | Tous les nombres et tables du jeu, en JSON ordinaire, un fichier par domaine. `validation.json` + `schemas/` : leur garde. |
 | `tests/regles/` | Les tests de règles (une règle, un test), lancés par `tests/regles.gd`. Outils : `tests/harnais.gd`. |
-| `references/` | 78 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
+| `references/` | 85 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
 | `jeu/` | Ce qui se voit, s'entend, se touche (contrat : `jeu/ARCHITECTURE.md`), avec ses tests headless. |
 | `outils/` | `verifier.sh` (l'oracle), `jouabilite.sh` (bots : solvabilité, classes), `donnees.gd` (écriture des données), `capture.gd`. |
 | `parite/` | Héritage : les outils de comparaison au web, plus lancés (`comparer.gd` sert encore). |
@@ -30,9 +30,9 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
 1. **import** — Godot enregistre ses classes ;
 2. **données** — chaque fichier de `data/` contre son schéma (types, bornes, un télégraphe
    d'ennemi d'au moins 0,4 s), et se réécrit sans rien perdre ;
-3. **règles** — `tests/regles/*.gd` : 459 tests, dont les références croisées des données
+3. **règles** — `tests/regles/*.gd` : 516 tests, dont les références croisées des données
    (`donnees.gd`) ;
-4. **références** — les 78 parties de `references/parties/` sont rejouées, point de contrôle
+4. **références** — les 85 parties de `references/parties/` sont rejouées, point de contrôle
    par point de contrôle (un toutes les 30 images) ;
 5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème), et le
    **parcours** (`jeu/essai/test_parcours.gd`) : le vrai jeu assemblé, toutes ses vues montées,
@@ -83,6 +83,29 @@ chaque disposition reste finissable à pied. Le terrain entre à l'étage `room.
 Règles et choix : `design/COMBAT_V3.md`, « Étape 1 bis » ; gardes : `tests/regles/v3_terrain.gd`.
 Juger à l'écran : `jeu/essai/terrain.tscn` (banc ; mode d'emploi en tête de `jeu/essai/terrain.gd`).
 
+## Les ultimes de classe (combat V3, étape 2)
+
+Un TYPE d'ultime par classe (`data/classes.json` : `super` de la classe, table `supers`), lancé comme
+avant (jauge pleine, appui commencé jauge pleine, maintien `holdTime`) ; il commence par un geste
+invulnérable (`duration`). Façade : `sim/kit_supers.gd` (`D6KitSupers`) ; une règle par fichier :
+
+- **Revenant — Forme du Damné** (`sim/ult_forme.gd`, sorte `forme`) : transformation de `formTime`
+  secondes. Les griffes remplacent l'arme équipée, trois actions de forme remplacent les trois
+  emplacements (`D6Loadout.slot_view` les rend : le HUD n'a rien à savoir), la jauge se vide et sert
+  de minuterie. À la fin, le kit d'origine revient tel qu'il était (ses recharges n'ont pas couru).
+- **Bourreau — Sentence capitale** (`sim/ult_magie.gd`, sorte `magie`) : lame levée, temps figé, puis
+  un fracas sur TOUS les ennemis présents ; exécution sous `executeBelow`, jamais un Gardien (`bossCap`).
+- **Chasseresse — Meute des Limbes** (`sim/ult_meute.gd`, sorte `meute`) : `count` limiers alliés dans
+  `game.allies` (jamais dans `game.enemies`) ; ils mordent ce qu'elle désigne, attirent les ennemis
+  de mêlée, arrêtent les tirs, contournent le terrain bas par les gués.
+
+Tant qu'un ultime AGIT (`D6KitSupers.acting`), il ne se relance pas et rien ne remplit la jauge.
+Mort, changement de salle, reprise : tout est remis en ordre (`D6KitSupers.reset`). L'affichage lit
+`D6Player.ultimate_view(game)`. Les trois anciens Supers (Colère, Sentence, Nuée) restent dans la
+table, marqués `reserve` : leur code joue toujours, ils ne sont l'ultime d'aucune classe. Règles,
+choix et nombres : `design/COMBAT_V3.md`, « Étape 2 » ; gardes : `tests/regles/v3_ultimes.gd`.
+Juger à l'écran : `jeu/essai/ultimes.tscn` (mode d'emploi en tête de `jeu/essai/ultimes.gd`).
+
 ## Changer une règle
 
 1. Modifier la règle dans `sim/` (conventions : `PORTAGE.md`) ou son nombre dans `data/`.
@@ -95,7 +118,7 @@ Juger à l'écran : `jeu/essai/terrain.tscn` (banc ; mode d'emploi en tête de `
    (« références réenregistrées : <la règle changée> »).
 
 ```
-bash references/enregistrer.sh          # 78 parties, ~20 s ; sans changement : mêmes fichiers au bit près
+bash references/enregistrer.sh          # 85 parties, ~25 s ; sans changement : mêmes fichiers au bit près
 bash outils/verifier.sh
 ```
 
@@ -107,7 +130,7 @@ moitié de la comparaison.
 ## Régler un nombre
 
 Tout est dans `data/`, un fichier par domaine : `heros`, `classes` (armes, compétences, gadgets,
-Supers), `bestiaire`, `gardiens`, `salles`, `etages` (sections, Cercles), `benedictions`, `butin`,
+ultimes), `bestiaire`, `gardiens`, `salles`, `etages` (sections, Cercles), `benedictions`, `butin`,
 `autels`, `ville`, `labo`. Chaque nombre n'y est écrit **qu'une fois** ; une clé en minuscules est
 un bloc de réglages, une clé en MAJUSCULES une table, `_note` dit à quoi sert le fichier. Le libellé
 d'une option d'autel reprend ses nombres par `{champ}` (`"Boire — rend {pct} % des PV"`, `"pct": 40`) :

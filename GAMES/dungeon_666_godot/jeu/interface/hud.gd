@@ -27,6 +27,9 @@ const BANDE_BASSE := 0.42 # opacité de la bande sombre derrière la rangée de 
 const LARGEUR_UTILE := 700.0 # le haut du HUD (vie, fil des étages, bourse) tient dans cette largeur
 const SEUIL_MANETTE := 0.5 # un axe de manette compte comme « utilisé » au-delà
 const ECART_ACCUEIL := 6.0 # entre le bloc de l'étage et la consigne de l'accueil
+const ENFONCE := 0.14 # s : un bouton du bureau reste « enfoncé » au moins ce temps (un appui bref se voit)
+const EMPLACEMENTS := ["skill1", "skill2", "skill3"]
+const EN_MARCHE := 0.5 # norme du déplacement voulu au-delà de laquelle le héros marche franchement
 ## Libellé de chaque commande selon le dernier périphérique utilisé (mêmes touches que jeu/entrees/).
 ## « move » (le déplacement) n'a pas de bouton : seules les consignes de l'accueil le nomment.
 const TOUCHES := {
@@ -48,6 +51,7 @@ var _echelle := 1.0 # agrandissement des textes et barres sur une petite fenêtr
 ## Dernier périphérique utilisé hors écran tactile : « clavier » ou « manette » (libellés des commandes).
 var _peripherique := "clavier"
 var _deplacement := "" # les lettres du déplacement sur ce clavier (lues une fois)
+var _enfonce := {} # commande -> s pendant lesquelles son bouton du bureau reste dessiné enfoncé
 
 @onready var racine: Control = $Racine
 @onready var bande: TextureRect = $Racine/BandeHaute
@@ -75,6 +79,7 @@ var _deplacement := "" # les lettres du déplacement sur ce clavier (lues une fo
 @onready var bureau: HBoxContainer = %Bureau
 @onready var commandes_bureau: Array = [%CmdAttaque, %CmdDash, %CmdEmplacement1, %CmdEmplacement2, %CmdEmplacement3]
 @onready var tactile: Control = $Racine/Tactile
+@onready var reperes: Control = $Racine/Reperes
 @onready var accueil: PanelContainer = %Accueil
 
 func _ready() -> void:
@@ -114,8 +119,10 @@ func _process(delta: float) -> void:
 	_actualiser_centre(game)
 	_actualiser_bourse(game)
 	accueil.actualiser(game, delta, appareil(), libelles(), banniere.visible, centre.position.y + centre.size.y + ECART_ACCUEIL)
-	_actualiser_commandes(game, au_doigt)
+	_suivre_appuis(delta)
+	var visee := _actualiser_commandes(game, au_doigt)
 	_actualiser_reperes(game, au_doigt)
+	reperes.montrer(visee, _arrivee_raccourcie(game), _echelle)
 
 # ---------------------------------------------------------------- habillage et marges
 
@@ -268,17 +275,74 @@ func _actualiser_bourse(game: Dictionary) -> void:
 	ames.visible = not D6Js.truthy(game.get("sandbox")) and not D6Js.truthy(game.get("practice"))
 	ames_montant.text = D6Js.num_str(game.meta.souls)
 
-func _actualiser_commandes(game: Dictionary, au_doigt: bool) -> void:
+## Rend la ligne de visée à tracer au BUREAU ({de, dir, couleur}, ou vide) : au doigt, la vue des
+## commandes tactiles trace la sienne.
+func _actualiser_commandes(game: Dictionary, au_doigt: bool) -> Dictionary:
 	bureau.visible = not au_doigt
 	bande_basse.visible = not au_doigt
 	tactile.visible = au_doigt
 	var designee: String = accueil.commande(game) # la consigne de l'accueil nomme une commande : elle bat
 	if au_doigt:
 		tactile.actualiser(game, _interface_tactile(), designee, _heros_a_l_ecran(game))
-		return
+		return {}
+	var visee := {}
 	for c in commandes_bureau:
-		c.montrer(Etats.etat(game, c.id))
+		var etat: Dictionary = Etats.etat(game, c.id)
+		var enfonce: bool = _enfonce.has(c.id)
+		c.montrer(etat, enfonce)
 		c.designer(c.id == designee)
+		if enfonce and c.id in EMPLACEMENTS and etat.get("visee", false) and not etat.get("vide", false):
+			visee = _visee_bureau(game)
+	return visee
+
+# ---------------------------------------------------------------- clavier et manette : retours
+
+## Le retour « enfoncé » des boutons du bureau : la vue Entrees dit quand une commande vient d'être
+## enfoncée (signal) et lesquelles sont tenues ; le bouton le montre au moins ENFONCE secondes.
+func _suivre_appuis(delta: float) -> void:
+	for id in _enfonce.keys():
+		_enfonce[id] -= delta
+		if _enfonce[id] <= 0.0:
+			_enfonce.erase(id)
+	var entrees = _entrees()
+	if entrees == null or not entrees.has_signal("commande_enfoncee"):
+		return
+	if not entrees.commande_enfoncee.is_connected(enfoncer):
+		entrees.commande_enfoncee.connect(enfoncer)
+	for id in entrees.tenues():
+		enfoncer(id)
+
+## La commande `id` vient d'être enfoncée (clavier, souris, manette) : son bouton s'enfonce.
+func enfoncer(id: String) -> void:
+	_enfonce[id] = ENFONCE
+
+## Les commandes dessinées enfoncées au bureau (pour les essais).
+func enfoncees() -> Array:
+	return _enfonce.keys()
+
+## La ligne de visée d'un emplacement tenu au clavier ou à la manette : du héros vers la souris ou
+## le stick droit. Vide en visée assistée (la simulation choisit la cible : rien à montrer).
+func _visee_bureau(game: Dictionary) -> Dictionary:
+	var entrees = _entrees()
+	var dir: Vector2 = entrees.visee_bureau() if entrees != null and entrees.has_method("visee_bureau") else Vector2.ZERO
+	if dir == Vector2.ZERO:
+		return {}
+	return {"de": _heros_a_l_ecran(game), "dir": dir, "couleur": Couleurs.PAL.lance}
+
+## Où le déplacement de classe poserait le héros S'IL ÉTAIT RACCOURCI par une rivière ou un
+## obstacle bas (position d'écran), sinon INF. Lecture seule : D6Player.move_view dit si le geste
+## est prêt, D6Player.move_landing où il finirait dans le sens de la marche. Rien si la salle n'a
+## pas de terrain bas, si le héros ne marche pas franchement, ou sans vue Monde.
+func _arrivee_raccourcie(game: Dictionary) -> Vector2:
+	var monde = app.vues.get("monde") if app.vues is Dictionary else null
+	if monde == null or not monde.has_method("monde_vers_ecran") or game.room.get("low", []).is_empty():
+		return Vector2.INF
+	var p: Dictionary = game.player
+	var norme: float = sqrt(p.moveX * p.moveX + p.moveY * p.moveY)
+	if game.mode != "play" or p.state == "dash" or norme < EN_MARCHE or not D6Player.move_view(game).ready:
+		return Vector2.INF
+	var arrivee: Dictionary = D6Player.move_landing(game, p.moveX / norme, p.moveY / norme)
+	return Vector2.INF if arrivee.full else monde.monde_vers_ecran(Vector2(arrivee.x, arrivee.y))
 
 func _actualiser_reperes(game: Dictionary, au_doigt: bool) -> void:
 	var room: Dictionary = game.room

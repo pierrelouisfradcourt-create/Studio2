@@ -1,5 +1,5 @@
 {
-  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. DÉPLACEMENT DE CLASSE (`move` d'une classe, table `moves`) : même bouton que le dash, un geste par classe ; un déplacement autre que le dash RECOUVRE les nombres du dash de base (data/heros.json, `dash`) par les siens — durée du geste, i-frames, charges, recharge, fenêtre de frappe ; la distance reste celle du dash × la statistique de classe dashDistanceMult ; `shock*` = choc d'atterrissage du saut (repousse, sans dégât). Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd).",
+  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. DÉPLACEMENT DE CLASSE (`move` d'une classe, table `moves`) : même bouton que le dash, un geste par classe ; un déplacement autre que le dash RECOUVRE les nombres du dash de base (data/heros.json, `dash`) par les siens — durée du geste, i-frames, charges, recharge, fenêtre de frappe ; la distance reste celle du dash × la statistique de classe dashDistanceMult ; `shock*` = choc d'atterrissage du saut (repousse, sans dégât). Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd). ULTIMES (combat V3, étape 2) : un type par classe — `forme` (Forme du Damné : `formTime` s de transformation, `weapon` remplace l'arme, `slots` / `actions` remplacent les trois emplacements, `lifesteal` des griffes ; l'embrasement inflige de `damage` à `damageMax` selon le temps de forme restant), `magie` (Sentence capitale : `strikeAt` s de lame levée, `freeze` s de temps figé, puis `damage` / `stun` à toute la salle, `executeBelow` part de vie sous laquelle un ennemi est exécuté, `bossCap` part de vie max qu'un Gardien perd au plus), `meute` (Meute des Limbes : `count` limiers, `life` s, `hp` × l'échelle de dégâts de l'étage, morsure `biteDamage` toutes les `biteEvery` s ; un ennemi de mêlée se tourne vers un limier à moins de `distractRange` u et de `distractRatio` × sa distance à l'héroïne). `duration` = le geste de lancement (invulnérable). `reserve` : ancien Super gardé pour l'arbre de compétences, ultime d'aucune classe.",
   "classes": {
     "revenant": {
       "name": "Revenant",
@@ -14,7 +14,7 @@
       "weapons": ["lame", "dagues"],
       "skills": ["lance", "chaine"],
       "gadgets": ["nova", "bombe"],
-      "super": "colere"
+      "super": "forme_damne"
     },
     "bourreau": {
       "name": "Bourreau",
@@ -35,7 +35,7 @@
       "weapons": ["hache", "marteau"],
       "skills": ["bond", "chaine"],
       "gadgets": ["cri", "bombe"],
-      "super": "sentence"
+      "super": "sentence_capitale"
     },
     "chasseresse": {
       "name": "Chasseresse",
@@ -50,7 +50,7 @@
       "weapons": ["arc", "arbalete"],
       "skills": ["volee", "brasier"],
       "gadgets": ["piege", "totem"],
-      "super": "nuee"
+      "super": "meute_limbes"
     }
   },
   "weapons": {
@@ -636,7 +636,8 @@
       "damagePerTick": 9,
       "knockback": 260,
       "speedMult": 0.85,
-      "shakePerTick": 0.1
+      "shakePerTick": 0.1,
+      "reserve": true
     },
     "sentence": {
       "name": "Sentence",
@@ -679,7 +680,8 @@
           "hitstop": 0.14,
           "shake": 1
         }
-      ]
+      ],
+      "reserve": true
     },
     "nuee": {
       "name": "Nuée de traits",
@@ -700,7 +702,173 @@
       "range": 560,
       "pierce": 1,
       "knockback": 150,
-      "hitstop": 0
+      "hitstop": 0,
+      "reserve": true
+    },
+    "forme_damne": {
+      "name": "Forme du Damné",
+      "kind": "forme",
+      "icon": "forme",
+      "text": "Transformation de 10 s en spectre de braise : griffes rapides et larges qui volent un peu de vie, trois actions de forme (ruée spectrale, hurlement, embrasement). La jauge se vide : c'est la durée.",
+      "startCharge": 0.4,
+      "holdTime": 0.4,
+      "chargeDamage": 900,
+      "duration": 0.25,
+      "speedMult": 1,
+      "radius": 130,
+      "formTime": 10,
+      "lifesteal": 0.05,
+      "weapon": {
+        "kind": "melee",
+        "moveMult": 1.5,
+        "combo": [
+          {
+            "startup": 0.04,
+            "active": 0.06,
+            "recovery": 0.09,
+            "range": 96,
+            "arc": 170,
+            "damage": 11,
+            "knockback": 180,
+            "lunge": 34,
+            "hitstop": 0.03,
+            "shake": 0.15,
+            "cancelFrom": 0.25
+          },
+          {
+            "startup": 0.04,
+            "active": 0.06,
+            "recovery": 0.09,
+            "range": 96,
+            "arc": 170,
+            "damage": 11,
+            "knockback": 180,
+            "lunge": 34,
+            "hitstop": 0.03,
+            "shake": 0.15,
+            "cancelFrom": 0.25
+          },
+          {
+            "startup": 0.06,
+            "active": 0.08,
+            "recovery": 0.16,
+            "range": 110,
+            "arc": 230,
+            "damage": 18,
+            "knockback": 420,
+            "lunge": 50,
+            "hitstop": 0.06,
+            "shake": 0.35,
+            "cancelFrom": 0.5
+          }
+        ],
+        "dashStrike": {
+          "startup": 0.03,
+          "active": 0.08,
+          "recovery": 0.14,
+          "range": 110,
+          "arc": 150,
+          "damage": 22,
+          "knockback": 380,
+          "lunge": 100,
+          "hitstop": 0.06,
+          "shake": 0.3
+        }
+      },
+      "slots": ["ruee_spectrale", "hurlement", "embrasement"],
+      "actions": {
+        "ruee_spectrale": {
+          "name": "Ruée spectrale",
+          "kind": "ruee",
+          "icon": "ruee",
+          "text": "Traverse 260 u d'un trait : 26 dégâts à tout ce qui est sur le passage. Invulnérable pendant la ruée.",
+          "cooldown": 2.5,
+          "castTime": 0.04,
+          "range": 260,
+          "width": 70,
+          "damage": 26,
+          "knockback": 200,
+          "hitstop": 0.05,
+          "shake": 0.3,
+          "iframes": 0.25
+        },
+        "hurlement": {
+          "name": "Hurlement",
+          "kind": "hurlement",
+          "icon": "roar",
+          "text": "Étourdit 1,3 s tout ce qui est à 180 u.",
+          "cooldown": 5,
+          "castTime": 0.08,
+          "radius": 180,
+          "damage": 8,
+          "stun": 1.3,
+          "knockback": 0,
+          "hitstop": 0.05,
+          "shake": 0.4,
+          "aimed": false
+        },
+        "embrasement": {
+          "name": "Embrasement",
+          "kind": "embrasement",
+          "icon": "burst",
+          "text": "Met fin à la forme : explosion à 210 u, de 30 à 160 dégâts selon le temps de forme qui restait.",
+          "cooldown": 1,
+          "castTime": 0.12,
+          "radius": 210,
+          "damage": 30,
+          "damageMax": 160,
+          "knockback": 800,
+          "stun": 0.6,
+          "hitstop": 0.12,
+          "shake": 1,
+          "aimed": false
+        }
+      }
+    },
+    "sentence_capitale": {
+      "name": "Sentence capitale",
+      "kind": "magie",
+      "icon": "sentence",
+      "text": "Il lève sa lame, le temps se fige, puis un fracas frappe TOUS les ennemis de la salle : 85 dégâts, étourdis 1,2 s ; sous 25 % de vie, exécutés. Un Gardien n'est jamais exécuté (10 % de sa vie au plus). Invulnérable pendant le geste.",
+      "startCharge": 0.4,
+      "holdTime": 0.4,
+      "chargeDamage": 1000,
+      "duration": 1,
+      "speedMult": 0,
+      "radius": 1700,
+      "strikeAt": 0.5,
+      "freeze": 0.3,
+      "damage": 85,
+      "stun": 1.2,
+      "shake": 1.2,
+      "executeBelow": 0.25,
+      "bossCap": 0.1
+    },
+    "meute_limbes": {
+      "name": "Meute des Limbes",
+      "kind": "meute",
+      "icon": "meute",
+      "text": "Trois limiers d'os se battent 12 s à ses côtés : ils mordent ce qu'elle vise, attirent les ennemis de mêlée et arrêtent les tirs. La jauge se vide : c'est leur durée.",
+      "startCharge": 0.4,
+      "holdTime": 0.4,
+      "chargeDamage": 1000,
+      "duration": 0.3,
+      "speedMult": 1,
+      "radius": 260,
+      "count": 3,
+      "life": 12,
+      "hp": 45,
+      "houndRadius": 11,
+      "speed": 340,
+      "biteDamage": 7,
+      "biteEvery": 0.6,
+      "biteRange": 12,
+      "biteKnockback": 90,
+      "markTime": 2.5,
+      "spawnDist": 56,
+      "heelDist": 70,
+      "distractRatio": 0.6,
+      "distractRange": 240
     }
   },
   "moves": {

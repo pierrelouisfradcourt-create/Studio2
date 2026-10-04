@@ -101,6 +101,7 @@ static func _new_game(seed_n: float, tuning: Dictionary, meta: Dictionary, opts:
 		"hazards": [],
 		"pickups": [],
 		"spawns": [],
+		"allies": [], # limiers de la Meute des Limbes (D6KitSupers) : jamais dans `enemies`
 	}
 
 static func step_game(game: Dictionary, input = null) -> void:
@@ -123,6 +124,7 @@ static func step_game(game: Dictionary, input = null) -> void:
 	var hb: Dictionary = game.tuning.hitstopBank
 	game.hitstopBank = minf(hb.max, game.hitstopBank + hb.refill * dt)
 	D6Player.update_player(game, dt)
+	D6KitSupers.tick(game, dt) # ultimes qui durent : forme, limiers
 	D6Nav.update_nav(game)
 	D6Enemies.update_enemies(game, dt)
 	D6Projectiles.update_projectiles(game, dt)

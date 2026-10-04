@@ -16,12 +16,19 @@ extends "res://jeu/monde/creatures/calque.gd"
 ##                  un anneau d'or se VIDE autour de lui avec la durée qui reste : « plus pour longtemps »
 ##   Super          Colère : il tournoie ; Sentence : il annonce puis abat chaque exécution ;
 ##                  Nuée : des traits d'or tournent autour de lui
+##   ultimes        Sentence capitale : lame LEVÉE au ciel, colonne d'or qui se charge jusqu'au
+##                  fracas ; Forme du Damné : SPECTRE DE BRAISE — corps de charbon et de feu, flammes,
+##                  griffes à la place de l'arme, pas de pieds (il flotte), un anneau de braise qui
+##                  se vide avec la durée de la forme ; taillades de braise
 
 const Armes = preload("res://jeu/monde/creatures/armes.gd")
 
 const NUIT := Color("#0d2a36") # contour du héros
 const ACCENT := Color("#123c4c") # détail sombre et froid de la classe
 const OR := Color("#ffb02e") # élan et Super : chaud, mais jamais le rouge du danger
+const BRAISE := Color("#ff8a2a") # Forme du Damné : le spectre de braise (orange, pas le rouge du danger)
+const BRAISE_CLAIRE := Color("#ffd9a0")
+const CHARBON := Color("#3a1408")
 const CARRURE := {"bourreau": 1.14, "chasseresse": 0.86}
 const CAPE := {"bourreau": 0.8, "chasseresse": 0.9}
 const ELAN := 0.08 # s d'étirement au départ d'un coup
@@ -43,6 +50,7 @@ var _geste_angle := 0.0
 var _marche := 0.0 # phase du pas (rad)
 var _allure := 0.0 # 0 immobile .. 1 en pleine course
 var _avant := Vector2.INF
+var _forme := false # la Forme du Damné est en cours (lu à chaque dessin)
 
 func _init() -> void:
 	super()
@@ -125,6 +133,7 @@ func _draw() -> void:
 	p.commencer(self)
 	p.alpha = 1.0 if h.state != "dead" else alpha_heros(h)
 	p.poser(Transform2D(0.0, pos))
+	_forme = D6KitSupers.form_of(g) != null and h.state != "dead"
 	_coup(h)
 	_super(g, h, pr)
 	p.alpha = alpha_heros(h)
@@ -138,19 +147,25 @@ func _draw() -> void:
 	pr *= 1.0 + 0.15 * haut
 	var elan: float = 0.0 if h.state == "dead" else minf(1.0, nombre(h, "surge") / SURGE_FONDU)
 	p.poser(m)
-	if elan > 0.0:
-		_flammes(pr, elan)
+	if elan > 0.0 or _forme:
+		_flammes(pr, 1.0 if _forme else elan)
 	_cape(h, pr, classe)
-	_pieds(h, pr, m)
+	if not _forme:
+		_pieds(h, pr, m) # le spectre flotte : pas de pieds
 	p.poser(m * Transform2D(_buste(g, h), Vector2.ZERO))
 	_corps(g, h, pr, classe)
 	_armes.temps = temps()
 	_armes.pas = sin(_marche) * _allure
 	_armes.chaud = elan
-	_armes.dessiner(g, h, pr, m, PAL.heroHurt if h.hurtFlash > 0.0 else PAL.hero)
+	if _forme:
+		_griffes(h, pr)
+	else:
+		_armes.dessiner(g, h, pr, m, PAL.heroHurt if h.hurtFlash > 0.0 else PAL.hero)
 	_lancer(g, h, pr, m)
 	p.poser(m)
 	_coquille(h, pr, elan)
+	if _forme:
+		_anneau_forme(h, pr)
 	p.finir()
 
 func _classe(g: Dictionary) -> String:
@@ -208,6 +223,8 @@ func _coup(h: Dictionary) -> void:
 	var a1: float = a0 + ouverture * sens
 	var frappe: bool = D6Js.truthy(at.strike)
 	var teinte: Color = PAL.slashStrike if frappe else PAL.slash
+	if _forme:
+		teinte = BRAISE_CLAIRE if frappe else BRAISE # les griffes taillent en braise
 	var epais: float = portee * (0.5 if frappe or at.def.arc >= 200.0 else 0.38)
 	match at.phase:
 		"startup":
@@ -252,12 +269,34 @@ func _super(g: Dictionary, h: Dictionary, pr: float) -> void:
 		"sentence":
 			_annonce_sentence(h, s)
 			p.pointille(Vector2.ZERO, pr * 2.3, PAL.superBar, 3.0, 16.0, t0 * 0.4)
+		"magie":
+			_lame_levee(h, s, pr)
+		"forme", "meute":
+			p.pointille(Vector2.ZERO, pr * 2.3, BRAISE if s.kind == "forme" else PAL.heroCape, 3.0, 16.0, t0 * 0.4)
 		_:
 			p.pointille(Vector2.ZERO, pr * 2.3, PAL.superBar, 3.0, 16.0, t0 * 0.4)
 			for i in 6:
 				var d := Vector2.from_angle(t0 * 0.3 + i * TAU / 6.0)
 				p.pic(d * pr * 2.9 + d.orthogonal() * 3.5, d * pr * 2.9 - d.orthogonal() * 3.5, d * pr * 3.9, PAL.crit, NUIT, 1.2)
 	p.anneau(Vector2.ZERO, pr * 1.7, Color(PAL.crit, 0.6 + 0.3 * sin(t0)), 2.0)
+
+## Sentence capitale : pendant le télégraphe (superClock → strikeAt, lus dans l'état et les données),
+## une colonne d'or monte au-dessus du Bourreau et un cercle d'or se resserre sur lui ; plus le
+## fracas approche, plus elle est haute et pleine. Après le fracas, elle retombe.
+func _lame_levee(h: Dictionary, s: Dictionary, pr: float) -> void:
+	var tombe: bool = nombre(h, "superStep") >= 2.0
+	var k := clampf(nombre(h, "superClock") / maxf(1e-3, nombre(s, "strikeAt")), 0.0, 1.0)
+	if tombe:
+		k = clampf(h.superT / maxf(1e-3, nombre(s, "duration") - nombre(s, "strikeAt")), 0.0, 1.0) * 0.6
+	var haut: float = pr * (3.0 + 6.0 * k)
+	var large: float = pr * (0.5 + 0.5 * k)
+	var c := Color(OR, 0.25 + 0.5 * k)
+	p.primitive(PackedVector2Array([Vector2(-large, 0.0), Vector2(-large * 0.3, -haut), Vector2(large * 0.3, -haut), Vector2(large, 0.0)]),
+		PackedColorArray([c, Color(PAL.crit, 0.0), Color(PAL.crit, 0.0), c]))
+	p.lueur(Vector2(0.0, -pr * 3.2), pr * (1.5 + 2.5 * k), PAL.crit, 0.9 * k)
+	if not tombe:
+		p.anneau(Vector2.ZERO, pr * lerpf(7.0, 2.2, k), Color(OR, 0.3 + 0.6 * k), 2.0 + 3.0 * k)
+		p.pointille(Vector2.ZERO, pr * 2.3, PAL.superBar, 3.0, 16.0, temps() * 6.0)
 
 ## Sentence : avant chaque exécution, son secteur (portée et ouverture de tuning.super.strikes)
 ## se dessine en or devant le Bourreau et s'épaissit jusqu'à l'instant du coup.
@@ -297,7 +336,9 @@ func _cape(h: Dictionary, pr: float, classe: String) -> void:
 		epine.append(dir * longueur * u + dir.orthogonal() * onde)
 		demi.append(pr * lerpf(0.88, 0.3 if dash else 0.42, u * u))
 	var teinte: Color = PAL.heroHurt.darkened(0.3) if h.hurtFlash > 0.0 else PAL.heroCape
-	p.bande(epine, demi, teinte, NUIT, 2.0)
+	if _forme and h.hurtFlash <= 0.0:
+		teinte = BRAISE.darkened(0.25) # la cape du spectre : un panache de braise
+	p.bande(epine, demi, teinte, CHARBON if _forme else NUIT, 2.0)
 	p.ligne(epine[1], epine[4], teinte.darkened(0.25), 1.5)
 
 ## Les pieds : ils passent l'un devant l'autre au rythme de la distance parcourue, dans l'axe du
@@ -318,6 +359,10 @@ func _corps(g: Dictionary, h: Dictionary, pr: float, classe: String) -> void:
 	var touche: bool = h.hurtFlash > 0.0
 	var clair: Color = PAL.heroHurt if touche else PAL.hero
 	var lisere: Color = PAL.heroHurt.darkened(0.35) if touche else PAL.heroCape
+	if _forme and not touche:
+		# Spectre de braise : tête de charbon cernée de feu, épaules ardentes.
+		clair = CHARBON.lerp(BRAISE, 0.25 + 0.15 * sin(temps() * 12.0))
+		lisere = BRAISE
 	var carrure: float = pr * CARRURE.get(classe, 1.0)
 	_dos(classe, pr)
 	p.ellipse(Vector2(-0.1 * pr, 0.0), pr * 0.62, carrure, lisere.darkened(0.12), NUIT, 2.0)
@@ -330,7 +375,10 @@ func _corps(g: Dictionary, h: Dictionary, pr: float, classe: String) -> void:
 	var hr := pr * 0.72
 	p.disque(tete, hr, clair, lisere, 3.0)
 	p.calotte(tete + Vector2(hr * 0.3, 0.0), hr * 0.62, -1.2, 1.2, NUIT)
-	p.ligne(tete + Vector2(hr * 0.72, -hr * 0.2), tete + Vector2(hr * 0.72, hr * 0.2), PAL.slashStrike, 1.5)
+	p.ligne(tete + Vector2(hr * 0.72, -hr * 0.2), tete + Vector2(hr * 0.72, hr * 0.2), BRAISE_CLAIRE if _forme else PAL.slashStrike, 1.5)
+	if _forme:
+		p.yeux(tete, hr, BRAISE_CLAIRE, 0.5, 0.55, 0.2)
+		p.lueur(tete, hr * 2.2, BRAISE, 0.7)
 	_coiffe(classe, tete, hr)
 
 ## La main qui ne tient pas l'arme (lame, hache, maillet) : elle balance à contretemps du pas.
@@ -338,7 +386,7 @@ func _corps(g: Dictionary, h: Dictionary, pr: float, classe: String) -> void:
 func _main_libre(g: Dictionary, h: Dictionary, pr: float, carrure: float, clair: Color) -> void:
 	var kit = g.get("kit")
 	var type = kit.get("weaponType") if kit is Dictionary else "lame"
-	if type in ["dagues", "arc", "arbalete"] or _geste > 0.0 or h.state == "cast":
+	if type in ["dagues", "arc", "arbalete"] or _geste > 0.0 or h.state == "cast" or _forme:
 		return
 	p.disque(Vector2((0.3 - sin(_marche) * 0.55 * _allure) * pr, -carrure * 0.8), pr * 0.2, clair, NUIT, 1.5)
 
@@ -365,7 +413,7 @@ func _coiffe(classe: String, tete: Vector2, hr: float) -> void:
 			var onde := sin(temps() * 10.0 + _marche) * hr * (0.2 + 0.3 * _allure)
 			p.ruban(PackedVector2Array([tete + Vector2(-hr * 0.8, 0.0), tete + Vector2(-hr * 1.5, onde * 0.5), tete + Vector2(-hr * 2.2, onde)]), PAL.heroCape, 3.0, NUIT)
 		_:
-			p.baton(tete + Vector2(-hr * 0.95, 0.0), tete + Vector2(hr * 0.1, 0.0), PAL.heroCape, 2.5, NUIT)
+			p.baton(tete + Vector2(-hr * 0.95, 0.0), tete + Vector2(hr * 0.1, 0.0), BRAISE_CLAIRE if _forme else PAL.heroCape, 2.5, NUIT)
 
 # ------------------------------------------------------------------ états
 
@@ -392,6 +440,39 @@ func _lancer(g: Dictionary, h: Dictionary, pr: float, m: Transform2D) -> void:
 			PackedColorArray([Color(c, 0.0), c, Color(c, 0.0)]))
 	p.etoile(main + Vector2(pr * 0.3, 0.0), pr * 0.55 * k, PAL.lance, temps() * 8.0, Pinceau.SANS)
 	p.disque(main, pr * 0.22, PAL.hero, NUIT, 1.5)
+
+## FORME DU DAMNÉ : les griffes, à la place de l'arme équipée. Trois lames de braise par main,
+## de part et d'autre du corps (repère du buste) ; elles s'allongent et s'ouvrent pendant un coup.
+func _griffes(h: Dictionary, pr: float) -> void:
+	var at = h.get("attack")
+	var frappe: float = 0.0
+	if h.state == "attack" and at is Dictionary:
+		frappe = 1.0 if at.phase == "active" else 0.5
+	var sens := -1.0 if at is Dictionary and h.state == "attack" and int(at.index) % 2 == 1 else 1.0
+	for cote: float in [-1.0, 1.0]:
+		var actif: float = frappe if (cote == sens or frappe >= 1.0) else frappe * 0.3
+		var main := Vector2(pr * (0.45 + 0.35 * actif), pr * 0.95 * cote)
+		p.disque(main, pr * 0.24, BRAISE, CHARBON, 1.5)
+		for i in 3:
+			var a: float = (i - 1) * (0.32 + 0.2 * actif) - 0.25 * cote
+			var d := Vector2.from_angle(a)
+			var long: float = pr * (0.85 + 0.75 * actif)
+			p.pic(main + d.orthogonal() * pr * 0.1, main - d.orthogonal() * pr * 0.1, main + d * long, BRAISE_CLAIRE, CHARBON, 1.5)
+
+## La forme se lit S'ÉPUISER autour de lui : un arc de braise qui se vide avec player.ult (t / max),
+## comme l'anneau de l'élan. La même durée se lit sur le bouton d'attaque (la jauge se vide).
+func _anneau_forme(h: Dictionary, pr: float) -> void:
+	var u = h.get("ult")
+	if not (u is Dictionary):
+		return
+	var reste := clampf(nombre(u, "t") / maxf(1e-3, nombre(u, "max")), 0.0, 1.0)
+	var rayon := pr * 1.75
+	var a0 := -PI / 2.0
+	var vif: float = 1.0 if reste > 0.2 or int(temps() * 8.0) % 2 == 0 else 0.4 # elle clignote sur sa fin
+	p.anneau(Vector2.ZERO, rayon, Color(CHARBON, 0.5), 3.5)
+	p.arc(Vector2.ZERO, rayon, a0, a0 + TAU * reste, Color(CHARBON, vif), 6.0)
+	p.arc(Vector2.ZERO, rayon, a0, a0 + TAU * reste, Color(BRAISE, vif), 3.0)
+	p.disque(Vector2.from_angle(a0 + TAU * reste) * rayon, 3.2, Color(BRAISE_CLAIRE, vif), Color(CHARBON, vif), 1.5)
 
 ## Invulnérable : une coquille autour de lui (filet clair étiré avec le dash ; tirets blancs qui
 ## tournent après un coup reçu). En élan : anneau de durée et double chevron au-dessus de la tête.

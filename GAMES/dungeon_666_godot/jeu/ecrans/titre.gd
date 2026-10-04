@@ -10,9 +10,10 @@ const LARGEUR := 760.0
 const LOGO_PART := 0.11
 const LOGO_MIN := 40
 const LOGO_MAX := 84
-const CONTROLES_DOIGTS := "Pouce gauche : se déplacer. Pouce droit, le gros bouton : attaquer (tapez = visée auto ; glissez pour viser, relâchez pour frapper). Jauge pleine : gardez-le appuyé pour l'ultime. Les trois boutons autour : vos compétences. À droite de l'attaque : DASH — invulnérable pendant la ruée."
-const CONTROLES_CLAVIER := "ZQSD / WASD : se déplacer · Souris : viser · Clic gauche : attaquer (maintenu, jauge pleine : ultime) · Espace : DASH (invulnérable) · Clic droit, E, F : les trois compétences · Échap : pause"
-const CONTROLES_MANETTE := "Manette — stick gauche : se déplacer · stick droit : viser · X / RT : attaquer (maintenu, jauge pleine : ultime) · A / LB : DASH · B, Y, RB : les trois compétences · Start : pause"
+const CONTROLES_DOIGTS := "Pouce gauche : se déplacer. Pouce droit, le gros bouton : attaquer (tapez = visée auto ; glissez pour viser, relâchez pour frapper). Jauge pleine : gardez-le appuyé pour l'ultime. Les trois boutons autour : vos compétences. À droite de l'attaque : %s — invulnérable pendant le geste."
+const CONTROLES_CLAVIER := "ZQSD / WASD : se déplacer · Souris : viser · Clic gauche : attaquer (maintenu, jauge pleine : ultime) · Espace : %s (invulnérable) · Clic droit, E, F : les trois compétences · Échap : pause"
+const CONTROLES_MANETTE := "Manette — stick gauche : se déplacer · stick droit : viser · X / RT : attaquer (maintenu, jauge pleine : ultime) · A / LB : %s · B, Y, RB : les trois compétences · Start : pause"
+const GESTE := "DASH" # à défaut de classe lue : le dash de base
 const RECORD := "Meilleur étage : %s. Paysage conseillé sur téléphone."
 const DESCENDRE := "Descendre · étage %s"
 
@@ -48,13 +49,22 @@ func largeur() -> float:
 func premier_focus() -> Control:
 	return _entrer
 
+## Le rappel nomme le DÉPLACEMENT de la classe choisie (DASH, SAUT, ROULADE), lu dans les données.
 func _ecrire_controles() -> void:
+	var geste := _geste()
 	if _tactile():
-		_controles.text = CONTROLES_DOIGTS
+		_controles.text = CONTROLES_DOIGTS % geste
 	elif Input.get_connected_joypads().is_empty():
-		_controles.text = CONTROLES_CLAVIER
+		_controles.text = CONTROLES_CLAVIER % geste
 	else:
-		_controles.text = CONTROLES_CLAVIER + "\n" + CONTROLES_MANETTE
+		_controles.text = CONTROLES_CLAVIER % geste + "\n" + CONTROLES_MANETTE % geste
+
+func _geste() -> String:
+	if _app == null:
+		return GESTE
+	var classe = _app.contenu.classes.get(_app.profil.loadout.classId)
+	var geste = _app.contenu.moves.get(classe.get("move")) if classe is Dictionary else null
+	return String(geste.name).to_upper() if geste is Dictionary else GESTE
 
 func _tactile() -> bool:
 	var entrees = _app.vues.get("entrees") if _app != null else null

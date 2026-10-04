@@ -3,7 +3,8 @@ extends "res://jeu/ville/onglet.gd"
 ## arc autour de l'attaque, les mêmes pictogrammes : jeu/ville/arc_emplacements.gd) et leur
 ## légende ; dessous, les compétences de la classe. On touche une compétence PUIS un emplacement
 ## (ou l'inverse) : elle y est placée ; une compétence déjà placée est marquée. L'ultime de la
-## classe est rappelé : il ne se choisit pas, il se lance en gardant l'attaque appuyée.
+## classe est rappelé : il ne se choisit pas, il se lance en gardant l'attaque appuyée. Le
+## DÉPLACEMENT de la classe (dash, saut, roulade) l'est aussi : son bouton, son nom, ce qu'il fait.
 ## Aucune règle ici : D6Profile.slot_choices dit ce qui se place, l'opération `select_slot` place
 ## (un échange si l'action est déjà ailleurs) ou vide. Ce que le joueur a touché en premier (une
 ## compétence, un emplacement) n'est qu'un état d'ÉCRAN : rien n'est écrit tant qu'il n'a pas
@@ -60,9 +61,12 @@ func _dessiner() -> void:
 	_montrer_emplacements(choix, places)
 	_lister(choix, places)
 	_vider(_super)
+	var geste = app.contenu.moves.get(c.get("move"))
+	if geste is Dictionary:
+		_carte(_super, {"surtitre": "Déplacement · %s" % c.name, "titre": geste.name, "lignes": [geste.text], "etat": "equipe", "badge": "Lié à la classe", "picto": _picto(String(geste.get("icon", "dash")), true)})
 	var s = app.contenu.supers.get(c.super)
 	if s is Dictionary:
-		_carte(_super, {"surtitre": "Ultime · %s" % c.name, "titre": s.name, "lignes": [s.get("text", ""), "Jauge pleine : garde l'attaque appuyée."], "etat": "equipe", "badge": "Lié à la classe"})
+		_carte(_super, {"surtitre": "Ultime · %s" % c.name, "titre": s.name, "lignes": [s.get("text", ""), "Jauge pleine : garde l'attaque appuyée."], "etat": "equipe", "badge": "Lié à la classe", "picto": _picto(String(s.get("icon", "super")), true)})
 
 func _trouver(choix: Array, id) -> Dictionary:
 	for x in choix:

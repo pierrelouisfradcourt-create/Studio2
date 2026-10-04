@@ -22,7 +22,7 @@
       "options": [
         { "label": "Boire — rend {pct} % des PV", "effect": "heal", "pct": 40 },
         {
-          "label": "Remplir une fiole — +{gain} charge de gadget",
+          "label": "Remplir une fiole — +{gain} charge à chaque compétence à charges",
           "effect": "gadgetCharge",
           "gain": 1
         }

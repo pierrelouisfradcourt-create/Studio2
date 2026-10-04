@@ -64,14 +64,14 @@
     "attackSpeedMult": "vitesse d'attaque",
     "critChance": "chances de critique",
     "critMult": "dégâts critiques",
-    "skillDamageMult": "dégâts de la compétence",
+    "skillDamageMult": "dégâts des compétences",
     "knockbackMult": "recul infligé",
     "maxHpBonus": "PV max",
     "armor": "réduction des dégâts",
     "moveSpeedMult": "vitesse de course",
     "healOnKill": "PV par ennemi tué",
     "dashRechargeMult": "recharge du dash",
-    "skillCooldownMult": "recharge de la compétence",
+    "skillCooldownMult": "recharge des compétences",
     "superChargeMult": "charge du Super",
     "goldFindMult": "or trouvé",
     "lifesteal": "vol de vie"
@@ -141,7 +141,7 @@
     {
       "id": "main_de_gloire",
       "name": "de la Main de gloire",
-      "text": "Salle nettoyée sans être touché : +1 charge de gadget",
+      "text": "Salle nettoyée sans être touché : +1 charge à chaque compétence à charges",
       "procs": [{ "on": "roomClear", "when": "untouched", "effect": "gadgetCharge", "value": 1 }]
     },
     {

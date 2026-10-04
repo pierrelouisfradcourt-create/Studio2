@@ -140,7 +140,7 @@ colonnes_max = 3
 [node name="TitreSuper" type="Label" parent="."]
 layout_mode = 2
 theme_type_variation = &"TitreSection"
-text = "Ultime"
+text = "Déplacement et ultime"
 
 [node name="Super" type="GridContainer" parent="."]
 layout_mode = 2

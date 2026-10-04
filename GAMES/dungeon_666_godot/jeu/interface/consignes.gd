@@ -8,6 +8,9 @@ extends RefCounted
 ##   id        : l'identifiant retenu dans les réglages (`reglages_jeu.json`, champ `accueil.acquis`)
 ##   texte     : la phrase ; une seule pour tous les appareils, ou une par appareil
 ##               {clavier, manette, tactile} (à défaut d'une clé, celle du clavier)
+##   gestes    : (au lieu de `texte`) la phrase selon le DÉPLACEMENT DE LA CLASSE jouée
+##               {dash, saut, roulade} (D6Player.move_kind) : « Dashe », « Saute », « Roule » ;
+##               un « %s » y est remplacé par le terrain bas le plus proche (TERRAINS)
 ##   commande  : la commande nommée (attack, dash, « move », ou « competence » / « gadget » : le
 ##               premier des TROIS emplacements qui en porte une — voir `commande()`) : son libellé
 ##               (touche, bouton de manette) vient du HUD, son pictogramme du kit équipé, et son
@@ -15,6 +18,7 @@ extends RefCounted
 ##               gardant appuyée (combat V3).
 ##   quand     : la lecture (plus bas) qui doit être vraie pour que la consigne se montre
 ##   fait      : les événements de simulation qui prouvent que le joueur a FAIT le geste
+##   lecture   : (au lieu de `fait`) la lecture de l'état qui prouve le geste, vue à n'importe quelle image
 ##   parcours  : (au lieu de `fait`) la distance, en unités de salle, que le héros doit avoir parcourue
 ##   contexte  : vrai = le geste ne compte que si `quand` était vrai à ce moment-là
 ##   urgent    : vrai = consigne de circonstance, elle passe devant celles qui peuvent attendre
@@ -26,9 +30,11 @@ const TABLE := [
 	{"id": "attaquer", "commande": "attack", "quand": "en_jeu", "fait": ["attackStart"],
 		"texte": "Frappe les démons"},
 	{"id": "dash", "commande": "dash", "quand": "en_jeu", "fait": ["dash"],
-		"texte": "Traverse les attaques d'un dash"},
+		"gestes": {"dash": "Dashe à travers les attaques", "saut": "Saute par-dessus les attaques", "roulade": "Roule à travers les attaques"}},
 	{"id": "rouge", "commande": "dash", "quand": "telegraphe", "fait": ["dash"], "contexte": true, "urgent": true, "patience": 10.0,
-		"texte": "Esquive le rouge"},
+		"gestes": {"dash": "Esquive le rouge : dashe", "saut": "Esquive le rouge : saute", "roulade": "Esquive le rouge : roule"}},
+	{"id": "terrain", "commande": "dash", "quand": "terrain_proche", "lecture": "franchit", "urgent": true, "patience": 14.0,
+		"gestes": {"dash": "Franchis %s d'un dash", "saut": "Franchis %s d'un saut", "roulade": "Franchis %s d'une roulade"}},
 	{"id": "competence", "commande": "competence", "quand": "competence_prete", "fait": ["castStart", "skill"], "patience": 14.0,
 		"texte": {"clavier": "Lance une compétence", "tactile": "Compétence : glisse pour viser, relâche"}},
 	{"id": "gadget", "commande": "gadget", "quand": "gadget_pret", "fait": ["gadget"], "patience": 14.0,
@@ -46,6 +52,11 @@ const TABLE := [
 const RECOMPENSES := ["boon", "loot"]
 ## Commandes qui nomment une SORTE d'action plutôt qu'un bouton : la sorte lue par slot_view.
 const SORTES := {"competence": "skill", "gadget": "gadget"}
+## Le terrain bas, tel que la salle le nomme (room.low[].kind), dit au joueur.
+const TERRAINS := {"river": "la rivière", "barrier": "l'obstacle"}
+## Distance (u) du héros au bord d'un terrain bas en deçà de laquelle la consigne « terrain » a
+## lieu d'être : un seuil d'AFFICHAGE (à peu près la portée du plus court déplacement), pas une règle.
+const PRES := 120.0
 
 static func trouver(id: String) -> Dictionary:
 	for c in TABLE:
@@ -56,8 +67,16 @@ static func trouver(id: String) -> Dictionary:
 static func ids() -> Array:
 	return TABLE.map(func(c: Dictionary) -> String: return c.id)
 
-## La phrase de la consigne pour l'appareil (« clavier », « manette », « tactile »).
-static func texte(c: Dictionary, appareil: String) -> String:
+## La phrase de la consigne pour l'appareil (« clavier », « manette », « tactile ») ; avec `game`,
+## une consigne à `gestes` parle du déplacement de la classe jouée (sans partie : celui du dash).
+static func texte(c: Dictionary, appareil: String, game = null) -> String:
+	var gestes = c.get("gestes")
+	if gestes is Dictionary:
+		var sorte: String = D6Player.move_kind(game) if game is Dictionary else D6Loadout.DEFAULT_MOVE
+		var phrase := String(gestes.get(sorte, gestes.get(D6Loadout.DEFAULT_MOVE, "")))
+		if not phrase.contains("%s"):
+			return phrase
+		return phrase % TERRAINS.get(terrain_proche(game) if game is Dictionary else "", TERRAINS.river)
 	var t = c.get("texte", "")
 	if t is Dictionary:
 		return String(t.get(appareil, t.get("clavier", "")))
@@ -91,6 +110,8 @@ static func quand(nom: String, game: Dictionary) -> bool:
 	match nom:
 		"en_jeu": return en_jeu(game)
 		"telegraphe": return en_jeu(game) and telegraphe(game)
+		"terrain_proche": return en_jeu(game) and terrain_proche(game) != ""
+		"franchit": return franchit(game)
 		"competence_prete": return combat(game) and _emplacement(game, "skill", true) >= 0
 		"gadget_pret": return combat(game) and _emplacement(game, "gadget", true) >= 0
 		"super_pret": return en_jeu(game) and game.player.superCharge >= 1.0
@@ -122,6 +143,26 @@ static func telegraphe(game: Dictionary) -> bool:
 		if D6Js.truthy(h.get("hitsPlayer")) and not D6Js.truthy(h.get("done")):
 			return true
 	return false
+
+## La sorte (« river », « barrier ») du terrain bas le plus proche du héros, à moins de PRES de son
+## bord ; "" s'il n'y en a pas. On lit les rectangles de la salle (room.low), rien d'autre.
+static func terrain_proche(game: Dictionary) -> String:
+	var p: Dictionary = game.player
+	var ici := Vector2(p.x, p.y)
+	var sorte := ""
+	var mini := PRES + float(p.r)
+	for o in game.room.get("low", []):
+		var d := ici.distance_to(ici.clamp(Vector2(o.x0, o.y0), Vector2(o.x1, o.y1)))
+		if d < mini:
+			mini = d
+			sorte = String(o.get("kind", "river"))
+	return sorte
+
+## Le héros est en plein franchissement : son déplacement de classe (ou son Bond) le porte
+## AU-DESSUS d'un terrain bas. La simulation ne l'y laisse jamais : il finira sur la terre ferme.
+static func franchit(game: Dictionary) -> bool:
+	var p: Dictionary = game.player
+	return D6Player.crossing(game) and D6Physics.low_at(game.room, p.x, p.y, p.r)
 
 static func _objet_libre(game: Dictionary) -> bool:
 	var objet = game.room.get("interact")

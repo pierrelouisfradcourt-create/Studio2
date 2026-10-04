@@ -1,7 +1,8 @@
 extends RefCounted
 ## Portage de tools/bots.mjs — INTENTION : ce que le bot veut faire avant de regarder les menaces.
 ## En combat : choisir une cible, s'en approcher, frapper, lancer les actions des trois
-## emplacements (compétences, gadgets) et l'ultime (attaque TENUE quand la jauge est pleine).
+## emplacements (compétences, gadgets ; pendant la Forme du Damné : les actions de forme, lues sur
+## les mêmes boutons) et l'ultime de la classe (attaque TENUE quand la jauge est pleine).
 ## Une intention : {mx, my, attack, slots: [visée {x, y} ou null par emplacement], superP (vouloir
 ## l'ultime : relâcher puis tenir l'attaque), tap (jauge pleine sans vouloir l'ultime : frapper par
 ## appuis brefs), cross (direction {x, y} d'un franchissement de rivière au déplacement de classe)}.
@@ -32,6 +33,9 @@ const GADGET_CROWD := 3.0
 const GADGET_LOW_HP := 0.35
 const GADGET_MIN_GAP := 1.0 # s entre deux gadgets offensifs
 const SUPER_CROWD := 2.0
+const PACK_CROWD := 1.0 # la Meute se lance en DÉBUT de mêlée : au premier ennemi à sa portée
+const HOWL_CROWD := 2.0 # Hurlement (forme) : au moins deux ennemis à étourdir, ou un seul si les PV sont bas
+const BURST_LEFT := 0.1 # Embrasement (forme) : quand la jauge-minuterie (visible) est presque vide
 const SUPER_LOW_HP := 0.4
 const SUPER_REACH_PAD := 20.0
 const SUPER_HOLD_MARGIN := 0.1 # s tenues au-delà de super.holdTime : la décision de lancer l'ultime ne se reprend pas à chaque image
@@ -127,6 +131,8 @@ static func _best_lance_aim(game: Dictionary, enemies: Array, s: Dictionary):
 	var p: Dictionary = game.player
 	var s_range := Base.num(s, "range")
 	var s_radius := Base.num(s, "radius")
+	if is_nan(s_radius):
+		s_radius = Base.num(s, "width") / 2.0 # Ruée spectrale (forme) : une bande traversée, pas un projectile
 	var best = null
 	for e in enemies:
 		var d := Base.norm(e.x - p.x, e.y - p.y)
@@ -171,9 +177,13 @@ static func _ability_intent(game: Dictionary, mem: Dictionary, enemies: Array, i
 	var super_radius := Base.num(t["super"], "radius")
 	var near_super := _count_near(p, enemies, super_radius + SUPER_REACH_PAD)
 	var boss_near := _boss_near(p, enemies, super_radius)
+	# Les trois ultimes se décident sur ce qui se voit, à la portée que le bot connaît de son héros
+	# (`radius`) : la FORME quand la mêlée est là (comme l'ancienne Colère) ; la MAGIE (toute la
+	# salle) quand plusieurs ennemis sont en vue ; la MEUTE dès le premier ennemi à sa portée.
+	var crowd := PACK_CROWD if t["super"].get("kind") == "meute" else SUPER_CROWD
 	# Ultime : jauge pleine (le bouton d'attaque le montre), il faut TENIR l'attaque. Une fois
 	# décidé, le bot tient le temps du maintien : il ne relâche pas parce qu'un ennemi a reculé.
-	if p.superCharge >= 1.0 and (near_super >= SUPER_CROWD or boss_near or (near_super >= 1.0 and hp_frac < SUPER_LOW_HP)):
+	if p.superCharge >= 1.0 and (near_super >= crowd or boss_near or (near_super >= 1.0 and hp_frac < SUPER_LOW_HP)):
 		mem.superHoldUntil = game.time + t["super"].holdTime + SUPER_HOLD_MARGIN
 	intent.superP = p.superCharge >= 1.0 and game.time < mem.get("superHoldUntil", -1.0)
 	# Jauge pleine sans vouloir l'ultime : tenir l'attaque le lancerait. Le bot frappe par appuis.
@@ -191,7 +201,12 @@ static func _slot_intents(game: Dictionary, mem: Dictionary, enemies: Array, int
 		if view == null or not view.ready:
 			continue
 		var def: Dictionary = D6Loadout.slot_def(game, i) # son propre héros : portée, rayon
-		if view.kind == "skill":
+		if view.kind == "skill" and not view.aimed:
+			# Action qui ne se vise pas (Forme du Damné : hurlement, embrasement) : autour de soi.
+			if can_cast and _around_wanted(p, enemies, def, hp_frac):
+				intent.slots[i] = {"x": 0.0, "y": 0.0}
+				can_cast = false
+		elif view.kind == "skill":
 			if not can_cast:
 				continue
 			var aim = _best_lance_aim(game, enemies, def)
@@ -203,6 +218,15 @@ static func _slot_intents(game: Dictionary, mem: Dictionary, enemies: Array, int
 			if near >= GADGET_CROWD or (hp_frac < GADGET_LOW_HP and near >= 1.0):
 				intent.slots[i] = {"x": 0.0, "y": 0.0}
 				mem.lastGadget = game.time
+
+## Une action de forme qui frappe AUTOUR du héros vaut-elle d'être lancée ? Le hurlement : quand
+## plusieurs ennemis sont dans son rayon (ou un seul, PV bas) ; l'embrasement (il met fin à la
+## forme) : seulement quand la jauge-minuterie est presque vide et qu'il touchera quelqu'un.
+static func _around_wanted(p: Dictionary, enemies: Array, def: Dictionary, hp_frac: float) -> bool:
+	var near := _count_near(p, enemies, Base.num(def, "radius"))
+	if def.get("kind") == "embrasement":
+		return near >= 1.0 and p.superCharge <= BURST_LEFT
+	return near >= HOWL_CROWD or (near >= 1.0 and hp_frac < SUPER_LOW_HP)
 
 static func _melee_intent(game: Dictionary, p: Dictionary, target: Dictionary, d: float, intent: Dictionary) -> void:
 	var standoff: float = target.r + p.r + STANDOFF_GAP

@@ -22,6 +22,9 @@ extends Control
 ## menu s'ouvre sous un doigt posé.
 
 signal pause_demandee ## Échap, P, Start, bouton retour d'Android
+## Une touche, un bouton de souris ou de manette vient d'enfoncer la commande `id` (attack, dash,
+## skill1..skill3). Pour l'AFFICHAGE seulement (le HUD enfonce son bouton) : le jeu, lui, lit `lire()`.
+signal commande_enfoncee(id: String)
 
 const Tactile = preload("res://jeu/entrees/tactile.gd")
 const ClavierSouris = preload("res://jeu/entrees/clavier_souris.gd")
@@ -100,6 +103,20 @@ func tactile() -> bool:
 func interface_tactile() -> Dictionary:
 	return _doigts.interface(_tactile_actif)
 
+## Les commandes TENUES au clavier, à la souris ou à la manette, {id: true} : pour l'affichage.
+func tenues() -> Dictionary:
+	var t := {}
+	if not _tactile_actif:
+		_clavier.noter_tenues(t)
+		_manette.noter_tenues(t)
+	return t
+
+## La direction visée au bureau (stick droit, sinon souris), unitaire ; ZERO en visée assistée.
+## Pour l'affichage de la ligne de visée : la même direction que celle posée dans `lire()`.
+func visee_bureau() -> Vector2:
+	var stick := _manette.visee()
+	return stick if stick != Vector2.ZERO else _clavier.visee(_tactile_actif, _heros_a_l_ecran())
+
 # ---------------------------------------------------------------- événements
 
 func _input(ev: InputEvent) -> void:
@@ -122,6 +139,8 @@ func _input(ev: InputEvent) -> void:
 		_sur_touche(ev)
 	elif ev is InputEventJoypadButton:
 		_manette.bouton(ev.device, ev.button_index, ev.pressed)
+		if ev.pressed and Manette.ACTIONS.has(ev.button_index):
+			commande_enfoncee.emit(Manette.ACTIONS[ev.button_index])
 		if ev.pressed and ev.button_index == Manette.BOUTON_PAUSE:
 			pause_demandee.emit()
 	elif ev is InputEventJoypadMotion:
@@ -143,11 +162,15 @@ func _unhandled_input(ev: InputEvent) -> void:
 	elif ev is InputEventMouseButton:
 		if ev.pressed:
 			_clavier.bouton_enfonce(ev.button_index, ev.position)
+			if ClavierSouris.BOUTONS.has(ev.button_index):
+				commande_enfoncee.emit(ClavierSouris.BOUTONS[ev.button_index])
 	elif ev is InputEventKey:
 		var touche := ClavierSouris.code(ev)
 		if ev.pressed and not ev.echo and not ClavierSouris.est_pause(touche):
 			_tactile_actif = false
 			_clavier.touche_enfoncee(touche)
+			if ClavierSouris.ACTIONS.has(touche):
+				commande_enfoncee.emit(ClavierSouris.ACTIONS[touche])
 
 ## Le doigt et la souris sont deux périphériques distincts : une souris fabriquée à partir d'un
 ## doigt (si le projet active un jour `emulate_mouse_from_touch` pour ses boutons) est ignorée.

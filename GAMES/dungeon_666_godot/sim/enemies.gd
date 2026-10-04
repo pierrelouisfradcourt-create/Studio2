@@ -144,7 +144,9 @@ static func _update_enemy(game: Dictionary, e: Dictionary, dt: float, t: Diction
 			D6Boss.update_boss(game, e, dt)
 		else:
 			var hp0: float = p.hp
-			_ai()[e.kind].call(game, e, t.enemies[e.kind], dt)
+			# Un ennemi de mêlée accaparé par un limier de la Meute joue son pas contre lui.
+			if not D6KitSupers.distract(game, e, t.enemies[e.kind]):
+				_ai()[e.kind].call(game, e, t.enemies[e.kind], dt)
 			if D6Js.truthy(e.eliteMod) and p.hp < hp0:
 				D6FoeElites.foe_dealt(game, e, hp0 - p.hp) # coup direct qui a porté
 	_integrate(game, e, dt)

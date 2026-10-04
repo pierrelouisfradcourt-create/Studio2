@@ -448,6 +448,21 @@ func _echantillons_heros() -> Array:
 	for style in [null, "sentence", "nuee"]:
 		out.append({"type": "super", "x": 500.0, "y": 400.0, "super": style})
 		out.append({"type": "superTick", "x": 500.0, "y": 400.0, "super": style})
+	# Combat V3, étape 2 : les trois ultimes de classe (ajout : un échantillon par type routé).
+	for style in ["forme", "magie", "meute"]:
+		out.append({"type": "super", "x": 500.0, "y": 400.0, "super": style})
+	out.append_array([
+		{"type": "ultFreeze", "x": 500.0, "y": 400.0, "time": 0.3},
+		{"type": "ultStrike", "x": 500.0, "y": 400.0, "r": 1700.0, "hits": 3.0, "executed": 1.0},
+		{"type": "ultBolt", "id": 3.0, "x": 560.0, "y": 400.0, "executed": true},
+		{"type": "formRush", "x0": 300.0, "y0": 400.0, "x": 500.0, "y": 400.0, "width": 70.0},
+		{"type": "formHowl", "x": 500.0, "y": 400.0, "r": 180.0},
+		{"type": "formBurst", "x": 500.0, "y": 400.0, "r": 210.0, "frac": 0.5, "amount": 95.0},
+		{"type": "formEnd", "x": 500.0, "y": 400.0, "reason": "temps"},
+		{"type": "allySpawn", "id": 7.0, "x": 520.0, "y": 430.0, "life": 12.0},
+		{"type": "allyDeath", "id": 7.0, "x": 520.0, "y": 430.0},
+		{"type": "allyGone", "id": 7.0, "x": 520.0, "y": 430.0, "reason": "temps"},
+	])
 	return out
 
 func _echantillons_ennemis() -> Array:

@@ -59,6 +59,22 @@ const CAS: Array[Dictionary] = [
 	{"type": "moveShort", "dirX": 1.0, "dirY": 0.0, "reach": 150.0, "done": 30.0, "move": "dash"},
 	{"type": "moveShort", "dirX": 0.0, "dirY": -1.0, "reach": 130.0, "done": 0.0, "move": "saut"},
 	{"type": "moveLand", "r": 80.0, "move": "saut", "pushed": 2.0},
+	# Les trois ultimes de classe (combat V3, étape 2).
+	{"type": "super", "r": 1700.0, "super": "magie"},
+	{"type": "ultFreeze", "time": 0.3},
+	{"type": "ultStrike", "r": 1700.0, "hits": 3.0, "executed": 1.0, "shake": 1.2},
+	{"type": "ultBolt", "id": 9020.0, "r": 14.0, "executed": false},
+	{"type": "ultBolt", "id": 9021.0, "r": 20.0, "executed": true},
+	{"type": "formStart", "time": 10.0},
+	{"type": "formEnd", "reason": "temps"},
+	{"type": "formRush", "segment_depart": Vector2(-200.0, 30.0), "width": 70.0},
+	{"type": "formHowl", "r": 180.0},
+	{"type": "formBurst", "r": 210.0, "frac": 0.6, "amount": 108.0},
+	{"type": "allySpawn", "id": 9022.0, "life": 12.0},
+	{"type": "allyBite", "id": 9022.0, "cible": Vector2(30.0, 0.0), "angle": 0.0},
+	{"type": "allyHurt", "id": 9022.0, "amount": 8.0, "source": "imp"},
+	{"type": "allyDeath", "id": 9022.0},
+	{"type": "allyGone", "id": 9022.0, "reason": "temps"},
 ]
 
 ## Les cas dont le type est dans `types` (tous si vide), posés en grille autour de `centre`.
@@ -82,6 +98,14 @@ static func _poser(ev: Dictionary, p: Vector2) -> void:
 		var s: Vector2 = ev.segment
 		ev.erase("segment")
 		ev.merge({"x0": p.x - s.x * 0.5, "y0": p.y - s.y * 0.5, "x1": p.x + s.x * 0.5, "y1": p.y + s.y * 0.5})
+	if ev.has("segment_depart"): # formRush : d'où part la ruée (x0, y0), relatif à l'arrivée (x, y)
+		ev["x0"] = p.x + ev.segment_depart.x
+		ev["y0"] = p.y + ev.segment_depart.y
+		ev.erase("segment_depart")
+	if ev.has("cible"): # allyBite : ce que le limier mord (tx, ty)
+		ev["tx"] = p.x + ev.cible.x
+		ev["ty"] = p.y + ev.cible.y
+		ev.erase("cible")
 	if ev.has("decalage_source"):
 		ev["srcX"] = p.x + ev.decalage_source
 		ev["srcY"] = p.y

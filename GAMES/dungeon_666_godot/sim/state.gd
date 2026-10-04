@@ -92,6 +92,9 @@ static func create_player(tuning: Dictionary, x, y) -> Dictionary:
 		"superArm": false, # l'appui d'attaque en cours a COMMENCÉ jauge pleine : lui seul arme l'ultime
 		"superT": 0.0,
 		"superTick": 0.0,
+		"ult": null, # ultime qui dure : {kind: 'forme', t, max, slots, states} (D6KitSupers) ; null sinon
+		"markId": 0.0, # dernier ennemi que le héros a blessé LUI-MÊME (cible désignée de la meute)…
+		"markAt": -99.0, # … et quand
 		"surge": 0.0, # élan passager (proc « surge ») : secondes restantes…
 		"surgeMult": 0.0, # … et dégâts en plus tant qu'il dure
 		"buffer": {"action": null, "t": 0.0, "aimX": 0.0, "aimY": 0.0, "slot": 0.0},

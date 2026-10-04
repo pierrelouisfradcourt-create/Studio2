@@ -3,7 +3,7 @@ extends RefCounted
 ## Repris tel quel de la version web (tools/traces.mjs, figée le 2026-10-01) : mêmes parties,
 ## mêmes graines, mêmes bots — les 70 parties dont l'égalité exacte avec le web a été prouvée
 ## ce jour-là (parite/LISEZ_MOI.md). Depuis, c'est Godot qui les enregistre ; les 8 parties
-## terrain_* (combat V3, étape 1 bis) n'ont jamais existé sur le web.
+## terrain_* (combat V3, étape 1 bis) et les 7 parties ultime_* (étape 2) n'ont jamais existé sur le web.
 ##
 ## Une spec : voir references/partie.gd. Ajouter une partie = ajouter une ligne ici, puis
 ## l'enregistrer (references/enregistrer.gd -- <nom>). Les graines sont choisies pour que ce que
@@ -26,6 +26,7 @@ static func all() -> Array:
 	out.append_array(_altars_and_layouts())
 	out.append_array(_bestiary())
 	out.append_array(_terrain())
+	out.append_array(_ultimes())
 	return out
 
 static func names() -> Array:
@@ -47,6 +48,23 @@ static func _terrain() -> Array:
 		{"name": "terrain_gues_hasard_arbalete", "seed": 5021, "floor": 6, "kit": KITS[5], "slots": SLOTS_3.chasseresse, "policy": "hasard", "seconds": 60, "godMode": true},
 		{"name": "terrain_torrent_hasard_hache", "seed": 5003, "floor": 300, "kit": KITS[2], "slots": SLOTS_3.bourreau, "policy": "hasard", "seconds": 60, "godMode": true},
 		{"name": "terrain_barrieres_hasard_lame", "seed": 5004, "floor": 12, "policy": "hasard", "seconds": 60, "godMode": true},
+	]
+
+## Combat V3, étape 2 : les trois ULTIMES de classe — Forme du Damné (Revenant), Sentence capitale
+## (Bourreau), Meute des Limbes (Chasseresse). Le bot habile lance l'ultime dès que sa jauge est
+## pleine et que la mêlée le demande ; la politique « hasard » le lance en tenant l'attaque et presse
+## les actions de forme n'importe quand. Graines où l'ultime est VRAIMENT joué (gardé par
+## tests/regles/v3_ultimes.gd, « références : les parties ultime_* »). Les parties kit_*, section_*
+## et gardien_* le jouent aussi.
+static func _ultimes() -> Array:
+	return [
+		{"name": "ultime_forme_lame", "seed": 7101, "floor": 7, "kit": KITS[0], "slots": SLOTS_3.revenant, "policy": "skilled", "seconds": 90},
+		{"name": "ultime_forme_hasard_dagues", "seed": 7102, "floor": 9, "kit": KITS[1], "slots": SLOTS_3.revenant, "policy": "hasard", "seconds": 90, "godMode": true},
+		{"name": "ultime_sentence_hache", "seed": 7103, "floor": 7, "kit": KITS[2], "slots": SLOTS_3.bourreau, "policy": "skilled", "seconds": 90},
+		{"name": "ultime_sentence_gardien_marteau", "seed": 7104, "floor": 18, "kit": KITS[3], "slots": SLOTS_3.bourreau, "policy": "skilled", "seconds": 90, "godMode": true},
+		{"name": "ultime_meute_arc", "seed": 7105, "floor": 7, "kit": KITS[4], "slots": SLOTS_3.chasseresse, "policy": "skilled", "seconds": 90},
+		{"name": "ultime_meute_terrain_arbalete", "seed": 5021, "floor": 6, "kit": KITS[5], "slots": SLOTS_3.chasseresse, "policy": "skilled", "seconds": 90, "godMode": true},
+		{"name": "ultime_meute_hasard_arc", "seed": 7107, "floor": 10, "kit": KITS[4], "slots": SLOTS_3.chasseresse, "policy": "hasard", "seconds": 90, "godMode": true},
 	]
 
 ## La spec d'une partie, ou null.

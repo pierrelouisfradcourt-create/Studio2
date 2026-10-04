@@ -54,6 +54,7 @@ func _derouler() -> void:
 	_ok(ville.visible, "la Ville s'affiche quand app.ecran == « ville »")
 	await _onglets()
 	await _classe()
+	await _deplacement()
 	await _sanctuaire()
 	await _sans_ames()
 	await _emplacements()
@@ -99,6 +100,13 @@ func _texte_visible(texte: String) -> bool:
 			return true
 	return false
 
+## Un texte visible de l'onglet commence par `debut`, sans égard aux majuscules.
+func _texte_commence(debut: String) -> bool:
+	for l in ville.page(ville.onglet).find_children("*", "Label", true, false):
+		if l.text.to_lower().begins_with(debut.to_lower()) and l.is_visible_in_tree():
+			return true
+	return false
+
 func _ouvrir(id: String) -> void:
 	ville.ouvrir_onglet(id)
 	await _images()
@@ -117,6 +125,19 @@ func _onglets() -> void:
 		for autre in ville.ONGLETS:
 			seule = seule and ville.page(autre).visible == (autre == id)
 		_ok(ville.onglet == id and seule, "onglet « %s » : sa page est la seule affichée" % id)
+
+## Finitions V3 : l'onglet Classe et le Grimoire nomment le DÉPLACEMENT de la classe (dash, saut,
+## roulade) et disent ce qu'il fait, avec le texte des données (data/classes.json, `moves`).
+func _deplacement() -> void:
+	print("[déplacement de classe]")
+	await _ouvrir("classe")
+	for id in app.contenu.classes:
+		var geste: Dictionary = app.contenu.moves[app.contenu.classes[id].move]
+		_ok(_texte_visible("Déplacement · %s : %s" % [geste.name, geste.text]), "onglet Classe, %s : « Déplacement · %s » et ce qu'il fait" % [id, geste.name])
+	await _ouvrir("grimoire")
+	var c: Dictionary = app.contenu.classes[app.profil.loadout.classId]
+	var le_sien: Dictionary = app.contenu.moves[c.move]
+	_ok(_texte_commence("Déplacement · %s" % c.name) and _texte_visible(le_sien.name) and _texte_visible(le_sien.text), "Grimoire : le déplacement de la classe (« %s ») est nommé et décrit" % le_sien.name)
 
 func _classe() -> void:
 	print("[classe]")

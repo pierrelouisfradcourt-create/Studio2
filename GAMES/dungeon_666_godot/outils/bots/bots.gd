@@ -15,8 +15,9 @@ extends RefCounted
 ##
 ## Politiques :
 ##   skilled — joue bien : lit les télégraphes, esquive au dernier moment (marche ou dash),
-##             punit les béliers sonnés, gère ses trois emplacements (compétences, gadgets)
-##             et l'ultime : l'appui doit COMMENCER jauge pleine, il RELÂCHE donc l'attaque un pas
+##             punit les béliers sonnés, gère ses trois emplacements (compétences, gadgets,
+##             actions de forme pendant la Forme du Damné) et l'ultime de sa classe (forme en
+##             mêlée, magie quand plusieurs ennemis sont en vue, meute au premier ennemi à portée) : l'appui doit COMMENCER jauge pleine, il RELÂCHE donc l'attaque un pas
 ##             puis rappuie et tient ; jauge pleine sans vouloir l'ultime, il frappe par appuis.
 ##   noDash  — identique mais n'utilise JAMAIS le dash ni le gadget : mesure la valeur du dash.
 ##   masher  — fonce sur l'ennemi le plus proche et martèle l'attaque (tenue ; jauge pleine : des

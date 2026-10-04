@@ -29,7 +29,7 @@
       },
       "arsenal": {
         "name": "Arsenal",
-        "text": "+1 charge de gadget par section.",
+        "text": "+1 charge par section à chaque compétence à charges.",
         "stat": "gadgetChargesBonus",
         "perLevel": 1,
         "max": 1,

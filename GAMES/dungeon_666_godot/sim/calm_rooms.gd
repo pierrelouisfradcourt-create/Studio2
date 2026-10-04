@@ -85,7 +85,7 @@ static func _rest_options(game: Dictionary) -> Array:
 		# jamais grisé : un choix reste toujours possible
 		{"id": "boire", "kicker": "Soin", "label": "Boire · +" + D6Js.num_str(heal) + " PV", "text": "Rend " + D6Js.num_str(D6Js.jround(r.heal * PERCENT)) + " % des PV.", "color": "#6dff8a", "disabled": false},
 		{"id": "mediter", "kicker": "Amélioration · temporaire", "label": ("Méditer · " + str(boon_name) + " niv. " + D6Js.num_str(target.level + 1.0)) if target != null else "Méditer", "text": "Votre bénédiction la moins avancée gagne un niveau." if target != null else "Aucune bénédiction à approfondir.", "color": "#b98cff", "disabled": target == null},
-		{"id": "fioles", "kicker": "Pouvoirs", "label": "Remplir les fioles", "text": "Charges de gadget pleines, jauge de Super +" + D6Js.num_str(D6Js.jround(r.superCharge * PERCENT)) + " %.", "color": REST_COLOR, "disabled": full},
+		{"id": "fioles", "kicker": "Pouvoirs", "label": "Remplir les fioles", "text": "Charges des compétences pleines, jauge de Super +" + D6Js.num_str(D6Js.jround(r.superCharge * PERCENT)) + " %.", "color": REST_COLOR, "disabled": full},
 	]
 
 ## Panneau de choix (game.choice) de l'objet d'interaction `it`.

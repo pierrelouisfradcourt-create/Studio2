@@ -305,7 +305,8 @@ static func _frappe_fin_de_dash(h) -> void:
 	h.egal(g.player.attack.strike, true)
 
 static func _super(h) -> void:
-	var g := _sandbox()
+	# Combat V3, étape 2 : la Colère n'est plus l'ultime du Revenant ; elle est lancée directement.
+	var g := _sandbox({"tuning": {"classes": {"revenant": {"super": "colere"}}}})
 	g.player.superCharge = 1.0
 	h.ultime(g)
 	h.egal(g.player.state, "super")

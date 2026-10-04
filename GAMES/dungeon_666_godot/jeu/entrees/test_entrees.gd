@@ -50,7 +50,7 @@ func _derouler() -> void:
 	print("viewport %s · fenêtre %s · échelle %s" % [root.get_visible_rect().size, root.size, e._doigts.echelle])
 	for essai: Callable in [_forme, _arc, _joystick, _joystick_suiveur, _attaque_et_multi_doigts, _appui_bref, _glisser_relacher,
 			_maintien, _attaque_annulee, _trois_doigts, _dash, _competence, _tap_flottant, _tolerance_du_pouce, _control_qui_consomme, _clavier, _souris, _souris_inactive,
-			_manette, _manette_visee, _vider_et_pause, _perte_du_focus, _zone_sure]:
+			_manette, _manette_visee, _retours_du_bureau, _vider_et_pause, _perte_du_focus, _zone_sure]:
 		_a_zero()
 		essai.call()
 	_a_zero()
@@ -634,6 +634,39 @@ func _manette_visee() -> void:
 	f = e.lire()
 	pad_bouton(JOY_BUTTON_Y, false)
 	verifier("manette : stick droit au repos, l'emplacement part en visée assistée", f.skill2Pressed and f.skill2AimX == 0.0 and f.skill2AimY == 0.0)
+
+## Finitions V3 : pour l'AFFICHAGE, la vue dit quelle commande vient d'être enfoncée (signal),
+## lesquelles sont tenues, et où vise le bureau (souris, stick droit). Rien de cela ne change `lire()`.
+func _retours_du_bureau() -> void:
+	var vus: Array = []
+	var noter := func(id: String) -> void: vus.append(id)
+	e.commande_enfoncee.connect(noter)
+	touche(KEY_SPACE, true)
+	verifier("retour : Espace enfoncé → commande_enfoncee(« dash »), et dash tenu", vus == ["dash"] and e.tenues() == {"dash": true}, [vus, e.tenues()])
+	touche(KEY_SPACE, true, true)
+	touche(KEY_SPACE, false)
+	verifier("retour : la répétition de touche ne ré-enfonce pas ; relâchée, plus rien n'est tenu", vus == ["dash"] and e.tenues().is_empty(), [vus, e.tenues()])
+	verifier("retour : souris inutilisée, la visée du bureau est assistée (ZERO)", e.visee_bureau() == Vector2.ZERO, e.visee_bureau())
+	var bas := HEROS + Vector2(0.0, 150.0)
+	clic(MOUSE_BUTTON_RIGHT, true, bas, MOUSE_BUTTON_MASK_RIGHT)
+	verifier("retour : clic droit → skill1 enfoncé, tenu, visé vers la souris", vus == ["dash", "skill1"] and e.tenues() == {"skill1": true} and e.visee_bureau().is_equal_approx(Vector2.DOWN), [vus, e.tenues(), e.visee_bureau()])
+	clic(MOUSE_BUTTON_RIGHT, false, bas, 0)
+	pad_axe(JOY_AXIS_RIGHT_X, -0.9)
+	pad_bouton(JOY_BUTTON_Y, true)
+	verifier("retour : manette, Y → skill2 enfoncé, tenu ; le stick droit donne la visée", vus == ["dash", "skill1", "skill2"] and e.tenues() == {"skill2": true} and e.visee_bureau().is_equal_approx(Vector2.LEFT), [vus, e.tenues(), e.visee_bureau()])
+	pad_axe(JOY_AXIS_TRIGGER_RIGHT, 1.0)
+	verifier("retour : gâchette droite tenue = attaque tenue", e.tenues() == {"skill2": true, "attack": true}, e.tenues())
+	pad_axe(JOY_AXIS_TRIGGER_RIGHT, 0.0)
+	pad_bouton(JOY_BUTTON_Y, false)
+	pad_axe(JOY_AXIS_RIGHT_X, 0.0)
+	touche(KEY_E, true)
+	doigt(1, gauche(0.5, 0.5), true)
+	verifier("retour : au doigt, aucune commande « tenue » du bureau", e.tenues().is_empty(), e.tenues())
+	doigt(1, gauche(0.5, 0.5), false)
+	touche(KEY_E, false)
+	e.commande_enfoncee.disconnect(noter)
+	var f: Dictionary = e.lire()
+	verifier("retour : les lectures d'affichage n'ont consommé aucun front", f.dashPressed and f.skill1Pressed and f.skill2Pressed, f)
 
 # ---------------------------------------------------------------- fronts, pause, disposition
 

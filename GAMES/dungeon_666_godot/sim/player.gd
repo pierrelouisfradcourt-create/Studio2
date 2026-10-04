@@ -17,7 +17,7 @@ extends RefCounted
 ##   arme 'ranged'      -> kit_shots.fire_weapon_shots (traits au début de l'actif, pas de balayage)
 ##   compétence ≠ lance -> kit_skills (chain, bond, brasier, volee)
 ##   gadget ≠ nova      -> kit_gadgets (bombe, piege, totem)
-##   Super ≠ colere     -> kit_supers (sentence, nuee)
+##   Super ≠ colere     -> kit_supers (ultimes de classe : forme, magie, meute ; réserve : sentence, nuee)
 ## Les tirs et zones posés par le héros vivent dans la salle (kit_common.kit_store).
 ##
 ## COMBAT V3 — trois EMPLACEMENTS d'action (D6Loadout : game.kit.slots, player.slots) : une
@@ -179,8 +179,8 @@ static func _can_skill(p: Dictionary, slot: int) -> bool:
 
 static func _can_super(game: Dictionary) -> bool:
 	var p: Dictionary = game.player
-	if p.superCharge < 1.0 or _over_low(game):
-		return false
+	if p.superCharge < 1.0 or _over_low(game) or D6KitSupers.acting(game):
+		return false # jauge pleine, terre ferme, et jamais deux ultimes à la fois
 	return p.state == "free" or p.state == "attack" or p.state == "cast" or p.state == "dash"
 
 ## Une action ne mérite le tampon que si elle peut partir pendant sa fenêtre : marteler un dash
@@ -221,7 +221,7 @@ static func read_input(game: Dictionary, input: Dictionary) -> bool:
 	# L'ultime ne s'arme que si l'APPUI A COMMENCÉ jauge pleine : un appui tenu depuis avant ne
 	# l'arme jamais, il faut relâcher et rappuyer.
 	if held and not p.attackHeld:
-		p.superArm = p.superCharge >= 1.0
+		p.superArm = p.superCharge >= 1.0 and not D6KitSupers.acting(game)
 	p.attackHeld = held
 	if not held:
 		p.superHold = 0.0 # relâcher l'attaque annule l'armement de l'ultime
@@ -778,7 +778,7 @@ static func _start_super(game: Dictionary) -> void:
 	p.superT = s.duration + D6Js.nz(p.stats.get("superDurationBonus"), 0.0)
 	p.superTick = 0.0
 	if s.kind != "colere":
-		D6KitSupers.start_kit_super(game)
+		D6KitSupers.start_kit_super(game) # forme : kit de forme branché ; meute : les limiers apparaissent
 	p.state = "super"
 	p.stateTime = 0.0
 	game.telemetry.superUses += 1.0
@@ -799,6 +799,12 @@ static func _update_super(game: Dictionary, dt: float) -> void:
 		p.state = "free"
 		p.stateTime = 0.0
 		D6State.emit(game, "superEnd", {"x": p.x, "y": p.y})
+
+## Ce que l'affichage lit de l'ULTIME de la classe (jauge, maintien, sorte, minuterie), sans
+## connaître l'intérieur : {id, kind ("forme" | "magie" | "invocation"), name, icon, text, charge,
+## ready, holdFrac, active, timeFrac, timeLeft, allies}. Détail : D6KitSupers.view.
+static func ultimate_view(game: Dictionary) -> Dictionary:
+	return D6KitSupers.view(game)
 
 ## Colère : tourbillon qui frappe tout autour à intervalle fixe et efface les projectiles.
 static func _colere_tick(game: Dictionary, dt: float, s: Dictionary) -> void:

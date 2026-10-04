@@ -13,9 +13,7 @@ const COURSE := 58.0 # rayon de la base du joystick
 const POUCE := 26.0
 const DEGAGEMENT := 24.0 # px autour du groupe de boutons
 const RAYON_ATTAQUE := 52.0 # rayon de référence du bouton d'attaque (px CSS) : donne l'échelle
-## La ligne de visée, en px CSS : elle commence hors du héros, finit par une pointe. Elle montre
-## une DIRECTION, pas une portée (la portée est une règle : l'affichage ne la calcule pas).
-const VISEE := {"debut": 30.0, "fin": 170.0, "trait": 5.0, "pointe": 13.0}
+const Reperes = preload("res://jeu/interface/reperes.gd") # la ligne de visée, la même sur les trois appareils
 
 @onready var _boutons := {"attack": $Attaque, "dash": $Dash, "skill1": $Emplacement1, "skill2": $Emplacement2, "skill3": $Emplacement3}
 
@@ -61,24 +59,10 @@ func coin() -> Vector2:
 func _draw() -> void:
 	var lot := Triangles.new()
 	if not _visee.is_empty():
-		_dessiner_visee(lot)
+		Reperes.ajouter_visee(lot, _visee, _echelle)
 	if D6Js.truthy(_manette.get("active")):
 		_dessiner_manche(lot)
 	lot.tracer(self)
-
-## Cerne sombre puis trait clair : la ligne se lit sur un sol clair comme sur un sol noir.
-func _dessiner_visee(lot: Triangles) -> void:
-	var dir: Vector2 = _visee.dir
-	var a: Vector2 = _visee.de + dir * VISEE.debut * _echelle
-	var b: Vector2 = _visee.de + dir * VISEE.fin * _echelle
-	var ep: float = VISEE.trait * _echelle
-	var t: float = VISEE.pointe * _echelle
-	var pointe := PackedVector2Array([b + dir * t, b + dir.orthogonal() * t * 0.7, b - dir.orthogonal() * t * 0.7])
-	var encre := Color(Couleurs.UI["void"], 0.5)
-	lot.ligne(a, b, encre, ep + 4.0)
-	lot.contour(pointe, encre, 4.0)
-	lot.ligne(a, b, Color(_visee.couleur, 0.9), ep)
-	lot.polygone(pointe, _visee.couleur)
 
 ## Cerne sombre puis trait clair : le joystick se lit sur un sol clair comme sur un sol noir.
 func _dessiner_manche(lot: Triangles) -> void:

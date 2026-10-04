@@ -53,13 +53,19 @@ static func update_nav(game: Dictionary) -> void:
 	if nav == null or game.tick - nav.lastTick < REFRESH_TICKS:
 		return
 	nav.lastTick = game.tick
+	var dist: PackedInt32Array = nav.dist
+	var queue: PackedInt32Array = nav.queue
+	_flood(nav, dist, queue, _cell_of(nav, game.player.x, game.player.y))
+	# Rendus au champ : le portage ne dépend pas du partage par référence des tableaux compacts.
+	nav.dist = dist
+	nav.queue = queue
+
+## Remplit `dist` (BFS 8-connexe) depuis la case `start` ; `queue` est la file de travail.
+static func _flood(nav: Dictionary, dist: PackedInt32Array, queue: PackedInt32Array, start: int) -> void:
 	var cols: int = nav.cols
 	var rows: int = nav.rows
 	var blocked: PackedByteArray = nav.blocked
-	var dist: PackedInt32Array = nav.dist
-	var queue: PackedInt32Array = nav.queue
 	dist.fill(UNREACHED)
-	var start := _cell_of(nav, game.player.x, game.player.y)
 	var head := 0
 	var tail := 0
 	dist[start] = 0
@@ -87,9 +93,23 @@ static func update_nav(game: Dictionary) -> void:
 			dist[n] = dist[c] + 1
 			queue[tail] = n
 			tail += 1
-	# Rendus au champ : le portage ne dépend pas du partage par référence des tableaux compacts.
-	nav.dist = dist
+
+## Case de navigation du point (x, y) : pour savoir si une cible a changé de case.
+static func cell_of(room: Dictionary, x: float, y: float) -> int:
+	var nav = room.get("nav")
+	return -1 if nav == null else _cell_of(nav, x, y)
+
+## Champ de distance vers un point QUELCONQUE de la salle (les limiers de la Meute marchent vers
+## leur cible, pas vers le héros) : un tableau neuf, à garder par l'appelant et à lire par slope.
+## Même grille, mêmes cases bloquées (terrain bas compris) que le champ des ennemis.
+static func flood_to(room: Dictionary, x: float, y: float) -> PackedInt32Array:
+	var nav: Dictionary = room.nav
+	var dist := PackedInt32Array()
+	dist.resize(nav.cols * nav.rows)
+	var queue: PackedInt32Array = nav.queue
+	_flood(nav, dist, queue, _cell_of(nav, x, y))
 	nav.queue = queue
+	return dist
 
 ## Direction (unitaire, écrite dans out) vers la case voisine la plus proche du héros.
 ## Rend false si aucune pente utilisable (on garde alors la poursuite directe).
@@ -97,9 +117,12 @@ static func nav_direction(game: Dictionary, x: float, y: float, out: Dictionary)
 	var nav = game.room.get("nav")
 	if nav == null:
 		return false
+	return slope(nav, nav.dist, x, y, out)
+
+## La pente du champ `dist` au point (x, y) : direction de la case voisine la plus proche du but.
+static func slope(nav: Dictionary, dist: PackedInt32Array, x: float, y: float, out: Dictionary) -> bool:
 	var cols: int = nav.cols
 	var rows: int = nav.rows
-	var dist: PackedInt32Array = nav.dist
 	var blocked: PackedByteArray = nav.blocked
 	var c := _cell_of(nav, x, y)
 	var cx := c % cols

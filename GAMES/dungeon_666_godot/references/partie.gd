@@ -43,7 +43,7 @@ static func digest(game: Dictionary, events: Dictionary) -> Dictionary:
 	for d in room.doors:
 		doors.append("%s%s" % [d.reward, "+" if D6Js.truthy(d.get("open")) else "-"])
 	var choice = game.get("choice")
-	return {
+	var d := {
 		"tick": game.tick, "time": game.time, "mode": game.mode, "floor": game.run.floor,
 		"gold": game.run.gold, "souls": game.meta.souls,
 		"rng": [game.rng.gen.s, game.rng.combat.s, game.rng.ai.s],
@@ -59,6 +59,11 @@ static func digest(game: Dictionary, events: Dictionary) -> Dictionary:
 		"ev": events,
 		"tel": [game.telemetry.kills, game.telemetry.damageTaken, game.telemetry.damageDealt, game.telemetry.dodges],
 	}
+	# Limiers de la Meute des Limbes : dans l'empreinte seulement quand il y en a (une partie sans
+	# meute garde l'empreinte qu'elle avait). La Forme du Damné se lit déjà : jauge, emplacements.
+	if not game.allies.is_empty():
+		d["al"] = game.allies.map(func(a): return [a.id, a.x, a.y, a.hp, a.life, a.state, a.targetId, 1 if a.dead else 0])
+	return d
 
 static func _drain(game: Dictionary, events: Dictionary) -> void:
 	for ev in game.events:

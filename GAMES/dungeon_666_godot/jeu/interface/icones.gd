@@ -2,6 +2,7 @@ extends RefCounted
 ## Pictogrammes des commandes, DESSINÉS (aucune image) : portage des `ICONS` de
 ## GAMES/dungeon_666/src/render/hud.mjs. Les noms sont ceux du champ `icon` des kits
 ## (data/classes.json) et, par défaut, l'identifiant du bouton (attack, dash, skill, gadget, super).
+## Le bouton de DÉPLACEMENT porte le geste de la classe (data/classes.json, `moves` : dash, saut, roulade).
 ##   Icones.dessiner(self, "axe", centre, rayon, couleur)   dans le `_draw` d'un CanvasItem
 ##   Icones.ajouter(lot, "axe", centre, rayon, couleur)     dans un lot de triangles déjà ouvert
 ## Coût : un pictogramme part en UN appel de dessin (jeu/theme/triangles.gd), ou avec le lot de
@@ -10,7 +11,7 @@ extends RefCounted
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
 const Triangles = preload("res://jeu/theme/triangles.gd")
 const PAS := 8 # segments par courbe
-const NOMS := ["attack", "dash", "skill", "gadget", "super", "daggers", "axe", "hammer", "bow", "crossbow", "chain", "leap", "fire", "fan", "bomb", "trap", "roar", "totem", "sentence", "rain"]
+const NOMS := ["attack", "dash", "saut", "roulade", "skill", "gadget", "super", "daggers", "axe", "hammer", "bow", "crossbow", "chain", "leap", "fire", "fan", "bomb", "trap", "roar", "totem", "sentence", "rain", "forme", "meute", "ruee", "burst"]
 
 static func connue(nom) -> bool:
 	return nom is String and nom in NOMS
@@ -29,6 +30,8 @@ static func ajouter(lot: Triangles, nom: String, c: Vector2, r: float, col: Colo
 	match nom:
 		"attack": _epee(lot, c, r, col)
 		"dash": _dash(lot, r, col)
+		"saut": _saut(lot, r, col)
+		"roulade": _roulade(lot, r, col)
 		"skill": _lance(lot, c, r, col)
 		"gadget": _nova(lot, r, col)
 		"super": _colere(lot, r, col)
@@ -46,6 +49,10 @@ static func ajouter(lot: Triangles, nom: String, c: Vector2, r: float, col: Colo
 		"roar": _cri(lot, r, col)
 		"totem": _totem(lot, r, col)
 		"sentence": _sentence(lot, r, col)
+		"forme": _spectre(lot, r, col)
+		"meute": _meute(lot, r, col)
+		"ruee": _ruee(lot, r, col)
+		"burst": _embrasement(lot, r, col)
 		"rain": _nuee(lot, c, r, col)
 	lot.repere = avant
 
@@ -99,6 +106,23 @@ static func _epee(lot: Triangles, c: Vector2, r: float, col: Color) -> void:
 static func _dash(lot: Triangles, r: float, col: Color) -> void:
 	for o in [-0.22, 0.12]:
 		_poly(lot, r, [[o - 0.1, -0.35], [o + 0.22, 0.0], [o - 0.1, 0.35], [o, 0.0]], col)
+
+## Le saut du Bourreau : les chevrons du dash, dressés vers le haut, au-dessus du sol.
+static func _saut(lot: Triangles, r: float, col: Color) -> void:
+	for o in [-0.22, 0.1]:
+		_poly(lot, r, [[-0.35, o + 0.1], [0.0, o - 0.22], [0.35, o + 0.1], [0.0, o]], col)
+	_rect(lot, r, -0.45, 0.4, 0.9, 0.09, col)
+
+## La roulade de la Chasseresse : une boucle qui roule vers la droite, au ras du sol.
+static func _roulade(lot: Triangles, r: float, col: Color) -> void:
+	var centre := Vector2(0.0, -0.08) * r
+	var fin := -PI * 0.15
+	lot.arc(centre, r * 0.34, fin - PI * 1.5, fin, 18, col, r * 0.11)
+	var bout := centre + Vector2.from_angle(fin) * r * 0.34
+	var sens := Vector2.from_angle(fin + PI / 2.0)
+	var cote := Vector2.from_angle(fin) * r * 0.2
+	lot.polygone(PackedVector2Array([bout + sens * r * 0.3, bout + cote, bout - cote]), col)
+	_rect(lot, r, -0.45, 0.42, 0.9, 0.08, col)
 
 static func _lance(lot: Triangles, c: Vector2, r: float, col: Color) -> void:
 	lot.repere = _place(c, -PI / 4.0)
@@ -218,6 +242,36 @@ static func _sentence(lot: Triangles, r: float, col: Color) -> void:
 	_courbe(pts, Vector2(0.45, 0.35) * r, Vector2(0.0, 0.5) * r)
 	_courbe(pts, Vector2(-0.45, 0.35) * r, Vector2(-0.4, -0.1) * r)
 	pts.remove_at(pts.size() - 1)
+	lot.polygone(pts, col)
+
+# ---------------------------------------------------------------- ultimes de classe (combat V3, étape 2)
+
+## Forme du Damné : une flamme à deux yeux — le spectre de braise.
+static func _spectre(lot: Triangles, r: float, col: Color) -> void:
+	_poly(lot, r, [[0.0, -0.6], [0.2, -0.22], [0.42, -0.34], [0.46, 0.14], [0.26, 0.5], [-0.26, 0.5], [-0.46, 0.14], [-0.42, -0.34], [-0.2, -0.22]], col)
+	var sombre := Color(Couleurs.UI.panel, 0.9)
+	for x: float in [-0.17, 0.17]:
+		_poly(lot, r, [[x - 0.1, 0.02], [x + 0.1, 0.08], [x, 0.24]], sombre)
+
+## Meute des Limbes : une empreinte de limier — un coussinet, trois doigts griffus.
+static func _meute(lot: Triangles, r: float, col: Color) -> void:
+	lot.disque(Vector2(0.0, 0.22) * r, r * 0.27, col)
+	for d in [[-0.33, -0.1], [0.0, -0.3], [0.33, -0.1]]:
+		lot.disque(Vector2(d[0], d[1]) * r, r * 0.13, col)
+		_poly(lot, r, [[d[0] - 0.06, d[1] - 0.1], [d[0] + 0.06, d[1] - 0.1], [d[0], d[1] - 0.3]], col)
+
+## Ruée spectrale : une pointe qui traverse, deux traits de vitesse.
+static func _ruee(lot: Triangles, r: float, col: Color) -> void:
+	_rect(lot, r, -0.55, -0.06, 0.75, 0.12, col)
+	_poly(lot, r, [[0.58, 0.0], [0.12, -0.34], [0.22, 0.0], [0.12, 0.34]], col)
+	_rect(lot, r, -0.5, -0.34, 0.36, 0.08, col)
+	_rect(lot, r, -0.5, 0.26, 0.36, 0.08, col)
+
+## Embrasement : un éclat à huit pointes — l'explosion qui met fin à la forme.
+static func _embrasement(lot: Triangles, r: float, col: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in range(16):
+		pts.append(Vector2.from_angle(i * TAU / 16.0 - PI / 2.0) * r * (0.58 if i % 2 == 0 else 0.24))
 	lot.polygone(pts, col)
 
 static func _nuee(lot: Triangles, c: Vector2, r: float, col: Color) -> void:

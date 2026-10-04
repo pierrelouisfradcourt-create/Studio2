@@ -38,9 +38,12 @@ func _derouler() -> void:
 	_bouger()
 	_attaquer_et_dasher()
 	_rouge()
+	_terrain()
 	_competence_et_gadget()
 	_super()
 	_commandes_v3()
+	_deplacement_de_classe()
+	_retours_du_bureau()
 	await _recompense_et_porte()
 	await _mort()
 	await _jamais_deux_fois()
@@ -159,7 +162,7 @@ func _calmer() -> void:
 func _reglages_neufs() -> void:
 	var a: Dictionary = app.reglages.accueil
 	verifier("réglages neufs : consignes actives, aucune acquise", a.actif == true and a.acquis.is_empty(), a)
-	verifier("la table : dix consignes, identifiants uniques", Consignes.TABLE.size() == 10 and Consignes.ids().size() == 10, Consignes.ids())
+	verifier("la table : onze consignes, identifiants uniques", Consignes.TABLE.size() == 11 and Consignes.ids().size() == 11, Consignes.ids())
 
 func _descendre() -> void:
 	app.demarrer_descente(1.0, false, false, GRAINE)
@@ -183,7 +186,7 @@ func _attaquer_et_dasher() -> void:
 	_entree = {"attackPressed": true}
 	_acquise("attaquer")
 	verifier("dash : apparaît ensuite", _montree("dash"), accueil.montree())
-	_libelles("dash", _trois("Traverse les attaques d'un dash"), "dash")
+	_libelles("dash", _trois("Dashe à travers les attaques"), "dash")
 	_entree = {"dashPressed": true}
 	_acquise("dash")
 	verifier("un dash hors de tout danger n'apprend pas « esquive le rouge »", not accueil.est_acquise("rouge"))
@@ -195,11 +198,43 @@ func _rouge() -> void:
 	var g := _game()
 	var zone: Dictionary = D6Combat.spawn_hazard(g, {"shape": "circle", "x": g.player.x + LOIN, "y": g.player.y, "r": 60.0, "delay": 60.0, "damage": 1.0, "kind": "essai"})
 	verifier("rouge : apparaît à la première attaque télégraphiée", _montree("rouge"), accueil.montree())
-	_libelles("rouge", _trois("Esquive le rouge"), "dash")
+	_libelles("rouge", _trois("Esquive le rouge : dashe"), "dash")
 	g.player.dashCharges = 1.0
 	_entree = {"dashPressed": true}
 	_acquise("rouge")
 	zone.done = true
+
+## Terrain à franchir : la consigne paraît près d'une rivière, nomme le geste de la classe, et
+## n'est acquise que lorsque le héros en a FRANCHI une (D6Player.crossing + D6Physics.low_at).
+func _terrain() -> void:
+	var g := _game()
+	var p: Dictionary = g.player
+	var c: Dictionary = Consignes.trouver("terrain")
+	_pas(FONDU)
+	verifier("terrain : rien dans une salle sans rivière ni obstacle bas", not Consignes.quand("terrain_proche", g) and accueil.montree() != "terrain", accueil.montree())
+	p.x = g.room.w * 0.3
+	p.y = g.room.h * 0.5
+	var depart := Vector2(p.x, p.y)
+	var riviere := {"x0": p.x + 50.0, "y0": p.y - 150.0, "x1": p.x + 110.0, "y1": p.y + 150.0, "kind": "river"}
+	g.room.low = [riviere]
+	verifier("terrain : apparaît près d'une rivière", _montree("terrain"), accueil.montree())
+	_libelles("terrain", _trois("Franchis la rivière d'un dash"), "dash")
+	riviere.kind = "barrier"
+	verifier("terrain : un obstacle bas est nommé", Consignes.texte(c, "clavier", g) == "Franchis l'obstacle d'un dash", Consignes.texte(c, "clavier", g))
+	riviere.kind = "river"
+	g.player.dashCharges = 2.0
+	_entree = {"moveY": 1.0, "dashPressed": true} # un dash LE LONG de la rivière ne franchit rien
+	_pas(30)
+	verifier("terrain : un dash qui ne franchit rien n'apprend rien", not accueil.est_acquise("terrain"))
+	p.x = depart.x
+	p.y = depart.y
+	g.player.dashCharges = 2.0
+	_entree = {"moveX": 1.0, "dashPressed": true}
+	_acquise("terrain")
+	verifier("terrain : le héros est de l'autre côté de la rivière", p.x > riviere.x1, [p.x, riviere.x1])
+	_entree = {}
+	g.room.low = []
+	_pas(PEU)
 
 func _competence_et_gadget() -> void:
 	var g := _game()
@@ -235,6 +270,7 @@ func _commandes_v3() -> void:
 	var ids: Array = hud.commandes_bureau.map(func(c: Node) -> String: return c.id)
 	verifier("HUD : attaque, dash et les trois emplacements", ids == ["attack", "dash", "skill1", "skill2", "skill3"], ids)
 	verifier("HUD tactile : les mêmes cinq commandes", hud.tactile.get_children().map(func(c: Node) -> String: return c.id) == ["attack", "dash", "skill1", "skill2", "skill3"])
+	_forme_puis_origine(Etats)
 	verifier("profil neuf : compétence, gadget, emplacement vide", g.kit.slots[0] != null and g.kit.slots[1] != null and g.kit.slots[2] == null, g.kit.slots)
 	var vide: Dictionary = Etats.etat(g, "skill3")
 	verifier("emplacement vide : pas prêt, pas de pictogramme, et le HUD continue de tourner", vide.get("vide") == true and vide.pret == 0.0 and vide.icone == "", vide)
@@ -260,6 +296,114 @@ func _commandes_v3() -> void:
 		_pas(3)
 	verifier("les trois présentations se dessinent avec un emplacement vide", true)
 	_jauge_et_visee_v3(Etats)
+
+## Combat V3, étape 2 : l'essai de l'ultime (au-dessus) a lancé la FORME DU DAMNÉ du Revenant, qui
+## dure. Pendant la forme, le HUD montre les trois ACTIONS DE FORME (pictogrammes connus, recharge,
+## aucune n'est vide) et le bouton d'attaque porte la minuterie (jauge qui n'est plus pleine) ; puis
+## la forme finit, et les vérifications d'origine jugent les emplacements d'ORIGINE, comme avant.
+func _forme_puis_origine(Etats: GDScript) -> void:
+	const Icones = preload("res://jeu/interface/icones.gd")
+	var g := _game()
+	var s: Dictionary = g.tuning["super"]
+	verifier("l'essai de l'ultime a lancé la Forme du Damné, encore en cours", D6KitSupers.form_of(g) != null and s.kind == "forme", [s.kind, g.player.get("ult")])
+	for i in 3:
+		var action: Dictionary = s.actions[s.slots[i]]
+		var e: Dictionary = Etats.etat(g, "skill%d" % (i + 1))
+		verifier("forme : l'emplacement %d montre « %s » (pictogramme « %s », recharge)" % [i + 1, action.name, action.icon], e.get("recharge") == true and not e.has("vide") and e.icone == action.icon and Icones.connue(action.icon), e)
+	var attaque: Dictionary = Etats.etat(g, "attack")
+	verifier("forme : le bouton d'attaque porte la minuterie (jauge qui se vide, sans éclat)", attaque.jauge > 0.0 and attaque.jauge < 1.0 and not attaque.eclat and is_equal_approx(attaque.jauge, D6Player.ultimate_view(g).timeFrac), attaque)
+	for appareil in ["tactile", "manette", "clavier"]:
+		_appareil(appareil)
+		_pas(3)
+	_entree = {}
+	_jusqu_a(func() -> bool: return not D6KitSupers.acting(g), int(s.formTime * 60.0) + 120)
+	verifier("forme finie : les emplacements d'origine reviennent au HUD", D6KitSupers.form_of(g) == null and Etats.etat(g, "skill1").icone == "skill" and Etats.etat(g, "skill3").get("vide") == true, g.kit.slots)
+
+## Le bouton de DÉPLACEMENT montre le geste de la classe : pictogramme, nom, charges et recharge
+## lus par D6Player.move_view ; les consignes disent « Dashe », « Saute », « Roule ».
+func _deplacement_de_classe() -> void:
+	const Etats = preload("res://jeu/interface/etat_commandes.gd")
+	const Icones = preload("res://jeu/interface/icones.gd")
+	const Triangles = preload("res://jeu/theme/triangles.gd")
+	const PHRASES := {
+		"dash": ["Dashe à travers les attaques", "Esquive le rouge : dashe", "Franchis la rivière d'un dash"],
+		"saut": ["Saute par-dessus les attaques", "Esquive le rouge : saute", "Franchis la rivière d'un saut"],
+		"roulade": ["Roule à travers les attaques", "Esquive le rouge : roule", "Franchis la rivière d'une roulade"],
+	}
+	var g := _game()
+	var classe: String = g.meta.loadout.classId
+	var sorte = g.tuning.dash.get("kind")
+	var pictos := {}
+	for id in g.tuning.classes:
+		var geste: Dictionary = g.tuning.moves[g.tuning.classes[id].move]
+		g.meta.loadout.classId = id # le test pose la classe ; la vue, elle, ne fait que lire
+		g.tuning.dash["kind"] = geste.kind
+		var e: Dictionary = Etats.etat(g, "dash")
+		var vue: Dictionary = D6Player.move_view(g)
+		var lot := Triangles.new()
+		Icones.ajouter(lot, e.icone, Vector2.ZERO, 22.0, Color.WHITE)
+		pictos[e.icone] = true
+		verifier("classe %s : le bouton porte le pictogramme « %s » de son déplacement, dessiné" % [id, geste.icon], e.icone == geste.icon and Icones.connue(e.icone) and not lot.vide(), e)
+		verifier("classe %s : le bouton se nomme « %s »" % [id, geste.name], e.nom == geste.name and e.geste == geste.kind, e)
+		verifier("classe %s : charges et recharge sont celles de move_view" % id, e.charges == vue.charges and e.max == vue.maxCharges and e.pret == (1.0 if vue.ready else vue.rechargeFrac), [e, vue])
+		var phrases: Array = ["dash", "rouge", "terrain"].map(func(c: String) -> String: return Consignes.texte(Consignes.trouver(c), "clavier", g))
+		verifier("classe %s : les consignes parlent de son geste" % id, phrases == PHRASES[geste.kind], phrases)
+	verifier("trois classes, trois pictogrammes de déplacement différents", pictos.size() == 3, pictos.keys())
+	g.meta.loadout.classId = classe
+	if sorte == null:
+		g.tuning.dash.erase("kind")
+	else:
+		g.tuning.dash["kind"] = sorte
+	g.player.dashCharges = 0.0
+	g.player.dashRecharge = 0.0
+	var vide: Dictionary = Etats.etat(g, "dash")
+	verifier("déplacement sans charge : pas prêt, la recharge se lit", vide.pret < 1.0 and vide.charges == 0.0 and vide.pret == D6Player.move_view(g).rechargeFrac, vide)
+	g.player.dashCharges = D6Player.max_dash_charges(g)
+
+## Clavier et manette : un bouton enfoncé se DESSINE enfoncé, un court instant au moins, et une
+## compétence visée tenue montre sa ligne de visée (souris, stick droit), comme au doigt.
+func _retours_du_bureau() -> void:
+	var g := _game()
+	_appareil("clavier")
+	var boutons := {}
+	for b in hud.commandes_bureau:
+		boutons[b.id] = b
+	for id in boutons:
+		hud.enfoncer(id)
+		_pas()
+		var vide: bool = hud.Etats.etat(g, id).get("vide", false) # un emplacement vide ne réagit à rien
+		verifier("bureau : « %s » enfoncé se dessine enfoncé" % id, boutons[id]._appuye != vide and hud.enfoncees().has(id), hud.enfoncees())
+	_pas(12)
+	verifier("bureau : le retour « enfoncé » est bref (retombé en 0,2 s)", hud.enfoncees().is_empty() and boutons.values().all(func(b: Node) -> bool: return not b._appuye), hud.enfoncees())
+	hud.enfoncer("skill1")
+	_pas()
+	verifier("bureau, visée assistée : aucune ligne de visée", hud.reperes.visee().is_empty())
+	app.vues.entrees.visee = Vector2.LEFT
+	for id in ["dash", "attack"]: # ni le déplacement ni l'attaque ne tracent cette ligne
+		_pas(12)
+		hud.enfoncer(id)
+		_pas()
+		verifier("bureau : « %s » enfoncé ne montre pas de ligne de visée" % id, hud.reperes.visee().is_empty(), hud.reperes.visee())
+	_pas(12)
+	for id in ["skill1", "skill2", "skill3"]:
+		_pas(12)
+		hud.enfoncer(id)
+		_pas()
+		var e: Dictionary = hud.Etats.etat(g, id)
+		var attendue: bool = e.get("visee", false) and not e.get("vide", false)
+		var ligne: Dictionary = hud.reperes.visee()
+		verifier("bureau : « %s » tenu montre sa ligne de visée depuis le héros si, et seulement si, son action se vise" % id, (ligne.get("dir") == Vector2.LEFT and ligne.get("de") == hud.racine.size / 2.0) if attendue else ligne.is_empty(), [e, ligne])
+	_pas(12)
+	verifier("bureau : touche relâchée, la ligne s'efface", hud.reperes.visee().is_empty())
+	_appareil("tactile")
+	hud.enfoncer("skill1")
+	_pas()
+	verifier("au doigt : le HUD ne trace pas la ligne du bureau (celle du pouce suffit)", hud.reperes.visee().is_empty())
+	_pas(12)
+	app.vues.entrees.visee = Vector2.ZERO
+	_appareil("clavier")
+	verifier("salle sans terrain bas : aucun point d'arrivée raccourci", not hud.reperes.arrivee().is_finite())
+	g.player.superCharge = 0.0
 
 ## Combat V3, affichage : le bouton d'attaque EST la jauge (elle se lit dans le bouton), la ligne
 ## de visée part du héros quand le pouce glisse, et un emplacement vide ne réagit à rien.
@@ -344,7 +488,7 @@ func _mort() -> void:
 # ---------------------------------------------------------------- une seule fois, par joueur
 
 func _jamais_deux_fois() -> void:
-	verifier("les dix consignes sont sur le disque", _sur_disque() == Consignes.ids(), _sur_disque())
+	verifier("les onze consignes sont sur le disque", _sur_disque() == Consignes.ids(), _sur_disque())
 	await _nouvelle_app(false)
 	verifier("application relancée : les acquis sont relus", app.reglages.accueil.acquis == Consignes.ids(), app.reglages.accueil)
 	app.demarrer_descente(1.0, false, false, GRAINE)

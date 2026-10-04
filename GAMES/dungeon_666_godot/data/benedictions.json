@@ -221,7 +221,7 @@
       "family": "luxure",
       "slot": "skill",
       "name": "Charme fatal",
-      "text": "Votre compétence rend vulnérable : +{v} % de dégâts subis, 4 s.",
+      "text": "Vos compétences rendent vulnérable : +{v} % de dégâts subis, 4 s.",
       "value": 30,
       "pct": true,
       "proc": { "on": "hit", "sources": ["skill"], "effect": "vuln", "duration": 4, "chance": 1 }
@@ -278,7 +278,7 @@
       "family": "envie",
       "slot": "skill",
       "name": "Convoitise",
-      "text": "Votre compétence déclenche un éclair : {v} dégâts, 3 rebonds.",
+      "text": "Vos compétences déclenchent un éclair : {v} dégâts, 3 rebonds.",
       "value": 14,
       "proc": {
         "on": "hit",
@@ -294,7 +294,7 @@
       "family": "envie",
       "slot": "passive",
       "name": "Rancœur",
-      "text": "Compétence : recharge −{v} %.",
+      "text": "Compétences : recharge −{v} %.",
       "value": 20,
       "pct": true,
       "stat": "skillCooldownMult",

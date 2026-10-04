@@ -106,6 +106,9 @@ static func update_projectiles(game: Dictionary, dt: float) -> void:
 				var landed := _hurt_player_for(game, pr.sourceId, pr.get("damage"), {"kind": pr.get("kind"), "id": pr.id, "x": pr.x, "y": pr.y})
 				if landed:
 					pr.dead = true
+			# Un limier de la Meute sur le trajet : le tir s'y arrête.
+			if not D6Js.truthy(pr.get("dead")) and D6KitSupers.block_shot(game, pr, ox, oy):
+				pr.dead = true
 		else:
 			_player_projectile_hits(game, pr, ox, oy)
 	compact(projectiles)
@@ -161,6 +164,10 @@ static func _fire_hazard(game: Dictionary, h: Dictionary) -> void:
 	})
 	if D6Js.truthy(h.get("hitsPlayer")) and p.state != "dead" and _in_hazard(h, p.x, p.y, p.r):
 		_hurt_player_for(game, h.get("sourceId"), h.get("damage"), {"kind": h.get("kind"), "id": h.id, "x": h.x, "y": h.y})
+	if D6Js.truthy(h.get("hitsPlayer")):
+		for a in game.allies: # les limiers de la Meute encaissent ce qui frappe le héros
+			if not a.dead and _in_hazard(h, a.x, a.y, a.r):
+				D6KitSupers.hurt_ally(game, a, D6Js.nz(h.get("damage"), 0.0), h.get("kind"))
 	if D6Js.truthy(h.get("hitsEnemies")):
 		var owner_id = h.get("ownerId")
 		var enemies: Array = game.enemies

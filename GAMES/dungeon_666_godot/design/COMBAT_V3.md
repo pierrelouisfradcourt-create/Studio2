@@ -280,7 +280,8 @@ marquée « ● Emplacement N ». Opérations inchangées (`select_slot`).
 bénédictions : « Compétences ») ; les anciens gadgets sont dits « compétences à charges »
 (Grimoire, consigne). RESTENT FAUX, parce qu'ils viennent de `data/` (non touché) : « Votre
 compétence… » (`benedictions.json`), « charge de gadget » (`autels.json`, `butin.json`,
-`ville.json`), « dégâts / recharge de la compétence » (`butin.json`).
+`ville.json`), « dégâts / recharge de la compétence » (`butin.json`). → corrigés depuis à la
+source : voir « Finitions — ce qui est FAIT ».
 
 **Coût de dessin** : inchangé. Banc du HUD, 960 × 540 : 39,2 appels au doigt et 51,1 au bureau,
 avant comme après ; banc de coût (10 ennemis) : 67,8 avant, 67,8 après. Chaque bouton reste un
@@ -376,6 +377,214 @@ est long et la cible encore loin.
 seule charge ?) ; la roulade et son « tir prêt » ; le geste raccourci plutôt que refusé ; la ruée
 sonnée au bord de l'eau ; les cinq dispositions et l'étage où elles entrent ; le dessin (couleurs
 de ce qui coule, palissades) ; le double emploi Bond / saut.
+
+## Finitions — ce qui est FAIT (2026-10-04)
+
+Lot court d'affichage et de textes (`jeu/interface/`, `jeu/entrees/`, `jeu/ville/`, `jeu/ecrans/`,
+textes de `data/` et de `sim/calm_rooms.gd`). Aucun nombre, aucun identifiant, aucune règle
+changés. Preuves à l'écran : `_dev/captures/lot_v3_finitions/` (`capturer.sh`). TOUT est à juger
+par Pierre.
+
+**1. Le bouton de déplacement est celui de la classe.** Pictogramme propre à chacun
+(`jeu/interface/icones.gd`, noms `dash`, `saut`, `roulade` = le champ `icon` de `moves`) : les
+chevrons du dash ; les mêmes chevrons DRESSÉS au-dessus d'un sol pour le saut ; une boucle qui
+tourne au ras du sol pour la roulade. Charges et recharge sont lues par `D6Player.move_view(game)`
+(`jeu/interface/etat_commandes.gd` ne lit plus `dashCharges` ni `dashRecharge`). Les consignes
+de l'accueil parlent du geste de la classe (`jeu/interface/consignes.gd`, champ `gestes`) :
+
+| Consigne | Revenant | Bourreau | Chasseresse |
+|---|---|---|---|
+| `dash` | Dashe à travers les attaques | Saute par-dessus les attaques | Roule à travers les attaques |
+| `rouge` | Esquive le rouge : dashe | Esquive le rouge : saute | Esquive le rouge : roule |
+| `terrain` | Franchis la rivière d'un dash | Franchis la rivière d'un saut | Franchis la rivière d'une roulade |
+
+Ville : l'onglet Classe écrit « Déplacement · Saut : … » (nom et texte de `moves`) sur chaque
+classe ; le Grimoire montre une carte « Déplacement · <classe> » (pictogramme, nom, texte) à côté
+de l'ultime. L'écran titre nomme le geste de la classe choisie (DASH / SAUT / ROULADE). Le libellé
+sous le bouton reste la TOUCHE (Espace, A).
+
+**2. Le terrain dans l'accueil.** Onzième consigne, `terrain` : elle se montre la première fois
+que le héros est à moins de 120 u du bord d'une rivière ou d'un obstacle bas (lu : `room.low`),
+dit « la rivière » ou « l'obstacle » selon ce qui est le plus près, et désigne le bouton de
+déplacement. Acquise quand le héros en a FRANCHI une : lu à chaque image,
+`D6Player.crossing(game)` et `D6Physics.low_at(...)` (il est au-dessus du terrain bas ; la règle
+ne l'y laisse jamais). Comme les autres consignes de circonstance, elle est aussi tenue pour vue
+après 14 s d'affichage cumulées. Le seuil de 120 u est un seuil d'affichage, pas une règle.
+
+**3. Textes au singulier, corrigés à la source.**
+
+| Fichier | Avant | Après |
+|---|---|---|
+| `data/benedictions.json` (charme) | Votre compétence rend vulnérable : +{v} % de dégâts subis, 4 s. | Vos compétences rendent vulnérable : +{v} % de dégâts subis, 4 s. |
+| `data/benedictions.json` (convoitise) | Votre compétence déclenche un éclair : {v} dégâts, 3 rebonds. | Vos compétences déclenchent un éclair : {v} dégâts, 3 rebonds. |
+| `data/benedictions.json` (rancoeur) | Compétence : recharge −{v} %. | Compétences : recharge −{v} %. |
+| `data/autels.json` (fontaine) | Remplir une fiole — +{gain} charge de gadget | Remplir une fiole — +{gain} charge à chaque compétence à charges |
+| `data/butin.json` (affixe `skillDamageMult`) | dégâts de la compétence | dégâts des compétences |
+| `data/butin.json` (affixe `skillCooldownMult`) | recharge de la compétence | recharge des compétences |
+| `data/butin.json` (main_de_gloire) | Salle nettoyée sans être touché : +1 charge de gadget | Salle nettoyée sans être touché : +1 charge à chaque compétence à charges |
+| `data/ville.json` (arsenal) | +1 charge de gadget par section. | +1 charge par section à chaque compétence à charges. |
+| `sim/calm_rooms.gd` (fioles) | Charges de gadget pleines, jauge de Super +N %. | Charges des compétences pleines, jauge de Super +N %. |
+| `jeu/ville/onglet_classe.tscn` | La classe fixe les armes, compétences et gadgets disponibles, et son Super. | La classe fixe le déplacement, les armes et les compétences disponibles, et son Super. |
+| `jeu/ville/onglet_grimoire.tscn` (titre de section) | Ultime | Déplacement et ultime |
+| `jeu/ecrans/titre.gd` | … DASH … | … le nom du déplacement de la classe … ; « invulnérable pendant la ruée » → « pendant le geste » |
+
+Les règles derrière ces textes ont été relues, pas changées : `grant_gadget_charges` et
+`gadgetChargesBonus` valent pour CHAQUE action à charges équipée (d'où « à chaque »). À SAVOIR :
+« Vos compétences rendent vulnérable », « … déclenchent un éclair » et « dégâts des compétences »
+ne valent que pour les compétences qui se RECHARGENT (source `skill`), pas pour les compétences à
+charges (source `gadget`) : la formule demandée par Pierre est gardée, la nuance est à trancher
+par lui (« Vos compétences à recharge… » ?). Le mot « gadget » n'est plus dans aucun texte vu par
+le joueur de `data/` (hors `classes.json`, tenu par un autre lot), `sim/` et `jeu/` ; il reste dans
+les noms de champs, d'événements et les commentaires.
+
+**4. Clavier et manette : retour « enfoncé » et ligne de visée.** La vue Entrees dit, pour
+l'affichage seulement, quelle commande vient d'être enfoncée (signal `commande_enfoncee(id)`),
+lesquelles sont tenues (`tenues()`) et où vise le bureau (`visee_bureau()` : stick droit, sinon
+souris ; ZERO en visée assistée). Le HUD dessine le bouton enfoncé (le même dessin qu'au doigt)
+tant que la touche est tenue, 0,14 s au moins. Une compétence qui se vise (`slot_view.aimed`),
+tenue, montre la même ligne de visée qu'au doigt, du héros vers la souris ou le stick
+(`jeu/interface/reperes.gd`, qui porte désormais le tracé commun de la ligne). En visée assistée,
+aucune ligne : la simulation choisit la cible, l'affichage ne la devine pas. Au clavier la
+compétence part À L'APPUI : la ligne montre donc où elle vient de partir, tant qu'on tient.
+
+**5. Geste raccourci : un repère AVANT qu'il parte.** Quand le héros marche franchement vers une
+rivière ou un obstacle bas (norme du déplacement voulu ≥ 0,5), que le geste est prêt et que
+`D6Player.move_landing(game, dx, dy).full` est faux, un petit anneau rouge barré est posé au sol
+à l'endroit où il s'arrêterait (`jeu/interface/reperes.gd`, dans le HUD, par
+`monde_vers_ecran`). Rien quand le geste irait au bout, ni dans une salle sans terrain bas.
+`jeu/monde/` n'est pas touché ; la visée du déplacement n'a pas changé.
+
+**Coût de dessin** : chaque bouton reste un lot de triangles. Le nœud `Reperes` ne dessine que
+s'il a quelque chose à montrer (un appel, le temps d'une visée au bureau ou d'un repère d'arrivée).
+
+**Vérifications ajoutées** : `test_accueil` (consigne du terrain ; pictogramme, nom, charges et
+phrases par classe ; boutons enfoncés, bref ; ligne de visée du bureau), `test_entrees`
+(`commande_enfoncee`, `tenues()`, `visee_bureau()`, aucun front consommé), `test_ville`
+(« Déplacement · … » dans Classe et Grimoire).
+
+**PAS FAIT.** Les textes de `data/classes.json` qui disent encore « dash » pour les trois classes
+(« frappe de dash », passif du Revenant) et les bénédictions du dash (« Dash », écran de choix) :
+`classes.json` est tenu par un autre lot, et « dash » y nomme une règle commune aux trois gestes.
+À la manette, le repère d'arrivée et la ligne de visée n'ont pas été capturés (même code que le
+clavier).
+
+**À juger en main par Pierre** : les deux pictogrammes neufs ; les phrases par classe ; le seuil
+de 120 u et la patience de 14 s de la consigne du terrain ; la durée du retour « enfoncé » ; la
+ligne de visée au clavier (utile, ou de trop ?) ; l'anneau d'arrivée (assez discret, assez lisible ?).
+
+## Étape 2 « Ultimes » — ce qui est FAIT (2026-10-04)
+
+Règles (`sim/`, `data/classes.json`), bots, affichage dans le monde, pictogrammes du HUD et du
+Grimoire. Un type par classe ; les trois se lancent comme avant (jauge pleine, appui commencé jauge
+pleine, maintien `holdTime`) et commencent par un geste invulnérable. TOUT ce qui suit est PROPOSÉ :
+noms, durées, nombres sont dans `data/classes.json`, à juger en main par Pierre.
+
+**Règles communes** (`sim/kit_supers.gd`, `D6KitSupers`).
+
+- Un ultime qui AGIT (geste en cours, forme active, limier vivant) ne se relance pas. Pendant ce
+  temps la jauge ne se remplit par rien (coups, esquive parfaite, bénédictions) : pour la forme et
+  la meute elle SE VIDE et sert de minuterie — le bouton d'attaque la montre sans rien savoir.
+- Mourir, changer de salle ou d'étage, reprendre après la mort : forme terminée (kit d'origine
+  rendu), limiers retirés, jauge à zéro (à sa valeur de départ après une reprise).
+- Jamais lancé au-dessus d'une rivière (comme avant) ; arène d'essai et entraînement : ils marchent.
+- Les trois anciens Supers (Colère, Sentence, Nuée) restent dans les données, marqués `reserve` :
+  leur code joue toujours (testé), ils ne sont plus l'ultime d'aucune classe et attendent l'arbre.
+- Lecture pour l'affichage : `D6Player.ultimate_view(game)` (`jeu/ARCHITECTURE.md`).
+
+**Revenant — transformation « Forme du Damné »** (`sim/ult_forme.gd`).
+
+| Réglage | Proposé |
+|---|---|
+| Geste de lancement (invulnérable) | 0,25 s |
+| Durée de la forme (`formTime`) | 10 s de temps de jeu (un gel d'impact la retient d'autant) |
+| Griffes (remplacent l'arme, quelle qu'elle soit) | 3 coups : 11, 11, 18 dégâts ; portée 96 / 96 / 110 u ; arcs 170° / 170° / 230° ; un tour en 0,68 s (la Lame : 0,90 s) ; frappe de dash 22 |
+| Vol de vie des griffes (`lifesteal`) | 5 % des dégâts, en plus de celui du build |
+| Ruée spectrale | 260 u d'un trait, 26 dégâts à tout ce qui est sur le passage (bande de 70 u), invulnérable 0,25 s, recharge 2,5 s |
+| Hurlement | étourdit 1,3 s à 180 u, 8 dégâts, recharge 5 s |
+| Embrasement | met fin à la forme ; explosion à 210 u, de 30 dégâts (forme presque finie) à 160 (à peine commencée), étourdit 0,6 s, efface les tirs |
+
+- La jauge est la minuterie ; les coups en forme ne la remplissent pas.
+- `slot_view` et `game.kit.slots` rendent les trois actions de FORME pendant la forme ; elles se
+  lancent comme des compétences (tampon, lancer, recharge propre, réduite par les mêmes bonus).
+- **Kit d'origine : FIGÉ pendant la forme.** Ses recharges ne courent pas, ses charges ne bougent
+  pas (ni gagnées, ni perdues) ; à la fin il revient tel qu'il était au lancement. Choix : c'est le
+  plus simple à lire (« je retrouve ce que j'ai laissé ») et à tester à l'identique.
+- Une action de forme en cours de lancer finit avant la fin de la forme ; l'arme équipée au moment
+  de la fin est celle qui revient (changer d'arme pendant la forme garde les griffes).
+- Le déplacement reste le dash. Dégâts des actions : source « super » (bonus de Gloire charnelle) ;
+  les griffes sont des coups d'arme ordinaires.
+
+**Bourreau — grosse magie « Sentence capitale »** (`sim/ult_magie.gd`).
+
+| Réglage | Proposé |
+|---|---|
+| Geste entier (invulnérable, immobile) | 1 s, plus le temps figé |
+| Lame levée avant le fracas (`strikeAt`) | 0,5 s |
+| Temps figé (`freeze`, le gel d'impact de la sim) | 0,3 s |
+| Fracas (`damage`, `stun`) | 85 dégâts, étourdit 1,2 s |
+| Exécution (`executeBelow`) | à 25 % de vie ou moins |
+| Gardien (`bossCap`) | jamais exécuté ; au plus 10 % de sa vie maximale par fracas |
+
+- **Qui est touché** : tout ennemi PRÉSENT dans la salle (apparu, non dissous), sans visée ni ligne
+  de vue — derrière un pilier, de l'autre côté d'une rivière, face à un pavois. Choix : « visible »
+  est lu comme « à l'écran », pas « en ligne de vue » ; la foudre tombe d'en haut.
+- **Exécution** : tout ennemi qui n'est pas un Gardien, champions compris ; une bulle d'immunité
+  protège. L'exécuté compte comme tué (or, Âmes, récompense d'élite, procs « à la mort »).
+- Pas de recul (étourdis sur place : la suite du combat se lit), pas de critique (85 est 85).
+- Les projectiles ennemis en vol sont effacés. Le fracas ne recharge pas la jauge.
+
+**Chasseresse — invocation « Meute des Limbes »** (`sim/ult_meute.gd`).
+
+| Réglage | Proposé |
+|---|---|
+| Geste de lancement (invulnérable) | 0,3 s |
+| Limiers (`count`), durée (`life`) | 3, pendant 12 s |
+| Vie d'un limier (`hp`) | 45 × l'échelle de dégâts de l'étage (comme les coups ennemis) |
+| Vitesse, morsure | 340 u/s ; 7 dégâts toutes les 0,6 s, à l'échelle de l'arme de l'héroïne |
+| Cible désignée (`markTime`) | 2,5 s après son dernier coup à elle |
+| Ennemi accaparé (`distractRange`, `distractRatio`) | limier à moins de 240 u ET de 60 % de sa distance à l'héroïne |
+
+- Les limiers vivent dans `game.allies`, JAMAIS dans `game.enemies` : vagues, ennemis restants,
+  invocations, élites, salle nettoyée ne les voient pas (testé).
+- **Cible** : ce qu'elle vient de blesser elle-même, sinon ce qu'elle vient de viser, sinon le plus
+  proche de chaque limier.
+- **Terrain** : ils MARCHENT et contournent par les gués (chacun son champ de navigation vers sa
+  cible, sur la grille des ennemis) ; jamais dans l'eau, un mur ni un pilier (300 graines).
+- **Ils encaissent** : un ennemi de MÊLÉE en chasse se tourne vers le limier nettement plus près
+  que l'héroïne et le frappe au contact, à ses dégâts et à son rythme ; un tir ennemi s'arrête sur
+  un limier ; une zone qui frappe le héros frappe aussi les limiers. Tireurs et Gardiens ne se
+  détournent pas.
+- **Leurs morsures ne sont pas des coups de l'héroïne** : ni jauge, ni proc « au toucher », ni vol de
+  vie, ni désignation de cible. La MORT d'un ennemi compte : or, Âmes, procs « à la mort », salle.
+  Le bonus de dégâts du Super (Gloire charnelle) s'y applique.
+- La jauge est leur minuterie ; tous morts avant la fin : la jauge est vide et se remplit de nouveau.
+
+**Effets qui parlent du « Super »**, revérifiés un par un sur les trois ultimes (`v3_ultimes.gd`,
+« effet … ») : Ripaille (soin au lancer), Passion brûlante (enflamme autour au lancer), Gloire
+charnelle (dégâts : fracas, actions de forme, morsures — pas les griffes ; durée +0,4 s : geste de la
+Sentence, forme, meute), Extase et affixe « de la Rage » (`superChargeMult`), Ivresse et esquive
+parfaite de base, Trop-plein (hors ultime oui, pendant non), autel de la Clepsydre, repos
+(« Remplir les fioles »), jauge de départ à la reprise.
+
+**Bots.** Le bot habile lance la forme quand la mêlée est là, la Sentence capitale quand deux
+ennemis sont en vue (ou un Gardien, ou PV bas), la meute au premier ennemi à sa portée ; en forme
+il lit les trois boutons : ruée sur une ligne d'ennemis, hurlement à deux ennemis dans le rayon,
+embrasement quand la jauge-minuterie est presque vide. Le bot qui martèle ne lance pas d'ultime.
+
+**Affichage** (`jeu/monde/creatures/`, `jeu/effets/ultimes.gd`, `jeu/son/routage.gd`,
+`jeu/interface/icones.gd`). Forme : spectre de braise (corps de charbon et de feu, flammes, griffes
+à la place de l'arme, pas de pieds), traînée et taillades de braise, anneau de braise qui se vide.
+Sentence capitale : lame levée au ciel, colonne et cercle d'or qui se resserrent, écran qui blanchit
+au temps figé, onde d'or, un éclair par ennemi, marque « EXÉCUTÉ ». Limiers : chiens d'os à la
+teinte froide de l'héroïne (jamais de rouge), triés en profondeur, barre de vie fine, arc de durée
+à leurs pieds. Pictogrammes neufs : `forme`, `meute`, `ruee`, `burst`. Preuves :
+`_dev/captures/lot_v3_ultimes/` (banc `jeu/essai/ultimes.tscn`).
+
+**À juger en main par Pierre** : les trois noms ; tous les nombres ci-dessus ; la forme (trop
+forte avec son vol de vie et son hurlement ?) ; le kit figé pendant la forme ; la ruée « posée » ;
+le fracas sans ligne de vue ni recul ; le seuil de 25 % et le plafond de 10 % sur un Gardien ; la
+taille et la lisibilité des limiers, leur règle d'attirance ; le mot « Super » dans les textes des
+bénédictions.
 
 ## Tests existants et combat V3
 

@@ -23,7 +23,7 @@ extends RefCounted
 # Sources de dégâts du héros qui déclenchent les procs « au toucher ».
 const PROC_SOURCES := ["melee", "strike", "skill", "gadget", "super"]
 # Sources qui ne remplissent pas la jauge de Super (sinon le Super se recharge lui-même).
-const NO_SUPER_CHARGE := ["super", "burn", "blast", "chain"]
+const NO_SUPER_CHARGE := ["super", "burn", "blast", "chain", "ally"] # "ally" : morsure d'un limier
 const HIT_FLASH := 0.1 # s : éclat d'un ennemi touché
 const HURT_FLASH := 0.35 # s : éclat du héros touché
 
@@ -100,7 +100,7 @@ static func _scaled_amount(game: Dictionary, e: Dictionary, src: Dictionary) -> 
 		# Élan passager du héros (effet « surge ») : dégâts en plus tant qu'il dure.
 		if _num(p, "surge") > 0.0:
 			amount *= 1.0 + p.surgeMult
-		if kind == "super":
+		if kind == "super" or kind == "ally": # l'ultime et ce qu'il invoque
 			amount *= D6Js.nz(st.get("superDamageMult"), 1.0)
 	if e.get("eliteMod") == "blinde":
 		amount *= t.elite.mods.blinde.damageTakenMult
@@ -159,13 +159,13 @@ static func push_enemy(game: Dictionary, e: Dictionary, dir_x: float, dir_y: flo
 		return
 	_apply_impact(game, e, {"kind": "move", "dirX": dir_x, "dirY": dir_y, "knockback": knockback, "stun": stun})
 
-## Jauge de Super remplie par un coup du héros (hors sources exclues, hors Super en cours).
+## Jauge de Super remplie par un coup du héros (hors sources exclues, hors ultime qui agit).
 ## `effective` : les PV réellement retirés — achever un ennemi à 1 PV ne remplit pas la jauge.
 static func _charge_super(game: Dictionary, kind, effective: float) -> void:
 	var t: Dictionary = game.tuning
 	var p: Dictionary = game.player
 	var st: Dictionary = p.stats
-	if is_player_source(kind) and not NO_SUPER_CHARGE.has(kind) and p.state != "super":
+	if is_player_source(kind) and not NO_SUPER_CHARGE.has(kind) and not D6KitSupers.acting(game):
 		var before: float = p.superCharge
 		# chargeDamage est donné pour l'arme de base : mis à l'échelle de l'arme portée, comme les
 		# dégâts. Sans cela la jauge se remplissait en 90 coups à l'étage 1 et en 3 à l'étage 649
@@ -190,6 +190,16 @@ static func _hit_stopped(game: Dictionary, e: Dictionary, src: Dictionary, kind)
 		return true
 	return false
 
+## Un coup du héros LUI-MÊME a porté : l'ennemi devient la cible désignée de la meute, et le vol de
+## vie joue (celui du build, plus celui des griffes pendant la Forme du Damné).
+static func _after_own_hit(game: Dictionary, e: Dictionary, kind, amount: float) -> void:
+	var p: Dictionary = game.player
+	p.markId = e.id
+	p.markAt = game.time
+	var steal: float = p.stats.lifesteal + D6KitSupers.form_lifesteal(game, kind)
+	if steal > 0.0:
+		heal_player(game, amount * steal, false)
+
 ## Inflige des dégâts à un ennemi. `src` : {kind, amount, dirX, dirY, knockback, hitstop,
 ## canCrit, stun}. Rend les dégâts réellement infligés.
 static func damage_enemy(game: Dictionary, e: Dictionary, src: Dictionary) -> float:
@@ -210,6 +220,8 @@ static func damage_enemy(game: Dictionary, e: Dictionary, src: Dictionary) -> fl
 			crit = true
 			amount *= t.combat.critMult + st.critMult
 	amount = maxf(1.0, D6Js.jround(amount))
+	if src.get("cap") != null:
+		amount = minf(amount, src.cap) # plafond du coup (Sentence capitale sur un Gardien)
 	var hp_before: float = e.hp
 	e.hp -= amount
 	e.flash = HIT_FLASH
@@ -227,8 +239,8 @@ static func damage_enemy(game: Dictionary, e: Dictionary, src: Dictionary) -> fl
 		game.telemetry.hitsLanded += 1.0
 
 	_charge_super(game, kind, effective)
-	if st.lifesteal > 0.0 and PROC_SOURCES.has(kind):
-		heal_player(game, amount * st.lifesteal, false)
+	if PROC_SOURCES.has(kind):
+		_after_own_hit(game, e, kind, amount)
 
 	D6State.emit(game, "hit", {
 		"id": e.id, "x": e.x, "y": e.y, "amount": amount, "crit": crit, "kind": kind,
@@ -281,8 +293,8 @@ static func _apply_proc(game: Dictionary, pr: Dictionary, e, ctx) -> void:
 			p.surge = maxf(p.surge, pr.duration)
 			p.surgeMult = maxf(p.surgeMult, pr.value)
 		"superCharge":
-			if p.state == "super":
-				return # jamais pendant le Super : il ne se recharge pas lui-même
+			if D6KitSupers.acting(game):
+				return # jamais pendant un ultime : il ne se recharge pas lui-même
 			var before: float = p.superCharge
 			var unit := 1.0
 			if D6Js.truthy(pr.get("perUnit")):
@@ -514,7 +526,8 @@ static func _dodge(game: Dictionary, src: Dictionary) -> void:
 		# Esquive parfaite : la jauge de Super grimpe et le dash se recharge plus vite.
 		var d: Dictionary = game.tuning.dash
 		var before: float = p.superCharge
-		p.superCharge = minf(1.0, p.superCharge + d.perfectDodgeSuper)
+		if not D6KitSupers.acting(game): # un ultime qui agit ne se recharge pas
+			p.superCharge = minf(1.0, p.superCharge + d.perfectDodgeSuper)
 		if before < 1.0 and p.superCharge >= 1.0:
 			D6State.emit(game, "superReady")
 		p.dashRecharge += d.perfectDodgeRefund

@@ -6,12 +6,16 @@ signal pause_demandee
 
 var est_tactile := false
 var vidages := 0
+var visee := Vector2.ZERO # ce que `visee_bureau()` rend (posé par l'essai)
 
 func vider() -> void:
 	vidages += 1
 
 func tactile() -> bool:
 	return est_tactile
+
+func visee_bureau() -> Vector2:
+	return visee
 
 func lire() -> Dictionary:
 	return D6Game.empty_input()

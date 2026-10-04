@@ -181,3 +181,51 @@ commence son appui jauge pleine.
 
 Aucun autre test existant de `tests/**` n'a été modifié par l'étape 1 bis. `tests/regles/donnees.gd` :
 deux tests AJOUTÉS (déplacements, terrain), rien de retiré. Nouveau fichier : `tests/regles/v3_terrain.gd`.
+
+## Finitions — tests de vues retouchés (`jeu/interface/test_accueil.gd`)
+
+Aucun test de `tests/**` n'a été modifié par le lot « Finitions » ; aucun test de règles ne
+comparait mot pour mot un des textes corrigés. Dans le test de vue de l'accueil (hors surface
+protégée), trois attentes parlaient de l'ancien système (un dash pour tous, dix consignes) :
+
+| Attente | Avant | Après | Pourquoi |
+|---|---|---|---|
+| phrase de la consigne `dash` | « Traverse les attaques d'un dash » | « Dashe à travers les attaques » | la phrase suit le geste de la classe (Dashe / Saute / Roule) |
+| phrase de la consigne `rouge` | « Esquive le rouge » | « Esquive le rouge : dashe » | idem |
+| taille de la table | dix consignes | onze | la consigne `terrain` est ajoutée (et acquise par le test avant « les onze consignes sont sur le disque ») |
+
+Ajouts (rien de retiré) : `_terrain`, `_deplacement_de_classe`, `_retours_du_bureau`
+(`test_accueil`) ; `_retours_du_bureau` (`test_entrees`) ; `_deplacement` (`test_ville`).
+
+## Étape 2 — les trois ultimes de classe (2026-10-04)
+
+Sous le même « GO tests V3 ». Colère, Sentence et Nuée ne sont plus l'ultime d'aucune classe ; leur
+code reste et se lance directement par un réglage d'essai (`tuning.classes.<classe>.super`). Règle
+suivie : un test qui prouve quelque chose de l'ANCIEN Super le prouve toujours, sur l'ancien Super
+lancé directement, mêmes attentes, mêmes nombres ; un test qui nomme « le Super de la classe »
+nomme le nouvel ultime. Aucun test supprimé ni affaibli ; aucun n'a rougi pour une autre raison.
+
+| Fichier | Test (fonction) | Ce qui a changé | Pourquoi |
+|---|---|---|---|
+| `logic.gd` | `_super` (« Super : se charge…, puis rend invulnérable ») | la partie nomme la Colère comme ultime (`tuning.classes.revenant.super`) | mêmes affirmations (jauge à 0, invulnérable) sur la Colère lancée directement |
+| `v2_contenu_benedictions.gd` | `_t_trop_plein` | « jamais pendant le Super » : la jauge attendue n'est plus 0 mais « inchangée par le soin, et plus pleine » | en Forme du Damné la jauge est la minuterie ; ce que le test prouve (le soin en trop ne la remplit pas pendant l'ultime) est gardé |
+| `v2_kits.gd` | `_t_defaut_valeurs` | le Super du Revenant attendu : `forme_damne` ; la Colère est comparée à l'historique sans `holdTime` NI `reserve` (dont on vérifie la présence) | la Colère garde tous ses nombres ; `reserve` est le seul ajout |
+| `v2_kits.gd` | `_t_defaut_references` | `kit.superId` et le bloc actif attendus : `forme_damne` | l'ultime du Revenant |
+| `v2_kits.gd` | `_t_registre_listes` | 6 Supers dans le registre (3 ultimes, 3 en réserve, compté) ; « un Super propre à chaque classe » inchangé | les anciens restent dans la table |
+| `v2_kits.gd` | `_t_ville` | « Super du Bourreau » : `sentence_capitale` | l'ultime du Bourreau |
+| `v2_kits.gd` | `_t_sentence`, `_t_nuee`, `_first_strike` (sert `_t_boons_dash_super`) | la partie nomme l'ancien Super comme ultime de la classe ; tout le reste identique | les nombres de la Sentence et de la Nuée sont toujours gardés |
+| `v3_combat.gd` | `_u_part`, `_u_pas_deux_fois`, `_e_gadget_refus` | idem : la Colère lancée directement | le geste du maintien et « pas de gadget pendant l'ultime » restent prouvés tels quels ; les trois ultimes neufs ont les leurs dans `v3_ultimes.gd` |
+| `v3_combat.gd` | `_u_reglage` | le réglage d'essai `holdTime: 1.0` vise `forme_damne` au lieu de `colere` | c'est l'ultime que la partie lance |
+| `v3_combat.gd` | `_p_migration_reelle` | `kit.superId` attendu : `sentence_capitale` | l'ultime du Bourreau |
+| `donnees.gd` | `_kit_orphans` | un Super sans classe est admis S'IL est marqué `reserve` ; en plus : un Super `reserve` ne doit être nommé par aucune classe | la garde « rien d'orphelin par oubli » tient toujours |
+
+Tests de vues (hors `tests/**`) :
+
+| Fichier | Vérification | Ce qui a changé | Pourquoi |
+|---|---|---|---|
+| `jeu/interface/test_accueil.gd` | `_commandes_v3`, `_jauge_et_visee_v3` (8 vérifications rouges) | AUCUNE attente changée : avant elles, une étape neuve `_forme_puis_origine` vérifie que le HUD montre les trois actions de forme et la minuterie pendant la forme (6 vérifications AJOUTÉES), puis laisse la forme finir | l'essai de l'ultime lançait une Colère de 1,4 s, il lance une forme de 10 s : les emplacements d'origine se jugent après elle |
+| `jeu/essai/test_parcours.gd` | « bout du chemin : la fontaine a été traversée en chemin » (et la garde « menu rest traversé » qui en dépend) | la graine de l'acte, `GRAINE_DE_LA_FIN`, passe de 1 à 2 ; aucune attente changée | graine CHOISIE pour que la fontaine soit sur la route du pilote : avec la Sentence capitale du Bourreau, les tirages de portes de la graine 1 n'offrent plus de fontaine (16 salles, aucune) ; la graine 2 en offre une |
+| `jeu/son/test_son.gd` | `_echantillons_heros` | 13 échantillons AJOUTÉS (les trois lancements et les dix types d'événements routés des ultimes), rien de retiré | « chaque type routé a son échantillon » |
+| `jeu/effets/echantillons.gd` | table des cas | 15 cas AJOUTÉS | « chaque effet a son événement d'exemple » |
+
+Nouveau fichier : `tests/regles/v3_ultimes.gd` (57 tests). `tests/harnais.gd` n'a pas changé.

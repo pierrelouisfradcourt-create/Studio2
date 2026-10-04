@@ -106,6 +106,9 @@ static func release_kit_skill(game: Dictionary) -> void:
 				"r": s.radius, "damage": s.damage, "knockback": s.knockback, "hitstop": s.hitstop,
 				"duration": s.duration, "tick": s.tick, "burnDps": s.burnDps, "burnRefresh": s.burnRefresh,
 			})
+		"ruee", "hurlement", "embrasement":
+			# Actions de la Forme du Damné (elles tiennent les trois emplacements pendant la forme).
+			D6KitSupers.form_action(game, s)
 		_:
 			return
 	# Recul léger au tir (sensation de puissance), comme la Lance.

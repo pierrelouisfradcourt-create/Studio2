@@ -80,14 +80,18 @@ static func _slot_ids(game: Dictionary) -> Array:
 static func resolve_kit(game: Dictionary) -> Dictionary:
 	var t: Dictionary = game.tuning
 	var c := class_of(game)
-	var w: Dictionary = t.weapons[weapon_type_of(game)]
+	t["super"] = D6Js.nz(t.supers.get(c.get("super")), t.get("super"))
+	# FORME (ultime du Revenant) : tant qu'elle dure, les griffes remplacent l'arme équipée et les
+	# actions de forme tiennent les trois emplacements (D6KitSupers ; kit d'origine rendu à la fin).
+	var form: bool = D6KitSupers.form_of(game) != null
+	var w: Dictionary = t["super"].weapon if form else t.weapons[weapon_type_of(game)]
 	_reset_combo_if_changed(game, w)
 	t.combo = w.combo
 	t.dashStrike = w.dashStrike
 	t.weapon = w
-	t["super"] = D6Js.nz(t.supers.get(c.get("super")), t.get("super"))
 	_resolve_move(t, c)
-	game.kit = {"classId": class_id_of(game), "weaponType": weapon_type_of(game), "slots": _slot_ids(game), "superId": c.get("super")}
+	var slots: Array = t["super"].slots.duplicate() if form else _slot_ids(game)
+	game.kit = {"classId": class_id_of(game), "weaponType": weapon_type_of(game), "slots": slots, "superId": c.get("super")}
 	return game.kit
 
 ## Identifiant du déplacement de la classe jouée (clé de tuning.moves) ; le dash si elle n'en nomme pas.
@@ -117,11 +121,23 @@ static func _resolve_move(t: Dictionary, c: Dictionary) -> void:
 
 ## Sorte de l'action d'un emplacement : "skill" (recharge), "gadget" (charges), ou null (vide).
 static func slot_kind(game: Dictionary, index: int):
+	if _form_action(game, game.kit.slots[index]) != null:
+		return "skill" # une action de forme se lance comme une compétence (recharge)
 	return action_kind(game.tuning, class_of(game), game.kit.slots[index])
+
+## Réglages de l'action de FORME `id` (tuning.super.actions) si la forme est en cours, sinon null.
+static func _form_action(game: Dictionary, id):
+	if id == null or D6KitSupers.form_of(game) == null:
+		return null
+	var actions = game.tuning["super"].get("actions")
+	return actions.get(id) if actions is Dictionary else null
 
 ## Réglages de l'action d'un emplacement (référence vers tuning.skills / tuning.gadgets), ou null.
 static func slot_def(game: Dictionary, index: int):
 	var id = game.kit.slots[index]
+	var form_def = _form_action(game, id)
+	if form_def != null:
+		return form_def
 	match action_kind(game.tuning, class_of(game), id):
 		"skill":
 			return game.tuning.skills[id]
@@ -195,7 +211,9 @@ static func clamp_gadgets(game: Dictionary) -> void:
 ##   ready        : l'action peut partir (recharge finie, ou une charge au moins)
 ##   cooldownFrac : 0 = prêt, 1 = vient de servir (toujours 0 pour un gadget)
 ##   charges, maxCharges : charges restantes et maximum d'un gadget ; null pour une compétence
-##   aimed        : l'action se vise (toute compétence ; un gadget LANCÉ, comme la bombe)
+##   aimed        : l'action se vise (toute compétence ; un gadget LANCÉ, comme la bombe ; une
+##                  action qui dit `aimed: false` ne se vise pas : hurlement, embrasement)
+## Pendant la Forme du Damné, les trois emplacements rendent les actions de FORME.
 static func slot_view(game: Dictionary, index: int):
 	var def = slot_def(game, index)
 	if def == null:
@@ -210,5 +228,5 @@ static func slot_view(game: Dictionary, index: int):
 		"cooldownFrac": D6Geo.clampv(st.cd / full, 0.0, 1.0) if full > 0.0 else 0.0,
 		"charges": st.charges if gadget else null,
 		"maxCharges": max_charges(game, index) if gadget else null,
-		"aimed": not gadget or def.get("throwDist") != null,
+		"aimed": D6Js.nz(def.get("aimed"), not gadget or def.get("throwDist") != null),
 	}

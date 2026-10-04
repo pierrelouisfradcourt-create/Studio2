@@ -15,6 +15,7 @@ const ACTIONS := {
 	KEY_J: "attack", KEY_L: "skill1", KEY_E: "skill2", KEY_F: "skill3",
 }
 const EMPLACEMENTS := ["skill1", "skill2", "skill3"]
+const BOUTONS := {MOUSE_BUTTON_LEFT: "attack", MOUSE_BUTTON_RIGHT: "skill1"} # la commande de chaque bouton de souris
 const TOUCHES_PAUSE := [KEY_ESCAPE, KEY_P]
 const TOUCHE_ATTAQUE := KEY_J # maintenue : enchaîne le combo ; jauge pleine : lance l'ultime
 
@@ -81,6 +82,23 @@ func tout_relacher() -> void:
 	touches.clear()
 	gauche = false
 	droite = false
+
+## Pour l'AFFICHAGE (retour « enfoncé » des boutons du HUD) : note dans `t` les commandes tenues.
+func noter_tenues(t: Dictionary) -> void:
+	for touche in touches:
+		if ACTIONS.has(touche):
+			t[ACTIONS[touche]] = true
+	if gauche:
+		t.attack = true
+	if droite:
+		t.skill1 = true
+
+## Pour l'AFFICHAGE (ligne de visée) : la direction que la souris vise depuis le héros, unitaire ;
+## ZERO quand la visée est assistée (souris inutilisée, ou curseur sur le héros).
+func visee(tactile: bool, heros: Vector2) -> Vector2:
+	var fraiche := not tactile and dedans and Time.get_ticks_msec() - dernier_mouvement_ms < SOURIS_INACTIVE_MS
+	var d := Vector2(souris_x, souris_y) - heros
+	return d.normalized() if (fraiche or gauche) and d.length() > VISEE_MIN else Vector2.ZERO
 
 func completer_clavier(f: Dictionary) -> void:
 	var kx := 0.0

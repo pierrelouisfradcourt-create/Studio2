@@ -92,10 +92,17 @@ func _pose(h: Dictionary, repos: float, genre) -> Vector3:
 	return Vector3(lerp_angle(bout, garde, smoothstep(TENUE, 1.0, fin)), 0.0, 1.0)
 
 ## Pendant un Super : la Colère fait tournoyer l'arme ; la Sentence la lève, dorée, puis l'abat sur
-## l'ouverture réelle de chaque exécution ; sinon elle reste en garde.
+## l'ouverture réelle de chaque exécution ; la Sentence capitale (« magie ») la lève droit au ciel
+## puis l'abat ; sinon elle reste en garde.
 func _pose_super(h: Dictionary, garde: float, genre) -> Vector3:
 	if genre == "colere":
 		return Vector3(temps * 22.0 + (PI if garde < h.facing else 0.0), 0.35, 1.25)
+	if genre == "magie":
+		# Sentence capitale : l'arme est LEVÉE vers le haut de l'écran pendant le télégraphe, grandie
+		# et tremblante ; une fois le fracas tombé (superStep 2), elle est abattue devant lui.
+		if D6Js.nz(h.get("superStep"), 0.0) >= 2.0:
+			return Vector3(h.facing + 0.2, 0.3, 1.3)
+		return Vector3(-PI / 2.0 + 0.05 * sin(temps * 40.0), 0.25, 1.75)
 	if genre == "sentence":
 		if execution < EXECUTION:
 			var k := execution / EXECUTION

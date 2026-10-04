@@ -78,7 +78,13 @@ static func _kit_orphans(h) -> void:
 		used.gadgets.append_array(c.gadgets)
 		used.supers.append(c["super"])
 	for family in used:
-		_all_in(h, t[family].keys(), used[family], "%s : aucune classe ne l'a" % family)
+		# Combat V3, étape 2 : un ancien Super marqué `reserve` (gardé pour l'arbre de compétences)
+		# n'est l'ultime d'aucune classe, exprès ; tout autre Super sans classe reste une faute.
+		var known: Array = t[family].keys().filter(func(id): return family != "supers" or not D6Js.truthy(t.supers[id].get("reserve")))
+		_all_in(h, known, used[family], "%s : aucune classe ne l'a" % family)
+	for id in t.supers:
+		if D6Js.truthy(t.supers[id].get("reserve")):
+			h.ok(not used.supers.has(id), "Super en réserve « %s » : aucune classe ne doit le nommer" % id)
 	for w in t.weapons:
 		_all_in(h, [t.weapons[w].className], t.classes.keys(), "arme %s, classe" % w)
 

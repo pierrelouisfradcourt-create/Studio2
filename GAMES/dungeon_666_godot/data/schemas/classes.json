@@ -289,7 +289,7 @@
         "fermé": true,
         "champs": {
           "name": { "type": "texte", "min": 1 },
-          "kind": { "type": "texte", "valeurs": ["colere", "sentence", "nuee"] },
+          "kind": { "type": "texte", "valeurs": ["colere", "sentence", "nuee", "forme", "magie", "meute"] },
           "icon": { "type": "texte", "min": 1 },
           "text": { "type": "texte", "min": 1 },
           "startCharge": { "type": "nombre", "min": 0, "max": 1 },
@@ -311,6 +311,108 @@
           "range": { "type": "nombre", "min": 0 },
           "pierce": { "type": "entier", "min": 0 },
           "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+          "reserve": { "type": "booleen", "_note": "ancien Super gardé pour l'arbre de compétences : ultime d'aucune classe" },
+          "stun": { "type": "nombre", "min": 0, "max": 5 },
+          "shake": { "type": "nombre", "min": 0, "max": 2 },
+          "formTime": { "type": "nombre", "min": 1, "max": 60, "_note": "forme : s de transformation (la jauge se vide)" },
+          "lifesteal": { "type": "nombre", "min": 0, "max": 0.5 },
+          "weapon": {
+            "type": "objet",
+            "requis": ["kind", "combo", "dashStrike"],
+            "fermé": true,
+            "champs": {
+              "kind": { "type": "texte", "valeurs": ["melee"] },
+              "moveMult": { "type": "nombre", "min": 0, "max": 2 },
+              "combo": {
+                "type": "liste",
+                "min": 1,
+                "elements": {
+                  "type": "objet",
+                  "requis": ["startup", "active", "recovery", "range", "arc", "damage", "knockback", "lunge", "hitstop", "shake"],
+                  "fermé": true,
+                  "champs": {
+                    "startup": { "type": "nombre", "min": 0 },
+                    "active": { "type": "nombre", "min": 0.01 },
+                    "recovery": { "type": "nombre", "min": 0 },
+                    "range": { "type": "nombre", "min": 0 },
+                    "arc": { "type": "nombre", "min": 0, "max": 360 },
+                    "damage": { "type": "nombre", "min": 0 },
+                    "knockback": { "type": "nombre", "min": 0 },
+                    "lunge": { "type": "nombre" },
+                    "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+                    "shake": { "type": "nombre", "min": 0, "max": 2 },
+                    "cancelFrom": { "type": "nombre", "min": 0, "max": 1 },
+                    "stun": { "type": "nombre", "min": 0 }
+                  }
+                }
+              },
+              "dashStrike": {
+                "type": "objet",
+                "requis": ["startup", "active", "recovery", "range", "arc", "damage", "knockback", "lunge", "hitstop", "shake"],
+                "fermé": true,
+                "champs": {
+                  "startup": { "type": "nombre", "min": 0 },
+                  "active": { "type": "nombre", "min": 0.01 },
+                  "recovery": { "type": "nombre", "min": 0 },
+                  "range": { "type": "nombre", "min": 0 },
+                  "arc": { "type": "nombre", "min": 0, "max": 360 },
+                  "damage": { "type": "nombre", "min": 0 },
+                  "knockback": { "type": "nombre", "min": 0 },
+                  "lunge": { "type": "nombre" },
+                  "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+                  "shake": { "type": "nombre", "min": 0, "max": 2 },
+                  "cancelFrom": { "type": "nombre", "min": 0, "max": 1 },
+                  "stun": { "type": "nombre", "min": 0 }
+                }
+              }
+            }
+          },
+          "slots": { "type": "liste", "min": 3, "max": 3, "elements": { "type": "texte", "min": 1 } },
+          "actions": {
+            "type": "objet",
+            "min": 3,
+            "chaque": {
+              "type": "objet",
+              "requis": ["name", "kind", "icon", "text", "cooldown", "castTime", "damage", "knockback", "hitstop", "shake"],
+              "fermé": true,
+              "champs": {
+                "name": { "type": "texte", "min": 1 },
+                "kind": { "type": "texte", "valeurs": ["ruee", "hurlement", "embrasement"] },
+                "icon": { "type": "texte", "min": 1 },
+                "text": { "type": "texte", "min": 1 },
+                "cooldown": { "type": "nombre", "min": 0, "max": 60 },
+                "castTime": { "type": "nombre", "min": 0, "max": 1 },
+                "range": { "type": "nombre", "min": 1, "max": 1000 },
+                "width": { "type": "nombre", "min": 1, "max": 400 },
+                "radius": { "type": "nombre", "min": 1, "max": 1000 },
+                "damage": { "type": "nombre", "min": 0 },
+                "damageMax": { "type": "nombre", "min": 0 },
+                "knockback": { "type": "nombre", "min": 0 },
+                "stun": { "type": "nombre", "min": 0, "max": 5 },
+                "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
+                "shake": { "type": "nombre", "min": 0, "max": 2 },
+                "iframes": { "type": "nombre", "min": 0, "max": 1.5 },
+                "aimed": { "type": "booleen" }
+              }
+            }
+          },
+          "strikeAt": { "type": "nombre", "min": 0.4, "max": 3, "_note": "magie : s de lame levée avant le fracas (télégraphe)" },
+          "freeze": { "type": "nombre", "min": 0, "max": 1 },
+          "executeBelow": { "type": "nombre", "min": 0, "max": 0.9 },
+          "bossCap": { "type": "nombre", "min": 0, "max": 1 },
+          "count": { "type": "entier", "min": 1, "max": 6 },
+          "life": { "type": "nombre", "min": 1, "max": 60 },
+          "hp": { "type": "nombre", "min": 1 },
+          "houndRadius": { "type": "nombre", "min": 4, "max": 30 },
+          "biteDamage": { "type": "nombre", "min": 0 },
+          "biteEvery": { "type": "nombre", "min": 0.1, "max": 5 },
+          "biteRange": { "type": "nombre", "min": 0, "max": 100 },
+          "biteKnockback": { "type": "nombre", "min": 0 },
+          "markTime": { "type": "nombre", "min": 0, "max": 10 },
+          "spawnDist": { "type": "nombre", "min": 0, "max": 300 },
+          "heelDist": { "type": "nombre", "min": 0, "max": 400 },
+          "distractRatio": { "type": "nombre", "min": 0, "max": 1 },
+          "distractRange": { "type": "nombre", "min": 0, "max": 2000 },
           "strikes": {
             "type": "liste",
             "min": 1,

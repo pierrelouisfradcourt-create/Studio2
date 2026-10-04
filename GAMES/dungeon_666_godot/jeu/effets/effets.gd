@@ -15,6 +15,7 @@ const Formes = preload("res://jeu/effets/formes.gd")
 const Particules = preload("res://jeu/effets/particules.gd")
 const Textes = preload("res://jeu/effets/textes.gd")
 const Ecran = preload("res://jeu/effets/ecran.gd")
+const Ultimes = preload("res://jeu/effets/ultimes.gd")
 const PAL: Dictionary = Couleurs.PAL
 
 ## Teintes absentes de la palette par rôle : poussières et cendres (neutres), nuances des kits.
@@ -84,6 +85,7 @@ func _ready() -> void:
 		"floorEnter": _sur_etage, "bossPhase": _sur_phase, "boonGain": _sur_benediction,
 		"immune": _sur_invulnerable, "moveShort": _sur_geste_court, "moveLand": _sur_atterrissage,
 	}
+	_table.merge(Ultimes.table(self)) # les trois ultimes de classe (combat V3, étape 2)
 
 func brancher(p_app: Node, p_partie: Node) -> void:
 	app = p_app
@@ -414,8 +416,9 @@ func _sur_gadget(ev: Dictionary, _g: Dictionary) -> void:
 		_zoom(0.03)
 
 func _sur_super(ev: Dictionary, _g: Dictionary) -> void:
-	# Onde de départ : la Nuée tire loin, mais son départ reste autour du héros.
-	var r: float = ONDE_SUPER if ev.get("super") == "nuee" else ev.r * 1.3
+	# Onde de départ : la Nuée tire loin, mais son départ reste autour du héros ; de même les trois
+	# ultimes de classe (leur `r` est une portée, pas une onde : la Sentence capitale couvre la salle).
+	var r: float = ONDE_SUPER if ev.get("super") in ["nuee", "magie", "meute", "forme"] else ev.r * 1.3
 	formes.ajouter({"type": "nova", "x": ev.x, "y": ev.y, "r": r, "couleur": PAL.superBar, "vie": 0.4})
 	_secouer(0.5)
 	ecran.voile(0.5)

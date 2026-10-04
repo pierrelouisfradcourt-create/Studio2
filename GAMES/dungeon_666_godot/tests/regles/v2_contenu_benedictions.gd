@@ -280,11 +280,14 @@ static func _t_trop_plein(h) -> void:
 	p.hp = p.maxHp - 20.0
 	D6Combat.heal_player(g, 10.0, true)
 	h.ok(absf(p.superCharge - 10.0 * (C.V("trop_plein") / 100.0)) < EPS, "un soin qui ne déborde pas ne charge rien")
-	# Jamais pendant le Super : il ne se recharge pas lui-même.
+	# Jamais pendant le Super : il ne se recharge pas lui-même. (Combat V3, étape 2 : la jauge de la
+	# Forme du Damné est sa minuterie ; le soin en trop ne doit pas la faire monter.)
 	p.superCharge = 1.0
 	C.ultime(h, g)
+	var pendant: float = p.superCharge
+	h.ok(pendant < 1.0, "la jauge n'est plus pleine une fois l'ultime lancé")
 	D6Combat.heal_player(g, 500.0, true)
-	h.egal(p.superCharge, 0.0)
+	h.egal(p.superCharge, pendant)
 	C.assert_deterministic(h, ["trop_plein", "festin"])
 
 static func _t_foudre_du_dedain(h) -> void:

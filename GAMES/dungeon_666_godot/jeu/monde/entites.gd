@@ -5,6 +5,7 @@ extends Node2D
 ## Quatre calques, du sol vers le haut (un script par famille, sous jeu/monde/creatures/) :
 ##   Sol      ombres douces, halos, fils de protection, traînée de dash, aura d'élan
 ##   Ennemis  les 10 archétypes et les 4 Gardiens : un nœud par corps
+##   Limiers  les alliés de la Meute des Limbes (ultime de la Chasseresse) : un nœud par limier
 ##   Heros    arc du coup, cape, corps, arme
 ##   Statuts  barres de vie, étourdissement, garde, froid, brûlure, vulnérabilité, élites, protégés
 ## Ennemis et Heros sont DEBOUT : ils vivent dans le groupe `Debout`, trié du fond vers l'avant
@@ -17,6 +18,7 @@ const Sol = preload("res://jeu/monde/creatures/sol.gd")
 const Ennemis = preload("res://jeu/monde/creatures/ennemis.gd")
 const Heros = preload("res://jeu/monde/creatures/heros.gd")
 const Statuts = preload("res://jeu/monde/creatures/statuts.gd")
+const Limiers = preload("res://jeu/monde/creatures/limiers.gd")
 
 const TRAINEE_VIE := 0.24 # s : durée d'un point de la traînée du dash
 const GARDES_CADENCE := 0.1 # s entre deux relevés de « qui protège qui »
@@ -52,6 +54,12 @@ func _ready() -> void:
 		_calques.append(calque)
 	move_child(_calques[0], 0)
 	_heros = _calques[2]
+	# Les limiers sont DEBOUT eux aussi : triés avec les ennemis, le héros et les piliers.
+	var limiers: Node2D = Limiers.new()
+	limiers.name = "Limiers"
+	limiers.entites = self
+	debout.add_child(limiers)
+	_calques.append(limiers)
 
 func brancher(p_app: Node, p_partie: Node) -> void:
 	app = p_app
@@ -83,7 +91,8 @@ func _suivre_trainee(delta: float) -> void:
 	if partie == null or partie.game == null or partie.en_pause:
 		return
 	var h: Dictionary = partie.game.player
-	if h.state == "dash":
+	# Le dash laisse une traînée ; le spectre de la Forme du Damné aussi, tant qu'il se déplace.
+	if h.state == "dash" or (h.state != "dead" and D6KitSupers.form_of(partie.game) != null):
 		trainee.append({"pos": partie.position_dessin(h, true), "vie": TRAINEE_VIE})
 
 ## Relève, dix fois par seconde, les ennemis couverts par un porte-étendard debout. Sans porteur

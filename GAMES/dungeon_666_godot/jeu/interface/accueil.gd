@@ -151,6 +151,8 @@ func _mesurer(game: Dictionary, delta: float) -> void:
 		_contexte[c.id] = not _acquis.has(c.id) and Consignes.quand(c.quand, game)
 		if c.has("parcours") and _parcours >= c.parcours:
 			_acquerir(c.id)
+		if c.has("lecture") and Consignes.quand(c.lecture, game):
+			_acquerir(c.id)
 	if _montree != "" and _opacite >= 1.0:
 		_vue[_montree] = _vue.get(_montree, 0.0) + delta
 		var patience: float = Consignes.trouver(_montree).get("patience", 0.0)
@@ -194,7 +196,7 @@ func _ecrire(game) -> void:
 	if c.is_empty():
 		return
 	var cmd := Consignes.commande(c, game)
-	_texte.text = Consignes.texte(c, _appareil)
+	_texte.text = Consignes.texte(c, _appareil, game)
 	_touche.text = String(_libelles.get(cmd, ""))
 	_touche.visible = _touche.text != ""
 	_picto.visible = not (cmd in SANS_PICTO)

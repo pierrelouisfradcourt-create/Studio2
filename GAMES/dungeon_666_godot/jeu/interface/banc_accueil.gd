@@ -6,7 +6,7 @@ extends Node
 ##   D666_CONSIGNE : bouger | attaquer | dash | rouge | competence | gadget | super | recompense |
 ##                   porte | mort (une consigne de jeu/interface/consignes.gd) ;
 ##                   pause (l'écran de pause et ses deux réglages) ;
-##                   armurerie | grimoire (l'onglet de la Ville, pour les textes accordés)
+##                   armurerie | grimoire | classe (l'onglet de la Ville, pour les textes accordés)
 ##   D666_APPAREIL : clavier (défaut) | manette | tactile
 ##   D666_CLASSE   : revenant (défaut) | bourreau | chasseresse
 ##   D666_BAS=1    : l'onglet de la Ville est défilé jusqu'en bas
@@ -19,7 +19,7 @@ const ProfilEssai = preload("res://jeu/ville/profil_essai.gd")
 const Consignes = preload("res://jeu/interface/consignes.gd")
 const DONNEES := "user://essais_accueil_banc"
 const GRAINE := 7.0
-const ONGLETS := ["armurerie", "grimoire"]
+const ONGLETS := ["armurerie", "grimoire", "classe"]
 const POSE := 3 # images avant de poser la situation (les vues sont branchées)
 const BAS := 20 # images avant de défiler un onglet de la Ville jusqu'en bas (D666_BAS=1)
 

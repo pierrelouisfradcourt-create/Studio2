@@ -47,6 +47,7 @@ static func enter_floor(game: Dictionary, floor_num, door) -> void:
 	game.run.floor = info.floor
 	game.meta.bestFloor = maxf(game.meta.bestFloor, info.floor)
 	sync_purse(game)
+	D6KitSupers.reset(game, "etage") # un ultime ne suit pas le héros : forme finie, limiers retirés
 	game.enemies.clear()
 	game.projectiles.clear()
 	game.hazards.clear()
@@ -775,6 +776,7 @@ static func last_checkpoint(game: Dictionary):
 static func _revive(game: Dictionary) -> void:
 	var p: Dictionary = game.player
 	var t: Dictionary = game.tuning
+	D6KitSupers.reset(game, "reprise")
 	D6Stats.recompute_stats(game)
 	p.hp = p.maxHp
 	p.superCharge = D6Js.nz(t["super"].get("startCharge"), 0.0)
