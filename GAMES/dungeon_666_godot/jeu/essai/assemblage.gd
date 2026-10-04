@@ -5,11 +5,17 @@ extends Node
 ## Expose `partie` (le pilote de capture.gd s'y branche).
 
 const Principal = preload("res://jeu/principal.tscn")
+const Profil = preload("res://jeu/profil.gd")
+const DONNEES := "user://essais"
 
 var app: Node
 var partie: Node
 
 func _ready() -> void:
+	# Un essai ne touche jamais au vrai profil ni aux vrais réglages du joueur (jeu/profil.gd), même
+	# lancé sans outils/capture.gd (scène ouverte seule, éditeur).
+	if OS.get_environment(Profil.ENV_DOSSIER) == "":
+		OS.set_environment(Profil.ENV_DOSSIER, DONNEES)
 	app = Principal.instantiate()
 	add_child(app)
 	partie = app.partie

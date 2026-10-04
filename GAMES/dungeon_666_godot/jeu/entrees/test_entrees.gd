@@ -155,7 +155,7 @@ func _forme() -> void:
 	verifier("interface_tactile : clés visible, stick, buttons", ui.has_all(["visible", "stick", "buttons"]))
 	verifier("interface_tactile : stick {active, baseX, baseY, knobX, knobY}", ui.stick.has_all(["active", "baseX", "baseY", "knobX", "knobY"]))
 	var ids: Array = ui.buttons.map(func(b: Dictionary) -> String: return b.id)
-	verifier("interface_tactile : 5 boutons attack, dash, skill, super, gadget", ids == ["attack", "dash", "skill", "super", "gadget"], ids)
+	verifier("interface_tactile : 5 boutons attack, dash, skill1, skill3, skill2 (les trois emplacements)", ids == ["attack", "dash", "skill1", "skill3", "skill2"], ids)
 	verifier("interface_tactile : bouton {id, x, y, r, pressed, dragging, dx, dy}", ui.buttons[0].has_all(["id", "x", "y", "r", "pressed", "dragging", "dx", "dy"]))
 	var taille := root.get_visible_rect().size
 	var a := bouton("attack")
@@ -231,10 +231,17 @@ func _attaque_et_multi_doigts() -> void:
 	# Glisser le doigt de l'attaque : visée manuelle.
 	glisse(2, centre("attack") + Vector2(0.0, -40.0 * k()))
 	f = e.lire()
-	verifier("attaque glissée : visée manuelle vers le haut", f.attack and absf(f.aimX) < 0.001 and is_equal_approx(f.aimY, -1.0) and bouton("attack").dragging, [f.aimX, f.aimY])
+	# Combat V3 : glisser VISE sans tenir l'attaque (tenir l'attaque, jauge pleine, lance l'ultime).
+	verifier("attaque glissée : visée manuelle vers le haut, l'attaque n'est plus tenue", not f.attack and not f.attackPressed and absf(f.aimX) < 0.001 and is_equal_approx(f.aimY, -1.0) and bouton("attack").dragging, [f.aimX, f.aimY])
+	var tenue := false
+	for i in 40: # bien plus long que le maintien de l'ultime (0,4 s = 24 pas)
+		tenue = tenue or e.lire().attack
+	verifier("attaque glissée longtemps : jamais d'attaque tenue (un glisser n'arme pas l'ultime)", not tenue)
 	doigt(2, centre("attack"), false)
 	f = e.lire()
-	verifier("attaque relâchée : attack faux, le joystick continue", not f.attack and f.moveX == 1.0)
+	verifier("attaque glissée puis relâchée : le coup part au relâcher, dans la direction visée", f.attackPressed and not f.attack and absf(f.aimX) < 0.001 and is_equal_approx(f.aimY, -1.0), [f.attackPressed, f.aimX, f.aimY])
+	f = e.lire()
+	verifier("attaque relâchée : attack faux, le joystick continue", not f.attack and not f.attackPressed and f.aimY == 0.0 and f.moveX == 1.0)
 	doigt(1, p, false)
 
 func _dash() -> void:
@@ -246,10 +253,17 @@ func _dash() -> void:
 	var f3: Dictionary = e.lire()
 	verifier("bouton dash : un seul dashPressed, puis faux", f1.dashPressed and not f2.dashPressed and not f3.dashPressed, [f1.dashPressed, f2.dashPressed, f3.dashPressed])
 	verifier("bouton dash : n'attaque pas", not f1.attack and not f1.attackPressed)
-	tap(5, centre("gadget"))
-	tap(6, centre("super"))
+	tap(5, centre("skill2"))
+	tap(6, centre("skill3"))
 	f1 = e.lire()
-	verifier("gadget et Super : un tap chacun, un front chacun", f1.gadgetPressed and f1.superPressed and not f1.dashPressed)
+	verifier("emplacements 2 et 3 : un tap chacun, un front chacun, visée assistée", f1.skill2Pressed and f1.skill3Pressed and not f1.skill1Pressed and not f1.dashPressed and f1.skill2AimX == 0.0 and f1.skill3AimY == 0.0)
+	var c3 := centre("skill3")
+	doigt(6, c3, true)
+	glisse(6, c3 + Vector2(-60.0 * k(), 0.0))
+	verifier("emplacement 3 glissé, pas encore relâché : rien ne part", not e.lire().skill3Pressed)
+	doigt(6, c3, false)
+	f1 = e.lire()
+	verifier("emplacement 3 glissé puis relâché : skill3Pressed, visé à gauche, sans toucher aux autres", f1.skill3Pressed and is_equal_approx(f1.skill3AimX, -1.0) and not f1.skill1Pressed and f1.skill1AimX == 0.0, [f1.skill3AimX, f1.skill3AimY])
 	doigt(3, centre("dash"), true)
 	doigt(4, centre("dash"), true) # bouton déjà tenu : ce doigt ne redéclenche rien
 	e.lire()
@@ -258,34 +272,34 @@ func _dash() -> void:
 	verifier("dash tenu : un second doigt dessus ne redashe pas", not e.lire().dashPressed)
 
 func _competence() -> void:
-	var c := centre("skill")
+	var c := centre("skill1")
 	doigt(4, c, true)
 	glisse(4, c + Vector2(0.0, -60.0 * k()))
 	var f: Dictionary = e.lire()
-	verifier("compétence glissée, pas encore relâchée : rien ne part", not f.skillPressed and bouton("skill").dragging)
+	verifier("compétence glissée, pas encore relâchée : rien ne part", not f.skill1Pressed and bouton("skill1").dragging)
 	doigt(4, c + Vector2(0.0, -60.0 * k()), false)
 	f = e.lire()
-	verifier("compétence glissée puis relâchée : skillPressed, visée vers le haut", f.skillPressed and absf(f.skillAimX) < 0.001 and is_equal_approx(f.skillAimY, -1.0), [f.skillAimX, f.skillAimY])
+	verifier("compétence glissée puis relâchée : skillPressed, visée vers le haut", f.skill1Pressed and absf(f.skill1AimX) < 0.001 and is_equal_approx(f.skill1AimY, -1.0), [f.skill1AimX, f.skill1AimY])
 	f = e.lire()
-	verifier("compétence : le front et sa visée ne sont rendus qu'une fois", not f.skillPressed and f.skillAimX == 0.0 and f.skillAimY == 0.0)
+	verifier("compétence : le front et sa visée ne sont rendus qu'une fois", not f.skill1Pressed and f.skill1AimX == 0.0 and f.skill1AimY == 0.0)
 	doigt(4, c, true)
 	glisse(4, c + Vector2(60.0 * k(), 0.0))
 	glisse(4, c + Vector2(5.0 * k(), 0.0))
 	doigt(4, c + Vector2(5.0 * k(), 0.0), false)
-	verifier("compétence glissée puis ramenée au centre : annulée", not e.lire().skillPressed)
+	verifier("compétence glissée puis ramenée au centre : annulée", not e.lire().skill1Pressed)
 	doigt(4, c, true)
 	glisse(4, c + Vector2(60.0 * k(), 0.0))
 	glisse(4, c + Vector2(15.0 * k(), 0.0)) # entre 12 et 18 px : la visée manuelle tient encore
 	doigt(4, c, false)
 	f = e.lire()
-	verifier("compétence ramenée à 15 px (seuil d'annulation 12) : elle part encore", f.skillPressed and is_equal_approx(f.skillAimX, 1.0), f.skillAimX)
+	verifier("compétence ramenée à 15 px (seuil d'annulation 12) : elle part encore", f.skill1Pressed and is_equal_approx(f.skill1AimX, 1.0), f.skill1AimX)
 	tap(4, c)
 	f = e.lire()
-	verifier("compétence tapée : skillPressed en visée assistée (0, 0)", f.skillPressed and f.skillAimX == 0.0 and f.skillAimY == 0.0)
+	verifier("compétence tapée : skillPressed en visée assistée (0, 0)", f.skill1Pressed and f.skill1AimX == 0.0 and f.skill1AimY == 0.0)
 	doigt(4, c, true)
 	glisse(4, c + Vector2(0.0, -60.0 * k()))
 	doigt(4, c, false, true)
-	verifier("compétence : toucher annulé par le système = rien ne part", not e.lire().skillPressed)
+	verifier("compétence : toucher annulé par le système = rien ne part", not e.lire().skill1Pressed)
 
 func _tap_flottant() -> void:
 	# Zone d'attaque flottante : un tap dans la moitié droite, hors des boutons, attaque.
@@ -299,7 +313,7 @@ func _tap_flottant() -> void:
 	verifier("attaque flottante glissée : visée depuis le point de contact", is_equal_approx(f.aimX, 1.0) and absf(f.aimY) < 0.001, [f.aimX, f.aimY])
 	doigt(9, Vector2(taille.x * 0.7, taille.y * 0.2), true)
 	f = e.lire()
-	verifier("attaque déjà tenue : un autre doigt à droite ne la redéclenche pas", f.attack and not f.attackPressed)
+	verifier("attaque déjà prise par un doigt (qui vise) : un autre doigt à droite ne la redéclenche pas", bouton("attack").pressed and not f.attackPressed and is_equal_approx(f.aimX, 1.0))
 	doigt(9, Vector2(taille.x * 0.7, taille.y * 0.2), false)
 	doigt(8, p, false)
 	verifier("tap flottant relâché : plus d'attaque", not e.lire().attack)
@@ -358,7 +372,7 @@ func _clavier() -> void:
 	f2 = e.lire()
 	touche(KEY_J, false)
 	verifier("clavier : J maintenu = attack à chaque pas, attackPressed une fois", f.attack and f.attackPressed and f2.attack and not f2.attackPressed and not e.lire().attack)
-	for paire: Array in [[KEY_L, "skillPressed"], [KEY_E, "gadgetPressed"], [KEY_F, "superPressed"], [KEY_R, "superPressed"], [KEY_SHIFT, "dashPressed"], [KEY_K, "dashPressed"]]:
+	for paire: Array in [[KEY_L, "skill1Pressed"], [KEY_E, "skill2Pressed"], [KEY_F, "skill3Pressed"], [KEY_SHIFT, "dashPressed"], [KEY_K, "dashPressed"]]:
 		touche(paire[0], true)
 		touche(paire[0], false)
 		verifier("clavier : %s → %s" % [OS.get_keycode_string(paire[0]), paire[1]], e.lire()[paire[1]])
@@ -376,11 +390,18 @@ func _souris() -> void:
 	# Clic droit PENDANT le clic gauche maintenu : la compétence part vers la souris.
 	clic(MOUSE_BUTTON_RIGHT, true, HEROS + Vector2(0.0, 150.0), MOUSE_BUTTON_MASK_LEFT | MOUSE_BUTTON_MASK_RIGHT)
 	f = e.lire()
-	verifier("souris : clic droit = compétence visée vers la souris", f.skillPressed and is_equal_approx(f.skillAimY, 1.0) and absf(f.skillAimX) < 0.001 and f.attack, [f.skillAimX, f.skillAimY])
+	verifier("souris : clic droit = compétence visée vers la souris", f.skill1Pressed and is_equal_approx(f.skill1AimY, 1.0) and absf(f.skill1AimX) < 0.001 and f.attack, [f.skill1AimX, f.skill1AimY])
+	# E et F (emplacements 2 et 3) visent aussi où pointe la souris.
+	touche(KEY_E, true)
+	touche(KEY_F, true)
+	f = e.lire()
+	touche(KEY_E, false)
+	touche(KEY_F, false)
+	verifier("clavier + souris : E et F = emplacements 2 et 3, visés vers la souris", f.skill2Pressed and f.skill3Pressed and is_equal_approx(f.skill2AimY, 1.0) and is_equal_approx(f.skill3AimY, 1.0) and not f.skill1Pressed, [f.skill2AimY, f.skill3AimY])
 	clic(MOUSE_BUTTON_LEFT, false, cible, MOUSE_BUTTON_MASK_RIGHT)
 	clic(MOUSE_BUTTON_RIGHT, false, cible, 0)
 	f = e.lire()
-	verifier("souris : boutons relâchés = plus d'attaque, rien ne reste collé", not f.attack and not f.skillPressed and not e._clavier.gauche and not e._clavier.droite)
+	verifier("souris : boutons relâchés = plus d'attaque, rien ne reste collé", not f.attack and not f.skill1Pressed and not e._clavier.gauche and not e._clavier.droite)
 	clic(MOUSE_BUTTON_LEFT, true, cible, MOUSE_BUTTON_MASK_LEFT)
 	souris(cible + Vector2(5.0, 0.0), 0) # le relâcher a eu lieu hors de la fenêtre : le masque le dit
 	e.lire()
@@ -450,7 +471,7 @@ func _manette() -> void:
 	f = e.lire()
 	pad_axe(JOY_AXIS_TRIGGER_RIGHT, 0.0)
 	verifier("manette : gâchette droite = attaque", f.attack and f.attackPressed and not e.lire().attack)
-	for paire: Array in [[JOY_BUTTON_B, "skillPressed"], [JOY_BUTTON_Y, "gadgetPressed"], [JOY_BUTTON_RIGHT_SHOULDER, "superPressed"], [JOY_BUTTON_LEFT_SHOULDER, "dashPressed"]]:
+	for paire: Array in [[JOY_BUTTON_B, "skill1Pressed"], [JOY_BUTTON_Y, "skill2Pressed"], [JOY_BUTTON_RIGHT_SHOULDER, "skill3Pressed"], [JOY_BUTTON_LEFT_SHOULDER, "dashPressed"]]:
 		pad_bouton(paire[0], true)
 		pad_bouton(paire[0], false)
 		verifier("manette : bouton %d → %s" % [paire[0], paire[1]], e.lire()[paire[1]])
@@ -471,7 +492,7 @@ func _vider_et_pause() -> void:
 	doigt(2, centre("attack"), true)
 	e.vider()
 	var f: Dictionary = e.lire()
-	verifier("vider() efface les fronts (doigt, clavier, manette)", not f.dashPressed and not f.skillPressed and not f.gadgetPressed and not f.attackPressed, f)
+	verifier("vider() efface les fronts (doigt, clavier, manette)", not f.dashPressed and not f.skill1Pressed and not f.skill2Pressed and not f.attackPressed, f)
 	verifier("vider() ne lâche pas ce qui est tenu", f.attack)
 	doigt(2, centre("attack"), false)
 	touche(KEY_L, false)
@@ -520,13 +541,13 @@ func _zone_sure() -> void:
 func _front_garde_une_image() -> void:
 	tap(3, centre("dash"))
 	tap(2, centre("attack"))
-	tap(4, centre("skill"))
+	tap(4, centre("skill1"))
 	await process_frame
 	await process_frame
 	var f: Dictionary = e.lire()
-	verifier("fronts lus deux images plus tard : aucun tap perdu", f.dashPressed and f.attackPressed and f.skillPressed, f)
+	verifier("fronts lus deux images plus tard : aucun tap perdu", f.dashPressed and f.attackPressed and f.skill1Pressed, f)
 	f = e.lire()
-	verifier("fronts : jamais rendus deux fois", not f.dashPressed and not f.attackPressed and not f.skillPressed, f)
+	verifier("fronts : jamais rendus deux fois", not f.dashPressed and not f.attackPressed and not f.skill1Pressed, f)
 
 func _hors_jeu() -> void:
 	for cas: String in ["ville", "pause", "menu", "sans partie"]:

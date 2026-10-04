@@ -3,7 +3,9 @@ extends RefCounted
 ## Mode d'emploi et consigne : references/enregistrer.gd et references/verifier.gd.
 ##
 ## Une partie notée, en mémoire : {name, spec, steps, frames, ticks}. Un pas :
-##   [0, mx, my, ax, ay, drapeaux, sx, sy]  une image d'entrées (analogiques en 1/1024)
+##   [0, mx, my, ax, ay, drapeaux, s1x, s1y, s2x, s2y, s3x, s3y]
+##                                          une image d'entrées (analogiques en 1/1024 ; s1..s3 :
+##                                          la visée de chacun des trois emplacements)
 ##   [1, commande, acceptée]                une commande de menu TENTÉE (toutes notées, même
 ##                                          refusées : le rejeu doit refuser pareil)
 ##   [2, empreinte]                         un point de contrôle (digest)
@@ -11,6 +13,7 @@ extends RefCounted
 ## rejeu retrouve exactement les mêmes nombres (q / 1024).
 ##
 ## Une spec (references/catalogue.gd) : {name, seed, floor, kit: [classe, arme], policy, seconds,
+## slots: [trois actions ou null] (avec `kit` ; absent : compétence et gadget de départ),
 ## tuning, sandbox, practice, godMode, deaths: "town", build}. `build` est un départ garni posé
 ## APRÈS create_game : {boons: [identifiants], rarity, power: pouvoir légendaire, souls: Âmes}.
 
@@ -20,10 +23,11 @@ const Classes = preload("res://outils/classes.gd")
 const Q := 1024.0 # pas de quantification des entrées analogiques
 const CHECK_EVERY := 30 # images entre deux points de contrôle
 const MAX_STEPS_FACTOR := 4 # garde-fou : pas plus de 4 pas notés par image demandée
-const ANALOG := ["moveX", "moveY", "aimX", "aimY", "skillAimX", "skillAimY"]
-const ANALOG_STEP := [1, 2, 3, 4, 6, 7] # rang de chaque analogique dans un pas d'entrées
-const FLAGS := ["attack", "attackPressed", "dashPressed", "skillPressed", "gadgetPressed", "superPressed"]
+const ANALOG := ["moveX", "moveY", "aimX", "aimY", "skill1AimX", "skill1AimY", "skill2AimX", "skill2AimY", "skill3AimX", "skill3AimY"]
+const ANALOG_STEP := [1, 2, 3, 4, 6, 7, 8, 9, 10, 11] # rang de chaque analogique dans un pas d'entrées
+const FLAGS := ["attack", "attackPressed", "dashPressed", "skill1Pressed", "skill2Pressed", "skill3Pressed"]
 const FLAG_STEP := 5
+const STEP_SIZE := 12 # le type du pas, puis ses 11 champs
 const RANDOM_POLICY := "hasard"
 const DEFAULT_POLICY := "skilled"
 const HASH_BASIS := 2166136261
@@ -44,7 +48,8 @@ static func digest(game: Dictionary, events: Dictionary) -> Dictionary:
 		"gold": game.run.gold, "souls": game.meta.souls,
 		"rng": [game.rng.gen.s, game.rng.combat.s, game.rng.ai.s],
 		"nextId": game.nextId, "hitstop": game.hitstop, "bank": game.hitstopBank,
-		"p": [p.x, p.y, p.vx, p.vy, p.hp, p.maxHp, p.state, p.facing, p.dashCharges, p.superCharge, p.gadgetCharges, p.skillCd, p.iframes, p.freeze],
+		"p": [p.x, p.y, p.vx, p.vy, p.hp, p.maxHp, p.state, p.facing, p.dashCharges, p.superCharge, p.superHold, p.iframes, p.freeze],
+		"slots": p.slots.map(func(s): return [s.cd, s.charges]),
 		"e": game.enemies.map(func(e): return [e.id, e.kind, e.state, e.x, e.y, e.hp, e.stun, 1 if D6Js.truthy(e.get("dead")) else 0, D6Js.nz(e.get("eliteMod"), "")]),
 		"pr": game.projectiles.map(func(o): return [o.x, o.y]),
 		"hz": game.hazards.size(), "pk": game.pickups.size(), "sp": game.spawns.size(),
@@ -69,7 +74,7 @@ static func start(spec: Dictionary) -> Dictionary:
 		"sandbox": spec.get("sandbox", false), "practice": spec.get("practice", false), "godMode": spec.get("godMode", false),
 	}
 	if spec.has("kit"):
-		options.meta = Classes.kit_profile(D6Data.create_tuning(), spec.kit[0], spec.kit[1])
+		options.meta = Classes.kit_profile(D6Data.create_tuning(), spec.kit[0], spec.kit[1], spec.get("slots"))
 	if spec.has("tuning"):
 		options.tuning = D6Js.decode(spec.tuning)
 	var game: Dictionary = D6Game.create_game(options)
@@ -100,7 +105,9 @@ static func _round_half_up(x: float) -> float:
 
 ## L'entrée d'une politique sous la forme d'un pas : analogiques en 1/1024, boutons en drapeaux.
 static func quantized(input: Dictionary) -> Array:
-	var step: Array = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+	var step: Array = []
+	step.resize(STEP_SIZE)
+	step.fill(0.0)
 	for i in ANALOG.size():
 		var v = input.get(ANALOG[i])
 		step[ANALOG_STEP[i]] = _round_half_up((float(v) if D6Js.truthy(v) else 0.0) * Q)
@@ -124,6 +131,8 @@ static func input_of(step: Array) -> Dictionary:
 ## Politique « au hasard » : toutes les commandes pressées aléatoirement, par courtes séquences
 ## tenues. Aucun bot ne joue ainsi ; c'est ce qui exerce les bords du tampon d'entrées (dash
 ## enchaîné, attaque pendant un dash, compétence pendant une récupération, visées manuelles).
+## L'ultime n'a pas de bouton : il part quand plusieurs séquences « attaque tenue » se suivent,
+## jauge pleine (0,4 s) ; les trois emplacements sont pressés chacun à son rythme.
 ## RNG propre à la politique (jamais celui de la partie) ; état dans `mem`.
 static func _random_input(mem: Dictionary) -> Dictionary:
 	var r: Dictionary = mem.rng
@@ -137,17 +146,18 @@ static func _random_input(mem: Dictionary) -> Dictionary:
 			cur.aimX = D6Rng.rand(r) * 2.0 - 1.0
 			cur.aimY = D6Rng.rand(r) * 2.0 - 1.0
 		cur.attack = D6Rng.rand(r) < 0.55
-		cur.skillAimX = D6Rng.rand(r) * 2.0 - 1.0 if D6Rng.rand(r) < 0.5 else 0.0
-		cur.skillAimY = D6Rng.rand(r) * 2.0 - 1.0 if D6Rng.rand(r) < 0.5 else 0.0
+		for k in ["skill1Aim", "skill2Aim", "skill3Aim"]:
+			cur[k + "X"] = D6Rng.rand(r) * 2.0 - 1.0 if D6Rng.rand(r) < 0.5 else 0.0
+			cur[k + "Y"] = D6Rng.rand(r) * 2.0 - 1.0 if D6Rng.rand(r) < 0.5 else 0.0
 		mem.cur = cur
 	else:
 		mem.hold -= 1
 	var out: Dictionary = mem.cur.duplicate()
 	out.attackPressed = D6Rng.rand(r) < 0.12
 	out.dashPressed = D6Rng.rand(r) < 0.1
-	out.skillPressed = D6Rng.rand(r) < 0.04
-	out.gadgetPressed = D6Rng.rand(r) < 0.01
-	out.superPressed = D6Rng.rand(r) < 0.03
+	out.skill1Pressed = D6Rng.rand(r) < 0.04
+	out.skill2Pressed = D6Rng.rand(r) < 0.01
+	out.skill3Pressed = D6Rng.rand(r) < 0.03
 	return out
 
 static func _policy_input(policy: String, game: Dictionary, mem: Dictionary) -> Dictionary:

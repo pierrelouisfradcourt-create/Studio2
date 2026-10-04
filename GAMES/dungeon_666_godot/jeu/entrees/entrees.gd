@@ -2,6 +2,13 @@ extends Control
 ## Les entrées : tactile multi-doigts, clavier / souris, manette → un InputFrame par pas de
 ## simulation (voir GAMES/dungeon_666/src/sim/player.mjs). Portage de src/input/input.mjs.
 ##
+## COMBAT V3 : trois emplacements d'action (skill1, skill2, skill3), chacun avec sa visée ; plus
+## de bouton Super — l'ultime part quand l'ATTAQUE reste tenue, jauge pleine (règle : sim/player.gd).
+## Clavier : clic droit = emplacement 1, E = 2, F = 3 ; clic gauche (ou J) tenu = attaque.
+## Manette : B, Y, RB. Tactile : les trois boutons autour de l'attaque (tap = visée assistée,
+## glisser = viser, relâcher = lancer) ; sur le bouton d'attaque, GLISSER vise sans tenir
+## l'attaque (le coup part au relâcher) : un glisser-relâcher n'arme jamais l'ultime.
+##
 ## Les fronts (…Pressed) s'accumulent jusqu'à être consommés par le prochain pas : aucun tap
 ## perdu, même si l'affichage va plus vite que la simulation ou pendant un gel d'impact.
 ## Cette vue ne dessine rien et ne connaît de la partie que son mode et la position du héros.
@@ -17,7 +24,8 @@ const Tactile = preload("res://jeu/entrees/tactile.gd")
 const ClavierSouris = preload("res://jeu/entrees/clavier_souris.gd")
 const Manette = preload("res://jeu/entrees/manette.gd")
 
-const ACTIONS := ["attack", "dash", "skill", "gadget", "super"]
+const ACTIONS := ["attack", "dash", "skill1", "skill2", "skill3"]
+const EMPLACEMENTS := ["skill1", "skill2", "skill3"]
 const DENSITE_ANDROID := 160.0 # points par pouce d'un « px CSS » sur Android
 const ECHELLE_MIN := 0.5
 const ECHELLE_MAX := 3.0
@@ -26,8 +34,12 @@ const BOUTONS_SOURIS := [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MID
 var _app: Node
 var _partie: Node
 var _tactile_actif := false
-## Fronts accumulés depuis le dernier pas (doigts, clavier, souris) et visée de la compétence.
-var _fronts := {"attack": false, "dash": false, "skill": false, "gadget": false, "super": false, "skillAimX": 0.0, "skillAimY": 0.0}
+## Fronts accumulés depuis le dernier pas (doigts, clavier, souris), visée de chaque emplacement,
+## et visée du coup parti au relâcher d'un glisser sur le bouton d'attaque (aimX, aimY).
+var _fronts := {
+	"attack": false, "dash": false, "skill1": false, "skill2": false, "skill3": false, "aimX": 0.0, "aimY": 0.0,
+	"skill1AimX": 0.0, "skill1AimY": 0.0, "skill2AimX": 0.0, "skill2AimY": 0.0, "skill3AimX": 0.0, "skill3AimY": 0.0,
+}
 var _doigts := Tactile.new(_fronts)
 var _clavier := ClavierSouris.new(_fronts)
 var _manette := Manette.new()
@@ -51,12 +63,17 @@ func lire() -> Dictionary:
 	var f: Dictionary = D6Game.empty_input()
 	for action: String in ACTIONS:
 		f[action + "Pressed"] = _fronts[action]
-	f.skillAimX = _fronts.skillAimX
-	f.skillAimY = _fronts.skillAimY
+	for e: String in EMPLACEMENTS:
+		f[e + "AimX"] = _fronts[e + "AimX"]
+		f[e + "AimY"] = _fronts[e + "AimY"]
 	_clavier.completer_clavier(f)
 	_doigts.completer(f)
 	_clavier.completer_souris(f, _tactile_actif, _heros_a_l_ecran())
 	_manette.completer(f)
+	# Coup parti au relâcher d'un glisser : il part dans la direction glissée.
+	if _fronts.attack and (_fronts.aimX != 0.0 or _fronts.aimY != 0.0):
+		f.aimX = _fronts.aimX
+		f.aimY = _fronts.aimY
 	vider()
 	return f
 
@@ -64,8 +81,11 @@ func lire() -> Dictionary:
 func vider() -> void:
 	for action: String in ACTIONS:
 		_fronts[action] = false
-	_fronts.skillAimX = 0.0
-	_fronts.skillAimY = 0.0
+	for e: String in EMPLACEMENTS:
+		_fronts[e + "AimX"] = 0.0
+		_fronts[e + "AimY"] = 0.0
+	_fronts.aimX = 0.0
+	_fronts.aimY = 0.0
 	_manette.vider()
 
 ## Vrai si le joueur utilise l'écran tactile (dernier périphérique utilisé).

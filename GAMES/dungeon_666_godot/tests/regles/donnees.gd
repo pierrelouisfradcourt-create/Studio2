@@ -89,8 +89,13 @@ static func _starter(h) -> void:
 	var d: Dictionary = _tb().kits.DEFAULT_LOADOUT
 	_all_in(h, [d.classId], t.classes.keys(), "DEFAULT_LOADOUT.classId")
 	var c: Dictionary = t.classes.get(d.classId, {"skills": [], "gadgets": []})
-	_all_in(h, [d.skillId], c.skills, "DEFAULT_LOADOUT.skillId (compétences de %s)" % d.classId)
-	_all_in(h, [d.gadgetId], c.gadgets, "DEFAULT_LOADOUT.gadgetId (gadgets de %s)" % d.classId)
+	# Combat V3 : trois emplacements, chacun une compétence ou un gadget de la classe, ou null.
+	h.egal(d.slots.size(), D6Loadout.SLOTS, "DEFAULT_LOADOUT.slots : trois emplacements")
+	var places: Array = d.slots.filter(func(id): return id != null)
+	_all_in(h, places, c.skills + c.gadgets, "DEFAULT_LOADOUT.slots (compétences et gadgets de %s)" % d.classId)
+	for id in places:
+		h.egal(places.count(id), 1, "DEFAULT_LOADOUT.slots : %s placé une seule fois" % id)
+	h.egal(D6Profile.create_profile(t).loadout, d, "un profil neuf porte DEFAULT_LOADOUT")
 
 static func _combo_cancel(h) -> void:
 	var t := _t()
@@ -327,7 +332,7 @@ static func _recomposed(h) -> void:
 	h.egal(tb.boss_data.GUARDIAN_ROTATION, t.guardians.rotation)
 	h.egal(tb.room.LAYOUT_IDS, tb.room.LAYOUTS.keys())
 	h.egal(t.combo, t.weapons.lame.combo, "réglage actif par défaut : le combo de la Lame")
-	h.egal(t.skill, t.skills.lance)
+	h.ok(not t.has("skill") and not t.has("gadget"), "combat V3 : compétence et gadget se lisent par emplacement, plus de bloc actif")
 	h.egal(tb.config.DT, D6Data.DT)
 	h.ok(not is_same(tb.kits.WEAPONS, t.weapons), "tables et réglages sont des copies distinctes")
 	for kind in tb.foe_data.EXTRA_ENEMIES:
@@ -435,7 +440,17 @@ static func _shape(h) -> void:
 	h.egal(D6Js.decode("~9a9999999999b93f"), 0.1, "la forme exacte « ~hex » est encore lue")
 	h.egal(D6Js.decode("~ environ"), "~ environ", "un texte en « ~ » qui n'est pas un nombre reste un texte")
 
+## Combat V3 : le maintien qui lance l'ultime est le MÊME geste pour toutes les classes.
+static func _hold_time(h) -> void:
+	var t := _t()
+	var durees: Array = []
+	for id in t.supers:
+		h.ok(t.supers[id].get("holdTime") is float and t.supers[id].holdTime > 0.0, "Super %s : holdTime" % id)
+		durees.append(t.supers[id].get("holdTime"))
+	h.egal(durees.count(durees[0]), durees.size(), "holdTime : la même valeur pour tous les Supers (%s)" % str(durees))
+
 static func tests(h) -> void:
+	h.test("combat V3 : holdTime existe pour chaque Super et vaut la même durée pour tous", func(): _hold_time(h))
 	h.test("classes : chaque arme, compétence, gadget et Super d'une classe existe, et l'arme nomme sa classe", func(): _classes(h))
 	h.test("kits : aucune arme, compétence, gadget ni Super sans classe", func(): _kit_orphans(h))
 	h.test("kit de départ : les blocs actifs par défaut et DEFAULT_LOADOUT existent", func(): _starter(h))

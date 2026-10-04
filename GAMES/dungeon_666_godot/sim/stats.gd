@@ -18,7 +18,7 @@ static func recompute_stats(game: Dictionary) -> void:
 	st.extraGoldOnKill = 0.0
 	var procs: Array = []
 
-	# Kit équipé (classe, arme portée, compétence, gadget, Super) : l'arme peut avoir changé.
+	# Kit équipé (classe, arme portée, emplacements, Super) : l'arme peut avoir changé.
 	D6Loadout.resolve_kit(game)
 	_add_permanent(game, st)
 	_add_items(game, st, procs)
@@ -140,5 +140,4 @@ static func _apply_to_player(game: Dictionary, st: Dictionary, procs: Array) -> 
 	p.hp = minf(p.hp, p.maxHp)
 	var max_dash: float = t.dash.charges + st.dashChargesBonus
 	p.dashCharges = minf(p.dashCharges, max_dash)
-	var max_gadget: float = t.gadget.chargesPerSection + st.gadgetChargesBonus
-	p.gadgetCharges = minf(p.gadgetCharges, max_gadget)
+	D6Loadout.clamp_gadgets(game)

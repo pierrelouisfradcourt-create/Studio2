@@ -15,10 +15,15 @@ extends RefCounted
 ## Fonctions PURES sur des dictionnaires (aucun nœud) : la Ville appelle ces opérations, le
 ## programme principal sauvegarde le résultat. Chaque opération rend { ok, reason? }.
 ## PROFILE_SCHEMA, STASH_MAX, EQUIP_SLOTS : D6Data.tables().profile.
+##
+## COMBAT V3 (schéma 4) : `loadout.slots` = trois emplacements d'action, chacun l'identifiant
+## d'une compétence ou d'un gadget POSSÉDÉ de la classe, ou null (vide) ; jamais deux fois le même.
+## Une sauvegarde du schéma 3 ({skillId, gadgetId}) est migrée par sanitize_profile.
 
 const DEFAULT_WEAPON := "lame"
 const UID_PREFIX := "i" # identifiant d'objet du profil : « i » + numéro d'ordre (itemSeq)
 const KINDS := ["classes", "weapons", "skills", "gadgets"]
+const FILL := "?" # marque d'un emplacement À REMPLIR (migration, action perdue) : jamais un identifiant
 
 static func _t() -> Dictionary:
 	return D6Data.tables().profile
@@ -39,7 +44,7 @@ static func create_profile(tuning: Dictionary) -> Dictionary:
 			"gadgets": [start.gadgetId],
 		},
 		"upgrades": {}, # id du Sanctuaire -> niveau
-		"loadout": {"classId": start.classId, "skillId": start.skillId, "gadgetId": start.gadgetId},
+		"loadout": {"classId": start.classId, "slots": [start.skillId, start.gadgetId, null]},
 		"equipment": {"arme": null, "armure": null, "talisman": null}, # rempli par starterItems à la 1re partie
 		"stash": [],
 		"itemSeq": 1.0,
@@ -116,10 +121,7 @@ static func sanitize_profile(raw, tuning: Dictionary) -> Dictionary:
 		var l: Dictionary = raw.loadout
 		if out.unlocked.classes.has(l.get("classId")):
 			out.loadout.classId = l.classId
-		if out.unlocked.skills.has(l.get("skillId")):
-			out.loadout.skillId = l.skillId
-		if out.unlocked.gadgets.has(l.get("gadgetId")):
-			out.loadout.gadgetId = l.gadgetId
+		out.loadout.slots = _raw_slots(l)
 	_sanitize_items(out, raw)
 	if _is_obj(raw.get("guardians")):
 		for k in raw.guardians:
@@ -131,6 +133,21 @@ static func sanitize_profile(raw, tuning: Dictionary) -> Dictionary:
 				out.stats[k] = raw.stats[k]
 	fix_loadout(out, tuning)
 	return out
+
+## Les emplacements d'une sauvegarde, tels qu'elle les donne (fix_loadout les valide ensuite).
+## MIGRATION du schéma 3 ({skillId, gadgetId}) : la compétence, le gadget, puis un emplacement à
+## remplir par la première autre action possédée de la classe (null s'il n'y en a pas).
+## Sans rien de lisible : compétence et gadget de départ, troisième emplacement vide.
+static func _raw_slots(l: Dictionary) -> Array:
+	var s = l.get("slots")
+	if s is Array:
+		var out: Array = []
+		for i in D6Loadout.SLOTS:
+			out.append(s[i] if i < s.size() else null)
+		return out
+	if l.has("skillId") or l.has("gadgetId"):
+		return [D6Js.nz(l.get("skillId"), FILL), D6Js.nz(l.get("gadgetId"), FILL), FILL]
+	return [FILL, FILL, null]
 
 ## Checkpoints, meilleur étage, Âmes et or.
 static func _sanitize_progress(out: Dictionary, raw: Dictionary, tuning: Dictionary, total: float) -> void:
@@ -232,16 +249,49 @@ static func _first_owned(list: Array, owned: Array):
 			return id
 	return list[0]
 
-## La compétence, le gadget et l'arme équipés doivent appartenir à la classe choisie.
+## Les actions de la classe `c` que le profil possède, dans l'ordre où elles remplissent un
+## emplacement : la première compétence et le premier gadget possédés, puis les autres.
+static func _owned_actions(profile: Dictionary, c: Dictionary) -> Array:
+	var skills: Array = c.skills.filter(func(id): return profile.unlocked.skills.has(id))
+	var gadgets: Array = c.gadgets.filter(func(id): return profile.unlocked.gadgets.has(id))
+	var out: Array = []
+	if not skills.is_empty():
+		out.append(skills[0])
+	if not gadgets.is_empty():
+		out.append(gadgets[0])
+	for id in skills + gadgets:
+		if not out.has(id):
+			out.append(id)
+	return out
+
+## Trois emplacements valides : une action possédée de la classe y reste (la première fois qu'on
+## la voit), un emplacement vide (null) reste vide, tout le reste (action d'une autre classe, non
+## possédée, en double, illisible) est remplacé par la première action possédée pas encore placée.
+static func _valid_slots(profile: Dictionary, c: Dictionary, raw) -> Array:
+	var owned := _owned_actions(profile, c)
+	var wanted: Array = raw if raw is Array else [FILL, FILL, null]
+	var out: Array = []
+	for i in D6Loadout.SLOTS:
+		var id = wanted[i] if i < wanted.size() else null
+		var text: bool = id is String or id is StringName
+		out.append(id if id == null or (text and owned.has(id) and not out.has(id)) else FILL)
+	for i in D6Loadout.SLOTS:
+		if out[i] == null or owned.has(out[i]):
+			continue
+		out[i] = null
+		for id in owned:
+			if not out.has(id):
+				out[i] = id
+				break
+	return out
+
+## Les emplacements d'action et l'arme équipés doivent appartenir à la classe choisie.
 static func fix_loadout(profile: Dictionary, tuning: Dictionary) -> void:
 	var c = tuning.classes.get(profile.loadout.get("classId"))
 	if c == null:
 		c = tuning.classes[tuning.classes.keys()[0]]
 	var l: Dictionary = profile.loadout
-	if not c.skills.has(l.get("skillId")) or not profile.unlocked.skills.has(l.get("skillId")):
-		l.skillId = _first_owned(c.skills, profile.unlocked.skills)
-	if not c.gadgets.has(l.get("gadgetId")) or not profile.unlocked.gadgets.has(l.get("gadgetId")):
-		l.gadgetId = _first_owned(c.gadgets, profile.unlocked.gadgets)
+	l.slots = _valid_slots(profile, c, l.get("slots"))
 	var w = profile.equipment.get("arme")
 	if w != null and not c.weapons.has(_weapon_type(w)):
 		# Arme d'une autre classe : elle retourne au coffre, la meilleure arme compatible la remplace.
@@ -348,6 +398,10 @@ static func buy_upgrade(profile: Dictionary, tuning: Dictionary, id) -> Dictiona
 static func select_class(profile: Dictionary, tuning: Dictionary, class_id) -> Dictionary:
 	if not profile.unlocked.classes.has(class_id):
 		return {"ok": false, "reason": "classe verrouillée"}
+	if profile.loadout.classId != class_id:
+		# Autre classe : les trois emplacements sont refaits. Une action commune aux deux classes
+		# reste à sa place ; tout le reste, vides compris, est rempli par ce que la classe possède.
+		profile.loadout.slots = profile.loadout.slots.map(func(id): return FILL if id == null else id)
 	profile.loadout.classId = class_id
 	var c: Dictionary = tuning.classes[class_id]
 	if not c.weapons.has(_weapon_type(profile.equipment.get("arme"))):
@@ -364,19 +418,41 @@ static func select_class(profile: Dictionary, tuning: Dictionary, class_id) -> D
 	fix_loadout(profile, tuning)
 	return {"ok": true}
 
-static func select_skill(profile: Dictionary, tuning: Dictionary, skill_id) -> Dictionary:
+## Place l'action `id` (compétence ou gadget possédé de la classe) dans l'emplacement `index`
+## (0, 1, 2). `id` null : vide l'emplacement. Une action déjà placée ailleurs ÉCHANGE les deux
+## emplacements : jamais deux fois la même.
+static func select_slot(profile: Dictionary, tuning: Dictionary, index, id) -> Dictionary:
+	if not _int_in(index, 0.0, D6Loadout.SLOTS - 1.0):
+		return {"ok": false, "reason": "emplacement inconnu"}
+	var slots: Array = profile.loadout.slots
+	var i := int(index)
+	if id == null:
+		slots[i] = null
+		return {"ok": true}
 	var c: Dictionary = tuning.classes[profile.loadout.classId]
-	if not profile.unlocked.skills.has(skill_id) or not c.skills.has(skill_id):
+	if not (id is String or id is StringName) or not _owned_actions(profile, c).has(id):
 		return {"ok": false, "reason": "indisponible"}
-	profile.loadout.skillId = skill_id
+	var j := slots.find(id)
+	if j >= 0:
+		slots[j] = slots[i]
+	slots[i] = id
 	return {"ok": true}
 
-static func select_gadget(profile: Dictionary, tuning: Dictionary, gadget_id) -> Dictionary:
+## Les actions que la classe courante peut placer dans un emplacement, compétences puis gadgets :
+## [{id, name, text, icon, kind ("skill" | "gadget"), unlocked, cost}]. Pour l'écran du Grimoire.
+static func slot_choices(profile: Dictionary, tuning: Dictionary) -> Array:
 	var c: Dictionary = tuning.classes[profile.loadout.classId]
-	if not profile.unlocked.gadgets.has(gadget_id) or not c.gadgets.has(gadget_id):
-		return {"ok": false, "reason": "indisponible"}
-	profile.loadout.gadgetId = gadget_id
-	return {"ok": true}
+	var out: Array = []
+	for pair in [["skill", "skills"], ["gadget", "gadgets"]]:
+		for id in c[pair[1]]:
+			var def = tuning[pair[1]].get(id)
+			if not (def is Dictionary):
+				continue
+			out.append({
+				"id": id, "name": def.name, "text": D6Js.nz(def.get("text"), ""), "icon": D6Js.nz(def.get("icon"), pair[0]), "kind": pair[0],
+				"unlocked": profile.unlocked[pair[1]].has(id), "cost": D6Js.nz(def.get("cost"), 0.0),
+			})
+	return out
 
 ## Rang dans le coffre de l'objet d'identifiant `uid` (findIndex : -1 s'il n'y est pas).
 static func _stash_index(profile: Dictionary, uid) -> int:

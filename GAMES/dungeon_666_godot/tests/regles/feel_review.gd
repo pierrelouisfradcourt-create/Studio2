@@ -120,7 +120,7 @@ static func _lance_au_finisher(h) -> void:
 	var g := _sandbox()
 	if not _to_finisher(h, g):
 		return
-	D6Game.step_game(g, _input({"skillPressed": true, "skillAimX": 1.0, "skillAimY": 0.0}))
+	D6Game.step_game(g, _input({"skill1Pressed": true, "skill1AimX": 1.0, "skill1AimY": 0.0}))
 	var cast := false
 	var f: Dictionary = g.tuning.combo[2]
 	var limit := _ticks(f.startup + f.active + f.recovery) + 3

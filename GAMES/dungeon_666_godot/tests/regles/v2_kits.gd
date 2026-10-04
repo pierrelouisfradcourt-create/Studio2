@@ -60,7 +60,7 @@ static func _kit_meta(class_id: String, kit: Dictionary = {}) -> Dictionary:
 	for k in ["classes", "weapons", "skills", "gadgets"]:
 		m.unlocked[k] = t[k].keys()
 	var c: Dictionary = t.classes[class_id]
-	m.loadout = {"classId": class_id, "skillId": kit.get("skill", c.skills[0]), "gadgetId": kit.get("gadget", c.gadgets[0])}
+	m.loadout = {"classId": class_id, "slots": [kit.get("skill", c.skills[0]), kit.get("gadget", c.gadgets[0]), null]}
 	m.equipment.arme = D6Profile.starter_weapon(t, kit.get("weapon", c.weapons[0]))
 	m.equipment.arme.uid = "i9000"
 	return m
@@ -151,7 +151,7 @@ static func _tests_defaut_et_registre(h) -> void:
 static func _t_defaut_valeurs(h) -> void:
 	var k := _kits()
 	var hist := _historic()
-	h.egal(k.DEFAULT_LOADOUT, {"classId": "revenant", "skillId": "lance", "gadgetId": "nova"})
+	h.egal(k.DEFAULT_LOADOUT, {"classId": "revenant", "slots": ["lance", "nova", null]})
 	h.egal(k.CLASSES.keys()[0], "revenant", "le Revenant reste la classe de départ")
 	var rev: Dictionary = k.CLASSES.revenant
 	h.egal(rev.stats, {})
@@ -166,31 +166,33 @@ static func _t_defaut_valeurs(h) -> void:
 	h.ok(not k.WEAPONS.lame.has("aimRange"), "la Lame garde la visée assistée de mêlée")
 	h.egal(_without_cost(k.SKILLS.lance), hist.lance)
 	h.egal(_without_cost(k.GADGETS.nova), hist.nova)
-	h.egal(k.SUPERS.colere, hist.colere)
+	# Combat V3 : la Colère a gagné `holdTime` (le maintien qui la lance) ; le reste est l'historique.
+	var colere: Dictionary = k.SUPERS.colere.duplicate()
+	h.ok(colere.erase("holdTime"), "la Colère porte holdTime")
+	h.egal(colere, hist.colere)
 	# Le tuning par défaut pointe sur les entrées du kit (références, pas copies). Côté Godot, le
 	# registre (tables) et le tuning sont deux fichiers de données : la référence se juge DANS le
 	# tuning (t.combo EST t.weapons.lame.combo), l'identité avec le registre se juge par valeur.
 	var t: Dictionary = D6Data.create_tuning()
 	h.ok(is_same(t.combo, t.weapons.lame.combo), "combo : référence")
 	h.ok(is_same(t.dashStrike, t.weapons.lame.dashStrike), "dashStrike : référence")
-	h.ok(is_same(t.skill, t.skills.lance), "skill : référence")
-	h.ok(is_same(t.gadget, t.gadgets.nova), "gadget : référence")
+	h.ok(not t.has("skill") and not t.has("gadget"), "combat V3 : compétence et gadget n'ont plus de bloc actif (emplacements)")
 	h.ok(is_same(t["super"], t.supers.colere), "super : référence")
 	h.egal(t.combo, k.WEAPONS.lame.combo)
 	h.egal(t.dashStrike, k.WEAPONS.lame.dashStrike)
-	h.egal(t.skill, k.SKILLS.lance)
-	h.egal(t.gadget, k.GADGETS.nova)
+	h.egal(t.skills.lance, k.SKILLS.lance)
+	h.egal(t.gadgets.nova, k.GADGETS.nova)
 	h.egal(t["super"], k.SUPERS.colere)
 
 static func _t_defaut_references(h) -> void:
 	var g: Dictionary = h.partie({"seed": 3.0})
 	var t: Dictionary = g.tuning
-	h.egal(g.kit, {"classId": "revenant", "weaponType": "lame", "skillId": "lance", "gadgetId": "nova", "superId": "colere"})
+	h.egal(g.kit, {"classId": "revenant", "weaponType": "lame", "slots": ["lance", "nova", null], "superId": "colere"})
 	h.ok(is_same(t.combo, t.weapons.lame.combo), "combo")
 	h.ok(is_same(t.dashStrike, t.weapons.lame.dashStrike), "dashStrike")
 	h.ok(is_same(t.weapon, t.weapons.lame), "weapon")
-	h.ok(is_same(t.skill, t.skills.lance), "skill")
-	h.ok(is_same(t.gadget, t.gadgets.nova), "gadget")
+	h.ok(is_same(D6Loadout.slot_def(g, 0), t.skills.lance), "skill")
+	h.ok(is_same(D6Loadout.slot_def(g, 1), t.gadgets.nova), "gadget")
 	h.ok(is_same(t["super"], t.supers.colere), "super")
 	h.egal(g.player.maxHp, 100.0)
 	h.egal(g.room.get("kitFx"), null, "le kit d'origine ne pose ni tir ni zone de kit")
@@ -275,8 +277,8 @@ static func _t_ville(h) -> void:
 	h.egal(p.souls, 1000.0 - k.CLASSES.bourreau.cost)
 	h.egal(D6Profile.select_class(p, t, "bourreau").ok, true)
 	h.egal(p.equipment.arme.weaponType, "hache")
-	h.egal(p.loadout.skillId, "bond")
-	h.egal(p.loadout.gadgetId, "cri")
+	h.egal(p.loadout.slots[0], "bond")
+	h.egal(p.loadout.slots[1], "cri")
 	var before: float = p.souls
 	h.egal(D6Profile.unlock(p, t, "weapons", "marteau").ok, true)
 	h.egal(p.souls, before - k.WEAPONS.marteau.cost)
@@ -470,14 +472,14 @@ static func _t_chaine(h) -> void:
 	var g := _sandbox(h, _kit_meta("revenant", {"skill": "chaine"}))
 	var e := _dummy(g, 300.0, 0.0, "imp", 500.0)
 	var d0: float = e.x - g.player.x
-	var evs: Array = h.avancer(g, 1, {"skillPressed": true, "skillAimX": 1.0, "skillAimY": 0.0})
+	var evs: Array = h.avancer(g, 1, {"skill1Pressed": true, "skill1AimX": 1.0, "skill1AimY": 0.0})
 	evs.append_array(h.avancer(g, h.ticks(0.6)))
 	h.ok(_has_event(evs, "hook"), "événement hook")
 	h.ok(_hits(evs, "skill").size() >= 1, "dégâts de compétence")
 	var d1 := _hypot(e.x - g.player.x, e.y - g.player.y)
 	h.ok(d1 < d0 * 0.4, "tiré : %s -> %.0f" % [d0, d1])
 	h.ok(d1 > g.player.r + e.r - 1.0, "pas à travers le héros")
-	h.ok(g.player.skillCd > 0.0)
+	h.ok(g.player.slots[0].cd > 0.0)
 	h.egal(g.telemetry.skillCasts, 1.0)
 
 static func _t_chaine_gardien(h) -> void:
@@ -486,7 +488,7 @@ static func _t_chaine_gardien(h) -> void:
 	b.cooldown = 999.0
 	b.state = "rest"
 	b.restFor = 99.0
-	h.avancer(g, 1, {"skillPressed": true, "skillAimX": 1.0, "skillAimY": 0.0})
+	h.avancer(g, 1, {"skill1Pressed": true, "skill1AimX": 1.0, "skill1AimY": 0.0})
 	var max_pull := 0.0
 	for i in h.ticks(0.5):
 		h.avancer(g, 1)
@@ -498,7 +500,7 @@ static func _t_bond(h) -> void:
 	var g := _sandbox(h, _kit_meta("bourreau"))
 	var e := _dummy(g, 220.0, 0.0, "imp", 500.0)
 	var x0: float = g.player.x
-	h.avancer(g, 1, {"skillPressed": true})
+	h.avancer(g, 1, {"skill1Pressed": true})
 	h.egal(g.player.state, "cast")
 	h.ok(g.player.iframes > 0.0, "invulnérable dès le saut")
 	h.avancer(g, 3)
@@ -513,7 +515,7 @@ static func _t_bond(h) -> void:
 static func _t_bond_interrompu(h) -> void:
 	var g := _sandbox(h, _kit_meta("bourreau"))
 	_dummy(g, 200.0, 0.0, "imp", 500.0)
-	h.avancer(g, 1, {"skillPressed": true})
+	h.avancer(g, 1, {"skill1Pressed": true})
 	h.avancer(g, 4)
 	var evs: Array = h.avancer(g, 1, {"moveX": -1.0, "dashPressed": true})
 	h.egal(g.player.state, "dash")
@@ -526,7 +528,7 @@ static func _t_brasier(h) -> void:
 	var e := _dummy(g, 200.0, 0.0, "brute", 2000.0)
 	e.mass = 1000.0
 	e.stun = 99.0 # immobile : on juge le point de chute
-	h.avancer(g, 1, {"skillPressed": true})
+	h.avancer(g, 1, {"skill1Pressed": true})
 	var evs: Array = h.avancer(g, h.ticks(sk.castTime + sk.flight) + 3)
 	h.ok(_has_event(evs, "explode", "kind", "brasier"), "le pot éclate")
 	h.ok(_hits(evs, "skill").size() >= 1, "impact de compétence")
@@ -543,7 +545,7 @@ static func _t_volee(h) -> void:
 	var g := _sandbox(h, _kit_meta("chasseresse"))
 	var e := _dummy(g, 60.0, 0.0, "brute", 2000.0)
 	e.mass = 1000.0
-	h.avancer(g, 1, {"skillPressed": true, "skillAimX": 1.0, "skillAimY": 0.0})
+	h.avancer(g, 1, {"skill1Pressed": true, "skill1AimX": 1.0, "skill1AimY": 0.0})
 	var evs: Array = h.avancer(g, h.ticks(_kits().SKILLS.volee.castTime) + 1)
 	var fan: Array = _shots(g).filter(func(s): return s.get("kind") == "thorn")
 	h.egal(fan.size() + _hit_ids(evs, "skill").size() > 0, true)
@@ -565,9 +567,9 @@ static func _t_bombe(h) -> void:
 	var gd: Dictionary = _kits().GADGETS.bombe
 	var g := _sandbox(h, _kit_meta("bourreau", {"gadget": "bombe"}))
 	var e := _dummy(g, 200.0, 0.0, "imp", 500.0)
-	var c0: float = g.player.gadgetCharges
-	h.avancer(g, 1, {"gadgetPressed": true})
-	h.egal(g.player.gadgetCharges, c0 - 1.0)
+	var c0: float = g.player.slots[1].charges
+	h.avancer(g, 1, {"skill2Pressed": true})
+	h.egal(g.player.slots[1].charges, c0 - 1.0)
 	var bombes := _zones_of(g, "bombe")
 	h.ok(bombes.size() > 0 and _hypot(bombes[0].tx - e.x, bombes[0].ty - e.y) < 20.0, "visée sur l'ennemi")
 	D6Projectiles.spawn_projectile(g, {"owner": "enemy", "kind": "arrow", "x": e.x, "y": e.y - 40.0, "vx": 0.0, "vy": 0.0, "r": 7.0, "damage": 10.0, "range": 600.0})
@@ -581,7 +583,7 @@ static func _t_bombe(h) -> void:
 static func _t_piege(h) -> void:
 	var gd: Dictionary = _kits().GADGETS.piege
 	var g := _sandbox(h, _kit_meta("chasseresse"))
-	h.avancer(g, 1, {"gadgetPressed": true})
+	h.avancer(g, 1, {"skill2Pressed": true})
 	if not h.ok(_zones(g).size() > 0, "un piège est posé"):
 		return
 	var trap: Dictionary = _zones(g)[0]
@@ -604,16 +606,16 @@ static func _t_piege(h) -> void:
 	var g2 := _sandbox(h, _kit_meta("chasseresse"))
 	for i in 4:
 		g2.player.x += 80.0
-		h.avancer(g2, 1, {"gadgetPressed": true})
+		h.avancer(g2, 1, {"skill2Pressed": true})
 		h.avancer(g2, 2)
 	h.egal(_zones_of(g2, "piege").size(), gd.maxActive)
 
 static func _t_cri(h) -> void:
 	var g := _sandbox(h, _kit_meta("bourreau"))
-	h.egal(g.kit.gadgetId, "cri", "gadget de départ du Bourreau")
+	h.egal(g.kit.slots[1], "cri", "gadget de départ du Bourreau")
 	var near := _dummy(g, 120.0, 0.0, "imp", 500.0)
 	var far := _dummy(g, 420.0, 0.0, "imp", 500.0)
-	var evs: Array = h.avancer(g, 1, {"gadgetPressed": true})
+	var evs: Array = h.avancer(g, 1, {"skill2Pressed": true})
 	h.ok(_has_event(evs, "gadget", "gadget", "cri"))
 	h.ok(near.stun > 0.0 and near.vuln > 0.0 and near.vulnMult > 0.0, "proche : étourdi et vulnérable")
 	h.ok(_hypot(near.kvx, near.kvy) < 1.0, "aucun recul")
@@ -625,7 +627,7 @@ static func _t_totem(h) -> void:
 	var far := _dummy(g, 400.0, 0.0, "imp", 500.0)
 	near.stun = 99.0 # immobiles : la portée du totem se juge sur place
 	far.stun = 99.0
-	h.avancer(g, 1, {"gadgetPressed": true})
+	h.avancer(g, 1, {"skill2Pressed": true})
 	var evs: Array = h.avancer(g, h.ticks(1.2))
 	h.ok(evs.filter(func(ev): return ev.type == "kitPulse").size() >= 2, "impulsions")
 	h.ok(near.hp < near.maxHp and near.chillMult < 1.0, "proche : blessé et ralenti")
@@ -641,7 +643,7 @@ static func _t_sentence(h) -> void:
 	var back := _dummy(g, -100.0, 0.0, "imp", 5000.0)
 	back.mass = 1000.0
 	g.player.superCharge = 1.0
-	var evs: Array = h.avancer(g, 1, {"superPressed": true})
+	var evs: Array = h.ultime(g)
 	h.egal(g.player.state, "super")
 	var hp: float = g.player.hp
 	D6Combat.damage_player(g, 50.0, {"kind": "test", "id": 5.0})
@@ -664,7 +666,7 @@ static func _t_nuee(h) -> void:
 	var a := _dummy(g, 200.0, 0.0, "imp", 5000.0)
 	var b := _dummy(g, -200.0, 50.0, "imp", 5000.0)
 	g.player.superCharge = 1.0
-	h.avancer(g, 1, {"superPressed": true})
+	h.ultime(g)
 	h.egal(g.player.state, "super")
 	h.egal(D6Combat.damage_player(g, 50.0, {"kind": "test", "id": 6.0}), false)
 	var evs: Array = []
@@ -697,7 +699,7 @@ static func _t_boons_attaque_competence(h) -> void:
 	D6Boons.add_boon(g2.run, {"id": "charme", "rarity": "commun"})
 	D6Stats.recompute_stats(g2)
 	var f := _dummy(g2, 250.0, 0.0, "imp", 500.0)
-	h.avancer(g2, 1, {"skillPressed": true, "skillAimX": 1.0, "skillAimY": 0.0})
+	h.avancer(g2, 1, {"skill1Pressed": true, "skill1AimX": 1.0, "skill1AimY": 0.0})
 	h.avancer(g2, h.ticks(0.4))
 	h.ok(f.vuln > 0.0, "la Chaîne (source skill) rend vulnérable")
 
@@ -710,7 +712,8 @@ static func _first_strike(h, boon: bool) -> Dictionary:
 	var e := _dummy(g, 90.0, 0.0, "brute", 5000.0)
 	e.mass = 1000.0
 	g.player.superCharge = 1.0
-	var evs: Array = h.avancer(g, h.ticks(0.4), func(i): return {"superPressed": i == 0})
+	var evs: Array = h.ultime(g) # le pas où le Super part, puis le reste des 0,4 s
+	evs.append_array(h.avancer(g, h.ticks(0.4) - 1))
 	var sup := _hits(evs, "super")
 	if not h.ok(sup.size() > 0, "le Super porte un premier coup"):
 		return {"amount": NAN, "superT": NAN}
@@ -742,7 +745,7 @@ static func _check_invariants(h, g: Dictionary, where: String) -> void:
 	h.ok(p.hp >= 0.0 and p.hp <= p.maxHp, "%s : PV %s/%s" % [where, p.hp, p.maxHp])
 	h.egal(p.hp <= 0.0, p.state == "dead", "%s : PV et état incohérents" % where)
 	h.ok(p.dashCharges >= 0.0 and p.dashCharges <= D6Player.max_dash_charges(g), "%s : charges de dash" % where)
-	h.ok(p.gadgetCharges >= 0.0, "%s : charges de gadget" % where)
+	h.ok(p.slots.all(func(s): return s.charges >= 0.0), "%s : charges de gadget" % where)
 	h.ok(p.superCharge >= 0.0 and p.superCharge <= 1.0, "%s : jauge de Super" % where)
 	for e in g.enemies:
 		if e.dead:

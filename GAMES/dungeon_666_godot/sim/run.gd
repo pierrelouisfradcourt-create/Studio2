@@ -88,7 +88,7 @@ static func _place_player(game: Dictionary, info: Dictionary) -> void:
 	# Gadget : charges rendues toutes les `gadgetRefillEvery` étages de la section.
 	var every: float = D6Js.nz(t.section.get("gadgetRefillEvery"), t.floors.sectionLength)
 	if fmod(info.indexInSection - 1.0, every) == 0.0:
-		p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus
+		D6Loadout.refill_gadgets(game)
 
 ## Salle calme : l'objet d'interaction est là d'emblée, les portes aussi.
 static func _enter_calm_room(game: Dictionary, plan: Dictionary) -> void:
@@ -359,7 +359,7 @@ static func _option_blocked(game: Dictionary, o: Dictionary) -> bool:
 		"bloodBoon":
 			return _blood_hp(p, o) >= p.hp # à 1 PV il n'y a plus de sang à offrir
 		"gadgetCharge":
-			return p.gadgetCharges >= game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus
+			return D6Loadout.gadgets_full(game) # tous les gadgets équipés pleins, ou aucun gadget
 		"superToHp":
 			return p.superCharge < o.need / 100.0
 		"hpToSuper":
@@ -597,7 +597,7 @@ static func _apply_loot(game: Dictionary, it: Dictionary, type: String) -> bool:
 		var old = run.items.get(it.item.slot)
 		if D6Js.truthy(old):
 			D6Profile.stash_loot(game.meta, old)
-		run.items[it.item.slot] = it.item
+		_wear(game, it.item)
 		D6Stats.recompute_stats(game)
 		D6State.emit(game, "equip", {"slot": it.item.slot, "rarity": it.item.rarity})
 		return _close_choice(game)
@@ -610,6 +610,12 @@ static func _apply_loot(game: Dictionary, it: Dictionary, type: String) -> bool:
 		D6State.emit(game, "gold", {"x": p.x, "y": p.y, "amount": D6Loot.salvage_value(game, it.item)})
 		return _close_choice(game)
 	return false
+
+## L'objet rejoint l'équipement du PROFIL (run.items) : il y reçoit son identifiant tout de suite,
+## comme un objet rangé au coffre — le profil en mémoire est celui qu'on relira du disque.
+static func _wear(game: Dictionary, item: Dictionary) -> void:
+	D6Profile.ensure_uid(game.meta, item)
+	game.run.items[item.slot] = item
 
 ## Marchand : fermer, ou acheter l'offre `index`.
 static func _apply_shop(game: Dictionary, it: Dictionary, type: String, index) -> bool:
@@ -633,7 +639,7 @@ static func _apply_shop(game: Dictionary, it: Dictionary, type: String, index) -
 			var old = run.items.get(offer.item.slot)
 			if D6Js.truthy(old):
 				D6Profile.stash_loot(game.meta, old)
-			run.items[offer.item.slot] = offer.item
+			_wear(game, offer.item)
 		else:
 			D6Profile.stash_loot(game.meta, offer.item)
 	sync_purse(game)
@@ -659,7 +665,7 @@ static func _apply_event(game: Dictionary, opt: Dictionary) -> bool:
 		"heal":
 			D6Combat.heal_player(game, p.maxHp * (opt.pct / 100.0), true)
 		"gadgetCharge":
-			p.gadgetCharges += opt.gain
+			D6Loadout.grant_gadget_charges(game, opt.gain) # à chaque gadget équipé
 		"cursedChest":
 			_event_chest(game, opt)
 			return true
@@ -773,8 +779,10 @@ static func _revive(game: Dictionary) -> void:
 	p.hp = p.maxHp
 	p.superCharge = D6Js.nz(t["super"].get("startCharge"), 0.0)
 	p.dashCharges = t.dash.charges + p.stats.dashChargesBonus
-	p.gadgetCharges = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus
-	p.skillCd = 0.0
+	D6Loadout.refill_gadgets(game)
+	for st in p.slots:
+		st.cd = 0.0
+	p.superHold = 0.0
 	p.iframes = 1.0
 	p.freeze = 0.0
 	p.state = "free"

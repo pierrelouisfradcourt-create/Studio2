@@ -56,6 +56,7 @@ func _derouler() -> void:
 	await _classe()
 	await _sanctuaire()
 	await _sans_ames()
+	await _emplacements()
 	await _coffre()
 	await _labo()
 	await _doigt()
@@ -175,13 +176,36 @@ func _sans_ames() -> void:
 	var deblocage := _bouton(cle, "debloquer")
 	_ok(deblocage != null and deblocage.disabled, "sans Âmes, « Débloquer » %s est grisé" % competence)
 	# Une opération refusée par les règles (compétence non possédée) : la raison s'affiche, rien ne change.
-	ville.page("grimoire").operation_demandee.emit(cle, "select_skill", [competence])
+	ville.page("grimoire").operation_demandee.emit(cle, "select_slot", [0.0, competence])
 	await _images()
 	_ok(_instantane() == avant, "une opération refusée ne change pas le profil")
 	_ok(_texte_visible("Indisponible"), "le refus affiche sa raison sur la carte (« Indisponible »)")
 	app.profil.souls = 50.0
 	app.profil_change.emit()
 	await _images()
+
+## Combat V3 : le Grimoire place les actions dans les TROIS emplacements (opération select_slot).
+func _emplacements() -> void:
+	print("[emplacements]")
+	await _ouvrir("grimoire")
+	var avant: Array = app.profil.loadout.slots.duplicate()
+	_ok(avant.size() == 3 and avant[0] != null and avant[1] != null, "le profil porte trois emplacements (%s)" % str(avant))
+	var premiere: String = avant[0]
+	var cle := "%s:%s" % ["skills" if app.contenu.skills.has(premiere) else "gadgets", premiere]
+	_ok(_bouton(cle, "slot0") != null and _bouton(cle, "slot0").disabled, "l'action placée dans l'emplacement 1 : son bouton « → 1 » est grisé")
+	_ok(_appuyer(_bouton(cle, "slot2")), "…et « → 3 » s'appuie")
+	await _images()
+	_ok(app.profil.loadout.slots == [avant[2], avant[1], premiere], "« → 3 » : les emplacements 1 et 3 s'échangent (%s)" % str(app.profil.loadout.slots))
+	_ok(_appuyer(_bouton("slots:2", "vider")), "l'emplacement 3, rempli, a un bouton « Vider »")
+	await _images()
+	_ok(app.profil.loadout.slots[2] == null and _bouton("slots:2", "vider") == null, "« Vider » : l'emplacement 3 est vide, et son bouton a disparu")
+	_ok(_appuyer(_bouton(cle, "slot0")), "l'action, plus placée nulle part, se replace dans l'emplacement 1")
+	await _images()
+	_ok(app.profil.loadout.slots[0] == premiere, "…elle y est")
+	var relu: Dictionary = Profil.charger(app.contenu)
+	_ok(relu.loadout.slots == app.profil.loadout.slots, "les emplacements sont relus du disque d'essai (%s)" % str(relu.loadout.slots))
+	var jeu: Dictionary = app.operation_ville("select_slot", [1.0, avant[1]])
+	_ok(jeu.get("ok") == true, "le second emplacement est remis")
 
 func _objet_du_coffre(emplacement: String, rarete: String = ""):
 	for objet in app.profil.stash:

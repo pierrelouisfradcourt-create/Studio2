@@ -8,12 +8,12 @@ l'équilibrage ressenti : **D11 se juge en main**.
 
 | Kit | Habile : section battue | Habile : dégâts/salle | Sans dash : dégâts/salle | Valeur du dash | Sans dash vs étalon | Sans dash : section battue | Martèle : meurt | Martèle : étage atteint | Durée (habile) |
 |---|---|---|---|---|---|---|---|---|---|
-| Revenant · Lame du Revenant | 100 % | 3.0 | 16.4 | ×5.4 | 100 % | 15 % | 100 % | 8.0 | 6.3 min |
-| Revenant · Dagues jumelles | 100 % | 3.9 | 17.5 | ×4.5 | 106 % | 35 % | 100 % | 7.0 | 6.4 min |
-| Bourreau · Hache du bourreau | 100 % | 2.9 | 25.9 | ×9.0 | 158 % | 20 % | 95 % | 13.7 | 5.6 min |
-| Bourreau · Maillet des damnés | 100 % | 2.5 | 24.4 | ×9.9 | 148 % | 10 % | 95 % | 13.8 | 5.6 min |
-| Chasseresse · Arc d'os | 100 % | 0.9 | 19.1 | ×22.1 | 116 % | 15 % | 100 % | 6.3 | 5.5 min |
-| Chasseresse · Arbalète des limbes | 100 % | 1.3 | 18.0 | ×13.8 | 110 % | 15 % | 100 % | 7.8 | 5.3 min |
+| Revenant · Lame du Revenant | 100 % | 4.0 | 22.5 | ×5.6 | 100 % | 20 % | 100 % | 8.7 | 6.5 min |
+| Revenant · Dagues jumelles | 100 % | 3.4 | 18.3 | ×5.4 | 81 % | 15 % | 100 % | 7.3 | 6.6 min |
+| Bourreau · Hache du bourreau | 100 % | 2.6 | 26.3 | ×10.2 | 117 % | 10 % | 95 % | 15.2 | 5.7 min |
+| Bourreau · Maillet des damnés | 100 % | 2.1 | 25.9 | ×12.1 | 115 % | 20 % | 95 % | 13.2 | 5.6 min |
+| Chasseresse · Arc d'os | 100 % | 0.7 | 17.5 | ×26.5 | 77 % | 25 % | 100 % | 5.8 | 5.5 min |
+| Chasseresse · Arbalète des limbes | 95 % | 1.2 | 18.3 | ×15.8 | 81 % | 15 % | 95 % | 9.7 | 5.3 min |
 
 Seuils bloquants : section battue ≥ 90 % ; valeur du dash ≥ ×2 ; sans dash, au moins 70 % des dégâts/salle de l'étalon (revenant/lame).
 
@@ -23,12 +23,12 @@ Le héros ne bouge pas et maintient l'attaque 30 s. Coups reçus, moyenne de 10 
 
 | Kit | brutes (2) | diablotins (3) | mêlée (5) |
 |---|---|---|---|
-| Revenant · Lame du Revenant | 15.0 | 10.0 | 11.3 |
-| Revenant · Dagues jumelles | 14.5 | 13.3 | 14.9 |
-| Bourreau · Hache du bourreau | 12.1 | 9.3 | 11.1 |
-| Bourreau · Maillet des damnés | 8.0 | 1.9 | 9.6 |
-| Chasseresse · Arc d'os (à distance) | 10.4 | 12.8 | 20.5 |
-| Chasseresse · Arbalète des limbes (à distance) | 5.4 | 1.3 | 9.1 |
+| Revenant · Lame du Revenant | 14.4 | 8.5 | 11.0 |
+| Revenant · Dagues jumelles | 15.0 | 13.0 | 13.8 |
+| Bourreau · Hache du bourreau | 10.2 | 5.2 | 7.0 |
+| Bourreau · Maillet des damnés | 7.0 | 1.1 | 5.3 |
+| Chasseresse · Arc d'os (à distance) | 9.3 | 13.7 | 20.3 |
+| Chasseresse · Arbalète des limbes (à distance) | 5.1 | 2.7 | 11.1 |
 
 Seuil bloquant (armes de mêlée) : au moins 3 coups de brutes en 30 s. Les diablotins restent une mesure :
 une arme lourde les tient à distance par son recul, pas par l'étourdissement.

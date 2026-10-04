@@ -110,6 +110,14 @@ static func nav_dir(room: Dictionary, px: float, py: float, tx: float, ty: float
 		return norm(best[0] - px, best[1] - py)
 	return norm(tx - px, ty - py)
 
+## Premier emplacement dont le bouton montre un gadget prêt (une charge au moins), ou -1.
+static func ready_gadget(game: Dictionary) -> int:
+	for i in D6Loadout.SLOTS:
+		var view = D6Loadout.slot_view(game, i)
+		if view != null and view.kind == "gadget" and view.ready:
+			return i
+	return -1
+
 static func inside_obstacle(room: Dictionary, x: float, y: float, r: float) -> bool:
 	for o in room.obstacles:
 		if x > o.x0 - r and x < o.x1 + r and y > o.y0 - r and y < o.y1 + r:

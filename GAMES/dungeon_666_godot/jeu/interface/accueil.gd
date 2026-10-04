@@ -68,8 +68,8 @@ func montree() -> String:
 	return _montree if _opacite > 0.0 else ""
 
 ## La commande que la consigne montrée désigne (son bouton bat à l'écran), ou "".
-func commande() -> String:
-	return String(Consignes.trouver(montree()).get("commande", ""))
+func commande(game = null) -> String:
+	return Consignes.commande(Consignes.trouver(montree()), game)
 
 ## La phrase et le libellé affichés (pour les essais).
 func phrase() -> String:
@@ -193,7 +193,7 @@ func _ecrire(game) -> void:
 	var c: Dictionary = Consignes.trouver(_montree)
 	if c.is_empty():
 		return
-	var cmd := String(c.get("commande", ""))
+	var cmd := Consignes.commande(c, game)
 	_texte.text = Consignes.texte(c, _appareil)
 	_touche.text = String(_libelles.get(cmd, ""))
 	_touche.visible = _touche.text != ""

@@ -89,6 +89,24 @@ func avancer(g: Dictionary, n: int, sur = null) -> Array:
 		g.events.clear()
 	return evs
 
+## Lance l'ULTIME comme un joueur (combat V3) : l'attaque est TENUE (avec l'entrée `sur`) jusqu'à
+## ce qu'il parte — jauge pleine, il part après super.holdTime. Rend les événements ; `vider` faux
+## les laisse aussi dans g.events. S'arrête au pas où le héros entre dans l'état 'super', ou après
+## ULTIME_MAX s (le test qui suit voit alors qu'il n'est pas parti).
+const ULTIME_MAX := 3.0 # s : marge large, un gel d'impact du premier coup retarde le maintien
+func ultime(g: Dictionary, sur: Dictionary = {}, vider: bool = true) -> Array:
+	var evs: Array = []
+	var tenu: Dictionary = sur.duplicate()
+	tenu.attack = true
+	for i in ticks(ULTIME_MAX):
+		D6Game.step_game(g, entree(tenu))
+		evs.append_array(g.events)
+		if vider:
+			g.events.clear()
+		if g.player.state == "super":
+			break
+	return evs
+
 func partie(options: Dictionary = {}) -> Dictionary:
 	return D6Game.create_game(options)
 

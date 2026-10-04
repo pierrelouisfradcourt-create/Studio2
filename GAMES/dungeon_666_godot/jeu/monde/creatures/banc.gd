@@ -66,7 +66,7 @@ static func _profil_kit(tuning: Dictionary, classe: String, arme: String) -> Dic
 	for k in ["classes", "weapons", "skills", "gadgets"]:
 		m.unlocked[k] = tuning[k].keys()
 	var c: Dictionary = tuning.classes[classe]
-	m.loadout = {"classId": classe, "skillId": c.skills[0], "gadgetId": c.gadgets[0]}
+	m.loadout = {"classId": classe, "slots": [c.skills[0], c.gadgets[0], null]}
 	m.equipment.arme = D6Profile.starter_weapon(tuning, c.weapons[0] if arme == "" else arme)
 	m.equipment.arme.uid = "i9000"
 	return m

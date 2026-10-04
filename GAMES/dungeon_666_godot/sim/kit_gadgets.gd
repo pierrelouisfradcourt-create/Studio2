@@ -6,19 +6,22 @@ extends RefCounted
 ##   piege — posé aux pieds ; se referme sur le premier ennemi qui passe (maxActive au plus)
 ##   totem — posé aux pieds ; impulsions qui blessent et ralentissent
 ##   cri   — hurlement autour du héros : étourdit et rend vulnérable, sans repousser
-## player vérifie que le gadget est utilisable (ni mort, ni Super, une charge au moins).
+## player vérifie que le gadget est utilisable (ni mort, ni Super, une charge au moins) et donne
+## l'emplacement `slot` d'où il part, avec la visée de son bouton (0, 0 = celle de l'attaque).
 
 static var _point := {"x": 0.0, "y": 0.0}
 
-static func use_kit_gadget(game: Dictionary, g: Dictionary) -> bool:
+static func use_kit_gadget(game: Dictionary, g: Dictionary, slot: int, aim_x: float = 0.0, aim_y: float = 0.0) -> bool:
 	var p: Dictionary = game.player
-	p.gadgetCharges -= 1.0
+	var st: Dictionary = p.slots[slot]
+	st.charges -= 1.0
 	if D6Js.truthy(g.get("iframes")):
 		p.iframes = maxf(p.iframes, g.iframes)
 	match g.kind:
 		"bombe":
-			# Visée : manuelle si le joueur vise, sinon l'ennemi pertinent à portée.
-			var aim: Dictionary = D6Aim.compute_aim(game, p.manualAimX, p.manualAimY, g.range)
+			# Visée : celle du bouton s'il a été glissé, sinon celle de l'attaque, sinon l'ennemi pertinent à portée.
+			var manual: bool = D6Js.truthy(aim_x) or D6Js.truthy(aim_y)
+			var aim: Dictionary = D6Aim.compute_aim(game, aim_x if manual else p.manualAimX, aim_y if manual else p.manualAimY, g.range)
 			var target: Dictionary = D6KitCommon.throw_point(game, aim.x, aim.y, aim.targetId, g.range, g.throwDist, _point)
 			D6KitZones.spawn_zone(game, {
 				"kind": "bombe", "phase": "flight", "x": p.x, "y": p.y, "x0": p.x, "y0": p.y, "tx": target.x, "ty": target.y, "flight": g.flight, "lift": 0.0,
@@ -43,7 +46,7 @@ static func use_kit_gadget(game: Dictionary, g: Dictionary) -> bool:
 				"chill": g.chill, "chillMult": g.chillMult,
 			})
 	game.telemetry.gadgetUses += 1.0
-	D6State.emit(game, "gadget", {"x": p.x, "y": p.y, "r": g.radius, "charges": p.gadgetCharges, "gadget": g.kind})
+	D6State.emit(game, "gadget", {"x": p.x, "y": p.y, "r": g.radius, "charges": st.charges, "gadget": g.kind, "slot": float(slot)})
 	return true
 
 ## Cri du bourreau : étourdit (l'attaque en préparation est abandonnée) et rend vulnérable.

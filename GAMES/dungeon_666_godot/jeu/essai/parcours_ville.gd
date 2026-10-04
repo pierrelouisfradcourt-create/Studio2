@@ -51,6 +51,30 @@ func regler_le_labo(etape: String) -> void:
 	t.verifier("%s, labo : « %s » retenu et écrit (était « %s »)" % [etape, autre, avant], autre != avant and app.reglages.lab[AXE_LABO] == autre and relu.lab[AXE_LABO] == autre, relu.lab)
 	operations["labo"] = operations.get("labo", 0) + 1
 
+## Le bouton de l'onglet Portail qui porte la clé `cle` (« depart:19 », « gardien:cerbere »), ou null.
+func bouton_du_portail(cle: String) -> Button:
+	for b in app.vues.ville.page("portail").find_children("*", "Button", true, false):
+		if String(b.get_meta("cle", "")) == cle and not b.is_queued_for_deletion():
+			return b
+	return null
+
+## Ce que le Portail PROPOSE : une carte par checkpoint du profil et pas une de plus, « Descendre »
+## sur le dernier ; un défi par Gardien rencontré, et pas un de plus.
+func verifier_le_portail(etape: String, dernier: float) -> void:
+	await ouvrir(etape, "portail")
+	for etage in app.profil.checkpoints:
+		var b := bouton_du_portail("depart:%s" % D6Js.num_str(etage))
+		var texte := "Descendre" if etage == dernier else "Se téléporter"
+		t.verifier("%s, portail : l'étage %s est proposé (« %s »)" % [etape, D6Js.num_str(etage), texte], b != null and b.text == texte and b.is_visible_in_tree() and not b.disabled, b.text if b != null else "absent")
+	var departs: int = _boutons_du_portail("depart:").size()
+	t.verifier("%s, portail : autant de départs que de checkpoints, le dernier est l'étage %s" % [etape, D6Js.num_str(dernier)], departs == app.profil.checkpoints.size() and D6Js.nz(app.profil.checkpoints.max(), 0.0) == dernier, [departs, app.profil.checkpoints])
+	var rencontres: Array = app.contenu.boss.keys().filter(func(m: String) -> bool: return D6Js.nz(app.profil.guardians.get(m), 0.0) > 0.0)
+	var defis: Array = _boutons_du_portail("gardien:").map(func(b: Button) -> String: return String(b.get_meta("cle")).trim_prefix("gardien:"))
+	t.verifier("%s, portail : un défi par Gardien rencontré %s, et eux seuls" % [etape, rencontres], defis == rencontres, defis)
+
+func _boutons_du_portail(prefixe: String) -> Array:
+	return app.vues.ville.page("portail").find_children("*", "Button", true, false).filter(func(b: Button) -> bool: return String(b.get_meta("cle", "")).begins_with(prefixe) and not b.is_queued_for_deletion() and b.is_visible_in_tree())
+
 func _premier_du_coffre(filtre: Callable):
 	for objet in app.profil.stash:
 		if filtre.call(objet):
@@ -73,6 +97,8 @@ func visite_du_nouveau_joueur() -> void:
 	await ouvrir(etape, "classe")
 	var res: Dictionary = await operer(etape, "unlock", ["classes", verrouillee], false)
 	t.verifier(etape + " : le refus dit pourquoi, rien n'est débloqué", String(res.get("reason", "")) != "" and not app.profil.unlocked.classes.has(verrouillee), res)
+	await verifier_le_portail(etape, 1.0)
+	t.verifier(etape + " : aucun Gardien à défier avant d'en avoir rencontré un", bouton_du_portail("gardien:%s" % app.contenu.guardians.rotation[0]) == null)
 	var depart: String = app.reglages.lab[AXE_LABO]
 	for i in D6Data.tables().lab.LAB_AXES[AXE_LABO].options.size(): # le tour des variantes
 		await regler_le_labo(etape)
@@ -169,7 +195,7 @@ func _apprendre_une_competence(etape: String) -> void:
 		if app.profil.unlocked.skills.has(id) or D6Profile.unlock_cost(app.contenu, "skills", id) > app.profil.souls:
 			continue
 		await operer(etape, "unlock", ["skills", id])
-		await operer(etape, "select_skill", [id])
-		t.verifier("%s : la compétence débloquée (%s) est équipée" % [etape, id], app.profil.loadout.skillId == id)
+		await operer(etape, "select_slot", [2.0, id])
+		t.verifier("%s : la compétence débloquée (%s) est équipée, troisième emplacement" % [etape, id], app.profil.loadout.slots[2] == id)
 		return
 	print("  (note) %s : aucune compétence à débloquer" % etape)

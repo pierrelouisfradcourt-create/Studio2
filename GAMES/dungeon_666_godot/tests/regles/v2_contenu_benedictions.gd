@@ -124,7 +124,7 @@ static func _t_ripaille(h) -> void:
 	g.player.hp = g.player.maxHp - 40.0
 	var hp0: float = g.player.hp
 	g.player.superCharge = 1.0
-	C.step1(h, g, {"superPressed": true})
+	C.ultime(h, g)
 	h.egal(g.player.state, "super")
 	h.egal(g.player.hp, hp0 + C.V("ripaille"))
 	var heals: Array = C.events(g, "heal")
@@ -250,7 +250,7 @@ static func _t_passion_brulante(h) -> void:
 	var near: Dictionary = C.dummy(g, 150.0, 0.0, "brute", 1e6)
 	var far: Dictionary = C.dummy(g, pr.radius + 200.0, 0.0, "brute", 1e6)
 	g.player.superCharge = 1.0
-	C.step1(h, g, {"superPressed": true})
+	C.ultime(h, g)
 	h.ok(near.burn > 4.0 - 2.0 * DT and near.burn <= 4.0, "en feu encore %s s" % near.burn)
 	h.egal(pr.duration, 4.0)
 	h.egal(near.burnDps, C.V("passion_brulante"))
@@ -282,7 +282,7 @@ static func _t_trop_plein(h) -> void:
 	h.ok(absf(p.superCharge - 10.0 * (C.V("trop_plein") / 100.0)) < EPS, "un soin qui ne déborde pas ne charge rien")
 	# Jamais pendant le Super : il ne se recharge pas lui-même.
 	p.superCharge = 1.0
-	C.step1(h, g, {"superPressed": true})
+	C.ultime(h, g)
 	D6Combat.heal_player(g, 500.0, true)
 	h.egal(p.superCharge, 0.0)
 	C.assert_deterministic(h, ["trop_plein", "festin"])

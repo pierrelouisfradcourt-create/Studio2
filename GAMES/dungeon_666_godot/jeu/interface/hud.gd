@@ -28,8 +28,8 @@ const ECART_ACCUEIL := 6.0 # entre le bloc de l'étage et la consigne de l'accue
 ## Libellé de chaque commande selon le dernier périphérique utilisé (mêmes touches que jeu/entrees/).
 ## « move » (le déplacement) n'a pas de bouton : seules les consignes de l'accueil le nomment.
 const TOUCHES := {
-	"clavier": {"attack": "Clic G", "dash": "Espace", "skill": "Clic D", "gadget": "E", "super": "F", "move": "ZQSD"},
-	"manette": {"attack": "X", "dash": "A", "skill": "B", "gadget": "Y", "super": "RB", "move": "Stick gauche"},
+	"clavier": {"attack": "Clic G", "dash": "Espace", "skill1": "Clic D", "skill2": "E", "skill3": "F", "move": "ZQSD"},
+	"manette": {"attack": "X", "dash": "A", "skill1": "B", "skill2": "Y", "skill3": "RB", "move": "Stick gauche"},
 }
 ## Les quatre touches PHYSIQUES du déplacement (jeu/entrees/clavier_souris.gd) : leur lettre dépend
 ## du clavier (ZQSD sur un AZERTY, WASD sur un QWERTY).
@@ -270,7 +270,7 @@ func _actualiser_commandes(game: Dictionary, au_doigt: bool) -> void:
 	bureau.visible = not au_doigt
 	bande_basse.visible = not au_doigt
 	tactile.visible = au_doigt
-	var designee: String = accueil.commande() # la consigne de l'accueil nomme une commande : elle bat
+	var designee: String = accueil.commande(game) # la consigne de l'accueil nomme une commande : elle bat
 	if au_doigt:
 		tactile.actualiser(game, _interface_tactile(), designee)
 		return

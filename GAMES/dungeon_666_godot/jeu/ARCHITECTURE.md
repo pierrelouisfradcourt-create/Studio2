@@ -70,8 +70,8 @@ C'est le SEUL point d'entrée d'une vue. Elle y garde `app` et `partie`, et s'ab
 | Pause / reprise | `app.mettre_en_pause(true / false)` |
 | Abandonner la descente | `app.abandonner()` |
 | Aller au titre, en Ville | `app.ouvrir_titre()`, `app.ouvrir_ville()` |
-| Descendre, arène, entraînement | `app.demarrer_descente(etage)`, `app.demarrer_descente(1.0, true)`, `app.demarrer_entrainement(gardien)` |
-| Opération de la Ville | `app.operation_ville("unlock", ["weapons", "dagues"])` → `{ok, reason?}` |
+| Descendre, arène, entraînement | `app.demarrer_descente(etage)`, `app.demarrer_descente(1.0, true)`, `app.demarrer_entrainement(gardien)` ; toutes prennent une graine en dernier argument (absente : tirée au hasard) |
+| Opération de la Ville | `app.operation_ville("unlock", ["weapons", "dagues"])` → `{ok, reason?}` ; emplacements : `app.operation_ville("select_slot", [2.0, "chaine"])` (`null` = vider) |
 | Réglage, labo du feel | `app.regler("sound", false)`, `app.regler_labo("hitstop", "local")` |
 | Réglages du feel (écarts au tuning de référence) | `app.regler_feel({"player.speed": 340.0})` — retenus, enregistrés, et passés à chaque partie neuve par `options.tuning` (`demarrer_descente`) |
 
@@ -87,13 +87,26 @@ nombre au hasard qui influence la partie (`randf` est permis pour une particule,
 - **Entrees** expose : `lire() -> Dictionary` (un InputFrame par pas de simulation, fronts
   accumulés puis consommés), `vider()`, `tactile() -> bool`, `interface_tactile() -> Dictionary`
   (la disposition des commandes tactiles, même forme que `touchUI()` de `src/input/input.mjs` :
-  c'est le HUD qui les DESSINE), et le signal `pause_demandee`.
+  c'est le HUD qui les DESSINE), et le signal `pause_demandee`. Combat V3 : l'entrée porte TROIS
+  emplacements d'action (`skill1`, `skill2`, `skill3`, chacun `…Pressed`, `…AimX`, `…AimY`) et plus
+  aucun bouton Super — clavier : clic droit / E / F ; manette : B / Y / RB ; tactile : les trois
+  boutons autour de l'attaque (ids `skill1`, `skill3`, `skill2` dans `interface_tactile()`), qui
+  partent au relâcher, visés si le pouce a glissé. L'attaque TENUE (clic gauche, J, X, gâchette,
+  pouce posé sans glisser) est ce qui lance l'ultime, jauge pleine : la règle est dans `sim/`, la
+  vue ne fait que dire « tenu ». Un pouce qui GLISSE sur l'attaque vise sans la tenir ; le coup
+  part au relâcher.
   Elle demande la position du héros à l'écran à `app.vues.monde.monde_vers_ecran(...)`.
 - **Effets** et **Son** n'exposent rien : ils écoutent `partie.evenements`. Effets appelle la
   caméra du Monde pour les secousses.
 - **Hud** laisse la zone des commandes tactiles libre (il lit `app.vues.entrees.tactile()`). Hors
   tactile, il écrit sous chaque commande la touche du DERNIER périphérique utilisé (clavier et
   souris, ou manette : X, A, B, Y, RB) ; `peripherique()` le dit, `montrer_peripherique(nom)` l'impose.
+  Ses commandes : attaque, dash, et les trois emplacements (`skill1`…`skill3`), dont l'état vient de
+  `jeu/interface/etat_commandes.gd`, qui lit `D6Loadout.slot_view(game, i)` sans connaître
+  l'intérieur (recharge d'une compétence, charges d'un gadget, emplacement vide : bouton éteint,
+  sans pictogramme). Le bouton d'ATTAQUE porte la jauge d'ultime en anneau, et un second trait
+  pendant le maintien qui le lance (présentation minimale de l'étape 1 : le bouton-jauge et
+  l'arc de boutons du plan sont le lot suivant).
 - **Ecrans** est seul à afficher des panneaux par-dessus le JEU (et l'écran titre) ; il met le jeu
   en pause quand il le faut et écoute `app.vues.entrees.pause_demandee`. **Ville** affiche la Ville
   quand `app.ecran == "ville"` et fournit `jeu/ville/panneau_labo.tscn` (racine avec
@@ -201,7 +214,9 @@ de profondeur corrigés le même jour (ramassables, objet d'interaction, Gardien
   jamais de coordonnées d'écran en dur. Le jeu doit rester lisible en 1600 × 720 et en 960 × 540.
 - Aucun fichier d'image, de son ou de police importé : formes dessinées, sons synthétisés,
   polices du système (`SystemFont`). Tout est procédural, comme dans la version web.
-- Un essai ne lit ni n'écrit le vrai profil : `outils/capture.gd` pose `D666_DONNEES`.
+- Un essai ne lit ni n'écrit le vrai profil ni les vrais réglages : il pose `D666_DONNEES`
+  LUI-MÊME, avant de monter le jeu (`outils/capture.gd` le fait aussi, mais un banc peut être
+  lancé sans lui : scène ouverte seule, éditeur).
 
 ## Vérifier une vue
 
@@ -233,13 +248,24 @@ elle est absente de l'arène et de l'entraînement. Vérification sans fenêtre 
 sont dans `jeu/theme/accords.gd`.
 
 Le jeu ASSEMBLÉ a son parcours sans fenêtre : `res://jeu/essai/test_parcours.gd` (finit par
-« PARCOURS : OK », environ 30 s). Il monte `jeu/principal.tscn` et fait vivre un joueur par les
-seules portes des vues (actions de `principal.gd`, commandes de menu), le bot de `outils/bots/`
-aux commandes (`jeu/essai/parcours_pilote.gd`) :
+« PARCOURS : OK », environ 45 s seul, davantage dans l'oracle). Il monte `jeu/principal.tscn` et
+fait vivre un joueur par les seules portes des vues (actions de `principal.gd`, commandes de menu,
+et le bouton de l'écran de victoire), le bot de `outils/bots/` aux commandes
+(`jeu/essai/parcours_pilote.gd`) :
 
-- un joueur neuf : titre, Ville (chaque onglet, un achat refusé, le labo), descente de l'étage 1
-  à l'antichambre (bénédiction, butin, marchand, autel), pause en combat, mort, « Repartir »,
-  mort, retour en Ville, une amélioration, un objet du coffre ;
+- un joueur neuf : titre, Ville (chaque onglet, un achat refusé, le labo ; le Portail ne propose
+  que l'étage 1 et aucun Gardien), descente de l'étage 1 (bénédiction, butin, marchand, autel,
+  chambre forte, pause en combat) jusqu'au GARDIEN de l'étage 18, réellement battu par le bot avec
+  ce profil neuf : butin, deux portes, checkpoint et Gardien au profil et sur le disque ; le
+  héros prend son butin puis le PORTAIL de la Ville (ni mort ni taxe) ; le Portail propose
+  l'étage 19 et le Gardien à défier ; REPRISE depuis ce point (équipement gardé, aucune
+  bénédiction), mort, « Repartir » (au même point), mort, retour en Ville, une amélioration, un
+  objet du coffre ;
+- un joueur au bout du chemin (profil écrit par `jeu/ville/profil_essai.gd`, `au_bout_du_chemin` :
+  tout acheté, un checkpoint par section, objets légendaires du niveau 648 — aucun mode
+  invulnérable) : la dernière section, de son checkpoint (étage 649) au dernier Gardien (étage
+  666), fontaine du Léthé comprise ; l'écran de VICTOIRE (ce qu'il dit, son seul bouton, appuyé),
+  ce que le profil reçoit (Âmes, Gardien compté, record 666, aucun checkpoint de plus) ;
 - un joueur avancé (profil de `jeu/ville/profil_essai.gd`, relu du disque par un jeu neuf) : une
   opération par onglet, arène d'essai, entraînement contre un Gardien, une descente profonde par
   classe (étages 19, 37, 55), finie par abandon ou par mort ;
@@ -248,11 +274,14 @@ aux commandes (`jeu/essai/parcours_pilote.gd`) :
 À chaque étape : l'écran et le mode attendus, les vues visibles et celles qui ne le sont pas, le
 profil du disque d'essai égal à celui en mémoire. Il est ROUGE de lui-même à la moindre erreur de
 script (`parcours_temoin.gd` les compte), et si le parcours n'a pas réellement joué (gardes :
-salles, étages, menus par sorte, morts, abandons, classes, opérations). Il tient l'horloge : la
+salles, étages jusqu'au 666e, les six sortes de menu, les deux Gardiens battus, le portail, le
+départ du point, la victoire, morts, abandons, classes, opérations). Il tient l'horloge : la
 boucle de la Partie est appelée pas à pas, graines fixes — même partie à chaque lancement (les
 lignes « RÉSUMÉ » sont identiques d'un lancement à l'autre). Il ne touche pas au vrai profil
 (dossier `user://essais_parcours`, empreinte du vrai `profil.json` vérifiée avant et après).
-Ce qu'il ne prouve pas : le rendu, le toucher des boutons (tests de chaque vue), la victoire.
+Ce qu'il ne prouve pas : le rendu, le toucher des boutons (tests de chaque vue). Avant de fermer
+le jeu, un essai laisse finir les fondus (`jeu/essai/fondus.gd`) : un fondu du kit coupé net par
+`app.free()` reste en mémoire et Godot écrit « ObjectDB instances leaked at exit » à la sortie.
 
 `capture.gd` lance une scène dans une vraie fenêtre (hors écran), la laisse vivre, et enregistre
 des PNG : c'est la preuve d'une vue. Chaque lot écrit sa scène de banc `jeu/<lot>/banc.tscn`

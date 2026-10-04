@@ -7,7 +7,8 @@ extends RefCounted
 ##   frames      nombre d'images jouées ; ticks : game.tick final
 ##   ops         le déroulé : n > 0 = jouer n images ; 0 = point de contrôle ;
 ##               n < 0 = commande de menu n° (-n - 1) >> 1, acceptée si (-n - 1) & 1
-##   columns     les entrées, une colonne par champ (mx, my, ax, ay, drapeaux, sx, sy), chacune
+##   columns     les entrées, une colonne par champ (mx, my, ax, ay, drapeaux, puis la visée
+##               x, y de chacun des trois emplacements : combat V3, format 2), chacune
 ##               codée par plages répétées : [valeur, nombre d'images, valeur, nombre…]
 ##   commands    les commandes de menu distinctes (JSON)
 ##   signatures  8 octets par point de contrôle : le début du SHA-256 de l'empreinte d'état
@@ -18,11 +19,11 @@ extends RefCounted
 
 const Format = preload("res://outils/bots/format.gd")
 
-const FORMAT := 1
+const FORMAT := 2 # 2 : entrée du combat V3 (trois emplacements, plus de bouton Super)
 const DIR := "res://references/parties/"
 const EXT := ".ref"
 const SIGNATURE_BYTES := 8
-const INPUT_FIELDS := 7 # un pas d'entrées : [0, mx, my, ax, ay, drapeaux, sx, sy]
+const INPUT_FIELDS := 11 # un pas d'entrées : [0, mx, my, ax, ay, drapeaux, s1x, s1y, s2x, s2y, s3x, s3y]
 
 static func path_of(name: String) -> String:
 	return DIR + name + EXT

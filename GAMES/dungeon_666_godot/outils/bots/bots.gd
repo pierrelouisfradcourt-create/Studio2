@@ -15,9 +15,11 @@ extends RefCounted
 ##
 ## Politiques :
 ##   skilled — joue bien : lit les télégraphes, esquive au dernier moment (marche ou dash),
-##             punit les béliers sonnés, gère compétence / gadget / Super.
+##             punit les béliers sonnés, gère ses trois emplacements (compétences, gadgets)
+##             et l'ultime (attaque TENUE quand la jauge est pleine ; sinon il frappe par appuis).
 ##   noDash  — identique mais n'utilise JAMAIS le dash ni le gadget : mesure la valeur du dash.
-##   masher  — fonce sur l'ennemi le plus proche et tape sans arrêt, dash aléatoire rare.
+##   masher  — fonce sur l'ennemi le plus proche et tient l'attaque sans arrêt, dash aléatoire
+##             rare. Combat V3 : attaque tenue + jauge pleine = l'ultime part tout seul.
 ##
 ## Options posées par l'appelant dans la mémoire (jamais lues dans la partie) :
 ##   mem.wantTown   — prendre le portail de la Ville quand il s'ouvre (sinon : jamais) ;
@@ -143,17 +145,16 @@ static func _intent_to_input(intent: Dictionary) -> Dictionary:
 	var input := D6Game.empty_input()
 	input.moveX = intent.mx
 	input.moveY = intent.my
-	input.attack = intent.attack
+	_attack_input(intent, input)
 	if D6Js.truthy(intent.get("aimX")) or D6Js.truthy(intent.get("aimY")):
 		input.aimX = intent.aimX
 		input.aimY = intent.aimY
-	var skill = intent.get("skill")
-	if skill != null:
-		input.skillPressed = true
-		input.skillAimX = skill.x
-		input.skillAimY = skill.y
-	input.gadgetPressed = intent.gadget
-	input.superPressed = intent.superP
+	var slots: Array = intent.slots
+	for i in slots.size():
+		if slots[i] != null:
+			input[D6Player.SLOT_PRESSED[i]] = true
+			input[D6Player.SLOT_AIM_X[i]] = slots[i].x
+			input[D6Player.SLOT_AIM_Y[i]] = slots[i].y
 	var dash = intent.get("dash")
 	if dash != null:
 		# Dash offensif (traverser un porte-pavois) : la direction du dash est celle de la marche.
@@ -161,6 +162,17 @@ static func _intent_to_input(intent: Dictionary) -> Dictionary:
 		input.moveY = dash.y
 		input.dashPressed = true
 	return input
+
+## Le bouton d'attaque d'une intention. L'ultime voulu : il est TENU. Jauge pleine sans le vouloir
+## (intent.tap) : des appuis brefs, jamais tenus — tenir le lancerait. Sinon : tenu, comme avant.
+static func _attack_input(intent: Dictionary, input: Dictionary) -> void:
+	if D6Js.truthy(intent.get("superP")):
+		input.attack = true
+	elif D6Js.truthy(intent.get("tap")):
+		input.attack = false
+		input.attackPressed = D6Js.truthy(intent.get("attack"))
+	else:
+		input.attack = D6Js.truthy(intent.get("attack"))
 
 ## Pendant un dash : on tient la direction. Habitude « dash puis frappe » (mesure du labo D5, sur
 ## demande : mem.dashAttack) : le pouce tape l'attaque dès le début de chaque ruée, comme un
@@ -193,8 +205,10 @@ static func _tactical(game: Dictionary, mem: Dictionary, opts: Dictionary) -> Di
 	if not threats.is_empty():
 		var evasive = Anticipation.plan_evasion(game, mem, threats, intent, opts)
 		if evasive != null:
-			# On garde le Super s'il est prêt : il rend invulnérable pendant sa durée.
-			evasive.superPressed = intent.superP
+			# On garde l'ultime s'il est voulu (il rend invulnérable) : l'attaque reste tenue ; et
+			# jauge pleine sans le vouloir, l'esquive ne tient pas l'attaque non plus.
+			var wanted: Dictionary = {"superP": intent.superP, "tap": intent.tap, "attack": evasive.attack}
+			_attack_input(wanted, evasive)
 			return evasive
 	return _intent_to_input(intent)
 

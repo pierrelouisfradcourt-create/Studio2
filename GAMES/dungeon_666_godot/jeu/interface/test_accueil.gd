@@ -11,6 +11,7 @@ extends SceneTree
 const App = preload("res://jeu/ecrans/banc_app.gd")
 const Profil = preload("res://jeu/profil.gd")
 const Consignes = preload("res://jeu/interface/consignes.gd")
+const Fondus = preload("res://jeu/essai/fondus.gd")
 const DONNEES := "user://essais_accueil"
 const GRAINE := 7.0
 const DT := 1.0 / 60.0
@@ -39,6 +40,7 @@ func _derouler() -> void:
 	_rouge()
 	_competence_et_gadget()
 	_super()
+	_commandes_v3()
 	await _recompense_et_porte()
 	await _mort()
 	await _jamais_deux_fois()
@@ -46,6 +48,7 @@ func _derouler() -> void:
 	await _couper_et_revoir()
 	print("test_accueil : %d vérifications, %d échec(s)" % [verifications, echecs])
 	print("ACCUEIL : OK" if echecs == 0 else "ACCUEIL : ÉCHEC")
+	await Fondus.laisser_finir(self)
 	app.free()
 	quit(1 if echecs > 0 else 0)
 
@@ -65,6 +68,7 @@ func _effacer() -> void:
 ## seuls : c'est `_pas()` qui les fait avancer, d'un soixantième de seconde à la fois.
 func _nouvelle_app(disque_vierge: bool) -> void:
 	if app != null:
+		await Fondus.laisser_finir(self)
 		app.free()
 	if disque_vierge:
 		_effacer()
@@ -203,12 +207,12 @@ func _competence_et_gadget() -> void:
 	var e: Dictionary = D6Enemies.create_enemy(g, "imp", g.player.x - LOIN, g.player.y, {})
 	e.spawnT = 0.0
 	verifier("compétence : apparaît au combat", _montree("competence"), accueil.montree())
-	_libelles("competence", {"clavier": "Lance ta compétence", "manette": "Lance ta compétence", "tactile": "Compétence : glisse pour viser, relâche"}, "skill")
-	_entree = {"skillPressed": true}
+	_libelles("competence", {"clavier": "Lance ta compétence", "manette": "Lance ta compétence", "tactile": "Compétence : glisse pour viser, relâche"}, "skill1")
+	_entree = {"skill1Pressed": true}
 	_acquise("competence")
 	verifier("gadget : apparaît ensuite", _montree("gadget"), accueil.montree())
-	_libelles("gadget", _trois("Utilise ton gadget"), "gadget")
-	_entree = {"gadgetPressed": true}
+	_libelles("gadget", _trois("Utilise ton gadget"), "skill2")
+	_entree = {"skill2Pressed": true}
 	_acquise("gadget")
 	_calmer()
 
@@ -218,10 +222,39 @@ func _super() -> void:
 	verifier("Super : rien tant que la jauge n'est pas pleine", accueil.montree() == "", accueil.montree())
 	g.player.superCharge = 1.0
 	verifier("Super : apparaît quand la jauge est pleine", _montree("super"), accueil.montree())
-	_libelles("super", _trois("Jauge pleine : déchaîne ton Super"), "super")
-	_entree = {"superPressed": true}
+	_libelles("super", _trois("Jauge pleine : garde le bouton d'attaque appuyé"), "attack")
+	_entree = {"attack": true}
 	_acquise("super")
 	_jusqu_a(func() -> bool: return g.player.state == "free")
+
+## Combat V3 : le HUD montre les trois emplacements (lus par D6Loadout.slot_view), ne plante pas
+## sur un emplacement vide, et le bouton d'attaque porte la jauge d'ultime et son maintien.
+func _commandes_v3() -> void:
+	const Etats = preload("res://jeu/interface/etat_commandes.gd")
+	var g := _game()
+	var ids: Array = hud.commandes_bureau.map(func(c: Node) -> String: return c.id)
+	verifier("HUD : attaque, dash et les trois emplacements", ids == ["attack", "dash", "skill1", "skill2", "skill3"], ids)
+	verifier("HUD tactile : les mêmes cinq commandes", hud.tactile.get_children().map(func(c: Node) -> String: return c.id) == ["attack", "dash", "skill1", "skill3", "skill2"])
+	verifier("profil neuf : compétence, gadget, emplacement vide", g.kit.slots[0] != null and g.kit.slots[1] != null and g.kit.slots[2] == null, g.kit.slots)
+	var vide: Dictionary = Etats.etat(g, "skill3")
+	verifier("emplacement vide : pas prêt, pas de pictogramme, et le HUD continue de tourner", vide.get("vide") == true and vide.pret == 0.0 and vide.icone == "", vide)
+	var competence: Dictionary = Etats.etat(g, "skill1")
+	var gadget: Dictionary = Etats.etat(g, "skill2")
+	verifier("emplacement 1 : la compétence, son anneau de recharge", competence.get("recharge") == true and competence.icone == "skill", competence)
+	verifier("emplacement 2 : le gadget, ses charges", gadget.get("max", 0.0) >= 1.0 and gadget.charges <= gadget.max and gadget.icone == "gadget", gadget)
+	g.player.superCharge = 1.0
+	_entree = {"attack": true}
+	_pas(12)
+	var attaque: Dictionary = Etats.etat(g, "attack")
+	verifier("bouton d'attaque : jauge d'ultime pleine, le maintien monte", attaque.jauge == 1.0 and attaque.eclat and attaque.maintien > 0.2 and attaque.maintien < 1.0, attaque)
+	_entree = {}
+	_pas(2)
+	verifier("attaque relâchée : le maintien retombe à zéro, la jauge reste pleine", Etats.etat(g, "attack").maintien == 0.0 and g.player.superCharge == 1.0)
+	g.player.superCharge = 0.0
+	for appareil in ["tactile", "manette", "clavier"]:
+		_appareil(appareil)
+		_pas(3)
+	verifier("les trois présentations se dessinent avec un emplacement vide", true)
 
 func _recompense_et_porte() -> void:
 	var g := _game()
@@ -294,7 +327,7 @@ func _muet_et_sans_acquis() -> bool:
 	_game().godMode = true
 	var muet := true
 	for i in 180:
-		_entree = {"moveX": 1.0, "attackPressed": i == 20, "dashPressed": i == 60, "skillPressed": i == 100, "gadgetPressed": i == 140}
+		_entree = {"moveX": 1.0, "attackPressed": i == 20, "dashPressed": i == 60, "skill1Pressed": i == 100, "skill2Pressed": i == 140}
 		_pas()
 		muet = muet and accueil.montree() == "" and not accueil.visible
 	_entree = {}

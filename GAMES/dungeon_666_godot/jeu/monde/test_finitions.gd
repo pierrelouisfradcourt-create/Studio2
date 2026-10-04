@@ -6,7 +6,7 @@ extends SceneTree
 ## 2. ramassables : celui qui tombe juste au nord d'un pilier est repeint devant lui (relais du
 ##    groupe trié), les autres restent au sol ; l'objet d'interaction est au rang de son pied ;
 ## 3. Gardien qui bondit : son nœud garde le rang de son point au sol, seul son dessin monte ;
-## 4. Grimoire : la note nomme la compétence et le gadget RÉELLEMENT équipés.
+## 4. Grimoire : la note nomme la compétence et le gadget RÉELLEMENT équipés (emplacements 1 et 2).
 ## Ce qu'il ne prouve pas : le nombre d'appels de dessin (il faut un vrai rendu : jeu/monde/mesure.gd
 ## sur jeu/essai/cout.tscn) ni que l'image est la même (captures de _dev/captures/lot_cout).
 
@@ -107,13 +107,13 @@ func _grimoire() -> void:
 	await _images()
 	var note: Label = app.vues.ville.page("grimoire").get_node("Note")
 	var classe: Dictionary = app.contenu.classes[app.profil.loadout.classId]
-	var equipee: String = app.contenu.skills[app.profil.loadout.skillId].name
+	var equipee: String = app.contenu.skills[app.profil.loadout.slots[0]].name
 	_ok(note.text.contains(equipee), "la note nomme la compétence équipée (« %s »)" % equipee)
-	_ok(note.text.contains(String(app.contenu.gadgets[app.profil.loadout.gadgetId].name)), "… et le gadget équipé")
+	_ok(note.text.contains(String(app.contenu.gadgets[app.profil.loadout.slots[1]].name)), "… et le gadget équipé")
 	_ok(not note.text.contains("bouton Lance"), "… et ne nomme plus « le bouton Lance » en dur")
 	# Le test fabrique sa situation (une autre compétence équipée) ; la Ville, elle, n'écrit jamais le profil.
 	var autre: String = classe.skills[1]
-	app.profil.loadout.skillId = autre
+	app.profil.loadout.slots[0] = autre
 	app.profil_change.emit()
 	await _images()
 	note = app.vues.ville.page("grimoire").get_node("Note")

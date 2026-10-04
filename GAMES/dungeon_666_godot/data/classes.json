@@ -1,5 +1,5 @@
 {
-  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Lance, Nova, Colère) sert de réglage actif par défaut.",
+  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd).",
   "classes": {
     "revenant": {
       "name": "Revenant",
@@ -625,6 +625,7 @@
       "kind": "colere",
       "text": "Tourbillon invulnérable de 1,4 s.",
       "startCharge": 0.4,
+      "holdTime": 0.4,
       "chargeDamage": 900,
       "duration": 1.4,
       "tickInterval": 0.12,
@@ -640,6 +641,7 @@
       "icon": "sentence",
       "text": "Invulnérable 1,5 s : deux taillades de 40, puis un fracas de 70 tout autour qui étourdit.",
       "startCharge": 0.4,
+      "holdTime": 0.4,
       "chargeDamage": 1000,
       "duration": 1.5,
       "speedMult": 0.6,
@@ -682,6 +684,7 @@
       "icon": "rain",
       "text": "Invulnérable 1,6 s en courant (+15 % de vitesse) : un trait toutes les 0,09 s sur les 3 ennemis les plus proches.",
       "startCharge": 0.4,
+      "holdTime": 0.4,
       "chargeDamage": 1000,
       "duration": 1.6,
       "speedMult": 1.15,
@@ -697,5 +700,5 @@
       "hitstop": 0
     }
   },
-  "DEFAULT_LOADOUT": { "classId": "revenant", "skillId": "lance", "gadgetId": "nova" }
+  "DEFAULT_LOADOUT": { "classId": "revenant", "slots": ["lance", "nova", null] }
 }

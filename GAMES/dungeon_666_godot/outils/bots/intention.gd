@@ -1,6 +1,9 @@
 extends RefCounted
 ## Portage de tools/bots.mjs — INTENTION : ce que le bot veut faire avant de regarder les menaces.
-## En combat : choisir une cible, s'en approcher, frapper, lancer compétence / gadget / Super.
+## En combat : choisir une cible, s'en approcher, frapper, lancer les actions des trois
+## emplacements (compétences, gadgets) et l'ultime (attaque TENUE quand la jauge est pleine).
+## Une intention : {mx, my, attack, slots: [visée {x, y} ou null par emplacement], superP (tenir
+## l'attaque pour l'ultime), tap (jauge pleine sans vouloir l'ultime : frapper par appuis brefs)}.
 ## Hors combat : attendre la vague, ramasser, toucher la récompense, choisir une porte.
 
 const Base = preload("res://outils/bots/base.gd")
@@ -30,6 +33,7 @@ const GADGET_MIN_GAP := 1.0 # s entre deux gadgets offensifs
 const SUPER_CROWD := 2.0
 const SUPER_LOW_HP := 0.4
 const SUPER_REACH_PAD := 20.0
+const SUPER_HOLD_MARGIN := 0.1 # s tenues au-delà de super.holdTime : la décision de lancer l'ultime ne se reprend pas à chaque image
 const LANCE_BOSS_WEIGHT := 3.0 # un boss aligné vaut trois ennemis pour la Lance
 const SHIELD_PENALTY := 600.0 # u : un Gardien enchaîné (bouclier visible) passe après ses geôliers
 # Arme à distance (kits) : on tient la cible à cette distance (u, bord à bord), on recule
@@ -112,10 +116,9 @@ static func _pick_target(game: Dictionary, mem: Dictionary, enemies: Array):
 	mem.targetId = best.id if best != null else 0.0
 	return best
 
-## Meilleure ligne de Lance : le plus d'ennemis alignés, tir dégagé.
-static func _best_lance_aim(game: Dictionary, enemies: Array):
+## Meilleure ligne de tir de la compétence `s` : le plus d'ennemis alignés, tir dégagé.
+static func _best_lance_aim(game: Dictionary, enemies: Array, s: Dictionary):
 	var p: Dictionary = game.player
-	var s: Dictionary = game.tuning.skill
 	var s_range := Base.num(s, "range")
 	var s_radius := Base.num(s, "radius")
 	var best = null
@@ -158,21 +161,42 @@ static func _ability_intent(game: Dictionary, mem: Dictionary, enemies: Array, i
 	var p: Dictionary = game.player
 	var t: Dictionary = game.tuning
 	var hp_frac: float = p.hp / p.maxHp
-	var attack = p.get("attack")
-	if p.skillCd <= 0.0 and (p.state == "free" or (p.state == "attack" and attack != null and attack.get("phase") == "recovery")):
-		var aim = _best_lance_aim(game, enemies)
-		if aim != null and aim.count >= 1.0:
-			intent.skill = aim
+	_slot_intents(game, mem, enemies, intent, opts, hp_frac)
 	var super_radius := Base.num(t["super"], "radius")
 	var near_super := _count_near(p, enemies, super_radius + SUPER_REACH_PAD)
 	var boss_near := _boss_near(p, enemies, super_radius)
+	# Ultime : jauge pleine (le bouton d'attaque le montre), il faut TENIR l'attaque. Une fois
+	# décidé, le bot tient le temps du maintien : il ne relâche pas parce qu'un ennemi a reculé.
 	if p.superCharge >= 1.0 and (near_super >= SUPER_CROWD or boss_near or (near_super >= 1.0 and hp_frac < SUPER_LOW_HP)):
-		intent.superP = true
-	if opts.gadget and p.gadgetCharges > 0.0 and game.time - mem.lastGadget > GADGET_MIN_GAP:
-		var near := _count_near(p, enemies, Base.num(t.gadget, "radius"))
-		if near >= GADGET_CROWD or (hp_frac < GADGET_LOW_HP and near >= 1.0):
-			intent.gadget = true
-			mem.lastGadget = game.time
+		mem.superHoldUntil = game.time + t["super"].holdTime + SUPER_HOLD_MARGIN
+	intent.superP = p.superCharge >= 1.0 and game.time < mem.get("superHoldUntil", -1.0)
+	# Jauge pleine sans vouloir l'ultime : tenir l'attaque le lancerait. Le bot frappe par appuis.
+	intent.tap = p.superCharge >= 1.0 and not intent.superP
+
+## Les trois emplacements, lus comme sur leurs boutons (D6Loadout.slot_view : prêt ou non) : une
+## compétence prête part sur la meilleure ligne (une seule par image), un gadget prêt sert quand
+## la foule presse ou que les PV sont bas (un par GADGET_MIN_GAP, tous emplacements confondus).
+static func _slot_intents(game: Dictionary, mem: Dictionary, enemies: Array, intent: Dictionary, opts: Dictionary, hp_frac: float) -> void:
+	var p: Dictionary = game.player
+	var attack = p.get("attack")
+	var can_cast: bool = p.state == "free" or (p.state == "attack" and attack != null and attack.get("phase") == "recovery")
+	for i in D6Loadout.SLOTS:
+		var view = D6Loadout.slot_view(game, i)
+		if view == null or not view.ready:
+			continue
+		var def: Dictionary = D6Loadout.slot_def(game, i) # son propre héros : portée, rayon
+		if view.kind == "skill":
+			if not can_cast:
+				continue
+			var aim = _best_lance_aim(game, enemies, def)
+			if aim != null and aim.count >= 1.0:
+				intent.slots[i] = aim
+				can_cast = false
+		elif opts.gadget and game.time - mem.lastGadget > GADGET_MIN_GAP:
+			var near := _count_near(p, enemies, Base.num(def, "radius"))
+			if near >= GADGET_CROWD or (hp_frac < GADGET_LOW_HP and near >= 1.0):
+				intent.slots[i] = {"x": 0.0, "y": 0.0}
+				mem.lastGadget = game.time
 
 static func _melee_intent(game: Dictionary, p: Dictionary, target: Dictionary, d: float, intent: Dictionary) -> void:
 	var standoff: float = target.r + p.r + STANDOFF_GAP
@@ -186,7 +210,7 @@ static func _melee_intent(game: Dictionary, p: Dictionary, target: Dictionary, d
 static func engage_intent(game: Dictionary, mem: Dictionary, enemies: Array, opts: Dictionary) -> Dictionary:
 	var p: Dictionary = game.player
 	var target: Dictionary = _pick_target(game, mem, enemies)
-	var intent := {"mx": 0.0, "my": 0.0, "attack": false, "skill": null, "gadget": false, "superP": false}
+	var intent := {"mx": 0.0, "my": 0.0, "attack": false, "slots": [null, null, null], "superP": false, "tap": false}
 	var d := Base.dist_to(p, target)
 	# Gardien dissous (il va réapparaître) : on ne court pas après une silhouette, on lit le sol.
 	if D6Js.truthy(target.get("hidden")):
@@ -333,7 +357,7 @@ static func _any_open(doors: Array) -> bool:
 static func explore_intent(game: Dictionary, mem: Dictionary) -> Dictionary:
 	var room: Dictionary = game.room
 	var p: Dictionary = game.player
-	var base := {"mx": 0.0, "my": 0.0, "attack": false, "skill": null, "gadget": false, "superP": false}
+	var base := {"mx": 0.0, "my": 0.0, "attack": false, "slots": [null, null, null], "superP": false, "tap": false}
 	if not D6Js.truthy(room.get("cleared")):
 		var s = nearest(p, game.spawns)
 		if s == null:

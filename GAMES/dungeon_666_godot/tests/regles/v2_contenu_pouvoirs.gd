@@ -69,21 +69,21 @@ static func _t_lilith(h) -> void:
 static func _t_main_de_gloire(h) -> void:
 	var g: Dictionary = D6Game.create_game({"seed": 25.0, "startFloor": 3.0})
 	C.wear(h, g, "main_de_gloire")
-	g.player.gadgetCharges = 1.0
+	g.player.slots[1].charges = 1.0
 	C.clear_room(h, g)
-	h.egal(g.player.gadgetCharges, 1.0 + C.power_proc("main_de_gloire").value)
+	h.egal(g.player.slots[1].charges, 1.0 + C.power_proc("main_de_gloire").value)
 	var g2: Dictionary = D6Game.create_game({"seed": 25.0, "startFloor": 3.0})
 	C.wear(h, g2, "main_de_gloire")
-	g2.player.gadgetCharges = 1.0
+	g2.player.slots[1].charges = 1.0
 	D6Combat.damage_player(g2, 3.0, {"kind": "test", "id": 3.0})
 	C.clear_room(h, g2)
-	h.egal(g2.player.gadgetCharges, 1.0)
+	h.egal(g2.player.slots[1].charges, 1.0)
 	# Jamais au-delà du plein.
 	var g3: Dictionary = D6Game.create_game({"seed": 25.0, "startFloor": 3.0})
 	C.wear(h, g3, "main_de_gloire")
-	var full: float = g3.player.gadgetCharges
+	var full: float = g3.player.slots[1].charges
 	C.clear_room(h, g3)
-	h.egal(g3.player.gadgetCharges, full)
+	h.egal(g3.player.slots[1].charges, full)
 	C.assert_deterministic(h, [], {"power": "main_de_gloire"})
 
 static func _sin_blast(g: Dictionary):

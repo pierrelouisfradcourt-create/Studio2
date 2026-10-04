@@ -12,14 +12,24 @@ extends RefCounted
 ##   Super ≠ colere     -> kit_supers (sentence, nuee)
 ## Les tirs et zones posés par le héros vivent dans la salle (kit_common.kit_store).
 ##
+## COMBAT V3 — trois EMPLACEMENTS d'action (D6Loadout : game.kit.slots, player.slots) : une
+## compétence part par le tampon et l'état 'cast', avec SA recharge ; un gadget part tout de suite,
+## sur SES charges. L'ULTIME n'a plus de bouton : jauge pleine, l'attaque MAINTENUE l'arme
+## (player.superHold) et il part à super.holdTime ; relâcher annule. Pendant l'armement le coup en
+## cours se joue, aucun nouveau coup ne part (design/COMBAT_V3.md).
+##
 ## InputFrame attendu (produit par l'entrée, ou par un bot) :
 ##   { moveX, moveY,            // [-1, 1], norme <= 1 (analogique)
 ##     aimX, aimY,              // visée manuelle (0, 0 = visée assistée)
-##     attack,                  // maintenu : enchaîne le combo
-##     attackPressed, dashPressed, skillPressed, gadgetPressed, superPressed,  // fronts
-##     skillAimX, skillAimY }   // visée de la compétence au relâcher (0, 0 = assistée)
+##     attack,                  // maintenu : enchaîne le combo ; jauge pleine : arme l'ultime
+##     attackPressed, dashPressed,                      // fronts
+##     skill1Pressed, skill2Pressed, skill3Pressed,     // fronts des trois emplacements
+##     skill1AimX, skill1AimY, … }                      // visée de l'emplacement (0, 0 = assistée)
 
-const PRIORITY := ["dash", "super", "skill", "attack"]
+const PRIORITY := ["dash", "skill", "attack"]
+const SLOT_PRESSED := ["skill1Pressed", "skill2Pressed", "skill3Pressed"]
+const SLOT_AIM_X := ["skill1AimX", "skill2AimX", "skill3AimX"]
+const SLOT_AIM_Y := ["skill1AimY", "skill2AimY", "skill3AimY"]
 
 ## `ids.includes(id)` : comparaison par `==` (Array.has distingue 1 de 1.0, JavaScript non).
 static func _has_id(ids: Array, id) -> bool:
@@ -31,7 +41,7 @@ static func _has_id(ids: Array, id) -> bool:
 static func max_dash_charges(game: Dictionary) -> float:
 	return game.tuning.dash.charges + game.player.stats.dashChargesBonus
 
-static func _buffer_action(p: Dictionary, action: String, t: float, aim_x: float = 0.0, aim_y: float = 0.0) -> void:
+static func _buffer_action(p: Dictionary, action: String, t: float, aim_x: float = 0.0, aim_y: float = 0.0, slot: int = 0) -> void:
 	var cur = p.buffer.action
 	# Un dash en attente n'est jamais écrasé par une action moins prioritaire.
 	if D6Js.truthy(cur) and p.buffer.t > 0.0 and PRIORITY.find(cur) < PRIORITY.find(action):
@@ -40,6 +50,7 @@ static func _buffer_action(p: Dictionary, action: String, t: float, aim_x: float
 	p.buffer.t = t
 	p.buffer.aimX = aim_x
 	p.buffer.aimY = aim_y
+	p.buffer.slot = float(slot) # emplacement de la compétence en attente
 
 ## Vrai si un dash peut partir maintenant (utilisé aussi pour annuler le gel d'impact).
 static func can_dash(game: Dictionary) -> bool:
@@ -81,8 +92,8 @@ static func _cancel_from(a: Dictionary, t: Dictionary) -> float:
 		return hits[idx]
 	return 1.0
 
-static func _can_skill(p: Dictionary) -> bool:
-	if p.skillCd > 0.0:
+static func _can_skill(p: Dictionary, slot: int) -> bool:
+	if p.slots[slot].cd > 0.0:
 		return false
 	if p.state == "free":
 		return true
@@ -92,18 +103,16 @@ static func _can_super(p: Dictionary) -> bool:
 	return p.superCharge >= 1.0 and (p.state == "free" or p.state == "attack" or p.state == "cast" or p.state == "dash")
 
 ## Une action ne mérite le tampon que si elle peut partir pendant sa fenêtre : marteler un dash
-## sans charge, ou toucher un Super pas prêt, ne doit JAMAIS avaler la frappe qui suit.
-static func _feasible_soon(game: Dictionary, action: String, window: float) -> bool:
+## sans charge, ou une compétence en recharge, ne doit JAMAIS avaler la frappe qui suit.
+static func _feasible_soon(game: Dictionary, action: String, window: float, slot: int = 0) -> bool:
 	var p: Dictionary = game.player
 	var t: Dictionary = game.tuning
 	if action == "dash":
 		if p.dashCharges >= 1.0:
 			return true
 		return t.dash.recharge * p.stats.dashRechargeMult - p.dashRecharge <= window
-	if action == "super":
-		return p.superCharge >= 1.0
 	if action == "skill":
-		return p.skillCd <= window
+		return p.slots[slot].cd <= window
 	return true
 
 ## `input.clé || 0` : un champ absent, nul ou faux vaut 0.
@@ -128,17 +137,26 @@ static func read_input(game: Dictionary, input: Dictionary) -> bool:
 	p.manualAimX = _num(input, "aimX")
 	p.manualAimY = _num(input, "aimY")
 	p.attackHeld = D6Js.truthy(input.get("attack"))
+	if not p.attackHeld:
+		p.superHold = 0.0 # relâcher l'attaque annule l'armement de l'ultime
 	if D6Js.truthy(input.get("attackPressed")):
 		_buffer_action(p, "attack", lock_buf)
-	if D6Js.truthy(input.get("skillPressed")) and _feasible_soon(game, "skill", lock_buf):
-		_buffer_action(p, "skill", lock_buf, _num(input, "skillAimX"), _num(input, "skillAimY"))
-	if D6Js.truthy(input.get("superPressed")) and _feasible_soon(game, "super", buf):
-		_buffer_action(p, "super", buf)
+	for i in D6Loadout.SLOTS:
+		if D6Js.truthy(input.get(SLOT_PRESSED[i])):
+			_press_slot(game, i, _num(input, SLOT_AIM_X[i]), _num(input, SLOT_AIM_Y[i]), lock_buf)
 	if D6Js.truthy(input.get("dashPressed")) and _feasible_soon(game, "dash", buf):
 		_buffer_action(p, "dash", buf)
-	if D6Js.truthy(input.get("gadgetPressed")):
-		use_gadget(game)
 	return p.buffer.action == "dash" and p.buffer.t > 0.0
+
+## Bouton d'un emplacement : une compétence attend dans le tampon (la fin d'un coup engagé), un
+## gadget part tout de suite, un emplacement vide ne fait rien.
+static func _press_slot(game: Dictionary, slot: int, aim_x: float, aim_y: float, window: float) -> void:
+	match D6Loadout.slot_kind(game, slot):
+		"skill":
+			if _feasible_soon(game, "skill", window, slot):
+				_buffer_action(game.player, "skill", window, aim_x, aim_y, slot)
+		"gadget":
+			use_gadget(game, slot, aim_x, aim_y)
 
 static func update_player(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player
@@ -162,11 +180,26 @@ static func update_player(game: Dictionary, dt: float) -> void:
 		p.buffer.t -= dt
 		if p.buffer.t <= 0.0:
 			p.buffer.action = null
-	# Attaque maintenue : enchaîne le combo sans re-taper (confort mobile).
-	if p.attackHeld and not D6Js.truthy(p.buffer.action) and _can_attack(game) and p.state != "dash":
+	# Attaque maintenue : enchaîne le combo sans re-taper (confort mobile). Pendant l'armement de
+	# l'ultime (superHold > 0), aucun NOUVEAU coup ne part : celui qui est en cours se joue.
+	if p.attackHeld and not D6Js.truthy(p.buffer.action) and _can_attack(game) and p.state != "dash" and p.superHold <= 0.0:
 		_start_attack(game)
+	_tick_super_hold(game, dt)
 	_update_state(game, dt)
 	D6Physics.move_circle(game.room, p, p.vx * dt, p.vy * dt)
+
+## Ultime par MAINTIEN : jauge pleine et attaque tenue sans interruption, superHold monte (plafonné
+## à super.holdTime) ; arrivé là, l'ultime part dès qu'il le peut (_can_super), en coupant ce qui
+## reste du coup comme le faisait son bouton. Le relâcher est lu par read_input.
+static func _tick_super_hold(game: Dictionary, dt: float) -> void:
+	var p: Dictionary = game.player
+	if not p.attackHeld or p.superCharge < 1.0 or p.state == "super":
+		p.superHold = 0.0
+		return
+	var need: float = game.tuning["super"].holdTime
+	p.superHold = minf(need, p.superHold + dt)
+	if p.superHold >= need and _can_super(p):
+		_start_super(game)
 
 ## Le `switch (p.state)` de updatePlayer.
 static func _update_state(game: Dictionary, dt: float) -> void:
@@ -194,7 +227,8 @@ static func _tick_timers(game: Dictionary, dt: float) -> void:
 	p.iframes = maxf(0.0, p.iframes - dt)
 	p.dodgeIframes = maxf(0.0, p.dodgeIframes - dt)
 	p.hurtFlash = maxf(0.0, p.hurtFlash - dt)
-	p.skillCd = maxf(0.0, p.skillCd - dt)
+	for st in p.slots:
+		st.cd = maxf(0.0, st.cd - dt)
 	p.strikeWindow = maxf(0.0, p.strikeWindow - dt)
 	# Élan passager (proc « surge ») : il s'éteint avec son bonus.
 	if p.surge > 0.0:
@@ -221,16 +255,13 @@ static func _try_buffered(game: Dictionary) -> void:
 			if can_dash(game):
 				p.buffer.action = null
 				_start_dash(game)
-		"super":
-			if _can_super(p):
-				p.buffer.action = null
-				_start_super(game)
 		"skill":
-			if _can_skill(p):
+			var slot := int(p.buffer.slot)
+			if _can_skill(p, slot):
 				var ax: float = p.buffer.aimX
 				var ay: float = p.buffer.aimY
 				p.buffer.action = null
-				_start_cast(game, ax, ay)
+				_start_cast(game, slot, ax, ay)
 		"attack":
 			if _can_attack(game):
 				p.buffer.action = null
@@ -466,9 +497,11 @@ static func _update_dash(game: Dictionary, dt: float) -> void:
 
 # ---------------------------------------------------------------- compétence (Lance infernale, kits)
 
-static func _start_cast(game: Dictionary, aim_x: float, aim_y: float) -> void:
+## Lance la compétence de l'emplacement `slot` : sa recharge part, l'état 'cast' la retient
+## (player.castSlot) jusqu'à son effet.
+static func _start_cast(game: Dictionary, slot: int, aim_x: float, aim_y: float) -> void:
 	var p: Dictionary = game.player
-	var s: Dictionary = game.tuning.skill
+	var s: Dictionary = D6Loadout.slot_def(game, slot)
 	var mx: float = aim_x if D6Js.truthy(aim_x) else p.manualAimX
 	var my: float = aim_y if D6Js.truthy(aim_y) else p.manualAimY
 	# La Lance voit loin (autoAim.skillRange) ; les autres compétences visent à leur portée.
@@ -479,18 +512,19 @@ static func _start_cast(game: Dictionary, aim_x: float, aim_y: float) -> void:
 	p.castDirX = aim.x
 	p.castDirY = aim.y
 	p.facing = D6Trig.atan2(aim.y, aim.x)
+	p.castSlot = float(slot)
 	p.castT = s.castTime
-	p.skillCd = s.cooldown * p.stats.skillCooldownMult
+	p.slots[slot].cd = s.cooldown * p.stats.skillCooldownMult
 	p.state = "cast"
 	p.stateTime = 0.0
-	D6State.emit(game, "castStart", {"angle": p.facing})
+	D6State.emit(game, "castStart", {"angle": p.facing, "slot": p.castSlot})
 	if s.kind != "lance":
 		D6KitSkills.begin_kit_skill(game, s, aim)
 
 static func _update_cast(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player
 	var t: Dictionary = game.tuning
-	if t.skill.kind == "bond":
+	if D6Loadout.cast_def(game).kind == "bond":
 		# Bond : l'état 'cast' EST le saut (vitesse imposée, invulnérable) ; il finit à l'atterrissage.
 		if D6KitSkills.update_leap(game, dt):
 			p.state = "free"
@@ -506,9 +540,9 @@ static func _update_cast(game: Dictionary, dt: float) -> void:
 	p.state = "free"
 	p.stateTime = 0.0
 
-## Effet de la compétence équipée (fin du lancer, ou interruption par un dash / Super).
+## Effet de la compétence en cours (fin du lancer, ou interruption par un dash / Super).
 static func _release_skill(game: Dictionary) -> void:
-	if game.tuning.skill.kind == "lance":
+	if D6Loadout.cast_def(game).kind == "lance":
 		_release_lance(game)
 	else:
 		D6KitSkills.release_kit_skill(game)
@@ -517,7 +551,7 @@ static func _release_skill(game: Dictionary) -> void:
 ## une recharge consommée doit toujours produire une Lance.
 static func _release_lance(game: Dictionary) -> void:
 	var p: Dictionary = game.player
-	var s: Dictionary = game.tuning.skill
+	var s: Dictionary = D6Loadout.cast_def(game)
 	D6Projectiles.spawn_projectile(game, {
 		"owner": "player",
 		"kind": "lance",
@@ -536,18 +570,23 @@ static func _release_lance(game: Dictionary) -> void:
 	p.vx -= p.castDirX * 120.0
 	p.vy -= p.castDirY * 120.0
 	game.telemetry.skillCasts += 1.0
-	D6State.emit(game, "skill", {"x": p.x, "y": p.y, "angle": D6Trig.atan2(p.castDirY, p.castDirX)})
+	D6State.emit(game, "skill", {"x": p.x, "y": p.y, "angle": D6Trig.atan2(p.castDirY, p.castDirX), "slot": p.castSlot})
 
 # ---------------------------------------------------------------- gadget (Nova de cendres, kits)
 
-static func use_gadget(game: Dictionary) -> bool:
+## Utilise le gadget de l'emplacement `slot` (une charge). (aim_x, aim_y) : visée de son bouton,
+## pour un gadget lancé. Rend false si rien n'est parti (pas un gadget, plus de charge, mort, Super).
+static func use_gadget(game: Dictionary, slot: int, aim_x: float = 0.0, aim_y: float = 0.0) -> bool:
 	var p: Dictionary = game.player
-	var g: Dictionary = game.tuning.gadget
-	if p.state == "dead" or p.state == "super" or p.gadgetCharges <= 0.0:
+	if D6Loadout.slot_kind(game, slot) != "gadget":
+		return false
+	var g: Dictionary = D6Loadout.slot_def(game, slot)
+	var st: Dictionary = p.slots[slot]
+	if p.state == "dead" or p.state == "super" or st.charges <= 0.0:
 		return false
 	if g.kind != "nova":
-		return D6KitGadgets.use_kit_gadget(game, g)
-	p.gadgetCharges -= 1.0
+		return D6KitGadgets.use_kit_gadget(game, g, slot, aim_x, aim_y)
+	st.charges -= 1.0
 	p.iframes = maxf(p.iframes, g.iframes)
 	var enemies: Array = game.enemies
 	var i := 0
@@ -569,7 +608,7 @@ static func use_gadget(game: Dictionary) -> bool:
 		})
 	D6Projectiles.destroy_enemy_projectiles_in_circle(game, p.x, p.y, g.radius)
 	game.telemetry.gadgetUses += 1.0
-	D6State.emit(game, "gadget", {"x": p.x, "y": p.y, "r": g.radius, "charges": p.gadgetCharges})
+	D6State.emit(game, "gadget", {"x": p.x, "y": p.y, "r": g.radius, "charges": st.charges, "slot": float(slot)})
 	return true
 
 # ---------------------------------------------------------------- Super (Colère, kits)
@@ -583,6 +622,7 @@ static func _start_super(game: Dictionary) -> void:
 		_release_skill(game)
 	p.attack = null
 	p.superCharge = 0.0
+	p.superHold = 0.0
 	p.superT = s.duration + D6Js.nz(p.stats.get("superDurationBonus"), 0.0)
 	p.superTick = 0.0
 	if s.kind != "colere":

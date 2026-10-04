@@ -57,7 +57,8 @@ func envol_heros(g: Dictionary) -> float:
 	var lance = h.get("cast")
 	if h.state != "cast" or not (lance is Dictionary) or lance.get("kind") != "bond":
 		return 0.0
-	var duree: float = maxf(1e-3, nombre(g.tuning.skill, "leapTime"))
+	var sort = D6Loadout.cast_def(g)
+	var duree: float = maxf(1e-3, nombre(sort, "leapTime") if sort is Dictionary else 0.0)
 	return sin(PI * clampf(1.0 - h.castT / duree, 0.0, 1.0))
 
 ## Hauteur relative d'un Gardien en plein bond (Cerbère) : 0 au sol, 1 au sommet.

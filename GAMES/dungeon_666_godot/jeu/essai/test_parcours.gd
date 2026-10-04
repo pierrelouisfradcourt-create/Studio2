@@ -3,19 +3,24 @@ extends SceneTree
 ## bout en bout sans fenêtre (sortie 0 = vert, dernière ligne « PARCOURS : OK ») :
 ##   <godot> --headless --path . --script res://jeu/essai/test_parcours.gd
 ## Il passe par les portes des vues (jeu/ARCHITECTURE.md) : les actions de `principal.gd` et les
-## commandes de menu ; jamais d'écriture dans l'état de la partie. Trois actes :
-##   1. un joueur NEUF : titre, Ville (chaque onglet, un achat refusé, le labo), descente à
-##      l'étage 1 jouée par le bot de outils/bots/ jusqu'à avoir traversé bénédiction, butin,
-##      marchand et autel ; pause en combat ; mort, reprise, mort, retour en Ville, dépenses ;
-##   2. un joueur AVANCÉ (profil de jeu/ville/profil_essai.gd, relu du disque par un jeu neuf) :
+## commandes de menu ; jamais d'écriture dans l'état de la partie. Quatre actes :
+##   1. un joueur NEUF : titre, Ville (chaque onglet, un achat refusé, le labo), descente de
+##      l'étage 1 jouée par le bot de outils/bots/ : bénédiction, butin, marchand, autel, chambre
+##      forte, pause en combat, puis le GARDIEN de l'étage 18 réellement battu (butin, portes,
+##      checkpoint) ; retour en Ville par le PORTAIL ; le Portail propose le nouveau point et le
+##      Gardien à défier ; REPRISE depuis ce point ; mort, « Repartir », mort, Ville, dépenses ;
+##   2. un joueur au BOUT DU CHEMIN (profil écrit sur le disque d'essai, relu par un jeu neuf) :
+##      la dernière section, de son checkpoint (étage 649) au dernier Gardien (étage 666), fontaine
+##      comprise ; l'écran de VICTOIRE, son bouton, ce que le profil reçoit ;
+##   3. un joueur AVANCÉ (profil de jeu/ville/profil_essai.gd, relu du disque par un jeu neuf) :
 ##      opérations de chaque onglet, arène d'essai, entraînement contre un Gardien, puis une
 ##      descente profonde par classe (étages 19, 37, 55), finies par abandon ou par mort ;
-##   3. des cycles titre → Ville → descente → mort → Ville : le nombre de nœuds ne monte pas.
+##   4. des cycles titre → Ville → descente → mort → Ville : le nombre de nœuds ne monte pas.
 ## Le temps : le test tient l'horloge. Il arrête le `_process` de la Partie et appelle sa boucle
 ## lui-même, un pas de 1/60 s par appel, PAS_PAR_IMAGE appels par image du moteur : la même
 ## partie à chaque lancement, quelle que soit la vitesse de la machine.
 ## Ce qu'il ne prouve pas : le rendu, le toucher des boutons (jeu/ecrans/test_ecrans.gd,
-## jeu/ville/test_ville.gd), l'écran de victoire, le plaisir de jeu.
+## jeu/ville/test_ville.gd), le plaisir de jeu.
 
 const Principal = preload("res://jeu/principal.tscn")
 const Profil = preload("res://jeu/profil.gd")
@@ -23,6 +28,7 @@ const ProfilEssai = preload("res://jeu/ville/profil_essai.gd")
 const Pilote = preload("res://jeu/essai/parcours_pilote.gd")
 const Ville = preload("res://jeu/essai/parcours_ville.gd")
 const Temoin = preload("res://jeu/essai/parcours_temoin.gd")
+const Fondus = preload("res://jeu/essai/fondus.gd")
 
 const DOSSIER := "user://essais_parcours"
 const VRAI_PROFIL := "user://profil.json"
@@ -32,14 +38,20 @@ const ETAGES_PROFONDS := [19.0, 37.0, 55.0] # un par classe ; au-delà de 13 viv
 const GARDIEN := "cerbere"
 const CYCLES := 4
 ## Durées de jeu accordées (secondes de boucle) avant de déclarer une étape manquée.
-const DUREE_DESCENTE := 600.0
+const DUREE_SECTION := 1200.0
+const ARMEMENT_MAX_MS := 3000 # temps réel laissé à un écran pour répondre (son armement : 350 ms)
+## La première descente cherche ces menus (la halte n'en offre qu'un : la fontaine attend l'acte 2).
+const SORTES_DU_DEBUT := ["boon", "loot", "shop", "event", "treasure"]
+const SORTES_DE_LA_FIN := ["rest", "treasure", "shop", "event"]
+const CLASSE_DE_LA_FIN := "bourreau"
+const GRAINE_DE_LA_FIN := 1.0
 const DUREE_SALLE := 240.0
 const DUREE_MORT := 120.0
 const DUREE_ESSAI := 20.0
 ## Gardes anti-faux-vert : en dessous, le parcours n'a pas joué ce qu'il dit.
-const MIN_SALLES := 8
-const MIN_ETAGES := 8
-const MIN_VERIFICATIONS := 150
+const MIN_SALLES := 30
+const MIN_ETAGES := 40
+const MIN_VERIFICATIONS := 400
 ## Les nœuds se comptent au nœud près ; les objets (ressources, interpolations en cours) varient
 ## de quelques unités d'une mesure à l'autre : au-delà, quelque chose s'accumule.
 const TOLERANCE_OBJETS := 8
@@ -55,8 +67,8 @@ var _appels := 0
 var _bloque := false
 var _ecrans_vus: Array = []
 var _empreintes: Array = []
-var _bilan := {"pauses": 0, "abandons": 0, "reprises": 0, "retours": 0, "cycles": 0, "classes": [], "operations": {}}
-var _totaux := {"salles": 0, "etages": 0, "morts": 0, "pas": 0, "etage_max": 0.0, "choix": {}, "commandes": {}}
+var _bilan := {"pauses": 0, "abandons": 0, "reprises": 0, "retours": 0, "gardiens": [], "portails": 0, "departs_du_point": 0, "victoires": 0, "cycles": 0, "classes": [], "operations": {}}
+var _totaux := {"salles": 0, "gardiens": 0, "etages": 0, "morts": 0, "pas": 0, "etage_max": 0.0, "choix": {}, "commandes": {}}
 var _base := {}
 var _vrai_profil_avant := ""
 
@@ -72,6 +84,7 @@ func _derouler() -> void:
 	await images(2)
 	_base = _mesure()
 	await _acte_du_nouveau_joueur()
+	await _acte_de_la_victoire()
 	await _acte_du_joueur_avance()
 	await _acte_des_fuites()
 	await _fermer_le_jeu("fin")
@@ -101,13 +114,10 @@ func _mesure() -> Dictionary:
 		"objets": int(Performance.get_monitor(Performance.OBJECT_COUNT)),
 	}
 
-## Le profil relu du disque d'essai est celui que l'application tient en mémoire. Les deux sont
-## comparés tels que le jeu les lirait (D6Profile.sanitize_profile) : un objet équipé en donjon
-## ne reçoit son identifiant `uid` qu'à la lecture, sur le disque comme en mémoire.
+## Le profil relu du disque d'essai est celui que l'application tient en mémoire, tel quel.
 func verifier_disque(etape: String) -> void:
 	var relu: Dictionary = Profil.charger(app.contenu)
-	var tenu: Dictionary = D6Profile.sanitize_profile(D6Js.clone(app.profil), app.contenu)
-	verifier(etape + " : le profil du disque d'essai est celui en mémoire", relu == tenu, _ecart(relu, tenu))
+	verifier(etape + " : le profil du disque d'essai est celui en mémoire", relu == app.profil, _ecart(relu, app.profil))
 
 ## Le premier endroit où deux valeurs diffèrent (« equipment.arme.uid : disque …, mémoire … »).
 func _ecart(a, b, chemin: String = "") -> String:
@@ -139,6 +149,7 @@ func _lancer_le_jeu() -> void:
 ## Ferme le jeu : rien ne lui survit (ni nœud dans l'arbre, ni nœud orphelin).
 func _fermer_le_jeu(etape: String) -> void:
 	_cumuler()
+	await Fondus.laisser_finir(self) # un fondu coupé net resterait en mémoire jusqu'à la sortie
 	app.free()
 	app = null
 	await images(3)
@@ -146,7 +157,7 @@ func _fermer_le_jeu(etape: String) -> void:
 	verifier("fermeture (%s) : aucun nœud ne survit au jeu" % etape, m.noeuds == _base.noeuds and m.orphelins == _base.orphelins, [_base, m])
 
 func _cumuler() -> void:
-	for k in ["salles", "etages", "morts", "pas"]:
+	for k in ["salles", "gardiens", "etages", "morts", "pas"]:
 		_totaux[k] += pilote.compte[k]
 	_totaux.etage_max = maxf(_totaux.etage_max, pilote.compte.etage_max)
 	for k in ["choix", "commandes"]:
@@ -209,13 +220,34 @@ func _jouer(secondes: float) -> void:
 ## l'écran suit (il se ferme, ou le marchand reste ouvert après un achat).
 func _traverser_le_menu() -> void:
 	var sorte: String = _game().choice.kind
+	var avant := _etat_du_heros()
 	await images(2)
 	verifier("menu %s : l'écran de choix est montré" % sorte, ecrans.ecran_montre() == "choix", ecrans.ecran_montre())
 	var reponse: Dictionary = pilote.repondre_au_menu()
 	verifier("menu %s : la simulation accepte une commande" % sorte, reponse.ok, _game().choice)
 	_bloque = not reponse.ok
+	_verifier_la_salle_calme(reponse.option, avant)
 	await images(2)
 	verifier("menu %s : après « %s », l'écran suit la partie" % [sorte, reponse.type], ecrans.ecran_montre() == _panneau_attendu(), ecrans.ecran_montre())
+
+## Ce qu'une salle calme peut changer : les PV du héros, les niveaux de ses bénédictions.
+func _etat_du_heros() -> Dictionary:
+	var niveaux := 0.0
+	for b in _game().run.boons:
+		niveaux += b.level
+	return {"hp": _game().player.hp, "niveaux": niveaux}
+
+## Chambre forte, fontaine : l'option choisie (son identifiant) a fait ce que son panneau annonce.
+func _verifier_la_salle_calme(option: String, avant: Dictionary) -> void:
+	var apres := _etat_du_heros()
+	var objet = _game().room.get("interact")
+	match option:
+		"objet":
+			verifier("chambre forte : l'objet choisi attend d'être pris, les portes attendent", _game().mode == "play" and objet.kind == "loot" and not D6Js.truthy(objet.used), objet)
+		"mediter":
+			verifier("fontaine : méditer approfondit une bénédiction d'un niveau", apres.niveaux == avant.niveaux + 1.0, [avant, apres])
+		"boire":
+			verifier("fontaine : boire ne retire aucun PV", apres.hp >= avant.hp, [avant, apres])
 
 func _en_combat() -> bool:
 	var g: Dictionary = _game()
@@ -286,41 +318,176 @@ func _acte_du_nouveau_joueur() -> void:
 	await _controler("joueur neuf", "ville")
 	await ville.visite_du_nouveau_joueur()
 	await _premiere_descente()
+	await _reprise_depuis_le_point()
 	await ville.visite_apres_la_descente()
 	app.ouvrir_titre()
 	await _controler("joueur neuf, retour au titre", "titre")
 	await _fermer_le_jeu("joueur neuf")
 
-## Étage 1, jusqu'à avoir traversé les quatre sortes de menu ; pause ; mort ; reprise ; mort ; Ville.
+## Étage 1 : un combat, une pause, puis toute la section — cinq sortes de menu, le Gardien de
+## l'étage 18 battu, son butin, le portail de la Ville, et ce que le Portail propose au retour.
 func _premiere_descente() -> void:
 	var etape := "première descente"
+	var gardien: float = D6Floors.section_bounds(app.contenu, 1.0).guardian
 	app.demarrer_descente(1.0, false, false, GRAINE)
+	pilote.voulues = SORTES_DU_DEBUT
 	await _controler(etape, "jeu", "play")
 	verifier(etape + " : étage 1, profil du joueur neuf", _game().run.floor == 1.0 and not _game().sandbox and _game().meta.stats.runs == 1.0)
 	verifier(etape + " : un combat s'engage", await _jouer_jusqu_a(_en_combat, DUREE_SALLE))
 	await _pause_et_reprise(etape, false)
-	var tout_vu := await _jouer_jusqu_a(func() -> bool: return pilote.sortes_manquantes().is_empty() and pilote.compte.salles >= 3, DUREE_DESCENTE)
-	verifier(etape + " : bénédiction, butin, marchand et autel traversés", tout_vu, [pilote.compte.choix, _game().mode, _game().run.floor])
-	verifier(etape + " : plusieurs salles, plusieurs étages", pilote.compte.salles >= 3 and _game().run.floor > 1.0, pilote.compte)
+	var battu := await _jouer_jusqu_a(func() -> bool: return pilote.compte.gardiens > 0, DUREE_SECTION)
+	verifier(etape + " : le Gardien de l'étage %s est battu" % D6Js.num_str(gardien), battu and _game().run.floor == gardien, [_game().mode, _game().run.floor, _game().player.hp])
+	verifier(etape + " : bénédiction, butin, marchand, autel et chambre forte traversés", pilote.sortes_manquantes().is_empty(), pilote.compte.choix)
 	verifier(etape + " : le temps de jeu a avancé", _game().time > 0.0 and _game().tick == float(pilote.compte.pas), [_game().tick, pilote.compte.pas])
 	print("première descente : %d salles, étage %s, menus %s, %s Âmes" % [pilote.compte.salles, D6Js.num_str(_game().run.floor), pilote.compte.choix, D6Js.num_str(_game().meta.souls)])
+	if not battu:
+		return
+	await _gardien_battu(etape, {"checkpoints": [1.0], "rencontres": 0.0, "victoires": 0.0, "ames": 0.0})
+	await _prendre_le_portail(etape)
+	await ville.verifier_le_portail(etape + ", de retour", gardien + 1.0)
+
+## Le Gardien vient de tomber (au pas de simulation même) : checkpoint et point de téléportation
+## au profil ET sur le disque, Âmes, butin à prendre, deux portes ouvertes dont celle de la Ville.
+## `avant` : ce que le profil avait avant la descente (checkpoints, rencontres, victoires, ames).
+func _gardien_battu(etape: String, avant: Dictionary) -> void:
+	var g: Dictionary = _game()
+	var modele: String = D6Floors.guardian_for(app.contenu, g.info.section)
+	var point: float = D6Floors.checkpoint_after_boss(app.contenu, g.run.floor)
+	_empreintes.append(D6Game.state_hash(g))
+	_bilan.gardiens.append(g.run.floor)
+	await _controler(etape + ", Gardien battu", "jeu", "play")
+	verifier(etape + " : salle du Gardien nettoyée, un seul checkpoint annoncé", g.room.kind == "boss" and D6Js.truthy(g.room.cleared) and g.info.isBoss and pilote.vus("checkpoint") == 1, [g.room.kind, pilote.vus("checkpoint")])
+	var butin = g.room.get("interact")
+	verifier(etape + " : le Gardien laisse un butin rare ou légendaire, à prendre", butin != null and butin.kind == "loot" and not D6Js.truthy(butin.used) and butin.item.rarity in ["rare", "legendaire"], butin)
+	var portes: Array = g.room.doors.map(func(d: Dictionary) -> String: return d.reward)
+	verifier(etape + " : deux portes ouvertes, la suite et la Ville", portes.size() == 2 and portes[0] != "town" and portes[1] == "town" and g.room.doors.all(func(d: Dictionary) -> bool: return D6Js.truthy(d.get("open"))), portes)
+	verifier(etape + " : le checkpoint de l'étage %s est posé au profil" % D6Js.num_str(point), app.profil.checkpoints == avant.checkpoints + [point], app.profil.checkpoints)
+	verifier(etape + " : le Gardien (%s) est compté au profil, il pourra être défié" % modele, D6Js.nz(app.profil.guardians.get(modele), 0.0) == avant.rencontres + 1.0 and app.profil.stats.guardianKills == avant.victoires + 1.0, [app.profil.guardians, app.profil.stats])
+	_verifier_la_prime(etape, avant.ames)
+	verifier_disque(etape + ", Gardien battu")
+
+## La prime du Gardien (Âmes de sa section) est annoncée avec son checkpoint, et le profil tient
+## les Âmes de la partie : celles d'avant, plus les gains, moins ce qu'un autel a pu prendre.
+func _verifier_la_prime(etape: String, ames_avant: float) -> void:
+	var g: Dictionary = _game()
+	var ames: Dictionary = app.contenu.progression.souls
+	var prime: float = ames.guardian + ames.guardianPerSection * (g.info.section - 1.0)
+	var annonce: Dictionary = pilote.dernier_checkpoint
+	verifier(etape + " : la prime du Gardien (%s Âmes) est annoncée avec son checkpoint" % D6Js.num_str(prime), annonce.get("souls") == prime and annonce.get("guardian") == D6Floors.guardian_for(app.contenu, g.info.section) and annonce.get("floor") == D6Floors.checkpoint_after_boss(app.contenu, g.run.floor), annonce)
+	verifier(etape + " : le profil tient les Âmes de la partie, prime comprise", app.profil.souls == g.meta.souls and g.telemetry.soulsEarned > prime and g.meta.souls <= ames_avant + g.telemetry.soulsEarned, [app.profil.souls, ames_avant, g.telemetry.soulsEarned])
+
+## Le pilote prend le butin puis le portail de la Ville : le run finit SANS mort ni taxe, la
+## Ville s'ouvre, le profil garde tout.
+func _prendre_le_portail(etape: String) -> void:
+	var butins: int = pilote.compte.choix.get("loot", 0)
+	var morts: float = app.profil.stats.deaths
+	pilote.vers_la_ville = true
+	var rentre := await _jouer_jusqu_a(func() -> bool: return app.partie.game == null, DUREE_SALLE)
+	verifier(etape + " : le héros franchit le portail, la partie finit", rentre and pilote.vus("returnTown") == 1, [app.ecran, pilote.vus("returnTown")])
+	await _controler(etape + ", portail", "ville")
+	verifier(etape + " : le butin du Gardien a été pris avant de partir", pilote.compte.choix.get("loot", 0) == butins + 1, pilote.compte.choix)
+	verifier(etape + " : le portail n'est pas une mort (aucune taxe de Charon)", app.profil.stats.deaths == morts and pilote.compte.morts == 0, app.profil.stats)
+	verifier_disque(etape + ", portail")
+	_bilan.portails += 1 if rentre else 0
+
+## Reprise depuis le point de téléportation ouvert par le Gardien : la descente part de là, avec
+## l'équipement gardé et sans bénédiction ; une salle ; mort ; « Repartir » y ramène ; mort ; Ville.
+func _reprise_depuis_le_point() -> void:
+	var etape := "reprise depuis le point"
+	var point: float = D6Js.nz(app.profil.checkpoints.max(), 1.0)
+	var porte: Dictionary = app.profil.equipment.duplicate(true)
+	var salles: int = pilote.compte.salles
+	app.demarrer_descente(point, false, false, GRAINE + point)
+	await _controler(etape, "jeu", "play")
+	verifier(etape + " : la descente part de l'étage %s, seconde du profil" % D6Js.num_str(point), point > 1.0 and _game().run.floor == point and _game().meta.stats.runs == 2.0, [point, _game().run.floor])
+	verifier(etape + " : l'équipement est gardé, les bénédictions non", _game().meta.equipment == porte and _game().run.boons.is_empty(), _game().run.boons)
+	var nettoyee := await _jouer_jusqu_a(func() -> bool: return pilote.compte.salles > salles, DUREE_SALLE)
+	verifier(etape + " : une salle nettoyée", nettoyee, [_game().mode, _game().player.hp])
+	_bilan.departs_du_point += 1 if nettoyee and _game().run.floor >= point else 0
 	await _mourir(etape)
-	verifier(etape + " : des Âmes gagnées, le record suit l'étage atteint", app.profil.souls > 0.0 and app.profil.bestFloor == pilote.compte.etage_max and app.profil.stats.deaths == 1.0, [app.profil.souls, app.profil.bestFloor])
-	await _reprendre(etape)
+	verifier(etape + " : le record suit l'étage atteint, une mort comptée", app.profil.bestFloor == pilote.compte.etage_max and app.profil.stats.deaths == 1.0, [app.profil.bestFloor, app.profil.stats])
+	await _reprendre(etape, point)
 	await _mourir(etape + " (seconde vie)")
 	await _rentrer(etape)
 
-## « Repartir » depuis l'écran de mort : même partie, étage du checkpoint, sans bénédiction.
-func _reprendre(etape: String) -> void:
+## « Repartir » depuis l'écran de mort : même partie, étage du dernier checkpoint, sans bénédiction.
+func _reprendre(etape: String, point: float) -> void:
 	var salles: int = pilote.compte.salles
 	verifier(etape + " : « Repartir » accepté", app.commande({"type": "respawn", "floor": D6Run.last_checkpoint(_game())}))
 	pilote.inerte = false
 	await _controler(etape + ", reprise après la mort", "jeu", "play")
-	verifier(etape + " : reparti du checkpoint, sans bénédiction", _game().run.floor == 1.0 and _game().run.boons.is_empty(), _game().run.floor)
+	verifier(etape + " : reparti du dernier checkpoint, sans bénédiction", _game().run.floor == point and _game().run.boons.is_empty(), _game().run.floor)
 	verifier(etape + " : une salle nettoyée après la reprise", await _jouer_jusqu_a(func() -> bool: return pilote.compte.salles > salles, DUREE_SALLE), _game().mode)
 	_bilan.reprises += 1
 
-# ---------------------------------------------------------------- acte 2 : le joueur avancé
+# ---------------------------------------------------------------- acte 2 : la victoire
+
+## Un joueur au bout du chemin (profil écrit sur le disque d'essai, relu par un jeu neuf) : la
+## dernière section, de son dernier checkpoint au dernier Gardien, puis l'écran de victoire.
+func _acte_de_la_victoire() -> void:
+	var etape := "bout du chemin"
+	_vider_le_dossier()
+	var ecrit: Dictionary = ProfilEssai.au_bout_du_chemin(D6Data.create_tuning(), CLASSE_DE_LA_FIN)
+	ProfilEssai.ecrire(ecrit)
+	await _lancer_le_jeu()
+	var depart: float = D6Floors.section_bounds(app.contenu, D6Floors.floor_info(app.contenu, app.contenu.floors.total).section).first
+	verifier(etape + " : le jeu a relu son profil du disque, dernier checkpoint à l'étage %s" % D6Js.num_str(depart), app.profil == D6Profile.sanitize_profile(ecrit, app.contenu) and D6Js.nz(app.profil.checkpoints.max(), 0.0) == depart, _ecart(ecrit, app.profil))
+	app.ouvrir_ville()
+	await _controler(etape, "ville")
+	await ville.verifier_le_portail(etape, depart)
+	var avant := {"checkpoints": app.profil.checkpoints.duplicate(), "rencontres": app.profil.guardians.duplicate(), "victoires": app.profil.stats.guardianKills, "ames": app.profil.souls, "morts": app.profil.stats.deaths}
+	app.demarrer_descente(depart, false, false, GRAINE_DE_LA_FIN)
+	pilote.voulues = SORTES_DE_LA_FIN
+	await _controler(etape, "jeu", "play")
+	verifier(etape + " : la descente part du dernier checkpoint", _game().run.floor == depart and _game().kit.classId == CLASSE_DE_LA_FIN, _game().run.floor)
+	var gagne := await _jouer_jusqu_a(func() -> bool: return _game().mode == "victory", DUREE_SECTION)
+	verifier(etape + " : le dernier Gardien est battu, sans une mort", gagne and pilote.compte.morts == 0 and pilote.compte.gardiens == 1, [_game().mode, _game().run.floor, _game().player.hp])
+	verifier(etape + " : la fontaine a été traversée en chemin", pilote.compte.choix.get("rest", 0) > 0, pilote.compte.choix)
+	print("bout du chemin : %d salles, étage %s, menus %s" % [pilote.compte.salles, D6Js.num_str(_game().run.floor), pilote.compte.choix])
+	if gagne:
+		await _victoire(etape, avant)
+	app.ouvrir_titre()
+	await _controler(etape + ", retour au titre", "titre")
+	await _fermer_le_jeu(etape)
+
+## L'écran de victoire : ce que le profil a reçu (aucun checkpoint : il n'y a pas d'étage après),
+## ce que l'écran dit et refuse, puis son seul bouton, appuyé comme le ferait un joueur.
+func _victoire(etape: String, avant: Dictionary) -> void:
+	var g: Dictionary = _game()
+	var total: float = app.contenu.floors.total
+	var modele: String = D6Floors.guardian_for(app.contenu, g.info.section)
+	_noter_la_fin()
+	_bilan.gardiens.append(g.run.floor)
+	await _controler(etape + ", victoire", "jeu", "victory")
+	verifier(etape + " : victoire à l'étage %s, annoncée une fois" % D6Js.num_str(total), g.run.floor == total and g.info.isFinal and pilote.vus("victory") == 1, [g.run.floor, pilote.vus("victory")])
+	verifier(etape + " : le dernier Gardien n'ouvre aucun checkpoint, le record est l'étage %s" % D6Js.num_str(total), app.profil.checkpoints == avant.checkpoints and app.profil.bestFloor == total, [app.profil.checkpoints.size(), app.profil.bestFloor])
+	verifier(etape + " : le Gardien (%s) est compté au profil" % modele, app.profil.guardians.get(modele) == avant.rencontres.get(modele) + 1.0 and app.profil.stats.guardianKills == avant.victoires + 1.0, [app.profil.guardians, app.profil.stats])
+	_verifier_la_prime(etape, avant.ames)
+	verifier_disque(etape + ", victoire")
+	var bouton := _bouton_de_la_victoire(etape, total)
+	verifier(etape + " : on ne « repart » pas d'une victoire", not app.commande({"type": "respawn", "floor": avant.checkpoints.max()}) and g.mode == "victory")
+	if bouton == null:
+		return
+	var limite := Time.get_ticks_msec() + ARMEMENT_MAX_MS
+	while not ecrans.pret() and Time.get_ticks_msec() < limite:
+		await process_frame
+	bouton.pressed.emit()
+	await _controler(etape + ", retour de la victoire", "ville")
+	verifier(etape + " : le bouton ramène en Ville, la partie est finie, sans mort, les Âmes au profil", app.partie.game == null and app.profil.souls == g.meta.souls and app.profil.stats.deaths == avant.morts, [app.profil.souls, app.profil.stats])
+	verifier_disque(etape + ", retour de la victoire")
+	await ville.verifier_le_portail(etape + ", après la victoire", avant.checkpoints.max())
+	_bilan.victoires += 1 if app.ecran == "ville" and app.partie.game == null else 0
+
+## L'écran de victoire dit l'étage atteint et n'offre qu'un bouton, le retour en Ville (null s'il manque).
+func _bouton_de_la_victoire(etape: String, total: float) -> Button:
+	var ecran: Control = ecrans.ecran()
+	var bouton: Button = ecran.get_node_or_null("%Ville") if ecran != null else null
+	var accroche: Label = ecran.get_node_or_null("%Accroche") if ecran != null else null
+	var seul: bool = ecran != null and ecran.find_children("*", "Button", true, false).size() == 1
+	verifier(etape + " : l'écran dit l'étage atteint et offre un seul bouton, « Retour à la Ville »", accroche != null and accroche.text.contains(D6Js.num_str(total)) and bouton != null and bouton.is_visible_in_tree() and not bouton.disabled and seul, accroche.text if accroche != null else "écran absent")
+	return bouton
+
+# ---------------------------------------------------------------- acte 3 : le joueur avancé
 
 func _acte_du_joueur_avance() -> void:
 	_vider_le_dossier()
@@ -358,11 +525,10 @@ func _entrainement() -> void:
 	var etape := "entraînement (%s)" % GARDIEN
 	var avant: Dictionary = app.profil.duplicate(true)
 	verifier(etape + " : ce Gardien a été rencontré", D6Js.nz(app.profil.guardians.get(GARDIEN), 0.0) > 0.0, app.profil.guardians)
-	seed(int(GRAINE)) # `demarrer_entrainement` tire sa graine au hasard (randi) : le test fixe ce hasard
-	app.demarrer_entrainement(GARDIEN)
+	app.demarrer_entrainement(GARDIEN, GRAINE)
 	await _controler(etape, "jeu", "play")
 	var boss: Array = _game().enemies.filter(func(e: Dictionary) -> bool: return D6Js.truthy(e.get("boss")))
-	verifier(etape + " : sans enjeu, dans la salle du Gardien", _game().practice and _game().room.kind == "boss", _game().room.kind)
+	verifier(etape + " : sans enjeu, dans la salle du Gardien, à la graine demandée", _game().practice and _game().room.kind == "boss" and _game().seed == GRAINE, [_game().room.kind, _game().seed])
 	await _jouer(DUREE_ESSAI)
 	boss = _game().enemies.filter(func(e: Dictionary) -> bool: return D6Js.truthy(e.get("boss")))
 	verifier(etape + " : le Gardien est là, le combat a lieu", (not boss.is_empty() or pilote.compte.morts > 0) and pilote.vus("hit") > 0, [boss.size(), _game().mode])
@@ -399,7 +565,7 @@ func _descente_profonde(classe: String, etage: float, fin: String) -> void:
 	await _abandonner(etape)
 	verifier(etape + " : l'abandon compte comme une mort", app.profil.stats.deaths == morts + 1.0, app.profil.stats)
 
-# ---------------------------------------------------------------- acte 3 : les fuites
+# ---------------------------------------------------------------- acte 4 : les fuites
 
 ## Des cycles identiques titre → Ville → descente → mort → Ville. Le premier chauffe les réserves
 ## (sons, particules) ; ensuite le compte des nœuds ne doit plus monter d'un cycle à l'autre.
@@ -432,7 +598,10 @@ func _acte_des_fuites() -> void:
 func _gardes() -> void:
 	var t := _totaux
 	verifier("garde : au moins %d salles nettoyées" % MIN_SALLES, t.salles >= MIN_SALLES, t.salles)
-	verifier("garde : au moins %d étages entrés, dont un profond" % MIN_ETAGES, t.etages >= MIN_ETAGES and t.etage_max >= ETAGES_PROFONDS[2], [t.etages, t.etage_max])
+	var etages: Dictionary = D6Data.default_tuning().floors
+	verifier("garde : au moins %d étages entrés, jusqu'au dernier" % MIN_ETAGES, t.etages >= MIN_ETAGES and t.etage_max == etages.total, [t.etages, t.etage_max])
+	verifier("garde : deux Gardiens battus, celui de la section 1 et le dernier", t.gardiens == 2 and _bilan.gardiens == [etages.sectionLength, etages.total], [t.gardiens, _bilan.gardiens])
+	verifier("garde : un portail pris, un départ du point ouvert, une victoire", _bilan.portails == 1 and _bilan.departs_du_point == 1 and _bilan.victoires == 1, _bilan)
 	for sorte in Pilote.SORTES_VOULUES:
 		verifier("garde : menu « %s » traversé" % sorte, t.choix.get(sorte, 0) > 0, t.choix)
 	verifier("garde : un butin équipé ou rangé, une bénédiction choisie", t.commandes.get("equip", 0) + t.commandes.get("stash", 0) > 0 and t.commandes.get("choose", 0) > 0, t.commandes)

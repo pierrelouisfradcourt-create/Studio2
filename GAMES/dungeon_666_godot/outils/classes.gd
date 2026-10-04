@@ -106,13 +106,14 @@ static func all_kits(tuning: Dictionary) -> Array:
 			out.append({"id": "%s/%s" % [class_id, weapon_type], "classId": class_id, "weaponType": weapon_type})
 	return out
 
-## Profil permanent : tout débloqué, la classe et l'arme demandées, compétence et gadget de départ.
-static func kit_profile(tuning: Dictionary, class_id: String, weapon_type) -> Dictionary:
+## Profil permanent : tout débloqué, la classe et l'arme demandées, compétence et gadget de départ
+## dans les deux premiers emplacements. `slots` (facultatif) : trois emplacements choisis.
+static func kit_profile(tuning: Dictionary, class_id: String, weapon_type, slots = null) -> Dictionary:
 	var m: Dictionary = D6Profile.create_profile(tuning)
 	for k in ["classes", "weapons", "skills", "gadgets"]:
 		m.unlocked[k] = tuning[k].keys()
 	var c: Dictionary = tuning.classes[class_id]
-	m.loadout = {"classId": class_id, "skillId": c.skills[0], "gadgetId": c.gadgets[0]}
+	m.loadout = {"classId": class_id, "slots": slots if slots is Array else [c.skills[0], c.gadgets[0], null]}
 	m.equipment.arme = D6Profile.starter_weapon(tuning, D6Js.nz(weapon_type, c.weapons[0]))
 	m.equipment.arme.uid = "i9000"
 	return m

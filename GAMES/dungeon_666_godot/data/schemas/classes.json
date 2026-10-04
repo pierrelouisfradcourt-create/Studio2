@@ -259,7 +259,7 @@
       "min": 1,
       "chaque": {
         "type": "objet",
-        "requis": ["name", "kind", "text", "startCharge", "chargeDamage", "duration", "speedMult", "radius"],
+        "requis": ["name", "kind", "text", "startCharge", "holdTime", "chargeDamage", "duration", "speedMult", "radius"],
         "fermé": true,
         "champs": {
           "name": { "type": "texte", "min": 1 },
@@ -267,6 +267,7 @@
           "icon": { "type": "texte", "min": 1 },
           "text": { "type": "texte", "min": 1 },
           "startCharge": { "type": "nombre", "min": 0, "max": 1 },
+          "holdTime": { "type": "nombre", "min": 0.1, "max": 2, "_note": "s d'attaque maintenue, jauge pleine, avant l'ultime (combat V3)" },
           "chargeDamage": { "type": "nombre", "min": 1 },
           "duration": { "type": "nombre", "min": 0.02 },
           "speedMult": { "type": "nombre", "min": 0 },
@@ -308,12 +309,17 @@
     },
     "DEFAULT_LOADOUT": {
       "type": "objet",
-      "requis": ["classId", "skillId", "gadgetId"],
+      "requis": ["classId", "slots"],
       "fermé": true,
       "champs": {
         "classId": { "type": "texte", "min": 1 },
-        "skillId": { "type": "texte", "min": 1 },
-        "gadgetId": { "type": "texte", "min": 1 }
+        "slots": {
+          "type": "liste",
+          "min": 3,
+          "max": 3,
+          "elements": { "type": "quelconque" },
+          "_note": "trois emplacements : identifiant d'une compétence ou d'un gadget de la classe, ou null (vide) ; gardé par tests/regles/donnees.gd"
+        }
       }
     }
   }

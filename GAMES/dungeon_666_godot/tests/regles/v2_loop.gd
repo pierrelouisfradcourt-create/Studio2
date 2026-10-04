@@ -219,7 +219,7 @@ static func _profil_neuf(h) -> void:
 	h.egal(p.souls, 0.0)
 	h.egal(p.gold, 0.0)
 	h.egal(p.unlocked, {"classes": [first], "weapons": [c.weapons[0]], "skills": [c.skills[0]], "gadgets": [c.gadgets[0]]})
-	h.egal(p.loadout, {"classId": first, "skillId": c.skills[0], "gadgetId": c.gadgets[0]})
+	h.egal(p.loadout, {"classId": first, "slots": [c.skills[0], c.gadgets[0], null]})
 	h.egal(p.stash, [])
 	# La 1re partie complète l'équipement vide avec l'équipement de départ (permanent).
 	var g: Dictionary = D6Game.create_game({"seed": 1.0, "meta": p})
@@ -570,8 +570,8 @@ static func _ville_classe(h) -> void:
 	h.ok(profile.unlocked.weapons.has("v2t_faux"))
 	h.ok(profile.unlocked.skills.has("v2t_trait"))
 	h.ok(profile.unlocked.gadgets.has("v2t_fiole"))
-	h.egal(profile.loadout.skillId, "v2t_trait")
-	h.egal(profile.loadout.gadgetId, "v2t_fiole")
+	h.egal(profile.loadout.slots[0], "v2t_trait")
+	h.egal(profile.loadout.slots[1], "v2t_fiole")
 	# La 2e arme de la classe reste à forger.
 	h.ok(not profile.unlocked.weapons.has("v2t_serpe"))
 	# La partie suivante joue le kit choisi (permanent).
@@ -587,13 +587,13 @@ static func _ville_competence_gadget(h) -> void:
 	var t := _content_with_extras()
 	var p: Dictionary = D6Profile.create_profile(t)
 	var c0: Dictionary = t.classes[_first_class_id(t)]
-	h.egal(D6Profile.select_skill(p, t, "v2t_trait"), {"ok": false, "reason": "indisponible"})
-	h.egal(D6Profile.select_gadget(p, t, "v2t_fiole"), {"ok": false, "reason": "indisponible"})
-	h.egal(D6Profile.select_skill(p, t, c0.skills[0]), {"ok": true})
-	h.egal(D6Profile.select_gadget(p, t, c0.gadgets[0]), {"ok": true})
+	h.egal(D6Profile.select_slot(p, t, 0.0, "v2t_trait"), {"ok": false, "reason": "indisponible"})
+	h.egal(D6Profile.select_slot(p, t, 1.0, "v2t_fiole"), {"ok": false, "reason": "indisponible"})
+	h.egal(D6Profile.select_slot(p, t, 0.0, c0.skills[0]), {"ok": true})
+	h.egal(D6Profile.select_slot(p, t, 1.0, c0.gadgets[0]), {"ok": true})
 	p.souls = 999.0
 	D6Profile.unlock(p, t, "skills", "v2t_trait")
-	h.egal(D6Profile.select_skill(p, t, "v2t_trait"), {"ok": false, "reason": "indisponible"}, "débloquée mais d'une autre classe")
+	h.egal(D6Profile.select_slot(p, t, 0.0, "v2t_trait"), {"ok": false, "reason": "indisponible"}, "débloquée mais d'une autre classe")
 
 static func _ville_sanctuaire(h) -> void:
 	var t: Dictionary = D6Data.create_tuning()

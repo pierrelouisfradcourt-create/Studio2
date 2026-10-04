@@ -307,9 +307,9 @@ static func _t_textes(h) -> void:
 	# Dans une vraie partie, avec une AUTRE compétence que la Lance : ce que les écrans affichent.
 	var meta: Dictionary = D6Profile.new_profile(t)
 	meta.unlocked.skills.append("chaine")
-	meta.loadout.skillId = "chaine"
+	meta.loadout.slots[0] = "chaine"
 	var g: Dictionary = D6Game.create_game({"seed": 3.0, "meta": meta})
-	h.egal(g.kit.skillId, "chaine")
+	h.egal(g.kit.slots[0], "chaine")
 	for id in ["charme", "convoitise"]:
 		var shown: Dictionary = D6Run.describe_boon({"id": id, "rarity": "commun", "level": 1.0})
 		h.ok(not ("Lance" in shown.text) and C.no_braces(shown.text), "%s, Chaîne équipée : « %s »" % [id, shown.text])

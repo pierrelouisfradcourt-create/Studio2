@@ -43,14 +43,13 @@ static func default_tuning() -> Dictionary:
 
 ## Copie profonde des défauts, que la partie possède et peut modifier ; `overrides` (dictionnaire
 ## partiel) y est fusionné. Les blocs ACTIFS sont les mêmes objets que l'entrée de kit qu'ils
-## désignent (t.combo est t.weapons.lame.combo) : une surcharge de t.skill modifie aussi
-## t.skills.lance.
+## désignent (t.combo est t.weapons.lame.combo) : une surcharge de t.combo modifie aussi
+## t.weapons.lame.combo. Compétences et gadgets n'ont pas de bloc actif : ils se lisent par
+## emplacement (D6Loadout.slot_def).
 static func create_tuning(overrides = null) -> Dictionary:
 	var t: Dictionary = default_tuning().duplicate(true)
 	t.combo = t.weapons.lame.combo
 	t.dashStrike = t.weapons.lame.dashStrike
-	t.skill = t.skills.lance
-	t.gadget = t.gadgets.nova
 	t["super"] = t.supers.colere
 	if overrides is Dictionary:
 		D6Js.deep_merge(t, overrides)
@@ -75,7 +74,7 @@ static func _load() -> void:
 	_tables = _build_tables(f, _tuning)
 
 ## Les réglages, dans l'ordre de leurs clés (des boucles le parcourent : il fait partie des règles).
-## combo, dashStrike, skill, gadget et super sont les blocs du kit de départ, recopiés.
+## combo, dashStrike et super sont les blocs du kit de départ, recopiés.
 static func _build_tuning(f: Dictionary) -> Dictionary:
 	var h: Dictionary = f.heros
 	var k: Dictionary = f.classes
@@ -87,7 +86,7 @@ static func _build_tuning(f: Dictionary) -> Dictionary:
 		"comboResetTime": h.comboResetTime, "comboCancelFrom": h.comboCancelFrom,
 		"dashStrike": D6Js.clone(k.weapons.lame.dashStrike),
 		"wallSlam": h.wallSlam, "autoAim": h.autoAim,
-		"skill": D6Js.clone(k.skills.lance), "gadget": D6Js.clone(k.gadgets.nova), "super": D6Js.clone(k.supers.colere),
+		"super": D6Js.clone(k.supers.colere),
 		"classes": k.classes, "weapons": k.weapons, "skills": k.skills, "gadgets": k.gadgets, "supers": k.supers,
 		"lab": f.labo.lab,
 		"enemies": f.bestiaire.enemies, "elite": f.bestiaire.elite, "boss": f.gardiens.boss,

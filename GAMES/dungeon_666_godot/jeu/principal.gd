@@ -24,7 +24,7 @@ const VUES := [
 	"res://jeu/ville/ville.tscn",
 	"res://jeu/ecrans/ecrans.tscn",
 ]
-const OPERATIONS_VILLE := ["select_class", "unlock", "select_skill", "select_gadget", "equip_from_stash", "salvage_from_stash", "buy_upgrade"]
+const OPERATIONS_VILLE := ["select_class", "unlock", "select_slot", "equip_from_stash", "salvage_from_stash", "buy_upgrade"]
 
 var ecran := "titre"
 var profil: Dictionary = {}
@@ -91,12 +91,13 @@ func _tuning_de_depart() -> Dictionary:
 	return t
 
 ## Entraînement : le Gardien choisi, à l'étage de sa première section, sans récompense ni risque.
-func demarrer_entrainement(gardien: String) -> void:
+## `graine` : comme pour `demarrer_descente` (absente : tirée au hasard).
+func demarrer_entrainement(gardien: String, graine: float = -1.0) -> void:
 	var sections: float = contenu.floors.total / contenu.floors.sectionLength
 	var section := 1.0
 	while section <= sections and D6Floors.guardian_for(contenu, section) != gardien:
 		section += 1.0
-	demarrer_descente(D6Floors.section_bounds(contenu, section).guardian, false, true)
+	demarrer_descente(D6Floors.section_bounds(contenu, section).guardian, false, true, graine)
 
 func _changer_ecran(nouveau: String) -> void:
 	ecran = nouveau
@@ -138,7 +139,7 @@ func enregistrer_profil() -> void:
 	profil_change.emit()
 
 ## Opération de la Ville sur le profil (règles : D6Profile), puis enregistrement.
-## `nom` : select_class | unlock | select_skill | select_gadget | equip_from_stash |
+## `nom` : select_class | unlock | select_slot (emplacement 0..2, action ou null) | equip_from_stash |
 ## salvage_from_stash | buy_upgrade ; `args` : les arguments après (profil, contenu).
 ## Rend le résultat de l'opération ({ok, reason?…}).
 func operation_ville(nom: String, args: Array = []) -> Dictionary:

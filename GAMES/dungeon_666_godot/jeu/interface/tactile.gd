@@ -1,5 +1,6 @@
 extends Control
-## Les commandes TACTILES : le joystick flottant et les cinq boutons, DESSINÉS aux positions que
+## Les commandes TACTILES : le joystick flottant et les cinq boutons (attaque, dash, et les trois
+## emplacements d'action du combat V3, aux places des anciens compétence / gadget / Super), DESSINÉS aux positions que
 ## donne la vue Entrees (`interface_tactile()`, en pixels du viewport). Ce nœud ne lit aucun
 ## toucher : la vue Entrees s'en charge. Portage de `drawTouchControls` (src/render/hud.mjs).
 
@@ -10,7 +11,7 @@ const COURSE := 58.0 # rayon de la base du joystick
 const POUCE := 26.0
 const DEGAGEMENT := 24.0 # px autour du groupe de boutons
 
-@onready var _boutons := {"attack": $Attaque, "dash": $Dash, "skill": $Competence, "super": $Super, "gadget": $Gadget}
+@onready var _boutons := {"attack": $Attaque, "dash": $Dash, "skill1": $Competence, "skill3": $Super, "skill2": $Gadget}
 
 var _manette := {}
 var _coin := Vector2.INF

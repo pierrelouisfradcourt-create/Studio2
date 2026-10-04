@@ -2,7 +2,7 @@ extends Node2D
 ## Banc d'essai (provisoire) : la simulation portée, jouée au clavier et dessinée en formes
 ## simples. Sert à vérifier à l'œil que la partie tourne avant que les vraies vues existent.
 ##   ZQSD / flèches : bouger · J ou clic gauche : attaquer · Espace : dash · L : compétence
-##   E : gadget · F : Super · 1 2 3 : choix de menu · Entrée : fermer / reprendre
+##   L, E, F : emplacements 1, 2, 3 · attaque tenue, jauge pleine : ultime · 1 2 3 : choix de menu · Entrée : fermer / reprendre
 
 const Partie = preload("res://jeu/partie.gd")
 
@@ -51,9 +51,9 @@ func _lire() -> Dictionary:
 	input.attack = Input.is_key_pressed(KEY_J) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 	input.attackPressed = _front(KEY_J)
 	input.dashPressed = _front(KEY_SPACE)
-	input.skillPressed = _front(KEY_L)
-	input.gadgetPressed = _front(KEY_E)
-	input.superPressed = _front(KEY_F)
+	input.skill1Pressed = _front(KEY_L)
+	input.skill2Pressed = _front(KEY_E)
+	input.skill3Pressed = _front(KEY_F)
 	return input
 
 func _process(_delta: float) -> void:

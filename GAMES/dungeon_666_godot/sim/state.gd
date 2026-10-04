@@ -79,17 +79,20 @@ static func create_player(tuning: Dictionary, x, y) -> Dictionary:
 		"freeze": 0.0, # gel d'impact LOCAL restant (D8, mode local) ; le mode global gèle toute la scène
 		"dodgeIframes": 0.0, # part des i-frames qui vient d'un dash (sert l'événement « esquive »)
 		"hurtFlash": 0.0,
-		"skillCd": 0.0,
+		# Les trois emplacements d'action (kit.slots) : recharge restante d'une compétence, charges
+		# d'un gadget. Remplis par D6Loadout.reset_slots (le héros naît avant de connaître son kit).
+		"slots": [{"cd": 0.0, "charges": 0.0}, {"cd": 0.0, "charges": 0.0}, {"cd": 0.0, "charges": 0.0}],
+		"castSlot": 0.0, # emplacement de la compétence en cours de lancer (état 'cast')
 		"castT": 0.0,
 		"castDirX": 0.0,
 		"castDirY": -1.0,
-		"gadgetCharges": tuning.gadget.chargesPerSection,
 		"superCharge": D6Js.nz(tuning["super"].get("startCharge"), 0.0),
+		"superHold": 0.0, # s d'attaque maintenue, jauge pleine : à super.holdTime l'ultime part
 		"superT": 0.0,
 		"superTick": 0.0,
 		"surge": 0.0, # élan passager (proc « surge ») : secondes restantes…
 		"surgeMult": 0.0, # … et dégâts en plus tant qu'il dure
-		"buffer": {"action": null, "t": 0.0, "aimX": 0.0, "aimY": 0.0},
+		"buffer": {"action": null, "t": 0.0, "aimX": 0.0, "aimY": 0.0, "slot": 0.0},
 		"dodgedIds": [], # attaques déjà esquivées pendant le dash en cours
 		"lastTargetId": 0.0, # cible « collante » de la visée assistée
 		"lastTargetAt": -99.0,

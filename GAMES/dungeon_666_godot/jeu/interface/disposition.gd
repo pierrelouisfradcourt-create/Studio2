@@ -6,13 +6,13 @@ extends RefCounted
 const BOUTONS := [
 	{"id": "attack", "r": 48.0, "angle": 0.0, "dist": 0.0},
 	{"id": "dash", "r": 40.0, "angle": 186.0, "dist": 112.0},
-	{"id": "skill", "r": 33.0, "angle": 228.0, "dist": 112.0},
-	{"id": "super", "r": 35.0, "angle": 268.0, "dist": 116.0},
-	{"id": "gadget", "r": 27.0, "angle": 318.0, "dist": 98.0},
+	{"id": "skill1", "r": 33.0, "angle": 228.0, "dist": 112.0},
+	{"id": "skill3", "r": 35.0, "angle": 268.0, "dist": 116.0},
+	{"id": "skill2", "r": 27.0, "angle": 318.0, "dist": 98.0},
 ]
 const MARGE_ATTAQUE := Vector2(118.0, 112.0)
 ## Portrait (toléré) : deux rangées au-dessus de l'attaque. id -> [angle, distance].
-const EVENTAIL_PORTRAIT := {"dash": [248.0, 108.0], "skill": [294.0, 118.0], "super": [255.0, 197.0], "gadget": [288.0, 194.0]}
+const EVENTAIL_PORTRAIT := {"dash": [248.0, 108.0], "skill1": [294.0, 118.0], "skill3": [255.0, 197.0], "skill2": [288.0, 194.0]}
 const MARGE_PORTRAIT := Vector2(95.0, 115.0)
 
 ## `taille` : celle du viewport ; `marges` : zone sûre (gauche, haut, droite, bas), en pixels du viewport.

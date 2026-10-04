@@ -11,6 +11,9 @@ extends RefCounted
 
 const KITS := [["revenant", "lame"], ["revenant", "dagues"], ["bourreau", "hache"], ["bourreau", "marteau"], ["chasseresse", "arc"], ["chasseresse", "arbalete"]]
 const GUARDIAN_FLOORS := [18, 36, 54, 72] # Charon, Cerbère, Minos, Colosse (rotation)
+## Combat V3 : les trois emplacements remplis, par classe — compétence, gadget, seconde compétence
+## (parties kit_* et hasard_*). Les autres parties gardent le départ : compétence, gadget, vide.
+const SLOTS_3 := {"revenant": ["lance", "nova", "chaine"], "bourreau": ["bond", "cri", "chaine"], "chasseresse": ["volee", "piege", "brasier"]}
 
 static func all() -> Array:
 	var out: Array = []
@@ -37,7 +40,7 @@ static func _base() -> Array:
 	var out: Array = []
 	# Chaque kit, du premier étage : combat, menus de bénédiction, portes.
 	for i in KITS.size():
-		out.append({"name": "kit_%s" % KITS[i][1], "seed": 101 + i, "floor": 1, "kit": KITS[i], "policy": "skilled", "seconds": 45})
+		out.append({"name": "kit_%s" % KITS[i][1], "seed": 101 + i, "floor": 1, "kit": KITS[i], "slots": SLOTS_3[KITS[i][0]], "policy": "skilled", "seconds": 45})
 	# Le bestiaire entier (milieu et fin de section 1), joueurs maladroits compris (morts, reprises).
 	out.append({"name": "etage_7_habile", "seed": 201, "floor": 7, "policy": "skilled", "seconds": 45})
 	out.append({"name": "etage_12_sans_dash", "seed": 202, "floor": 12, "policy": "noDash", "seconds": 45})
@@ -84,7 +87,7 @@ static func _long_and_random() -> Array:
 	out.append({"name": "section_marteau_martele", "seed": 903, "floor": 1, "kit": ["bourreau", "marteau"], "policy": "masher", "seconds": 300})
 	# Entrées au hasard, pour chaque kit : les bords que les bots ne touchent jamais.
 	for i in KITS.size():
-		out.append({"name": "hasard_%s" % KITS[i][1], "seed": 1001 + i, "floor": 2 + i * 3, "kit": KITS[i], "policy": "hasard", "seconds": 90, "godMode": i % 2 == 0})
+		out.append({"name": "hasard_%s" % KITS[i][1], "seed": 1001 + i, "floor": 2 + i * 3, "kit": KITS[i], "slots": SLOTS_3[KITS[i][0]], "policy": "hasard", "seconds": 90, "godMode": i % 2 == 0})
 	# Modes : arène d'essai, entraînement contre un Gardien.
 	out.append({"name": "arene", "seed": 701, "floor": 1, "policy": "skilled", "seconds": 45, "sandbox": true})
 	out.append({"name": "entrainement_cerbere", "seed": 702, "floor": 36, "policy": "masher", "seconds": 40, "practice": true})
@@ -129,8 +132,9 @@ static func _bestiary() -> Array:
 		{"name": "bestiaire_elite_traqueur", "seed": 6405, "floor": 14, "policy": "skilled", "seconds": 75},
 		{"name": "bestiaire_elite_pavois", "seed": 6406, "floor": 14, "policy": "skilled", "seconds": 75},
 		# Entrées au hasard : coups sur un pavois sous tous les angles, dashs à travers, frappes dans le vide d'un traqueur disparu.
-		{"name": "bestiaire_hasard_hache", "seed": 6503, "floor": 15, "kit": ["bourreau", "hache"], "policy": "hasard", "seconds": 90, "godMode": true},
-		{"name": "bestiaire_hasard_dagues", "seed": 6605, "floor": 16, "kit": ["revenant", "dagues"], "policy": "hasard", "seconds": 90},
+		# (combat V3 : deux GADGETS équipés pour la hache, les deux gadgets après la compétence pour les dagues)
+		{"name": "bestiaire_hasard_hache", "seed": 6503, "floor": 15, "kit": ["bourreau", "hache"], "slots": ["cri", "bond", "bombe"], "policy": "hasard", "seconds": 90, "godMode": true},
+		{"name": "bestiaire_hasard_dagues", "seed": 6605, "floor": 16, "kit": ["revenant", "dagues"], "slots": ["lance", "bombe", "nova"], "policy": "hasard", "seconds": 90},
 		# En profondeur (toutes les sections suivantes ont le bestiaire entier), héros invulnérable.
 		{"name": "bestiaire_profond_230", "seed": 6706, "floor": 230, "policy": "skilled", "seconds": 60, "godMode": true},
 		{"name": "bestiaire_profond_100_arbalete", "seed": 6803, "floor": 100, "kit": ["chasseresse", "arbalete"], "policy": "noDash", "seconds": 60, "godMode": true},

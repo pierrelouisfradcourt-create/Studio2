@@ -555,11 +555,11 @@ static func _fontaine(h, T: Dictionary) -> void:
 	h.egal(g2.run.boons[0].level, 2.0)
 	# Fioles : gadget plein, jauge de Super remontée.
 	var g3 := _calm_room("rest")
-	g3.player.gadgetCharges = 0.0
+	g3.player.slots[1].charges = 0.0
 	g3.player.superCharge = 0.0
 	_touch_interact(g3)
 	h.egal(D6Game.apply_command(g3, {"type": "choose", "index": 2.0}), true)
-	h.egal(g3.player.gadgetCharges, T.gadget.chargesPerSection + g3.player.stats.gadgetChargesBonus)
+	h.egal(g3.player.slots[1].charges, T.gadgets.nova.chargesPerSection + g3.player.stats.gadgetChargesBonus)
 	h.egal(g3.player.superCharge, T.economy.rest.superCharge)
 	# Pleine santé, aucune bénédiction, fioles pleines : un choix reste possible.
 	var g4 := _calm_room("rest")

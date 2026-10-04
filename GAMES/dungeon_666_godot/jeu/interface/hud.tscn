@@ -102,21 +102,21 @@ rayon = 40.0
 layout_mode = 0
 mouse_filter = 2
 script = ExtResource("9")
-id = "skill"
+id = "skill1"
 rayon = 33.0
 
 [node name="Super" type="Control" parent="Racine/Tactile"]
 layout_mode = 0
 mouse_filter = 2
 script = ExtResource("9")
-id = "super"
+id = "skill3"
 rayon = 35.0
 
 [node name="Gadget" type="Control" parent="Racine/Tactile"]
 layout_mode = 0
 mouse_filter = 2
 script = ExtResource("9")
-id = "gadget"
+id = "skill2"
 rayon = 27.0
 
 [node name="Marges" type="MarginContainer" parent="Racine"]
@@ -408,7 +408,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
 script = ExtResource("9")
-id = "skill"
+id = "skill1"
 rayon = 22.0
 
 [node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Competence"]
@@ -429,7 +429,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
 script = ExtResource("9")
-id = "gadget"
+id = "skill2"
 rayon = 22.0
 
 [node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Gadget"]
@@ -450,7 +450,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
 script = ExtResource("9")
-id = "super"
+id = "skill3"
 rayon = 22.0
 
 [node name="Touche" type="Label" parent="Racine/Marges/Zone/Bas/Bureau/Super"]

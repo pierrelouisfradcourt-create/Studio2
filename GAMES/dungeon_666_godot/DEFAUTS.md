@@ -160,6 +160,27 @@ réenregistrer, sur onze copies du projet (une seule correction active, puis tou
   image 2052 : un orbe de Charon passait le coin d'un pilier de l'arène, il s'y arrête) ;
 - les cinq ensemble : 64 parties, exactement la réunion des précédentes.
 
+## Quatrième lot (2026-10-04) : le parcours étendu, et ce qu'il a fait corriger
+
+Garde : `tests/regles/v3_defauts_4.gd` (3 tests, tous rouges sur le code d'avant, verts après).
+
+| # | Défaut | Correction | Avant → après |
+|---|---|---|---|
+| 19 | Un objet ÉQUIPÉ en donjon (butin pris, objet acheté au marchand) entrait dans le profil sans identifiant (`uid`) ; l'équipement de départ d'un profil neuf non plus. Ils ne le recevaient qu'à la relecture du profil (`sanitize_profile`) : le profil en mémoire et le profil relu du disque différaient. | `sim/run.gd` (`_wear`, appelée par `_apply_loot` et `_apply_shop`) et `sim/game.gd` (`create_game`, quand l'équipement de départ entre dans le profil) : l'objet reçoit son identifiant en entrant dans le profil, par `D6Profile.ensure_uid`, comme un objet rangé au coffre. | Avant : `uid` absent en mémoire (test : « uid : <null> », puis « .equipment.arme.uid : clé en trop » à la relecture). Après : identifiant posé, unique ; le profil relu est le profil en mémoire, tel quel. |
+
+Références : **non réenregistrées**. Les 70 parties se rejouent sans écart avec la correction
+(10 714 points de contrôle identiques) : ni `uid` ni `itemSeq` ne sont dans l'empreinte. Le
+parcours (`jeu/essai/test_parcours.gd`) compare maintenant le profil du disque d'essai au profil
+en mémoire sans passer par `sanitize_profile`.
+
+Hors des règles, le même jour :
+
+| Où | Constat | État |
+|---|---|---|
+| `jeu/principal.gd`, `demarrer_entrainement` | Ne prenait pas de graine (`randi()`) : un entraînement n'était pas reproductible par l'API. | **Corrigé** : graine optionnelle en dernier argument, comme `demarrer_descente` ; sans elle, rien ne change. Le parcours s'en sert (et vérifie que la partie porte la graine demandée). |
+| `jeu/essai/assemblage.gd`, `cout.gd`, `profondeur.gd` | Ces trois bancs montent le VRAI jeu (`jeu/principal.tscn`) sans poser `D666_DONNEES` : ils comptaient sur `outils/capture.gd`. Ouverts seuls (scène lancée à la main, éditeur), ils lisaient et écrivaient le vrai `profil.json` et le vrai `reglages_jeu.json` du joueur (une descente y est lancée : le profil est enregistré dès l'entrée dans l'étage). | **Corrigé** : chacun pose son dossier d'essai (`user://essais`) s'il n'y en a pas, avant de monter le jeu. Les autres bancs et tests le faisaient déjà. |
+| `addons/studio_kit/ecran/transitions.gd`, `fondu` ; `jeu/ecrans/ecrans.gd`, `_fondre` | Message « ObjectDB instances leaked at exit » à la sortie des tests sans fenêtre. Ce qui reste : l'interpolation (`Tween`) et les coroutines (`GDScriptFunctionState`) d'un fondu d'écran coupé net, quand le nœud est libéré pendant le fondu (0,3 s). Reproduit hors du jeu en vingt lignes avec le seul `StudioTransitions`. Dans le jeu, cela n'arrive que si l'on ferme la fenêtre pendant un fondu, à l'instant où tout est rendu au système : rien ne s'accumule en jouant (le parcours le mesure). Dans les tests : à chaque `app.free()`. | **Tests corrigés** (`jeu/essai/fondus.gd` : laisser finir les fondus avant de libérer ; parcours, `test_ecrans.gd`, `test_accueil.gd`, `jeu/theme/verifier.gd`). **Cause laissée** : elle est dans le kit du studio (une coroutine qui attend `finished` d'une interpolation), à corriger là-bas. Restent : `test_ville.gd` (un son encore en lecture à la sortie) et `test_finitions.gd` (une coroutine), non traités ; le parcours a montré le message une fois sur huit lancements, cause non établie. |
+
 ## Vu en passant, non corrigé
 
 | Où | Constat | Pourquoi non corrigé |
@@ -177,4 +198,8 @@ réenregistrer, sur onze copies du projet (une seule correction active, puis tou
 | `data/butin.json`, `loot.bossGuaranteedRare` | Réglage que rien ne lit : après un Gardien, l'objet est « rare » (ou légendaire) par le code de `sim/run.gd`, quel que soit ce booléen. | Le brancher ou le retirer : à décider (le schéma l'exige). |
 | `sim/boss*.gd` | Les invocations de Gardien cherchent un point d'apparition pour un corps de 14 u, quel que soit l'ennemi invoqué (un renfort plus gros qu'un archer apparaîtrait trop près d'un obstacle). | Sans effet avec les renforts actuels (rayons 12 à 14). |
 | `sim/projectiles.gd`, `sim/kit_shots.gd` | Un tir arrêté par un coin garde sa position d'arrivée (au plus un pas après le coin) : l'impact s'affiche là, pas sur le pilier. | Affichage ; le point d'entrée exact demanderait de le calculer. |
-| `sim/state.gd`, `create_player` | 51 lignes (limite : 50) : un seul dictionnaire. | Hors de la liste. |
+| `sim/state.gd`, `create_player` | 51 lignes (limite : 50) : un seul dictionnaire. 56 depuis le combat V3 (`slots`, `castSlot`, `superHold`). | Hors de la liste. |
+| Combat V3, étape 1 : ultime par maintien | Un joueur qui GARDE l'attaque enfoncée pour enchaîner voit l'ultime partir tout seul 0,4 s après que la jauge est pleine (le bot qui martèle lance ainsi 1 à 5 ultimes par partie, zéro avant). C'est la règle demandée, lue à la lettre. | À juger en main par Pierre ; variante décrite dans `design/COMBAT_V3.md`. |
+| Combat V3, étape 1 : attaque glissée au doigt | Glisser sur le bouton d'attaque donne deux coups : un à l'appui (visée assistée), un au relâcher (visé). | Geste à trancher au lot « affichage » (frapper seulement au relâcher ?). |
+| `data/benedictions.json`, `data/butin.json`, `data/autels.json`, `sim/calm_rooms.gd` | Textes au singulier (« Votre compétence… », « charge de gadget », « Charges de gadget pleines ») alors que l'effet vaut maintenant pour toute compétence / tout gadget équipé. | Mots : au lot « affichage », ou à Pierre. |
+| `sim/player.gd`, tampon | Une seule action en attente : deux compétences pressées au même pas, seule la dernière part. | Règle du tampon d'origine ; à revoir si l'arc de trois boutons le rend gênant. |

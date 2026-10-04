@@ -1,6 +1,7 @@
 extends Control
-## Une commande du héros (dash, compétence, gadget, Super, attaque) : disque, pictogramme du kit,
-## recharge et charges en ANNEAU autour du bouton. Sert aux deux présentations : posée par un
+## Une commande du héros (attaque, dash, emplacement d'action) : disque, pictogramme du kit,
+## recharge et charges en ANNEAU autour du bouton ; sur l'attaque, l'anneau est la jauge d'ultime
+## et un second trait montre le maintien qui le lance. Sert aux deux présentations : posée par un
 ## conteneur (rangée du bureau) ou placée par `placer()` (commandes tactiles).
 ## Ne lit pas la simulation : on lui donne son état (etat_commandes.gd) par `montrer()`.
 ## Coût : tout le bouton (disque, cernes, pictogramme, anneau) part en UN appel de dessin.
@@ -76,8 +77,10 @@ func _draw() -> void:
 	_lot.arc(c, r + 0.5, 0.0, TAU, 48, Color(encre, 0.6), CERNE)
 	_lot.arc(c, r, 0.0, TAU, 48, Color(texte, 0.85 if _pret() else 0.35), 2.5)
 	_dessiner_recharge(c)
-	var plein: Color = Couleurs.PAL.superBar if id == "super" else texte
-	Icones.ajouter(_lot, _etat.get("icone", id), c, rayon, plein if _pret() else Color(texte, 0.4))
+	var plein: Color = Couleurs.PAL.superBar if _etat.get("eclat", false) else texte
+	var icone: String = _etat.get("icone", id)
+	if icone != "": # un emplacement vide n'a pas de pictogramme
+		Icones.ajouter(_lot, icone, c, rayon, plein if _pret() else Color(texte, 0.4))
 	_dessiner_anneau(c)
 	_dessiner_reactions(c)
 	_lot.tracer(self)
@@ -93,7 +96,8 @@ func _dessiner_recharge(c: Vector2) -> void:
 		pts.append(c + Vector2.from_angle(lerpf(a0, -PI / 2.0 + TAU, i / 32.0)) * rayon)
 	_lot.polygone(pts, Color(Couleurs.UI["void"], 0.55))
 
-## Anneau : charges en segments (dash, gadget) ou jauge continue (compétence, Super).
+## Anneau : charges en segments (dash, gadget) ou jauge continue (recharge d'une compétence,
+## jauge d'ultime sur l'attaque, doublée du trait de maintien quand elle est pleine et tenue).
 func _dessiner_anneau(c: Vector2) -> void:
 	var rr := rayon + ANNEAU
 	var maxi := int(_etat.get("max", 0.0))
@@ -101,11 +105,16 @@ func _dessiner_anneau(c: Vector2) -> void:
 		_dessiner_charges(c, rr, maxi, Couleurs.PAL.dashPip if id == "dash" else Couleurs.PAL.gold)
 		return
 	var pret: float = _etat.get("pret", 1.0)
-	if id == "super" or (id == "skill" and pret < 1.0):
-		var col: Color = Couleurs.PAL.superBar if id == "super" else Couleurs.PAL.lance
+	var jauge: bool = _etat.has("jauge")
+	if jauge or (_etat.get("recharge", false) and pret < 1.0):
+		var col: Color = Couleurs.PAL.superBar if jauge else Couleurs.PAL.lance
+		var part: float = _etat.jauge if jauge else pret
 		_lot.arc(c, rr, 0.0, TAU, 48, Color(Couleurs.PAL.text, 0.12), ANNEAU)
-		if pret > 0.01:
-			_lot.arc(c, rr, -PI / 2.0, -PI / 2.0 + TAU * pret, 48, col, ANNEAU)
+		if part > 0.01:
+			_lot.arc(c, rr, -PI / 2.0, -PI / 2.0 + TAU * part, 48, col, ANNEAU)
+		var maintien: float = _etat.get("maintien", 0.0)
+		if maintien > 0.0:
+			_lot.arc(c, rr + ANNEAU + 2.0, -PI / 2.0, -PI / 2.0 + TAU * maintien, 48, Couleurs.PAL.text, 3.0)
 
 func _dessiner_charges(c: Vector2, rr: float, maxi: int, col: Color) -> void:
 	var seg := TAU / maxi

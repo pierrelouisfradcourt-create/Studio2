@@ -368,7 +368,8 @@ func _lancer(g: Dictionary, h: Dictionary, pr: float, m: Transform2D) -> void:
 	var charge := 0.0
 	var angle := _geste_angle
 	if h.state == "cast" and not bond:
-		charge = 1.0 - clampf(h.castT / maxf(1e-3, nombre(g.tuning.skill, "castTime")), 0.0, 1.0)
+		var def = D6Loadout.cast_def(g)
+		charge = 1.0 - clampf(h.castT / maxf(1e-3, nombre(def, "castTime") if def is Dictionary else 0.0), 0.0, 1.0)
 		angle = Vector2(h.castDirX, h.castDirY).angle()
 	elif _geste <= 0.0 or bond:
 		return

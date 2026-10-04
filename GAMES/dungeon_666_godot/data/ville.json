@@ -55,5 +55,5 @@
     "salvageSouls": { "commun": 1, "magique": 3, "rare": 8, "legendaire": 20 }
   },
   "STASH_MAX": 24,
-  "PROFILE_SCHEMA": 3
+  "PROFILE_SCHEMA": 4
 }

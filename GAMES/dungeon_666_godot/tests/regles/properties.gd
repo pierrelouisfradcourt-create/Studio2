@@ -50,6 +50,8 @@ static func tests(h) -> void:
 
 # ---------------------------------------------------------------- outillage
 
+const SUPER_HOLD_STEPS := 30 # pas d'attaque tenue : 0,5 s, au-delà de super.holdTime (0,4 s)
+
 ## InputFrame pseudo-aléatoire : déplacement analogique, visée, et tous les boutons.
 static func _random_input(rng: Dictionary) -> Dictionary:
 	var input: Dictionary = D6Game.empty_input()
@@ -63,11 +65,17 @@ static func _random_input(rng: Dictionary) -> Dictionary:
 	input.attack = D6Rng.rand(rng) < 0.5
 	input.attackPressed = D6Rng.rand(rng) < 0.1
 	input.dashPressed = D6Rng.rand(rng) < 0.04
-	input.skillPressed = D6Rng.rand(rng) < 0.02
-	input.skillAimX = D6Rng.rand(rng) * 2.0 - 1.0
-	input.skillAimY = D6Rng.rand(rng) * 2.0 - 1.0
-	input.gadgetPressed = D6Rng.rand(rng) < 0.005
-	input.superPressed = D6Rng.rand(rng) < 0.01
+	input.skill1Pressed = D6Rng.rand(rng) < 0.02
+	input.skill1AimX = D6Rng.rand(rng) * 2.0 - 1.0
+	input.skill1AimY = D6Rng.rand(rng) * 2.0 - 1.0
+	input.skill2Pressed = D6Rng.rand(rng) < 0.005
+	# Ultime (combat V3) : plus de bouton. Au rythme de l'ancien appui (1 % des pas, même tirage),
+	# le joueur aléatoire TIENT l'attaque assez longtemps pour qu'il parte si la jauge est pleine.
+	if D6Rng.rand(rng) < 0.01:
+		rng.hold = SUPER_HOLD_STEPS
+	if rng.get("hold", 0) > 0:
+		rng.hold -= 1
+		input.attack = true
 	return input
 
 static func _settle_choice(h, game: Dictionary) -> void:

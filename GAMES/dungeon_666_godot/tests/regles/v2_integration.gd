@@ -51,5 +51,5 @@ static func _ville(h) -> void:
 			h.egal(D6Profile.unlock(p, t, "classes", class_id).get("ok"), true)
 		_kit_gratuit_possede(h, p, t, class_id)
 		h.egal(D6Profile.select_class(p, t, class_id).get("ok"), true)
-		h.ok(p.unlocked.skills.has(p.loadout.skillId), "%s : compétence choisie possédée" % class_id)
-		h.ok(p.unlocked.gadgets.has(p.loadout.gadgetId), "%s : gadget choisi possédé" % class_id)
+		h.ok(p.unlocked.skills.has(p.loadout.slots[0]), "%s : compétence choisie possédée" % class_id)
+		h.ok(p.unlocked.gadgets.has(p.loadout.slots[1]), "%s : gadget choisi possédé" % class_id)

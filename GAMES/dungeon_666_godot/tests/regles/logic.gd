@@ -278,9 +278,9 @@ static func _gadget(h) -> void:
 	var g := _sandbox()
 	var e := _dummy(g, 60.0, 0.0, "imp")
 	D6Projectiles.spawn_projectile(g, {"owner": "enemy", "kind": "arrow", "x": g.player.x - 50.0, "y": g.player.y, "vx": 300.0, "vy": 0.0, "r": 7.0, "damage": 10.0, "range": 600.0})
-	var charges: float = g.player.gadgetCharges
-	D6Game.step_game(g, _input({"gadgetPressed": true}))
-	h.egal(g.player.gadgetCharges, charges - 1.0)
+	var charges: float = g.player.slots[1].charges
+	D6Game.step_game(g, _input({"skill2Pressed": true}))
+	h.egal(g.player.slots[1].charges, charges - 1.0)
 	h.ok(e.get("stun", 0.0) > 0.0 or D6Js.truthy(e.get("dead")))
 	var restants: Array = g.projectiles.filter(func(p): return p.owner == "enemy" and not D6Js.truthy(p.get("dead")))
 	h.egal(restants.size(), 0)
@@ -307,7 +307,7 @@ static func _frappe_fin_de_dash(h) -> void:
 static func _super(h) -> void:
 	var g := _sandbox()
 	g.player.superCharge = 1.0
-	D6Game.step_game(g, _input({"superPressed": true}))
+	h.ultime(g)
 	h.egal(g.player.state, "super")
 	h.egal(g.player.superCharge, 0.0)
 	var hp: float = g.player.hp
@@ -318,10 +318,10 @@ static func _competence(h) -> void:
 	var g := _sandbox()
 	var a := _dummy(g, 120.0, 0.0, "imp")
 	var b := _dummy(g, 220.0, 0.0, "imp")
-	D6Game.step_game(g, _input({"skillPressed": true, "skillAimX": 1.0, "skillAimY": 0.0}))
+	D6Game.step_game(g, _input({"skill1Pressed": true, "skill1AimX": 1.0, "skill1AimY": 0.0}))
 	_steps(g, 30)
 	h.ok(a.hp < a.maxHp and b.hp < b.maxHp, "les deux ennemis alignés sont touchés")
-	h.ok(g.player.skillCd > 0.0)
+	h.ok(g.player.slots[0].cd > 0.0)
 
 # ---------------------------------------------------------------- ennemis : équité
 
@@ -570,15 +570,16 @@ static func _tampon_a_vide(h) -> void:
 	g.player.dashCharges = 0.0
 	g.player.dashRecharge = 0.0
 	g.player.superCharge = 0.0
+	g.player.slots[0].cd = 99.0 # compétence en recharge : elle ne partira pas pendant la fenêtre du tampon
 	D6Game.step_game(g, _input({"dashPressed": true}))
-	D6Game.step_game(g, _input({"superPressed": true}))
+	D6Game.step_game(g, _input({"skill1Pressed": true}))
 	D6Game.step_game(g, _input({"attackPressed": true}))
 	_steps(g, 3)
 	h.ok(g.telemetry.attacks >= 1.0, "la frappe est partie")
 
 static func _lance_interrompue(h) -> void:
 	var g := _sandbox()
-	D6Game.step_game(g, _input({"skillPressed": true, "skillAimX": 1.0, "skillAimY": 0.0}))
+	D6Game.step_game(g, _input({"skill1Pressed": true, "skill1AimX": 1.0, "skill1AimY": 0.0}))
 	h.egal(g.player.state, "cast")
 	D6Game.step_game(g, _input({"moveX": -1.0, "dashPressed": true}))
 	h.egal(g.player.state, "dash")

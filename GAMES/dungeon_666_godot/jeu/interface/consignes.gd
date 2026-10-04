@@ -8,9 +8,11 @@ extends RefCounted
 ##   id        : l'identifiant retenu dans les réglages (`reglages_jeu.json`, champ `accueil.acquis`)
 ##   texte     : la phrase ; une seule pour tous les appareils, ou une par appareil
 ##               {clavier, manette, tactile} (à défaut d'une clé, celle du clavier)
-##   commande  : la commande nommée (attack, dash, skill, gadget, super, ou « move ») : son libellé
-##               (touche, bouton de manette) vient du HUD, son pictogramme du kit équipé, et son
-##               bouton bat à l'écran. Absente : la phrase seule.
+##   commande  : la commande nommée (attack, dash, « move », ou « competence » / « gadget » : le
+##               premier emplacement qui en porte une — voir `commande()`) : son libellé (touche,
+##               bouton de manette) vient du HUD, son pictogramme du kit équipé, et son bouton bat
+##               à l'écran. Absente : la phrase seule. L'ultime nomme l'ATTAQUE : il part en la
+##               gardant appuyée (combat V3).
 ##   quand     : la lecture (plus bas) qui doit être vraie pour que la consigne se montre
 ##   fait      : les événements de simulation qui prouvent que le joueur a FAIT le geste
 ##   parcours  : (au lieu de `fait`) la distance, en unités de salle, que le héros doit avoir parcourue
@@ -27,12 +29,12 @@ const TABLE := [
 		"texte": "Traverse les attaques d'un dash"},
 	{"id": "rouge", "commande": "dash", "quand": "telegraphe", "fait": ["dash"], "contexte": true, "urgent": true, "patience": 10.0,
 		"texte": "Esquive le rouge"},
-	{"id": "competence", "commande": "skill", "quand": "competence_prete", "fait": ["castStart", "skill"], "patience": 14.0,
+	{"id": "competence", "commande": "competence", "quand": "competence_prete", "fait": ["castStart", "skill"], "patience": 14.0,
 		"texte": {"clavier": "Lance ta compétence", "tactile": "Compétence : glisse pour viser, relâche"}},
 	{"id": "gadget", "commande": "gadget", "quand": "gadget_pret", "fait": ["gadget"], "patience": 14.0,
 		"texte": "Utilise ton gadget"},
-	{"id": "super", "commande": "super", "quand": "super_pret", "fait": ["super"], "urgent": true, "patience": 14.0,
-		"texte": "Jauge pleine : déchaîne ton Super"},
+	{"id": "super", "commande": "attack", "quand": "super_pret", "fait": ["super"], "urgent": true, "patience": 14.0,
+		"texte": "Jauge pleine : garde le bouton d'attaque appuyé"},
 	{"id": "recompense", "quand": "recompense", "fait": ["choiceOpen"], "urgent": true,
 		"texte": "Marche sur la récompense pour la prendre"},
 	{"id": "porte", "quand": "portes", "fait": ["floorEnter"], "contexte": true, "urgent": true,
@@ -42,6 +44,8 @@ const TABLE := [
 ]
 ## Objets d'interaction que la consigne « recompense » désigne (les autres ont leur propre écran).
 const RECOMPENSES := ["boon", "loot"]
+## Commandes qui nomment une SORTE d'action plutôt qu'un bouton : la sorte lue par slot_view.
+const SORTES := {"competence": "skill", "gadget": "gadget"}
 
 static func trouver(id: String) -> Dictionary:
 	for c in TABLE:
@@ -59,6 +63,24 @@ static func texte(c: Dictionary, appareil: String) -> String:
 		return String(t.get(appareil, t.get("clavier", "")))
 	return String(t)
 
+## La commande qu'une consigne désigne DANS CETTE PARTIE : « competence » et « gadget » deviennent
+## le premier emplacement (skill1, skill2, skill3) qui en porte une ; "" si aucun n'en porte.
+static func commande(c: Dictionary, game) -> String:
+	var cmd := String(c.get("commande", ""))
+	if not SORTES.has(cmd):
+		return cmd
+	var index := _emplacement(game, SORTES[cmd]) if game is Dictionary else -1
+	return "skill%d" % (index + 1) if index >= 0 else ""
+
+## Premier emplacement qui porte une action de la sorte (« skill » ou « gadget »), prête si
+## `prete` ; -1 s'il n'y en a pas.
+static func _emplacement(game: Dictionary, sorte: String, prete: bool = false) -> int:
+	for i in D6Loadout.SLOTS:
+		var vue = D6Loadout.slot_view(game, i)
+		if vue != null and vue.kind == sorte and (vue.ready or not prete):
+			return i
+	return -1
+
 ## Les consignes n'ont cours que dans une vraie descente : ni arène d'essai, ni entraînement.
 static func ouvert(game) -> bool:
 	return game is Dictionary and not D6Js.truthy(game.get("sandbox")) and not D6Js.truthy(game.get("practice"))
@@ -69,8 +91,8 @@ static func quand(nom: String, game: Dictionary) -> bool:
 	match nom:
 		"en_jeu": return en_jeu(game)
 		"telegraphe": return en_jeu(game) and telegraphe(game)
-		"competence_prete": return combat(game) and game.player.skillCd <= 0.0
-		"gadget_pret": return combat(game) and game.player.gadgetCharges > 0.0
+		"competence_prete": return combat(game) and _emplacement(game, "skill", true) >= 0
+		"gadget_pret": return combat(game) and _emplacement(game, "gadget", true) >= 0
 		"super_pret": return en_jeu(game) and game.player.superCharge >= 1.0
 		"recompense": return en_jeu(game) and _objet_libre(game) and game.room.interact.kind in RECOMPENSES
 		"portes": return en_jeu(game) and D6Js.truthy(game.room.get("cleared")) and not _objet_libre(game) and _porte_ouverte(game)

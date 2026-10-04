@@ -205,8 +205,9 @@ static func _emergency_dodge(game: Dictionary, mem: Dictionary, threats: Array, 
 			input.moveY = dash.y
 			input.dashPressed = true
 			return input
-	if opts.gadget and p.gadgetCharges > 0.0 and walk.firstHit <= GADGET_TRIGGER and p.state != "super":
-		input.gadgetPressed = true
+	var slot := Base.ready_gadget(game)
+	if opts.gadget and slot >= 0 and walk.firstHit <= GADGET_TRIGGER and p.state != "super":
+		input[D6Player.SLOT_PRESSED[slot]] = true
 		mem.lastGadget = game.time
 	return input
 

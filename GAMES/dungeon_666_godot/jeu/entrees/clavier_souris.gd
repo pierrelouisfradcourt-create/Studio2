@@ -12,10 +12,11 @@ const DEPLACEMENTS := {
 }
 const ACTIONS := {
 	KEY_SPACE: "dash", KEY_SHIFT: "dash", KEY_K: "dash",
-	KEY_J: "attack", KEY_L: "skill", KEY_E: "gadget", KEY_F: "super", KEY_R: "super",
+	KEY_J: "attack", KEY_L: "skill1", KEY_E: "skill2", KEY_F: "skill3",
 }
+const EMPLACEMENTS := ["skill1", "skill2", "skill3"]
 const TOUCHES_PAUSE := [KEY_ESCAPE, KEY_P]
-const TOUCHE_ATTAQUE := KEY_J # maintenue : enchaîne le combo
+const TOUCHE_ATTAQUE := KEY_J # maintenue : enchaîne le combo ; jauge pleine : lance l'ultime
 
 var touches := {} # touche physique enfoncée -> true
 var souris_x := 0.0
@@ -52,9 +53,9 @@ func bouton_enfonce(bouton: MouseButton, p: Vector2) -> void:
 		_fronts.attack = true
 	elif bouton == MOUSE_BUTTON_RIGHT and not droite:
 		droite = true
-		_fronts.skillAimX = 0.0 # visée de la compétence : celle de la souris, posée par completer_souris
-		_fronts.skillAimY = 0.0
-		_fronts.skill = true
+		_fronts.skill1AimX = 0.0 # visée de l'emplacement 1 : celle de la souris, posée par completer_souris
+		_fronts.skill1AimY = 0.0
+		_fronts.skill1 = true
 
 func bouton_relache(bouton: MouseButton) -> void:
 	if bouton == MOUSE_BUTTON_LEFT:
@@ -109,6 +110,8 @@ func completer_souris(f: Dictionary, tactile: bool, heros: Vector2) -> void:
 		return
 	f.aimX = dx / l
 	f.aimY = dy / l
-	if f.skillPressed and not tactile and f.skillAimX == 0.0 and f.skillAimY == 0.0:
-		f.skillAimX = f.aimX
-		f.skillAimY = f.aimY
+	# Un emplacement pressé au clavier ou à la souris vise où pointe la souris.
+	for e: String in EMPLACEMENTS:
+		if f[e + "Pressed"] and not tactile and f[e + "AimX"] == 0.0 and f[e + "AimY"] == 0.0:
+			f[e + "AimX"] = f.aimX
+			f[e + "AimY"] = f.aimY

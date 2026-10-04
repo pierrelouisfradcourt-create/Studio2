@@ -1,7 +1,8 @@
 class_name D6KitSkills
 extends RefCounted
 ## Portage de src/sim/kit_skills.mjs.
-## COMPÉTENCES (bouton Lance) autres que la Lance infernale, jouées selon `kind` :
+## COMPÉTENCES autres que la Lance infernale, jouées selon `kind`. La compétence en cours est
+## celle de l'emplacement player.castSlot (D6Loadout.cast_def) :
 ##   chain   — Chaîne d'Enfer : crochet qui harponne, étourdit et tire l'ennemi au contact
 ##   bond    — Bond du bourreau : saut invulnérable vers la cible, impact à l'atterrissage
 ##   brasier — Brasier d'âmes : pot lancé sur la cible, impact puis sol qui brûle
@@ -35,7 +36,7 @@ static func _begin_leap(game: Dictionary, s: Dictionary) -> void:
 	p.castT = s.leapTime
 	p.iframes = maxf(p.iframes, s.leapTime + s.iframesGrace)
 	game.telemetry.skillCasts += 1.0
-	D6State.emit(game, "skill", {"x": p.x, "y": p.y, "angle": D6Trig.atan2(p.castDirY, p.castDirX), "skill": "bond"})
+	D6State.emit(game, "skill", {"x": p.x, "y": p.y, "angle": D6Trig.atan2(p.castDirY, p.castDirX), "skill": "bond", "slot": p.castSlot})
 
 ## Un pas du Bond (état 'cast'). Rend true quand le héros a atterri.
 static func update_leap(game: Dictionary, dt: float) -> bool:
@@ -50,7 +51,7 @@ static func update_leap(game: Dictionary, dt: float) -> bool:
 
 static func _land(game: Dictionary) -> void:
 	var p: Dictionary = game.player
-	var s: Dictionary = game.tuning.skill
+	var s: Dictionary = D6Loadout.cast_def(game)
 	p.cast = null
 	p.vx = 0.0
 	p.vy = 0.0
@@ -60,7 +61,7 @@ static func _land(game: Dictionary) -> void:
 ## Effet de la compétence au relâcher (ou à l'interruption).
 static func release_kit_skill(game: Dictionary) -> void:
 	var p: Dictionary = game.player
-	var s: Dictionary = game.tuning.skill
+	var s: Dictionary = D6Loadout.cast_def(game)
 	var angle: float = D6Trig.atan2(p.castDirY, p.castDirX)
 	match s.kind:
 		"bond":
@@ -96,4 +97,4 @@ static func release_kit_skill(game: Dictionary) -> void:
 	p.vy -= p.castDirY * recoil
 	p.cast = null
 	game.telemetry.skillCasts += 1.0
-	D6State.emit(game, "skill", {"x": p.x, "y": p.y, "angle": angle, "skill": s.kind})
+	D6State.emit(game, "skill", {"x": p.x, "y": p.y, "angle": angle, "skill": s.kind, "slot": p.castSlot})

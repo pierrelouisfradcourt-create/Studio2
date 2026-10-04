@@ -9,19 +9,29 @@ extends RefCounted
 ##   - il préfère la porte qui mène à une sorte de menu pas encore traversée (mem.wantRewards) ;
 ##   - butin : il équipe si le bot le ferait, sinon il RANGE au coffre (le bot recyclerait) ;
 ##   - marchand : il achète la première offre à sa portée, une fois, puis s'en va ;
+##   - chambre forte : il prend l'objet ; fontaine : il médite s'il a une bénédiction, sinon il boit ;
+##   - `vers_la_ville` : il prend le portail de la Ville quand un Gardien vaincu l'ouvre ;
 ##   - `inerte` : il lâche les commandes dès qu'un combat est en cours (il se laisse tuer).
 
 const Bots = preload("res://outils/bots/bots.gd")
 
 const POLITIQUE := "skilled"
-## Les sortes de menu que la première descente doit traverser (porte = sorte du menu).
-const SORTES_VOULUES := ["boon", "loot", "shop", "event"]
+## Les sortes de menu que le parcours doit traverser (porte = sorte du menu).
+const SORTES_VOULUES := ["boon", "loot", "shop", "event", "treasure", "rest"]
+## Menus des salles calmes : l'option préférée, puis les autres dans l'ordre du panneau.
+const OPTIONS_PREFEREES := {"treasure": "objet", "rest": "mediter"}
 
 var app: Node
 var inerte := false
-## salles nettoyées, étages entrés, étage le plus profond, morts, pas joués, menus ouverts par
-## sorte, commandes de menu acceptées par type, événements de simulation par type.
-var compte := {"salles": 0, "etages": 0, "etage_max": 0.0, "morts": 0, "pas": 0, "choix": {}, "commandes": {}, "evenements": {}}
+var vers_la_ville := false
+## Les sortes que CETTE descente cherche (une halte n'en offre qu'une sur deux : le test répartit).
+var voulues: Array = SORTES_VOULUES
+## salles nettoyées, Gardiens vaincus, étages entrés, étage le plus profond, morts, pas joués, menus
+## ouverts par sorte, commandes de menu acceptées par type, événements de simulation par type.
+var compte := {"salles": 0, "gardiens": 0, "etages": 0, "etage_max": 0.0, "morts": 0, "pas": 0, "choix": {}, "commandes": {}, "evenements": {}}
+
+## Le dernier événement « checkpoint » publié (étage ouvert, Gardien, Âmes de sa prime).
+var dernier_checkpoint := {}
 
 var _mem := {}
 
@@ -41,25 +51,29 @@ func entree() -> Dictionary:
 	if inerte and not D6Js.truthy(g.room.get("cleared")):
 		return D6Game.empty_input()
 	_mem.wantRewards = sortes_manquantes()
+	_mem.wantTown = vers_la_ville
 	return Bots.play(POLITIQUE, g, _mem)
 
-## Les sortes voulues que le parcours n'a pas encore traversées.
+## Les sortes voulues par cette descente que le pilote n'a pas encore traversées.
 func sortes_manquantes() -> Array:
-	return SORTES_VOULUES.filter(func(s: String) -> bool: return not compte.choix.has(s))
+	return voulues.filter(func(s: String) -> bool: return not compte.choix.has(s))
 
 ## Nombre d'événements de simulation de ce type vus depuis le début.
 func vus(type: String) -> int:
 	return compte.evenements.get(type, 0)
 
 ## Répond au menu ouvert par `app.commande` : essaie les commandes dans l'ordre, la première
-## acceptée gagne. Rend {sorte, type, ok}.
+## acceptée gagne. Rend {sorte, type, option, ok} (`option` : l'identifiant de l'option choisie
+## dans une salle calme, "" ailleurs).
 func repondre_au_menu() -> Dictionary:
 	var sorte: String = app.partie.game.choice.kind
+	var options: Array = app.partie.game.choice.get("options", [])
 	for cmd in _commandes_du_menu():
 		if app.commande(cmd):
 			compte.commandes[cmd.type] = compte.commandes.get(cmd.type, 0) + 1
-			return {"sorte": sorte, "type": cmd.type, "ok": true}
-	return {"sorte": sorte, "type": "", "ok": false}
+			var option: String = options[int(cmd.index)].get("id", "") if OPTIONS_PREFEREES.has(sorte) else ""
+			return {"sorte": sorte, "type": cmd.type, "option": option, "ok": true}
+	return {"sorte": sorte, "type": "", "option": "", "ok": false}
 
 func _commandes_du_menu() -> Array:
 	var g: Dictionary = app.partie.game
@@ -69,7 +83,22 @@ func _commandes_du_menu() -> Array:
 			return [{"type": "equip"}, {"type": "stash"}] if du_bot[0].type == "equip" else [{"type": "stash"}]
 		"shop":
 			return _commandes_du_marchand(g.choice) + du_bot
+		"treasure", "rest":
+			return _commandes_de_la_salle_calme(g.choice)
 	return du_bot
+
+## Chambre forte, fontaine : l'option préférée d'abord ; une option grisée est refusée par la
+## simulation, la suivante est alors essayée.
+func _commandes_de_la_salle_calme(ch: Dictionary) -> Array:
+	var premieres: Array = []
+	var autres: Array = []
+	for i in ch.options.size():
+		var cmd := {"type": "choose", "index": float(i)}
+		if ch.options[i].id == OPTIONS_PREFEREES[ch.kind]:
+			premieres.append(cmd)
+		else:
+			autres.append(cmd)
+	return premieres + autres
 
 ## Un achat par visite : la première offre encore en vente que la bourse permet, puis on ferme.
 func _commandes_du_marchand(ch: Dictionary) -> Array:
@@ -85,6 +114,7 @@ func _commandes_du_marchand(ch: Dictionary) -> Array:
 func _sur_partie() -> void:
 	_mem = {}
 	inerte = false
+	vers_la_ville = false
 
 func _sur_evenements(liste: Array) -> void:
 	for ev in liste:
@@ -92,9 +122,12 @@ func _sur_evenements(liste: Array) -> void:
 		match ev.type:
 			"roomClear":
 				compte.salles += 1
+				compte.gardiens += 1 if D6Js.truthy(ev.get("boss")) else 0
 			"floorEnter":
 				compte.etages += 1
 				compte.etage_max = maxf(compte.etage_max, ev.floor)
+			"checkpoint":
+				dernier_checkpoint = ev
 			"choiceOpen":
 				compte.choix[ev.kind] = compte.choix.get(ev.kind, 0) + 1
 			"gameOver":

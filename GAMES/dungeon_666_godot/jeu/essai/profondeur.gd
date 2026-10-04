@@ -11,6 +11,8 @@ extends Node
 ## Expose `partie`, comme les autres bancs.
 
 const Principal = preload("res://jeu/principal.tscn")
+const Profil = preload("res://jeu/profil.gd")
+const DONNEES := "user://essais"
 
 const ETAGE := 3.0
 const GRAINE := 7.0
@@ -21,6 +23,10 @@ var app: Node
 var partie: Node
 
 func _ready() -> void:
+	# Un essai ne touche jamais au vrai profil ni aux vrais réglages du joueur (jeu/profil.gd), même
+	# lancé sans outils/capture.gd (scène ouverte seule, éditeur).
+	if OS.get_environment(Profil.ENV_DOSSIER) == "":
+		OS.set_environment(Profil.ENV_DOSSIER, DONNEES)
 	app = Principal.instantiate()
 	add_child(app)
 	partie = app.partie
@@ -105,7 +111,10 @@ func _ennemis_au_bord(g: Dictionary, o: Dictionary, cote: float) -> void:
 ## Le héros en plein Bond, au-dessus du pilier (sommet de la cloche).
 func _bond(g: Dictionary) -> void:
 	var h: Dictionary = g.player
-	g.tuning.skill["leapTime"] = 0.4
+	g.meta.loadout.classId = "bourreau" # le Bond est la compétence en cours (emplacement 1) : celle du Bourreau
+	g.kit.slots[0] = "bond"
+	g.tuning.skills.bond["leapTime"] = 0.4
+	h.castSlot = 0.0
 	h.state = "cast"
 	h.cast = {"kind": "bond"}
 	h.castT = 0.2

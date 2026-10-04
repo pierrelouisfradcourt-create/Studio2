@@ -112,7 +112,10 @@ func _heros() -> void:
 	await _images()
 	_ok(heros.position.y > _corps(bas).position.y, "loin de tout pilier : devant un ennemi placé plus bas que lui")
 	_placer_heros(Vector2(435.0, PILIER.y0 - r - 1.0))
-	_g.tuning.skill["leapTime"] = 0.4
+	_g.meta.loadout.classId = "bourreau" # le Bond est la compétence en cours (emplacement 1) : celle du Bourreau
+	_g.kit.slots[0] = "bond"
+	_g.tuning.skills.bond["leapTime"] = 0.4
+	_g.player.castSlot = 0.0
 	_g.player.state = "cast"
 	_g.player.cast = {"kind": "bond"}
 	_g.player.castT = 0.2

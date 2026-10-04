@@ -1,7 +1,7 @@
 extends RefCounted
 ## La manette. Portage de readPad() de GAMES/dungeon_666/src/input/input.mjs : mêmes zones
-## mortes, même disposition (A / LB dash, B compétence, X / RT attaque, Y gadget, RB Super,
-## Start pause). Le web SONDE la manette à chaque pas ; ici on écoute ses événements, et les
+## mortes, même disposition (A / LB dash, X / RT attaque, Start pause) ; combat V3 : B, Y et RB
+## sont les emplacements 1, 2 et 3, et l'ultime part en gardant X ou RT enfoncé, jauge pleine. Le web SONDE la manette à chaque pas ; ici on écoute ses événements, et les
 ## fronts s'accumulent comme ceux des doigts : un appui bref entre deux pas n'est jamais perdu.
 
 const ZONE_MORTE := 0.22 # stick gauche, par axe
@@ -10,8 +10,8 @@ const SEUIL_GACHETTE := 0.5 # la gâchette droite compte comme un bouton au-del�
 const BOUTON_PAUSE := JOY_BUTTON_START
 const BOUTON_ATTAQUE := JOY_BUTTON_X
 const ACTIONS := {
-	JOY_BUTTON_A: "dash", JOY_BUTTON_LEFT_SHOULDER: "dash", JOY_BUTTON_B: "skill",
-	JOY_BUTTON_X: "attack", JOY_BUTTON_Y: "gadget", JOY_BUTTON_RIGHT_SHOULDER: "super",
+	JOY_BUTTON_A: "dash", JOY_BUTTON_LEFT_SHOULDER: "dash", JOY_BUTTON_B: "skill1",
+	JOY_BUTTON_X: "attack", JOY_BUTTON_Y: "skill2", JOY_BUTTON_RIGHT_SHOULDER: "skill3",
 }
 const AUCUNE := -1
 

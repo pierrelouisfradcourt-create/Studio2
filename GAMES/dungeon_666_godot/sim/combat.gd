@@ -289,11 +289,7 @@ static func _apply_proc(game: Dictionary, pr: Dictionary, e, ctx) -> void:
 			p.dashCharges = minf(max_dash, p.dashCharges + pr.value)
 			D6State.emit(game, "dashReady", {"charges": p.dashCharges})
 		"gadgetCharge":
-			var max_gadget: float = game.tuning.gadget.chargesPerSection + p.stats.gadgetChargesBonus
-			if p.gadgetCharges >= max_gadget:
-				return
-			p.gadgetCharges = minf(max_gadget, p.gadgetCharges + pr.value)
-			D6State.emit(game, "gadgetCharge", {"x": p.x, "y": p.y, "charges": p.gadgetCharges})
+			_gadget_charges(game, pr.value, p.x, p.y)
 		"nova":
 			_hero_nova(game, pr)
 		"around":
@@ -434,15 +430,18 @@ static func _drop_gold(game: Dictionary, e: Dictionary, elite: bool) -> void:
 		if amount > 0.0:
 			spawn_pickup(game, "gold", e.x, e.y, amount)
 
+## Charges rendues à CHAQUE gadget équipé (D6Loadout.grant_gadget_charges) ; un seul événement,
+## au nom du premier emplacement qui en a gagné. Rien si tous sont pleins (ou sans gadget).
+static func _gadget_charges(game: Dictionary, amount, x: float, y: float) -> void:
+	var slot := D6Loadout.grant_gadget_charges(game, amount)
+	if slot >= 0:
+		D6State.emit(game, "gadgetCharge", {"x": x, "y": y, "charges": game.player.slots[slot].charges, "slot": float(slot)})
+
 ## Mort d'un élite ou d'un boss : charge de gadget, gel imposé, explosion de l'élite ardent.
 static func _kill_rewards(game: Dictionary, e: Dictionary, elite: bool) -> void:
 	var t: Dictionary = game.tuning
 	if elite:
-		var p: Dictionary = game.player
-		var max_g: float = t.gadget.chargesPerSection + p.stats.gadgetChargesBonus
-		if p.gadgetCharges < max_g:
-			p.gadgetCharges = minf(max_g, p.gadgetCharges + t.gadget.chargeOnEliteKill)
-			D6State.emit(game, "gadgetCharge", {"x": e.x, "y": e.y, "charges": p.gadgetCharges})
+		_gadget_charges(game, null, e.x, e.y) # chaque gadget équipé : son chargeOnEliteKill
 		force_hitstop(game, t.killHitstop.elite)
 	if D6Js.truthy(e.get("boss")):
 		force_hitstop(game, t.killHitstop.boss)

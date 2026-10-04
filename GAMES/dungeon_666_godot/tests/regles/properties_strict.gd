@@ -67,6 +67,8 @@ static func tests(h) -> void:
 
 # ---------------------------------------------------------------- outillage
 
+const SUPER_HOLD_STEPS := 30 # pas d'attaque tenue : 0,5 s, au-delà de super.holdTime (0,4 s)
+
 static func _random_move(input: Dictionary, rng: Dictionary) -> Dictionary:
 	var a := D6Rng.rand(rng) * PI * 2.0
 	var m := D6Rng.rand(rng)
@@ -81,15 +83,21 @@ static func _random_input(rng: Dictionary) -> Dictionary:
 	input.attack = D6Rng.rand(rng) < 0.5
 	input.attackPressed = D6Rng.rand(rng) < 0.1
 	input.dashPressed = D6Rng.rand(rng) < 0.04
-	input.skillPressed = D6Rng.rand(rng) < 0.02
-	input.gadgetPressed = D6Rng.rand(rng) < 0.005
-	input.superPressed = D6Rng.rand(rng) < 0.01
+	input.skill1Pressed = D6Rng.rand(rng) < 0.02
+	input.skill2Pressed = D6Rng.rand(rng) < 0.005
+	# Ultime (combat V3) : plus de bouton. Au rythme de l'ancien appui (1 % des pas, même tirage),
+	# le joueur aléatoire TIENT l'attaque assez longtemps pour qu'il parte si la jauge est pleine.
+	if D6Rng.rand(rng) < 0.01:
+		rng.hold = SUPER_HOLD_STEPS
+	if rng.get("hold", 0) > 0:
+		rng.hold -= 1
+		input.attack = true
 	return input
 
 ## Tous les boutons pressés à la fois : le pire cas pour une pause.
 static func _all_buttons(rng: Dictionary) -> Dictionary:
 	var input := _random_move(D6Game.empty_input(), rng)
-	input.merge({"attack": true, "attackPressed": true, "dashPressed": true, "skillPressed": true, "gadgetPressed": true, "superPressed": true}, true)
+	input.merge({"attack": true, "attackPressed": true, "dashPressed": true, "skill1Pressed": true, "skill2Pressed": true, "skill3Pressed": true}, true)
 	return input
 
 static func _settle_choice(game: Dictionary) -> void:
@@ -244,7 +252,7 @@ static func _check_strict_player(h, game: Dictionary, where: String) -> void:
 	h.ok(p.hp >= 0.0 and p.hp <= p.maxHp, "%s : PV du héros hors bornes (%s / %s)" % [where, str(p.hp), str(p.maxHp)])
 	h.egal(p.hp <= 0.0, p.state == "dead", "%s : PV %s incohérents avec l'état '%s'" % [where, str(p.hp), p.state])
 	h.ok(p.dashCharges >= 0.0 and p.dashCharges <= D6Player.max_dash_charges(game), "%s : charges de dash %s" % [where, str(p.dashCharges)])
-	h.ok(p.gadgetCharges >= 0.0, "%s : charges de gadget négatives (%s)" % [where, str(p.gadgetCharges)])
+	h.ok(p.slots.all(func(s): return s.charges >= 0.0), "%s : charges de gadget négatives (%s)" % [where, str(p.slots)])
 	h.ok(p.superCharge >= 0.0 and p.superCharge <= 1.0, "%s : jauge de Super %s" % [where, str(p.superCharge)])
 
 static func _check_strict(h, game: Dictionary, where: String, cover: Dictionary) -> void:

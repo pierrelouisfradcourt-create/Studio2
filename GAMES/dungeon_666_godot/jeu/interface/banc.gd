@@ -48,7 +48,7 @@ class FaussesEntrees extends Node:
 		for b in ui.buttons:
 			if b.id == "dash":
 				b.pressed = true
-			elif b.id == "skill":
+			elif b.id == "skill1":
 				b.pressed = true
 				b.dragging = true
 				b.dx = -40.0
@@ -105,7 +105,7 @@ func _profil(tuning: Dictionary) -> Dictionary:
 		var c: Dictionary = tuning.classes[classe]
 		p.unlocked.classes.append(classe)
 		D6Profile.grant_class_starters(p, tuning, classe)
-		p.loadout = {"classId": classe, "skillId": c.skills[0], "gadgetId": c.gadgets[0]}
+		p.loadout = {"classId": classe, "slots": [c.skills[0], c.gadgets[0], null]}
 	p.souls = 145.0
 	p.gold = float(_env("D666_OR", "37"))
 	return p

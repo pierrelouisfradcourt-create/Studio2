@@ -17,8 +17,9 @@ static func empty_input() -> Dictionary:
 	return {
 		"moveX": 0.0, "moveY": 0.0, "aimX": 0.0, "aimY": 0.0,
 		"attack": false, "attackPressed": false, "dashPressed": false,
-		"skillPressed": false, "skillAimX": 0.0, "skillAimY": 0.0,
-		"gadgetPressed": false, "superPressed": false,
+		"skill1Pressed": false, "skill1AimX": 0.0, "skill1AimY": 0.0,
+		"skill2Pressed": false, "skill2AimX": 0.0, "skill2AimY": 0.0,
+		"skill3Pressed": false, "skill3AimX": 0.0, "skill3AimY": 0.0,
 	}
 
 ## options : { seed, tuning (surcharges partielles), startFloor, meta, godMode, items, sandbox, practice }
@@ -49,12 +50,18 @@ static func create_game(options = null) -> Dictionary:
 	var items = opts.get("items")
 	if items is Dictionary:
 		meta.equipment.merge(items, true)
+	# Tout objet qui entre dans le profil y reçoit son identifiant (comme au coffre) : le profil en
+	# mémoire est celui qu'on relira du disque.
+	for slot in meta.equipment:
+		if meta.equipment[slot] is Dictionary:
+			D6Profile.ensure_uid(meta, meta.equipment[slot])
 	game.run.items = meta.equipment
 	game.run.gold = meta.gold # la bourse suit le héros d'un run à l'autre
 	if not game.sandbox and not game.practice:
 		meta.stats.runs += 1.0
 	D6Loadout.resolve_kit(game)
 	game.player = D6State.create_player(tuning, 0.0, 0.0)
+	D6Loadout.reset_slots(game)
 	D6Stats.recompute_stats(game)
 	game.player.hp = game.player.maxHp
 	D6Run.enter_floor(game, start_floor, {"reward": "boon", "family": "colere"})
@@ -85,7 +92,7 @@ static func _new_game(seed_n: float, tuning: Dictionary, meta: Dictionary, opts:
 		"telemetry": D6State.create_telemetry(),
 		"meta": meta,
 		"run": D6Run.create_run(start_floor),
-		"kit": null, # kit résolu (loadout) : classe, arme, compétence, gadget, Super
+		"kit": null, # kit résolu (loadout) : classe, arme, trois emplacements d'action, Super
 		"player": null,
 		"room": null,
 		"info": null,

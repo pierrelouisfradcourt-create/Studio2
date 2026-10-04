@@ -30,14 +30,16 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
 1. **import** — Godot enregistre ses classes ;
 2. **données** — chaque fichier de `data/` contre son schéma (types, bornes, un télégraphe
    d'ennemi d'au moins 0,4 s), et se réécrit sans rien perdre ;
-3. **règles** — `tests/regles/*.gd` : 359 tests, dont les références croisées des données
+3. **règles** — `tests/regles/*.gd` : 404 tests, dont les références croisées des données
    (`donnees.gd`) ;
-4. **références** — les 70 parties de `references/parties/` sont rejouées, 10 714 points de
+4. **références** — les 70 parties de `references/parties/` sont rejouées, 10 719 points de
    contrôle comparés ;
 5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème), et le
    **parcours** (`jeu/essai/test_parcours.gd`) : le vrai jeu assemblé, toutes ses vues montées,
-   joué de bout en bout par le bot — titre, Ville, descentes des trois classes, menus, pause,
-   morts, abandons, profil relu du disque d'essai, aucun nœud qui s'accumule ;
+   joué de bout en bout par le bot — titre, Ville, descentes des trois classes, menus (chambre
+   forte et fontaine comprises), pause, le Gardien de l'étage 18 battu, le portail de la Ville
+   et la reprise depuis son point, la dernière section jusqu'à l'écran de victoire, morts,
+   abandons, profil relu du disque d'essai, aucun nœud qui s'accumule ;
 6. **jouabilité** (sur demande) — un bot bat la section 1, le dash compte, chaque classe se joue.
 
 Toute « SCRIPT ERROR » est un rouge. Ce que l'oracle prouve : les règles font ce que leurs tests
@@ -51,6 +53,17 @@ Une étape seule (`G` = l'exécutable Godot en console) :
 "$G" --headless --path . --script res://tests/regles.gd -- donnees logic         # deux fichiers de tests
 "$G" --headless --path . --script res://references/verifier.gd -- kit_lame       # une partie de référence
 ```
+
+## Les commandes (combat V3, étape 1)
+
+Demande et plan : `design/COMBAT_V3.md`. Une entrée d'un pas (`D6Game.empty_input`) porte le
+déplacement, la visée, l'attaque (tenue et front), le dash, et **trois emplacements d'action**
+(`skill1Pressed`…`skill3Pressed`, chacun avec sa visée). Chaque emplacement porte une compétence
+(sa recharge) ou un gadget (ses charges) de la classe : `profil.loadout.slots`, choisi au Grimoire
+(`D6Profile.select_slot`), lu en partie par `game.kit.slots` et, pour l'affichage, par
+`D6Loadout.slot_view`. **L'ultime n'a pas de bouton** : jauge pleine, garder l'attaque appuyée
+`super.holdTime` (0,4 s, `data/classes.json`) le lance ; relâcher annule. Clavier : clic gauche
+attaque, Espace dash, clic droit / E / F les emplacements 1 / 2 / 3. Manette : X, A, B / Y / RB.
 
 ## Changer une règle
 

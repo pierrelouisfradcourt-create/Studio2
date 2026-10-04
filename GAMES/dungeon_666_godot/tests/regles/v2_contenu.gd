@@ -92,6 +92,11 @@ static func steps(h, g: Dictionary, n: int, over: Dictionary = {}) -> void:
 static func step1(h, g: Dictionary, over: Dictionary = {}) -> void:
 	D6Game.step_game(g, h.entree(over))
 
+## Lance l'ultime comme un joueur (combat V3 : attaque tenue jusqu'à ce qu'il parte), SANS vider
+## les événements.
+static func ultime(h, g: Dictionary) -> void:
+	h.ultime(g, {}, false)
+
 ## Ennemi d'essai : ne riposte pas ; `hp` (facultatif) le rend increvable ou fragile.
 static func dummy(g: Dictionary, dx: float, dy: float, kind: String = "brute", hp: float = 0.0) -> Dictionary:
 	var e: Dictionary = D6Enemies.create_enemy(g, kind, g.player.x + dx, g.player.y + dy, {"spawnT": 0.0})

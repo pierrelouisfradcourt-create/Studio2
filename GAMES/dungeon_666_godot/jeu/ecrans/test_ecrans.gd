@@ -9,6 +9,7 @@ extends SceneTree
 const App = preload("res://jeu/ecrans/banc_app.gd")
 const Scenes = preload("res://jeu/ecrans/banc_scenes.gd")
 const LaboRepli = preload("res://jeu/ecrans/labo_repli.tscn")
+const Fondus = preload("res://jeu/essai/fondus.gd")
 const DONNEES := "user://essais_ecrans_test"
 const GRAINE := 7.0
 const IMAGES_MAX := 900
@@ -37,6 +38,7 @@ func _derouler() -> void:
 	await _avec_entrees()
 	await _labo_de_repli()
 	print("test_ecrans : %d vérifications, %d échec(s)" % [verifications, echecs])
+	await Fondus.laisser_finir(self)
 	quit(1 if echecs > 0 else 0)
 
 # ---------------------------------------------------------------- outils
@@ -49,6 +51,7 @@ func verifier(nom: String, ok: bool, detail = "") -> void:
 
 func _nouvelle_app(fausses_entrees: bool) -> void:
 	if app != null:
+		await Fondus.laisser_finir(self)
 		app.free()
 	for fichier in ["profil.json", "profil.json.bak", "reglages_jeu.json", "reglages_jeu.json.bak"]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(DONNEES.path_join(fichier)))

@@ -63,5 +63,39 @@ static func riche(tuning: Dictionary, ames: float = 345.0) -> Dictionary:
 	p.gold = 312.0
 	return p
 
+## Profil du BOUT DU CHEMIN (test de parcours : l'écran de victoire) : un joueur qui a battu tous
+## les Gardiens sauf le dernier. Tout est acheté, chaque début de section est un checkpoint
+## jusqu'à la dernière, et il porte des objets légendaires du niveau de l'étage qui la précède.
+static func au_bout_du_chemin(tuning: Dictionary, classe: String, ames: float = 345.0) -> Dictionary:
+	var p: Dictionary = D6Profile.new_profile(tuning)
+	p.souls = AMES_LARGES
+	for id in tuning.classes:
+		D6Profile.unlock(p, tuning, "classes", id)
+	for id in tuning.town.upgrades:
+		while D6Js.truthy(D6Profile.buy_upgrade(p, tuning, id).get("ok")):
+			pass
+	D6Profile.select_class(p, tuning, classe)
+	var sections: float = ceilf(tuning.floors.total / tuning.floors.sectionLength)
+	p.checkpoints = []
+	p.guardians = {}
+	for s in range(1, int(sections)):
+		p.checkpoints.append(D6Floors.section_bounds(tuning, float(s)).first)
+		var modele = D6Floors.guardian_for(tuning, float(s))
+		p.guardians[modele] = D6Js.nz(p.guardians.get(modele), 0.0) + 1.0
+	var derniere: float = D6Floors.section_bounds(tuning, sections).first
+	p.checkpoints.append(derniere)
+	p.bestFloor = derniere
+	p.stats = {"runs": 240.0, "deaths": 203.0, "kills": 31800.0, "guardianKills": sections - 1.0}
+	var jetable: Dictionary = D6Game.create_game({"seed": GRAINE, "startFloor": 1.0, "meta": p, "sandbox": true})
+	for slot in p.equipment:
+		var voeu := {"slot": slot, "rarity": "legendaire", "floor": derniere - 1.0}
+		if slot == "arme":
+			voeu.weaponType = tuning.classes[classe].weapons[0]
+		var objet: Dictionary = D6Loot.generate_item(jetable, voeu)
+		D6Profile.ensure_uid(p, objet)
+		p.equipment[slot] = objet
+	p.souls = ames
+	return p
+
 static func ecrire(profil: Dictionary) -> void:
 	Profil.enregistrer(profil)

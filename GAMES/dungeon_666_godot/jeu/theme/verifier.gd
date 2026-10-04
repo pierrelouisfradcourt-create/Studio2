@@ -12,6 +12,7 @@ const ThemeJeu = preload("res://jeu/theme/theme.gd")
 const Couches = preload("res://jeu/theme/couches.gd")
 const Principal = preload("res://jeu/principal.gd")
 const Profil = preload("res://jeu/profil.gd")
+const Fondus = preload("res://jeu/essai/fondus.gd")
 const DONNEES := "user://essais_theme"
 const RACINE := "res://jeu"
 ## Dossiers dont les vues prennent leur style au thème commun.
@@ -97,6 +98,7 @@ func _feel() -> void:
 	var ref: Dictionary = app.contenu
 	_ok(app.reglages.feel.is_empty(), "réglages neufs : aucun écart de feel")
 	app.regler_feel(ECARTS)
+	await Fondus.laisser_finir(self)
 	app.free()
 	# « Fermeture » : une application neuve relit les réglages sur le disque.
 	app = _nouvelle_app()
@@ -119,6 +121,7 @@ func _feel() -> void:
 	_ok(Profil.charger_reglages().feel.is_empty(), "…et le disque aussi")
 	_ok(Profil._feel_valide({"player.speed": "vite", "x": NAN, "dash.distance": 120}) == {"dash.distance": 120.0}, "un fichier abîmé ne donne que des nombres finis")
 	print("-- feel : écarts enregistrés, relus, passés par options.tuning (arme %s, Super %s)" % [kit.weaponType, kit.superId])
+	await Fondus.laisser_finir(self)
 	app.free()
 
 # ---------------------------------------------------------------- 4. Sanctuaire

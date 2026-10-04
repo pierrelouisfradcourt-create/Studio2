@@ -349,7 +349,8 @@ func _partie_entiere(son: Node, etage: float) -> void:
 	son.stats.inconnus.clear()
 	son.avancer_horloge(10.0)
 
-## Va vers l'ennemi le plus proche et frappe ; dash, compétence, gadget et Super périodiques.
+## Va vers l'ennemi le plus proche et frappe ; dash, compétence et gadget périodiques ; l'attaque
+## est tenue : l'ultime part de lui-même quand la jauge est pleine (combat V3).
 func _piloter(g: Dictionary, pas: int) -> Dictionary:
 	var input: Dictionary = D6Game.empty_input()
 	var cible = null
@@ -369,9 +370,8 @@ func _piloter(g: Dictionary, pas: int) -> Dictionary:
 	input.attack = true
 	input.attackPressed = pas % 12 == 0
 	input.dashPressed = pas % 50 == 25
-	input.skillPressed = pas % 240 == 100
-	input.gadgetPressed = pas % 400 == 200
-	input.superPressed = pas % 60 == 30
+	input.skill1Pressed = pas % 240 == 100
+	input.skill2Pressed = pas % 400 == 200
 	return input
 
 func _sortir_du_menu(g: Dictionary) -> bool:

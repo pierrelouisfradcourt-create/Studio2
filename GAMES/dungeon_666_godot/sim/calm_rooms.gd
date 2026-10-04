@@ -49,9 +49,6 @@ static func setup_calm_room(game: Dictionary, it: Dictionary) -> void:
 	it.gold = each * tr.goldPickups
 	it.family = D6Boons.random_family(game)
 
-static func _gadget_max(game: Dictionary) -> float:
-	return game.tuning.gadget.chargesPerSection + game.player.stats.gadgetChargesBonus
-
 ## Bénédiction que la méditation approfondit : la moins avancée (la première à égalité). Jamais
 ## une bénédiction `noScale` (Envol : « +1 charge de dash ») : elle n'a pas de niveau.
 static func _meditation_target(game: Dictionary):
@@ -83,7 +80,7 @@ static func _rest_options(game: Dictionary) -> Array:
 	if target != null:
 		var def = D6Boons.boon_def(target.id)
 		boon_name = target.id if def == null or def.get("name") == null else def.name
-	var full: bool = p.gadgetCharges >= _gadget_max(game) and p.superCharge >= 1.0
+	var full: bool = D6Loadout.gadgets_full(game) and p.superCharge >= 1.0
 	return [
 		# jamais grisé : un choix reste toujours possible
 		{"id": "boire", "kicker": "Soin", "label": "Boire · +" + D6Js.num_str(heal) + " PV", "text": "Rend " + D6Js.num_str(D6Js.jround(r.heal * PERCENT)) + " % des PV.", "color": "#6dff8a", "disabled": false},
@@ -141,8 +138,12 @@ static func apply_calm(game: Dictionary, it: Dictionary, index):
 			D6State.emit(game, "boonGain", {"id": target.id, "rarity": target.rarity})
 			return "close"
 		"fioles":
-			p.gadgetCharges = maxf(p.gadgetCharges, _gadget_max(game))
+			# Tous les gadgets équipés sont remplis ; l'événement nomme le premier (aucun : 0 charge).
+			D6Loadout.refill_gadgets(game)
 			p.superCharge = minf(1.0, p.superCharge + game.tuning.economy.rest.superCharge)
-			D6State.emit(game, "gadgetCharge", {"x": p.x, "y": p.y, "charges": p.gadgetCharges})
+			var slot := D6Loadout.first_gadget(game)
+			var ev: Dictionary = D6State.emit(game, "gadgetCharge", {"x": p.x, "y": p.y, "charges": p.slots[slot].charges if slot >= 0 else 0.0})
+			if slot >= 0:
+				ev.slot = float(slot)
 			return "close"
 	return false
