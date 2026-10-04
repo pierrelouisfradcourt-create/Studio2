@@ -11,7 +11,8 @@
 # 3. règles          tests/regles/*.gd, un processus par fichier ;
 # 4. références      les parties enregistrées par Godot sont rejouées : la simulation n'a pas
 #                    changé sans qu'on le veuille (consigne : references/verifier.gd) ;
-# 5. vues            les tests headless de jeu/ (jeu/*/test_*.gd, jeu/*/verifier.gd) ;
+# 5. vues            les tests headless de jeu/ (jeu/*/test_*.gd, jeu/*/verifier.gd), dont le PARCOURS :
+#                    le vrai jeu assemblé joué de bout en bout (jeu/essai/test_parcours.gd) ;
 # 6. jouabilité      sur demande : outils/jouabilite.sh (un bot bat la section 1, le dash compte, les classes).
 #
 # Les étapes 2 à 5 tournent en parallèle, chacune dans ses propres processus Godot. ROUGE si une
@@ -28,7 +29,7 @@ ERREUR_SCRIPT="SCRIPT ERROR\|Parse Error"
 MIN_TESTS_REGLES=359
 MIN_PARTIES=70
 LIGNES_PAR_ROUGE=6 # lignes montrées par processus rouge (la suite : relancer l'étape seule, voir README.md)
-VUES_ATTENDUES="jeu/entrees/test_entrees.gd jeu/ecrans/test_ecrans.gd jeu/ville/test_ville.gd jeu/son/test_son.gd jeu/effets/verifier.gd jeu/theme/verifier.gd jeu/monde/test_profondeur.gd jeu/monde/test_finitions.gd"
+VUES_ATTENDUES="jeu/entrees/test_entrees.gd jeu/ecrans/test_ecrans.gd jeu/ville/test_ville.gd jeu/son/test_son.gd jeu/effets/verifier.gd jeu/theme/verifier.gd jeu/monde/test_profondeur.gd jeu/monde/test_finitions.gd jeu/essai/test_parcours.gd jeu/interface/test_accueil.gd"
 
 JOUABILITE=0
 GRAINES=()

@@ -13,6 +13,7 @@ extends CanvasLayer
 ## gâchettes hautes = onglet voisin, stick droit = défiler, Échap / B = retour au titre.
 
 const Style = preload("res://jeu/theme/theme.gd")
+const Accords = preload("res://jeu/theme/accords.gd")
 ## Les onglets, dans l'ordre des boutons (Onglets) et des pages (Pages) de ville.tscn.
 const ONGLETS := ["portail", "classe", "armurerie", "coffre", "grimoire", "sanctuaire", "labo"]
 ## En portrait, l'écran est mis en page comme s'il faisait cette largeur (sinon tout est minuscule).
@@ -136,7 +137,7 @@ func _dessiner() -> void:
 	var cle := _cle_du_focus()
 	var profil: Dictionary = _app.profil
 	var classe = _app.contenu.classes.get(profil.loadout.classId)
-	_ames.text = "◆ %s Âmes" % D6Js.num_str(profil.souls)
+	_ames.text = "◆ " + Accords.compte(profil.souls, "Âme", "Âmes")
 	_or.text = "● %s or" % D6Js.num_str(profil.gold)
 	_classe.text = "%s · record étage %s" % [classe.name if classe is Dictionary else "?", D6Js.num_str(profil.bestFloor)]
 	page(onglet).dessiner(_refus)

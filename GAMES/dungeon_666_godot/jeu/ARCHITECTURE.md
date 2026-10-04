@@ -220,6 +220,40 @@ Le lot de triangles, le rang des ramassables, de l'objet d'interaction et du Gar
 `res://jeu/monde/test_finitions.gd` (finit par « FINITIONS : OK ») ; à l'écran, le banc
 `res://jeu/essai/cout.tscn` (`D666_RAMASSABLES`, `D666_OBJET`, `D666_BOND`).
 
+L'ACCUEIL DU PREMIER JOUEUR (`jeu/interface/accueil.gd` + `accueil.tscn`, enfant du HUD, couche
+HUD) montre une consigne à la fois, sous le fil des étages ; elle s'efface dès que le geste est
+fait. La liste est une TABLE (`jeu/interface/consignes.gd` : identifiant, texte par appareil,
+quand elle se montre, quel événement la tient pour acquise). L'acquis vit dans les RÉGLAGES
+(`reglages_jeu.json`, champ `accueil` : `actif`, `acquis`), jamais dans le profil de la
+simulation ; la pause permet de couper les consignes ou de les revoir. La vue ne lit que
+`partie.game` et `partie.evenements`, n'écrit rien dans la simulation, ne met jamais en pause ;
+elle est absente de l'arène et de l'entraînement. Vérification sans fenêtre :
+`res://jeu/interface/test_accueil.gd` (finit par « ACCUEIL : OK ») ; à l'écran, le banc
+`res://jeu/interface/banc_accueil.tscn`. Les accords des textes composés (« de la classe … »)
+sont dans `jeu/theme/accords.gd`.
+
+Le jeu ASSEMBLÉ a son parcours sans fenêtre : `res://jeu/essai/test_parcours.gd` (finit par
+« PARCOURS : OK », environ 30 s). Il monte `jeu/principal.tscn` et fait vivre un joueur par les
+seules portes des vues (actions de `principal.gd`, commandes de menu), le bot de `outils/bots/`
+aux commandes (`jeu/essai/parcours_pilote.gd`) :
+
+- un joueur neuf : titre, Ville (chaque onglet, un achat refusé, le labo), descente de l'étage 1
+  à l'antichambre (bénédiction, butin, marchand, autel), pause en combat, mort, « Repartir »,
+  mort, retour en Ville, une amélioration, un objet du coffre ;
+- un joueur avancé (profil de `jeu/ville/profil_essai.gd`, relu du disque par un jeu neuf) : une
+  opération par onglet, arène d'essai, entraînement contre un Gardien, une descente profonde par
+  classe (étages 19, 37, 55), finie par abandon ou par mort ;
+- quatre cycles titre → Ville → descente → mort → Ville : le nombre de nœuds ne monte pas.
+
+À chaque étape : l'écran et le mode attendus, les vues visibles et celles qui ne le sont pas, le
+profil du disque d'essai égal à celui en mémoire. Il est ROUGE de lui-même à la moindre erreur de
+script (`parcours_temoin.gd` les compte), et si le parcours n'a pas réellement joué (gardes :
+salles, étages, menus par sorte, morts, abandons, classes, opérations). Il tient l'horloge : la
+boucle de la Partie est appelée pas à pas, graines fixes — même partie à chaque lancement (les
+lignes « RÉSUMÉ » sont identiques d'un lancement à l'autre). Il ne touche pas au vrai profil
+(dossier `user://essais_parcours`, empreinte du vrai `profil.json` vérifiée avant et après).
+Ce qu'il ne prouve pas : le rendu, le toucher des boutons (tests de chaque vue), la victoire.
+
 `capture.gd` lance une scène dans une vraie fenêtre (hors écran), la laisse vivre, et enregistre
 des PNG : c'est la preuve d'une vue. Chaque lot écrit sa scène de banc `jeu/<lot>/banc.tscn`
 (sa vue + une Partie démarrée à un étage choisi, exposée par la propriété `partie`) pour se

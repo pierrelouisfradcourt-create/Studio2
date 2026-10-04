@@ -18,7 +18,7 @@ func _dessiner() -> void:
 	_vider(_super)
 	var s = app.contenu.supers.get(c.super)
 	if s is Dictionary:
-		_carte(_super, {"surtitre": "Super du %s" % c.name, "titre": s.name, "lignes": [s.get("text", "")], "etat": "equipe", "badge": "Lié à la classe"})
+		_carte(_super, {"surtitre": "Super · %s" % c.name, "titre": s.name, "lignes": [s.get("text", "")], "etat": "equipe", "badge": "Lié à la classe"})
 
 func _lister(grille: GridContainer, genre: String, surtitre: String, ids: Array, equipe, op_choisir: String) -> void:
 	_vider(grille)

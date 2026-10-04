@@ -15,7 +15,8 @@ const DEGAGEMENT := 24.0 # px autour du groupe de boutons
 var _manette := {}
 var _coin := Vector2.INF
 
-func actualiser(game: Dictionary, ui: Dictionary) -> void:
+## `designee` : la commande que nomme la consigne de l'accueil ("" : aucune) ; son bouton bat.
+func actualiser(game: Dictionary, ui: Dictionary, designee: String = "") -> void:
 	_manette = ui.get("stick", {})
 	_coin = Vector2.INF
 	for b in ui.get("buttons", []):
@@ -25,6 +26,7 @@ func actualiser(game: Dictionary, ui: Dictionary) -> void:
 		var glisse := Vector2(b.get("dx", 0.0), b.get("dy", 0.0)) if D6Js.truthy(b.get("dragging")) else Vector2.ZERO
 		bouton.placer(Vector2(b.x, b.y), b.r)
 		bouton.montrer(Etats.etat(game, b.id), D6Js.truthy(b.get("pressed")), glisse)
+		bouton.designer(b.id == designee)
 		_coin = _coin.min(Vector2(b.x - b.r, b.y - b.r))
 	queue_redraw()
 

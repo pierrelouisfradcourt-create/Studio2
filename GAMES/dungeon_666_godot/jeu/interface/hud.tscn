@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://jeu/interface/hud.gd" id="1"]
 [ext_resource type="Script" path="res://jeu/interface/jauge.gd" id="2"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://jeu/interface/danger.gd" id="11"]
 [ext_resource type="Script" path="res://jeu/interface/fleches.gd" id="12"]
 [ext_resource type="Script" path="res://jeu/theme/filet.gd" id="13"]
+[ext_resource type="PackedScene" path="res://jeu/interface/accueil.tscn" id="14"]
 
 [node name="Hud" type="CanvasLayer"]
 layer = 10
@@ -323,6 +324,10 @@ layout_mode = 2
 theme_type_variation = &"HudBanniereSous"
 text = "Limbes · section 1"
 horizontal_alignment = 1
+
+[node name="Accueil" parent="Racine/Marges/Zone" instance=ExtResource("14")]
+unique_name_in_owner = true
+layout_mode = 0
 
 [node name="Bas" type="VBoxContainer" parent="Racine/Marges/Zone"]
 layout_mode = 1

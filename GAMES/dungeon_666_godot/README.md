@@ -34,7 +34,10 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
    (`donnees.gd`) ;
 4. **références** — les 70 parties de `references/parties/` sont rejouées, 10 714 points de
    contrôle comparés ;
-5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème) ;
+5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème), et le
+   **parcours** (`jeu/essai/test_parcours.gd`) : le vrai jeu assemblé, toutes ses vues montées,
+   joué de bout en bout par le bot — titre, Ville, descentes des trois classes, menus, pause,
+   morts, abandons, profil relu du disque d'essai, aucun nœud qui s'accumule ;
 6. **jouabilité** (sur demande) — un bot bat la section 1, le dash compte, chaque classe se joue.
 
 Toute « SCRIPT ERROR » est un rouge. Ce que l'oracle prouve : les règles font ce que leurs tests

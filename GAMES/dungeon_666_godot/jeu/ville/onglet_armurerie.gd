@@ -2,7 +2,7 @@ extends "res://jeu/ville/onglet.gd"
 ## Armurerie : les types d'arme de la classe équipée ; forger (débloquer) un type, ou prendre au
 ## coffre l'exemplaire possédé. L'arme portée est rappelée en bas.
 
-const NOTE := "Armes du %s. Débloquer un type d'arme forge un exemplaire commun (rangé au coffre) et l'ajoute au butin du donjon."
+const NOTE := "Armes de la classe %s. Débloquer un type d'arme forge un exemplaire commun (rangé au coffre) et l'ajoute au butin du donjon."
 const STYLES := {"ranged": "Arme à distance", "melee": "Arme de mêlée"}
 const AUCUN_EXEMPLAIRE := "Aucun exemplaire au coffre."
 

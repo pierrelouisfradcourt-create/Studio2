@@ -15,6 +15,7 @@ extends RefCounted
 ##           Or · Ames · Prix · PrixCher · Refus · Badge · BadgeDoux · Reglage · ReglageChange · Valeur
 ## HUD       HudFort · HudDoux · HudVie · HudOr · HudAmes · HudGardien · HudIndice · HudBanniere
 ##           HudBanniereSous · Touche (libellé de touche ou de bouton de manette)
+##           Consigne (bandeau de l'accueil du premier joueur) · HudConsigne (sa phrase)
 ## État grisé : `OPACITE_GRISE` (boutons désactivés, cartes qu'on ne peut pas prendre).
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
@@ -338,3 +339,12 @@ static func _hud_textes(th: Theme) -> void:
 	capsule.content_margin_top = 1
 	capsule.content_margin_bottom = 2
 	th.set_stylebox("normal", "Touche", capsule)
+	# Consigne de l'accueil : une phrase sur un bandeau sombre, au liseré d'or (l'accent du thème).
+	_hud_texte(th, "HudConsigne", 15, pal.text)
+	var bandeau := _boite(Color(Couleurs.UI.panel, 0.82), Color(pal.gold, 0.55), 1, RAYON)
+	bandeau.content_margin_left = 12
+	bandeau.content_margin_right = 12
+	bandeau.content_margin_top = 4
+	bandeau.content_margin_bottom = 5
+	th.set_type_variation("Consigne", "PanelContainer")
+	th.set_stylebox("panel", "Consigne", bandeau)

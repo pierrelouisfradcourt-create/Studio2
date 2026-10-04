@@ -4,6 +4,7 @@ extends VBoxContainer
 ## `setBanner` (src/render/fx.mjs) et de `drawBanner` (src/render/hud.mjs).
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
+const Accords = preload("res://jeu/theme/accords.gd")
 const ENTREE := 0.15 # part de la durée passée à apparaître
 const SORTIE := 0.4 # s de fondu final
 const COUPE := 0.3 # s restantes quand le combat démarre (bannière d'entrée d'étage)
@@ -57,7 +58,7 @@ func _detail_checkpoint(ev: Dictionary) -> String:
 		return "Entraînement terminé"
 	var texte := "Checkpoint : étage %s" % D6Js.num_str(ev.floor)
 	if float(ev.get("souls", 0.0)) > 0.0:
-		texte += " · + %s Âmes" % D6Js.num_str(ev.souls)
+		texte += " · + " + Accords.compte(ev.souls, "Âme", "Âmes")
 	return texte
 
 func _process(delta: float) -> void:

@@ -15,6 +15,7 @@ const ECART := 0.14 # rad entre deux segments de charge
 const POULS := 0.3 # s : onde quand la commande redevient prête
 const FOND := 0.72 # opacité du disque : le pictogramme se lit sur un sol clair comme sur un sol noir
 const CERNE := 5.0 # px du cerne sombre sous le cercle clair
+const DESIGNEE := Vector3(6.0, 2.5, 6.0) # anneau d'une commande désignée : écart, battement (px), vitesse
 
 @export var id := "dash"
 @export var rayon := 22.0:
@@ -27,6 +28,7 @@ var _appuye := false
 var _visee := Vector2.ZERO
 var _temps := 0.0
 var _pouls := 0.0
+var _designee := false
 var _lot := Triangles.new()
 
 func _ready() -> void:
@@ -46,6 +48,12 @@ func montrer(etat: Dictionary, appuye: bool = false, visee: Vector2 = Vector2.ZE
 	_appuye = appuye
 	_visee = visee
 	queue_redraw()
+
+## Une consigne de l'accueil nomme cette commande : un anneau doré bat autour du bouton.
+func designer(oui: bool) -> void:
+	if oui != _designee:
+		_designee = oui
+		queue_redraw()
 
 func _process(delta: float) -> void:
 	_temps += delta
@@ -113,6 +121,9 @@ func _dessiner_charges(c: Vector2, rr: float, maxi: int, col: Color) -> void:
 
 ## Onde « prêt ! » et repère de visée quand le pouce glisse (attaque, compétence).
 func _dessiner_reactions(c: Vector2) -> void:
+	if _designee:
+		var bat := 0.5 + 0.5 * sin(_temps * DESIGNEE.z)
+		_lot.arc(c, rayon + ANNEAU + DESIGNEE.x + DESIGNEE.y * bat, 0.0, TAU, 48, Color(Couleurs.PAL.gold, 0.55 + 0.45 * bat), 3.0)
 	if _pouls > 0.0:
 		var k := 1.0 - _pouls / POULS
 		_lot.arc(c, rayon + ANNEAU + 10.0 * k, 0.0, TAU, 48, Color(Couleurs.PAL.text, 0.6 * (1.0 - k)), 2.0)

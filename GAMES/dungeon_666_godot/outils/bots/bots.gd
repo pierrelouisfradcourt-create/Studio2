@@ -21,6 +21,8 @@ extends RefCounted
 ##
 ## Options posées par l'appelant dans la mémoire (jamais lues dans la partie) :
 ##   mem.wantTown   — prendre le portail de la Ville quand il s'ouvre (sinon : jamais) ;
+##   mem.wantRewards — liste de récompenses de porte à préférer (« shop », « event »…) : la
+##                    première porte qui y mène est prise (sinon : le choix habituel) ;
 ##   mem.dashAttack — taper l'attaque au début de chaque dash (mesure du labo D5).
 ##
 ## Découpage : base.gd (utilitaires, navigation), perception.gd (menaces), anticipation.gd
@@ -246,6 +248,10 @@ static func play(policy_name: String, game: Dictionary, mem: Dictionary) -> Dict
 			return masher(game, mem)
 	push_error("politique inconnue : %s" % policy_name)
 	return D6Game.empty_input()
+
+## Les commandes que le bot enverrait au menu ouvert, sans les appliquer : voir menus.gd.
+static func choice_commands(game: Dictionary, policy_name: String) -> Array:
+	return Menus.choice_commands(game, policy_name)
 
 ## Résout le menu ouvert (mode 'choice') : voir menus.gd.
 static func resolve_choice(game: Dictionary, policy_name: String) -> bool:

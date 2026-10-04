@@ -292,6 +292,13 @@ static func _choose_door(game: Dictionary, mem: Dictionary):
 			break
 	if D6Js.truthy(mem.get("wantTown")) and town >= 0:
 		return _remember_door(game, mem, town)
+	# Sur demande seulement (mem.wantRewards, posé par l'appelant) : la première porte qui mène à
+	# une récompense voulue. Sans cette option, le choix ci-dessous est inchangé.
+	var wanted = mem.get("wantRewards")
+	if wanted is Array:
+		for i in doors.size():
+			if wanted.has(doors[i].reward):
+				return _remember_door(game, mem, i)
 	var hp_frac: float = p.hp / p.maxHp
 	var best := -1
 	var best_score := -INF

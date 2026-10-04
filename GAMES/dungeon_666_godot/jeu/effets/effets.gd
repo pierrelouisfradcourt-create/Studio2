@@ -10,6 +10,7 @@ extends Node2D
 ## le nœud Ecran (CanvasLayer) couvre l'écran entier.
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
+const Accords = preload("res://jeu/theme/accords.gd")
 const Formes = preload("res://jeu/effets/formes.gd")
 const Particules = preload("res://jeu/effets/particules.gd")
 const Textes = preload("res://jeu/effets/textes.gd")
@@ -438,7 +439,7 @@ func _sur_soin(ev: Dictionary, _g: Dictionary) -> void:
 
 ## Âmes d'un élite (absent de fx.mjs, où seul le compteur du HUD bouge).
 func _sur_ames(ev: Dictionary, _g: Dictionary) -> void:
-	textes.ajouter(ev.x, ev.y - 36.0, "+%s Âmes" % D6Js.num_str(ev.amount), PAL.lance, 13, 0.9)
+	textes.ajouter(ev.x, ev.y - 36.0, "+" + Accords.compte(ev.amount, "Âme", "Âmes"), PAL.lance, 13, 0.9)
 
 func _sur_benediction(_ev: Dictionary, _g: Dictionary) -> void:
 	ecran.voile(0.35)

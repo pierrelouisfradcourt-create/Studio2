@@ -51,6 +51,14 @@ static func _primary_command(game: Dictionary, policy_name: String) -> Dictionar
 		return _event_command(ch)
 	return {"type": "close"}
 
+## Les commandes que le bot enverrait au menu ouvert, dans l'ordre d'essai (la première acceptée
+## gagne), SANS les appliquer : pour l'appelant qui passe par une autre porte que apply_command
+## (jeu/essai/test_parcours.gd les envoie par `app.commande`, comme un écran). [] hors menu.
+static func choice_commands(game: Dictionary, policy_name: String) -> Array:
+	if game.mode != "choice" or not D6Js.truthy(game.get("choice")):
+		return []
+	return [_primary_command(game, policy_name)] + FALLBACK_COMMANDS
+
 ## Résout le menu ouvert (game.mode == 'choice') via apply_command. Rend true si une
 ## commande a été acceptée. Repli sur des commandes génériques si la première échoue.
 static func resolve_choice(game: Dictionary, policy_name: String) -> bool:

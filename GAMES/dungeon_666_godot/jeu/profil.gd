@@ -13,7 +13,9 @@ const FICHIER_REGLAGES := "reglages_jeu.json"
 const ENV_DOSSIER := "D666_DONNEES"
 const VERSION := 1
 ## `feel` : les écarts des « Réglages du feel » au tuning de référence, {chemin de tuning: nombre}.
-const REGLAGES_DEFAUT := {"sound": true, "haptics": true, "shake": 1.0, "lab": {"dashStrike": "fin", "hitstop": "global", "comboMobility": "mobile"}, "feel": {}}
+## `accueil` : les consignes du premier joueur (jeu/interface/accueil.gd) : `actif` (montrées ou
+## coupées) et `acquis`, les identifiants de celles que ce joueur a déjà apprises.
+const REGLAGES_DEFAUT := {"sound": true, "haptics": true, "shake": 1.0, "lab": {"dashStrike": "fin", "hitstop": "global", "comboMobility": "mobile"}, "feel": {}, "accueil": {"actif": true, "acquis": []}}
 
 static func chemin(fichier: String) -> String:
 	var dossier := OS.get_environment(ENV_DOSSIER)
@@ -49,10 +51,23 @@ static func charger_reglages() -> Dictionary:
 				out[k] = lu.donnees[k]
 	out.lab = _labo_valide(out.lab)
 	out.feel = _feel_valide(out.feel)
+	out.accueil = _accueil_valide(out.accueil)
 	return out
 
 static func enregistrer_reglages(reglages: Dictionary) -> bool:
 	return StudioStockage.ecrire(chemin(FICHIER_REGLAGES), reglages, VERSION) == OK
+
+## Consignes de l'accueil validées : un oui/non et une liste d'identifiants, sans doublon.
+static func _accueil_valide(accueil) -> Dictionary:
+	var out := {"actif": true, "acquis": []}
+	if not (accueil is Dictionary):
+		return out
+	out.actif = accueil.get("actif") != false
+	var acquis = accueil.get("acquis")
+	for id in acquis if acquis is Array else []:
+		if id is String and not out.acquis.has(id):
+			out.acquis.append(id)
+	return out
 
 ## Écarts du feel validés : seulement des paires {chemin: nombre fini} ; un fichier abîmé ne casse rien.
 static func _feel_valide(feel) -> Dictionary:

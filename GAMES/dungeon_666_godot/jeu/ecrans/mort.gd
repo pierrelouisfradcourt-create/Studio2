@@ -8,6 +8,7 @@ signal commande(cmd: Dictionary)
 signal action(nom: String, args: Array)
 
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
+const Accords = preload("res://jeu/theme/accords.gd")
 
 const LARGEUR := 760.0
 const TITRE_PART := 0.078 # clamp(30px, 6vw, 56px) du web, rapporté au panneau
@@ -71,7 +72,7 @@ func _remplir_recap(r: Dictionary) -> void:
 	})
 	_garde.decrire({
 		"accent": Couleurs.UI.cyan, "surtitre": "Gardé · permanent",
-		"titre": "◆ %s Âmes (+%s)" % [D6Js.num_str(r.souls), D6Js.num_str(r.soulsEarned)], "lignes": [GARDE],
+		"titre": "◆ %s (+%s)" % [Accords.compte(r.souls, "Âme", "Âmes"), D6Js.num_str(r.soulsEarned)], "lignes": [GARDE],
 	})
 
 static func _compte(n: float, singulier: String, pluriel: String) -> String:

@@ -12,6 +12,7 @@ const ThemeJeu = preload("res://jeu/theme/theme.gd")
 const Disposition = preload("res://jeu/interface/disposition.gd")
 const Etats = preload("res://jeu/interface/etat_commandes.gd")
 const Degrades = preload("res://jeu/interface/degrades.gd")
+const Accords = preload("res://jeu/theme/accords.gd")
 
 const BORD := 14 # marge entre le HUD et le bord (en plus de la zone sûre)
 const BANDE := 96.0 # hauteur de la bande sombre du haut
@@ -23,11 +24,16 @@ const VIE_BASSE := 0.3
 const BANDE_BASSE := 0.42 # opacité de la bande sombre derrière la rangée de commandes du bureau
 const LARGEUR_UTILE := 700.0 # le haut du HUD (vie, fil des étages, bourse) tient dans cette largeur
 const SEUIL_MANETTE := 0.5 # un axe de manette compte comme « utilisé » au-delà
+const ECART_ACCUEIL := 6.0 # entre le bloc de l'étage et la consigne de l'accueil
 ## Libellé de chaque commande selon le dernier périphérique utilisé (mêmes touches que jeu/entrees/).
+## « move » (le déplacement) n'a pas de bouton : seules les consignes de l'accueil le nomment.
 const TOUCHES := {
-	"clavier": {"attack": "Clic G", "dash": "Espace", "skill": "Clic D", "gadget": "E", "super": "F"},
-	"manette": {"attack": "X", "dash": "A", "skill": "B", "gadget": "Y", "super": "RB"},
+	"clavier": {"attack": "Clic G", "dash": "Espace", "skill": "Clic D", "gadget": "E", "super": "F", "move": "ZQSD"},
+	"manette": {"attack": "X", "dash": "A", "skill": "B", "gadget": "Y", "super": "RB", "move": "Stick gauche"},
 }
+## Les quatre touches PHYSIQUES du déplacement (jeu/entrees/clavier_souris.gd) : leur lettre dépend
+## du clavier (ZQSD sur un AZERTY, WASD sur un QWERTY).
+const TOUCHES_DEPLACEMENT := [KEY_W, KEY_A, KEY_S, KEY_D]
 
 var app
 var partie
@@ -39,6 +45,7 @@ var _encoche_forcee := false
 var _echelle := 1.0 # agrandissement des textes et barres sur une petite fenêtre (téléphone)
 ## Dernier périphérique utilisé hors écran tactile : « clavier » ou « manette » (libellés des commandes).
 var _peripherique := "clavier"
+var _deplacement := "" # les lettres du déplacement sur ce clavier (lues une fois)
 
 @onready var racine: Control = $Racine
 @onready var bande: TextureRect = $Racine/BandeHaute
@@ -66,6 +73,7 @@ var _peripherique := "clavier"
 @onready var bureau: HBoxContainer = %Bureau
 @onready var commandes_bureau: Array = [%CmdAttaque, %CmdDash, %CmdCompetence, %CmdGadget, %CmdSuper]
 @onready var tactile: Control = $Racine/Tactile
+@onready var accueil: PanelContainer = %Accueil
 
 func _ready() -> void:
 	racine.theme = ThemeJeu.theme()
@@ -84,6 +92,7 @@ func brancher(app_: Node, partie_: Node) -> void:
 	partie = partie_
 	banniere.brancher(partie)
 	danger.brancher(partie)
+	accueil.brancher(app, partie)
 	partie.partie_demarree.connect(_sur_demarrage)
 
 func _sur_demarrage() -> void:
@@ -93,7 +102,7 @@ func _sur_pause() -> void:
 	if app != null:
 		app.mettre_en_pause(true)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var game = partie.game if partie != null else null
 	visible = game != null and app != null and app.ecran == "jeu" and game.get("info") != null
 	if not visible:
@@ -102,6 +111,7 @@ func _process(_delta: float) -> void:
 	_actualiser_vie(game)
 	_actualiser_centre(game)
 	_actualiser_bourse(game)
+	accueil.actualiser(game, delta, appareil(), libelles(), banniere.visible, centre.position.y + centre.size.y + ECART_ACCUEIL)
 	_actualiser_commandes(game, au_doigt)
 	_actualiser_reperes(game, au_doigt)
 
@@ -185,6 +195,35 @@ func montrer_peripherique(nom: String) -> void:
 func peripherique() -> String:
 	return _peripherique
 
+## L'appareil en main : « tactile », sinon le dernier périphérique utilisé (clavier ou manette).
+func appareil() -> String:
+	return "tactile" if _tactile() else _peripherique
+
+## Les libellés de l'appareil en main, {commande: touche ou bouton} ; au doigt, aucun : c'est le
+## bouton lui-même qui se montre.
+func libelles() -> Dictionary:
+	if _tactile():
+		return {}
+	var l: Dictionary = TOUCHES[_peripherique].duplicate()
+	if _peripherique == "clavier":
+		if _deplacement == "":
+			_deplacement = _lettres_du_deplacement(l.move)
+		l.move = _deplacement
+	return l
+
+## Les lettres que porte CE clavier sur les touches du déplacement ; à défaut (pas de fenêtre,
+## clavier inconnu), `repli`. Lu une seule fois.
+func _lettres_du_deplacement(repli: String) -> String:
+	if DisplayServer.get_name() == "headless":
+		return repli
+	var lettres := ""
+	for touche in TOUCHES_DEPLACEMENT:
+		var nom := OS.get_keycode_string(DisplayServer.keyboard_get_label_from_physical(touche))
+		if nom.length() != 1:
+			return repli
+		lettres += nom
+	return lettres
+
 func _ecrire_touches() -> void:
 	for c in commandes_bureau:
 		c.get_parent().get_node("Touche").text = TOUCHES[_peripherique][c.id]
@@ -204,7 +243,7 @@ func _actualiser_centre(game: Dictionary) -> void:
 	if D6Js.truthy(game.get("sandbox")):
 		etage.text = "ARÈNE D'ESSAI"
 		etage_total.visible = false
-		cercle.text = "%s démons · %s esquives parfaites" % [D6Js.num_str(game.telemetry.kills), D6Js.num_str(game.telemetry.dodges)]
+		cercle.text = "%s · %s" % [Accords.compte(game.telemetry.kills, "démon", "démons"), Accords.compte(game.telemetry.dodges, "esquive parfaite", "esquives parfaites")]
 		cercle.visible = true
 		fil.visible = false
 		gardien.visible = false
@@ -231,17 +270,20 @@ func _actualiser_commandes(game: Dictionary, au_doigt: bool) -> void:
 	bureau.visible = not au_doigt
 	bande_basse.visible = not au_doigt
 	tactile.visible = au_doigt
+	var designee: String = accueil.commande() # la consigne de l'accueil nomme une commande : elle bat
 	if au_doigt:
-		tactile.actualiser(game, _interface_tactile())
+		tactile.actualiser(game, _interface_tactile(), designee)
 		return
 	for c in commandes_bureau:
 		c.montrer(Etats.etat(game, c.id))
+		c.designer(c.id == designee)
 
 func _actualiser_reperes(game: Dictionary, au_doigt: bool) -> void:
 	var room: Dictionary = game.room
 	var objet = room.get("interact")
 	var objet_libre: bool = objet is Dictionary and not D6Js.truthy(objet.get("used"))
-	indice.visible = D6Js.truthy(room.get("cleared")) and not objet_libre and _porte_ouverte(room)
+	# Une indication à la fois : l'indice des portes se tait tant qu'une consigne de l'accueil parle.
+	indice.visible = D6Js.truthy(room.get("cleared")) and not objet_libre and _porte_ouverte(room) and accueil.montree() == ""
 	var monde = app.vues.get("monde") if app.vues is Dictionary else null
 	var haut := centre.get_global_rect().end.y + BANDE_UTILE
 	fleches.actualiser(game, monde, haut, _marges, tactile.coin() if au_doigt else racine.size)

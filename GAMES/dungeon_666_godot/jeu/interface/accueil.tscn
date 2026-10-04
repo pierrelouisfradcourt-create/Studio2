@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://jeu/interface/accueil.gd" id="1"]
+
+[node name="Accueil" type="PanelContainer"]
+mouse_filter = 2
+theme_type_variation = &"Consigne"
+script = ExtResource("1")
+
+[node name="Ligne" type="HBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Picto" type="Control" parent="Ligne"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="Texte" type="Label" parent="Ligne"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudConsigne"
+text = "Déplace-toi"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Touche" type="Label" parent="Ligne"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"Touche"
+text = "Espace"
+horizontal_alignment = 1

@@ -1,6 +1,6 @@
 extends VBoxContainer
-## La pause : reprendre, son, vibrations, tremblement d'écran, labo et réglages du feel,
-## abandonner la descente — avec confirmation (buildPause du web, qui abandonnait d'un seul tap).
+## La pause : reprendre, son, vibrations, tremblement d'écran, consignes de l'accueil (les couper,
+## les revoir), labo et réglages du feel, abandonner la descente — avec confirmation (buildPause du web, qui abandonnait d'un seul tap).
 ## Les réglages se lisent dans `app.reglages` ; l'écran se remet à jour sur `reglages_change`.
 
 signal commande(cmd: Dictionary)
@@ -12,6 +12,10 @@ const POURCENT := 100.0
 const CRANS_TREMBLEMENT := [1.0, 0.5, 0.0]
 const COUT_DESCENTE := "Abandonner compte comme une mort : Charon prélève sa part de l'or et les bénédictions sont perdues. Équipement, Âmes et checkpoints restent acquis."
 const COUT_ESSAI := "Retour à la Ville. Rien n'est en jeu ici : ni or, ni Âmes."
+## Les consignes de l'accueil (jeu/interface/accueil.gd) : le réglage `accueil` = {actif, acquis}.
+const ACCUEIL := "accueil"
+const REVOIR := "Revoir les consignes"
+const A_REVOIR := "Consignes : toutes à revoir"
 
 @onready var _menu: VBoxContainer = %Menu
 @onready var _confirmation: VBoxContainer = %Confirmation
@@ -19,6 +23,8 @@ const COUT_ESSAI := "Retour à la Ville. Rien n'est en jeu ici : ni or, ni Âmes
 @onready var _son: Button = %Son
 @onready var _vibrations: Button = %Vibrations
 @onready var _tremblement: Button = %Tremblement
+@onready var _consignes: Button = %Consignes
+@onready var _revoir: Button = %RevoirConsignes
 @onready var _labo: Button = %Labo
 @onready var _feel: Button = %Feel
 @onready var _abandonner: Button = %Abandonner
@@ -37,6 +43,8 @@ func ouvrir(app: Node, partie: Node) -> void:
 	_son.pressed.connect(func() -> void: action.emit("regler", ["sound", not _app.reglages.sound]))
 	_vibrations.pressed.connect(func() -> void: action.emit("regler", ["haptics", not _app.reglages.haptics]))
 	_tremblement.pressed.connect(func() -> void: action.emit("regler", ["shake", _cran_suivant(_app.reglages.shake)]))
+	_consignes.pressed.connect(func() -> void: action.emit("regler", [ACCUEIL, {"actif": not _accueil().actif, "acquis": _accueil().acquis}]))
+	_revoir.pressed.connect(func() -> void: action.emit("regler", [ACCUEIL, {"actif": true, "acquis": []}]))
 	_labo.pressed.connect(func() -> void: action.emit("labo", []))
 	_feel.pressed.connect(func() -> void: action.emit("feel", []))
 	_abandonner.pressed.connect(_demander.bind(true))
@@ -56,6 +64,16 @@ func rafraichir() -> void:
 	_son.text = "Son : " + _oui_non(r.sound)
 	_vibrations.text = "Vibrations : " + _oui_non(r.haptics)
 	_tremblement.text = "Tremblement : %s %%" % D6Js.num_str(roundf(r.shake * POURCENT))
+	var a := _accueil()
+	_consignes.text = "Consignes : " + _oui_non(a.actif)
+	# Rien à revoir tant qu'aucune consigne n'est acquise : le libellé le dit, l'appui ne change rien.
+	_revoir.text = REVOIR if not a.acquis.is_empty() or not a.actif else A_REVOIR
+
+## Le réglage des consignes de l'accueil (un `app` d'essai peut ne pas le porter).
+func _accueil() -> Dictionary:
+	var a = _app.reglages.get(ACCUEIL)
+	var lu: Dictionary = a if a is Dictionary else {}
+	return {"actif": lu.get("actif") != false, "acquis": lu.get("acquis", [])}
 
 ## Montre (ou referme) la confirmation d'abandon.
 func _demander(ouverte: bool) -> void:
