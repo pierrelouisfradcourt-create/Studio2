@@ -305,6 +305,39 @@ tireur), `MUZZLE` ; `sim/neuves_bourreau.gd` — `REACH_STEP` (pas de la recherc
 | `jeu/interface/` | Le bouton d'une compétence ne montre ni la charge du Trait ni la durée d'un sillage ou d'une garde (`D6Loadout.slot_state` les rend). | Lot d'affichage du HUD (tenu par un autre chantier). |
 | `outils/arbre.gd` | Avec 10 graines, les dégâts reçus par salle varient encore beaucoup d'une mesure à l'autre. | Plus de graines pour trancher un nombre. |
 
+## Neuvième lot (2026-10-05) : combat V3, étape 5 — quatrième compétence, sons, mesure en profondeur
+
+Contenu neuf et une passe d'échelle (`design/COMBAT_V3.md`, « Étape 5 »). Gardes :
+`tests/regles/v3_competences_2.gd` (28 tests), `tests/regles/v3_profondeur.gd` (5 tests) ; le test
+générique des rangs de `v3_arbre.gd` joue de lui-même les trois nœuds neufs (+3) ; 3 tests existants
+adaptés, tous pour le NOMBRE de compétences d'une classe (`design/COMBAT_V3_TESTS_ADAPTES.md`).
+
+**Défaut d'échelle corrigé.** Les soins que l'arbre donne en PV ne suivaient pas les PV du héros (100 à
+l'étage 1, 1 260 à l'étage 325 avec une armure rare) : Moisson (6 PV), Dîme de sang (4 PV par ennemi),
+Soif (1 PV par ennemi) valaient douze fois moins au 325 qu'à l'étage 1. Ils passent par
+`D6Combat.heal_scaled` (× `hpGrowth` de l'étage : ×1, ×4,0 au 109, ×9,9 au 325). À l'étage 1 rien ne
+change. Les dégâts, eux, n'avaient pas ce défaut : tout coup du héros est multiplié par l'arme portée
+(`D6Combat._scaled_amount`), la jauge d'ultime aussi.
+
+Références réenregistrées une fois : **aucune des 100 parties existantes n'a changé** (rejouées
+identiques avant d'écrire : la quatrième compétence ne change rien à qui ne l'équipe pas, l'événement
+`dash` a gagné un champ que l'empreinte ne lit pas, et aucune partie ne soigne avec Moisson, Soif ou
+Dîme en étant blessée). 6 parties `competences2_*` ajoutées : 106 au total.
+
+Constantes laissées dans le code (techniques) : `sim/neuves_revenant.gd` — `SHADE_SIDE`, `SHADE_SNAP`,
+`SHADE_STOP` (place et rattachement de l'ombre liée), `ECHO_SHOW` (durée d'affichage du coup répété).
+
+| Où | Ce qui reste | Suite |
+|---|---|---|
+| `data/classes.json`, `data/arbres.json`, `data/ville.json`, `data/benedictions.json` | Les bonus de PV écrits en dur (Bourreau +40, Chasseresse −20, Sang vif +8 par rang, Cuir épais +12, Vitalité, Voracité +30) ne suivent pas la vie du héros : +40 PV = +40 % à l'étage 1, +3 % au 325. | Équilibrage (force relative des classes) : à Pierre. Proposition chiffrée : `_dev/rapports/profondeur.md`. |
+| `data/benedictions.json` | Les soins en PV des bénédictions (Festin : 2 PV par ennemi tué…) ont le défaut d'échelle corrigé dans l'arbre. | Contenu d'avant le combat V3, non touché : les passer par `D6Combat.heal_scaled` si Pierre le veut. |
+| `sim/combat.gd`, `_charge_super` | La jauge suit l'arme ; les PV des ennemis montent plus vite et les salles sont plus peuplées : 1,5 à 1,9 fois plus d'ultimes par section au 325 (mesuré). | À juger ; piste : `chargeDamage` × l'échelle des PV ennemis de l'étage. |
+| `sim/ult_forme.gd` | Arbre plein, la Forme du Damné fait moins de dégâts que le kit qu'elle remplace (×0,93 au 109, ×0,86 au 325) : les compétences au rang 5 sont figées, les griffes ne profitent d'aucun rang. | Équilibrage : à Pierre (pistes dans le rapport). |
+| `outils/bots/base.gd`, `nav_dir` | Le bot habile reste parfois coincé au coin d'un mur de la disposition « chicane », salle nettoyée, sans rejoindre la récompense : 6 parties sur 540 de la mesure en profondeur (aucune mort). | Lot à part : ce bot joue les oracles et les références (à réenregistrer). Graines dans le rapport. |
+| `sim/neuves_revenant.gd` | L'Ombre jumelle répète les coups de MÊLÉE seulement (les deux armes du Revenant) ; son coup répété balaie aussi les tirs ennemis, comme un coup d'arme. | À juger. |
+| `sim/neuves_chasseresse.gd`, `sim/kit_common.gd` | Visée à la main, la Grêle (comme le Brasier et la Bombe) tombe à une distance FIXE (`throwDist`) : le bouton donne une direction, pas un point. | Demande une visée « point » dans l'entrée d'un pas : lot à part. |
+| `jeu/son/` | Personne n'a encore écouté les sons : 38 recettes neuves, sobres exprès. | Écoute par Pierre : `_dev/sons/` (liste dans `design/COMBAT_V3.md`). |
+
 ## Vu en passant, non corrigé
 
 | Où | Constat | Pourquoi non corrigé |

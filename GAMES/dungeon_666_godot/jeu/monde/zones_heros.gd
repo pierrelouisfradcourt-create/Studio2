@@ -1,7 +1,7 @@
 extends "res://jeu/monde/calque.gd"
 ## Les zones posées par le héros (game.room.kitFx.zones) : cible d'un pot ou d'une bombe en vol,
 ## Brasier d'âmes, Bombe de soufre, Piège à mâchoires, Totem de givre, braises du Sillage et Faille
-## restée au sol (étape 4) ; et le souffle de ses explosions. Ce sont SES outils : teintes froides (cyan, blanc), jamais de rouge.
+## restée au sol (étape 4), télégraphe de la Grêle des Limbes (étape 5) ; et le souffle de ses explosions. Ce sont SES outils : teintes froides (cyan, blanc), jamais de rouge.
 ## Les objets lancés, tant qu'ils volent, sont dessinés par tirs.gd (au-dessus des créatures).
 
 const FEU_D_AMES := Color("#3fb8ff")
@@ -32,6 +32,8 @@ func _draw() -> void:
 					_brasier(z)
 			"faille":
 				_faille(z)
+			"grele":
+				_grele(z)
 			"bombe":
 				_bombe(z)
 			"piege":
@@ -81,6 +83,26 @@ func _braise(z: Dictionary) -> void:
 		var h: float = 9.0 + 5.0 * sin(t * 10.0 + float(i) * 2.1 + float(z.id))
 		var feu := Trace.voile(PAL.lance, 0.8 * fondu)
 		Trace.triangle(self, pied + Vector2(-4, 0), pied + Vector2(4, 0), pied + Vector2(0, -h * 1.3), feu, feu, Trace.voile(Color.WHITE, 0.2 * fondu))
+
+## GRÊLE DES LIMBES qui va tomber : un télégraphe ALLIÉ — cercle froid (cyan, givre, blanc ; jamais le
+## rouge des dangers), un anneau blanc qui GRANDIT du centre jusqu'au bord (« ça tombe quand il le
+## touche »), et les ombres des traits qui descendent, de plus en plus nettes. Entre deux chutes du
+## « Déluge », le même anneau repart du centre.
+func _grele(z: Dictionary) -> void:
+	var p := Vector2(z.x, z.y)
+	var attente: float = z.delay if z.wave <= 0.0 else z.interval
+	var chute: float = z.delay + z.wave * z.interval
+	var k := clampf(1.0 - (chute - z.t) / maxf(1e-3, attente), 0.0, 1.0)
+	draw_circle(p, z.r, Trace.voile(PAL.heroCape, 0.06 + 0.1 * k), true, -1.0, true)
+	draw_arc(p, z.r, 0.0, TAU, 56, Trace.voile(GIVRE, 0.45 + 0.4 * k), 2.5, true)
+	draw_arc(p, maxf(2.0, z.r * k), 0.0, TAU, 48, Trace.voile(Color.WHITE, 0.35 + 0.45 * k), 2.0, true)
+	_cible(p, z.r + 7.0, PAL.heroCape, 0.55)
+	for i in 11:
+		var q: Vector2 = p + Vector2.from_angle(float(i) * 2.399 + z.id) * z.r * (0.2 + 0.68 * fmod(float(i) * 0.37 + 0.11, 1.0))
+		var t := 3.0 + 5.0 * k
+		var teinte := Trace.voile(GIVRE, 0.25 + 0.6 * k)
+		draw_line(q - Vector2(t, t), q + Vector2(t, t), teinte, 1.5, true)
+		draw_line(q - Vector2(t, -t), q + Vector2(t, -t), teinte, 1.5, true)
 
 ## Faille du Bourreau qui reste au sol : la lézarde (trait noir à lèvres de givre) ; OUVERTE
 ## (« gouffre ») sa bande sombre dit où l'on est ralenti ; en attente d'une RÉPLIQUE son contour bat.

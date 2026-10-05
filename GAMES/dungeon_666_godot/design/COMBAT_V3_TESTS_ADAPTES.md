@@ -283,6 +283,26 @@ nœuds neufs (+9 tests, sans modification). Tests de vues (hors `tests/**`), AJO
 `jeu/effets/echantillons.gd` (19 événements d'exemple), `jeu/son/test_son.gd` (7 échantillons).
 
 
+## Étape 5 — la quatrième compétence de chaque classe (2026-10-05)
+
+Sous le même « GO tests V3 », pour le seul cas prévu : un test qui fige la LISTE ou le NOMBRE des
+compétences d'une classe. Chaque classe a neuf compétences au lieu de huit.
+
+| Fichier | Test (fonction) | Ce qui a changé | Pourquoi |
+|---|---|---|---|
+| `v3_competences.gd` | `_a_noeuds` (« arbre : … compétences par classe … ») | le nombre attendu passe de 8 à 9 ; le titre du test le dit | une compétence de plus par classe (`ombre`, `grace`, `grele`) ; les trois neuves de l'étape 4, leurs étages, « une à charges sur trois » et « les cinq d'avant gardent leur place » sont inchangés |
+| `v3_competences.gd` | `_a_sortes` (« données : chaque sorte (kind) de compétence a sa règle… ») | une sorte est aussi « jouée par une règle » si elle est dans `Neuves.SKILLS_2` (les trois sortes de l'étape 5) | la liste des sortes connues grandit ; les sortes de l'étape 4 (`Neuves.SKILLS`, `GADGETS`) et leur vérification « une compétence par sorte » sont inchangées |
+| `v3_combat.gd` | `_p_choix` (« slot_choices : compétences puis gadgets de la classe, avec leur état ») | les trois listes attendues passent de 8 à 9 éléments (six compétences à recharge, trois à charges) | même adaptation qu'à l'étape 4, pour la même raison |
+
+Aucun autre test existant n'a été touché. Rien d'autre n'a rougi pour une raison de règle.
+
+Nouveaux fichiers : `tests/regles/v3_competences_2.gd` (28 tests : les trois compétences) et
+`tests/regles/v3_profondeur.gd` (5 tests : l'échelle en profondeur). Le test générique
+`v3_arbre.gd : _r_competence` s'étend de lui-même aux trois nœuds neufs (+3, sans modification).
+Tests de vues (hors `tests/**`), AJOUTS seulement : `jeu/effets/echantillons.gd` (7 événements
+d'exemple), `jeu/son/test_son.gd` (21 échantillons : les sons propres du combat V3).
+
+
 ## Écran de l'arbre (2026-10-05) — vérifications adaptées dans `jeu/ville/test_ville.gd`
 
 Le Grimoire n'est plus une liste de cartes mais un arbre dessiné et un panneau de détail (mission

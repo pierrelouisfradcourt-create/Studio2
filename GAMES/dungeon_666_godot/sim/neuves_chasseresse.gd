@@ -20,6 +20,13 @@ extends RefCounted
 ##            aussitôt, moins fort (de `minCharge` à 1 × `damage`). Un dash ou l'ultime le lâche
 ##            de même. Sans visée manuelle, il vise au moment de partir. Il traverse tout.
 ##            Améliorations : `stun` (à pleine charge seulement) ; `castTime` / `range`.
+##   grele  — Grêle des Limbes (recharge, étape 5) : elle tire vers le ciel ; `delay` s plus tard les
+##            traits tombent à `radius` u autour du point visé (sur la cible si elle est à `range` u,
+##            sinon à `throwDist` u ; jamais dans un mur, mais au-dessus de l'eau oui : ce sont des
+##            tirs). Ce qui s'y tient ENCORE est frappé : c'est un coup à prévoir. La zone `grele`
+##            est le télégraphe (allié). Une grêle tirée tombe même si elle meurt entre-temps.
+##            Améliorations : `waves` / `interval` / `waveMult` (elle retombe au même endroit) ;
+##            `chill` / `chillMult` (ce qu'elle touche est ralenti).
 ## Un ennemi marqué porte e.proie = {t, max, aim, jumps, jumpRange, vuln, vulnMult, blastRadius}.
 
 const MUZZLE := 0.5 # × rayon du héros : point de départ d'un tir
@@ -220,3 +227,49 @@ static func release_trait(game: Dictionary, s: Dictionary) -> float:
 	})
 	D6State.emit(game, "traitShot", {"x": p.x, "y": p.y, "angle": p.facing, "charge": frac, "full": full})
 	return p.facing
+
+# ---------------------------------------------------------------- Grêle des Limbes (étape 5)
+
+static func release_grele(game: Dictionary, s: Dictionary) -> void:
+	var p: Dictionary = game.player
+	var cast = p.get("cast")
+	var target_id = D6Js.nz(cast.get("targetId"), 0.0) if cast is Dictionary else 0.0
+	var target: Dictionary = D6KitCommon.throw_point(game, p.castDirX, p.castDirY, target_id, s.range, s.throwDist, _point)
+	D6KitZones.spawn_zone(game, {
+		"kind": "grele", "x": target.x, "y": target.y, "r": s.radius, "delay": s.delay, "damage": s.damage, "knockback": s.knockback,
+		"hitstop": s.hitstop, "shake": D6Js.nz(s.get("shake"), 0.0), "wave": 0.0, "waves": D6Js.nz(s.get("waves"), 1.0),
+		"interval": D6Js.nz(s.get("interval"), 0.0), "waveMult": D6Js.nz(s.get("waveMult"), 1.0),
+		"chill": D6Js.nz(s.get("chill"), 0.0), "chillMult": D6Js.nz(s.get("chillMult"), 0.0),
+	})
+	D6State.emit(game, "hailCall", {"x": p.x, "y": p.y, "tx": target.x, "ty": target.y, "r": s.radius, "delay": s.delay})
+
+## Zone `grele` : rien pendant `delay` (le télégraphe), puis la grêle tombe — une fois, ou `waves`
+## fois toutes les `interval` s (« Déluge » : les suivantes à `waveMult` des dégâts).
+static func zone_grele(game: Dictionary, z: Dictionary) -> void:
+	if z.t < z.delay + z.wave * z.interval:
+		return
+	var amount: float = z.damage * (1.0 if z.wave <= 0.0 else z.waveMult)
+	z.wave += 1.0
+	if z.wave >= z.waves:
+		z.dead = true
+	D6State.emit(game, "hail", {"x": z.x, "y": z.y, "r": z.r, "wave": z.wave, "last": z.dead})
+	var slow: float = maxf(game.tuning.combat.minChillMult, 1.0 - z.chillMult)
+	var enemies: Array = game.enemies
+	var i := 0
+	while i < enemies.size():
+		var e: Dictionary = enemies[i]
+		i += 1
+		if e.dead or e.spawnT > 0.0:
+			continue
+		var rr: float = z.r + e.r
+		var d2 := D6Geo.dist2(z.x, z.y, e.x, e.y)
+		if d2 >= rr * rr:
+			continue
+		var l := maxf(1e-6, sqrt(d2))
+		D6Combat.damage_enemy(game, e, {
+			"kind": "skill", "amount": amount, "dirX": (e.x - z.x) / l, "dirY": (e.y - z.y) / l, "knockback": z.knockback,
+			"hitstop": z.hitstop, "canCrit": true, "shake": z.shake,
+		})
+		if z.chill > 0.0 and not e.dead: # « Givre des Limbes »
+			e.chill = maxf(e.chill, z.chill)
+			e.chillMult = minf(e.chillMult if D6Js.truthy(e.get("chillMult")) else 1.0, slow)

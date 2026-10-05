@@ -89,11 +89,11 @@ static func slots_of(tuning: Dictionary, class_id: String) -> Array:
 	var c: Dictionary = tuning.classes[class_id]
 	return [c.skills[0], c.gadgets[0], c.skills[1]]
 
-## Les compétences NEUVES d'une classe (étape 4), dans l'ordre de l'arbre.
+## Les compétences NEUVES d'une classe (étapes 4 et 5), dans l'ordre de l'arbre.
 static func new_skills(tuning: Dictionary, class_id: String) -> Array:
 	var out: Array = []
 	for n in Arbre.nodes(tuning, class_id):
-		if n.kind == "skill" and (Neuves.SKILLS + Neuves.GADGETS).has(tuning[Arbre.table_of(tuning, n.skill)][n.skill].kind):
+		if n.kind == "skill" and (Neuves.SKILLS + Neuves.GADGETS + Neuves.SKILLS_2).has(tuning[Arbre.table_of(tuning, n.skill)][n.skill].kind):
 			out.append(n.skill)
 	return out
 

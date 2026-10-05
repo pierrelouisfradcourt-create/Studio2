@@ -72,6 +72,11 @@ var _depart_rendu := 0
 var _a_rendre: Array = []
 var _travail: Dictionary = {}
 var _bruit := PackedFloat32Array()
+# Ce que la vue lit de l'état pour ses sons hors événement (Routage.SONS_VUE).
+var _maintien := -1 # lecteur qui joue la montée de l'armement de l'ultime (-1 : aucun)
+var _tenait := false
+var _au_dessus := false
+var _depense := -1.0 # rangs achetés dans l'arbre, toutes classes (-1 : pas encore lu)
 
 @onready var _reservoir: Node = $Lecteurs
 
@@ -102,7 +107,79 @@ func brancher(application: Node, la_partie: Node) -> void:
 			partie.partie_demarree.connect(_sur_partie_demarree)
 	if app != null and app.has_signal("reglages_change"):
 		app.reglages_change.connect(_sur_reglages)
+	if app != null and app.has_signal("profil_change"):
+		app.profil_change.connect(_sur_profil)
+		_depense = _points_depenses()
 	_sur_reglages()
+
+# ---------------------------------------------------------------- sons lus dans l'état (hors événement)
+
+## Trois sons n'ont pas d'événement de simulation : la vue LIT l'état, comme le bouton d'attaque
+## lit `superHold` pour fermer son anneau. Aucune règle ici.
+func _physics_process(_delta: float) -> void:
+	_suivre_etat()
+
+func _suivre_etat() -> void:
+	var g = partie.get("game") if partie != null else null
+	if not (g is Dictionary) or g.get("mode") != "play" or not (g.get("player") is Dictionary) or not (g.get("room") is Dictionary):
+		_relacher_maintien()
+		_tenait = false
+		_au_dessus = false
+		return
+	var p: Dictionary = g.player
+	# Armement de l'ultime : la montée part quand le maintien commence, s'arrête net si l'on relâche.
+	var tient: bool = Routage.nombre(p.get("superHold"), 0.0) > 0.0
+	if tient and not _tenait:
+		_maintien = _jouer_vue("ultime_armement")
+	elif _tenait and not tient and p.get("state") != "super":
+		_relacher_maintien()
+	_tenait = tient
+	# Franchissement : le héros est AU-DESSUS d'un terrain bas (la règle ne l'y laisse qu'en plein geste).
+	var dessus: bool = D6Player.crossing(g) and D6Physics.low_at(g.room, p.x, p.y, p.r)
+	if dessus and not _au_dessus:
+		_jouer_vue("franchissement")
+	_au_dessus = dessus
+
+## Joue un son de Routage.SONS_VUE. Rend le lecteur qui le joue, -1 si rien n'a joué.
+func _jouer_vue(nom: String) -> int:
+	if _muet or not _flux.has(nom):
+		return -1
+	var def: Dictionary = Routage.SONS_VUE[nom]
+	var t := _maintenant()
+	_purger(t)
+	var i := _lecteur_libre(def.priorite, t)
+	if i == -1:
+		return -1
+	_lancer(nom, def.gain, 1.0, def.priorite, t)
+	stats.vue = stats.get("vue", 0) + 1
+	return i
+
+func _relacher_maintien() -> void:
+	if _maintien >= 0 and _lecteurs[_maintien].playing and _flux.has("ultime_armement") and _lecteurs[_maintien].stream == _flux["ultime_armement"].flux:
+		_lecteurs[_maintien].stop()
+		_fins[_maintien] = 0.0
+	_maintien = -1
+
+## Rangs ACHETÉS dans l'arbre de compétences, toutes classes confondues (-1 : profil sans arbre).
+func _points_depenses() -> float:
+	var profil = app.get("profil") if app != null else null
+	var arbre = profil.get("tree") if profil is Dictionary else null
+	if not (arbre is Dictionary):
+		return -1.0
+	var total := 0.0
+	for classe in arbre:
+		var rangs = arbre[classe].get("ranks") if arbre[classe] is Dictionary else null
+		if rangs is Dictionary:
+			for v in rangs.values():
+				total += Routage.nombre(v, 0.0)
+	return total
+
+## Le profil a changé : un rang de plus acheté dans l'arbre = le sceau du Grimoire.
+func _sur_profil() -> void:
+	var total := _points_depenses()
+	if _depense >= 0.0 and total > _depense:
+		_jouer_vue("point_arbre")
+	_depense = total
 
 # ---------------------------------------------------------------- pour les écrans
 

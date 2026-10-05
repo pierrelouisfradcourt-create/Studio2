@@ -34,7 +34,7 @@ const SONS := {
 	"super": {"voix": 1, "par_image": 1, "priorite": 9, "gain": 0.7},
 	"superTick": {"voix": 2, "par_image": 1, "priorite": 3, "gain": 0.45},
 	"superEnd": {"voix": 1, "par_image": 1, "priorite": 3, "gain": 0.35},
-	"superReady": {"voix": 1, "par_image": 1, "priorite": 8, "gain": 0.45},
+	"superReady": {"voix": 1, "par_image": 1, "priorite": 8, "gain": 0.5},
 	"playerHurt": {"voix": 2, "par_image": 1, "priorite": 10, "gain": 0.75},
 	"playerDeath": {"voix": 1, "par_image": 1, "priorite": 10, "gain": 0.85},
 	"enemyAttack": {"voix": 3, "par_image": 2, "priorite": 4, "gain": 0.3},
@@ -55,51 +55,94 @@ const SONS := {
 	"choiceOpen": {"voix": 1, "par_image": 1, "priorite": 3, "gain": 0.35},
 	"victory": {"voix": 1, "par_image": 1, "priorite": 10, "gain": 0.7},
 	"gameOver": {"voix": 1, "par_image": 1, "priorite": 9, "gain": 0.6},
+	# Combat V3 (étape 5) : des sons propres aux ultimes, aux déplacements de classe, à la
+	# progression et aux compétences neuves. Niveaux calés sur les sons voisins (skill 0,55 ;
+	# gadget 0,65 ; super 0,7 ; boom 0,6) ; ce qui se répète (morsure, éclair, marque) est bas.
+	"gadgetCharge": {"voix": 1, "par_image": 1, "priorite": 4, "gain": 0.35},
+	"levelUp": {"voix": 1, "par_image": 1, "priorite": 8, "gain": 0.5},
+	"land": {"voix": 1, "par_image": 1, "priorite": 6, "gain": 0.55},
+	"ultFreeze": {"voix": 1, "par_image": 1, "priorite": 8, "gain": 0.35},
+	"ultStrike": {"voix": 1, "par_image": 1, "priorite": 9, "gain": 0.8},
+	"ultBolt": {"voix": 3, "par_image": 2, "priorite": 5, "gain": 0.4},
+	"formEnd": {"voix": 1, "par_image": 1, "priorite": 5, "gain": 0.4},
+	"formHowl": {"voix": 1, "par_image": 1, "priorite": 7, "gain": 0.5},
+	"formBurst": {"voix": 1, "par_image": 1, "priorite": 8, "gain": 0.7},
+	"packSpawn": {"voix": 2, "par_image": 1, "priorite": 6, "gain": 0.45},
+	"bite": {"voix": 2, "par_image": 1, "priorite": 2, "gain": 0.22},
+	"parry": {"voix": 1, "par_image": 1, "priorite": 9, "gain": 0.7},
+	"block": {"voix": 2, "par_image": 1, "priorite": 7, "gain": 0.6},
+	"fissure": {"voix": 2, "par_image": 1, "priorite": 6, "gain": 0.6},
+	"mark": {"voix": 2, "par_image": 1, "priorite": 4, "gain": 0.3},
+	"axeCatch": {"voix": 1, "par_image": 1, "priorite": 5, "gain": 0.45},
+	"traitShot": {"voix": 1, "par_image": 1, "priorite": 7, "gain": 0.65},
+	"stigmate": {"voix": 2, "par_image": 1, "priorite": 6, "gain": 0.6},
+	"shade": {"voix": 1, "par_image": 1, "priorite": 6, "gain": 0.5},
+	"swap": {"voix": 1, "par_image": 1, "priorite": 6, "gain": 0.45},
+	"grace": {"voix": 1, "par_image": 1, "priorite": 7, "gain": 0.65},
+	"graceKill": {"voix": 1, "par_image": 1, "priorite": 7, "gain": 0.4},
+	"hailCall": {"voix": 1, "par_image": 1, "priorite": 6, "gain": 0.5},
+	"hail": {"voix": 2, "par_image": 1, "priorite": 6, "gain": 0.6},
+}
+## Sons que la vue Son joue SANS événement de simulation (elle LIT l'état, comme le HUD) : niveau et
+## priorité, et ce qui les déclenche (dit par la planche de sons). Voir son.gd, `_suivre_etat`.
+const SONS_VUE := {
+	"ultime_armement": {"gain": 0.4, "priorite": 8, "quand": "vue Son : attaque TENUE jauge pleine (player.superHold monte) ; coupé net si l'on relâche"},
+	"franchissement": {"gain": 0.3, "priorite": 4, "quand": "vue Son : le héros passe AU-DESSUS d'une rivière ou d'un obstacle bas (déplacement de classe, Bond)"},
+	"point_arbre": {"gain": 0.5, "priorite": 5, "quand": "vue Son : un point dépensé dans l'arbre au Grimoire (app.profil_change, rangs achetés en hausse)"},
 }
 ## Sons dont le représentant d'un groupe est choisi au poids (voir `poids`).
-const SONS_PESES := ["hit", "kill", "playerHurt", "enemyAttack", "boom", "slam", "spawnWarn", "coin"]
+const SONS_PESES := ["hit", "kill", "playerHurt", "enemyAttack", "boom", "slam", "spawnWarn", "coin", "ultBolt"]
 
 ## Événement de sim -> clé de son. Trois types dépendent de l'événement : voir `cle`.
 const ROUTES := {
 	"swing": "swing", "kill": "kill", "chain": "chain",
 	"dash": "dash", "dodge": "dodge", "dashNova": "dashNova", "dashReady": "dashReady",
-	"deflect": "deflect", "skill": "skill", "gadget": "gadget",
+	"deflect": "deflect", "gadget": "gadget",
 	"super": "super", "superTick": "superTick", "superEnd": "superEnd", "superReady": "superReady",
 	"playerHurt": "playerHurt", "playerDeath": "playerDeath",
-	"enemyAttack": "enemyAttack", "explode": "boom", "hazardCancel": "hazardCancel",
+	"enemyAttack": "enemyAttack", "hazardCancel": "hazardCancel",
 	"wallSlam": "slam", "chargerWall": "slam", "spawnWarn": "spawnWarn",
 	"bossPhase": "bossPhase", "bossSummon": "bossSummon",
 	"gold": "coin", "buy": "coin", "heal": "heal",
 	"boonGain": "boonGain", "equip": "equip", "roomClear": "roomClear", "doorsOpen": "doorsOpen",
 	"floorEnter": "floorEnter", "checkpoint": "checkpoint", "respawn": "checkpoint",
 	"choiceOpen": "choiceOpen", "victory": "victory", "gameOver": "gameOver",
-	# Charge de gadget rendue par un élite abattu : même accord bref que « Super prêt ».
-	"gadgetCharge": "superReady",
-	# Les trois ultimes de classe (combat V3, étape 2), avec les recettes qui existent. Leur
-	# lancement est l'événement `super` (ci-dessus). Sentence capitale : le temps qui se fige sonne
-	# l'accord « prêt », le fracas est une explosion, chaque éclair un éclair. Forme du Damné : la
-	# ruée est un dash, le hurlement un choc, l'embrasement une explosion, la fin celle d'un Super.
-	# Meute des Limbes : l'apparition est une invocation ; un limier tué meurt, un limier qui s'en va
-	# à la fin de sa durée sonne la fin d'un Super.
-	"ultFreeze": "superReady", "ultStrike": "boom", "ultBolt": "chain",
-	"formRush": "dash", "formHowl": "slam", "formBurst": "boom", "formEnd": "superEnd",
-	"allySpawn": "bossSummon", "allyDeath": "kill", "allyGone": "superEnd",
-	# Arbre de compétences (étape 3) : un niveau de classe passé sonne l'accord du checkpoint.
-	"levelUp": "checkpoint",
-	# Compétences neuves (étape 4), avec les recettes qui existent. Leur lancement est l'événement
-	# `skill` ou `gadget` (ci-dessus, recette de repli). Un coup paré (Contre-taille) ou bloqué (Garde
-	# de fer) sonne la parade ; la fissure de la Faille est un choc ; une marque posée et la hache
-	# rattrapée sonnent l'accord bref « prêt » ; une marque qui saute est un éclair ; la garde qui
-	# tombe sonne la fin d'un Super.
-	"parry": "deflect", "guardBlock": "deflect", "fissure": "slam", "marked": "dashReady",
-	"markJump": "chain", "axeCatch": "dashReady", "guardEnd": "superEnd",
+	# Charge rendue par un élite abattu : l'ancien accord « Super prêt » (la jauge PLEINE a désormais
+	# son propre signal, `ultime_pret` : c'est le moment de penser à tenir le bouton).
+	"gadgetCharge": "gadgetCharge",
+	# Les trois ultimes de classe (étape 2), chacun ses sons depuis l'étape 5. Leur lancement est
+	# l'événement `super` (ci-dessus : une recette par ultime). Sentence capitale : le temps figé,
+	# le fracas, un éclair par ennemi (une exécution sonne la lame qui tombe). Forme du Damné : la
+	# ruée garde le son du dash ; hurlement, embrasement et fin ont le leur. Meute des Limbes :
+	# apparition et morsure ; un limier tué meurt comme un ennemi, un limier qui s'en va à la fin de
+	# sa durée sonne la fin d'un Super.
+	"ultFreeze": "ultFreeze", "ultStrike": "ultStrike", "ultBolt": "ultBolt",
+	"formRush": "dash", "formHowl": "formHowl", "formBurst": "formBurst", "formEnd": "formEnd",
+	"allyBite": "bite", "allyDeath": "kill", "allyGone": "superEnd",
+	# Arbre de compétences (étape 3) : un niveau de classe passé a son arpège.
+	"levelUp": "levelUp",
+	# Saut du Bourreau : l'atterrissage (le décollage est l'événement `dash`, champ `move`).
+	"moveLand": "land",
+	# Compétences neuves (étapes 4 et 5) : une signature par compétence. Leur LANCEMENT est
+	# l'événement `skill` ou `gadget` (une recette pour la Hache, la Contre-taille, le Sillage, la
+	# Garde, le Leurre ; les autres gardent la recette de repli, ou sont couvertes : voir `cle`).
+	"parry": "parry", "guardBlock": "block", "fissure": "fissure", "marked": "mark",
+	"markJump": "chain", "axeCatch": "axeCatch", "guardEnd": "superEnd", "traitShot": "traitShot",
+	"shadeSwap": "swap", "grace": "grace", "graceKill": "graceKill", "hailCall": "hailCall", "hail": "hail",
 }
 ## Routes qui dépendent de l'événement : les clés possibles (la décision est dans `cle`).
 const ROUTES_CALCULEES := {
 	"hit": ["hit", "burn"], # brûlure : grésillement ; chaîne et mur : déjà portés par un autre son
 	"hazardFire": ["boom"], # sauf le possédé, qui émet déjà `explode` : un seul boum
 	"pickup": ["coin", "heal"],
+	"skill": ["skill"], # sauf les compétences dont un autre événement porte le son (SKILLS_COUVERTES)
+	"explode": ["boom", "stigmate", "shade"], # Stigmate qui explose, Ombre jumelle qui surgit : leur signature
+	"allySpawn": ["packSpawn"], # les limiers ; le leurre et l'ombre sont portés par `gadget` et `explode`
 }
+## Compétences dont le lancement (`skill`) est TU : un événement plus précis sonne au même instant —
+## traitShot (Trait de Nemrod), fissure (Faille), explode:ombre (Ombre jumelle), grace (Décollation),
+## hailCall (Grêle des Limbes).
+const SKILLS_COUVERTES := ["trait", "faille", "ombre", "grace", "grele"]
 const COUPS_COUVERTS := ["chain", "wall"]
 
 ## Silencieux À DESSEIN : spawn (couvert par spawnWarn), attackStart / castStart (couverts par
@@ -109,7 +152,6 @@ const SILENCIEUX := [
 	"spawn", "attackStart", "castStart", "cancel", "dashEnd", "projectileEnd", "hazard", "choiceClose", "wave",
 	"immune", # Gardien en transition de phase : retour visuel seulement
 	"moveShort", # déplacement raccourci au bord de l'eau : le son du dash est déjà parti, retour visuel seulement
-	"moveLand", # atterrissage du saut du Bourreau : onde visuelle seulement pour l'instant (un choc sourd reste à choisir)
 	"souls", # Âmes d'un élite : le son de mort de l'élite suffit
 	"treePoint", # point de compétence d'un Gardien vaincu pour la première fois : le checkpoint sonne déjà
 	"stash", # objet rangé au coffre : le clic du menu suffit
@@ -118,22 +160,29 @@ const SILENCIEUX := [
 	"hook", # crochet de la Chaîne d'Enfer qui harponne : le son d'impact (hit) le porte
 	"kitPulse", # impulsion d'un Totem de givre : les coups (hit) qu'elle inflige portent le son
 	"formStart", # entrée dans la Forme du Damné : le son du lancement (`super`) la porte
-	"allyBite", # morsure d'un limier : le son d'impact (hit) la porte
 	"allyHurt", # limier blessé : retour visuel seulement (le son de blessure est réservé au héros)
 	"parryStart", # Contre-taille : la taillade est portée par le son de la compétence (`skill`)
 	"parryEnd", # la garde qui s'éteint sans avoir paré : retour visuel seulement
 	"guardStart", # Garde de fer levée : le son de la compétence à charges (`gadget`) la porte
 	"axeTurn", # demi-tour de la Hache du supplice : retour visuel seulement
 	"sillageEnd", # fin du Sillage de braise : retour visuel seulement (une détonation émet `explode`)
-	"traitShot", # le Trait de Nemrod qui part : le son de la compétence (`skill`) le porte
+	"echo", # l'Ombre jumelle répète un coup : les coups (hit) qu'elle inflige portent le son
 ]
 
 # ---------------------------------------------------------------- clé de son -> recettes
 
 ## Sons à recette unique.
 const RECETTE_SIMPLE := {
-	"burn": "brulure", "dash": "dash", "dodge": "esquive", "dashReady": "dash_pret",
-	"deflect": "parade", "superEnd": "super_fin", "superReady": "super_pret",
+	"burn": "brulure", "dodge": "esquive", "dashReady": "dash_pret",
+	"deflect": "parade", "superEnd": "super_fin", "superReady": "ultime_pret", "gadgetCharge": "super_pret",
+	"levelUp": "niveau", "land": "saut_atterrissage",
+	"ultFreeze": "sentence_gel", "ultStrike": "sentence_fracas",
+	"formEnd": "forme_fin", "formHowl": "forme_hurlement", "formBurst": "forme_embrasement",
+	"packSpawn": "meute_apparition", "bite": "meute_morsure",
+	"parry": "parade_contre_taille", "block": "garde_blocage", "fissure": "faille_fissure", "mark": "marque",
+	"axeCatch": "hache_retour", "traitShot": "trait_tir", "stigmate": "stigmate_explosion",
+	"shade": "ombre_surgit", "swap": "ombre_echange", "grace": "decollation", "graceKill": "decollation_encore",
+	"hailCall": "grele_tir", "hail": "grele_chute",
 	"playerHurt": "blessure", "playerDeath": "mort_heros", "hazardCancel": "annulation",
 	"slam": "choc", "spawnWarn": "apparition", "bossPhase": "rugissement", "bossSummon": "invocation",
 	"heal": "soin", "doorsOpen": "portes", "checkpoint": "checkpoint", "choiceOpen": "choix",
@@ -141,9 +190,10 @@ const RECETTE_SIMPLE := {
 }
 ## Sons dont un champ de l'événement choisit le timbre : [champ, préfixe, valeurs, recette de repli].
 const RECETTE_PAR_CHAMP := {
-	"skill": ["skill", "competence_", ["chain", "bond", "brasier", "volee"], "competence"],
-	"gadget": ["gadget", "gadget_", ["bombe", "piege", "cri", "totem"], "gadget"],
-	"super": ["super", "super_", ["sentence", "nuee"], "super"],
+	"skill": ["skill", "competence_", ["chain", "bond", "brasier", "volee", "hachette", "riposte"], "competence"],
+	"gadget": ["gadget", "gadget_", ["bombe", "piege", "cri", "totem", "sillage", "garde", "leurre"], "gadget"],
+	"super": ["super", "super_", ["sentence", "nuee", "forme", "magie", "meute"], "super"],
+	"dash": ["move", "deplacement_", ["saut", "roulade"], "dash"], # le déplacement de la classe ; repli : le dash (et la ruée de forme)
 	"superTick": ["super", "super_coup_", ["sentence", "nuee"], "super_coup"],
 	"boonGain": ["rarity", "benediction_", ["commun", "rare", "epique"], "benediction_commun"],
 	"enemyAttack": ["enemy", "cri_", ["imp", "archer", "brute", "charger", "pyromancer", "necromancer", "summon", "pavois", "stalker", "boss", "bossRing", "cerbere", "minos", "colosse"], "cri_defaut"],
@@ -159,9 +209,11 @@ const RECETTES_COMPOSEES := {
 	"equip": ["equipement_0", "equipement_1", "equipement_2", "equipement_3"],
 	"roomClear": ["salle_nettoyee", "salle_gardien"],
 	"floorEnter": ["etage", "etage_gardien"],
+	"ultBolt": ["sentence_eclair", "sentence_execution"],
 }
-## Recettes que seuls les écrans demandent (`son.jouer("clic")`).
-const RECETTES_ECRANS := ["clic"]
+## Recettes jouées HORS événement de simulation : par les écrans (`son.jouer("clic")`), ou par la
+## vue Son elle-même quand elle lit l'état (SONS_VUE).
+const RECETTES_ECRANS := ["clic", "ultime_armement", "franchissement", "point_arbre"]
 
 const HAUTEUR_GARDIEN := 0.7
 ## Timbre de la cible : les grosses bêtes sonnent plus grave (champ `enemy` de hit / kill).
@@ -196,12 +248,17 @@ const STYLE_ZONE := {
 	"brasier": [1.2, 0.55, false],
 	"pyre": [1.2, 0.55, true], # cercle de la Pyromancienne qui s'embrase
 	"stalker": [1.25, 0.8, false], # frappe de lames du Traqueur : plus sèche et plus aiguë qu'une masse
+	# Souffles des compétences neuves qui gardent le boum commun (sans crépitement de feu) : braises
+	# du Sillage qui détonent (petites, aiguës), contrecoup de la Garde de fer, leurre piégé.
+	"sillage": [1.5, 0.35, false], "garde": [0.8, 1.0, false], "leurre": [1.1, 0.8, false],
 }
 ## Variantes rejouées autrement : [hauteur, gain] quand le champ nommé est vrai.
 const VARIANTE_FORTE := {
 	"slam": ["boss", 0.8, 1.2], "spawnWarn": ["elite", 0.8, 1.4],
 }
 const NOVA_DE_DASH := [1.2, 0.55] # la nova de dash (bénédiction) : petite sœur du gadget
+const MARQUE_DE_PROIE := 1.25 # hauteur de la marque de la Chasseresse (celle du Stigmate : 1)
+const TRAIT_LACHE_TOT := [1.15, 0.6] # Trait de Nemrod lâché avant la pleine charge : plus aigu, moins fort
 const GAIN_REAPPARITION := 0.7
 
 # ---------------------------------------------------------------- lecture d'un événement
@@ -232,6 +289,14 @@ static func cle(ev: Dictionary) -> String:
 			return "" if (kind is String and kind == "exploder") else "boom"
 		"pickup":
 			return "heal" if (kind is String and kind == "heal") else "coin"
+		"skill":
+			return "" if SKILLS_COUVERTES.has(ev.get("skill")) else "skill"
+		"explode":
+			if D6Js.truthy(ev.get("hero")) and kind is String and kind == "stigmate":
+				return "stigmate"
+			return "shade" if (D6Js.truthy(ev.get("hero")) and kind is String and kind == "ombre") else "boom"
+		"allySpawn":
+			return "" if kind is String else "packSpawn" # un allié qui a un genre (leurre, ombre) a déjà son son
 	return ROUTES.get(type, "")
 
 ## Coup lourd : frappe de dash, ou 3e coup du combo.
@@ -260,6 +325,8 @@ static func poids(cle_son: String, ev: Dictionary) -> float:
 			return 1.0 if D6Js.truthy(ev.get("elite")) else 0.0
 		"coin":
 			return 1.0 if ev.get("type") == "buy" else 0.0
+		"ultBolt":
+			return 1.0 if D6Js.truthy(ev.get("executed")) else 0.0
 	return 0.0
 
 ## Atténuation douce des sons lointains, relative au héros ; 1 si l'événement n'a pas de position.
@@ -341,6 +408,8 @@ static func parties(cle_son: String, ev: Dictionary, lourd: bool, hauteur: float
 			return [["salle_gardien" if D6Js.truthy(ev.get("boss")) else "salle_nettoyee", hauteur, 1.0]]
 		"floorEnter":
 			return [["etage_gardien" if D6Js.truthy(ev.get("isBoss")) else "etage", hauteur, 1.0]]
+		"ultBolt":
+			return [["sentence_execution" if D6Js.truthy(ev.get("executed")) else "sentence_eclair", hauteur, 1.0]]
 	if RECETTE_PAR_CHAMP.has(cle_son):
 		var regle: Array = RECETTE_PAR_CHAMP[cle_son]
 		var valeur = ev.get(regle[0])
@@ -363,6 +432,12 @@ static func _simple(cle_son: String, ev: Dictionary, hauteur: float) -> Array:
 			g = lerpf(GAIN_BLESSURE[0], GAIN_BLESSURE[1], clampf(nombre(ev.get("amount"), 0.0) / BLESSURE_REFERENCE, 0.0, 1.0))
 		"checkpoint":
 			g = GAIN_REAPPARITION if ev.get("type") == "respawn" else 1.0
+		"mark":
+			h *= MARQUE_DE_PROIE if ev.get("mark") == "proie" else 1.0
+		"traitShot":
+			if not D6Js.truthy(ev.get("full")):
+				h *= TRAIT_LACHE_TOT[0]
+				g = TRAIT_LACHE_TOT[1]
 	return [[RECETTE_SIMPLE[cle_son], h, g]]
 
 ## Coup du héros : tir (arc ou trait lourd), frappe de dash, ou coup du combo.

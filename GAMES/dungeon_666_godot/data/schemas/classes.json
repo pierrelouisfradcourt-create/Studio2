@@ -210,7 +210,10 @@
               "faille",
               "hachette",
               "proie",
-              "trait"
+              "trait",
+              "ombre",
+              "grace",
+              "grele"
             ]
           },
           "icon": { "type": "texte", "min": 1 },
@@ -255,7 +258,14 @@
           "vuln": { "type": "nombre", "min": 0 },
           "vulnMult": { "type": "nombre", "min": 0 },
           "aimBonus": { "type": "nombre", "min": 0 },
-          "minCharge": { "type": "nombre", "min": 0, "max": 1 }
+          "minCharge": { "type": "nombre", "min": 0, "max": 1 },
+          "life": { "type": "nombre", "min": 0.1 },
+          "echoMult": { "type": "nombre", "min": 0, "max": 1 },
+          "bodyRadius": { "type": "nombre", "min": 1 },
+          "executeBelow": { "type": "nombre", "min": 0, "max": 1 },
+          "executeMult": { "type": "nombre", "min": 1 },
+          "resetCd": { "type": "nombre", "min": 0 },
+          "delay": { "type": "nombre", "min": 0.4, "_note": "télégraphe d'une frappe à retardement : jamais moins de 0,4 s" }
         }
       }
     },

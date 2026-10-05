@@ -15,6 +15,10 @@ extends Node
 ##   D666_NOM    = préfixe des images (défaut : la classe)
 ##   D666_ETAGE  = étage de départ (défaut 7) ; D666_GRAINE = graine (défaut 11)
 ##   D666_SORTIE = dossier des images (défaut _dev/captures/lot_v3_competences)
+##   D666_LOT    = 5 : la QUATRIÈME compétence de la classe (étape 5 : ombre, grace, grele) dans le
+##                 premier emplacement, avec le kit de départ (KITS_5, INSTANTS_5). Le bot ne presse
+##                 pas deux fois un bouton en recharge : pour montrer la « Transposition », le banc
+##                 presse lui-même le bouton de l'Ombre une fois qu'elle est posée depuis 2 s.
 ##   <godot> --position -3000,-3000 --resolution 1600x900 --path . res://jeu/essai/competences.tscn
 ## SANS --headless (il faut un vrai rendu). Expose `partie`, comme les autres bancs.
 
@@ -24,6 +28,19 @@ const Bots = preload("res://outils/bots/bots.gd")
 const Arbre = preload("res://sim/tree.gd")
 const DONNEES := "user://essais"
 const KITS := {"revenant": ["sillage", "sceau", "riposte"], "bourreau": ["faille", "hachette", "garde"], "chasseresse": ["proie", "leurre", "trait"]}
+const KITS_5 := {"revenant": ["ombre", "lance", "nova"], "bourreau": ["grace", "bond", "cri"], "chasseresse": ["grele", "volee", "piege"]}
+const INSTANTS_5 := {
+	"revenant": [
+		["allySpawn:ombre", 4, "ombre_1_surgit"], ["echo", 4, "ombre_2_coup_repete"], ["allySpawn:ombre", 120, "ombre_3_plus_tard"], ["shadeSwap", 4, "ombre_4_echange"],
+	],
+	"bourreau": [
+		["grace", 3, "decollation_1_coup"], ["graceKill", 8, "decollation_2_encore"], ["kitPulse:grace", 4, "decollation_3_effroi"],
+	],
+	"chasseresse": [
+		["hailCall", 30, "grele_1_telegraphe"], ["hail", 3, "grele_2_chute"], ["hail", 24, "grele_3_apres"],
+	],
+}
+const ECHANGE_APRES := 2.0 # s : le banc presse le bouton de l'Ombre posée depuis ce temps (« Transposition »)
 const DUREE_MAX := 4200 # images : le banc se ferme de toute façon
 const CHARGE_VUE := 0.75 # part de la charge du Trait à laquelle l'arc bandé est pris en image
 const COUPS_D_ESSAI := {"parryStart": 10, "guardStart": 34} # images entre la garde levée et le coup d'essai du banc
@@ -61,6 +78,7 @@ var _coups: Array = [] # images restantes avant chaque coup d'essai
 var _vus := {}
 var _reste := 0
 var _sortie := ""
+var _instants: Array = []
 
 func _ready() -> void:
 	# Un essai ne touche jamais au vrai profil ni aux vrais réglages du joueur (jeu/profil.gd).
@@ -69,15 +87,17 @@ func _ready() -> void:
 	_classe = _env("D666_CLASSE", "revenant")
 	_nom = _env("D666_NOM", _classe)
 	_sortie = _env("D666_SORTIE", ProjectSettings.globalize_path("res://_dev/captures/lot_v3_competences"))
+	var lot5: bool = _env("D666_LOT", "") == "5"
+	_instants = (INSTANTS_5 if lot5 else INSTANTS)[_classe]
 	DirAccess.make_dir_recursive_absolute(_sortie)
 	app = Principal.instantiate()
 	add_child(app)
 	partie = app.partie
-	app.profil = _profil(_classe, _env("D666_CHOIX", ""))
+	app.profil = _profil(_classe, _env("D666_CHOIX", ""), (KITS_5 if lot5 else KITS)[_classe])
 	app.demarrer_descente(float(_env("D666_ETAGE", "7")), false, false, float(_env("D666_GRAINE", "11")))
 	partie.entrees = _lire_bot
 	partie.evenements.connect(_sur_evenements)
-	_reste = INSTANTS[_classe].size()
+	_reste = _instants.size()
 
 static func _env(nom: String, defaut: String) -> String:
 	var v := OS.get_environment(nom)
@@ -85,12 +105,12 @@ static func _env(nom: String, defaut: String) -> String:
 
 ## Profil d'essai : tout débloqué, la classe demandée, ses trois compétences neuves ; chaque
 ## amélioration demandée est prise, sa compétence au rang du choix.
-func _profil(classe: String, choix: String) -> Dictionary:
+func _profil(classe: String, choix: String, kit: Array) -> Dictionary:
 	var t: Dictionary = D6Data.create_tuning()
 	var m: Dictionary = D6Profile.create_profile(t)
 	for k in ["classes", "weapons", "skills", "gadgets"]:
 		m.unlocked[k] = t[k].keys()
-	m.loadout = {"classId": classe, "slots": KITS[classe]}
+	m.loadout = {"classId": classe, "slots": kit}
 	m.equipment.arme = D6Profile.starter_weapon(t, t.classes[classe].weapons[0])
 	m = D6Profile.sanitize_profile(m, t)
 	var st: Dictionary = Arbre.state(m, classe)
@@ -106,7 +126,11 @@ func _lire_bot() -> Dictionary:
 	if g.mode == "choice":
 		Bots.resolve_choice(g, "skilled")
 	g.player.hp = g.player.maxHp # le combat dure : PV rendus (parer et bloquer restent possibles)
-	return Bots.play("skilled", g, _mem)
+	var entree: Dictionary = Bots.play("skilled", g, _mem)
+	for a in g.allies: # « Transposition » : le second appui, que le bot ne fait pas (voir l'en-tête)
+		if a.kind == "ombre" and not a.dead and not a.swapped and a.def.get("swap") != null and a.lifeMax - a.life >= ECHANGE_APRES:
+			entree.skill1Pressed = true
+	return entree
 
 ## Clés sous lesquelles un événement est attendu : son type, et « type:genre » (le champ qui dit
 ## de quelle compétence il s'agit).
@@ -144,7 +168,7 @@ func _armer(cle: String) -> void:
 	if _vus.has(cle):
 		return
 	_vus[cle] = true
-	for instant in INSTANTS[_classe]:
+	for instant in _instants:
 		if instant[0] == cle:
 			_attente.append([instant[1], instant[2]])
 

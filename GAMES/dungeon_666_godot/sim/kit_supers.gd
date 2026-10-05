@@ -154,7 +154,7 @@ static func _sentence(game: Dictionary, s: Dictionary) -> void:
 			"kind": "super", "amount": st.damage * D6Js.nz(s.get("damageMult"), 1.0), "knockback": st.knockback, "stun": D6Js.nz(st.get("stun"), 0.0), "hitstop": st.hitstop, "canCrit": true, "shake": D6Js.nz(st.get("shake"), 0.0),
 		})
 		if hits > 0.0 and s.get("healPerHit") != null:
-			D6Combat.heal_player(game, hits * s.healPerHit, true) # « Dîme de sang » (amélioration de l'arbre)
+			D6Combat.heal_scaled(game, hits * s.healPerHit, true) # « Dîme de sang » (amélioration de l'arbre) : à l'échelle de l'étage
 		D6State.emit(game, "superTick", {"x": p.x, "y": p.y, "r": st.range, "super": "sentence", "angle": angle, "arc": st.arc * D6Data.DEG, "step": p.superStep})
 
 ## Les `n` ennemis visibles les plus proches à portée, du plus proche au plus lointain.

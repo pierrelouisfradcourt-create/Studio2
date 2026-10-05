@@ -39,6 +39,7 @@ const SOUFFLE_HEROS := {
 	"sillage": {"couleur": "", "secousse": 0.06, "zoom": 0.0},
 	"garde": {"couleur": "lance", "secousse": 0.4, "zoom": 0.03},
 	"leurre": {"couleur": "heroCape", "secousse": 0.3, "zoom": 0.0},
+	"ombre": {"couleur": "heroCape", "secousse": 0.2, "zoom": 0.0}, # étape 5 : l'Ombre jumelle surgit
 }
 ## Événements que fx.mjs ne traduit qu'en BANNIÈRE : ils sont au HUD, rien ici.
 const AU_HUD: Array[String] = ["roomClear", "checkpoint"]

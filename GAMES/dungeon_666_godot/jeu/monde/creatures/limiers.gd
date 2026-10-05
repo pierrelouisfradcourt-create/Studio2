@@ -1,6 +1,7 @@
 extends "res://jeu/monde/creatures/calque.gd"
 ## Calque des ALLIÉS, lus dans game.allies : les LIMIERS de la Meute des Limbes (ultime de la
-## Chasseresse) et, depuis l'étape 4, son LEURRE D'OS (`kind` : "leurre", dessiné par _leurre). Chaque limier vivant a son nœud, enfant de ce calque trié du fond vers l'avant avec
+## Chasseresse), depuis l'étape 4 son LEURRE D'OS (`kind` : "leurre", dessiné par _leurre) et, depuis
+## l'étape 5, l'OMBRE JUMELLE du Revenant (`kind` : "ombre", dessinée par _ombre_jumelle). Chaque limier vivant a son nœud, enfant de ce calque trié du fond vers l'avant avec
 ## les ennemis, le héros et les piliers (groupe Debout d'entites.gd). Un limier est UN lot de
 ## triangles (le pinceau) : 1 appel de dessin, ombre, barre de vie et repère de durée compris.
 ## Ce qui les distingue d'un ennemi au premier regard : la teinte FROIDE de l'héroïne (os clair,
@@ -65,8 +66,11 @@ func _peindre(etat: Dictionary) -> void:
 	var n: Node2D = etat.n
 	var r: float = a.r * VISUEL
 	p.commencer(n)
-	if a.kind == "leurre":
-		_leurre(a, r)
+	if a.kind == "leurre" or a.kind == "ombre":
+		if a.kind == "leurre":
+			_leurre(a, r)
+		else:
+			_ombre_jumelle(a, r)
 		p.finir()
 		p.ci = self
 		return
@@ -108,6 +112,33 @@ func _leurre(a: Dictionary, r: float) -> void:
 	var coin := Vector2(-largeur * 0.5, -r * 3.3)
 	p.rect(Rect2(coin - Vector2(1.0, 1.0), Vector2(largeur + 2.0, 5.0)), Color(NUIT, 0.75))
 	p.rect(Rect2(coin, Vector2(largeur * part, 3.0)), PAL.heroCape if part > 0.35 else OS_CLAIR)
+
+## OMBRE JUMELLE (Revenant, étape 5) : sa silhouette sans visage, en nuit cernée de la teinte froide du
+## héros, qui s'effiloche vers le sol (elle ne marche pas : elle flotte). Deux yeux clairs, une lame
+## claire : au repos le long du corps, FAUCHÉE devant elle le temps qu'elle répète un coup (lu :
+## a.biteT, a.face). À ses pieds, l'arc de durée des alliés. Intangible : ni barre de vie, ni cercle.
+func _ombre_jumelle(a: Dictionary, r: float) -> void:
+	var pied := Vector2(0.0, r * 0.35)
+	var souffle := 0.5 + 0.5 * sin(temps() * 5.0 + a.id)
+	var flotte := sin(temps() * 3.0 + a.id) * r * 0.18
+	p.ombre(pied, r * 1.15, r * 0.5, 0.55)
+	_duree(a, r)
+	var corps := Color(NUIT, 0.9)
+	p.lueur(Vector2(0.0, -r * 1.2), r * 2.0, PAL.heroCape, 0.3 + 0.25 * souffle)
+	p.pic(Vector2(-r * 0.8, -r * 1.25), Vector2(r * 0.8, -r * 1.25), pied + Vector2(flotte, 0.0), corps, PAL.heroCape, 1.5)
+	p.ellipse(Vector2(0.0, -r * 1.3), r * 0.82, r * 0.7, corps, PAL.heroCape, 1.5)
+	var tete := Vector2(0.0, -r * 2.15)
+	p.disque(tete, r * 0.5, corps, PAL.heroCape, 1.5)
+	for cote: float in [-1.0, 1.0]:
+		p.disque(tete + Vector2(cote * r * 0.19, 0.0), r * 0.1, OS_CLAIR, Pinceau.SANS)
+	var coup := clampf(nombre(a, "biteT") / 0.18, 0.0, 1.0)
+	var dir := Vector2.from_angle(a.face)
+	var main := Vector2(0.0, -r * 1.2) + dir * r * 0.7
+	if coup > 0.0:
+		p.taillade(Vector2(0.0, -r * 1.2), r * 3.4, a.face - 1.1, a.face + 1.1, r * 0.5, PAL.heroCape, coup)
+		p.baton(main, main + dir.rotated(lerpf(0.9, -0.9, coup)) * r * 2.2, Color.WHITE, 3.0, NUIT)
+	else:
+		p.baton(main, main + Vector2(dir.x * 0.4, 0.9).normalized() * r * 1.6, OS_CLAIR, 2.5, NUIT)
 
 ## Repère de durée : à ses pieds, un arc cyan qui se vide avec le temps qui lui reste.
 func _duree(a: Dictionary, r: float) -> void:

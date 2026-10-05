@@ -4,7 +4,8 @@ extends RefCounted
 ## mêmes graines, mêmes bots — les 70 parties dont l'égalité exacte avec le web a été prouvée
 ## ce jour-là (parite/LISEZ_MOI.md). Depuis, c'est Godot qui les enregistre ; les 8 parties
 ## terrain_* (combat V3, étape 1 bis), les 7 parties ultime_* (étape 2), les 6 parties arbre_*
-## (étape 3) et les 9 parties competences_* (étape 4) n'ont jamais existé sur le web.
+## (étape 3), les 9 parties competences_* (étape 4) et les 6 parties competences2_* (étape 5) n'ont
+## jamais existé sur le web.
 ##
 ## Une spec : voir references/partie.gd. Ajouter une partie = ajouter une ligne ici, puis
 ## l'enregistrer (references/enregistrer.gd -- <nom>). Les graines sont choisies pour que ce que
@@ -30,7 +31,28 @@ static func all() -> Array:
 	out.append_array(_ultimes())
 	out.append_array(_arbre())
 	out.append_array(_competences())
+	out.append_array(_competences_2())
 	return out
+
+## Combat V3, étape 5 : la QUATRIÈME compétence neuve de chaque classe (ombre, grace, grele). Six
+## parties : chacune jouée par le bot habile avec une amélioration, puis au hasard (visées, second
+## appui de l'Ombre, dash pendant un lancer) avec l'autre, au rang 5. Gardé par
+## tests/regles/v3_competences_2.gd (« références : le catalogue joue chacune des trois »).
+static func _competences_2() -> Array:
+	return [
+		{"name": "competences2_ombre_lame", "seed": 9201, "floor": 7, "kit": KITS[0], "slots": ["ombre", "lance", "nova"], "policy": "skilled", "seconds": 90,
+			"tree": {"ranks": {"ombre": 3}, "choices": {"ombre": "liee"}}},
+		{"name": "competences2_ombre_hasard_dagues", "seed": 9202, "floor": 9, "kit": KITS[1], "slots": ["ombre", "sillage", "riposte"], "policy": "hasard", "seconds": 90, "godMode": true,
+			"tree": {"ranks": {"ombre": 5}, "choices": {"ombre": "transposition"}}},
+		{"name": "competences2_grace_hache", "seed": 9203, "floor": 8, "kit": KITS[2], "slots": ["grace", "bond", "cri"], "policy": "skilled", "seconds": 90,
+			"tree": {"ranks": {"grace": 3}, "choices": {"grace": "ivresse"}}},
+		{"name": "competences2_grace_hasard_marteau", "seed": 9204, "floor": 10, "kit": KITS[3], "slots": ["grace", "faille", "garde"], "policy": "hasard", "seconds": 90, "godMode": true,
+			"tree": {"ranks": {"grace": 5}, "choices": {"grace": "effroi"}}},
+		{"name": "competences2_grele_arc", "seed": 9205, "floor": 7, "kit": KITS[4], "slots": ["grele", "volee", "piege"], "policy": "skilled", "seconds": 90,
+			"tree": {"ranks": {"grele": 3}, "choices": {"grele": "deluge"}}},
+		{"name": "competences2_grele_hasard_arbalete", "seed": 9206, "floor": 12, "kit": KITS[5], "slots": ["grele", "proie", "leurre"], "policy": "hasard", "seconds": 90, "godMode": true,
+			"tree": {"ranks": {"grele": 5}, "choices": {"grele": "givre"}}},
+	]
 
 ## Combat V3, étape 4 : les COMPÉTENCES NEUVES (sim/kit_neuves.gd). Neuf parties : pour chaque classe,
 ## ses trois compétences neuves dans les trois emplacements, jouées par le bot habile puis au

@@ -523,6 +523,13 @@ static func heal_player(game: Dictionary, amount: float, show) -> void:
 	if over > 0.0 and p.get("procs") != null:
 		fire_procs(game, "overheal", null, {"amount": over})
 
+## Soin que l'ARBRE DE COMPÉTENCES donne en PV (Soif, Dîme de sang, Moisson) : le nombre des données
+## vaut pour l'étage 1 ; en partie il suit les PV d'un héros équipé du niveau de l'étage
+## (D6Floors.floor_scaling : `hpGrowth`). Sans cela 6 PV valent 6 % de la vie à l'étage 1 et 0,5 % à
+## l'étage 325 (défaut d'échelle, corrigé à l'étape 5 : tests/regles/v3_profondeur.gd).
+static func heal_scaled(game: Dictionary, amount: float, show) -> void:
+	heal_player(game, amount * D6Floors.floor_scaling(game.tuning, game.run.floor).hpGrowth, show)
+
 ## Coup reçu pendant les i-frames : esquivé — et compté comme tel s'il l'est grâce à un dash.
 static func _dodge(game: Dictionary, src: Dictionary) -> void:
 	var p: Dictionary = game.player

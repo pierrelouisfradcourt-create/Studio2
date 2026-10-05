@@ -172,6 +172,30 @@ C'est le SEUL point d'entrée d'une vue. Elle y garde `app` et `partie`, et s'ab
 - Banc : `jeu/essai/competences.tscn` (`D666_CLASSE`, `D666_CHOIX`), captures dans
   `_dev/captures/lot_v3_competences/`.
 
+## Quatrième compétence de chaque classe et sons du combat V3 (étape 5)
+
+- **Ombre jumelle** (Revenant) : un allié de `game.allies`, `kind` `"ombre"`, marqué `ghost`
+  (intangible) : `{x, y, r, life, lifeMax, face, biteT (éclat du coup qu'elle répète), swapped}` ;
+  dessiné par `creatures/limiers.gd` (`_ombre_jumelle`). `D6Loadout.slot_state(game, i)` rend
+  `active` / `activeFrac` tant qu'elle est debout. Événements : `allySpawn {kind: "ombre"}`,
+  `explode {hero, kind: "ombre"}` (elle surgit), `echo {id, x, y, angle, arc, range}` (elle répète
+  un coup), `shadeSwap {x0, y0, x1, y1}` (« Transposition »), `allyGone {kind: "ombre", reason}`.
+- **Décollation** (Bourreau) : aucun état. Événements : `grace {x, y, r, angle}` (le coup, à son
+  point d'impact), `graceKill {x, y, kills, slot}` (il a tué : la recharge est tombée),
+  `kitPulse {kind: "grace"}` (« Effroi »).
+- **Grêle des Limbes** (Chasseresse) : zone `grele` de `room.kitFx.zones` `{x, y, r, t, delay, wave,
+  waves, interval}` — le TÉLÉGRAPHE allié, dessiné par `zones_heros.gd` (`_grele`). Événements :
+  `hailCall {x, y, tx, ty, r, delay}` (le tir vers le ciel), `hail {x, y, r, wave, last}` (chaque chute).
+- Pictogrammes neufs : `ombre`, `grace`, `grele`. Effets : `jeu/effets/competences.gd`.
+- L'événement `dash` porte `move` (`"dash"` | `"saut"` | `"roulade"`) : le son du déplacement de la classe.
+- **Son.** Chaque événement de la simulation est routé ou silencieux à dessein (`jeu/son/routage.gd`,
+  gardé par `jeu/son/test_son.gd`). Trois sons n'ont PAS d'événement : la vue Son lit l'état à chaque
+  image de physique (`son.gd`, `_suivre_etat` ; table `Routage.SONS_VUE`) — `ultime_armement`
+  (`player.superHold` monte ; coupé si l'on relâche), `franchissement` (`D6Player.crossing` et
+  `D6Physics.low_at`), `point_arbre` (signal `app.profil_change` : les rangs achetés de
+  `app.profil.tree` ont augmenté). Aucune règle : elle lit, comme le HUD.
+- Banc : `jeu/essai/competences.tscn` avec `D666_LOT=5` ; captures dans `_dev/captures/lot_v3_lot5/`.
+
 ## Signaux
 
 - `partie.evenements(liste: Array)` : les événements de simulation de l'image (`{type, tick, …}`),

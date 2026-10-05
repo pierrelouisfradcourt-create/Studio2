@@ -29,6 +29,8 @@ extends RefCounted
 ## (son champ `lure` = {range, ratio} remplace distractRange / distractRatio), un tir s'y arrête,
 ## une zone le blesse. Il n'est PAS un ultime : il ne tient pas la jauge, ne bloque pas le lancer
 ## (hounds, any_hound), et son pas est joué par Neuves.tick_ally.
+## L'OMBRE JUMELLE du Revenant (étape 5) y vit aussi, marquée `ghost` : INTANGIBLE — aucun ennemi ne
+## se tourne vers elle, aucun tir ne s'y arrête, rien ne la blesse (_lure, block_shot, hurt).
 
 const SPREAD := 0.9 # rad entre deux limiers à l'apparition (derrière l'héroïne, en éventail)
 const SPAWN_RINGS := [1.0, 0.66, 0.33] # parts de spawnDist essayées, du plus loin au plus près
@@ -266,7 +268,7 @@ static func _separate(game: Dictionary) -> void:
 
 ## Blesse un limier (coup d'ennemi, tir, zone). Rend true s'il était vivant.
 static func hurt(game: Dictionary, h: Dictionary, amount: float, source) -> bool:
-	if h.dead:
+	if h.dead or D6Js.truthy(h.get("ghost")):
 		return false
 	var dmg: float = maxf(1.0, D6Js.jround(amount))
 	h.hp -= dmg
@@ -285,7 +287,7 @@ static func _lure(game: Dictionary, e: Dictionary, s: Dictionary):
 	var best = null
 	var best_d := INF
 	for h in game.allies:
-		if h.dead:
+		if h.dead or D6Js.truthy(h.get("ghost")):
 			continue
 		# Portée d'attirance de CET allié : celle des limiers, ou la sienne (`lure` du leurre).
 		var lure = h.get("lure")
@@ -327,7 +329,7 @@ static func distract(game: Dictionary, e: Dictionary, def: Dictionary) -> bool:
 ## blesse et s'y arrête (rend true).
 static func block_shot(game: Dictionary, pr: Dictionary, ox: float, oy: float) -> bool:
 	for h in game.allies:
-		if h.dead:
+		if h.dead or D6Js.truthy(h.get("ghost")):
 			continue
 		var rr: float = pr.r + h.r
 		if D6Geo.point_seg_dist2(h.x, h.y, ox, oy, pr.x, pr.y) < rr * rr:

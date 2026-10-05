@@ -30,6 +30,8 @@ const EXTRA_FIELDS := [
 	# étape 4 : améliorations des compétences neuves (sim/kit_neuves.gd) et des variantes du Bourreau
 	"contagion", "healOnBlast", "refund", "mirror", "aftershock", "aftershockMult", "fissureTime", "spin", "spinRadius", "spinMult", "spinEvery",
 	"thorns", "thornStun", "burstMult", "burstRadius", "burstCap", "jumps", "jumpRange", "blastStun", "fear", "hpMult",
+	# étape 5 : améliorations de la quatrième compétence de chaque classe (ombre, grace, grele)
+	"follow", "followSpeed", "swap", "waves", "waveMult",
 ]
 
 # ---------------------------------------------------------------- lecture des données

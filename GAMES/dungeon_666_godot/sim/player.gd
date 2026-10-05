@@ -460,6 +460,7 @@ static func _update_attack(game: Dictionary, dt: float) -> void:
 		# Arme à distance : les traits partent au début de l'actif (pas de balayage ni de parade).
 		if D6Js.truthy(shot):
 			D6KitShots.fire_weapon_shots(game, a)
+		Neuves.on_swing(game, a) # Ombre jumelle (étape 5) : elle répète le coup de sa place
 	if a.phase == "active":
 		vx += a.dirX * a.lungeV
 		vy += a.dirY * a.lungeV
@@ -575,7 +576,7 @@ static func _start_dash(game: Dictionary) -> void:
 	p.stateTime = 0.0
 	game.hitstop = 0.0
 	game.telemetry.dashes += 1.0
-	D6State.emit(game, "dash", {"x": p.x, "y": p.y, "dirX": dx, "dirY": dy, "charges": p.dashCharges})
+	D6State.emit(game, "dash", {"x": p.x, "y": p.y, "dirX": dx, "dirY": dy, "charges": p.dashCharges, "move": move_kind(game)})
 	D6Combat.fire_procs(game, "dash") # une charge de dash dépensée (déflagration, éclair… : combat)
 
 ## Vitesse du déplacement de classe : sa distance (× la statistique de classe) sur sa durée.
@@ -880,6 +881,6 @@ static func _colere_tick(game: Dictionary, dt: float, s: Dictionary) -> void:
 			hits += 1.0
 			D6KitGadgets.draw_in(game, e, s) # amélioration « Œil du cyclone » : aspire
 		if hits > 0.0 and s.get("healPerHit") != null:
-			D6Combat.heal_player(game, hits * s.healPerHit, true) # amélioration « Soif »
+			D6Combat.heal_scaled(game, hits * s.healPerHit, true) # amélioration « Soif » : à l'échelle de l'étage
 		D6Projectiles.destroy_enemy_projectiles_in_circle(game, p.x, p.y, s.radius)
 		D6State.emit(game, "superTick", {"x": p.x, "y": p.y, "r": s.radius})

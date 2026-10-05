@@ -52,8 +52,8 @@ static func update_zones(game: Dictionary, dt: float) -> void:
 				_piege(game, z)
 			"totem":
 				_totem(game, z, dt)
-			"faille":
-				Neuves.zone(game, z) # compétence neuve (étape 4) : réplique, fissure ouverte
+			"faille", "grele":
+				Neuves.zone(game, z) # compétences neuves : réplique et fissure ouverte ; grêle à retardement (étape 5)
 	D6Projectiles.compact(store.zones)
 
 ## Objet lancé en cloche : rend true à l'atterrissage (position posée sur la cible).

@@ -431,6 +431,10 @@ func _echantillons_heros() -> Array:
 		{"type": "kill", "id": 5.0, "x": 560.0, "y": 400.0, "enemy": "gardien", "elite": false, "boss": true},
 		{"type": "chain", "x0": 560.0, "y0": 400.0, "x1": 620.0, "y1": 420.0},
 		{"type": "dash", "x": 500.0, "y": 400.0, "dirX": 1.0, "dirY": 0.0},
+		{"type": "dash", "x": 500.0, "y": 400.0, "dirX": 1.0, "dirY": 0.0, "move": "dash"},
+		{"type": "dash", "x": 500.0, "y": 400.0, "dirX": 1.0, "dirY": 0.0, "move": "saut"},
+		{"type": "dash", "x": 500.0, "y": 400.0, "dirX": 1.0, "dirY": 0.0, "move": "roulade"},
+		{"type": "moveLand", "x": 500.0, "y": 400.0, "r": 80.0, "move": "saut", "pushed": 2.0},
 		{"type": "dodge", "x": 500.0, "y": 400.0},
 		{"type": "dashNova", "x": 500.0, "y": 400.0, "r": 90.0},
 		{"type": "dashReady", "charges": 2.0},
@@ -439,6 +443,17 @@ func _echantillons_heros() -> Array:
 		{"type": "guardBlock", "x": 500.0, "y": 400.0, "srcX": 540.0, "srcY": 400.0, "amount": 24.0},
 		{"type": "fissure", "x": 500.0, "y": 400.0, "angle": 0.0, "length": 360.0, "width": 68.0},
 		{"type": "marked", "id": 3.0, "x": 560.0, "y": 400.0, "mark": "proie", "time": 6.0},
+		{"type": "marked", "id": 3.0, "x": 560.0, "y": 400.0, "mark": "stigmate", "time": 6.0},
+		{"type": "traitShot", "x": 500.0, "y": 400.0, "angle": 0.0, "charge": 1.0, "full": true},
+		{"type": "traitShot", "x": 500.0, "y": 400.0, "angle": 0.0, "charge": 0.3, "full": false},
+		{"type": "explode", "x": 560.0, "y": 400.0, "r": 110.0, "hero": true, "kind": "stigmate"},
+		{"type": "explode", "x": 500.0, "y": 400.0, "r": 90.0, "hero": true, "kind": "ombre"},
+		{"type": "explode", "x": 500.0, "y": 400.0, "r": 70.0, "hero": true, "kind": "sillage"},
+		{"type": "shadeSwap", "x0": 500.0, "y0": 400.0, "x1": 700.0, "y1": 400.0},
+		{"type": "grace", "x": 570.0, "y": 400.0, "r": 60.0, "angle": 0.0},
+		{"type": "graceKill", "x": 500.0, "y": 400.0, "kills": 1.0, "slot": 0.0},
+		{"type": "hailCall", "x": 500.0, "y": 400.0, "tx": 700.0, "ty": 400.0, "r": 110.0, "delay": 0.9},
+		{"type": "hail", "x": 700.0, "y": 400.0, "r": 110.0, "wave": 1.0, "last": true},
 		{"type": "markJump", "x0": 560.0, "y0": 400.0, "x1": 620.0, "y1": 420.0},
 		{"type": "axeCatch", "x": 500.0, "y": 400.0},
 		{"type": "guardEnd", "x": 500.0, "y": 400.0},
@@ -448,9 +463,9 @@ func _echantillons_heros() -> Array:
 		{"type": "playerHurt", "x": 500.0, "y": 400.0, "amount": 14.0, "source": "imp"},
 		{"type": "playerDeath", "x": 500.0, "y": 400.0, "source": "arrow"},
 	]
-	for style in [null, "chain", "bond", "brasier", "volee"]:
+	for style in [null, "chain", "bond", "brasier", "volee", "hachette", "riposte"]:
 		out.append({"type": "skill", "x": 500.0, "y": 400.0, "skill": style})
-	for style in [null, "bombe", "piege", "cri", "totem"]:
+	for style in [null, "bombe", "piege", "cri", "totem", "sillage", "garde", "leurre"]:
 		out.append({"type": "gadget", "x": 500.0, "y": 400.0, "gadget": style})
 	for style in [null, "sentence", "nuee"]:
 		out.append({"type": "super", "x": 500.0, "y": 400.0, "super": style})
@@ -462,6 +477,8 @@ func _echantillons_heros() -> Array:
 		{"type": "ultFreeze", "x": 500.0, "y": 400.0, "time": 0.3},
 		{"type": "ultStrike", "x": 500.0, "y": 400.0, "r": 1700.0, "hits": 3.0, "executed": 1.0},
 		{"type": "ultBolt", "id": 3.0, "x": 560.0, "y": 400.0, "executed": true},
+		{"type": "ultBolt", "id": 4.0, "x": 600.0, "y": 400.0, "executed": false},
+		{"type": "allyBite", "id": 7.0, "x": 520.0, "y": 430.0, "tx": 540.0, "ty": 430.0, "angle": 0.0},
 		{"type": "formRush", "x0": 300.0, "y0": 400.0, "x": 500.0, "y": 400.0, "width": 70.0},
 		{"type": "formHowl", "x": 500.0, "y": 400.0, "r": 180.0},
 		{"type": "formBurst", "x": 500.0, "y": 400.0, "r": 210.0, "frac": 0.5, "amount": 95.0},

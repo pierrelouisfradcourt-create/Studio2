@@ -162,7 +162,7 @@ static func _talisman(g: Dictionary, stat: String, value: float) -> void:
 # ---------------------------------------------------------------- arbre : nœuds, rangs, exclusion
 
 static func _tests_arbre(h) -> void:
-	h.test("arbre : huit compétences par classe, dont trois neuves, chacune à son étage et dans sa table", func(): _a_noeuds(h))
+	h.test("arbre : neuf compétences par classe (étape 5), dont les trois neuves de l'étape 4, chacune à son étage et dans sa table", func(): _a_noeuds(h))
 	h.test("arbre : une compétence neuve se débloque au rang 1 de son nœud et devient plaçable", func(): _a_debloque(h))
 	h.test("données : chaque sorte (kind) de compétence a sa règle, chaque sorte neuve a sa compétence", func(): _a_sortes(h))
 	for class_id in NEUVES:
@@ -175,7 +175,7 @@ static func _a_noeuds(h) -> void:
 	var t := _base()
 	for class_id in NEUVES:
 		var c: Dictionary = t.classes[class_id]
-		h.egal((c.skills + c.gadgets).size(), 8, "%s : huit compétences" % class_id)
+		h.egal((c.skills + c.gadgets).size(), 9, "%s : neuf compétences (la quatrième neuve : tests/regles/v3_competences_2.gd)" % class_id)
 		for id in NEUVES[class_id]:
 			var n = Arbre.skill_node(t, class_id, id)
 			h.ok(n != null and (c.skills + c.gadgets).has(id), "%s / %s : dans la liste de la classe, avec son nœud" % [class_id, id])
@@ -195,7 +195,7 @@ static func _a_sortes(h) -> void:
 	for table in SORTES_D_AVANT:
 		for id in t[table]:
 			var kind: String = t[table][id].kind
-			h.ok(SORTES_D_AVANT[table].has(kind) or neuves[table].has(kind), "%s.%s : la sorte « %s » n'est jouée par aucune règle" % [table, id, kind])
+			h.ok(SORTES_D_AVANT[table].has(kind) or neuves[table].has(kind) or (table == "skills" and Neuves.SKILLS_2.has(kind)), "%s.%s : la sorte « %s » n'est jouée par aucune règle" % [table, id, kind])
 			if neuves[table].has(kind):
 				vues.append(kind)
 				h.egal(_classe(id) != "", true, "%s : une compétence de sorte neuve est dans la liste d'une classe" % id)

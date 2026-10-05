@@ -69,4 +69,6 @@ func _declencheurs() -> Dictionary:
 			out[nom] = texte if not out.has(nom) else out[nom] + " ; " + texte
 	for nom in Routage.RECETTES_ECRANS:
 		out[nom] = "écrans : son.jouer(\"%s\")" % nom
+	for nom in Routage.SONS_VUE:
+		out[nom] = "%s (%.2f)" % [Routage.SONS_VUE[nom].quand, Routage.SONS_VUE[nom].gain]
 	return out

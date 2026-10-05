@@ -94,6 +94,14 @@ const CAS: Array[Dictionary] = [
 	{"type": "guardEnd"},
 	{"type": "traitShot", "angle": 0.0, "charge": 1.0, "full": true},
 	{"type": "traitShot", "angle": 0.6, "charge": 0.3, "full": false},
+	# Étape 5 : la quatrième compétence de chaque classe.
+	{"type": "explode", "r": 90.0, "hero": true, "kind": "ombre"},
+	{"type": "echo", "id": 9025.0, "angle": 0.4, "arc": 2.4, "range": 84.0},
+	{"type": "shadeSwap", "segment": Vector2(120.0, 30.0)},
+	{"type": "grace", "r": 60.0, "angle": 0.0},
+	{"type": "graceKill", "kills": 2.0, "slot": 0.0},
+	{"type": "hailCall", "cible": Vector2(40.0, 0.0), "r": 110.0, "delay": 0.9},
+	{"type": "hail", "r": 110.0, "wave": 1.0, "last": true},
 ]
 
 ## Les cas dont le type est dans `types` (tous si vide), posés en grille autour de `centre`.

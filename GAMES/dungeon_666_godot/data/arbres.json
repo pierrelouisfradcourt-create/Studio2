@@ -1,5 +1,5 @@
 {
-  "_note": "L'ARBRE DE COMPÉTENCES (combat V3, étape 3), PERMANENT, un par classe. Tous les nombres sont des PROPOSITIONS à juger par Pierre. EXPÉRIENCE : `xp` par ennemi tué (kill), par élite, par Gardien, multipliée par 1 + depthStep × (section − 1), jamais plus que depthCap ; rien en arène d'essai ni à l'entraînement, rien pour une invocation. NIVEAUX : de 1 à maxLevel ; passer du niveau N au suivant demande curve.base + curve.perLevel × (N − 1). POINTS : pointsPerLevel par niveau gagné, pointsPerGuardian par modèle de Gardien vaincu pour la première fois avec la classe. ÉTAGES (`tiers`) : un étage s'ouvre quand `need` points ont été dépensés dans la classe ; `tier` d'un nœud = son rang dans cette liste (0 = base). NŒUDS : `skill` (une compétence de classes.json : skillRanks rangs ; le rang 1 la DÉBLOQUE avec les nombres de classes.json, `ranks` donne chaque nombre amélioré aux rangs 2, 3, 4, 5 ; au rang choiceRank, DEUX améliorations exclusives `choices` : `set` remplace des nombres de la compétence, `text` les cite par {champ}) ; `passive` et `move` (maxRank rangs de `perRank` sur la statistique `stat`, ou un `proc` lu par les règles ; `text` cite le total par {v}, en pour cent si `pct`) ; `ultimate` (`ranks` : chaque nombre de l'ultime de la classe aux rangs 1, 2…). `labels` : comment se dit chaque nombre d'un rang ({v}) ; `pctFields` : ceux qui s'écrivent en pour cent. RESPÉCIALISATION : tout rendre coûte respec.base + respec.perPoint × points dépensés, en or. `fullyBuyable` faux : l'arbre de la classe coûte EXPRÈS plus de points qu'un héros n'en aura jamais (niveau maximum + tous les Gardiens) : il faut choisir (gardé par tests/regles/donnees.gd). Ajouter une compétence : une entrée dans classes.json (et dans la liste de sa classe), un nœud ici. ÉTAPE 4 : huit compétences par classe (les cinq d'avant + trois neuves, sim/kit_neuves.gd) ; la Chaîne et la Bombe ont une version par classe : le rang 1 est commun (classes.json), les rangs du Bourreau et une amélioration sur deux diffèrent (Revenant : Ferrage ou Croc de boucher, Grappe ou Poix ardente ; Bourreau : Chaîne traversante ou Rafle, Fumigène ou Baril).",
+  "_note": "L'ARBRE DE COMPÉTENCES (combat V3, étape 3), PERMANENT, un par classe. Tous les nombres sont des PROPOSITIONS à juger par Pierre. EXPÉRIENCE : `xp` par ennemi tué (kill), par élite, par Gardien, multipliée par 1 + depthStep × (section − 1), jamais plus que depthCap ; rien en arène d'essai ni à l'entraînement, rien pour une invocation. NIVEAUX : de 1 à maxLevel ; passer du niveau N au suivant demande curve.base + curve.perLevel × (N − 1). POINTS : pointsPerLevel par niveau gagné, pointsPerGuardian par modèle de Gardien vaincu pour la première fois avec la classe. ÉTAGES (`tiers`) : un étage s'ouvre quand `need` points ont été dépensés dans la classe ; `tier` d'un nœud = son rang dans cette liste (0 = base). NŒUDS : `skill` (une compétence de classes.json : skillRanks rangs ; le rang 1 la DÉBLOQUE avec les nombres de classes.json, `ranks` donne chaque nombre amélioré aux rangs 2, 3, 4, 5 ; au rang choiceRank, DEUX améliorations exclusives `choices` : `set` remplace des nombres de la compétence, `text` les cite par {champ}) ; `passive` et `move` (maxRank rangs de `perRank` sur la statistique `stat`, ou un `proc` lu par les règles ; `text` cite le total par {v}, en pour cent si `pct`) ; `ultimate` (`ranks` : chaque nombre de l'ultime de la classe aux rangs 1, 2…). `labels` : comment se dit chaque nombre d'un rang ({v}) ; `pctFields` : ceux qui s'écrivent en pour cent. SOINS : un soin donné en PV par une amélioration (`healPerHit`, `healOnBlast`) vaut pour l'étage 1 ; en partie il suit les PV d'un héros équipé du niveau de l'étage (D6Combat.heal_scaled). RESPÉCIALISATION : tout rendre coûte respec.base + respec.perPoint × points dépensés, en or. `fullyBuyable` faux : l'arbre de la classe coûte EXPRÈS plus de points qu'un héros n'en aura jamais (niveau maximum + tous les Gardiens) : il faut choisir (gardé par tests/regles/donnees.gd). Ajouter une compétence : une entrée dans classes.json (et dans la liste de sa classe), un nœud ici. ÉTAPE 4 : huit compétences par classe (les cinq d'avant + trois neuves, sim/kit_neuves.gd) ; la Chaîne et la Bombe ont une version par classe : le rang 1 est commun (classes.json), les rangs du Bourreau et une amélioration sur deux diffèrent (Revenant : Ferrage ou Croc de boucher, Grappe ou Poix ardente ; Bourreau : Chaîne traversante ou Rafle, Fumigène ou Baril).",
   "tree": {
     "maxLevel": 30,
     "xp": { "kill": 1, "elite": 6, "guardian": 60, "depthStep": 0.25, "depthCap": 4 },
@@ -31,7 +31,16 @@
       "executeBelow": "exécute sous {v} % de vie",
       "count": "{v} limiers"
     },
-    "pctFields": ["vulnMult", "executeBelow", "chillMult", "surgeMult", "refund", "aftershockMult", "spinMult"],
+    "pctFields": [
+      "vulnMult",
+      "executeBelow",
+      "chillMult",
+      "surgeMult",
+      "refund",
+      "aftershockMult",
+      "spinMult",
+      "waveMult"
+    ],
     "classes": {
       "revenant": {
         "fullyBuyable": false,
@@ -175,7 +184,7 @@
               {
                 "id": "moisson",
                 "name": "Moisson",
-                "text": "Quand le marqué explose : +{healOnBlast} PV, et la recharge du Stigmate est réduite de {refund} %.",
+                "text": "Quand le marqué explose : +{healOnBlast} PV (à l'échelle de l'étage), et la recharge du Stigmate est réduite de {refund} %.",
                 "set": { "healOnBlast": 6, "refund": 0.5 }
               }
             ]
@@ -217,7 +226,7 @@
               {
                 "id": "soif",
                 "name": "Soif",
-                "text": "Chaque ennemi touché par le tourbillon vous rend {healPerHit} PV.",
+                "text": "Chaque ennemi touché par le tourbillon vous rend {healPerHit} PV (à l'échelle de l'étage).",
                 "set": { "healPerHit": 1 }
               }
             ]
@@ -240,6 +249,27 @@
                 "name": "Représailles",
                 "text": "Parade réussie : recharge réduite de {refund} %, et +{surgeMult} % de dégâts pendant {surge} s.",
                 "set": { "refund": 0.75, "surge": 4, "surgeMult": 0.3 }
+              }
+            ]
+          },
+          {
+            "id": "ombre",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "ombre",
+            "ranks": { "damage": [26, 30, 34, 38], "cooldown": [13.5, 13, 12.5, 12] },
+            "choices": [
+              {
+                "id": "liee",
+                "name": "Ombre liée",
+                "text": "L'ombre ne reste plus où il l'a laissée : elle le SUIT, à {follow} u de lui, et ne se dissipe plus quand il s'éloigne.",
+                "set": { "follow": 44, "followSpeed": 520 }
+              },
+              {
+                "id": "transposition",
+                "name": "Transposition",
+                "text": "Un second appui tant que l'ombre est là : il ÉCHANGE sa place avec elle, invulnérable {swap} s. Une fois par ombre.",
+                "set": { "swap": 0.4 }
               }
             ]
           },
@@ -481,7 +511,7 @@
               {
                 "id": "soif",
                 "name": "Dîme de sang",
-                "text": "Chaque ennemi frappé par une taillade ou le fracas vous rend {healPerHit} PV.",
+                "text": "Chaque ennemi frappé par une taillade ou le fracas vous rend {healPerHit} PV (à l'échelle de l'étage).",
                 "set": { "healPerHit": 4 }
               }
             ]
@@ -504,6 +534,27 @@
                 "name": "Contrecoup",
                 "text": "À la fin de la garde, une onde rend {burstMult} fois les dégâts encaissés ({burstCap} au plus) à {burstRadius} u.",
                 "set": { "burstMult": 1.5, "burstCap": 120, "burstRadius": 170 }
+              }
+            ]
+          },
+          {
+            "id": "grace",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "grace",
+            "ranks": { "damage": [42, 48, 54, 60], "cooldown": [8.5, 8, 7.5, 7] },
+            "choices": [
+              {
+                "id": "ivresse",
+                "name": "Ivresse du billot",
+                "text": "Chaque coup qui tue l'enivre : +{surgeMult} % de dégâts pendant {surge} s.",
+                "set": { "surge": 4, "surgeMult": 0.3 }
+              },
+              {
+                "id": "effroi",
+                "name": "Effroi",
+                "text": "Chaque coup qui tue glace les témoins : les ennemis à {blastRadius} u de la victime sont étourdis {blastStun} s.",
+                "set": { "blastRadius": 170, "blastStun": 1.2 }
               }
             ]
           },
@@ -750,6 +801,27 @@
                 "name": "Trait vif",
                 "text": "L'arc se bande en {castTime} s ; le trait ne porte plus qu'à {range} u.",
                 "set": { "castTime": 0.45, "range": 560 }
+              }
+            ]
+          },
+          {
+            "id": "grele",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "grele",
+            "ranks": { "damage": [62, 69, 76, 83], "cooldown": [7.6, 7.2, 6.8, 6.4] },
+            "choices": [
+              {
+                "id": "deluge",
+                "name": "Déluge",
+                "text": "La grêle retombe {waves} fois au même endroit, toutes les {interval} s ; les suivantes à {waveMult} % des dégâts.",
+                "set": { "waves": 3, "interval": 0.5, "waveMult": 0.5 }
+              },
+              {
+                "id": "givre",
+                "name": "Givre des Limbes",
+                "text": "Des traits de glace : ce qu'ils touchent est ralenti de {chillMult} % pendant {chill} s.",
+                "set": { "chill": 3, "chillMult": 0.5 }
               }
             ]
           },

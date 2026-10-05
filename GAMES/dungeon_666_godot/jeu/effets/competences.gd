@@ -5,6 +5,8 @@ extends RefCounted
 ##   Revenant     parryStart, parry, parryEnd (Contre-taille), marked (Stigmate), sillageEnd
 ##   Bourreau     fissure (Faille), axeTurn, axeCatch (Hache du supplice), guardStart, guardBlock, guardEnd
 ##   Chasseresse  marked, markJump (Marque de la proie), traitShot (Trait de Nemrod)
+## Étape 5 (la quatrième de chaque classe) : echo, shadeSwap (Ombre jumelle), grace, graceKill
+## (Décollation), hailCall, hail (Grêle des Limbes).
 ## Les souffles (Stigmate, braises, contrecoup, leurre piégé) passent par l'événement `explode` de
 ## effets.gd, le leurre par les événements d'alliés d'ultimes.gd, les impulsions par `kitPulse`.
 ## Teintes : celles du héros, FROIDES (cyan, écume, blanc), jamais le rouge des dangers ; la marque
@@ -28,6 +30,8 @@ static func table(fx: Node) -> Dictionary:
 		"fissure": _fissure.bind(fx), "axeTurn": _demi_tour.bind(fx), "axeCatch": _hache_rattrapee.bind(fx),
 		"guardStart": _bouclier_leve.bind(fx), "guardBlock": _bouclier_touche.bind(fx), "guardEnd": _bouclier_baisse.bind(fx),
 		"traitShot": _trait.bind(fx),
+		"echo": _echo.bind(fx), "shadeSwap": _echange.bind(fx), "grace": _decollation.bind(fx), "graceKill": _encore.bind(fx),
+		"hailCall": _tir_au_ciel.bind(fx), "hail": _grele.bind(fx),
 	}
 
 # ---------------------------------------------------------------- Revenant
@@ -116,3 +120,46 @@ static func _trait(ev: Dictionary, _g: Dictionary, fx: Node) -> void:
 	if plein:
 		fx._secouer(0.3)
 		fx._recul(Vector2.from_angle(ev.angle + PI), 6.0)
+
+# ---------------------------------------------------------------- étape 5 : la quatrième de chaque classe
+
+## Ombre jumelle : elle répète le coup — une gerbe froide dans l'arc du coup, à SA place (sa lame est
+## dessinée par le calque des alliés).
+static func _echo(ev: Dictionary, _g: Dictionary, fx: Node) -> void:
+	fx.particules.gerbe(ev.x, ev.y, 9, 340.0, 0.2, 2.5, PAL.heroCape, ev.get("angle", 0.0), ev.get("arc", 2.0), 7.0, true, 18.0)
+
+## « Transposition » : un trait d'ombre entre les deux places, un anneau qui se ferme au départ, un qui s'ouvre à l'arrivée.
+static func _echange(ev: Dictionary, _g: Dictionary, fx: Node) -> void:
+	fx.formes.ajouter({"type": "eclair", "x0": ev.x0, "y0": ev.y0, "x1": ev.x1, "y1": ev.y1, "graine": randf() * 1000.0, "couleur": PAL.heroCape, "vie": 0.22})
+	fx.formes.anneau(ev.x0, ev.y0, 44.0, 8.0, Color(ECUME, 0.8), 2.5, 0.22)
+	fx.formes.anneau(ev.x1, ev.y1, 8.0, 48.0, ECUME, 3.0, 0.25)
+	fx.particules.gerbe(ev.x1, ev.y1, 10, 200.0, 0.3, 2.5, PAL.heroCape, 0.0, TAU, 6.0, true)
+	fx._zoom(0.02)
+
+## Décollation : la hache s'abat — une onde courte et lourde au point d'impact, des gravats, une secousse.
+static func _decollation(ev: Dictionary, _g: Dictionary, fx: Node) -> void:
+	fx.formes.ajouter({"type": "choc", "x": ev.x, "y": ev.y, "r": ev.get("r", 60.0), "couleur": PAL.lance, "bord": ECUME, "vie": 0.24})
+	fx.particules.gerbe(ev.x, ev.y, 10, 260.0, 0.4, 3.5, ARDOISE, -PI / 2.0, 2.4, 5.0)
+	fx.particules.gerbe(ev.x, ev.y, 8, 380.0, 0.22, 2.5, Color.WHITE, ev.get("angle", 0.0), 1.2, 7.0, true)
+	fx._secouer(0.4)
+
+## Le coup a tué : la recharge est tombée — le mot au-dessus de lui, un anneau qui se referme sur le héros.
+static func _encore(ev: Dictionary, _g: Dictionary, fx: Node) -> void:
+	fx.textes.ajouter(ev.x, ev.y - 40.0, "ENCORE !", ECUME, 15, 0.7)
+	fx.formes.anneau(ev.x, ev.y, 54.0, 20.0, PAL.heroCape, 3.0, 0.25)
+	fx._zoom(0.03)
+
+## Grêle des Limbes : la volée part vers le ciel, au-dessus d'elle.
+static func _tir_au_ciel(ev: Dictionary, _g: Dictionary, fx: Node) -> void:
+	fx.particules.gerbe(ev.x, ev.y - 16.0, 9, 620.0, 0.35, 3.0, ECUME, -PI / 2.0, 0.35, 2.0, true)
+	fx.formes.anneau(ev.x, ev.y, 10.0, 34.0, PAL.heroCape, 2.5, 0.2)
+
+## … et retombe : des traits serrés qui se plantent dans tout le cercle, une onde froide, la poussière.
+static func _grele(ev: Dictionary, _g: Dictionary, fx: Node) -> void:
+	var r: float = ev.get("r", 100.0)
+	fx.formes.ajouter({"type": "choc", "x": ev.x, "y": ev.y, "r": r, "couleur": PAL.heroCape, "bord": ECUME, "vie": 0.3})
+	for i in 14:
+		var q := Vector2(ev.x, ev.y) + Vector2.from_angle(float(i) * 2.399 + ev.x) * r * sqrt(float(i + 1) / 15.0)
+		fx.particules.gerbe(q.x, q.y - 26.0, 2, 520.0, 0.14, 3.0, ECUME, PI / 2.0, 0.12, 9.0, true)
+		fx.particules.gerbe(q.x, q.y, 2, 120.0, 0.35, 2.5, ARDOISE, -PI / 2.0, 2.0, 5.0)
+	fx._secouer(0.3 if D6Js.truthy(ev.get("last")) else 0.18)

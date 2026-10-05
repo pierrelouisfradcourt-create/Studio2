@@ -13,6 +13,7 @@ extends RefCounted
 ##             réglages, player le joue dans l'état 'super'
 ##   sceau, riposte, faille, hachette, proie, trait — les compétences NEUVES de l'étape 4 : leur
 ##             effet est dans sim/kit_neuves.gd (une famille par classe), lancé d'ici comme les autres
+##   ombre, grace, grele — la quatrième de chaque classe (étape 5), mêmes fichiers, même chemin
 ## Les AMÉLIORATIONS EXCLUSIVES de l'arbre (sim/tree.gd) ajoutent des nombres à la compétence :
 ## `rebound` (Bond), `noPull` / `pierce` / `vuln` (Chaîne), `chill` / `stun` (Brasier)… lus ici.
 ##
@@ -140,8 +141,8 @@ static func release_kit_skill(game: Dictionary) -> void:
 		"ruee", "hurlement", "embrasement":
 			# Actions de la Forme du Damné (elles tiennent les trois emplacements pendant la forme).
 			D6KitSupers.form_action(game, s)
-		"sceau", "riposte", "faille", "hachette", "proie", "trait":
-			angle = Neuves.release(game, s, angle) # compétences neuves (étape 4)
+		"sceau", "riposte", "faille", "hachette", "proie", "trait", "ombre", "grace", "grele":
+			angle = Neuves.release(game, s, angle) # compétences neuves (étapes 4 et 5)
 		_:
 			return
 	# Recul léger au tir (sensation de puissance), comme la Lance.

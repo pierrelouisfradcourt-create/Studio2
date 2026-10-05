@@ -1,5 +1,5 @@
 {
-  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. DÉPLACEMENT DE CLASSE (`move` d'une classe, table `moves`) : même bouton que le dash, un geste par classe ; un déplacement autre que le dash RECOUVRE les nombres du dash de base (data/heros.json, `dash`) par les siens — durée du geste, i-frames, charges, recharge, fenêtre de frappe ; la distance reste celle du dash × la statistique de classe dashDistanceMult ; `shock*` = choc d'atterrissage du saut (repousse, sans dégât). Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd). ULTIMES (combat V3, étape 2) : un type par classe — `forme` (Forme du Damné : `formTime` s de transformation, `weapon` remplace l'arme, `slots` / `actions` remplacent les trois emplacements, `lifesteal` des griffes ; l'embrasement inflige de `damage` à `damageMax` selon le temps de forme restant), `magie` (Sentence capitale : `strikeAt` s de lame levée, `freeze` s de temps figé, puis `damage` / `stun` à toute la salle, `executeBelow` part de vie sous laquelle un ennemi est exécuté, `bossCap` part de vie max qu'un Gardien perd au plus), `meute` (Meute des Limbes : `count` limiers, `life` s, `hp` × l'échelle de dégâts de l'étage, morsure `biteDamage` toutes les `biteEvery` s ; un ennemi de mêlée se tourne vers un limier à moins de `distractRange` u et de `distractRatio` × sa distance à l'héroïne). `duration` = le geste de lancement (invulnérable). `reserve` : ancien Super gardé pour l'arbre de compétences, ultime d'aucune classe ; depuis l'étape 3 chacun est JOUÉ par une compétence de sorte `canal` (`super` : lequel ; `cooldown` : sa recharge longue), invulnérable le temps du geste, dégâts de source « super ». ARBRE (étape 3, data/arbres.json) : une compétence ne s'achète plus en Âmes (plus de `cost` sur `skills` et `gadgets`) ; la première compétence et la première compétence à charges de chaque classe sont offertes, les autres se débloquent au rang 1 de leur nœud ; les nombres ci-dessous sont ceux du RANG 1. COMPÉTENCES NEUVES (étape 4, sim/kit_neuves.gd) : `sceau` (Stigmate : le trait marque `duration` s, le marqué qui meurt explose de `damage` × `blastMult` à `radius` u), `riposte` (Contre-taille : taillade de `range` u sur `arc` degrés, puis `window` s de garde ; le coup paré est rendu, `damage` × `riposteMult` à `radius` u), `faille` (fissure longue de `range` u, large de 2 × `radius`), `hachette` (hache qui va à `range` u et revient), `proie` (marque : `vulnMult` de dégâts subis en plus pendant `vuln` s, `aimBonus` u de préférence pour la visée assistée), `trait` (`castTime` = le temps de bander l'arc ; lâché avant, il inflige de `minCharge` à 1 × `damage`), `sillage` (`duration` s à semer une braise tous les `step` u ; une braise brûle `life` s à `burnDps`), `garde` (coup de bouclier à `radius` u, puis `duration` s : un coup reçu dans `arc` degrés devant lui est réduit de `reduce`, son auteur repoussé de `pushback`), `leurre` (allié posé : `hp` × l'échelle de dégâts de l'étage, `life` s, attire la mêlée à `radius` u tant qu'il est à moins de `lureRatio` × sa distance au héros ; `maxActive` au plus).",
+  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. DÉPLACEMENT DE CLASSE (`move` d'une classe, table `moves`) : même bouton que le dash, un geste par classe ; un déplacement autre que le dash RECOUVRE les nombres du dash de base (data/heros.json, `dash`) par les siens — durée du geste, i-frames, charges, recharge, fenêtre de frappe ; la distance reste celle du dash × la statistique de classe dashDistanceMult ; `shock*` = choc d'atterrissage du saut (repousse, sans dégât). Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd). ULTIMES (combat V3, étape 2) : un type par classe — `forme` (Forme du Damné : `formTime` s de transformation, `weapon` remplace l'arme, `slots` / `actions` remplacent les trois emplacements, `lifesteal` des griffes ; l'embrasement inflige de `damage` à `damageMax` selon le temps de forme restant), `magie` (Sentence capitale : `strikeAt` s de lame levée, `freeze` s de temps figé, puis `damage` / `stun` à toute la salle, `executeBelow` part de vie sous laquelle un ennemi est exécuté, `bossCap` part de vie max qu'un Gardien perd au plus), `meute` (Meute des Limbes : `count` limiers, `life` s, `hp` × l'échelle de dégâts de l'étage, morsure `biteDamage` toutes les `biteEvery` s ; un ennemi de mêlée se tourne vers un limier à moins de `distractRange` u et de `distractRatio` × sa distance à l'héroïne). `duration` = le geste de lancement (invulnérable). `reserve` : ancien Super gardé pour l'arbre de compétences, ultime d'aucune classe ; depuis l'étape 3 chacun est JOUÉ par une compétence de sorte `canal` (`super` : lequel ; `cooldown` : sa recharge longue), invulnérable le temps du geste, dégâts de source « super ». ARBRE (étape 3, data/arbres.json) : une compétence ne s'achète plus en Âmes (plus de `cost` sur `skills` et `gadgets`) ; la première compétence et la première compétence à charges de chaque classe sont offertes, les autres se débloquent au rang 1 de leur nœud ; les nombres ci-dessous sont ceux du RANG 1. COMPÉTENCES NEUVES (étape 4, sim/kit_neuves.gd) : `sceau` (Stigmate : le trait marque `duration` s, le marqué qui meurt explose de `damage` × `blastMult` à `radius` u), `riposte` (Contre-taille : taillade de `range` u sur `arc` degrés, puis `window` s de garde ; le coup paré est rendu, `damage` × `riposteMult` à `radius` u), `faille` (fissure longue de `range` u, large de 2 × `radius`), `hachette` (hache qui va à `range` u et revient), `proie` (marque : `vulnMult` de dégâts subis en plus pendant `vuln` s, `aimBonus` u de préférence pour la visée assistée), `trait` (`castTime` = le temps de bander l'arc ; lâché avant, il inflige de `minCharge` à 1 × `damage`), `sillage` (`duration` s à semer une braise tous les `step` u ; une braise brûle `life` s à `burnDps`), `garde` (coup de bouclier à `radius` u, puis `duration` s : un coup reçu dans `arc` degrés devant lui est réduit de `reduce`, son auteur repoussé de `pushback`), `leurre` (allié posé : `hp` × l'échelle de dégâts de l'étage, `life` s, attire la mêlée à `radius` u tant qu'il est à moins de `lureRatio` × sa distance au héros ; `maxActive` au plus). QUATRIÈME COMPÉTENCE NEUVE (étape 5, mêmes fichiers de règles) : `ombre` (Ombre jumelle : une ombre alliée, intangible, surgit là où il se tient — `damage` à `radius` u — et y reste `life` s ; elle répète chacun de ses coups d'arme à `echoMult` des dégâts et se dissipe s'il s'éloigne de plus de `range` u), `grace` (Décollation : la hache s'abat à `range` u devant lui, sur tout ce qui est à `radius` u du point d'impact ; `executeMult` fois les dégâts sur un ennemi à `executeBelow` de sa vie ou moins ; si le coup TUE, la recharge tombe à `resetCd` s), `grele` (Grêle des Limbes : `delay` s après le tir, les traits tombent à `radius` u autour du point visé, jusqu'à `range` u ; sans cible, à `throwDist` u).",
   "classes": {
     "revenant": {
       "name": "Revenant",
@@ -12,7 +12,7 @@
       },
       "stats": {},
       "weapons": ["lame", "dagues"],
-      "skills": ["lance", "chaine", "colere", "sceau", "riposte"],
+      "skills": ["lance", "chaine", "colere", "sceau", "riposte", "ombre"],
       "gadgets": ["nova", "bombe", "sillage"],
       "super": "forme_damne"
     },
@@ -33,7 +33,7 @@
         "moveSpeedMult": -0.06
       },
       "weapons": ["hache", "marteau"],
-      "skills": ["bond", "chaine", "sentence", "faille", "hachette"],
+      "skills": ["bond", "chaine", "sentence", "faille", "hachette", "grace"],
       "gadgets": ["cri", "bombe", "garde"],
       "super": "sentence_capitale"
     },
@@ -48,7 +48,7 @@
       },
       "stats": { "dashDistanceMult": 0.3, "moveSpeedMult": 0.08, "critChance": 0.05, "maxHpBonus": -20 },
       "weapons": ["arc", "arbalete"],
-      "skills": ["volee", "brasier", "nuee", "proie", "trait"],
+      "skills": ["volee", "brasier", "nuee", "proie", "trait", "grele"],
       "gadgets": ["piege", "totem", "leurre"],
       "super": "meute_limbes"
     }
@@ -657,6 +657,56 @@
       "hitstop": 0.08,
       "shake": 0.5,
       "recoil": 120
+    },
+    "ombre": {
+      "name": "Ombre jumelle",
+      "kind": "ombre",
+      "icon": "ombre",
+      "text": "Son ombre se détache là où il se tient (22 dégâts à 90 u en surgissant) et y reste 6 s : elle répète chacun de ses coups d'arme, à 50 % des dégâts. Elle se dissipe s'il s'éloigne de plus de 520 u.",
+      "cooldown": 14,
+      "castTime": 0.05,
+      "aimed": false,
+      "damage": 22,
+      "radius": 90,
+      "range": 520,
+      "knockback": 200,
+      "hitstop": 0.04,
+      "life": 6,
+      "echoMult": 0.5,
+      "bodyRadius": 14
+    },
+    "grace": {
+      "name": "Décollation",
+      "kind": "grace",
+      "icon": "grace",
+      "text": "Sa hache s'abat à 70 u devant lui (36 dégâts à 60 u autour) ; dégâts × 2,5 sur un ennemi à 35 % de vie ou moins. Si le coup TUE, la recharge tombe à 0,5 s : il enchaîne.",
+      "cooldown": 9,
+      "castTime": 0.16,
+      "damage": 36,
+      "radius": 60,
+      "range": 70,
+      "knockback": 320,
+      "hitstop": 0.08,
+      "shake": 0.5,
+      "executeBelow": 0.35,
+      "executeMult": 2.5,
+      "resetCd": 0.5
+    },
+    "grele": {
+      "name": "Grêle des Limbes",
+      "kind": "grele",
+      "icon": "grele",
+      "text": "Elle tire vers le ciel : 0,9 s plus tard, une grêle de traits s'abat à 110 u autour du point visé (jusqu'à 420 u) — 55 dégâts à tout ce qui s'y tient encore.",
+      "cooldown": 8,
+      "castTime": 0.1,
+      "damage": 55,
+      "radius": 110,
+      "range": 420,
+      "throwDist": 260,
+      "knockback": 120,
+      "hitstop": 0.05,
+      "shake": 0.4,
+      "delay": 0.9
     }
   },
   "gadgets": {

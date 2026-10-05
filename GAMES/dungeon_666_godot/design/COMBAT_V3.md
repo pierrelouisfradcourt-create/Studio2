@@ -1045,6 +1045,159 @@ améliorations ; l'arc des emplacements réduit (45 % du jeu) ; la note de pied 
 deux appuis de confirmation ; la place et la taille de la barre d'expérience ; le bandeau de niveau
 (assez visible ? trop ?) ; la consigne de la Ville.
 
+## Étape 5 « Quatrième compétence, sons, profondeur » — ce qui est FAIT (2026-10-05)
+
+Trois tâches, dans cet ordre. TOUS les noms et TOUS les nombres sont des PROPOSITIONS, à renommer et à
+régler par Pierre.
+
+### 1. La quatrième compétence neuve de chaque classe (neuf compétences par classe)
+
+Mêmes fichiers de règles que l'étape 4 (`sim/kit_neuves.gd` et une famille par classe), données
+(`data/classes.json`, `data/arbres.json`), bots, dessin, pictogrammes, sons, tests, références.
+Toutes les trois à recharge, à l'étage de MAÎTRISE (12 points dépensés) : ce sont des idées qui
+demandent de savoir jouer la classe, et cet étage n'avait que deux compétences. Seuils et total de
+points inchangés (0 / 5 / 12 / 20 ; 33 points) : l'arbre entier coûte maintenant 57 ou 58 points.
+
+| Classe | Compétence | Ce qu'elle fait | Rang 1 | Rang 5 | Amélioration A | Amélioration B |
+|---|---|---|---|---|---|---|
+| Revenant | **Ombre jumelle** (`ombre`) | Son ombre se détache là où il se tient et y reste 6 s : elle répète CHACUN de ses coups d'arme de sa place, vers l'ennemi le plus proche d'elle, à 50 % des dégâts. Intangible (rien ne la vise ni ne la blesse). Elle se dissipe s'il s'éloigne de plus de 520 u. | 22 dégâts à 90 u en surgissant ; recharge 14 s | 38 ; 12 s | **Ombre liée** : elle le SUIT à 44 u au lieu de rester en arrière, et ne se dissipe plus | **Transposition** : un second appui échange leurs places, invulnérable 0,4 s, une fois par ombre |
+| Bourreau | **Décollation** (`grace`) | La hache s'abat à 70 u devant lui, sur tout ce qui est à 60 u du point d'impact ; dégâts × 2,5 sur un ennemi à 35 % de vie ou moins. Si le coup TUE, la recharge tombe à 0,5 s : il enchaîne. | 36 dégâts ; recharge 9 s | 60 ; 7 s | **Ivresse du billot** : un coup qui tue donne +30 % de dégâts pendant 4 s | **Effroi** : un coup qui tue étourdit 1,2 s les ennemis à 170 u de la victime |
+| Chasseresse | **Grêle des Limbes** (`grele`) | Elle tire vers le ciel : 0,9 s plus tard les traits tombent à 110 u autour du point visé (jusqu'à 420 u). Ce qui s'y tient ENCORE est frappé. Un cercle allié (froid, jamais rouge) l'annonce au sol. | 55 dégâts ; recharge 8 s | 83 ; 6,4 s | **Déluge** : elle retombe 3 fois au même endroit, toutes les 0,5 s, les suivantes à 50 % | **Givre des Limbes** : ce qu'elle touche est ralenti de 50 % pendant 3 s |
+
+Pourquoi ces trois-là.
+
+- **Revenant — le double spectral** (piste du plan). Ce qu'il n'avait pas : un allié, et une raison
+  de choisir OÙ il se bat (il revient frapper près de son ombre, ou la fait suivre). La
+  « Transposition » en fait un outil de fuite.
+- **Bourreau — le coup de grâce plutôt que la provocation.** Il a déjà de quoi encaisser et tenir la
+  foule (Garde de fer, Cri, saut) ; une provocation aurait redit la Garde. Ce qui lui manquait : un
+  RYTHME — chasser les ennemis affaiblis pour relancer son coup. Ce n'est pas une exécution : un
+  Gardien prend le coup multiplié, il n'est jamais tué d'office.
+- **Chasseresse — la pluie à retardement plutôt que le faucon.** Elle a déjà deux sortes d'alliés
+  (limiers, leurre) ; un troisième n'aurait rien appris. La Grêle se PRÉVOIT : elle récompense le
+  placement (piège, leurre, totem qui retiennent l'ennemi dessous).
+
+Règles à savoir. L'ombre vit dans `game.allies` (jamais un ennemi, jamais un ultime : elle ne tient
+pas la jauge), marquée `ghost` : aucun ennemi ne se tourne vers elle, un tir la traverse. Son coup
+répété est un coup de compétence (bénédictions « de compétence »). L'ombre liée marche (jamais dans
+l'eau : 300 graines) ; quand il a franchi une rivière, elle se rattache à ses pieds. L'échange est
+refusé en plein franchissement. La Décollation frappe par-dessus un obstacle bas, comme tout coup.
+La Grêle tombe où l'on vise, même au-dessus de l'eau (ce sont des tirs), jamais dans un mur ; une
+grêle déjà tirée tombe même si elle meurt entre-temps ; visée à la main, elle tombe à 260 u (le bouton
+donne une direction, pas un point — comme le Brasier et la Bombe). Mort, changement de salle : plus
+d'ombre, plus de grêle en attente.
+
+**Bots.** L'Ombre se détache dès qu'un ennemi est à portée de lame ; la Décollation est gardée pour
+l'ennemi affaibli (ou un Gardien) ; la Grêle vise à la main l'endroit où le groupe SERA, et tombe
+sur une cible qui ne bouge pas (Gardien, étourdi). Vérifié : le bot se sert de chacune.
+
+**Valeur mesurée** (`bash outils/arbre.sh 10`, section 1, kit de départ contre le même kit avec la
+compétence dans le troisième emplacement) :
+
+| Compétence | Rang | Section battue | Dégâts reçus / salle | Temps par salle | Combat du Gardien |
+|---|---|---|---|---|---|
+| Ombre jumelle | 1 | 100 % | 3,5 (×0,82) | 14,8 s (×0,95) | 46,0 s (×0,94) |
+| Ombre jumelle | 5 | 100 % | 3,2 (×0,76) | 14,3 s (×0,92) | 45,6 s (×0,93) |
+| Décollation | 1 | 100 % | 8,9 (×0,92) | 12,1 s (×0,93) | 34,0 s (×0,81) |
+| Décollation | 5 | 100 % | 8,5 (×0,89) | 12,0 s (×0,92) | 34,7 s (×0,83) |
+| Grêle des Limbes | 1 | 100 % | 0,9 (×1,61) | 11,7 s (×0,96) | 30,4 s (×1,01) |
+| Grêle des Limbes | 5 | 100 % | 1,0 (×1,71) | 11,3 s (×0,93) | 30,6 s (×1,02) |
+
+Aucune n'écrase, aucune ne dégrade (les dégâts reçus de la Chasseresse sont au niveau du bruit : 0,6
+contre 0,9 point de vie par salle). Les neuf d'avant donnent exactement les nombres de l'étape 4.
+Le tableau « arbre plein » de `_dev/rapports/arbre.md` a bougé (×0,82 à ×0,90 en temps par salle) :
+sa politique dépense un rang par nœud, donc trois points de moins ailleurs — ce n'est pas le jeu qui
+a changé (rapport d'avant : `_dev/rapports/arbre_avant_lot5.md`).
+
+**Affichage.** Ombre : la silhouette du héros sans visage, en nuit cernée de sa teinte froide, deux
+yeux clairs, une lame qui FAUCHE quand elle répète un coup, l'arc de durée des alliés à ses pieds ;
+l'échange est un trait d'éclair entre les deux places. Décollation : une onde courte au point
+d'impact, des gravats, « ENCORE ! » quand le coup a tué ; l'Effroi est un anneau autour de la victime.
+Grêle : cercle froid au sol, un anneau blanc qui grandit du centre jusqu'au bord (« ça tombe quand
+il le touche »), les croix des traits qui descendent, puis les traits plantés. Trois pictogrammes :
+`ombre`, `grace`, `grele`. Captures : `_dev/captures/lot_v3_lot5/` (banc `jeu/essai/competences.tscn`,
+`D666_LOT=5`) — chaque compétence au rang 1, puis avec chaque amélioration (`_A`, `_B`) ;
+`essais_graines/` : d'autres graines, mieux cadrées pour la Grêle et la Transposition.
+
+**Tests.** `tests/regles/v3_competences_2.gd` : 28 tests (nœuds, rangs, les deux améliorations et
+leur exclusion ; base ; salle vide, Gardien, terrain bas, mort pendant, changement de salle ;
+bénédictions et objets de compétence ; formes de `empty_input`, `slot_view`, `slot_state` ;
+déterminisme ; bots ; références ; l'ombre jamais dans l'eau sur 300 graines). Trois tests existants
+adaptés, tous pour le NOMBRE de compétences (`design/COMBAT_V3_TESTS_ADAPTES.md`).
+
+**Références.** Les 100 parties existantes sont identiques au bit près ; 6 parties `competences2_*`
+ajoutées (chaque compétence par le bot habile avec une amélioration, puis au hasard avec l'autre) : 106.
+
+### 2. Des sons propres au combat V3
+
+38 recettes neuves, synthétisées comme les autres (`jeu/son/recettes.gd`), sobres exprès : niveaux
+des recettes voisines, rien de strident, court pour ce qui se répète. `jeu/son/test_son.gd` : vert
+(287 vérifications). **Personne ne les a écoutés** : les fichiers sont dans `_dev/sons/` (un `.wav` par
+recette, `sommaire.txt` dit ce qui déclenche chacune).
+
+| À écouter (`_dev/sons/<nom>.wav`) | Ce qui le déclenche |
+|---|---|
+| `ultime_pret` | la jauge d'ultime devient pleine — LE signal : « pense à tenir le bouton » (une charge rendue par un élite garde l'ancien accord, `super_pret`) |
+| `ultime_armement` | l'attaque est TENUE jauge pleine : montée de 0,4 s, coupée net si l'on relâche |
+| `super_forme`, `forme_hurlement`, `forme_embrasement`, `forme_fin` | Forme du Damné : transformation, hurlement, embrasement, fin de la forme (la ruée garde le son du dash) |
+| `super_magie`, `sentence_gel`, `sentence_fracas`, `sentence_eclair`, `sentence_execution` | Sentence capitale : lame levée, temps figé, fracas, un éclair par ennemi, lame qui tombe sur un exécuté |
+| `super_meute`, `meute_apparition`, `meute_morsure` | Meute des Limbes : le cor, un limier qui surgit, une morsure (très courte, basse) |
+| `deplacement_saut`, `saut_atterrissage`, `deplacement_roulade` | saut du Bourreau (décollage, atterrissage), roulade de la Chasseresse (le dash garde son son) |
+| `franchissement` | le héros passe au-dessus d'une rivière ou d'un obstacle bas |
+| `niveau` | un niveau de classe est passé (avant : l'accord du checkpoint) |
+| `point_arbre` | un point est dépensé dans l'arbre, au Grimoire |
+| `gadget_sillage`, `competence_riposte`, `parade_contre_taille`, `stigmate_explosion`, `marque`, `ombre_surgit`, `ombre_echange` | Revenant : Sillage lancé, taillade de la Contre-taille, PARADE réussie, Stigmate qui explose, marque posée (plus aiguë : Marque de la proie), Ombre qui surgit, Transposition |
+| `faille_fissure`, `competence_hachette`, `hache_retour`, `gadget_garde`, `garde_blocage`, `decollation`, `decollation_encore` | Bourreau : fissure de la Faille, hache lancée, hache RATTRAPÉE, Garde levée, coup BLOQUÉ, Décollation, « encore » (le coup a tué) |
+| `gadget_leurre`, `trait_tir`, `grele_tir`, `grele_chute` | Chasseresse : Leurre posé, Trait de Nemrod lâché (plus aigu et moins fort avant la pleine charge), Grêle tirée, Grêle qui tombe |
+
+Trois sons n'ont pas d'événement de simulation : la vue Son LIT l'état, comme le HUD (armement :
+`player.superHold` ; franchissement ; point d'arbre : le profil change). L'événement `dash` porte
+maintenant le geste (`move`) : aucune partie de référence ne change. `jeu/ville/` et
+`jeu/interface/` ne sont pas touchés (seul ajout : trois pictogrammes dans `icones.gd`).
+
+### 3. Mesure en profondeur
+
+Outil : `bash outils/profondeur.sh 20` (`outils/profondeur.gd`) — chaque classe aux étages 1, 109 et
+325, une section entière, arbre vide contre arbre plein (33 points), avec et sans déplacement de
+classe ; 20 graines par case, 540 parties. Tableaux : `_dev/rapports/profondeur_mesures.md` ;
+lecture, écarts entre graines et recommandations chiffrées : `_dev/rapports/profondeur.md`. En bref :
+
+- **(a) L'arbre plein et la profondeur.** Pour le bot habile la profondeur n'est dangereuse ni à
+  vide ni à plein : 0 mort sur 360 parties. À l'étage 325 l'arbre plein divise par quatre les dégâts
+  reçus (Revenant 1,5 → 0,4 % de la vie par salle, Bourreau 4,3 → 1,1 %), nettoie les salles 20 à
+  23 % plus vite, et tue le Gardien 14 à 51 % plus vite. Le danger se lit sans le déplacement de
+  classe : 15 à 23 % de la vie perdus par salle, à toute profondeur.
+- **(b) Les classes.** Chasseresse au-dessus (0,1 % de vie par salle ; Gardien en 11 s à l'arbre
+  plein, contre 20 à 22 s), Bourreau au-dessous (celui qui encaisse le plus). Le même écart qu'en
+  section 1 : ce n'est pas la profondeur qui le crée.
+- **(c) L'échelle.** Tout coup du héros est multiplié par l'arme portée : un rang ou un ultime ne
+  devient jamais négligeable (compétences : 18 à 26 % des dégâts à l'étage 1, 27 à 31 % au 325 ;
+  ultime : 27 → 35 % pour le Revenant, 19 → 34 % pour le Bourreau, 9 → 10 % pour la Chasseresse).
+  **Défaut corrigé** : les SOINS en PV de l'arbre (Moisson 6, Dîme de sang 4, Soif 1) ne suivaient
+  rien — 6 % de la vie à l'étage 1, 0,5 % au 325. Ils suivent maintenant les PV du héros équipé
+  (`D6Combat.heal_scaled` ; 6 % → 4,7 %). Test : `tests/regles/v3_profondeur.gd`. Texte des trois
+  améliorations : « … PV (à l'échelle de l'étage) ».
+- **(d) Forme du Damné.** Pas « trop forte » pour le bot : ×1,8 de dégâts par seconde à l'étage 1
+  avec un arbre vide, mais ×0,86 au 325 avec un arbre plein (le kit au rang 5, figé pendant la forme,
+  fait mieux que les griffes) ; et le héros n'y prend pas moins de coups. **Saut du Bourreau** : au
+  ras du seuil seulement en section 1 (×2,5 pour un seuil de ×2) ; ×7,2 au 109, ×4,0 au 325.
+
+**Recommandations NON appliquées** (équilibrage de goût) : les PV écrits en dur (classe, passifs,
+Ville) qui ne suivent pas la vie du héros — les +40 PV du Bourreau valent +40 % à l'étage 1 et +3 % au
+325 ; les soins en PV des bénédictions (même défaut que celui corrigé dans l'arbre) ; la jauge qui se
+remplit 1,5 à 1,9 fois plus souvent par section au 325 ; la Forme à relever de 15 à 20 % pour un arbre
+plein plutôt qu'à baisser ; la Chasseresse à juger en main avant tout réglage.
+
+**PAS FAIT.** Un geste « maintenir » pour une compétence ; une visée « point » pour ce qui se lance
+(Grêle, Brasier, Bombe) ; la provocation du Bourreau et le faucon de la Chasseresse (écartés, voir plus
+haut) ; l'Ombre ne répète que la mêlée ; le bot coincé dans la disposition « chicane » (6 parties sur
+540, aucune mort : défaut de navigation du bot, vu, non corrigé).
+
+**À juger par Pierre** : les trois noms et tous les nombres ; l'étage de maîtrise pour les trois ;
+l'Ombre intangible, sa silhouette, ce qu'elle répète ; le second appui de la Transposition ; le seuil
+de 35 % et la recharge de 0,5 s de la Décollation ; le télégraphe de la Grêle (assez lisible ? assez
+long ?) ; les 38 sons, à l'oreille, un par un — surtout `ultime_pret` ; les recommandations de la mesure.
+
 ## Tests existants et combat V3
 
 GO de Pierre le 2026-10-04 (« GO tests V3 ») : les tests existants qui décrivent l'ancien système

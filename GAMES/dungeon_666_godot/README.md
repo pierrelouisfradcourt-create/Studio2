@@ -14,9 +14,9 @@ règles). Il ne se compare plus à lui : il se garde lui-même. L'histoire du pa
 | `sim/` | La simulation : les règles. Ne connaît pas Godot (ni nœud, ni scène). Conventions : `PORTAGE.md`. |
 | `data/` | Tous les nombres et tables du jeu, en JSON ordinaire, un fichier par domaine. `validation.json` + `schemas/` : leur garde. |
 | `tests/regles/` | Les tests de règles (une règle, un test), lancés par `tests/regles.gd`. Outils : `tests/harnais.gd`. |
-| `references/` | 100 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
+| `references/` | 106 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
 | `jeu/` | Ce qui se voit, s'entend, se touche (contrat : `jeu/ARCHITECTURE.md`), avec ses tests headless. |
-| `outils/` | `verifier.sh` (l'oracle), `jouabilite.sh` (bots : solvabilité, classes), `arbre.sh` (mesure : puissance de l'arbre, valeur de chaque compétence neuve), `donnees.gd` (écriture des données), `capture.gd`. |
+| `outils/` | `verifier.sh` (l'oracle), `jouabilite.sh` (bots : solvabilité, classes), `arbre.sh` (mesure : puissance de l'arbre, valeur de chaque compétence neuve), `profondeur.sh` (mesure : chaque classe aux étages 1, 109 et 325, arbre vide contre arbre plein), `donnees.gd` (écriture des données), `capture.gd`. |
 | `parite/` | Héritage : les outils de comparaison au web, plus lancés (`comparer.gd` sert encore). |
 | `addons/studio_kit/` | Le socle du studio (sauvegarde, thème, réglages, validation des données). |
 
@@ -30,9 +30,9 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
 1. **import** — Godot enregistre ses classes ;
 2. **données** — chaque fichier de `data/` contre son schéma (types, bornes, un télégraphe
    d'ennemi d'au moins 0,4 s), et se réécrit sans rien perdre ;
-3. **règles** — `tests/regles/*.gd` : 652 tests, dont les références croisées des données
+3. **règles** — `tests/regles/*.gd` : 688 tests, dont les références croisées des données
    (`donnees.gd`) ;
-4. **références** — les 100 parties de `references/parties/` sont rejouées, point de contrôle
+4. **références** — les 106 parties de `references/parties/` sont rejouées, point de contrôle
    par point de contrôle (un toutes les 30 images) ;
 5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème), et le
    **parcours** (`jeu/essai/test_parcours.gd`) : le vrai jeu assemblé, toutes ses vues montées,
@@ -106,9 +106,9 @@ table, marqués `reserve` : leur code joue toujours, ils ne sont l'ultime d'aucu
 choix et nombres : `design/COMBAT_V3.md`, « Étape 2 » ; gardes : `tests/regles/v3_ultimes.gd`.
 Juger à l'écran : `jeu/essai/ultimes.tscn` (mode d'emploi en tête de `jeu/essai/ultimes.gd`).
 
-## Les compétences neuves (combat V3, étape 4)
+## Les compétences neuves (combat V3, étapes 4 et 5)
 
-Trois compétences neuves par classe (huit en tout par classe, pour trois emplacements), chacune une
+Quatre compétences neuves par classe (neuf en tout par classe, pour trois emplacements), chacune une
 entrée de `data/classes.json` (`skills` : à recharge ; `gadgets` : à charges) et un nœud de
 `data/arbres.json`. Façade : `sim/kit_neuves.gd` (chargée par `preload`, sans `class_name`) ; une
 famille par fichier :
@@ -121,6 +121,11 @@ famille par fichier :
 - **Chasseresse** (`sim/neuves_chasseresse.gd`) : `proie` (marque : dégâts subis en plus, visée et
   limiers), `leurre` (allié posé dans `game.allies`, qui attire la mêlée), `trait` (Trait de Nemrod :
   il se BANDE d'un appui, part seul à pleine charge, ou tout de suite au second appui).
+- **La quatrième de chaque classe** (étape 5, mêmes fichiers, étage de maîtrise) : `ombre` (Revenant,
+  Ombre jumelle : une ombre alliée, intangible, reste où il se tient et répète chacun de ses coups
+  d'arme), `grace` (Bourreau, Décollation : la hache s'abat devant lui, frappe plus fort un ennemi
+  affaibli ; si le coup TUE, la recharge tombe et il enchaîne), `grele` (Chasseresse, Grêle des
+  Limbes : frappe de zone à retardement, annoncée au sol par un cercle allié).
 
 Elles passent par les chemins communs (état `cast` et recharge, charges, tirs et zones de la salle,
 alliés) : l'entrée d'un pas n'a pas changé, et tout ce qui parle « des compétences » (bénédictions,
@@ -128,9 +133,28 @@ objets, procs) s'y applique. Un leurre est un allié, pas un ultime : il ne tien
 (`D6KitSupers.acting` ne compte que les limiers). L'affichage lit `D6Loadout.slot_view` (forme
 inchangée) et, en plus, `D6Loadout.slot_state(game, i)` (charge du Trait, effet qui dure). La Chaîne
 et la Bombe ont une version par classe (rang 1 commun, rangs et une amélioration sur deux propres).
-Règles, tableaux et nombres : `design/COMBAT_V3.md`, « Étape 4 » ; gardes :
-`tests/regles/v3_competences.gd` ; mesure : `bash outils/arbre.sh` (`_dev/rapports/arbre.md`) ;
-juger à l'écran : `jeu/essai/competences.tscn` (mode d'emploi en tête de `jeu/essai/competences.gd`).
+Règles, tableaux et nombres : `design/COMBAT_V3.md`, « Étape 4 » et « Étape 5 » ; gardes :
+`tests/regles/v3_competences.gd` et `v3_competences_2.gd` ; mesure : `bash outils/arbre.sh`
+(`_dev/rapports/arbre.md`) ; juger à l'écran : `jeu/essai/competences.tscn` (mode d'emploi en tête
+de `jeu/essai/competences.gd` ; `D666_LOT=5` pour la quatrième de chaque classe).
+
+## Le son du combat V3, et la profondeur (étape 5)
+
+**Sons.** Les sons sont synthétisés par recettes (`jeu/son/recettes.gd`), choisis par événement
+(`jeu/son/routage.gd`). Depuis l'étape 5 les ultimes, les trois déplacements de classe, la jauge
+pleine, le niveau de classe et chaque compétence neuve ont leur recette. Trois sons n'ont pas
+d'événement de simulation : la vue Son LIT l'état (`Routage.SONS_VUE` : armement de l'ultime,
+franchissement d'un terrain bas, point dépensé au Grimoire). Garde : `jeu/son/test_son.gd`.
+ÉCOUTER : `"$G" --headless --path . --script res://jeu/son/exporter_planche.gd -- <dossier hors du
+projet>` écrit un `.wav` par recette et `sommaire.txt` (ce qui déclenche chacune) ; une copie est
+posée dans `_dev/sons/` (hors dépôt, hors import).
+
+**Profondeur.** `bash outils/profondeur.sh [graines]` joue chaque classe aux étages 1, 109 et 325
+(une section entière, héros équipé pour l'étage : voir l'en-tête de `outils/profondeur.gd`), arbre
+vide contre arbre plein, avec et sans déplacement de classe : `_dev/rapports/profondeur_mesures.md`
+(les tableaux) et `_dev/rapports/profondeur.md` (la lecture). Ce qui doit SUIVRE la profondeur est
+gardé par `tests/regles/v3_profondeur.gd` : tout coup du héros est multiplié par l'arme portée ; un
+soin donné en PV par l'arbre suit les PV du héros (`D6Combat.heal_scaled`).
 
 ## Changer une règle
 
@@ -144,7 +168,7 @@ juger à l'écran : `jeu/essai/competences.tscn` (mode d'emploi en tête de `jeu
    (« références réenregistrées : <la règle changée> »).
 
 ```
-bash references/enregistrer.sh          # 100 parties, ~30 s ; sans changement : mêmes fichiers au bit près
+bash references/enregistrer.sh          # 106 parties, ~30 s ; sans changement : mêmes fichiers au bit près
 bash outils/verifier.sh
 ```
 

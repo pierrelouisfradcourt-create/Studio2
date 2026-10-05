@@ -47,6 +47,11 @@ const GUARD_PAD := 60.0 # u ajoutées au rayon du coup de bouclier pour décider
 const GUARD_CROWD := 2.0
 const LURE_CROWD := 2.0 # le Leurre se lance dès que deux ennemis pressent (ou un seul, PV bas)
 const PARRY_PAD := 30.0 # u : la Contre-taille se lève face à un ennemi qui ARME son coup à cette distance de sa portée
+# Quatrième compétence de chaque classe (étape 5).
+const SHADE_NEAR := 120.0 # u : l'Ombre jumelle se détache quand la mêlée est là (un ennemi à portée de lame)
+const GRACE_PAD := 6.0 # u retirées à la portée de la Décollation pour frapper « sûr »
+const RAIN_NEAR := 0.5 # × rayon : la Grêle tombe à `throwDist` ; un ennemi plus près que throwDist − cette part sera déjà passé
+const RAIN_LEAD := 140.0 # u : un ennemi en chasse aura avancé d'autant pendant le télégraphe (visible : il court vers elle)
 const SHIELD_PENALTY := 600.0 # u : un Gardien enchaîné (bouclier visible) passe après ses geôliers
 # Arme à distance (kits) : on tient la cible à cette distance (u, bord à bord), on recule
 # en deçà de RANGED_TOO_CLOSE, et l'on ne tire que si la ligne de tir est dégagée.
@@ -216,7 +221,7 @@ static func _slot_intents(game: Dictionary, mem: Dictionary, enemies: Array, int
 		elif view.kind == "skill":
 			if not can_cast:
 				continue
-			var aim = _parry_aim(p, enemies, def) if def.get("kind") == "riposte" else _best_lance_aim(game, enemies, def)
+			var aim = _skill_aim(game, p, enemies, def)
 			if aim != null and aim.count >= 1.0 and not _already_marked(enemies, def):
 				intent.slots[i] = aim
 				can_cast = false
@@ -245,6 +250,53 @@ static func _charge_wanted(game: Dictionary, p: Dictionary, enemies: Array, def:
 	var near := _count_near(p, enemies, radius)
 	return near >= crowd or (hp_frac < GADGET_LOW_HP and near >= 1.0)
 
+## Visée d'une compétence à recharge, selon ce qu'elle est : la Contre-taille attend un coup armé, la
+## Décollation un ennemi affaibli, la Grêle un groupe qui sera sous elle ; les autres, la meilleure ligne.
+static func _skill_aim(game: Dictionary, p: Dictionary, enemies: Array, def: Dictionary):
+	match def.get("kind"):
+		"riposte":
+			return _parry_aim(p, enemies, def)
+		"grace":
+			return _grace_aim(p, enemies, def)
+		"grele":
+			return _rain_aim(p, enemies, def)
+	return _best_lance_aim(game, enemies, def)
+
+## Décollation : gardée pour l'ennemi AFFAIBLI à portée (sa barre de vie se voit) — le coup qui tue
+## se relance ; un Gardien à portée la reçoit toujours (il ne mourra pas, mais c'est son plus gros coup).
+static func _grace_aim(p: Dictionary, enemies: Array, def: Dictionary):
+	var reach := Base.num(def, "range") + Base.num(def, "radius") - GRACE_PAD
+	for e in enemies:
+		var d := Base.norm(e.x - p.x, e.y - p.y)
+		if d.l > reach + e.r:
+			continue
+		if D6Js.truthy(e.get("boss")) or e.hp / e.maxHp <= Base.num(def, "executeBelow"):
+			return {"x": d.x, "y": d.y, "count": 1.0}
+	return null
+
+## Grêle des Limbes : sur une cible qui ne bouge pas à portée (Gardien, étourdi, en train d'armer),
+## visée assistée — elle tombe SUR elle. Sinon elle est visée à la main et tombe à `throwDist` : dans
+## la direction où le plus d'ennemis seront sous elle après le télégraphe (ils courent vers elle).
+static func _rain_aim(p: Dictionary, enemies: Array, def: Dictionary):
+	var throw := Base.num(def, "throwDist")
+	var radius := Base.num(def, "radius")
+	var best = null
+	for e in enemies:
+		var d := Base.norm(e.x - p.x, e.y - p.y)
+		if d.l <= Base.num(def, "range") and (D6Js.truthy(e.get("boss")) or e.stun > 0.0 or e.state == "windup"):
+			return {"x": 0.0, "y": 0.0, "count": 1.0}
+		if d.l < throw - radius * RAIN_NEAR or d.l > throw + radius + RAIN_LEAD:
+			continue
+		var count := 0.0
+		for o in enemies:
+			var along: float = (o.x - p.x) * d.x + (o.y - p.y) * d.y
+			var side: float = absf((o.x - p.x) * d.y - (o.y - p.y) * d.x)
+			if side < radius and along > throw - radius * RAIN_NEAR and along < throw + radius + RAIN_LEAD:
+				count += 1.0
+		if best == null or count > best.count:
+			best = {"x": d.x, "y": d.y, "count": count}
+	return best
+
 ## Contre-taille : elle se lève face à l'ennemi qui ARME son coup à portée (télégraphe visible) —
 ## la taillade le touche, et sa frappe sera parée. Rend la visée, ou null.
 static func _parry_aim(p: Dictionary, enemies: Array, def: Dictionary):
@@ -271,6 +323,8 @@ static func _already_marked(enemies: Array, def: Dictionary) -> bool:
 ## plusieurs ennemis sont dans son rayon (ou un seul, PV bas) ; l'embrasement (il met fin à la
 ## forme) : seulement quand la jauge-minuterie est presque vide et qu'il touchera quelqu'un.
 static func _around_wanted(p: Dictionary, enemies: Array, def: Dictionary, hp_frac: float) -> bool:
+	if def.get("kind") == "ombre":
+		return _count_near(p, enemies, SHADE_NEAR) >= 1.0 # l'Ombre jumelle : dès que la mêlée est là, elle double ses coups
 	var near := _count_near(p, enemies, Base.num(def, "radius"))
 	if def.get("kind") == "embrasement":
 		return near >= 1.0 and p.superCharge <= BURST_LEFT

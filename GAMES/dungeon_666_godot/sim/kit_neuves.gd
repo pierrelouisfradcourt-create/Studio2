@@ -4,6 +4,9 @@ extends RefCounted
 ##   sim/neuves_revenant.gd     sillage (braises), sceau (Stigmate), riposte (Contre-taille)
 ##   sim/neuves_bourreau.gd     faille, hachette (hache qui revient), garde (Garde de fer)
 ##   sim/neuves_chasseresse.gd  proie (marque), leurre (allié posé), trait (tir qui se bande)
+## Étape 5, la quatrième de chaque classe, dans les mêmes fichiers : ombre (Ombre jumelle : alliée
+## intangible qui répète ses coups), grace (Décollation : le coup qui tue se relance), grele (Grêle
+## des Limbes : frappe de zone à retardement).
 ## Chaque compétence est une entrée de data/classes.json (`skills` : recharge ; `gadgets` :
 ## charges) et un nœud de data/arbres.json. Elles passent par les chemins communs : l'état 'cast'
 ## et sa recharge (player), les charges (kit_gadgets), les tirs et zones de la salle (kit_shots,
@@ -16,7 +19,7 @@ extends RefCounted
 ##   D6Combat.damage_player → absorb                D6Combat.kill_enemy → on_kill
 ##   D6KitShots → mark_hit, update_shot             D6KitZones → zone
 ##   ult_meute.tick → tick_ally, prey               D6Player._press_slot → second_press
-##   D6Loadout.slot_view → slot_extra
+##   D6Loadout.slot_view → slot_extra               D6Player._update_attack → on_swing
 
 const Revenant := preload("res://sim/neuves_revenant.gd")
 const Bourreau := preload("res://sim/neuves_bourreau.gd")
@@ -24,6 +27,7 @@ const Chasseresse := preload("res://sim/neuves_chasseresse.gd")
 
 const SKILLS := ["sceau", "riposte", "faille", "hachette", "proie", "trait"] # `kind` des compétences neuves à recharge
 const GADGETS := ["sillage", "garde", "leurre"] # … et à charges
+const SKILLS_2 := ["ombre", "grace", "grele"] # étape 5 : la quatrième de chaque classe (toutes à recharge)
 
 ## Effet d'une compétence neuve à la fin de son lancer. Rend l'angle du tir (le Trait vise au départ).
 static func release(game: Dictionary, s: Dictionary, angle: float) -> float:
@@ -40,6 +44,12 @@ static func release(game: Dictionary, s: Dictionary, angle: float) -> float:
 			Chasseresse.release_proie(game, s)
 		"trait":
 			return Chasseresse.release_trait(game, s)
+		"ombre":
+			Revenant.release_ombre(game, s)
+		"grace":
+			Bourreau.release_grace(game, s, angle)
+		"grele":
+			Chasseresse.release_grele(game, s)
 	return angle
 
 ## Une compétence neuve à charges part. Rend false si rien n'a pu partir (charge à rendre).
@@ -97,20 +107,30 @@ static func mark_hit(game: Dictionary, s: Dictionary, e: Dictionary) -> void:
 static func update_shot(game: Dictionary, s: Dictionary, dt: float) -> void:
 	Bourreau.update_axe(game, s, dt)
 
-## Zone posée par une compétence neuve (`faille`).
+## Zone posée par une compétence neuve (`faille`, `grele`).
 static func zone(game: Dictionary, z: Dictionary) -> void:
-	Bourreau.zone_faille(game, z)
+	if z.kind == "grele":
+		Chasseresse.zone_grele(game, z)
+	else:
+		Bourreau.zone_faille(game, z)
 
-## Un pas d'un allié qui n'est pas un limier (le leurre).
+## Un pas d'un allié qui n'est pas un limier (le leurre, l'ombre).
 static func tick_ally(game: Dictionary, h: Dictionary, dt: float) -> void:
-	Chasseresse.tick_ally(game, h, dt)
+	if h.kind == Revenant.SHADE:
+		Revenant.tick_shade(game, h, dt)
+	else:
+		Chasseresse.tick_ally(game, h, dt)
+
+## Un coup d'arme du héros commence à porter : l'Ombre jumelle le répète.
+static func on_swing(game: Dictionary, a: Dictionary) -> void:
+	Revenant.echo(game, a)
 
 ## La proie marquée (cible des limiers), ou null.
 static func prey(game: Dictionary):
 	return Chasseresse.prey(game)
 
 static func second_press(game: Dictionary, slot: int) -> bool:
-	return Chasseresse.second_press(game, slot)
+	return Chasseresse.second_press(game, slot) or Revenant.swap(game, slot)
 
 ## Ce que slot_view AJOUTE pour une compétence neuve : `charging` (le Trait se bande sur ce bouton),
 ## `chargeFrac` (0..1), `active` (son effet dure : sillage, garde, parade) et `activeFrac` (part qui reste).
@@ -120,6 +140,12 @@ static func slot_extra(game: Dictionary, index: int, def: Dictionary) -> Diction
 	if def.kind == "trait" and Chasseresse.charging(game, index):
 		out.charging = true
 		out.chargeFrac = Chasseresse.charge_frac(game, def)
+	if def.kind == Revenant.SHADE:
+		var h = Revenant.shade(game)
+		if h != null and is_same(h.def, def): # l'ombre debout : son temps qui reste
+			out.active = true
+			out.activeFrac = D6Geo.clampv(h.life / maxf(1e-6, h.lifeMax), 0.0, 1.0)
+		return out
 	var key = {"sillage": "sillage", "garde": "guard", "riposte": "parry"}.get(def.kind)
 	var st = p.get(key) if key != null else null
 	if st is Dictionary and is_same(st.def, def):

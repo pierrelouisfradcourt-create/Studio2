@@ -11,7 +11,7 @@ extends RefCounted
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
 const Triangles = preload("res://jeu/theme/triangles.gd")
 const PAS := 8 # segments par courbe
-const NOMS := ["attack", "dash", "saut", "roulade", "skill", "gadget", "super", "daggers", "axe", "hammer", "bow", "crossbow", "chain", "leap", "fire", "fan", "bomb", "trap", "roar", "totem", "sentence", "rain", "forme", "meute", "ruee", "burst", "sillage", "stigmate", "riposte", "faille", "hachette", "garde", "proie", "leurre", "trait"]
+const NOMS := ["attack", "dash", "saut", "roulade", "skill", "gadget", "super", "daggers", "axe", "hammer", "bow", "crossbow", "chain", "leap", "fire", "fan", "bomb", "trap", "roar", "totem", "sentence", "rain", "forme", "meute", "ruee", "burst", "sillage", "stigmate", "riposte", "faille", "hachette", "garde", "proie", "leurre", "trait", "ombre", "grace", "grele"]
 
 static func connue(nom) -> bool:
 	return nom is String and nom in NOMS
@@ -63,6 +63,9 @@ static func ajouter(lot: Triangles, nom: String, c: Vector2, r: float, col: Colo
 		"proie": _proie(lot, r, col)
 		"leurre": _leurre(lot, r, col)
 		"trait": _trait(lot, r, col)
+		"ombre": _ombre(lot, r, col)
+		"grace": _grace(lot, c, r, col)
+		"grele": _grele(lot, r, col)
 	lot.repere = avant
 
 # ---------------------------------------------------------------- outils de tracé
@@ -377,3 +380,34 @@ static func _trait(lot: Triangles, r: float, col: Color) -> void:
 	lot.ligne(bas, corde, col, maxf(1.0, r * 0.045))
 	_rect(lot, r, -0.5, -0.04, 1.0, 0.08, col)
 	_poly(lot, r, [[0.66, 0.0], [0.42, -0.15], [0.42, 0.15]], col)
+
+## Ombre jumelle (étape 5) : deux silhouettes côte à côte — la sienne, pleine, et son ombre, en contour.
+static func _ombre(lot: Triangles, r: float, col: Color) -> void:
+	lot.disque(Vector2(-0.22, -0.3) * r, r * 0.17, col)
+	_poly(lot, r, [[-0.42, -0.08], [-0.02, -0.08], [-0.1, 0.5], [-0.34, 0.5]], col)
+	lot.arc(Vector2(0.28, -0.3) * r, r * 0.15, 0.0, TAU, 14, col, maxf(1.0, r * 0.06))
+	var ep := maxf(1.0, r * 0.06)
+	var pts := [Vector2(0.08, -0.08), Vector2(0.48, -0.08), Vector2(0.4, 0.5), Vector2(0.16, 0.5)]
+	for i in 4:
+		lot.ligne(pts[i] * r, pts[(i + 1) % 4] * r, col, ep)
+
+## Décollation (étape 5) : la hache qui tombe droit sur le billot — un fer large, un manche, le trait du sol.
+static func _grace(lot: Triangles, c: Vector2, r: float, col: Color) -> void:
+	_rect(lot, r, -0.5, 0.46, 1.0, 0.09, col)
+	_rect(lot, r, -0.26, 0.24, 0.52, 0.16, col)
+	lot.repere = _place(c + Vector2(0.0, -0.12) * r, PI * 0.12)
+	_rect(lot, r, -0.045, -0.46, 0.09, 0.62, col)
+	var pts := PackedVector2Array([Vector2(-0.045, -0.02) * r])
+	_courbe(pts, Vector2(-0.5, 0.02) * r, Vector2(-0.42, 0.34) * r)
+	pts.append(Vector2(0.0, 0.2) * r)
+	_courbe(pts, Vector2(0.42, 0.34) * r, Vector2(0.5, 0.02) * r)
+	pts.append(Vector2(0.045, -0.02) * r)
+	lot.polygone(pts, col)
+
+## Grêle des Limbes (étape 5) : trois traits qui tombent, pointe en bas, sur un cercle au sol.
+static func _grele(lot: Triangles, r: float, col: Color) -> void:
+	_ellipse(lot, Vector2(0.0, 0.42) * r, Vector2(0.56, 0.16) * r, 0.0, col, maxf(1.0, r * 0.07))
+	for x: float in [-0.32, 0.0, 0.32]:
+		var haut: float = -0.56 + absf(x) * 0.5
+		_rect(lot, r, x - 0.035, haut, 0.07, 0.6, col)
+		_poly(lot, r, [[x, haut + 0.82], [x - 0.13, haut + 0.56], [x + 0.13, haut + 0.56]], col)

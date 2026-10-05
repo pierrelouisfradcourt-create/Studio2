@@ -18,6 +18,13 @@ extends RefCounted
 ##              `thorns` / `thornStun` (l'attaquant paré est blessé, étourdi) ; `burstMult` (à la
 ##              fin, une onde rend les dégâts encaissés, ramenés à l'échelle de l'étage 1,
 ##              `burstCap` au plus).
+##   grace    — Décollation (recharge, étape 5) : la hache s'abat à `range` u devant lui, sur tout
+##              ce qui est à `radius` u du point d'impact ; un ennemi à `executeBelow` de sa vie ou
+##              moins prend `executeMult` fois les dégâts (un Gardien aussi : ce n'est pas une
+##              exécution, il n'est jamais tué d'office). Si le coup TUE, la recharge tombe à
+##              `resetCd` s : il enchaîne. Améliorations : `surge` / `surgeMult` (un coup qui tue
+##              donne un élan de dégâts) ; `blastRadius` / `blastStun` (les ennemis autour de la
+##              victime sont étourdis, sans dégât).
 ## État : player.guard = {t, def, absorbed}.
 
 const REACH_STEP := 8.0 # u : pas de la recherche du mur qui arrête la fissure
@@ -223,3 +230,50 @@ static func absorb(game: Dictionary, amount: float, src: Dictionary) -> float:
 		if g.get("thorns") != null:
 			D6Combat.damage_enemy(game, foe, {"kind": "gadget", "amount": g.thorns, "dirX": fx / fl, "dirY": fy / fl, "stun": D6Js.nz(g.get("thornStun"), 0.0), "canCrit": false})
 	return kept
+
+# ---------------------------------------------------------------- Décollation (étape 5)
+
+static func release_grace(game: Dictionary, s: Dictionary, angle: float) -> void:
+	var p: Dictionary = game.player
+	var cx: float = p.x + p.castDirX * s.range
+	var cy: float = p.y + p.castDirY * s.range
+	D6State.emit(game, "grace", {"x": cx, "y": cy, "r": s.radius, "angle": angle})
+	var kills := 0.0
+	var enemies: Array = game.enemies
+	var i := 0
+	while i < enemies.size():
+		var e: Dictionary = enemies[i]
+		i += 1
+		if e.dead or e.spawnT > 0.0:
+			continue
+		var rr: float = s.radius + e.r
+		if D6Geo.dist2(cx, cy, e.x, e.y) >= rr * rr:
+			continue
+		var weak: bool = e.hp / e.maxHp <= s.executeBelow
+		D6Combat.damage_enemy(game, e, {
+			"kind": "skill", "amount": s.damage * (s.executeMult if weak else 1.0), "dirX": p.castDirX, "dirY": p.castDirY,
+			"knockback": s.knockback, "hitstop": s.hitstop, "canCrit": true, "shake": D6Js.nz(s.get("shake"), 0.0),
+		})
+		if e.dead:
+			kills += 1.0
+			_dread(game, s, e)
+	if kills > 0.0:
+		_reprieve(game, s, kills)
+
+## Le coup a tué : la recharge tombe à `resetCd` ; « Ivresse du billot » : élan de dégâts.
+static func _reprieve(game: Dictionary, s: Dictionary, kills: float) -> void:
+	var p: Dictionary = game.player
+	var st: Dictionary = p.slots[int(p.castSlot)]
+	st.cd = minf(st.cd, s.resetCd)
+	if s.get("surge") != null:
+		p.surge = maxf(p.surge, s.surge)
+		p.surgeMult = maxf(p.surgeMult, s.surgeMult)
+	D6State.emit(game, "graceKill", {"x": p.x, "y": p.y, "kills": kills, "slot": p.castSlot})
+
+## « Effroi » (amélioration) : les ennemis autour de la victime sont étourdis, sans dégât ni recul
+## (ni un Gardien, ni un ennemi en garde : règles d'un choc, D6Combat.push_enemy).
+static func _dread(game: Dictionary, s: Dictionary, e: Dictionary) -> void:
+	if s.get("blastStun") == null:
+		return
+	D6KitCommon.push_circle(game, e.x, e.y, s.blastRadius, 0.0, s.blastStun)
+	D6State.emit(game, "kitPulse", {"x": e.x, "y": e.y, "r": s.blastRadius, "kind": "grace"})

@@ -41,6 +41,11 @@ const RARETES_BENEDICTION := {
 	"epique": {"decalage": 5.0, "intervalles": [0.0, 4.0, 7.0, 12.0, 14.0, 16.0, 19.0, 24.0]},
 }
 const ETINCELLES_EQUIPEMENT := 3 # 0 (commun) à 3 (légendaire)
+const IMPACTS_GRELE := 9 # pointes qui se plantent dans la chute de la Grêle des Limbes (instants tirés une fois)
+const FENETRE_GRELE := 0.16 # s
+const GAIN_GRELE := [0.3, 0.55]
+const HAUTEUR_GRELE := [1400.0, 2600.0] # Hz
+const TOURS_DE_HACHE := 3 # battements d'air de la Hache du supplice lancée
 
 static var _table: Dictionary = {}
 
@@ -113,6 +118,12 @@ static func table() -> Dictionary:
 		_competences(t)
 		_gadgets(t)
 		_supers(t)
+		_gestes(t)
+		_progression_v3(t)
+		_neuves_revenant(t)
+		_neuves_bourreau(t)
+		_neuves_chasseresse(t)
+		_ultimes(t)
 		_cris_gardiens(t)
 		_benedictions_equipement(t)
 		_salles(t)
@@ -407,6 +418,264 @@ static func _supers(t: Dictionary) -> void:
 	# Nuée : montée scintillante.
 	t["super_nuee"] = accord("triangle", NOTE.E5, MAJEUR, 0.03, perc(0.005, 0.4), 0.1) + [
 		souffle("highpass", 3000.0, 7000.0, 0.7, adsr(0.1, 0.1, 0.6, 0.2, 0.4), 0.2),
+	]
+
+# ---------------------------------------------------------------- combat V3 (propres à Godot : rien de tel sur le web)
+# Sobres exprès — personne n'a encore écouté les sons de ce jeu : volumes des recettes voisines,
+# rien de strident (les partiels aigus restent faibles), court pour tout ce qui se répète.
+
+## Les trois déplacements de classe (événement `dash`, champ `move`) et le terrain franchi.
+static func _gestes(t: Dictionary) -> void:
+	# Saut du Bourreau, décollage : effort grave qui monte (il quitte le sol).
+	t["deplacement_saut"] = [
+		souffle("bandpass", 250.0, 1100.0, 0.8, adsr(0.02, 0.05, 0.6, 0.06, 0.16), 0.6),
+		ton("sine", 95.0, 190.0, perc(0.01, 0.2), 0.3),
+	]
+	# … atterrissage : choc mat du corps, poussière.
+	t["saut_atterrissage"] = [
+		ton("sine", 90.0, 34.0, perc(0.003, 0.28), 0.9),
+		souffle("lowpass", 700.0, 160.0, 0.8, perc(0.002, 0.2), 0.6),
+		souffle("bandpass", 1500.0, FIXE, 1.0, perc(0.001, 0.03), 0.25),
+	]
+	# Roulade de la Chasseresse : deux froissements de cuir, légers.
+	t["deplacement_roulade"] = [
+		souffle("bandpass", 700.0, 1600.0, 1.0, perc(0.015, 0.09), 0.5),
+		souffle("bandpass", 900.0, 2200.0, 1.0, perc(0.015, 0.1), 0.4, {"at": 0.1}),
+		ton("sine", 220.0, 330.0, perc(0.02, 0.1), 0.06),
+	]
+	# Franchissement (au-dessus d'une rivière ou d'un obstacle bas) : un filet d'air clair.
+	t["franchissement"] = [
+		souffle("bandpass", 1800.0, 4200.0, 2.5, adsr(0.03, 0.05, 0.5, 0.05, 0.15), 0.3),
+		ton("sine", 880.0, 1320.0, perc(0.02, 0.16), 0.05),
+	]
+
+## Jauge d'ultime, armement, niveau de classe, point de l'arbre.
+static func _progression_v3(t: Dictionary) -> void:
+	# Jauge d'ultime PLEINE : le signal qui compte (« pense à tenir le bouton ») — deux notes claires,
+	# une quinte qui monte, un éclat. Bref.
+	t["ultime_pret"] = [
+		ton("triangle", NOTE.E5, FIXE, perc(0.003, 0.14), 0.3),
+		ton("triangle", NOTE.B5, FIXE, perc(0.003, 0.3), 0.32, {"at": 0.09}),
+		ton("sine", demi_tons(NOTE.B5, 12.0), FIXE, perc(0.002, 0.25), 0.08, {"at": 0.09}),
+		souffle("highpass", 6000.0, FIXE, 0.7, perc(0.003, 0.1), 0.06, {"at": 0.09}),
+	]
+	# Armement par maintien : une montée du temps du maintien (0,4 s) ; la vue l'arrête net si l'on relâche.
+	t["ultime_armement"] = [
+		ton("sine", 220.0, 660.0, adsr(0.05, 0.05, 0.9, 0.25, 0.06), 0.25, {"glide": 0.4}),
+		ton("triangle", 440.0, 1320.0, adsr(0.1, 0.05, 0.9, 0.2, 0.06), 0.08, {"glide": 0.4}),
+		souffle("bandpass", 800.0, 3600.0, 2.0, adsr(0.1, 0.05, 0.8, 0.2, 0.06), 0.15),
+	]
+	# Niveau de classe passé : arpège majeur montant, une cloche claire au sommet.
+	t["niveau"] = accord("triangle", NOTE.C5, MAJEUR, 0.07, perc(0.005, 0.35), 0.16) + cloche(NOTE.C6, PARTIELS_METAL, 0.28, 0.7, 0.14)
+	# Point dépensé dans l'arbre (Grimoire) : un sceau qu'on appose — coup feutré, note d'or.
+	t["point_arbre"] = [
+		ton("sine", 140.0, 70.0, perc(0.003, 0.12), 0.6),
+		souffle("lowpass", 800.0, FIXE, 0.8, perc(0.002, 0.05), 0.3),
+		ton("triangle", NOTE.G5, FIXE, perc(0.003, 0.3), 0.2, {"at": 0.04}),
+		ton("sine", demi_tons(NOTE.G5, 12.0), FIXE, perc(0.002, 0.25), 0.06, {"at": 0.04}),
+	]
+
+## Compétences neuves du Revenant : Sillage, Contre-taille, Stigmate (et la marque), Ombre jumelle.
+static func _neuves_revenant(t: Dictionary) -> void:
+	# Sillage de braise : la braise prend sous ses pas — grésillement doux qui s'installe.
+	t["gadget_sillage"] = [
+		souffle("highpass", 2200.0, 3600.0, 0.7, adsr(0.03, 0.08, 0.5, 0.1, 0.25), 0.3),
+		ton("sine", 196.0, 147.0, perc(0.01, 0.2), 0.15),
+	]
+	# Contre-taille, la taillade qui lève la garde : lame vive, acier qui reste tendu.
+	t["competence_riposte"] = [
+		souffle("bandpass", 1200.0, 3600.0, 1.4, perc(0.008, 0.1), 0.55),
+		ton("triangle", 1760.0, FIXE, perc(0.004, 0.3), 0.07),
+	]
+	# … la PARADE réussie : l'acier claque clair (plus haut et plus long que la parade d'un tir),
+	# puis la riposte fend l'air.
+	t["parade_contre_taille"] = cloche(1980.0, PARTIELS_METAL, 0.0, 0.45, 0.3) + [
+		souffle("highpass", 5000.0, FIXE, 0.7, perc(0.001, 0.015), 0.3),
+		souffle("bandpass", 700.0, 3000.0, 1.2, perc(0.015, 0.14), 0.5, {"at": 0.05}),
+	]
+	# Stigmate qui explose : le fer rouge — coup médium, souffle brûlant, sifflement qui retombe.
+	t["stigmate_explosion"] = [
+		ton("sine", 150.0, 50.0, perc(0.003, 0.3), 0.9),
+		souffle("bandpass", 1400.0, 500.0, 0.9, perc(0.003, 0.25), 0.6),
+		ton("sine", 1900.0, 700.0, perc(0.005, 0.3), 0.06, {"glide": 0.3}),
+		souffle("highpass", 3000.0, FIXE, 0.7, adsr(0.005, 0.04, 0.3, 0.05, 0.2), 0.2),
+	]
+	# Marque posée (Stigmate ; rejouée plus aiguë : Marque de la proie) : un « tic » de visée, deux notes serrées.
+	t["marque"] = [
+		ton("triangle", 1320.0, FIXE, perc(0.002, 0.05), 0.25),
+		ton("triangle", 1760.0, FIXE, perc(0.002, 0.12), 0.22, {"at": 0.05}),
+	]
+	# Ombre jumelle : elle se détache — souffle creux qui s'ouvre, note basse qui tremble.
+	t["ombre_surgit"] = [
+		souffle("bandpass", 1500.0, 350.0, 1.5, adsr(0.02, 0.06, 0.5, 0.05, 0.2), 0.5),
+		ton("sine", 110.0, 82.0, perc(0.01, 0.3), 0.4),
+		ton("triangle", 330.0, 247.0, perc(0.02, 0.25), 0.08, {"vibrato": {"rate": 7.0, "cents": 20.0}}),
+	]
+	# … « Transposition » : deux souffles inverses, l'un qui se ferme, l'autre qui s'ouvre.
+	t["ombre_echange"] = [
+		souffle("bandpass", 2600.0, 500.0, 2.0, perc(0.005, 0.1), 0.45),
+		souffle("bandpass", 500.0, 2600.0, 2.0, perc(0.02, 0.12), 0.45, {"at": 0.07}),
+		ton("sine", 440.0, 660.0, perc(0.01, 0.14), 0.08, {"at": 0.07}),
+	]
+
+## Compétences neuves du Bourreau : Faille, Hache du supplice, Garde de fer, Décollation.
+static func _neuves_bourreau(t: Dictionary) -> void:
+	# Faille : le sol se fend — grondement qui roule, craquements de pierre.
+	t["faille_fissure"] = [
+		ton("sine", 70.0, 40.0, perc(0.005, 0.5), 0.9),
+		souffle("lowpass", 500.0, 120.0, 0.8, adsr(0.01, 0.1, 0.6, 0.1, 0.3), 0.7),
+		souffle("bandpass", 1600.0, FIXE, 2.0, perc(0.001, 0.03), 0.4, {"at": 0.04}),
+		souffle("bandpass", 1200.0, FIXE, 2.0, perc(0.001, 0.035), 0.35, {"at": 0.13}),
+		souffle("bandpass", 2000.0, FIXE, 2.0, perc(0.001, 0.025), 0.25, {"at": 0.2}),
+	]
+	# Hache du supplice lancée : elle tournoie — trois battements d'air, de plus en plus loin.
+	var tours: Array = []
+	for i in TOURS_DE_HACHE:
+		tours.append(souffle("bandpass", 500.0, 1500.0, 1.5, perc(0.012, 0.06), 0.5 - 0.1 * i, {"at": 0.07 * i}))
+	t["competence_hachette"] = tours + [ton("sine", 150.0, 110.0, perc(0.01, 0.2), 0.12)]
+	# … rattrapée : le manche claque dans la paume, le fer tinte bas.
+	t["hache_retour"] = [
+		souffle("lowpass", 900.0, FIXE, 0.8, perc(0.001, 0.04), 0.6),
+		ton("square", 190.0, 130.0, perc(0.002, 0.06), 0.3, {"filter": {"type": "lowpass", "freq": 900.0}}),
+	] + cloche(620.0, PARTIELS_METAL, 0.01, 0.2, 0.12)
+	# Garde de fer levée : le coup de bouclier — bois ferré qui cogne.
+	t["gadget_garde"] = [
+		ton("square", 120.0, 70.0, perc(0.003, 0.18), 0.5, {"filter": {"type": "lowpass", "freq": 500.0}}),
+		souffle("lowpass", 700.0, 200.0, 0.8, perc(0.002, 0.12), 0.5),
+	] + cloche(520.0, PARTIELS_METAL, 0.0, 0.25, 0.1)
+	# … un coup BLOQUÉ : le fer sonne mat et grave (pas l'éclat clair d'une parade).
+	t["garde_blocage"] = cloche(430.0, PARTIELS_METAL, 0.0, 0.22, 0.3) + [
+		ton("sine", 130.0, 60.0, perc(0.002, 0.12), 0.6),
+		souffle("bandpass", 1100.0, FIXE, 1.5, perc(0.001, 0.03), 0.35),
+	]
+	# Décollation : la hache tombe — l'air fendu, puis le billot.
+	t["decollation"] = [
+		souffle("bandpass", 600.0, 2400.0, 1.2, perc(0.02, 0.07), 0.5),
+		ton("sine", 105.0, 40.0, perc(0.003, 0.26), 1.0, {"at": 0.06}),
+		souffle("lowpass", 900.0, 200.0, 0.8, perc(0.002, 0.14), 0.6, {"at": 0.06}),
+	]
+	# … le coup a tué, la recharge est tombée : « encore » — deux notes brèves qui montent.
+	t["decollation_encore"] = [
+		ton("triangle", NOTE.G5, FIXE, perc(0.002, 0.06), 0.25),
+		ton("triangle", NOTE.C6, FIXE, perc(0.002, 0.14), 0.25, {"at": 0.06}),
+	]
+
+## Compétences neuves de la Chasseresse : Leurre d'os, Trait de Nemrod, Grêle des Limbes.
+static func _neuves_chasseresse(t: Dictionary) -> void:
+	# Leurre d'os posé : il se plante — pieu dans le sol, os qui cliquettent.
+	t["gadget_leurre"] = [
+		ton("sine", 130.0, 70.0, perc(0.003, 0.12), 0.6),
+		souffle("lowpass", 600.0, FIXE, 0.8, perc(0.002, 0.06), 0.4),
+		souffle("bandpass", 3000.0, FIXE, 6.0, perc(0.001, 0.02), 0.4, {"at": 0.08}),
+		souffle("bandpass", 2400.0, FIXE, 6.0, perc(0.001, 0.025), 0.35, {"at": 0.13}),
+	]
+	# Trait de Nemrod lâché : corde lourde (grave, longue) et l'air qui claque derrière le trait.
+	t["trait_tir"] = [
+		ton("triangle", 260.0, 90.0, perc(0.002, 0.22), 0.5),
+		ton("sine", 130.0, 60.0, perc(0.003, 0.2), 0.4),
+		souffle("bandpass", 1800.0, 5200.0, 1.6, perc(0.004, 0.14), 0.55),
+		souffle("highpass", 4500.0, FIXE, 0.7, perc(0.001, 0.02), 0.3),
+	]
+	# Grêle des Limbes, le tir vers le ciel : une volée qui s'éloigne.
+	t["grele_tir"] = [
+		ton("triangle", 420.0, 170.0, perc(0.002, 0.1), 0.3),
+		souffle("bandpass", 1600.0, 5000.0, 2.0, perc(0.006, 0.16), 0.45),
+		souffle("bandpass", 2000.0, 6000.0, 2.0, perc(0.006, 0.2), 0.25, {"at": 0.06}),
+	]
+	t["grele_chute"] = _averse()
+
+## La chute de la Grêle : une averse de pointes (impacts serrés, à instants tirés une fois pour
+## toutes) sur un coup sourd.
+static func _averse() -> Array:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 6670
+	var couches := [
+		ton("sine", 100.0, 45.0, perc(0.004, 0.25), 0.6, {"at": 0.03}),
+		souffle("bandpass", 3000.0, 1200.0, 1.0, perc(0.01, 0.2), 0.3),
+	]
+	for i in IMPACTS_GRELE:
+		var hauteur := lerpf(HAUTEUR_GRELE[0], HAUTEUR_GRELE[1], rng.randf())
+		var gain := lerpf(GAIN_GRELE[0], GAIN_GRELE[1], rng.randf())
+		couches.append(souffle("bandpass", hauteur, FIXE, 3.0, perc(0.0008, 0.025), gain, {"at": rng.randf() * FENETRE_GRELE}))
+	return couches
+
+## Les trois ultimes de classe : lancement (`super`, champ `super` : forme | magie | meute) et effets.
+static func _ultimes(t: Dictionary) -> void:
+	# Forme du Damné : la braise prend — coup sourd, souffle qui s'embrase, deux dents de scie qui montent.
+	var prise := adsr(0.04, 0.15, 0.7, 0.2, 0.35)
+	t["super_forme"] = [
+		ton("sine", 80.0, 38.0, perc(0.003, 0.4), 0.9),
+		souffle("bandpass", 400.0, 2600.0, 1.2, adsr(0.05, 0.1, 0.6, 0.2, 0.3), 0.45),
+		ton("sawtooth", 98.0, 147.0, prise, 0.2, {"glide": 0.45, "drive": true, "filter": {"type": "lowpass", "freq": 350.0, "to": 2200.0}}),
+		ton("sawtooth", 147.0, 220.0, prise, 0.12, {"glide": 0.45, "detune": 9.0, "filter": {"type": "lowpass", "freq": 350.0, "to": 2200.0}}),
+	]
+	# Fin de la forme : la braise retombe — souffle qui descend, note qui s'éteint.
+	t["forme_fin"] = [
+		souffle("bandpass", 2200.0, 300.0, 1.0, perc(0.02, 0.4), 0.35),
+		ton("sawtooth", 196.0, 82.0, perc(0.02, 0.35), 0.14, {"filter": {"type": "lowpass", "freq": 1200.0, "to": 250.0}}),
+	]
+	# Hurlement (action de forme) : voix creuse qui monte, tremblée.
+	t["forme_hurlement"] = [
+		ton("sawtooth", 180.0, 320.0, adsr(0.04, 0.1, 0.7, 0.15, 0.3), 0.3, {"glide": 0.2, "drive": true, "tremolo": {"rate": 22.0, "depth": 0.3}, "filter": {"type": "bandpass", "freq": 700.0, "to": 1300.0, "q": 2.0}}),
+		souffle("bandpass", 900.0, 500.0, 1.2, adsr(0.03, 0.1, 0.6, 0.15, 0.25), 0.4),
+	]
+	# Embrasement (fin choisie de la forme) : explosion de braise, plus claire que le boum des dangers.
+	t["forme_embrasement"] = [
+		ton("sine", 110.0, 36.0, perc(0.004, 0.5), 1.0),
+		souffle("lowpass", 1800.0, 200.0, 0.7, perc(0.003, 0.45), 0.6),
+		souffle("highpass", 1500.0, 4000.0, 0.7, adsr(0.01, 0.06, 0.4, 0.1, 0.3), 0.22),
+	]
+	_ultime_magie(t)
+	_ultime_meute(t)
+
+static func _ultime_magie(t: Dictionary) -> void:
+	# Sentence capitale : la lame se lève — cloche grave, acier qui chante de plus en plus haut.
+	t["super_magie"] = cloche(NOTE.G2, PARTIELS_CLOCHE, 0.0, 0.9, 0.4) + [
+		ton("triangle", 660.0, 1320.0, adsr(0.1, 0.1, 0.7, 0.15, 0.2), 0.1, {"glide": 0.45, "vibrato": {"rate": 9.0, "cents": 12.0}}),
+		souffle("highpass", 3000.0, 6000.0, 0.7, adsr(0.15, 0.1, 0.6, 0.1, 0.15), 0.1),
+	]
+	# Le temps se fige : un souffle qui se retire (de l'aigu au grave), presque rien.
+	t["sentence_gel"] = [
+		souffle("bandpass", 3000.0, 500.0, 1.5, adsr(0.02, 0.05, 0.5, 0.1, 0.15), 0.3),
+		ton("sine", 1320.0, 660.0, perc(0.01, 0.25), 0.06),
+	]
+	# Le FRACAS : tonnerre — coup très grave, craquement, la cloche du Juge.
+	t["sentence_fracas"] = [
+		ton("sine", 70.0, 26.0, perc(0.004, 0.9), 1.0),
+		souffle("lowpass", 1600.0, 90.0, 0.7, perc(0.003, 0.8), 0.8),
+		souffle("bandpass", 2800.0, 900.0, 1.0, perc(0.001, 0.08), 0.5),
+	] + cloche(NOTE.G2, PARTIELS_CLOCHE, 0.02, 1.2, 0.3)
+	# Un éclair par ennemi frappé : claquement bref.
+	t["sentence_eclair"] = [
+		souffle("highpass", 2500.0, FIXE, 0.7, perc(0.0005, 0.03), 0.5),
+		ton("square", 1400.0, 500.0, perc(0.001, 0.05), 0.06),
+	]
+	# EXÉCUTION : la lame tombe — l'acier tinte, puis le coup sourd.
+	t["sentence_execution"] = cloche(1100.0, PARTIELS_METAL, 0.0, 0.25, 0.2) + [
+		souffle("bandpass", 1800.0, 600.0, 1.4, perc(0.002, 0.07), 0.5),
+		ton("sine", 120.0, 45.0, perc(0.003, 0.22), 0.8, {"at": 0.03}),
+	]
+
+static func _ultime_meute(t: Dictionary) -> void:
+	# Meute des Limbes : l'appel — un cor de chasse, deux notes (une quinte qui monte), creux et lointain.
+	var timbre := {"type": "lowpass", "freq": 900.0}
+	var souffle_cor := {"rate": 5.0, "cents": 10.0}
+	t["super_meute"] = [
+		ton("sawtooth", NOTE.G3, FIXE, adsr(0.04, 0.05, 0.8, 0.12, 0.1), 0.25, {"drive": true, "filter": timbre, "vibrato": souffle_cor}),
+		ton("sawtooth", demi_tons(NOTE.G3, 7.0), FIXE, adsr(0.04, 0.08, 0.8, 0.3, 0.35), 0.25, {"drive": true, "filter": timbre, "vibrato": souffle_cor, "at": 0.2}),
+		souffle("bandpass", 700.0, FIXE, 2.0, adsr(0.05, 0.1, 0.5, 0.3, 0.3), 0.12),
+	]
+	# Un limier surgit : os qui s'entrechoquent (trois clics) dans un souffle grave.
+	t["meute_apparition"] = [
+		souffle("bandpass", 500.0, 1200.0, 1.0, perc(0.02, 0.18), 0.4),
+		souffle("bandpass", 3200.0, FIXE, 6.0, perc(0.001, 0.02), 0.5),
+		souffle("bandpass", 2600.0, FIXE, 6.0, perc(0.001, 0.02), 0.4, {"at": 0.05}),
+		souffle("bandpass", 3600.0, FIXE, 6.0, perc(0.001, 0.02), 0.35, {"at": 0.09}),
+	]
+	# Morsure : un claquement de mâchoire, très court (elle se répète plusieurs fois par seconde).
+	t["meute_morsure"] = [
+		souffle("bandpass", 2400.0, 1200.0, 3.0, perc(0.001, 0.03), 0.5),
+		ton("square", 300.0, 160.0, perc(0.001, 0.035), 0.12, {"filter": {"type": "lowpass", "freq": 1400.0}}),
 	]
 
 ## Cris d'attaque des Gardiens (champ `enemy` de enemyAttack) : un timbre par modèle.
