@@ -3,7 +3,8 @@ extends RefCounted
 ## Repris tel quel de la version web (tools/traces.mjs, figée le 2026-10-01) : mêmes parties,
 ## mêmes graines, mêmes bots — les 70 parties dont l'égalité exacte avec le web a été prouvée
 ## ce jour-là (parite/LISEZ_MOI.md). Depuis, c'est Godot qui les enregistre ; les 8 parties
-## terrain_* (combat V3, étape 1 bis) et les 7 parties ultime_* (étape 2) n'ont jamais existé sur le web.
+## terrain_* (combat V3, étape 1 bis), les 7 parties ultime_* (étape 2) et les 6 parties arbre_*
+## (étape 3) n'ont jamais existé sur le web.
 ##
 ## Une spec : voir references/partie.gd. Ajouter une partie = ajouter une ligne ici, puis
 ## l'enregistrer (references/enregistrer.gd -- <nom>). Les graines sont choisies pour que ce que
@@ -27,7 +28,28 @@ static func all() -> Array:
 	out.append_array(_bestiary())
 	out.append_array(_terrain())
 	out.append_array(_ultimes())
+	out.append_array(_arbre())
 	return out
+
+## Combat V3, étape 3 : l'ARBRE DE COMPÉTENCES. Six parties jouées avec un arbre REMPLI (`tree` :
+## rangs et améliorations exclusives, references/partie.gd) : les rangs 5, les trois anciens Supers
+## en compétence (`colere`, `sentence`, `nuee`), une amélioration exclusive de chaque sorte, des
+## passifs, un rang d'ultime. Toutes les autres parties du catalogue jouent l'arbre VIDE.
+static func _arbre() -> Array:
+	return [
+		{"name": "arbre_plein_lame", "seed": 8101, "floor": 7, "kit": KITS[0], "slots": ["lance", "nova", "colere"], "policy": "skilled", "seconds": 90,
+			"tree": {"ranks": {"lance": 5, "nova": 5, "colere": 3, "sang_vif": 3, "grimoire_brulant": 3, "forme_tenace": 2}, "choices": {"lance": "explose", "nova": "feu", "colere": "soif"}}},
+		{"name": "arbre_plein_hache", "seed": 8102, "floor": 8, "kit": KITS[2], "slots": ["bond", "cri", "sentence"], "policy": "skilled", "seconds": 90,
+			"tree": {"ranks": {"bond": 5, "cri": 5, "sentence": 3, "cuir_epais": 3, "bourreau_des_sonnes": 3, "sentence_sans_appel": 2}, "choices": {"bond": "double", "cri": "guerre", "sentence": "verdict"}}},
+		{"name": "arbre_plein_arc", "seed": 8103, "floor": 9, "kit": KITS[4], "slots": ["volee", "piege", "nuee"], "policy": "skilled", "seconds": 90,
+			"tree": {"ranks": {"volee": 5, "piege": 5, "nuee": 3, "oeil_de_lynx": 3, "carquois_profond": 1, "grande_meute": 2}, "choices": {"volee": "tempete", "piege": "champ", "nuee": "averse"}}},
+		{"name": "arbre_hasard_dagues", "seed": 8104, "floor": 10, "kit": KITS[1], "slots": ["chaine", "bombe", "nova"], "policy": "hasard", "seconds": 90, "godMode": true,
+			"tree": {"ranks": {"chaine": 3, "bombe": 3, "nova": 3, "pas_de_l_ombre": 1, "dash_long": 1}, "choices": {"chaine": "ferrage", "bombe": "fumigene", "nova": "attire"}}},
+		{"name": "arbre_hasard_marteau", "seed": 8105, "floor": 11, "kit": KITS[3], "slots": ["chaine", "bombe", "bond"], "policy": "hasard", "seconds": 90, "godMode": true,
+			"tree": {"ranks": {"chaine": 3, "bombe": 3, "bond": 3, "bras_de_fer": 2, "saut_leste": 1}, "choices": {"chaine": "traversante", "bombe": "grappe", "bond": "onde"}}},
+		{"name": "arbre_hasard_arbalete", "seed": 8106, "floor": 12, "kit": KITS[5], "slots": ["brasier", "totem", "volee"], "policy": "hasard", "seconds": 90, "godMode": true,
+			"tree": {"ranks": {"brasier": 3, "totem": 3, "volee": 3, "traits_lourds": 3, "roulade_de_plus": 1}, "choices": {"brasier": "poix", "totem": "gardien", "volee": "rafale"}}},
+	]
 
 static func names() -> Array:
 	return all().map(func(s): return s.name)

@@ -586,6 +586,156 @@ le fracas sans ligne de vue ni recul ; le seuil de 25 % et le plafond de 10 % su
 taille et la lisibilité des limiers, leur règle d'attirance ; le mot « Super » dans les textes des
 bénédictions.
 
+## Étape 3 « Arbre de compétences » — ce qui est FAIT (2026-10-04)
+
+Règles (`sim/tree.gd`, `data/arbres.json`), affichage SIMPLE au Grimoire, bots, références. Avec les
+compétences qui existent ; le contenu neuf (étape 4) s'ajoute par les données : une entrée dans
+`data/classes.json`, un nœud dans `data/arbres.json`. TOUS les nombres sont des PROPOSITIONS.
+
+**Expérience et niveaux de classe (permanents).** Chaque classe a son niveau, de 1 à **30**.
+
+| Réglage (`data/arbres.json`) | Proposé |
+|---|---|
+| Expérience : ennemi tué / élite / Gardien (`xp`) | 1 / 6 / 60 |
+| Profondeur (`depthStep`, `depthCap`) | × (1 + 0,25 × (section − 1)), jamais plus de × 4 (atteint en section 13) |
+| Courbe (`curve`) | passer du niveau N au suivant : 40 + 25 × (N − 1) ; niveau 30 = 11 310 d'expérience |
+| Points | 1 par niveau gagné (29), + 1 par MODÈLE de Gardien vaincu pour la première fois avec la classe (4 modèles) : 33 au plus |
+
+- L'expérience est versée au profil À CHAQUE ennemi tué, exactement là où le sont les Âmes : mourir,
+  abandonner, rentrer ou gagner ne la reprend pas. Rien en arène d'essai, rien à l'entraînement,
+  rien pour une invocation ; le Gardien verse la sienne à sa mort (pas à l'entraînement).
+- Borne : un élite au plafond vaut 24, un Gardien 240 ; le premier niveau en demande 40, le 29e 740.
+- Événements : `levelUp {classId, level, levels, points}`, `treePoint {guardian, points}`. Bilan :
+  `game.run.deathRecap.tree` et `D6Run.tree_recap(game)` = `{classId, xpEarned, levelsGained, level, points}`.
+
+**L'arbre** : 4 étages, ouverts après 0 / 5 / 12 / 20 points DÉPENSÉS dans la classe (les rangs
+offerts ne comptent pas). Trois sortes de nœuds :
+
+- **Compétence** : 5 rangs. Le rang 1 DÉBLOQUE (elle devient plaçable) avec les nombres de
+  `classes.json` ; les rangs 2 à 5 l'améliorent (table `ranks`). **Au rang 3**, deux améliorations
+  EXCLUSIVES : on prend l'une OU l'autre, gratuitement ; seule la respécialisation défait le choix.
+  Choix du rang 3 plutôt que 5 : le joueur choisit tôt, et les rangs 4 et 5 améliorent ce qu'il a pris.
+- **Passif** (5 par classe, 1 à 3 rangs) et **déplacement** (1 nœud au sommet) : une statistique.
+- **Ultime** (1 nœud au sommet, 2 rangs) : un nombre de l'ultime de la classe.
+- La première compétence et la première compétence à charges de chaque classe ont leur rang 1
+  OFFERT (aucun point, il survit à la respécialisation). Le prix en Âmes des compétences a disparu
+  (plus de `cost` ; `D6Profile.unlock` d'une compétence répond « se débloque dans l'arbre »).
+- **L'arbre entier coûte EXPRÈS plus de points qu'un héros n'en aura** (37 ou 38 contre 33) : il
+  faut choisir. Écrit dans les données (`fullyBuyable: false`), gardé par `donnees.gd`.
+
+**Les anciens Supers sont la 5e compétence de chaque classe** (faisable proprement : fait). Sorte
+`canal` : la compétence joue Colère, Sentence ou Nuée dans l'état « super » sur SA recharge longue
+(20 / 24 / 22 s), invulnérable le temps du geste, dégâts de source « super » (ils ne chargent pas la
+jauge) ; la jauge d'ultime n'est ni dépensée ni remplie pendant le geste. À JUGER : une invulnérabilité
+de 1,4 à 1,6 s toutes les 20 s, en plus de l'ultime.
+
+**Revenant**
+
+| Nœud | Étage | Rangs | Ce que donnent les rangs | Amélioration A | Amélioration B |
+|---|---|---|---|---|---|
+| Lance infernale (offerte) | Base | 5 | dégâts 30 → 34, 38, 42, 46 ; recharge 4 → 3,8, 3,6, 3,4, 3,2 s | **Transperce tout** : traverse 99 ennemis, porte à 760 u | **Explose à l'impact** : 26 dégâts à 110 u autour du premier touché, et elle s'arrête là |
+| Nova de cendres (offerte) | Base | 5 | dégâts 20 → 36 ; rayon 150 → 182 u ; 4 charges aux rangs 4 et 5 | **Aspiration** : attire contre vous au lieu de repousser | **Sol en feu** : 4 s de flammes, 14 dégâts/s |
+| Sang vif (passif) | Base | 3 | +8 PV max par rang | | |
+| Chaîne d'Enfer | Cœur | 5 | dégâts 16 → 32 ; recharge 5 → 3,8 s ; portée 430 → 510 u | **Ferrage** : le harponné subit +30 % de dégâts 4 s | **Chaîne traversante** : ne tire plus, traverse 5 ennemis, étourdit 1,2 s |
+| Bombe de soufre | Cœur | 5 | dégâts 45 → 69 ; rayon 120 → 144 u | **Grappe** : 3 bombes de 26 dégâts à 90 u | **Fumigène** : 1 dégât, étourdit 2,5 s à 170 u, sans repousser |
+| Grimoire brûlant (passif) | Cœur | 3 | recharge des compétences −5 % par rang | | |
+| Pas de l'ombre (passif) | Cœur | 1 | +1 charge de dash | | |
+| Tourbillon de colère (ancien Super) | Maîtrise | 5 | recharge 20 → 16 s ; 9 → 13 dégâts par coup | **Œil du cyclone** : aspire au lieu de repousser | **Soif** : +1 PV par ennemi touché, à chaque coup |
+| Fureur damnée (passif) | Maîtrise | 2 | l'ultime se charge 10 % plus vite par rang | | |
+| Tranchant (passif) | Maîtrise | 3 | +4 % de critique par rang | | |
+| Dash long (déplacement) | Sommet | 1 | le dash va 15 % plus loin | | |
+| Forme tenace (ultime) | Sommet | 2 | Forme du Damné : 10 → 12, 14 s | | |
+
+**Bourreau**
+
+| Nœud | Étage | Rangs | Ce que donnent les rangs | Amélioration A | Amélioration B |
+|---|---|---|---|---|---|
+| Bond du bourreau (offert) | Base | 5 | dégâts 34 → 54 ; recharge 6 → 4,8 s | **Double saut** : le Bond suivant est prêt en 0,5 s, une fois | **Onde de choc** : frappe à 200 u, recul 900 |
+| Cri du bourreau (offert) | Base | 5 | rayon 200 → 240 u ; vulnérable +30 → +42 % ; 4 charges aux rangs 4 et 5 | **Cri de guerre** : +25 % de dégâts 5 s pour le héros | **Terreur** : le cri repousse (recul 900) |
+| Cuir épais (passif) | Base | 3 | +12 PV max par rang | | |
+| Chaîne d'Enfer | Cœur | 5 | comme celle du Revenant (arbre à part : chaque classe monte la sienne) | Ferrage | Chaîne traversante |
+| Bombe de soufre | Cœur | 5 | comme celle du Revenant | Grappe | Fumigène |
+| Bourreau des sonnés (passif) | Cœur | 3 | +10 % de dégâts aux ennemis étourdis par rang | | |
+| Bras de fer (passif) | Cœur | 2 | recul infligé +15 % par rang | | |
+| Triple sentence (ancien Super) | Maîtrise | 5 | recharge 24 → 20 s ; dégâts × 1,08 → × 1,32 | **Verdict** : un seul fracas de 120 tout autour, en 0,6 s | **Dîme de sang** : +4 PV par ennemi frappé |
+| Billot (passif) | Maîtrise | 2 | +4 % d'armure par rang | | |
+| Jugement hâtif (passif) | Maîtrise | 2 | l'ultime se charge 10 % plus vite par rang | | |
+| Saut leste (déplacement) | Sommet | 1 | le saut revient 20 % plus vite | | |
+| Sentence sans appel (ultime) | Sommet | 2 | Sentence capitale : exécute sous 25 → 30, 35 % de vie | | |
+
+**Chasseresse**
+
+| Nœud | Étage | Rangs | Ce que donnent les rangs | Amélioration A | Amélioration B |
+|---|---|---|---|---|---|
+| Volée d'épines (offerte) | Base | 5 | dégâts 14 → 22 ; recharge 3,5 → 2,7 s | **Rafale droite** : épines serrées (8°), traversent 4 ennemis, portent à 620 u | **Tempête d'épines** : 9 épines sur 120°, 11 dégâts |
+| Piège à mâchoires (offert) | Base | 5 | dégâts 30 → 50 ; immobilise 1,6 → 2 s | **Piège explosif** : souffle à 140 u, 55 dégâts, étourdit 0,8 s | **Champ de pièges** : 3 pièges par charge, 6 au plus |
+| Œil de lynx (passif) | Base | 3 | +4 % de critique par rang | | |
+| Brasier d'âmes | Cœur | 5 | brûlure 12 → 20 dégâts/s ; recharge 7 → 5,8 s | **Poix** : ralentit de 50 % dans les flammes | **Pot explosif** : 60 dégâts à 120 u, étourdit 1 s, plus de flammes |
+| Totem de givre | Cœur | 5 | dégâts 7 → 11 ; dure 6 → 8 s | **Totem de foudre** : ne ralentit plus, 16 dégâts toutes les 0,4 s | **Totem gardien** : efface les tirs ennemis à chaque impulsion |
+| Traits lourds (passif) | Cœur | 3 | dégâts des compétences à recharge +8 % par rang | | |
+| Carquois profond (passif) | Cœur | 1 | +1 charge à chaque compétence à charges | | |
+| Nuée de traits (ancien Super) | Maîtrise | 5 | recharge 22 → 18 s ; dégâts 8 → 12 | **Acharnement** : tout sur la cible la plus proche, 13 dégâts | **Averse** : 6 cibles, un trait toutes les 0,06 s, 7 dégâts |
+| Jambes de biche (passif) | Maîtrise | 2 | la roulade revient 8 % plus vite par rang | | |
+| Souffle long (passif) | Maîtrise | 2 | vitesse +4 % par rang | | |
+| Troisième roulade (déplacement) | Sommet | 1 | +1 charge de roulade | | |
+| Grande meute (ultime) | Sommet | 2 | Meute des Limbes : 3 → 4, 5 limiers | | |
+
+**Respécialisation** : « Tout rendre » rend tous les points de la classe contre **80 + 30 × points
+dépensés** en or. Rangs achetés et améliorations s'effacent, les rangs offerts restent ; un
+emplacement qui tenait une compétence redevenue verrouillée est VIDÉ.
+
+**Migration du profil** (`PROFILE_SCHEMA` 4 → 5, `sim/tree.gd : migrate`) :
+
+- chaque compétence déjà débloquée garde son rang 1, OFFERT (hors budget) ; les Âmes dépensées ne
+  sont ni reprises ni rendues ; les emplacements ne bougent pas ;
+- l'AVANCE, pour ne pas repartir de zéro : la classe PORTÉE reçoit l'expérience que le profil
+  prouve — chaque ennemi tué (`stats.kills`) et chaque Gardien vaincu (`guardians`), au tarif de base,
+  sans bonus de profondeur — et un point par modèle de Gardien déjà vaincu. Les autres classes
+  partent du niveau 1 : le profil ne dit pas avec laquelle il a joué. (La proposition de départ ne
+  comptait que les Gardiens : le vrai profil aurait eu le niveau 6 au lieu de 12. À TRANCHER.)
+- le vrai profil du joueur (au schéma 3 sur le disque : étage 126, Bourreau, 1 598 ennemis tués,
+  8 Gardiens vaincus de 4 modèles) arrive au schéma 5 avec : Bourreau **niveau 12** (263 / 315),
+  **15 points** à dépenser (11 de niveaux, 4 de Gardiens), Bond, Cri, Chaîne et Bombe au rang 1
+  offert, emplacements Bond / Cri / Chaîne inchangés, Âmes, or et coffre intacts ; Revenant et
+  Chasseresse au niveau 1.
+
+**En partie.** À la création de la partie, les rangs et l'amélioration de chaque compétence de la
+classe jouée sont écrits dans les réglages de la partie ; les passifs s'ajoutent aux statistiques à
+chaque calcul, à côté du Sanctuaire ; les bénédictions s'ajoutent par-dessus comme avant. Un arbre
+vide ne change RIEN (prouvé : `v3_arbre`, « un arbre vide laisse les réglages… », et les références).
+
+**Lecture pour l'affichage** (aucune règle dans l'UI) : `D6Profile.tree_view`, `tree_buy`,
+`tree_choose`, `tree_respec`, `tree_points` ; `D6Profile.slot_choices` rend `rank` à la place de `cost`.
+
+**Affichage (simple, exprès).** Grimoire : les trois emplacements en haut (inchangés), puis « Arbre
+de compétences » — niveau, barre d'expérience, points — et l'arbre en liste par étage : une carte par
+nœud (rang, texte du rang actuel et du suivant, « + » grisé avec sa raison, les deux améliorations),
+« Tout rendre (N or) » en deux appuis. L'onglet devient « Grimoire ● » quand des points attendent.
+Écran de mort : « Expérience de classe : +N » et « Niveau N ! +1 point à dépenser au Grimoire » ;
+écran de victoire : l'expérience et le niveau. Un niveau passé sonne l'accord du checkpoint.
+Captures : `_dev/captures/lot_v3_arbre/` (`capturer.sh`).
+
+**Bots, puissance, références.** Les oracles de jouabilité jouent toujours l'arbre vide (base
+comparable). `outils/arbre.gd` mesure arbre vide contre arbre plein (`_dev/rapports/arbre.md`) : en
+section 1, l'arbre plein nettoie une salle 11 à 19 % plus vite, bat le Gardien 27 à 42 % plus vite,
+et prend 2 à 10 fois moins de dégâts. Références : l'expérience entre dans l'empreinte par les
+événements `levelUp` et `treePoint` (17 parties sur 85 en écart, AUCUNE hors de ces deux événements :
+prouvé partie par partie avant de réenregistrer) ; 6 parties `arbre_*` ajoutées, jouées avec un arbre
+rempli (91 au total).
+
+**PAS FAIT** (lot suivant, « le bel écran ») : un vrai dessin d'arbre (étages en colonnes, liens,
+pictogrammes des passifs) ; un retour en jeu au niveau passé (rien ne s'affiche pendant le combat) ;
+l'expérience dans le HUD ; un dessin propre à chaque amélioration (l'explosion de la Lance, le sol en
+feu de la Nova réutilisent les effets existants ; la Chaîne traversante, l'aspiration, le Totem
+gardien n'ont pas d'effet à eux) ; la confirmation d'une amélioration exclusive (elle se prend en un
+appui) ; la capture d'une compétence au rang 1 et au rang 5 en jeu.
+
+**À juger par Pierre** : tous les nombres ci-dessus ; le rang 3 pour le choix ; les 26 améliorations
+(noms, effets) ; l'ancien Super en compétence invulnérable ; le double emploi Chaîne / Bombe entre
+Revenant et Bourreau (mêmes nœuds, arbres séparés) ; l'arbre qui ne se remplit pas en entier ; le
+prix de la respécialisation ; l'avance donnée à la migration (ennemis tués + Gardiens, ou Gardiens
+seuls) ; la puissance de l'arbre plein.
+
 ## Tests existants et combat V3
 
 GO de Pierre le 2026-10-04 (« GO tests V3 ») : les tests existants qui décrivent l'ancien système

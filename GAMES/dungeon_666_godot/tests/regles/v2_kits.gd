@@ -246,13 +246,24 @@ static func _t_registre_prix(h) -> void:
 		for id in tables[kind]:
 			var d: Dictionary = tables[kind][id]
 			var cost = d.get("cost")
+			if kind == "skills" or kind == "gadgets":
+				# Combat V3, étape 3 : une compétence n'a plus de prix en Âmes, l'arbre la débloque.
+				h.egal(cost, null, "%s.%s : plus de cost" % [kind, id])
+				h.egal(D6Profile.unlock_cost(_t(), kind, id), 0.0)
+				continue
 			h.ok(_fini(cost) and cost == floorf(cost) and cost >= 0.0, "%s.%s : cost %s" % [kind, id, str(cost)])
 			h.egal(D6Profile.unlock_cost(_t(), kind, id), cost)
 	h.egal(k.CLASSES.revenant.cost, 0.0)
-	for c in k.CLASSES.values():
+	var p: Dictionary = D6Profile.new_profile(_t())
+	p.souls = 1e6
+	for class_id in k.CLASSES:
+		var c: Dictionary = k.CLASSES[class_id]
 		h.egal(k.WEAPONS[c.weapons[0]].cost, 0.0)
-		h.egal(k.SKILLS[c.skills[0]].cost, 0.0)
-		h.egal(k.GADGETS[c.gadgets[0]].cost, 0.0)
+		# Le départ de la classe (1re compétence, 1re compétence à charges) est offert : rang 1 sans point.
+		D6Profile.unlock(p, _t(), "classes", class_id)
+		D6Profile.select_class(p, _t(), class_id)
+		for x in D6Profile.slot_choices(p, _t()):
+			h.egal(x.unlocked, x.id == c.skills[0] or x.id == c.gadgets[0], "%s : %s" % [class_id, x.id])
 	for w in k.WEAPONS.values():
 		_verifier_arme_du_registre(h, w)
 

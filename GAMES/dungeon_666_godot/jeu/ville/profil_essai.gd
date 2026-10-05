@@ -7,6 +7,7 @@ const Profil = preload("res://jeu/profil.gd")
 
 const GRAINE := 666.0
 const AMES_LARGES := 100000.0
+const NIVEAU_RICHE := 8.0 # niveau de classe du joueur avancé : sept points de compétence à dépenser
 const AMELIORATIONS := ["vitalite", "vitalite", "ferocite", "fortune", "arsenal"]
 const PORTES := [
 	{"slot": "arme", "rarity": "rare", "floor": 52.0, "weaponType": "lame"},
@@ -36,7 +37,8 @@ static func effacer() -> void:
 			if FileAccess.file_exists(chemin):
 				DirAccess.remove_absolute(chemin)
 
-## Profil avancé : toutes les classes, des Âmes, quatre checkpoints, trois Gardiens rencontrés,
+## Profil avancé : toutes les classes, des Âmes, des niveaux de classe (donc des points de
+## compétence à dépenser), quatre checkpoints, trois Gardiens rencontrés,
 ## un équipement porté et un coffre garni de toutes les raretés (dont des armes d'autres classes).
 static func riche(tuning: Dictionary, ames: float = 345.0) -> Dictionary:
 	var p: Dictionary = D6Profile.new_profile(tuning)
@@ -61,6 +63,7 @@ static func riche(tuning: Dictionary, ames: float = 345.0) -> Dictionary:
 		D6Profile.stash_loot(p, D6Loot.generate_item(jetable, voeu))
 	p.souls = ames
 	p.gold = 312.0
+	p.tree[p.loadout.classId].level = NIVEAU_RICHE
 	return p
 
 ## Profil du BOUT DU CHEMIN (test de parcours : l'écran de victoire) : un joueur qui a battu tous

@@ -84,6 +84,8 @@ const ROUTES := {
 	"ultFreeze": "superReady", "ultStrike": "boom", "ultBolt": "chain",
 	"formRush": "dash", "formHowl": "slam", "formBurst": "boom", "formEnd": "superEnd",
 	"allySpawn": "bossSummon", "allyDeath": "kill", "allyGone": "superEnd",
+	# Arbre de compétences (étape 3) : un niveau de classe passé sonne l'accord du checkpoint.
+	"levelUp": "checkpoint",
 }
 ## Routes qui dépendent de l'événement : les clés possibles (la décision est dans `cle`).
 const ROUTES_CALCULEES := {
@@ -102,6 +104,7 @@ const SILENCIEUX := [
 	"moveShort", # déplacement raccourci au bord de l'eau : le son du dash est déjà parti, retour visuel seulement
 	"moveLand", # atterrissage du saut du Bourreau : onde visuelle seulement pour l'instant (un choc sourd reste à choisir)
 	"souls", # Âmes d'un élite : le son de mort de l'élite suffit
+	"treePoint", # point de compétence d'un Gardien vaincu pour la première fois : le checkpoint sonne déjà
 	"stash", # objet rangé au coffre : le clic du menu suffit
 	"returnTown", # fin de la descente : la Ville prend le relais
 	"bossShield", # chaînes du Colosse levées / brisées : retour visuel (chaînes, barre de vie)

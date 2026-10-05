@@ -10,6 +10,10 @@ extends Node
 ##   D666_APPAREIL : clavier (défaut) | manette | tactile
 ##   D666_CLASSE   : revenant (défaut) | bourreau | chasseresse
 ##   D666_BAS=1    : l'onglet de la Ville est défilé jusqu'en bas
+##   D666_DEFILE   : … ou défilé de ce nombre de pixels
+##   D666_ARBRE    : état de l'arbre de compétences de la classe — vide (niveau 1, aucun point) |
+##                   points (défaut : des points à dépenser) | choix (les deux améliorations exclusives
+##                   offertes) | moitie (quinze points dépensés) | plein (tout ce qu'un héros peut acheter)
 ## Le banc écrit dans son propre dossier d'essai, jamais dans le vrai profil. Comme tout banc, il
 ## est le seul ici à poser des situations dans `game` ; la vue Accueil, elle, ne fait que lire.
 
@@ -21,6 +25,7 @@ const DONNEES := "user://essais_accueil_banc"
 const GRAINE := 7.0
 const ONGLETS := ["armurerie", "grimoire", "classe"]
 const POSE := 3 # images avant de poser la situation (les vues sont branchées)
+const NIVEAUX_D_ARBRE := {"vide": 1.0, "moitie": 16.0} # niveau de classe posé pour D666_ARBRE
 const BAS := 20 # images avant de défiler un onglet de la Ville jusqu'en bas (D666_BAS=1)
 
 var app: Node
@@ -35,6 +40,7 @@ func _ready() -> void:
 	var tuning: Dictionary = D6Data.create_tuning()
 	var profil: Dictionary = ProfilEssai.riche(tuning)
 	D6Profile.select_class(profil, tuning, _env("D666_CLASSE", "revenant"))
+	_garnir_l_arbre(profil, tuning, _env("D666_ARBRE", "points"))
 	ProfilEssai.ecrire(profil)
 	# Le joueur d'essai a tout appris, sauf la consigne voulue ; son et vibrations coupés.
 	var reglages: Dictionary = Profil.REGLAGES_DEFAUT.duplicate(true)
@@ -56,8 +62,36 @@ func _env(nom: String, defaut: String = "") -> String:
 	var v := OS.get_environment(nom)
 	return v if v != "" else defaut
 
+## L'arbre de la classe portée, dans l'état demandé (un banc a le droit de fabriquer son profil).
+func _garnir_l_arbre(profil: Dictionary, tuning: Dictionary, etat: String) -> void:
+	var classe: String = profil.loadout.classId
+	var st: Dictionary = profil.tree[classe]
+	var c: Dictionary = tuning.classes[classe]
+	st.level = NIVEAUX_D_ARBRE.get(etat, st.level)
+	if etat == "plein":
+		st.level = tuning.tree.maxLevel
+		st.guardians = tuning.boss.keys()
+	if etat == "choix":
+		for i in int(tuning.tree.choiceRank) - 1:
+			D6Profile.tree_buy(profil, tuning, classe, c.skills[0])
+	if etat != "moitie" and etat != "plein":
+		return
+	var achete := true
+	while achete:
+		achete = false
+		for n in tuning.tree.classes[classe].nodes:
+			achete = D6Js.truthy(D6Profile.tree_buy(profil, tuning, classe, n.id).ok) or achete
+	for n in tuning.tree.classes[classe].nodes:
+		if n.has("choices"):
+			D6Profile.tree_choose(profil, tuning, classe, n.id, n.choices[0].id)
+	for i in [c.skills[1], c.skills[2]]:
+		D6Profile.select_slot(profil, tuning, 2.0, i) # la dernière compétence débloquée tient l'emplacement 3
+
 func _process(_delta: float) -> void:
 	_images += 1
+	if _images == BAS and _voulue in ONGLETS and _env("D666_DEFILE") != "":
+		var page: ScrollContainer = app.vues.ville.page(_voulue).get_parent().get_parent()
+		page.scroll_vertical = int(_env("D666_DEFILE"))
 	if _images == BAS and _voulue in ONGLETS and _env("D666_BAS") == "1":
 		var defilement: ScrollContainer = app.vues.ville.page(_voulue).get_parent().get_parent()
 		defilement.scroll_vertical = int(defilement.get_v_scroll_bar().max_value)

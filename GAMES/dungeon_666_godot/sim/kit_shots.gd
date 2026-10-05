@@ -124,6 +124,10 @@ static func _shot_hits(game: Dictionary, s: Dictionary, ox: float, oy: float, sp
 		})
 		if s.pull != null:
 			_hook(game, s, e)
+		if D6Js.nz(s.get("vuln"), 0.0) > 0.0 and not e.dead:
+			# « Ferrage » (amélioration de la Chaîne) : l'ennemi touché devient vulnérable.
+			e.vuln = maxf(e.vuln, s.vuln)
+			e.vulnMult = maxf(e.vulnMult, s.vulnMult)
 		if float(s.hitIds.size()) > s.pierce:
 			s.dead = true
 			break

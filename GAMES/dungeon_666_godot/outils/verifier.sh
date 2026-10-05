@@ -26,8 +26,8 @@ GODOT_BIN="${GODOT_BIN:-C:/Users/Studio-Dev/Desktop/Godot_v4.6.3-stable_win64.ex
 PROCESSUS="${PROCESSUS:-$(nproc 2>/dev/null || echo 4)}"
 ERREUR_SCRIPT="SCRIPT ERROR\|Parse Error"
 # Gardes anti-faux-vert : en dessous, un fichier de tests ou des parties ont disparu.
-MIN_TESTS_REGLES=516
-MIN_PARTIES=85
+MIN_TESTS_REGLES=581
+MIN_PARTIES=91
 LIGNES_PAR_ROUGE=6 # lignes montrées par processus rouge (la suite : relancer l'étape seule, voir README.md)
 VUES_ATTENDUES="jeu/entrees/test_entrees.gd jeu/ecrans/test_ecrans.gd jeu/ville/test_ville.gd jeu/son/test_son.gd jeu/effets/verifier.gd jeu/theme/verifier.gd jeu/monde/test_profondeur.gd jeu/monde/test_finitions.gd jeu/monde/test_terrain.gd jeu/essai/test_parcours.gd jeu/interface/test_accueil.gd"
 

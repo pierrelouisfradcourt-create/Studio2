@@ -54,6 +54,9 @@ func _demarrer() -> void:
 		"fontaine", "mort":
 			Scenes.benir(g, 2)
 			Scenes.donner_or(g, OR_DU_MARCHAND)
+			# D666_XP : autant d'ennemis tués avant de mourir (l'écran de mort montre l'expérience, le niveau gagné).
+			for i in int(OS.get_environment("D666_XP")):
+				D6Combat.kill_enemy(g, D6Enemies.create_enemy(g, "imp", g.player.x + 200.0, g.player.y, {"spawnT": 0.0}))
 
 func _process(_delta: float) -> void:
 	var g = partie.game

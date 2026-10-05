@@ -1,0 +1,615 @@
+{
+  "_note": "L'ARBRE DE COMPÉTENCES (combat V3, étape 3), PERMANENT, un par classe. Tous les nombres sont des PROPOSITIONS à juger par Pierre. EXPÉRIENCE : `xp` par ennemi tué (kill), par élite, par Gardien, multipliée par 1 + depthStep × (section − 1), jamais plus que depthCap ; rien en arène d'essai ni à l'entraînement, rien pour une invocation. NIVEAUX : de 1 à maxLevel ; passer du niveau N au suivant demande curve.base + curve.perLevel × (N − 1). POINTS : pointsPerLevel par niveau gagné, pointsPerGuardian par modèle de Gardien vaincu pour la première fois avec la classe. ÉTAGES (`tiers`) : un étage s'ouvre quand `need` points ont été dépensés dans la classe ; `tier` d'un nœud = son rang dans cette liste (0 = base). NŒUDS : `skill` (une compétence de classes.json : skillRanks rangs ; le rang 1 la DÉBLOQUE avec les nombres de classes.json, `ranks` donne chaque nombre amélioré aux rangs 2, 3, 4, 5 ; au rang choiceRank, DEUX améliorations exclusives `choices` : `set` remplace des nombres de la compétence, `text` les cite par {champ}) ; `passive` et `move` (maxRank rangs de `perRank` sur la statistique `stat`, ou un `proc` lu par les règles ; `text` cite le total par {v}, en pour cent si `pct`) ; `ultimate` (`ranks` : chaque nombre de l'ultime de la classe aux rangs 1, 2…). `labels` : comment se dit chaque nombre d'un rang ({v}) ; `pctFields` : ceux qui s'écrivent en pour cent. RESPÉCIALISATION : tout rendre coûte respec.base + respec.perPoint × points dépensés, en or. `fullyBuyable` faux : l'arbre de la classe coûte EXPRÈS plus de points qu'un héros n'en aura jamais (niveau maximum + tous les Gardiens) : il faut choisir (gardé par tests/regles/donnees.gd). Ajouter une compétence : une entrée dans classes.json (et dans la liste de sa classe), un nœud ici.",
+  "tree": {
+    "maxLevel": 30,
+    "xp": { "kill": 1, "elite": 6, "guardian": 60, "depthStep": 0.25, "depthCap": 4 },
+    "curve": { "base": 40, "perLevel": 25 },
+    "pointsPerLevel": 1,
+    "pointsPerGuardian": 1,
+    "skillRanks": 5,
+    "choiceRank": 3,
+    "respec": { "base": 80, "perPoint": 30 },
+    "tiers": [
+      { "name": "Base", "need": 0 },
+      { "name": "Cœur", "need": 5 },
+      { "name": "Maîtrise", "need": 12 },
+      { "name": "Sommet", "need": 20 }
+    ],
+    "labels": {
+      "damage": "{v} dégâts",
+      "cooldown": "recharge {v} s",
+      "radius": "rayon {v} u",
+      "range": "portée {v} u",
+      "chargesPerSection": "{v} charges",
+      "stun": "étourdit {v} s",
+      "vulnMult": "vulnérable +{v} %",
+      "burnDps": "brûle {v} dégâts/s",
+      "life": "dure {v} s",
+      "damagePerTick": "{v} dégâts par coup",
+      "damageMult": "dégâts × {v}",
+      "formTime": "forme de {v} s",
+      "executeBelow": "exécute sous {v} % de vie",
+      "count": "{v} limiers"
+    },
+    "pctFields": ["vulnMult", "executeBelow", "chillMult", "surgeMult"],
+    "classes": {
+      "revenant": {
+        "fullyBuyable": false,
+        "nodes": [
+          {
+            "id": "lance",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "lance",
+            "ranks": { "damage": [34, 38, 42, 46], "cooldown": [3.8, 3.6, 3.4, 3.2] },
+            "choices": [
+              {
+                "id": "transperce",
+                "name": "Transperce tout",
+                "text": "La lance traverse jusqu'à {pierce} ennemis et porte à {range} u.",
+                "set": { "pierce": 99, "range": 760 }
+              },
+              {
+                "id": "explose",
+                "name": "Explose à l'impact",
+                "text": "Au premier ennemi touché, la lance explose : {blastDamage} dégâts à {blastRadius} u, et elle s'arrête là.",
+                "set": { "blastRadius": 110, "blastDamage": 26 }
+              }
+            ]
+          },
+          {
+            "id": "nova",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "nova",
+            "ranks": {
+              "damage": [24, 28, 32, 36],
+              "radius": [158, 166, 174, 182],
+              "chargesPerSection": [3, 3, 4, 4]
+            },
+            "choices": [
+              {
+                "id": "attire",
+                "name": "Aspiration",
+                "text": "La nova ATTIRE les ennemis contre vous au lieu de les repousser.",
+                "set": { "knockback": 0, "pullGap": 14, "pullMass": 2.5 }
+              },
+              {
+                "id": "feu",
+                "name": "Sol en feu",
+                "text": "La nova laisse le sol en feu {fireDuration} s : {fireDps} dégâts/s à ceux qui y restent.",
+                "set": { "fireDuration": 4, "fireDps": 14 }
+              }
+            ]
+          },
+          {
+            "id": "sang_vif",
+            "kind": "passive",
+            "tier": 0,
+            "name": "Sang vif",
+            "text": "+{v} PV max.",
+            "stat": "maxHpBonus",
+            "perRank": 8,
+            "maxRank": 3
+          },
+          {
+            "id": "chaine",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "chaine",
+            "ranks": {
+              "damage": [20, 24, 28, 32],
+              "cooldown": [4.7, 4.4, 4.1, 3.8],
+              "range": [450, 470, 490, 510]
+            },
+            "choices": [
+              {
+                "id": "ferrage",
+                "name": "Ferrage",
+                "text": "L'ennemi harponné devient vulnérable : +{vulnMult} % de dégâts subis pendant {vuln} s.",
+                "set": { "vuln": 4, "vulnMult": 0.3 }
+              },
+              {
+                "id": "traversante",
+                "name": "Chaîne traversante",
+                "text": "La chaîne ne tire plus : elle traverse jusqu'à {pierce} ennemis et les étourdit {stun} s.",
+                "set": { "noPull": true, "pierce": 5, "stun": 1.2 }
+              }
+            ]
+          },
+          {
+            "id": "bombe",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "bombe",
+            "ranks": { "damage": [51, 57, 63, 69], "radius": [126, 132, 138, 144] },
+            "choices": [
+              {
+                "id": "grappe",
+                "name": "Grappe",
+                "text": "{count} bombes en éventail au lieu d'une : {damage} dégâts chacune, à {radius} u.",
+                "set": { "count": 3, "spread": 50, "damage": 26, "radius": 90 }
+              },
+              {
+                "id": "fumigene",
+                "name": "Fumigène",
+                "text": "La bombe ne blesse presque plus ({damage} dégât) mais étourdit {stun} s tout ce qui est à {radius} u, sans repousser.",
+                "set": { "damage": 1, "stun": 2.5, "radius": 170, "knockback": 0 }
+              }
+            ]
+          },
+          {
+            "id": "grimoire_brulant",
+            "kind": "passive",
+            "tier": 1,
+            "name": "Grimoire brûlant",
+            "text": "Recharge des compétences −{v} %.",
+            "stat": "skillCooldownMult",
+            "perRank": -0.05,
+            "pct": true,
+            "maxRank": 3
+          },
+          {
+            "id": "pas_de_l_ombre",
+            "kind": "passive",
+            "tier": 1,
+            "name": "Pas de l'ombre",
+            "text": "+{v} charge de dash.",
+            "stat": "dashChargesBonus",
+            "perRank": 1,
+            "maxRank": 1
+          },
+          {
+            "id": "colere",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "colere",
+            "ranks": { "cooldown": [19, 18, 17, 16], "damagePerTick": [10, 11, 12, 13] },
+            "choices": [
+              {
+                "id": "aspire",
+                "name": "Œil du cyclone",
+                "text": "Le tourbillon ASPIRE les ennemis vers vous au lieu de les repousser.",
+                "set": { "knockback": 0, "pullGap": 30, "pullMass": 2.5 }
+              },
+              {
+                "id": "soif",
+                "name": "Soif",
+                "text": "Chaque ennemi touché par le tourbillon vous rend {healPerHit} PV.",
+                "set": { "healPerHit": 1 }
+              }
+            ]
+          },
+          {
+            "id": "fureur_damnee",
+            "kind": "passive",
+            "tier": 2,
+            "name": "Fureur damnée",
+            "text": "L'ultime se charge {v} % plus vite.",
+            "stat": "superChargeMult",
+            "perRank": 0.1,
+            "pct": true,
+            "maxRank": 2
+          },
+          {
+            "id": "tranchant",
+            "kind": "passive",
+            "tier": 2,
+            "name": "Tranchant",
+            "text": "+{v} % de chances de critique.",
+            "stat": "critChance",
+            "perRank": 0.04,
+            "pct": true,
+            "maxRank": 3
+          },
+          {
+            "id": "dash_long",
+            "kind": "move",
+            "tier": 3,
+            "name": "Dash long",
+            "text": "Le dash va {v} % plus loin.",
+            "stat": "dashDistanceMult",
+            "perRank": 0.15,
+            "pct": true,
+            "maxRank": 1
+          },
+          {
+            "id": "forme_tenace",
+            "kind": "ultimate",
+            "tier": 3,
+            "name": "Forme tenace",
+            "maxRank": 2,
+            "ranks": { "formTime": [12, 14] }
+          }
+        ]
+      },
+      "bourreau": {
+        "fullyBuyable": false,
+        "nodes": [
+          {
+            "id": "bond",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "bond",
+            "ranks": { "damage": [39, 44, 49, 54], "cooldown": [5.7, 5.4, 5.1, 4.8] },
+            "choices": [
+              {
+                "id": "double",
+                "name": "Double saut",
+                "text": "Après un Bond, le suivant est prêt en {rebound} s (une fois, puis la recharge normale).",
+                "set": { "rebound": 0.5 }
+              },
+              {
+                "id": "onde",
+                "name": "Onde de choc",
+                "text": "L'atterrissage frappe à {radius} u et projette bien plus loin (recul {knockback}).",
+                "set": { "radius": 200, "knockback": 900 }
+              }
+            ]
+          },
+          {
+            "id": "cri",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "cri",
+            "ranks": {
+              "radius": [210, 220, 230, 240],
+              "vulnMult": [0.33, 0.36, 0.39, 0.42],
+              "chargesPerSection": [3, 3, 4, 4]
+            },
+            "choices": [
+              {
+                "id": "guerre",
+                "name": "Cri de guerre",
+                "text": "Le cri vous galvanise : +{surgeMult} % de dégâts pendant {surge} s.",
+                "set": { "surge": 5, "surgeMult": 0.25 }
+              },
+              {
+                "id": "terreur",
+                "name": "Terreur",
+                "text": "Le cri REPOUSSE violemment tout ce qu'il touche (recul {knockback}).",
+                "set": { "knockback": 900 }
+              }
+            ]
+          },
+          {
+            "id": "cuir_epais",
+            "kind": "passive",
+            "tier": 0,
+            "name": "Cuir épais",
+            "text": "+{v} PV max.",
+            "stat": "maxHpBonus",
+            "perRank": 12,
+            "maxRank": 3
+          },
+          {
+            "id": "chaine",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "chaine",
+            "ranks": {
+              "damage": [20, 24, 28, 32],
+              "cooldown": [4.7, 4.4, 4.1, 3.8],
+              "range": [450, 470, 490, 510]
+            },
+            "choices": [
+              {
+                "id": "ferrage",
+                "name": "Ferrage",
+                "text": "L'ennemi harponné devient vulnérable : +{vulnMult} % de dégâts subis pendant {vuln} s.",
+                "set": { "vuln": 4, "vulnMult": 0.3 }
+              },
+              {
+                "id": "traversante",
+                "name": "Chaîne traversante",
+                "text": "La chaîne ne tire plus : elle traverse jusqu'à {pierce} ennemis et les étourdit {stun} s.",
+                "set": { "noPull": true, "pierce": 5, "stun": 1.2 }
+              }
+            ]
+          },
+          {
+            "id": "bombe",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "bombe",
+            "ranks": { "damage": [51, 57, 63, 69], "radius": [126, 132, 138, 144] },
+            "choices": [
+              {
+                "id": "grappe",
+                "name": "Grappe",
+                "text": "{count} bombes en éventail au lieu d'une : {damage} dégâts chacune, à {radius} u.",
+                "set": { "count": 3, "spread": 50, "damage": 26, "radius": 90 }
+              },
+              {
+                "id": "fumigene",
+                "name": "Fumigène",
+                "text": "La bombe ne blesse presque plus ({damage} dégât) mais étourdit {stun} s tout ce qui est à {radius} u, sans repousser.",
+                "set": { "damage": 1, "stun": 2.5, "radius": 170, "knockback": 0 }
+              }
+            ]
+          },
+          {
+            "id": "bourreau_des_sonnes",
+            "kind": "passive",
+            "tier": 1,
+            "name": "Bourreau des sonnés",
+            "text": "+{v} % de dégâts aux ennemis étourdis.",
+            "proc": { "on": "passive", "effect": "stunnedBonus" },
+            "perRank": 0.1,
+            "pct": true,
+            "maxRank": 3
+          },
+          {
+            "id": "bras_de_fer",
+            "kind": "passive",
+            "tier": 1,
+            "name": "Bras de fer",
+            "text": "Recul infligé +{v} %.",
+            "stat": "knockbackMult",
+            "perRank": 0.15,
+            "pct": true,
+            "maxRank": 2
+          },
+          {
+            "id": "sentence",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "sentence",
+            "ranks": { "cooldown": [23, 22, 21, 20], "damageMult": [1.08, 1.16, 1.24, 1.32] },
+            "choices": [
+              {
+                "id": "verdict",
+                "name": "Verdict",
+                "text": "Un seul coup au lieu de trois : un fracas immédiat tout autour, en {duration} s.",
+                "set": {
+                  "duration": 0.6,
+                  "strikes": [
+                    {
+                      "at": 0.25,
+                      "range": 190,
+                      "arc": 360,
+                      "damage": 120,
+                      "knockback": 1000,
+                      "stun": 1.2,
+                      "hitstop": 0.14,
+                      "shake": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "soif",
+                "name": "Dîme de sang",
+                "text": "Chaque ennemi frappé par une taillade ou le fracas vous rend {healPerHit} PV.",
+                "set": { "healPerHit": 4 }
+              }
+            ]
+          },
+          {
+            "id": "billot",
+            "kind": "passive",
+            "tier": 2,
+            "name": "Billot",
+            "text": "+{v} % d'armure.",
+            "stat": "armor",
+            "perRank": 0.04,
+            "pct": true,
+            "maxRank": 2
+          },
+          {
+            "id": "jugement_hatif",
+            "kind": "passive",
+            "tier": 2,
+            "name": "Jugement hâtif",
+            "text": "L'ultime se charge {v} % plus vite.",
+            "stat": "superChargeMult",
+            "perRank": 0.1,
+            "pct": true,
+            "maxRank": 2
+          },
+          {
+            "id": "saut_leste",
+            "kind": "move",
+            "tier": 3,
+            "name": "Saut leste",
+            "text": "Le saut revient {v} % plus vite.",
+            "stat": "dashRechargeMult",
+            "perRank": -0.2,
+            "pct": true,
+            "maxRank": 1
+          },
+          {
+            "id": "sentence_sans_appel",
+            "kind": "ultimate",
+            "tier": 3,
+            "name": "Sentence sans appel",
+            "maxRank": 2,
+            "ranks": { "executeBelow": [0.3, 0.35] }
+          }
+        ]
+      },
+      "chasseresse": {
+        "fullyBuyable": false,
+        "nodes": [
+          {
+            "id": "volee",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "volee",
+            "ranks": { "damage": [16, 18, 20, 22], "cooldown": [3.3, 3.1, 2.9, 2.7] },
+            "choices": [
+              {
+                "id": "rafale",
+                "name": "Rafale droite",
+                "text": "Les épines partent serrées, en ligne : elles traversent {pierce} ennemis et portent à {range} u.",
+                "set": { "spread": 8, "pierce": 4, "range": 620 }
+              },
+              {
+                "id": "tempete",
+                "name": "Tempête d'épines",
+                "text": "{count} épines sur {spread}°, {damage} dégâts chacune : tout ce qui vous entoure est touché.",
+                "set": { "count": 9, "spread": 120, "damage": 11 }
+              }
+            ]
+          },
+          {
+            "id": "piege",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "piege",
+            "ranks": { "damage": [35, 40, 45, 50], "stun": [1.7, 1.8, 1.9, 2] },
+            "choices": [
+              {
+                "id": "explosif",
+                "name": "Piège explosif",
+                "text": "Le piège explose à {blastRadius} u : {damage} dégâts à tous ceux qui s'y trouvent, étourdis {stun} s.",
+                "set": { "blastRadius": 140, "damage": 55, "stun": 0.8 }
+              },
+              {
+                "id": "champ",
+                "name": "Champ de pièges",
+                "text": "Une charge pose {count} pièges autour d'elle ({maxActive} au plus en même temps).",
+                "set": { "count": 3, "ringDist": 60, "maxActive": 6 }
+              }
+            ]
+          },
+          {
+            "id": "oeil_de_lynx",
+            "kind": "passive",
+            "tier": 0,
+            "name": "Œil de lynx",
+            "text": "+{v} % de chances de critique.",
+            "stat": "critChance",
+            "perRank": 0.04,
+            "pct": true,
+            "maxRank": 3
+          },
+          {
+            "id": "brasier",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "brasier",
+            "ranks": { "burnDps": [14, 16, 18, 20], "cooldown": [6.7, 6.4, 6.1, 5.8] },
+            "choices": [
+              {
+                "id": "poix",
+                "name": "Poix",
+                "text": "Les flammes collent : les ennemis qui y restent sont ralentis de {chillMult} %.",
+                "set": { "chill": 1, "chillMult": 0.5 }
+              },
+              {
+                "id": "explosif",
+                "name": "Pot explosif",
+                "text": "Plus de flammes : le pot explose à {radius} u, {damage} dégâts, étourdit {stun} s.",
+                "set": { "damage": 60, "stun": 1, "radius": 120, "duration": 0 }
+              }
+            ]
+          },
+          {
+            "id": "totem",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "totem",
+            "ranks": { "damage": [8, 9, 10, 11], "life": [6.5, 7, 7.5, 8] },
+            "choices": [
+              {
+                "id": "foudre",
+                "name": "Totem de foudre",
+                "text": "Le totem ne ralentit plus : il frappe, {damage} dégâts toutes les {pulse} s.",
+                "set": { "damage": 16, "pulse": 0.4, "chillMult": 1 }
+              },
+              {
+                "id": "gardien",
+                "name": "Totem gardien",
+                "text": "À chaque impulsion, le totem efface les tirs ennemis dans son rayon.",
+                "set": { "ward": true }
+              }
+            ]
+          },
+          {
+            "id": "traits_lourds",
+            "kind": "passive",
+            "tier": 1,
+            "name": "Traits lourds",
+            "text": "Dégâts des compétences à recharge +{v} %.",
+            "stat": "skillDamageMult",
+            "perRank": 0.08,
+            "pct": true,
+            "maxRank": 3
+          },
+          {
+            "id": "carquois_profond",
+            "kind": "passive",
+            "tier": 1,
+            "name": "Carquois profond",
+            "text": "+{v} charge à chaque compétence à charges.",
+            "stat": "gadgetChargesBonus",
+            "perRank": 1,
+            "maxRank": 1
+          },
+          {
+            "id": "nuee",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "nuee",
+            "ranks": { "cooldown": [21, 20, 19, 18], "damage": [9, 10, 11, 12] },
+            "choices": [
+              {
+                "id": "acharnement",
+                "name": "Acharnement",
+                "text": "Tous les traits sur la cible la plus proche ({targets} cible), {damage} dégâts chacun.",
+                "set": { "targets": 1, "damage": 13 }
+              },
+              {
+                "id": "averse",
+                "name": "Averse",
+                "text": "Un trait toutes les {interval} s sur les {targets} ennemis les plus proches, {damage} dégâts chacun.",
+                "set": { "targets": 6, "interval": 0.06, "damage": 7 }
+              }
+            ]
+          },
+          {
+            "id": "jambes_de_biche",
+            "kind": "passive",
+            "tier": 2,
+            "name": "Jambes de biche",
+            "text": "La roulade revient {v} % plus vite.",
+            "stat": "dashRechargeMult",
+            "perRank": -0.08,
+            "pct": true,
+            "maxRank": 2
+          },
+          {
+            "id": "souffle",
+            "kind": "passive",
+            "tier": 2,
+            "name": "Souffle long",
+            "text": "Vitesse +{v} %.",
+            "stat": "moveSpeedMult",
+            "perRank": 0.04,
+            "pct": true,
+            "maxRank": 2
+          },
+          {
+            "id": "roulade_de_plus",
+            "kind": "move",
+            "tier": 3,
+            "name": "Troisième roulade",
+            "text": "+{v} charge de roulade.",
+            "stat": "dashChargesBonus",
+            "perRank": 1,
+            "maxRank": 1
+          },
+          {
+            "id": "grande_meute",
+            "kind": "ultimate",
+            "tier": 3,
+            "name": "Grande meute",
+            "maxRank": 2,
+            "ranks": { "count": [4, 5] }
+          }
+        ]
+      }
+    }
+  }
+}

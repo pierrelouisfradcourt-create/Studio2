@@ -99,6 +99,28 @@ C'est le SEUL point d'entrée d'une vue. Elle y garde `app` et `partie`, et s'ab
   (`jeu/monde/creatures/heros.gd`, `armes.gd`) ; les limiers ont leur calque (`limiers.gd`), 1 appel
   de dessin par limier, barre de vie et repère de durée compris. Banc : `jeu/essai/ultimes.tscn`.
 
+## Arbre de compétences (combat V3, étape 3)
+
+- `D6Profile.tree_view(profil, contenu, classe)` : TOUT ce que le Grimoire montre de l'arbre —
+  `{level, maxLevel, xp, xpNext, points, spent, choiceRank, respecCost, tiers: [{name, need, open,
+  nodes: [{id, kind ("skill" | "passive" | "move" | "ultimate"), name, icon, text, now, next, rank,
+  maxRank, free, canBuy, reason, choices: [{id, name, text, taken, canTake, reason}]}]}]}`. `now` /
+  `next` : le texte du rang actuel et du suivant, déjà chiffré ; `text` les deux ; `reason` : pourquoi
+  « + » est grisé ; `xpNext` vaut 0 au niveau maximum. Une vue n'additionne rien, ne compare aucun rang.
+- Opérations (par `app.operation_ville`) : `tree_buy [classe, nœud]`, `tree_choose [classe, nœud,
+  amélioration]`, `tree_respec [classe]` ; `D6Profile.tree_points(profil, contenu, classe)` pour un repère.
+- `D6Profile.slot_choices` rend `rank` (0 = à débloquer dans l'arbre) ; il n'y a plus de `cost`.
+- En partie : événements `levelUp {classId, level, levels, points}` et `treePoint {classId, guardian,
+  points}` ; bilan `D6Run.tree_recap(game)` = `game.run.deathRecap.tree` = `{classId, xpEarned,
+  levelsGained, level, points}`. Une compétence `canal` émet `skill {skill: "canal", super, r, slot}`
+  puis les `superTick` de l'ancien Super ; pendant son geste `player.channel` porte ses réglages.
+- Améliorations exclusives : elles réutilisent les événements existants (`explode` de sorte `lance`,
+  zone `brasier` sous la Nova, `hook` absent pour la Chaîne traversante…) ; aucun effet neuf.
+- Grimoire : `jeu/ville/onglet_grimoire.gd` (`_dessiner_arbre`, une carte par nœud, clé `arbre:<nœud>`,
+  actions `plus` et `choix:<amélioration>` ; « Tout rendre » : clé `arbre:rendre`, deux appuis).
+  Ville : l'onglet devient `REPERE_POINTS` quand des points attendent. Bancs : `D666_ARBRE`
+  (`jeu/interface/banc_accueil.gd`), `D666_XP` (`jeu/ecrans/banc.gd`).
+
 ## Signaux
 
 - `partie.evenements(liste: Array)` : les événements de simulation de l'image (`{type, tick, …}`),

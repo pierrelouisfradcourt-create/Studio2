@@ -9,6 +9,7 @@ extends RefCounted
 ##   D6Game.apply_command(game, {"type": "choose", "index": 0})   # menus (bénédiction, butin…)
 ##   game.events                            # événements de l'image, à vider par l'appelant
 
+const Arbre = preload("res://sim/tree.gd")
 const DT := 1.0 / 60.0
 const HASH_BASIS := 2166136261
 const HASH_PRIME := 16777619
@@ -59,6 +60,7 @@ static func create_game(options = null) -> Dictionary:
 	game.run.gold = meta.gold # la bourse suit le héros d'un run à l'autre
 	if not game.sandbox and not game.practice:
 		meta.stats.runs += 1.0
+	Arbre.apply(game) # arbre de compétences : rangs et améliorations exclusives de la classe jouée
 	D6Loadout.resolve_kit(game)
 	game.player = D6State.create_player(tuning, 0.0, 0.0)
 	D6Loadout.reset_slots(game)

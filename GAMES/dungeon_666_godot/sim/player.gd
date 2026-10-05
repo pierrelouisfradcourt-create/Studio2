@@ -18,6 +18,8 @@ extends RefCounted
 ##   compétence ≠ lance -> kit_skills (chain, bond, brasier, volee)
 ##   gadget ≠ nova      -> kit_gadgets (bombe, piege, totem)
 ##   Super ≠ colere     -> kit_supers (ultimes de classe : forme, magie, meute ; réserve : sentence, nuee)
+##   compétence `canal` -> un ancien Super (Colère, Sentence, Nuée) joué dans l'état 'super' sur la
+##                         recharge de la compétence (player.channel), sans toucher à la jauge d'ultime
 ## Les tirs et zones posés par le héros vivent dans la salle (kit_common.kit_store).
 ##
 ## COMBAT V3 — trois EMPLACEMENTS d'action (D6Loadout : game.kit.slots, player.slots) : une
@@ -653,6 +655,9 @@ static func _land_jump(game: Dictionary) -> void:
 static func _start_cast(game: Dictionary, slot: int, aim_x: float, aim_y: float) -> void:
 	var p: Dictionary = game.player
 	var s: Dictionary = D6Loadout.slot_def(game, slot)
+	if s.kind == "canal":
+		_start_channel(game, slot, s)
+		return
 	var mx: float = aim_x if D6Js.truthy(aim_x) else p.manualAimX
 	var my: float = aim_y if D6Js.truthy(aim_y) else p.manualAimY
 	# La Lance voit loin (autoAim.skillRange) ; les autres compétences visent à leur portée.
@@ -671,6 +676,26 @@ static func _start_cast(game: Dictionary, slot: int, aim_x: float, aim_y: float)
 	D6State.emit(game, "castStart", {"angle": p.facing, "slot": p.castSlot})
 	if s.kind != "lance":
 		D6KitSkills.begin_kit_skill(game, s, aim)
+
+## Compétence `canal` : elle joue un ancien Super (Colère, Sentence, Nuée) dans l'état 'super' —
+## invulnérable, dégâts de source « super » — sur SA recharge. La jauge d'ultime n'est ni dépensée
+## ni remplie pendant le geste ; les réglages joués sont ceux de player.channel.
+static func _start_channel(game: Dictionary, slot: int, s: Dictionary) -> void:
+	var p: Dictionary = game.player
+	if p.state == "attack":
+		D6State.emit(game, "cancel", {"from": "attack"})
+	p.attack = null
+	p.slots[slot].cd = s.cooldown * p.stats.skillCooldownMult
+	p.channel = D6KitSkills.channel_def(game, s)
+	p.superT = p.channel.duration
+	p.superTick = 0.0
+	D6KitSupers.reset_clock(game)
+	p.castSlot = float(slot)
+	p.state = "super"
+	p.stateTime = 0.0
+	game.telemetry.skillCasts += 1.0
+	D6State.emit(game, "castStart", {"angle": p.facing, "slot": p.castSlot})
+	D6State.emit(game, "skill", {"x": p.x, "y": p.y, "angle": p.facing, "skill": "canal", "super": p.channel.kind, "r": p.channel.get("radius"), "slot": p.castSlot})
 
 static func _update_cast(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player
@@ -703,7 +728,7 @@ static func _release_skill(game: Dictionary) -> void:
 static func _release_lance(game: Dictionary) -> void:
 	var p: Dictionary = game.player
 	var s: Dictionary = D6Loadout.cast_def(game)
-	D6Projectiles.spawn_projectile(game, {
+	var shot: Dictionary = D6Projectiles.spawn_projectile(game, {
 		"owner": "player",
 		"kind": "lance",
 		"x": p.x + p.castDirX * (p.r + 4.0),
@@ -717,6 +742,9 @@ static func _release_lance(game: Dictionary) -> void:
 		"knockback": s.knockback,
 		"hitstop": s.hitstop,
 	})
+	if s.get("blastRadius") != null: # amélioration « Explose à l'impact » (D6Projectiles)
+		shot.blastRadius = s.blastRadius
+		shot.blastDamage = s.blastDamage
 	# Recul : la lance repousse légèrement le héros (sensation de puissance).
 	p.vx -= p.castDirX * 120.0
 	p.vy -= p.castDirY * 120.0
@@ -757,6 +785,8 @@ static func use_gadget(game: Dictionary, slot: int, aim_x: float = 0.0, aim_y: f
 			"kind": "gadget", "amount": g.damage, "dirX": dx / l, "dirY": dy / l,
 			"knockback": g.knockback, "stun": g.stun, "hitstop": g.hitstop, "canCrit": false,
 		})
+		D6KitGadgets.draw_in(game, e, g) # amélioration « Aspiration » : attire au lieu de repousser
+	D6KitGadgets.nova_fire(game, g) # amélioration « Sol en feu »
 	D6Projectiles.destroy_enemy_projectiles_in_circle(game, p.x, p.y, g.radius)
 	game.telemetry.gadgetUses += 1.0
 	D6State.emit(game, "gadget", {"x": p.x, "y": p.y, "r": g.radius, "charges": st.charges, "slot": float(slot)})
@@ -775,6 +805,7 @@ static func _start_super(game: Dictionary) -> void:
 	p.superCharge = 0.0
 	p.superHold = 0.0
 	p.superArm = false # l'appui qui vient de lancer l'ultime n'en arme pas un second
+	p.channel = null
 	p.superT = s.duration + D6Js.nz(p.stats.get("superDurationBonus"), 0.0)
 	p.superTick = 0.0
 	if s.kind != "colere":
@@ -788,7 +819,7 @@ static func _start_super(game: Dictionary) -> void:
 static func _update_super(game: Dictionary, dt: float) -> void:
 	var p: Dictionary = game.player
 	var t: Dictionary = game.tuning
-	var s: Dictionary = t["super"]
+	var s: Dictionary = super_def(game)
 	_locomotion(game, dt, t.player.speed * p.stats.moveSpeedMult * s.speedMult)
 	p.superT -= dt
 	if s.kind != "colere":
@@ -798,7 +829,13 @@ static func _update_super(game: Dictionary, dt: float) -> void:
 	if p.superT <= 0.0:
 		p.state = "free"
 		p.stateTime = 0.0
+		p.channel = null
 		D6State.emit(game, "superEnd", {"x": p.x, "y": p.y})
+
+## Les réglages du Super EN COURS : ceux de la compétence `canal` qui le joue, sinon l'ultime de la classe.
+static func super_def(game: Dictionary) -> Dictionary:
+	var ch = game.player.get("channel")
+	return ch if ch is Dictionary and game.player.state == "super" else game.tuning["super"]
 
 ## Ce que l'affichage lit de l'ULTIME de la classe (jauge, maintien, sorte, minuterie), sans
 ## connaître l'intérieur : {id, kind ("forme" | "magie" | "invocation"), name, icon, text, charge,
@@ -812,6 +849,7 @@ static func _colere_tick(game: Dictionary, dt: float, s: Dictionary) -> void:
 	p.superTick -= dt
 	if p.superTick <= 0.0:
 		p.superTick += s.tickInterval
+		var hits := 0.0
 		var enemies: Array = game.enemies
 		var i := 0
 		while i < enemies.size():
@@ -830,5 +868,9 @@ static func _colere_tick(game: Dictionary, dt: float, s: Dictionary) -> void:
 				"kind": "super", "amount": s.damagePerTick, "dirX": dx / l, "dirY": dy / l,
 				"knockback": s.knockback, "canCrit": true,
 			})
+			hits += 1.0
+			D6KitGadgets.draw_in(game, e, s) # amélioration « Œil du cyclone » : aspire
+		if hits > 0.0 and s.get("healPerHit") != null:
+			D6Combat.heal_player(game, hits * s.healPerHit, true) # amélioration « Soif »
 		D6Projectiles.destroy_enemy_projectiles_in_circle(game, p.x, p.y, s.radius)
 		D6State.emit(game, "superTick", {"x": p.x, "y": p.y, "r": s.radius})

@@ -114,9 +114,11 @@ func visite_apres_la_descente() -> void:
 	await _acheter_une_amelioration(etape)
 	await ouvrir(etape, "coffre")
 	await _equiper_et_reprendre(etape)
+	await _depenser_un_point(etape)
 
 ## Joueur avancé : classe changée et reprise, arme forgée et prise, objet équipé, objet recyclé,
-## compétence débloquée et choisie, amélioration achetée, labo réglé.
+## arbre de compétences (rangs, amélioration exclusive, compétence débloquée et placée, tout rendu),
+## amélioration achetée, labo réglé.
 func visite_du_joueur_avance() -> void:
 	var etape := "Ville du joueur avancé"
 	await ouvrir(etape, "portail")
@@ -130,7 +132,7 @@ func visite_du_joueur_avance() -> void:
 	await _equiper_et_reprendre(etape)
 	await _recycler(etape)
 	await ouvrir(etape, "grimoire")
-	await _apprendre_une_competence(etape)
+	await _arbre_du_joueur_avance(etape)
 	await ouvrir(etape, "sanctuaire")
 	await _acheter_une_amelioration(etape)
 	await regler_le_labo(etape)
@@ -190,12 +192,62 @@ func _forger_et_prendre(etape: String) -> void:
 		return
 	print("  (note) %s : aucune arme à forger" % etape)
 
-func _apprendre_une_competence(etape: String) -> void:
-	for id in app.contenu.classes[app.profil.loadout.classId].skills:
-		if app.profil.unlocked.skills.has(id) or D6Profile.unlock_cost(app.contenu, "skills", id) > app.profil.souls:
-			continue
-		await operer(etape, "unlock", ["skills", id])
-		await operer(etape, "select_slot", [2.0, id])
-		t.verifier("%s : la compétence débloquée (%s) est équipée, troisième emplacement" % [etape, id], app.profil.loadout.slots[2] == id)
+func _bouton_du_grimoire(cle: String, action: String) -> Button:
+	for b in app.vues.ville.page("grimoire").find_children("*", "Button", true, false):
+		if String(b.get_meta("cle", "")) == cle and String(b.get_meta("action", "")) == action:
+			return b
+	return null
+
+func _noeud(classe: String, id: String) -> Dictionary:
+	for etage in D6Profile.tree_view(app.profil, app.contenu, classe).tiers:
+		for n in etage.nodes:
+			if n.id == id:
+				return n
+	return {}
+
+## Retour d'une première descente : la classe a gagné des niveaux (et le point du Gardien). Le
+## joueur ouvre le Grimoire et dépense un point par le bouton « + » de sa compétence de départ.
+func _depenser_un_point(etape: String) -> void:
+	var ville: Node = app.vues.ville
+	var classe: String = app.profil.loadout.classId
+	var id: String = app.contenu.classes[classe].skills[0]
+	var avant: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	t.verifier("%s : la descente a fait gagner des niveaux et des points (niveau %s, %s points)" % [etape, D6Js.num_str(avant.level), D6Js.num_str(avant.points)], avant.level > 1.0 and avant.points > 0.0)
+	t.verifier("%s : l'onglet Grimoire porte le repère des points à dépenser" % etape, ville.bouton_onglet("grimoire").text == ville.REPERE_POINTS, ville.bouton_onglet("grimoire").text)
+	await ouvrir(etape, "grimoire")
+	var plus := _bouton_du_grimoire("arbre:%s" % id, "plus")
+	t.verifier("%s : le bouton « + » de %s est offert" % [etape, id], plus != null and not plus.disabled)
+	if plus == null or plus.disabled:
 		return
-	print("  (note) %s : aucune compétence à débloquer" % etape)
+	plus.pressed.emit()
+	await t.images(IMAGES_DE_DESSIN + 1)
+	t.verifier_disque("%s, après « + »" % etape)
+	operations["tree_buy"] = operations.get("tree_buy", 0) + 1
+	var apres: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	t.verifier("%s : un point dépensé, %s passe au rang 2" % [etape, id], apres.points == avant.points - 1.0 and _noeud(classe, id).rank == 2.0, [apres.points, _noeud(classe, id).rank])
+
+## Joueur avancé (des points à dépenser) : un étage fermé refuse ; deux rangs de la compétence de
+## départ, puis l'une de ses deux améliorations (l'autre est alors refusée) ; un passif ; l'étage
+## suivant s'ouvre, une compétence y est débloquée et placée ; enfin tout est rendu contre de l'or.
+func _arbre_du_joueur_avance(etape: String) -> void:
+	var classe: String = app.profil.loadout.classId
+	var c: Dictionary = app.contenu.classes[classe]
+	var noeuds: Array = app.contenu.tree.classes[classe].nodes
+	var depart: Dictionary = noeuds.filter(func(n: Dictionary) -> bool: return n.id == c.skills[0])[0]
+	var passif: Dictionary = noeuds.filter(func(n: Dictionary) -> bool: return n.kind == "passive" and n.tier == 0.0)[0]
+	await operer(etape, "tree_buy", [classe, c.skills[1]], false)
+	await operer(etape, "tree_choose", [classe, depart.id, depart.choices[0].id], false)
+	for i in int(app.contenu.tree.choiceRank) - 1:
+		await operer(etape, "tree_buy", [classe, depart.id])
+	await operer(etape, "tree_choose", [classe, depart.id, depart.choices[0].id])
+	await operer(etape, "tree_choose", [classe, depart.id, depart.choices[1].id], false)
+	for i in int(passif.maxRank):
+		await operer(etape, "tree_buy", [classe, passif.id])
+	await operer(etape, "tree_buy", [classe, c.skills[1]])
+	await operer(etape, "select_slot", [2.0, c.skills[1]])
+	t.verifier("%s : la compétence débloquée dans l'arbre (%s) est équipée, troisième emplacement" % [etape, c.skills[1]], app.profil.loadout.slots[2] == c.skills[1])
+	var bourse: float = app.profil.gold
+	var vue: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	await operer(etape, "tree_respec", [classe])
+	var rendu: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	t.verifier("%s : tout rendu contre %s or — points revenus, emplacement de %s vidé" % [etape, D6Js.num_str(vue.respecCost), c.skills[1]], app.profil.gold == bourse - vue.respecCost and rendu.spent == 0.0 and rendu.points == vue.points + vue.spent and app.profil.loadout.slots[2] == null, [app.profil.gold, rendu.points, app.profil.loadout.slots])

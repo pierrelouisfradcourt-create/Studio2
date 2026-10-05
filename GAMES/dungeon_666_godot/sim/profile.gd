@@ -19,7 +19,14 @@ extends RefCounted
 ## COMBAT V3 (schéma 4) : `loadout.slots` = trois emplacements d'action, chacun l'identifiant
 ## d'une compétence ou d'un gadget POSSÉDÉ de la classe, ou null (vide) ; jamais deux fois le même.
 ## Une sauvegarde du schéma 3 ({skillId, gadgetId}) est migrée par sanitize_profile.
+##
+## ARBRE DE COMPÉTENCES (schéma 5, sim/tree.gd) : `tree` = par classe {xp, level, ranks, choices,
+## guardians}. Une compétence ne s'achète plus en Âmes : le rang 1 de son nœud la débloque.
+## `unlocked.skills` / `unlocked.gadgets` ne listent plus que les compétences OFFERTES (kit de
+## départ de chaque classe, anciens déblocages en Âmes) : leur rang 1 est gratuit. Opérations :
+## tree_view, tree_buy, tree_choose, tree_respec.
 
+const Arbre = preload("res://sim/tree.gd")
 const DEFAULT_WEAPON := "lame"
 const UID_PREFIX := "i" # identifiant d'objet du profil : « i » + numéro d'ordre (itemSeq)
 const KINDS := ["classes", "weapons", "skills", "gadgets"]
@@ -50,6 +57,7 @@ static func create_profile(tuning: Dictionary) -> Dictionary:
 		"itemSeq": 1.0,
 		"guardians": {}, # modèle de Gardien -> victoires
 		"stats": {"runs": 0.0, "deaths": 0.0, "kills": 0.0, "guardianKills": 0.0},
+		"tree": {start.classId: Arbre.new_state()}, # arbre de compétences : classe -> état (sim/tree.gd)
 	}
 
 ## Profil neuf avec le kit gratuit de la classe de départ.
@@ -58,17 +66,17 @@ static func new_profile(tuning: Dictionary) -> Dictionary:
 	grant_class_starters(p, tuning, p.loadout.classId)
 	return p
 
-## Le kit GRATUIT d'une classe (entrées de coût 0 : arme, compétence et gadget de départ) est
-## acquis avec la classe ; sinon le Grimoire afficherait « Débloquer · ◆ 0 ».
+## Les ARMES gratuites d'une classe (coût 0) sont acquises avec elle ; sinon l'Armurerie afficherait
+## « Débloquer · ◆ 0 ». Compétences : seule la première de chaque sorte est offerte
+## (_grant_starter_kit), les autres se débloquent dans l'arbre.
 static func grant_class_starters(profile: Dictionary, tuning: Dictionary, class_id) -> void:
 	var c = tuning.classes.get(class_id)
 	if c == null:
 		return
-	for kind in ["weapons", "skills", "gadgets"]:
-		for id in c[kind]:
-			var entry = tuning[kind].get(id)
-			if D6Js.truthy(entry) and D6Js.nz(entry.get("cost"), 0.0) == 0.0 and not profile.unlocked[kind].has(id):
-				profile.unlocked[kind].append(id)
+	for id in c.weapons:
+		var entry = tuning.weapons.get(id)
+		if D6Js.truthy(entry) and D6Js.nz(entry.get("cost"), 0.0) == 0.0 and not profile.unlocked.weapons.has(id):
+			profile.unlocked.weapons.append(id)
 
 static func _starting_kit(tuning: Dictionary) -> Dictionary:
 	var class_id = tuning.classes.keys()[0]
@@ -131,6 +139,7 @@ static func sanitize_profile(raw, tuning: Dictionary) -> Dictionary:
 		for k in out.stats.keys():
 			if _int_in(raw.stats.get(k), 0.0, 1e9):
 				out.stats[k] = raw.stats[k]
+	Arbre.sanitize(out, raw, tuning) # après les déblocages, la classe et le record : l'arbre et la migration les lisent
 	fix_loadout(out, tuning)
 	return out
 
@@ -251,9 +260,11 @@ static func _first_owned(list: Array, owned: Array):
 
 ## Les actions de la classe `c` que le profil possède, dans l'ordre où elles remplissent un
 ## emplacement : la première compétence et le premier gadget possédés, puis les autres.
-static func _owned_actions(profile: Dictionary, c: Dictionary) -> Array:
-	var skills: Array = c.skills.filter(func(id): return profile.unlocked.skills.has(id))
-	var gadgets: Array = c.gadgets.filter(func(id): return profile.unlocked.gadgets.has(id))
+## POSSÉDÉE = rang 1 au moins dans l'arbre de la classe (Arbre.owns).
+static func _owned_actions(profile: Dictionary, tuning: Dictionary, class_id) -> Array:
+	var c: Dictionary = tuning.classes[class_id]
+	var skills: Array = c.skills.filter(func(id): return Arbre.owns(profile, tuning, class_id, "skills", id))
+	var gadgets: Array = c.gadgets.filter(func(id): return Arbre.owns(profile, tuning, class_id, "gadgets", id))
 	var out: Array = []
 	if not skills.is_empty():
 		out.append(skills[0])
@@ -267,8 +278,8 @@ static func _owned_actions(profile: Dictionary, c: Dictionary) -> Array:
 ## Trois emplacements valides : une action possédée de la classe y reste (la première fois qu'on
 ## la voit), un emplacement vide (null) reste vide, tout le reste (action d'une autre classe, non
 ## possédée, en double, illisible) est remplacé par la première action possédée pas encore placée.
-static func _valid_slots(profile: Dictionary, c: Dictionary, raw) -> Array:
-	var owned := _owned_actions(profile, c)
+static func _valid_slots(profile: Dictionary, tuning: Dictionary, class_id, raw) -> Array:
+	var owned := _owned_actions(profile, tuning, class_id)
 	var wanted: Array = raw if raw is Array else [FILL, FILL, null]
 	var out: Array = []
 	for i in D6Loadout.SLOTS:
@@ -287,11 +298,12 @@ static func _valid_slots(profile: Dictionary, c: Dictionary, raw) -> Array:
 
 ## Les emplacements d'action et l'arme équipés doivent appartenir à la classe choisie.
 static func fix_loadout(profile: Dictionary, tuning: Dictionary) -> void:
-	var c = tuning.classes.get(profile.loadout.get("classId"))
-	if c == null:
-		c = tuning.classes[tuning.classes.keys()[0]]
+	var class_id = profile.loadout.get("classId")
+	if tuning.classes.get(class_id) == null:
+		class_id = tuning.classes.keys()[0]
+	var c: Dictionary = tuning.classes[class_id]
 	var l: Dictionary = profile.loadout
-	l.slots = _valid_slots(profile, c, l.get("slots"))
+	l.slots = _valid_slots(profile, tuning, class_id, l.get("slots"))
 	var w = profile.equipment.get("arme")
 	if w != null and not c.weapons.has(_weapon_type(w)):
 		# Arme d'une autre classe : elle retourne au coffre, la meilleure arme compatible la remplace.
@@ -337,6 +349,9 @@ static func unlock(profile: Dictionary, tuning: Dictionary, kind, id) -> Diction
 		return {"ok": false, "reason": "inconnu"}
 	if profile.unlocked[kind].has(id):
 		return {"ok": false, "reason": "déjà débloqué"}
+	if kind == "skills" or kind == "gadgets":
+		# Combat V3, étape 3 : une compétence ne s'achète plus en Âmes, le rang 1 de son nœud la débloque.
+		return {"ok": false, "reason": "se débloque dans l'arbre"}
 	var cost := unlock_cost(tuning, kind, id)
 	if profile.souls < cost:
 		return {"ok": false, "reason": "Âmes insuffisantes"}
@@ -344,6 +359,7 @@ static func unlock(profile: Dictionary, tuning: Dictionary, kind, id) -> Diction
 	profile.unlocked[kind].append(id)
 	if kind == "classes":
 		grant_class_starters(profile, tuning, id)
+		Arbre.state(profile, id) # son arbre : niveau 1, rien d'acheté
 	if kind == "classes":
 		_grant_starter_kit(profile, tuning, id)
 	if kind == "weapons":
@@ -429,8 +445,7 @@ static func select_slot(profile: Dictionary, tuning: Dictionary, index, id) -> D
 	if id == null:
 		slots[i] = null
 		return {"ok": true}
-	var c: Dictionary = tuning.classes[profile.loadout.classId]
-	if not (id is String or id is StringName) or not _owned_actions(profile, c).has(id):
+	if not (id is String or id is StringName) or not _owned_actions(profile, tuning, profile.loadout.classId).has(id):
 		return {"ok": false, "reason": "indisponible"}
 	var j := slots.find(id)
 	if j >= 0:
@@ -439,20 +454,56 @@ static func select_slot(profile: Dictionary, tuning: Dictionary, index, id) -> D
 	return {"ok": true}
 
 ## Les actions que la classe courante peut placer dans un emplacement, compétences puis gadgets :
-## [{id, name, text, icon, kind ("skill" | "gadget"), unlocked, cost}]. Pour l'écran du Grimoire.
+## [{id, name, text, icon, kind ("skill" | "gadget"), unlocked, rank}]. Pour l'écran du Grimoire.
+## `unlocked` : rang 1 au moins dans l'arbre de la classe ; `rank` : son rang (0 = à débloquer
+## dans l'arbre ; il n'y a plus de prix en Âmes).
 static func slot_choices(profile: Dictionary, tuning: Dictionary) -> Array:
-	var c: Dictionary = tuning.classes[profile.loadout.classId]
+	var class_id = profile.loadout.classId
+	var c: Dictionary = tuning.classes[class_id]
 	var out: Array = []
 	for pair in [["skill", "skills"], ["gadget", "gadgets"]]:
 		for id in c[pair[1]]:
 			var def = tuning[pair[1]].get(id)
 			if not (def is Dictionary):
 				continue
+			var owned: bool = Arbre.owns(profile, tuning, class_id, pair[1], id)
+			var n = Arbre.skill_node(tuning, class_id, id)
 			out.append({
 				"id": id, "name": def.name, "text": D6Js.nz(def.get("text"), ""), "icon": D6Js.nz(def.get("icon"), pair[0]), "kind": pair[0],
-				"unlocked": profile.unlocked[pair[1]].has(id), "cost": D6Js.nz(def.get("cost"), 0.0),
+				"unlocked": owned, "rank": Arbre.rank(profile, tuning, class_id, n) if n != null else (1.0 if owned else 0.0),
 			})
 	return out
+
+# ---------------------------------------------------------------- arbre de compétences
+
+## Ce que l'affichage lit de l'arbre d'une classe : {level, maxLevel, xp, xpNext, points, spent,
+## choiceRank, respecCost, tiers: [{name, need, open, nodes: [{id, kind ("skill" | "passive" |
+## "move" | "ultimate"), name, icon, text, now, next, rank, maxRank, free, canBuy, reason,
+## choices: [{id, name, text, taken, canTake, reason}]}]}]}. `text` = le rang actuel puis le
+## suivant (`now`, `next`), chiffrés par les données.
+static func tree_view(profile: Dictionary, tuning: Dictionary, class_id) -> Dictionary:
+	return Arbre.view(profile, tuning, class_id)
+
+## Points de compétence à dépenser dans l'arbre de la classe (repère de l'onglet Grimoire).
+static func tree_points(profile: Dictionary, tuning: Dictionary, class_id) -> float:
+	return Arbre.points(profile, tuning, class_id) if profile.unlocked.classes.has(class_id) else 0.0
+
+## Achète un rang du nœud `node_id` (1 point). Le rang 1 d'une compétence la débloque.
+static func tree_buy(profile: Dictionary, tuning: Dictionary, class_id, node_id) -> Dictionary:
+	return Arbre.buy(profile, tuning, class_id, node_id)
+
+## Prend l'une des deux améliorations exclusives d'une compétence (l'autre est alors exclue).
+static func tree_choose(profile: Dictionary, tuning: Dictionary, class_id, node_id, choice_id) -> Dictionary:
+	return Arbre.choose(profile, tuning, class_id, node_id, choice_id)
+
+## Rend tous les points de la classe contre de l'or. Un emplacement qui tenait une compétence
+## redevenue verrouillée est VIDÉ (jamais rempli d'office par une autre).
+static func tree_respec(profile: Dictionary, tuning: Dictionary, class_id) -> Dictionary:
+	var res: Dictionary = Arbre.respec(profile, tuning, class_id)
+	if D6Js.truthy(res.get("ok")) and profile.loadout.classId == class_id:
+		var owned := _owned_actions(profile, tuning, class_id)
+		profile.loadout.slots = profile.loadout.slots.map(func(id): return id if owned.has(id) else null)
+	return res
 
 ## Rang dans le coffre de l'objet d'identifiant `uid` (findIndex : -1 s'il n'y est pas).
 static func _stash_index(profile: Dictionary, uid) -> int:

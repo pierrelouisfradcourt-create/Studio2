@@ -17,10 +17,12 @@ extends RefCounted
 ##   effect — sur la CIBLE : burn | chill | vuln | chain | stun | blast | cull | gold ;
 ##            sur le HÉROS : heal | surge | superCharge | dashCharge | gadgetCharge | gold (sans cible) ;
 ##            AUTOUR du héros : nova (dégâts, gel facultatif) | around (`apply` = effet de cible) ;
-##            passifs : execute | fullHpBonus | goldPower | streakBonus | stunnedCrit.
+##            passifs : execute | fullHpBonus | goldPower | streakBonus | stunnedCrit | stunnedBonus
+##            (dégâts en plus contre une cible étourdie : passif de l'arbre de compétences).
 ## Aucun effet ne connaît l'identifiant de la bénédiction qui le déclare.
 
 # Sources de dégâts du héros qui déclenchent les procs « au toucher ».
+const Arbre = preload("res://sim/tree.gd")
 const PROC_SOURCES := ["melee", "strike", "skill", "gadget", "super"]
 # Sources qui ne remplissent pas la jauge de Super (sinon le Super se recharge lui-même).
 const NO_SUPER_CHARGE := ["super", "burn", "blast", "chain", "ally"] # "ally" : morsure d'un limier
@@ -95,6 +97,8 @@ static func _scaled_amount(game: Dictionary, e: Dictionary, src: Dictionary) -> 
 			if effect == "goldPower":
 				amount *= 1.0 + pr.value * minf(pr.cap, floorf(game.run.gold / pr.per))
 			# Salles nettoyées d'affilée sans blessure (run.streak, remis à zéro par un coup reçu).
+			if effect == "stunnedBonus" and e.stun > 0.0:
+				amount *= 1.0 + pr.value
 			if effect == "streakBonus":
 				amount *= 1.0 + pr.value * minf(pr.cap, D6Js.nz(game.run.get("streak"), 0.0))
 		# Élan passager du héros (effet « surge ») : dégâts en plus tant qu'il dure.
@@ -435,6 +439,7 @@ static func _grant_souls(game: Dictionary, e: Dictionary, elite: bool) -> void:
 		tel.soulsEarned += souls
 		if elite:
 			D6State.emit(game, "souls", {"x": e.x, "y": e.y, "amount": souls})
+		Arbre.gain(game, "elite" if elite else "kill") # expérience de classe : mêmes conditions que les Âmes
 
 ## Butin d'or (les boss ont leur propre récompense, gérée par la salle).
 static func _drop_gold(game: Dictionary, e: Dictionary, elite: bool) -> void:

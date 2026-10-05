@@ -50,7 +50,7 @@
     "STASH_MAX": { "type": "entier", "min": 1 },
     "PROFILE_SCHEMA": {
       "type": "entier",
-      "valeurs": [4],
+      "valeurs": [5],
       "_note": "version du format de sauvegarde : se change ici ET dans data/ville.json, avec une migration dans sim/profile.gd"
     }
   }

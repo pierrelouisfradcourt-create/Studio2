@@ -14,11 +14,13 @@ extends RefCounted
 ##
 ## Une spec (references/catalogue.gd) : {name, seed, floor, kit: [classe, arme], policy, seconds,
 ## slots: [trois actions ou null] (avec `kit` ; absent : compétence et gadget de départ),
-## tuning, sandbox, practice, godMode, deaths: "town", build}. `build` est un départ garni posé
+## tree: {ranks: {nœud: RANG voulu}, choices: {nœud: amélioration}} (avec `kit` : l'arbre de compétences
+## de la classe, au niveau maximum), tuning, sandbox, practice, godMode, deaths: "town", build}. `build` est un départ garni posé
 ## APRÈS create_game : {boons: [identifiants], rarity, power: pouvoir légendaire, souls: Âmes}.
 
 const Bots = preload("res://outils/bots/bots.gd")
 const Classes = preload("res://outils/classes.gd")
+const Arbre = preload("res://sim/tree.gd")
 
 const Q := 1024.0 # pas de quantification des entrées analogiques
 const CHECK_EVERY := 30 # images entre deux points de contrôle
@@ -80,12 +82,26 @@ static func start(spec: Dictionary) -> Dictionary:
 	}
 	if spec.has("kit"):
 		options.meta = Classes.kit_profile(D6Data.create_tuning(), spec.kit[0], spec.kit[1], spec.get("slots"))
+		if spec.has("tree"):
+			_apply_tree(options.meta, spec.kit[0], spec.tree)
 	if spec.has("tuning"):
 		options.tuning = D6Js.decode(spec.tuning)
 	var game: Dictionary = D6Game.create_game(options)
 	if spec.has("build"):
 		_apply_build(game, spec.build)
 	return game
+
+## Arbre de compétences d'une spec : la classe au niveau maximum, chaque nœud au RANG demandé (le
+## rang offert d'une compétence possédée est déduit), les améliorations exclusives prises.
+static func _apply_tree(meta: Dictionary, class_id: String, tree: Dictionary) -> void:
+	var t: Dictionary = D6Data.default_tuning()
+	var st: Dictionary = Arbre.state(meta, class_id)
+	st.level = t.tree.maxLevel
+	for id in tree.get("ranks", {}):
+		var n: Dictionary = Arbre.node(t, class_id, id)
+		st.ranks[id] = float(tree.ranks[id]) - (1.0 if Arbre.is_free(meta, t, n) else 0.0)
+	for id in tree.get("choices", {}):
+		st.choices[id] = tree.choices[id]
 
 ## Les bénédictions passent par add_boon (emplacements exclusifs compris), le pouvoir est porté
 ## en talisman, puis les stats sont recalculées.

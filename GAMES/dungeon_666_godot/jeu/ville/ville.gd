@@ -20,6 +20,7 @@ const ONGLETS := ["portail", "classe", "armurerie", "coffre", "grimoire", "sanct
 const LARGEUR_PORTRAIT := 540.0
 const DEFILEMENT_MANETTE := 900.0 # px de référence par seconde, stick droit à fond
 const ZONE_MORTE := 0.25
+const REPERE_POINTS := "Grimoire ●" # des points de compétence attendent d'être dépensés
 const APPARITION_S := 0.16 # la page d'un onglet monte en opacité ; elle répond dès le début
 
 ## L'onglet affiché (un identifiant de ONGLETS).
@@ -140,6 +141,8 @@ func _dessiner() -> void:
 	_ames.text = "◆ " + Accords.compte(profil.souls, "Âme", "Âmes")
 	_or.text = "● %s or" % D6Js.num_str(profil.gold)
 	_classe.text = "%s · record étage %s" % [classe.name if classe is Dictionary else "?", D6Js.num_str(profil.bestFloor)]
+	var points: float = D6Profile.tree_points(profil, _app.contenu, profil.loadout.classId)
+	bouton_onglet("grimoire").text = REPERE_POINTS if points > 0.0 else "Grimoire"
 	page(onglet).dessiner(_refus)
 	_rendre_focus(cle)
 

@@ -522,12 +522,14 @@ static func _p_choix(h) -> void:
 	var choix: Array = D6Profile.slot_choices(p, t)
 	var c: Dictionary = t.classes.revenant
 	h.egal(choix.map(func(x): return x.id), c.skills + c.gadgets, "compétences puis gadgets de la classe")
-	h.egal(choix.map(func(x): return x.kind), ["skill", "skill", "gadget", "gadget"])
-	h.egal(choix.map(func(x): return x.unlocked), [true, false, true, false], "le départ possédé, le reste à débloquer")
+	h.egal(choix.map(func(x): return x.kind), ["skill", "skill", "skill", "gadget", "gadget"])
+	h.egal(choix.map(func(x): return x.unlocked), [true, false, false, true, false], "le départ possédé, le reste à débloquer (dans l'arbre)")
+	h.egal(choix.map(func(x): return x.rank), [1.0, 0.0, 0.0, 1.0, 0.0], "rang dans l'arbre : 1 offert pour le départ, 0 pour le reste")
 	for x in choix:
 		var def: Dictionary = t.skills[x.id] if x.kind == "skill" else t.gadgets[x.id]
-		h.egal(x.keys(), ["id", "name", "text", "icon", "kind", "unlocked", "cost"], "forme de %s" % x.id)
-		h.egal([x.name, x.text, x.cost], [def.name, def.text, def.cost], x.id)
+		h.egal(x.keys(), ["id", "name", "text", "icon", "kind", "unlocked", "rank"], "forme de %s" % x.id)
+		h.egal([x.name, x.text], [def.name, def.text], x.id)
+		h.egal(def.get("cost"), null, "%s : plus de prix en Âmes (l'arbre débloque)" % x.id)
 		h.egal(x.icon, def.get("icon", x.kind), "pictogramme de %s (à défaut, celui de sa sorte)" % x.id)
 	D6Profile.select_class(p, t, "revenant")
 	p.unlocked.classes.append("chasseresse")
@@ -540,7 +542,8 @@ static func _p_classe(h) -> void:
 	p.souls = 9999.0
 	for class_id in ["bourreau", "chasseresse"]:
 		D6Profile.unlock(p, t, "classes", class_id)
-	D6Profile.unlock(p, t, "skills", "chaine")
+	h.egal(D6Profile.unlock(p, t, "skills", "chaine"), {"ok": false, "reason": "se débloque dans l'arbre"}, "une compétence ne s'achète plus en Âmes")
+	p.unlocked.skills.append("chaine") # possédée d'office (rang 1 offert), comme sur un ancien profil
 	h.egal(D6Profile.select_slot(p, t, 2.0, "chaine"), {"ok": true})
 	h.egal(D6Profile.select_class(p, t, "bourreau"), {"ok": true})
 	h.egal(p.loadout.slots, ["bond", "cri", "chaine"], "la Chaîne, commune aux deux classes, reste ; le reste devient le départ du Bourreau")
@@ -561,7 +564,7 @@ static func _p_classe(h) -> void:
 static func _p_migration_reelle(h) -> void:
 	var t: Dictionary = D6Data.create_tuning()
 	var p: Dictionary = D6Profile.sanitize_profile(D6Js.clone(PROFIL_SCHEMA_3), t)
-	h.egal(p.schema, 4.0, "le schéma monte d'un cran")
+	h.egal(p.schema, 5.0, "le schéma monte au schéma courant (3 → 5 : emplacements, puis arbre)")
 	h.egal(p.schema, D6Data.tables().profile.PROFILE_SCHEMA)
 	for cle in INTACTS:
 		h.egal(p[cle], PROFIL_SCHEMA_3[cle], "« %s » relu sans perte" % cle)

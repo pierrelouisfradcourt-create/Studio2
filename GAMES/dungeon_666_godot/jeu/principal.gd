@@ -24,7 +24,7 @@ const VUES := [
 	"res://jeu/ville/ville.tscn",
 	"res://jeu/ecrans/ecrans.tscn",
 ]
-const OPERATIONS_VILLE := ["select_class", "unlock", "select_slot", "equip_from_stash", "salvage_from_stash", "buy_upgrade"]
+const OPERATIONS_VILLE := ["select_class", "unlock", "select_slot", "equip_from_stash", "salvage_from_stash", "buy_upgrade", "tree_buy", "tree_choose", "tree_respec"]
 
 var ecran := "titre"
 var profil: Dictionary = {}
@@ -140,7 +140,8 @@ func enregistrer_profil() -> void:
 
 ## Opération de la Ville sur le profil (règles : D6Profile), puis enregistrement.
 ## `nom` : select_class | unlock | select_slot (emplacement 0..2, action ou null) | equip_from_stash |
-## salvage_from_stash | buy_upgrade ; `args` : les arguments après (profil, contenu).
+## salvage_from_stash | buy_upgrade | tree_buy (classe, nœud) | tree_choose (classe, nœud, amélioration) |
+## tree_respec (classe) ; `args` : les arguments après (profil, contenu).
 ## Rend le résultat de l'opération ({ok, reason?…}).
 func operation_ville(nom: String, args: Array = []) -> Dictionary:
 	if not (nom in OPERATIONS_VILLE):

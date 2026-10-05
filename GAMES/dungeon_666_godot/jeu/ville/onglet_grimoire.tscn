@@ -124,10 +124,69 @@ mouse_filter = 1
 theme_type_variation = &"BoutonDiscret"
 text = "Vider"
 
+[node name="TitreArbre" type="Label" parent="."]
+layout_mode = 2
+theme_type_variation = &"TitreSection"
+text = "Arbre de compétences"
+
+[node name="Niveau" type="HFlowContainer" parent="."]
+layout_mode = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 6
+
+[node name="NiveauTexte" type="Label" parent="Niveau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Texte"
+text = "Niveau 1"
+
+[node name="Experience" type="ProgressBar" parent="Niveau"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 14)
+layout_mode = 2
+size_flags_vertical = 4
+show_percentage = false
+
+[node name="ExperienceTexte" type="Label" parent="Niveau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TexteDoux"
+text = "0 / 40 d'expérience"
+
+[node name="Points" type="Label" parent="Niveau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Texte"
+text = "Aucun point à dépenser"
+
+[node name="Etages" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PiedArbre" type="HFlowContainer" parent="."]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+
+[node name="Rendre" type="Button" parent="PiedArbre"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 1
+theme_type_variation = &"BoutonDiscret"
+text = "Tout rendre (0 or)"
+
+[node name="RefusRendre" type="Label" parent="PiedArbre"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"TexteDoux"
+text = ""
+
 [node name="TitreActions" type="Label" parent="."]
 layout_mode = 2
 theme_type_variation = &"TitreSection"
-text = "Compétences de la classe"
+text = "Placer une compétence"
 
 [node name="Actions" type="GridContainer" parent="."]
 layout_mode = 2

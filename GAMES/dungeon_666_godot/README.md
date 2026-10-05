@@ -14,7 +14,7 @@ règles). Il ne se compare plus à lui : il se garde lui-même. L'histoire du pa
 | `sim/` | La simulation : les règles. Ne connaît pas Godot (ni nœud, ni scène). Conventions : `PORTAGE.md`. |
 | `data/` | Tous les nombres et tables du jeu, en JSON ordinaire, un fichier par domaine. `validation.json` + `schemas/` : leur garde. |
 | `tests/regles/` | Les tests de règles (une règle, un test), lancés par `tests/regles.gd`. Outils : `tests/harnais.gd`. |
-| `references/` | 85 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
+| `references/` | 91 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
 | `jeu/` | Ce qui se voit, s'entend, se touche (contrat : `jeu/ARCHITECTURE.md`), avec ses tests headless. |
 | `outils/` | `verifier.sh` (l'oracle), `jouabilite.sh` (bots : solvabilité, classes), `donnees.gd` (écriture des données), `capture.gd`. |
 | `parite/` | Héritage : les outils de comparaison au web, plus lancés (`comparer.gd` sert encore). |
@@ -30,9 +30,9 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
 1. **import** — Godot enregistre ses classes ;
 2. **données** — chaque fichier de `data/` contre son schéma (types, bornes, un télégraphe
    d'ennemi d'au moins 0,4 s), et se réécrit sans rien perdre ;
-3. **règles** — `tests/regles/*.gd` : 516 tests, dont les références croisées des données
+3. **règles** — `tests/regles/*.gd` : 581 tests, dont les références croisées des données
    (`donnees.gd`) ;
-4. **références** — les 85 parties de `references/parties/` sont rejouées, point de contrôle
+4. **références** — les 91 parties de `references/parties/` sont rejouées, point de contrôle
    par point de contrôle (un toutes les 30 images) ;
 5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème), et le
    **parcours** (`jeu/essai/test_parcours.gd`) : le vrai jeu assemblé, toutes ses vues montées,
@@ -118,7 +118,7 @@ Juger à l'écran : `jeu/essai/ultimes.tscn` (mode d'emploi en tête de `jeu/ess
    (« références réenregistrées : <la règle changée> »).
 
 ```
-bash references/enregistrer.sh          # 85 parties, ~25 s ; sans changement : mêmes fichiers au bit près
+bash references/enregistrer.sh          # 91 parties, ~25 s ; sans changement : mêmes fichiers au bit près
 bash outils/verifier.sh
 ```
 
@@ -131,7 +131,7 @@ moitié de la comparaison.
 
 Tout est dans `data/`, un fichier par domaine : `heros`, `classes` (armes, compétences, gadgets,
 ultimes), `bestiaire`, `gardiens`, `salles`, `etages` (sections, Cercles), `benedictions`, `butin`,
-`autels`, `ville`, `labo`. Chaque nombre n'y est écrit **qu'une fois** ; une clé en minuscules est
+`autels`, `ville`, `labo`, `arbres` (l'arbre de compétences). Chaque nombre n'y est écrit **qu'une fois** ; une clé en minuscules est
 un bloc de réglages, une clé en MAJUSCULES une table, `_note` dit à quoi sert le fichier. Le libellé
 d'une option d'autel reprend ses nombres par `{champ}` (`"Boire — rend {pct} % des PV"`, `"pct": 40`) :
 il ne s'écrit jamais en chiffres. Ce qui reste en constantes dans `sim/` est technique (tolérances,
@@ -144,6 +144,17 @@ garde-fous, marges de contact) : liste et raisons dans `DEFAUTS.md`, troisième 
 3. `bash outils/verifier.sh` : les tests de règles disent ce que le nombre casse, les références
    rougissent (le jeu a changé). Si c'est voulu : réenregistrer et le dire, comme pour une règle.
 4. `bash outils/verifier.sh --jouabilite` si le nombre touche l'équilibre (PV, dégâts, télégraphes).
+
+**L'arbre de compétences** (`data/arbres.json`, mode d'emploi dans sa `_note`) : l'expérience par
+ennemi et son plafond de profondeur (`xp`), la courbe des niveaux (`curve`), le niveau maximum, les
+points, les seuils des étages (`tiers`), le rang du choix exclusif (`choiceRank`), le prix de la
+respécialisation (`respec`), puis par classe la liste des nœuds. Le RANG 1 d'une compétence, ce sont
+ses nombres de `classes.json` ; `ranks` donne chaque nombre aux rangs 2 à 5 ; une amélioration
+exclusive remplace des nombres (`set`) et son texte les cite par `{champ}` ; un passif cite son total
+par `{v}`. Ajouter une compétence : une entrée dans `classes.json` (et dans la liste de sa classe), un
+nœud ici — aucun code si elle réutilise une sorte (`kind`) existante. `tests/regles/donnees.gd` garde
+les renvois, les textes et le budget de points ; `outils/arbre.gd` mesure arbre vide contre arbre
+plein (`_dev/rapports/arbre.md`).
 
 Ajouter un champ ou un identifiant : le déclarer aussi dans `data/schemas/<domaine>.json` ; les
 identifiants qui se répondent d'un fichier à l'autre sont gardés par `tests/regles/donnees.gd`.

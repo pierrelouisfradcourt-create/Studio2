@@ -229,3 +229,34 @@ Tests de vues (hors `tests/**`) :
 | `jeu/effets/echantillons.gd` | table des cas | 15 cas AJOUTÉS | « chaque effet a son événement d'exemple » |
 
 Nouveau fichier : `tests/regles/v3_ultimes.gd` (57 tests). `tests/harnais.gd` n'a pas changé.
+
+## Étape 3 — arbre de compétences (2026-10-04)
+
+Sous le même « GO tests V3 », étendu par Pierre aux tests qui décrivent le DÉBLOCAGE DES COMPÉTENCES
+EN ÂMES (`unlock` d'une compétence, `cost`, `slot_choices` avec `cost`). Avec l'arbre, le rang 1 du
+nœud débloque ; `cost` a disparu de `skills` et `gadgets` ; chaque classe a une 5e compétence
+(l'ancien Super, sorte `canal`). Aucun test supprimé ni affaibli ; aucun n'a rougi pour une autre raison.
+
+| Fichier | Test (fonction) | Ce qui a changé | Pourquoi |
+|---|---|---|---|
+| `v2_kits.gd` | `_t_registre_prix` (« chaque entrée a un prix en Âmes ; le départ de chaque classe est gratuit ») | classes et armes : inchangé. Compétences et gadgets : on vérifie qu'ils n'ont PLUS de `cost` et que `unlock_cost` vaut 0 ; « le départ est gratuit » se prouve par `slot_choices` : la 1re compétence et la 1re compétence à charges de chaque classe sont débloquées, les autres non | le prix en Âmes n'existe plus ; ce que le test garde (le kit de départ est possédé, rien d'autre) est toujours prouvé, et plus strictement (« les autres non ») |
+| `v2_integration.gd` | `_kit_gratuit_possede` (sert `_ville`) | armes : celles de coût 0, comme avant ; compétences et gadgets : la première de chaque liste | sans `cost`, « coût 0 » ne désigne plus le départ ; c'est la place dans la liste de la classe qui le dit |
+| `v3_combat.gd` | `_p_choix` (« slot_choices : compétences puis gadgets de la classe, avec leur état ») | 5 choix au lieu de 4 (la 5e compétence) ; forme d'un choix : `rank` à la place de `cost` ; on vérifie en plus les rangs (1 pour le départ, 0 sinon) et l'absence de `cost` dans les données | le contrat de `slot_choices` a changé avec l'arbre |
+| `v3_combat.gd` | `_p_classe` (« changer de classe refait des emplacements valides ») | la Chaîne n'est plus débloquée par `unlock(…, "skills", "chaine")` (dont on vérifie maintenant le REFUS, « se débloque dans l'arbre ») mais possédée d'office (`unlocked.skills`), comme sur un ancien profil | tout le reste du test (emplacements au changement de classe) est identique |
+| `v3_combat.gd` | `_p_migration_reelle` | le schéma attendu après migration : 5 au lieu de 4 | un profil au schéma 3 passe maintenant par deux migrations (emplacements, puis arbre) ; « aucun champ en plus ni en moins qu'un profil neuf », « la migration est stable » et le kit en partie sont inchangés et verts |
+
+`v2_loop.gd` (`_ville_deblocage`, `_ville_competence_gadget`) n'a PAS été modifié : ses attentes
+(« déjà débloqué » pour le kit de départ, « indisponible » pour une compétence d'une autre classe)
+tiennent telles quelles.
+
+Tests de vues (hors `tests/**`) :
+
+| Fichier | Vérification | Ce qui a changé | Pourquoi |
+|---|---|---|---|
+| `jeu/ville/test_ville.gd` | `_sans_ames` : « sans Âmes, « Débloquer » <compétence> est grisé » | devient : la carte d'une compétence verrouillée porte un bouton grisé « À débloquer dans l'arbre », et aucun bouton « Débloquer » en Âmes ; étape `_arbre` AJOUTÉE (niveau, points, repère d'onglet, « + » et sa raison, étage fermé, les deux améliorations, l'exclusion, « Tout rendre » en deux appuis) | le Grimoire ne vend plus de compétence en Âmes |
+| `jeu/essai/parcours_ville.gd`, `test_parcours.gd` | « Ville du joueur avancé : unlock ["skills", …] acceptée », « la compétence débloquée est équipée, troisième emplacement » | la compétence est débloquée DANS L'ARBRE (étage fermé refusé, deux rangs, une amélioration prise et l'autre refusée, un passif, l'étage suivant, rang 1 de la compétence), puis placée au troisième emplacement (même vérification), puis tout est rendu contre de l'or (emplacement vidé). AJOUTS : après la première descente, un point est dépensé par le bouton « + » ; la compétence améliorée est vue en jeu ; la garde des opérations exige en plus `tree_buy`, `tree_choose`, `tree_respec` | le parcours joue l'arbre de bout en bout |
+| `jeu/ecrans/test_ecrans.gd` | — | étape `_mort_et_experience` AJOUTÉE (4 vérifications), rien de changé | l'écran de mort dit l'expérience et le niveau |
+| `jeu/son/test_son.gd` | `_echantillons` | 1 échantillon AJOUTÉ (`levelUp`), rien de retiré | « chaque type routé a son échantillon » |
+
+Nouveau fichier : `tests/regles/v3_arbre.gd` (62 tests). Ajouts à `tests/regles/donnees.gd` : 3 tests
+(`_tree_refs`, `_tree_texts`, `_tree_budget`), aucun test existant touché. `tests/harnais.gd` n'a pas changé.

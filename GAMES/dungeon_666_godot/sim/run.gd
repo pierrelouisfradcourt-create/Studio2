@@ -16,6 +16,7 @@ extends RefCounted
 ##
 ## REWARD_LABELS et EVENTS se lisent dans D6Data.tables().run.
 
+const Arbre = preload("res://sim/tree.gd")
 const DOOR_GUARD := 20.0 # garde-fou du tirage de la seconde porte
 const MIN_HP := 1.0 # un paiement en PV n'est jamais mortel : il laisse au moins ceci
 
@@ -174,6 +175,8 @@ static func _clear_boss(game: Dictionary, cx: float, cy: float) -> void:
 	if not game.sandbox:
 		meta.souls += souls
 		game.telemetry.soulsEarned += souls
+		Arbre.gain(game, "guardian") # expérience de classe, et un point la première fois avec cette classe
+		Arbre.guardian_down(game, kind)
 	D6Combat.heal_player(game, game.player.maxHp * game.tuning.guardians.clearHeal, true)
 	sync_purse(game)
 	D6State.emit(game, "checkpoint", {"floor": cp, "guardian": kind, "souls": souls})
@@ -762,9 +765,15 @@ static func on_death(game: Dictionary) -> void:
 		"gold": run.gold,
 		"souls": meta.souls,
 		"soulsEarned": game.telemetry.soulsEarned,
+		"tree": tree_recap(game), # expérience gagnée, niveaux passés, niveau et points de la classe
 		"checkpoint": last_checkpoint(game),
 	}
 	sync_purse(game)
+
+## Bilan de la descente côté ARBRE, pour l'affichage (mort, victoire, retour) : {classId, xpEarned,
+## levelsGained, level, points}. L'expérience est déjà au profil : elle y est versée à chaque ennemi tué.
+static func tree_recap(game: Dictionary) -> Dictionary:
+	return Arbre.recap(game)
 
 ## Dernier checkpoint débloqué (point de reprise par défaut).
 static func last_checkpoint(game: Dictionary):

@@ -17,6 +17,8 @@ const TITRE_MAX := 56
 const TITRE_PART_HAUTEUR := 0.13 # sur un écran bas (téléphone en paysage), le titre cède la place
 const SEP := " · "
 const GARDE := "Classe, armes, équipement et coffre, compétences, améliorations de la Ville, checkpoints."
+const EXPERIENCE := "Expérience de classe : +%s."
+const NIVEAU := "Niveau %s ! +%s à dépenser au Grimoire."
 
 @onready var _titre: Label = %Titre
 @onready var _bilan: Label = %Bilan
@@ -72,8 +74,18 @@ func _remplir_recap(r: Dictionary) -> void:
 	})
 	_garde.decrire({
 		"accent": Couleurs.UI.cyan, "surtitre": "Gardé · permanent",
-		"titre": "◆ %s (+%s)" % [Accords.compte(r.souls, "Âme", "Âmes"), D6Js.num_str(r.soulsEarned)], "lignes": [GARDE],
+		"titre": "◆ %s (+%s)" % [Accords.compte(r.souls, "Âme", "Âmes"), D6Js.num_str(r.soulsEarned)], "lignes": _lignes_gardees(r),
 	})
+
+## Ce qui reste : le rappel, puis l'expérience de classe gagnée et, s'il y en a, les niveaux passés.
+func _lignes_gardees(r: Dictionary) -> Array:
+	var lignes: Array = [GARDE]
+	var arbre = r.get("tree")
+	if arbre is Dictionary:
+		lignes.append({"texte": EXPERIENCE % D6Js.num_str(arbre.xpEarned), "genre": "Affixe"})
+		if arbre.levelsGained > 0.0:
+			lignes.append({"texte": NIVEAU % [D6Js.num_str(arbre.level), Accords.compte(arbre.levelsGained, "point", "points")], "genre": "Pouvoir"})
+	return lignes
 
 static func _compte(n: float, singulier: String, pluriel: String) -> String:
 	return D6Js.num_str(n) + " " + (pluriel if n > 1.0 else singulier)

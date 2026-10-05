@@ -63,8 +63,11 @@ static func _fly(z: Dictionary) -> bool:
 static func _pot(game: Dictionary, z: Dictionary) -> void:
 	if not _fly(z):
 		return
-	D6KitCommon.hit_circle(game, z.x, z.y, z.r, {"kind": "skill", "amount": z.damage, "knockback": z.knockback, "hitstop": z.hitstop, "canCrit": true})
+	D6KitCommon.hit_circle(game, z.x, z.y, z.r, {"kind": "skill", "amount": z.damage, "knockback": z.knockback, "hitstop": z.hitstop, "canCrit": true, "stun": D6Js.nz(z.get("stun"), 0.0)})
 	D6State.emit(game, "explode", {"x": z.x, "y": z.y, "r": z.r, "hero": true, "kind": "brasier"})
+	if z.duration <= 0.0:
+		z.dead = true # « Pot explosif » (amélioration) : aucune flamme ne reste
+		return
 	z.kind = "brasier"
 	z.t = 0.0
 	z.tickT = 0.0
@@ -90,6 +93,11 @@ static func _brasier(game: Dictionary, z: Dictionary, dt: float) -> void:
 			continue
 		e.burn = maxf(e.burn, z.burnRefresh)
 		e.burnDps = maxf(e.burnDps, z.burnDps)
+		if D6Js.nz(z.get("chill"), 0.0) > 0.0:
+			# « Poix » (amélioration du Brasier) : les flammes ralentissent aussi.
+			e.chill = maxf(e.chill, z.chill)
+			var cur: float = e.chillMult if D6Js.truthy(e.get("chillMult")) else 1.0
+			e.chillMult = minf(cur, maxf(game.tuning.combat.minChillMult, z.chillMult))
 
 ## Bombe : vol, mèche, explosion (étourdit, efface les projectiles ennemis du souffle).
 static func _bombe(game: Dictionary, z: Dictionary) -> void:
@@ -155,4 +163,6 @@ static func _totem(game: Dictionary, z: Dictionary, dt: float) -> void:
 		e.chill = maxf(e.chill, z.chill)
 		var cur: float = e.chillMult if D6Js.truthy(e.get("chillMult")) else 1.0
 		e.chillMult = minf(cur, maxf(min_chill, z.chillMult))
+	if D6Js.truthy(z.get("ward")):
+		D6Projectiles.destroy_enemy_projectiles_in_circle(game, z.x, z.y, z.r) # « Totem gardien » (amélioration)
 	D6State.emit(game, "kitPulse", {"x": z.x, "y": z.y, "r": z.r, "kind": "totem"})

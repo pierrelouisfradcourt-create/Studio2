@@ -19,7 +19,7 @@ const DT := 1.0 / 60.0
 const DEG := PI / 180.0
 const DATA_DIR := "res://data/"
 ## Les fichiers de données, dans l'ordre où une personne les lirait.
-const FILES := ["heros", "classes", "bestiaire", "gardiens", "salles", "etages", "benedictions", "butin", "autels", "ville", "labo"]
+const FILES := ["heros", "classes", "bestiaire", "gardiens", "salles", "etages", "benedictions", "butin", "autels", "ville", "labo", "arbres"]
 ## Le bestiaire et le Gardien d'origine. Les tables EXTRA_* (lues par les tests) sont « tout le
 ## reste » : un ennemi ajouté dans data/bestiaire.json y entre de lui-même.
 const BASE_KINDS := ["imp", "archer", "brute", "charger", "exploder"]
@@ -97,6 +97,7 @@ static func _build_tuning(f: Dictionary) -> Dictionary:
 		"guardians": f.gardiens.guardians, "progression": f.ville.progression, "town": f.ville.town,
 		"economy": f.butin.economy, "loot": f.butin.loot, "boons": f.benedictions.boons,
 		"moves": k.moves,
+		"tree": f.arbres.tree, # arbre de compétences (sim/tree.gd)
 	}
 
 ## Les tables, par module et dans l'ordre d'origine. Ce qui répète un réglage en est une COPIE

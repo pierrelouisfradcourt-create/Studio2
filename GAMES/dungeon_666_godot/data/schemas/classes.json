@@ -9,7 +9,18 @@
       "min": 1,
       "chaque": {
         "type": "objet",
-        "requis": ["name", "text", "move", "cost", "passive", "stats", "weapons", "skills", "gadgets", "super"],
+        "requis": [
+          "name",
+          "text",
+          "move",
+          "cost",
+          "passive",
+          "stats",
+          "weapons",
+          "skills",
+          "gadgets",
+          "super"
+        ],
         "fermé": true,
         "champs": {
           "name": { "type": "texte", "min": 1 },
@@ -183,26 +194,13 @@
       "min": 1,
       "chaque": {
         "type": "objet",
-        "requis": [
-          "name",
-          "kind",
-          "text",
-          "cost",
-          "cooldown",
-          "castTime",
-          "damage",
-          "radius",
-          "range",
-          "knockback",
-          "hitstop"
-        ],
+        "requis": ["name", "kind", "text", "cooldown", "castTime"],
         "fermé": true,
         "champs": {
           "name": { "type": "texte", "min": 1 },
-          "kind": { "type": "texte", "valeurs": ["lance", "chain", "bond", "brasier", "volee"] },
+          "kind": { "type": "texte", "valeurs": ["lance", "chain", "bond", "brasier", "volee", "canal"] },
           "icon": { "type": "texte", "min": 1 },
           "text": { "type": "texte", "min": 1 },
-          "cost": { "type": "nombre", "min": 0 },
           "cooldown": { "type": "nombre", "min": 0 },
           "castTime": { "type": "nombre", "min": 0 },
           "damage": { "type": "nombre", "min": 0 },
@@ -227,7 +225,13 @@
           "burnDps": { "type": "nombre", "min": 0 },
           "burnRefresh": { "type": "nombre", "min": 0 },
           "count": { "type": "entier", "min": 1 },
-          "spread": { "type": "nombre", "min": 0, "max": 360 }
+          "spread": { "type": "nombre", "min": 0, "max": 360 },
+          "super": {
+            "type": "texte",
+            "min": 1,
+            "_note": "compétence `canal` : l'ancien Super qu'elle joue (clé de `supers`)"
+          },
+          "aimed": { "type": "booleen" }
         }
       }
     },
@@ -240,7 +244,6 @@
           "name",
           "kind",
           "text",
-          "cost",
           "chargesPerSection",
           "chargeOnEliteKill",
           "radius",
@@ -254,7 +257,6 @@
           "kind": { "type": "texte", "valeurs": ["nova", "bombe", "piege", "cri", "totem"] },
           "icon": { "type": "texte", "min": 1 },
           "text": { "type": "texte", "min": 1 },
-          "cost": { "type": "nombre", "min": 0 },
           "chargesPerSection": { "type": "entier", "min": 1 },
           "chargeOnEliteKill": { "type": "entier", "min": 0 },
           "radius": { "type": "nombre", "min": 1 },
@@ -285,7 +287,17 @@
       "min": 1,
       "chaque": {
         "type": "objet",
-        "requis": ["name", "kind", "text", "startCharge", "holdTime", "chargeDamage", "duration", "speedMult", "radius"],
+        "requis": [
+          "name",
+          "kind",
+          "text",
+          "startCharge",
+          "holdTime",
+          "chargeDamage",
+          "duration",
+          "speedMult",
+          "radius"
+        ],
         "fermé": true,
         "champs": {
           "name": { "type": "texte", "min": 1 },
@@ -293,7 +305,12 @@
           "icon": { "type": "texte", "min": 1 },
           "text": { "type": "texte", "min": 1 },
           "startCharge": { "type": "nombre", "min": 0, "max": 1 },
-          "holdTime": { "type": "nombre", "min": 0.1, "max": 2, "_note": "s d'attaque maintenue, jauge pleine, avant l'ultime (combat V3)" },
+          "holdTime": {
+            "type": "nombre",
+            "min": 0.1,
+            "max": 2,
+            "_note": "s d'attaque maintenue, jauge pleine, avant l'ultime (combat V3)"
+          },
           "chargeDamage": { "type": "nombre", "min": 1 },
           "duration": { "type": "nombre", "min": 0.02 },
           "speedMult": { "type": "nombre", "min": 0 },
@@ -311,10 +328,18 @@
           "range": { "type": "nombre", "min": 0 },
           "pierce": { "type": "entier", "min": 0 },
           "hitstop": { "type": "nombre", "min": 0, "max": 0.5 },
-          "reserve": { "type": "booleen", "_note": "ancien Super gardé pour l'arbre de compétences : ultime d'aucune classe" },
+          "reserve": {
+            "type": "booleen",
+            "_note": "ancien Super gardé pour l'arbre de compétences : ultime d'aucune classe"
+          },
           "stun": { "type": "nombre", "min": 0, "max": 5 },
           "shake": { "type": "nombre", "min": 0, "max": 2 },
-          "formTime": { "type": "nombre", "min": 1, "max": 60, "_note": "forme : s de transformation (la jauge se vide)" },
+          "formTime": {
+            "type": "nombre",
+            "min": 1,
+            "max": 60,
+            "_note": "forme : s de transformation (la jauge se vide)"
+          },
           "lifesteal": { "type": "nombre", "min": 0, "max": 0.5 },
           "weapon": {
             "type": "objet",
@@ -328,7 +353,18 @@
                 "min": 1,
                 "elements": {
                   "type": "objet",
-                  "requis": ["startup", "active", "recovery", "range", "arc", "damage", "knockback", "lunge", "hitstop", "shake"],
+                  "requis": [
+                    "startup",
+                    "active",
+                    "recovery",
+                    "range",
+                    "arc",
+                    "damage",
+                    "knockback",
+                    "lunge",
+                    "hitstop",
+                    "shake"
+                  ],
                   "fermé": true,
                   "champs": {
                     "startup": { "type": "nombre", "min": 0 },
@@ -348,7 +384,18 @@
               },
               "dashStrike": {
                 "type": "objet",
-                "requis": ["startup", "active", "recovery", "range", "arc", "damage", "knockback", "lunge", "hitstop", "shake"],
+                "requis": [
+                  "startup",
+                  "active",
+                  "recovery",
+                  "range",
+                  "arc",
+                  "damage",
+                  "knockback",
+                  "lunge",
+                  "hitstop",
+                  "shake"
+                ],
                 "fermé": true,
                 "champs": {
                   "startup": { "type": "nombre", "min": 0 },
@@ -373,7 +420,18 @@
             "min": 3,
             "chaque": {
               "type": "objet",
-              "requis": ["name", "kind", "icon", "text", "cooldown", "castTime", "damage", "knockback", "hitstop", "shake"],
+              "requis": [
+                "name",
+                "kind",
+                "icon",
+                "text",
+                "cooldown",
+                "castTime",
+                "damage",
+                "knockback",
+                "hitstop",
+                "shake"
+              ],
               "fermé": true,
               "champs": {
                 "name": { "type": "texte", "min": 1 },
@@ -396,7 +454,12 @@
               }
             }
           },
-          "strikeAt": { "type": "nombre", "min": 0.4, "max": 3, "_note": "magie : s de lame levée avant le fracas (télégraphe)" },
+          "strikeAt": {
+            "type": "nombre",
+            "min": 0.4,
+            "max": 3,
+            "_note": "magie : s de lame levée avant le fracas (télégraphe)"
+          },
           "freeze": { "type": "nombre", "min": 0, "max": 1 },
           "executeBelow": { "type": "nombre", "min": 0, "max": 0.9 },
           "bossCap": { "type": "nombre", "min": 0, "max": 1 },

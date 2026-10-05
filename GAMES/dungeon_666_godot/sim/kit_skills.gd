@@ -9,6 +9,10 @@ extends RefCounted
 ##             les deux partagent le vol (D6KitCommon.flight_moves) ; le Bond reste une attaque.
 ##   brasier — Brasier d'âmes : pot lancé sur la cible, impact puis sol qui brûle
 ##   volee   — Volée d'épines : éventail de traits
+##   canal   — un ancien Super (Colère, Sentence, Nuée) joué comme compétence : channel_def donne ses
+##             réglages, player le joue dans l'état 'super'
+## Les AMÉLIORATIONS EXCLUSIVES de l'arbre (sim/tree.gd) ajoutent des nombres à la compétence :
+## `rebound` (Bond), `noPull` / `pierce` / `vuln` (Chaîne), `chill` / `stun` (Brasier)… lus ici.
 ##
 ## player garde la machine à états (état 'cast', recharge, tampon, annulations) et appelle :
 ##   begin_kit_skill   au début du lancer (mémorise la cible ; le Bond part aussitôt)
@@ -16,6 +20,7 @@ extends RefCounted
 ##   release_kit_skill à la fin du lancer, ou AVANT un dash / Super qui l'interrompt : une
 ##                     recharge consommée produit toujours son effet (comme la Lance).
 
+const CHANNEL_OWN := ["name", "kind", "icon", "text", "super", "cooldown", "castTime", "aimed"] # champs d'une compétence `canal` qui ne règlent pas le Super joué
 const LAND_OVERLAP := 0.5 # le Bond s'arrête quand le héros chevauche la cible de moitié
 static var _point := {"x": 0.0, "y": 0.0}
 
@@ -74,6 +79,27 @@ static func _land(game: Dictionary) -> void:
 	p.vy = 0.0
 	D6KitCommon.hit_circle(game, p.x, p.y, s.radius, {"kind": "skill", "amount": s.damage, "knockback": s.knockback, "stun": D6Js.nz(s.get("stun"), 0.0), "hitstop": s.hitstop, "canCrit": true, "shake": D6Js.nz(s.get("shake"), 0.0)})
 	D6State.emit(game, "explode", {"x": p.x, "y": p.y, "r": s.radius, "hero": true, "kind": "bond"})
+	_rebound(game, s)
+
+## « Double saut » (amélioration du Bond) : après un Bond, le suivant est prêt en `rebound` s — une
+## fois ; le Bond d'après retrouve sa recharge entière.
+static func _rebound(game: Dictionary, s: Dictionary) -> void:
+	if s.get("rebound") == null:
+		return
+	var st: Dictionary = game.player.slots[int(game.player.castSlot)]
+	var chained: bool = D6Js.truthy(st.get("rebound"))
+	st.rebound = not chained
+	if not chained:
+		st.cd = minf(st.cd, s.rebound)
+
+## Réglages joués par une compétence `canal` : ceux de l'ancien Super qu'elle nomme (tuning.supers),
+## recouverts par les nombres de la compétence (ses rangs, son amélioration exclusive).
+static func channel_def(game: Dictionary, s: Dictionary) -> Dictionary:
+	var def: Dictionary = D6Js.clone(game.tuning.supers[s["super"]])
+	for key in s:
+		if not CHANNEL_OWN.has(key):
+			def[key] = s[key]
+	return def
 
 ## Effet de la compétence au relâcher (ou à l'interruption).
 static func release_kit_skill(game: Dictionary) -> void:
@@ -89,8 +115,9 @@ static func release_kit_skill(game: Dictionary) -> void:
 		"chain":
 			D6KitShots.spawn_shot(game, {
 				"kind": "hook", "x": p.x, "y": p.y, "vx": p.castDirX * s.speed, "vy": p.castDirY * s.speed, "r": s.radius, "range": s.range,
-				"pierce": 0.0, "damage": s.damage, "source": "skill", "knockback": s.knockback, "hitstop": s.hitstop, "stun": D6Js.nz(s.get("stun"), 0.0),
-				"pull": {"stopGap": s.pullGap, "mass": s.pullMass},
+				"pierce": D6Js.nz(s.get("pierce"), 0.0), "damage": s.damage, "source": "skill", "knockback": s.knockback, "hitstop": s.hitstop, "stun": D6Js.nz(s.get("stun"), 0.0),
+				"pull": null if D6Js.truthy(s.get("noPull")) else {"stopGap": s.pullGap, "mass": s.pullMass},
+				"vuln": D6Js.nz(s.get("vuln"), 0.0), "vulnMult": D6Js.nz(s.get("vulnMult"), 0.0),
 			})
 		"volee":
 			D6KitShots.fire_fan(game, angle, s.count, s.spread, {
@@ -103,7 +130,8 @@ static func release_kit_skill(game: Dictionary) -> void:
 			var target: Dictionary = D6KitCommon.throw_point(game, p.castDirX, p.castDirY, target_id, s.range, s.throwDist, _point)
 			D6KitZones.spawn_zone(game, {
 				"kind": "pot", "x": p.x, "y": p.y, "x0": p.x, "y0": p.y, "tx": target.x, "ty": target.y, "flight": s.flight, "lift": 0.0,
-				"r": s.radius, "damage": s.damage, "knockback": s.knockback, "hitstop": s.hitstop,
+				"r": s.radius, "damage": s.damage, "knockback": s.knockback, "hitstop": s.hitstop, "stun": D6Js.nz(s.get("stun"), 0.0),
+				"chill": D6Js.nz(s.get("chill"), 0.0), "chillMult": D6Js.nz(s.get("chillMult"), 1.0),
 				"duration": s.duration, "tick": s.tick, "burnDps": s.burnDps, "burnRefresh": s.burnRefresh,
 			})
 		"ruee", "hurlement", "embrasement":

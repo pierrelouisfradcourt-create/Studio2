@@ -40,7 +40,8 @@ static func _kit_gratuit_possede(h, p: Dictionary, t: Dictionary, class_id: Stri
 	var c: Dictionary = t.classes[class_id]
 	for kind in ["weapons", "skills", "gadgets"]:
 		for id in c[kind]:
-			if D6Profile.unlock_cost(t, kind, id) == 0.0:
+			# Armes : celles de coût 0. Compétences (combat V3, étape 3 : plus de prix en Âmes) : la première de chaque sorte.
+			if (kind == "weapons" and D6Profile.unlock_cost(t, kind, id) == 0.0) or (kind != "weapons" and id == c[kind][0]):
 				h.ok(p.unlocked[kind].has(id), "%s : %s/%s gratuit mais verrouillé" % [class_id, kind, id])
 
 static func _ville(h) -> void:

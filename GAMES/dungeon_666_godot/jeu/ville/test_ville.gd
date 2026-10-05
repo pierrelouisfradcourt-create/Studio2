@@ -58,6 +58,7 @@ func _derouler() -> void:
 	await _sanctuaire()
 	await _sans_ames()
 	await _emplacements()
+	await _arbre()
 	await _coffre()
 	await _labo()
 	await _doigt()
@@ -194,8 +195,10 @@ func _sans_ames() -> void:
 	await _ouvrir("grimoire")
 	var competence: String = app.contenu.classes[app.profil.loadout.classId].skills[1]
 	var cle := "skills:%s" % competence
-	var deblocage := _bouton(cle, "debloquer")
-	_ok(deblocage != null and deblocage.disabled, "sans Âmes, « Débloquer » %s est grisé" % competence)
+	# Combat V3, étape 3 : une compétence ne s'achète plus en Âmes ; verrouillée, sa carte renvoie à l'arbre.
+	var deblocage := _bouton(cle, "verrou")
+	_ok(deblocage != null and deblocage.disabled and deblocage.text == "À débloquer dans l'arbre", "%s, verrouillée : bouton grisé « À débloquer dans l'arbre », sans prix en Âmes" % competence)
+	_ok(_bouton(cle, "debloquer") == null or _bouton(cle, "debloquer") == deblocage, "aucun bouton « Débloquer » en Âmes sur une compétence")
 	# Une opération refusée par les règles (compétence non possédée) : la raison s'affiche, rien ne change.
 	ville.page("grimoire").operation_demandee.emit(cle, "select_slot", [0.0, competence])
 	await _images()
@@ -204,6 +207,58 @@ func _sans_ames() -> void:
 	app.profil.souls = 50.0
 	app.profil_change.emit()
 	await _images()
+
+## Combat V3, étape 3 : l'ARBRE DE COMPÉTENCES au Grimoire. Niveau, expérience, points ; une carte
+## par nœud avec son « + » (grisé avec sa raison) ; les deux améliorations exclusives au rang du
+## choix ; « Tout rendre » en deux appuis. Tout passe par les boutons (tree_buy, tree_choose, tree_respec).
+func _arbre() -> void:
+	print("[arbre]")
+	await _ouvrir("grimoire")
+	var classe: String = app.profil.loadout.classId
+	var c: Dictionary = app.contenu.classes[classe]
+	var depart: String = c.skills[0]
+	var v: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	_ok(v.points > 0.0 and _texte_visible("Niveau %s / %s" % [D6Js.num_str(v.level), D6Js.num_str(v.maxLevel)]), "le niveau de la classe est écrit (%s)" % D6Js.num_str(v.level))
+	_ok(_texte_commence("● %s point" % D6Js.num_str(v.points)), "les points à dépenser sont écrits (%s)" % D6Js.num_str(v.points))
+	_ok(ville.bouton_onglet("grimoire").text == ville.REPERE_POINTS, "l'onglet Grimoire porte le repère des points à dépenser")
+	for etage in v.tiers:
+		_ok(_texte_commence("Étage %s" % etage.name), "l'étage « %s » est titré" % etage.name)
+		for n in etage.nodes:
+			var plus := _bouton("arbre:%s" % n.id, "plus")
+			_ok(plus != null and plus.disabled == (not n.canBuy), "%s : un « + », %s" % [n.id, "offert" if n.canBuy else "grisé (%s)" % n.reason])
+	var ferme := _bouton("arbre:%s" % c.skills[1], "plus")
+	_ok(ferme != null and ferme.disabled and _texte_commence("Étage %s fermé" % v.tiers[1].name), "étage fermé : « + » grisé, la carte dit pourquoi")
+	var premier: String = v.tiers[0].nodes.filter(func(n: Dictionary) -> bool: return n.id == depart)[0].choices[0].id
+	_ok(_bouton("arbre:%s:%s" % [depart, premier], "choix:%s" % premier) == null, "avant le rang du choix, aucune amélioration ne se prend")
+	# « + » jusqu'au rang du choix : le rang monte, les points descendent, les deux améliorations s'offrent.
+	for i in int(v.choiceRank) - 1:
+		_ok(_appuyer(_bouton("arbre:%s" % depart, "plus")), "« + » sur %s s'appuie" % depart)
+		await _images()
+	var apres: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	_ok(apres.points == v.points - (v.choiceRank - 1.0) and _texte_commence("Compétence · rang %s / " % D6Js.num_str(v.choiceRank)), "rang %s : écrit sur la carte, un point par rang" % D6Js.num_str(v.choiceRank))
+	var choix: Array = apres.tiers[0].nodes.filter(func(n: Dictionary) -> bool: return n.id == depart)[0].choices
+	var a := _bouton("arbre:%s:%s" % [depart, choix[0].id], "choix:%s" % choix[0].id)
+	var b := _bouton("arbre:%s:%s" % [depart, choix[1].id], "choix:%s" % choix[1].id)
+	_ok(a != null and b != null and not a.disabled and not b.disabled, "les deux améliorations exclusives sont offertes")
+	_ok(_appuyer(a), "« %s » se prend" % choix[0].name)
+	await _images()
+	_ok(app.profil.tree[classe].choices.get(depart) == choix[0].id, "elle est au profil")
+	_ok(_bouton("arbre:%s:%s" % [depart, choix[0].id], "choix:%s" % choix[0].id) == null and _texte_commence("● %s" % choix[0].name), "prise : marquée, son bouton disparaît")
+	b = _bouton("arbre:%s:%s" % [depart, choix[1].id], "choix:%s" % choix[1].id)
+	_ok(b != null and b.disabled, "l'autre est grisée : c'est l'une OU l'autre")
+	# Tout rendre : deux appuis, de l'or, tous les points.
+	var rendre: Button = ville.page("grimoire").get_node("%Rendre")
+	var bourse: float = app.profil.gold
+	var prix: float = D6Profile.tree_view(app.profil, app.contenu, classe).respecCost
+	_ok(rendre.text == "Tout rendre (%s or)" % D6Js.num_str(prix) and not rendre.disabled, "« Tout rendre » dit son prix (%s or)" % D6Js.num_str(prix))
+	_appuyer(rendre)
+	await _images()
+	_ok(app.profil.gold == bourse and rendre.text.begins_with("Confirmer"), "premier appui : rien n'est rendu, le bouton demande confirmation")
+	_appuyer(rendre)
+	await _images()
+	var rendu: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	_ok(app.profil.gold == bourse - prix and rendu.points == v.points and rendu.spent == 0.0 and app.profil.tree[classe].choices.is_empty(), "second appui : %s or payés, tous les points reviennent" % D6Js.num_str(prix))
+	_ok(rendre.disabled, "plus rien à rendre : le bouton est grisé")
 
 ## Combat V3 : le Grimoire place les actions dans les TROIS emplacements (opération select_slot).
 ## On touche une compétence PUIS un emplacement, ou l'inverse ; rien n'est écrit au premier toucher.

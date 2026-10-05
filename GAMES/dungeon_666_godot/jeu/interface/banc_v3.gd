@@ -109,7 +109,8 @@ func _profil(tuning: Dictionary) -> Dictionary:
 	p.souls = ProfilEssai.AMES_LARGES
 	for genre in ["skills", "gadgets"]:
 		for action in c[genre]:
-			D6Profile.unlock(p, tuning, genre, action)
+			if not p.unlocked[genre].has(action):
+				p.unlocked[genre].append(action) # possédée d'office : rang 1 offert dans l'arbre
 	var voulus: Array = [c.skills[0], c.gadgets[0], null if _env("D666_VIDE") == "1" else c.skills[1]]
 	for i in voulus.size():
 		D6Profile.select_slot(p, tuning, float(i), null)

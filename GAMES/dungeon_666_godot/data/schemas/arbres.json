@@ -1,0 +1,140 @@
+{
+  "type": "objet",
+  "requis": ["tree"],
+  "fermé": true,
+  "champs": {
+    "_note": { "type": "texte" },
+    "tree": {
+      "type": "objet",
+      "requis": [
+        "maxLevel",
+        "xp",
+        "curve",
+        "pointsPerLevel",
+        "pointsPerGuardian",
+        "skillRanks",
+        "choiceRank",
+        "respec",
+        "tiers",
+        "labels",
+        "pctFields",
+        "classes"
+      ],
+      "fermé": true,
+      "champs": {
+        "maxLevel": { "type": "entier", "min": 2, "max": 100 },
+        "xp": {
+          "type": "objet",
+          "requis": ["kill", "elite", "guardian", "depthStep", "depthCap"],
+          "fermé": true,
+          "champs": {
+            "kill": { "type": "nombre", "min": 0 },
+            "elite": { "type": "nombre", "min": 0 },
+            "guardian": { "type": "nombre", "min": 0 },
+            "depthStep": { "type": "nombre", "min": 0, "max": 5 },
+            "depthCap": {
+              "type": "nombre",
+              "min": 1,
+              "max": 20,
+              "_note": "plafond du multiplicateur de profondeur"
+            }
+          }
+        },
+        "curve": {
+          "type": "objet",
+          "requis": ["base", "perLevel"],
+          "fermé": true,
+          "champs": { "base": { "type": "nombre", "min": 1 }, "perLevel": { "type": "nombre", "min": 0 } }
+        },
+        "pointsPerLevel": { "type": "entier", "min": 0, "max": 5 },
+        "pointsPerGuardian": { "type": "entier", "min": 0, "max": 5 },
+        "skillRanks": { "type": "entier", "min": 1, "max": 10 },
+        "choiceRank": { "type": "entier", "min": 1, "max": 10 },
+        "respec": {
+          "type": "objet",
+          "requis": ["base", "perPoint"],
+          "fermé": true,
+          "champs": { "base": { "type": "nombre", "min": 0 }, "perPoint": { "type": "nombre", "min": 0 } }
+        },
+        "tiers": {
+          "type": "liste",
+          "min": 1,
+          "unique": "name",
+          "elements": {
+            "type": "objet",
+            "requis": ["name", "need"],
+            "fermé": true,
+            "champs": { "name": { "type": "texte", "min": 1 }, "need": { "type": "entier", "min": 0 } }
+          }
+        },
+        "labels": { "type": "objet", "min": 1, "chaque": { "type": "texte", "min": 1 } },
+        "pctFields": { "type": "liste", "elements": { "type": "texte", "min": 1 } },
+        "classes": {
+          "type": "objet",
+          "min": 1,
+          "chaque": {
+            "type": "objet",
+            "requis": ["fullyBuyable", "nodes"],
+            "fermé": true,
+            "champs": {
+              "fullyBuyable": { "type": "booleen" },
+              "nodes": {
+                "type": "liste",
+                "min": 1,
+                "unique": "id",
+                "elements": {
+                  "type": "objet",
+                  "requis": ["id", "kind", "tier"],
+                  "fermé": true,
+                  "champs": {
+                    "id": { "type": "texte", "min": 1 },
+                    "kind": { "type": "texte", "valeurs": ["skill", "passive", "move", "ultimate"] },
+                    "tier": { "type": "entier", "min": 0, "max": 9 },
+                    "skill": { "type": "texte", "min": 1 },
+                    "name": { "type": "texte", "min": 1 },
+                    "text": { "type": "texte", "min": 1 },
+                    "stat": { "type": "texte", "min": 1 },
+                    "proc": {
+                      "type": "objet",
+                      "requis": ["on", "effect"],
+                      "fermé": true,
+                      "champs": {
+                        "on": { "type": "texte", "valeurs": ["passive"] },
+                        "effect": { "type": "texte", "valeurs": ["stunnedBonus"] }
+                      }
+                    },
+                    "perRank": { "type": "nombre" },
+                    "pct": { "type": "booleen" },
+                    "maxRank": { "type": "entier", "min": 1, "max": 10 },
+                    "ranks": {
+                      "type": "objet",
+                      "min": 1,
+                      "chaque": { "type": "liste", "min": 1, "elements": { "type": "nombre" } }
+                    },
+                    "choices": {
+                      "type": "liste",
+                      "min": 2,
+                      "max": 2,
+                      "unique": "id",
+                      "elements": {
+                        "type": "objet",
+                        "requis": ["id", "name", "text", "set"],
+                        "fermé": true,
+                        "champs": {
+                          "id": { "type": "texte", "min": 1 },
+                          "name": { "type": "texte", "min": 1 },
+                          "text": { "type": "texte", "min": 1 },
+                          "set": { "type": "objet", "min": 1 }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

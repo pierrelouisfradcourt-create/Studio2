@@ -346,9 +346,27 @@ func _acte_du_nouveau_joueur() -> void:
 	await _premiere_descente()
 	await _reprise_depuis_le_point()
 	await ville.visite_apres_la_descente()
+	await _voir_le_rang_en_jeu()
 	app.ouvrir_titre()
 	await _controler("joueur neuf, retour au titre", "titre")
 	await _fermer_le_jeu("joueur neuf")
+
+## L'arbre se voit EN JEU : la compétence améliorée au Grimoire part avec les nombres de son rang
+## (arène d'essai : rien n'y est gagné ni perdu).
+func _voir_le_rang_en_jeu() -> void:
+	var etape := "arbre en jeu"
+	var classe: String = app.profil.loadout.classId
+	var id: String = app.contenu.classes[classe].skills[0]
+	var rang: float = D6Profile.slot_choices(app.profil, app.contenu).filter(func(x: Dictionary) -> bool: return x.id == id)[0].rank
+	var noeud: Dictionary = app.contenu.tree.classes[classe].nodes.filter(func(n: Dictionary) -> bool: return n.id == id)[0]
+	verifier(etape + " : la compétence de départ a été améliorée dans la Ville", rang >= 2.0, rang)
+	if rang < 2.0:
+		return
+	var attendu: float = noeud.ranks.damage[int(rang) - 2]
+	app.demarrer_descente(1.0, true, false, GRAINE)
+	await _controler(etape, "jeu", "play")
+	verifier(etape + " : %s frappe aux dégâts de son rang %s (%s au lieu de %s)" % [id, D6Js.num_str(rang), D6Js.num_str(attendu), D6Js.num_str(app.contenu.skills[id].damage)], _game().tuning.skills[id].damage == attendu and attendu > app.contenu.skills[id].damage, _game().tuning.skills[id].damage)
+	await _abandonner(etape)
 
 ## Étage 1 : un combat, une pause, puis toute la section — cinq sortes de menu, le Gardien de
 ## l'étage 18 battu, son butin, le portail de la Ville, et ce que le Portail propose au retour.
@@ -634,7 +652,7 @@ func _gardes() -> void:
 	verifier("garde : morts, reprise, retours, abandons, pauses", t.morts >= 3 + CYCLES and _bilan.reprises >= 1 and _bilan.retours >= 2 + CYCLES and _bilan.abandons >= 3 and _bilan.pauses >= 2, [t.morts, _bilan])
 	verifier("garde : les trois classes ont nettoyé une salle", _bilan.classes.size() == 3, _bilan.classes)
 	verifier("garde : %d cycles de fuite joués" % CYCLES, _bilan.cycles == CYCLES, _bilan.cycles)
-	for op in ["select_class", "unlock", "equip_from_stash", "buy_upgrade", "labo"]:
+	for op in ["select_class", "unlock", "equip_from_stash", "buy_upgrade", "labo", "tree_buy", "tree_choose", "tree_respec"]:
 		verifier("garde : opération de Ville « %s » acceptée" % op, _bilan.operations.get(op, 0) > 0, _bilan.operations)
 	verifier("garde : au moins %d salles à terrain (rivière, obstacles bas) nettoyées par le bot" % MIN_SALLES_A_TERRAIN, _terrain.nettoyees.size() >= MIN_SALLES_A_TERRAIN, _terrain.nettoyees)
 	verifier("terrain : le héros n'est jamais posé dans une rivière ni sur un obstacle bas", _terrain.noyades == 0, _terrain.noyades)

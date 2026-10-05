@@ -1,5 +1,5 @@
 {
-  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. DÉPLACEMENT DE CLASSE (`move` d'une classe, table `moves`) : même bouton que le dash, un geste par classe ; un déplacement autre que le dash RECOUVRE les nombres du dash de base (data/heros.json, `dash`) par les siens — durée du geste, i-frames, charges, recharge, fenêtre de frappe ; la distance reste celle du dash × la statistique de classe dashDistanceMult ; `shock*` = choc d'atterrissage du saut (repousse, sans dégât). Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd). ULTIMES (combat V3, étape 2) : un type par classe — `forme` (Forme du Damné : `formTime` s de transformation, `weapon` remplace l'arme, `slots` / `actions` remplacent les trois emplacements, `lifesteal` des griffes ; l'embrasement inflige de `damage` à `damageMax` selon le temps de forme restant), `magie` (Sentence capitale : `strikeAt` s de lame levée, `freeze` s de temps figé, puis `damage` / `stun` à toute la salle, `executeBelow` part de vie sous laquelle un ennemi est exécuté, `bossCap` part de vie max qu'un Gardien perd au plus), `meute` (Meute des Limbes : `count` limiers, `life` s, `hp` × l'échelle de dégâts de l'étage, morsure `biteDamage` toutes les `biteEvery` s ; un ennemi de mêlée se tourne vers un limier à moins de `distractRange` u et de `distractRatio` × sa distance à l'héroïne). `duration` = le geste de lancement (invulnérable). `reserve` : ancien Super gardé pour l'arbre de compétences, ultime d'aucune classe.",
+  "_note": "Les classes et leurs kits : armes (combo coup par coup, frappe de dash), compétences, gadgets, Supers. Le kit de départ (Lame, Colère) sert de réglage actif par défaut. DÉPLACEMENT DE CLASSE (`move` d'une classe, table `moves`) : même bouton que le dash, un geste par classe ; un déplacement autre que le dash RECOUVRE les nombres du dash de base (data/heros.json, `dash`) par les siens — durée du geste, i-frames, charges, recharge, fenêtre de frappe ; la distance reste celle du dash × la statistique de classe dashDistanceMult ; `shock*` = choc d'atterrissage du saut (repousse, sans dégât). Combat V3 : compétences et gadgets s'équipent dans TROIS emplacements (DEFAULT_LOADOUT.slots, null = vide) ; `holdTime` d'un Super = secondes d'attaque maintenue, jauge pleine, avant que l'ultime parte (la même valeur pour les trois : gardé par tests/regles/donnees.gd). ULTIMES (combat V3, étape 2) : un type par classe — `forme` (Forme du Damné : `formTime` s de transformation, `weapon` remplace l'arme, `slots` / `actions` remplacent les trois emplacements, `lifesteal` des griffes ; l'embrasement inflige de `damage` à `damageMax` selon le temps de forme restant), `magie` (Sentence capitale : `strikeAt` s de lame levée, `freeze` s de temps figé, puis `damage` / `stun` à toute la salle, `executeBelow` part de vie sous laquelle un ennemi est exécuté, `bossCap` part de vie max qu'un Gardien perd au plus), `meute` (Meute des Limbes : `count` limiers, `life` s, `hp` × l'échelle de dégâts de l'étage, morsure `biteDamage` toutes les `biteEvery` s ; un ennemi de mêlée se tourne vers un limier à moins de `distractRange` u et de `distractRatio` × sa distance à l'héroïne). `duration` = le geste de lancement (invulnérable). `reserve` : ancien Super gardé pour l'arbre de compétences, ultime d'aucune classe ; depuis l'étape 3 chacun est JOUÉ par une compétence de sorte `canal` (`super` : lequel ; `cooldown` : sa recharge longue), invulnérable le temps du geste, dégâts de source « super ». ARBRE (étape 3, data/arbres.json) : une compétence ne s'achète plus en Âmes (plus de `cost` sur `skills` et `gadgets`) ; la première compétence et la première compétence à charges de chaque classe sont offertes, les autres se débloquent au rang 1 de leur nœud ; les nombres ci-dessous sont ceux du RANG 1.",
   "classes": {
     "revenant": {
       "name": "Revenant",
@@ -12,7 +12,7 @@
       },
       "stats": {},
       "weapons": ["lame", "dagues"],
-      "skills": ["lance", "chaine"],
+      "skills": ["lance", "chaine", "colere"],
       "gadgets": ["nova", "bombe"],
       "super": "forme_damne"
     },
@@ -33,7 +33,7 @@
         "moveSpeedMult": -0.06
       },
       "weapons": ["hache", "marteau"],
-      "skills": ["bond", "chaine"],
+      "skills": ["bond", "chaine", "sentence"],
       "gadgets": ["cri", "bombe"],
       "super": "sentence_capitale"
     },
@@ -48,7 +48,7 @@
       },
       "stats": { "dashDistanceMult": 0.3, "moveSpeedMult": 0.08, "critChance": 0.05, "maxHpBonus": -20 },
       "weapons": ["arc", "arbalete"],
-      "skills": ["volee", "brasier"],
+      "skills": ["volee", "brasier", "nuee"],
       "gadgets": ["piege", "totem"],
       "super": "meute_limbes"
     }
@@ -443,7 +443,6 @@
       "name": "Lance infernale",
       "kind": "lance",
       "text": "Projectile qui transperce 3 ennemis.",
-      "cost": 0,
       "cooldown": 4,
       "damage": 30,
       "speed": 900,
@@ -458,7 +457,6 @@
       "name": "Chaîne d'Enfer",
       "kind": "chain",
       "icon": "chain",
-      "cost": 35,
       "text": "Crochet qui harponne le premier ennemi touché, l'étourdit et le tire contre vous.",
       "cooldown": 5,
       "castTime": 0.08,
@@ -477,7 +475,6 @@
       "name": "Bond du bourreau",
       "kind": "bond",
       "icon": "leap",
-      "cost": 0,
       "text": "Saut invulnérable jusqu'à 260 u ; l'atterrissage écrase tout à 120 u et étourdit.",
       "cooldown": 6,
       "castTime": 0,
@@ -496,7 +493,6 @@
       "name": "Brasier d'âmes",
       "kind": "brasier",
       "icon": "fire",
-      "cost": 40,
       "text": "Pot d'âmes lancé jusqu'à 380 u : impact de 20, puis le sol brûle 4 s (12 dégâts/s).",
       "cooldown": 7,
       "castTime": 0.1,
@@ -516,7 +512,6 @@
       "name": "Volée d'épines",
       "kind": "volee",
       "icon": "fan",
-      "cost": 0,
       "text": "Éventail de 5 épines (14 dégâts chacune) ; à bout portant, tout touche.",
       "cooldown": 3.5,
       "castTime": 0.06,
@@ -530,6 +525,36 @@
       "knockback": 260,
       "hitstop": 0.04,
       "recoil": 80
+    },
+    "colere": {
+      "name": "Tourbillon de colère",
+      "kind": "canal",
+      "icon": "super",
+      "text": "L'ancien Super, devenu compétence : tourbillon invulnérable de 1,4 s qui frappe tout autour. Recharge longue.",
+      "super": "colere",
+      "cooldown": 20,
+      "castTime": 0,
+      "aimed": false
+    },
+    "sentence": {
+      "name": "Triple sentence",
+      "kind": "canal",
+      "icon": "sentence",
+      "text": "L'ancien Super, devenu compétence : invulnérable 1,5 s, deux taillades de 40 puis un fracas de 70 qui étourdit. Recharge longue.",
+      "super": "sentence",
+      "cooldown": 24,
+      "castTime": 0,
+      "aimed": false
+    },
+    "nuee": {
+      "name": "Nuée de traits",
+      "kind": "canal",
+      "icon": "rain",
+      "text": "L'ancien Super, devenu compétence : invulnérable 1,6 s en courant, un trait toutes les 0,09 s sur les 3 ennemis les plus proches. Recharge longue.",
+      "super": "nuee",
+      "cooldown": 22,
+      "castTime": 0,
+      "aimed": false
     }
   },
   "gadgets": {
@@ -537,7 +562,6 @@
       "name": "Nova de cendres",
       "kind": "nova",
       "text": "Onde qui repousse, étourdit et efface les projectiles.",
-      "cost": 0,
       "chargesPerSection": 3,
       "chargeOnEliteKill": 1,
       "radius": 150,
@@ -552,7 +576,6 @@
       "name": "Bombe de soufre",
       "kind": "bombe",
       "icon": "bomb",
-      "cost": 35,
       "text": "Lancée sur la cible : explose 0,25 s après l'impact (45 dégâts à 120 u, étourdit).",
       "chargesPerSection": 3,
       "chargeOnEliteKill": 1,
@@ -571,7 +594,6 @@
       "name": "Piège à mâchoires",
       "kind": "piege",
       "icon": "trap",
-      "cost": 0,
       "text": "Posé à vos pieds (3 au plus) : immobilise 1,6 s et inflige 30 dégâts au premier qui passe.",
       "chargesPerSection": 4,
       "chargeOnEliteKill": 1,
@@ -590,7 +612,6 @@
       "name": "Cri du bourreau",
       "kind": "cri",
       "icon": "roar",
-      "cost": 0,
       "text": "Hurlement à 200 u : étourdit 1,2 s et rend vulnérable (+30 % de dégâts subis, 4 s). Ne repousse pas.",
       "chargesPerSection": 3,
       "chargeOnEliteKill": 1,
@@ -608,7 +629,6 @@
       "name": "Totem de givre",
       "kind": "totem",
       "icon": "totem",
-      "cost": 45,
       "text": "Totem de 6 s : à 150 u, ralentit de 50 % et inflige 7 dégâts toutes les 0,5 s.",
       "chargesPerSection": 3,
       "chargeOnEliteKill": 1,

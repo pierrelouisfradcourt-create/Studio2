@@ -92,6 +92,7 @@ static func create_player(tuning: Dictionary, x, y) -> Dictionary:
 		"superArm": false, # l'appui d'attaque en cours a COMMENCÉ jauge pleine : lui seul arme l'ultime
 		"superT": 0.0,
 		"superTick": 0.0,
+		"channel": null, # ancien Super joué par une compétence `canal` (état 'super') : ses réglages ; null sinon
 		"ult": null, # ultime qui dure : {kind: 'forme', t, max, slots, states} (D6KitSupers) ; null sinon
 		"markId": 0.0, # dernier ennemi que le héros a blessé LUI-MÊME (cible désignée de la meute)…
 		"markAt": -99.0, # … et quand
@@ -127,4 +128,6 @@ static func create_telemetry() -> Dictionary:
 		"killTimes": [], # durée de vie (s) des ennemis tués, par type
 		"deathCauses": {},
 		"soulsEarned": 0.0, # Âmes gagnées pendant ce run (permanentes)
+		"xpEarned": 0.0, # expérience de classe gagnée pendant ce run (permanente : sim/tree.gd)
+		"levelsGained": 0.0, # niveaux de classe passés pendant ce run
 	}

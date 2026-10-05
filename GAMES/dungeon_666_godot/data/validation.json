@@ -16,6 +16,7 @@
     { "fichier": "res://data/butin.json", "schema": "res://data/schemas/butin.json" },
     { "fichier": "res://data/autels.json", "schema": "res://data/schemas/autels.json" },
     { "fichier": "res://data/ville.json", "schema": "res://data/schemas/ville.json" },
-    { "fichier": "res://data/labo.json", "schema": "res://data/schemas/labo.json" }
+    { "fichier": "res://data/labo.json", "schema": "res://data/schemas/labo.json" },
+    { "fichier": "res://data/arbres.json", "schema": "res://data/schemas/arbres.json" }
   ]
 }

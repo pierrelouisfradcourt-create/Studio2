@@ -530,6 +530,9 @@ static func tests(h) -> void:
 	h.test("labo : chaque variante règle un nombre qui existe, la référence décrit le défaut", func(): _lab(h))
 	h.test("données : chaque nombre n'existe qu'une fois, tables et réglages recomposés se répondent", func(): _recomposed(h))
 	h.test("données : tout nombre est un float, la forme exacte reste lue", func(): _shape(h))
+	h.test("arbre : chaque nœud nomme une compétence, un nombre ou une statistique qui existe ; deux améliorations par compétence", func(): _tree_refs(h))
+	h.test("arbre : chaque texte chiffré dit les nombres des données, aucun nombre en dur", func(): _tree_texts(h))
+	h.test("arbre : étages atteignables, courbe croissante, et l'arbre entier coûte plus de points qu'un héros n'en a (exprès, écrit)", func(): _tree_budget(h))
 	h.test("autels : chaque effet a dans son option les champs qu'il lit ; raretés et familles connues", func(): _altar_fields(h))
 	h.test("autels : tout chiffre d'un libellé vient d'un {champ} de l'option, et tout nombre d'option y est dit", func(): _altar_labels(h))
 	h.test("bestiaire : chaque archétype d'origine a les réglages que son IA lit", func(): _base_ai_fields(h))
@@ -537,3 +540,131 @@ static func tests(h) -> void:
 	h.test("salles : entre un obstacle et un mur ou un autre obstacle, rien ne passe ou le plus gros corps passe", func(): _passages(h))
 	h.test("déplacements : chaque classe a le sien, chaque déplacement a ses nombres et sert à une classe", func(): _moves(h))
 	h.test("terrain : chaque terrain bas a sa disposition, n'entre pas au début du jeu, et chaque rivière se franchit avec le plus court déplacement", func(): _terrains(h))
+
+# ---------------------------------------------------------------- arbre de compétences (combat V3, étape 3)
+
+const Arbre = preload("res://sim/tree.gd")
+const CHIFFRES := "0123456789"
+
+## Les réglages de base qu'une compétence de l'arbre peut lire : les siens, et ceux de l'ancien
+## Super qu'elle joue (sorte `canal`).
+static func _tree_fields(t: Dictionary, skill_id: String) -> Dictionary:
+	var def: Dictionary = t[Arbre.table_of(t, skill_id)][skill_id]
+	var out: Dictionary = def.duplicate()
+	if def.has("super"):
+		out.merge(t.supers[def["super"]])
+	return out
+
+static func _tree_refs(h) -> void:
+	var t := _t()
+	var tree: Dictionary = t.tree
+	var stats: Array = D6State.base_stats().keys()
+	h.egal(tree.classes.keys(), t.classes.keys(), "un arbre par classe, dans le même ordre")
+	h.ok(tree.choiceRank >= 1.0 and tree.choiceRank <= tree.skillRanks, "le rang du choix existe")
+	for class_id in tree.classes:
+		var c: Dictionary = t.classes[class_id]
+		var vus: Array = []
+		for n in tree.classes[class_id].nodes:
+			var ou := "%s/%s" % [class_id, n.id]
+			h.ok(n.tier < float(tree.tiers.size()), "%s : étage %s inconnu" % [ou, str(n.tier)])
+			match n.kind:
+				"skill":
+					vus.append(n.skill)
+					h.ok((c.skills + c.gadgets).has(n.skill), "%s : %s n'est pas une compétence de la classe" % [ou, n.skill])
+					var champs := _tree_fields(t, n.skill)
+					for field in n.ranks:
+						h.ok(tree.labels.has(field), "%s : pas de libellé pour %s" % [ou, field])
+						h.egal(float(n.ranks[field].size()), tree.skillRanks - 1.0, "%s : %s, un nombre par rang de 2 à %s" % [ou, field, str(tree.skillRanks)])
+						h.ok(champs.get(field) is float or field == "damageMult", "%s : %s n'est pas un nombre de la compétence" % [ou, field])
+					h.egal(n.choices.size(), 2, "%s : deux améliorations exclusives" % ou)
+					h.different(n.choices[0].set, n.choices[1].set, "%s : deux améliorations vraiment différentes" % ou)
+					for ch in n.choices:
+						for field in ch.set:
+							h.ok(champs.has(field) or Arbre.EXTRA_FIELDS.has(field), "%s/%s : %s n'est lu par aucune règle" % [ou, ch.id, field])
+				"ultimate":
+					var ult: Dictionary = t.supers[c["super"]]
+					for field in n.ranks:
+						h.ok(ult.get(field) is float and tree.labels.has(field), "%s : %s n'est pas un nombre de l'ultime %s" % [ou, field, c["super"]])
+						h.egal(float(n.ranks[field].size()), n.maxRank, "%s : %s, un nombre par rang" % [ou, field])
+				_:
+					h.ok(n.get("maxRank") != null and n.get("perRank") != null, "%s : maxRank et perRank" % ou)
+					h.ok(stats.has(n.get("stat")) or n.get("proc") is Dictionary, "%s : statistique %s inconnue" % [ou, str(n.get("stat"))])
+		h.egal(vus, _dans_l_ordre(vus, c.skills + c.gadgets), "%s : chaque compétence de la classe a son nœud, une fois" % class_id)
+		h.egal(vus.size(), (c.skills + c.gadgets).size(), "%s : aucune compétence sans nœud" % class_id)
+	for id in t.skills:
+		var def: Dictionary = t.skills[id]
+		if def.kind == "canal":
+			h.ok(D6Js.truthy(t.supers.get(def.get("super"), {}).get("reserve")), "%s : joue un ancien Super gardé en réserve" % id)
+		else:
+			for key in ["damage", "radius", "range", "knockback", "hitstop"]:
+				h.ok(def.get(key) is float, "compétence %s : %s manquant" % [id, key])
+
+## `vus` sans doublon, pour comparer : chaque identifiant de `tous` au plus une fois.
+static func _dans_l_ordre(vus: Array, tous: Array) -> Array:
+	var out: Array = []
+	for id in vus:
+		if tous.has(id) and not out.has(id):
+			out.append(id)
+	return out
+
+## Aucun nombre n'est écrit en dur dans un texte : il vient des données par {v} ou {champ}.
+static func _sans_chiffre(text: String) -> bool:
+	for ch in text:
+		if ch in CHIFFRES:
+			return false
+	return true
+
+static func _tree_texts(h) -> void:
+	var t := _t()
+	var tree: Dictionary = t.tree
+	for field in tree.labels:
+		h.ok("{v}" in tree.labels[field] and _sans_chiffre(tree.labels[field]), "libellé de %s : {v}, sans nombre en dur" % field)
+	for class_id in tree.classes:
+		for n in tree.classes[class_id].nodes:
+			var ou := "%s/%s" % [class_id, n.id]
+			if n.has("text"):
+				h.ok("{v}" in n.text and _sans_chiffre(n.text), "%s : le texte cite son nombre par {v} (« %s »)" % [ou, n.text])
+				for rang in range(1, int(n.maxRank) + 1):
+					var v: float = absf(n.perRank * rang) * (100.0 if D6Js.truthy(n.get("pct")) else 1.0)
+					h.ok(Arbre.fr(v) in Arbre.rank_text(t, class_id, n, float(rang)), "%s rang %d : dit %s" % [ou, rang, Arbre.fr(v)])
+			for ch in n.get("choices", []):
+				h.ok(_sans_chiffre(ch.text), "%s/%s : aucun nombre en dur (« %s »)" % [ou, ch.id, ch.text])
+				var dit: String = Arbre.choice_text(t, ch)
+				h.ok(not ("{" in dit), "%s/%s : chaque {champ} existe dans son `set` (« %s »)" % [ou, ch.id, dit])
+				for field in ch.set:
+					if ("{%s}" % field) in ch.text:
+						var v = ch.set[field]
+						h.ok(Arbre.fr(v * 100.0 if tree.pctFields.has(field) else v) in dit, "%s/%s : dit %s" % [ou, ch.id, field])
+
+static func _tree_budget(h) -> void:
+	var t := _t()
+	var tree: Dictionary = t.tree
+	var besoins: Array = tree.tiers.map(func(x): return x.need)
+	h.egal(besoins[0], 0.0, "le premier étage est ouvert d'office")
+	var sommet: float = (tree.maxLevel - 1.0) * tree.pointsPerLevel + float(t.boss.size()) * tree.pointsPerGuardian
+	var p: Dictionary = D6Profile.new_profile(t)
+	p.souls = 1e9
+	for class_id in tree.classes:
+		D6Profile.unlock(p, t, "classes", class_id)
+		var cout := 0.0
+		var par_etage: Array = besoins.map(func(_x): return 0.0)
+		for n in tree.classes[class_id].nodes:
+			var prix: float = Arbre.max_rank(t, n) - (1.0 if Arbre.is_free(p, t, n) else 0.0)
+			cout += prix
+			par_etage[int(n.tier)] += prix
+		# Chaque étage s'atteint en dépensant dans les étages d'avant.
+		var dessous := 0.0
+		for i in besoins.size():
+			h.ok(besoins[i] <= dessous, "%s : l'étage %s (%s points) s'atteint avec les %s points des étages d'avant" % [class_id, tree.tiers[i].name, str(besoins[i]), str(dessous)])
+			h.ok(i == 0 or besoins[i] > besoins[i - 1], "%s : seuils croissants" % class_id)
+			dessous += par_etage[i]
+		h.ok(besoins[-1] < sommet, "%s : le dernier étage s'ouvre avant le niveau maximum" % class_id)
+		# Entièrement achetable, ou PAS exprès (écrit : fullyBuyable faux, et il manque vraiment des points).
+		var achetable: bool = tree.classes[class_id].fullyBuyable
+		h.egal(cout <= sommet, achetable, "%s : l'arbre coûte %s points, un héros en a %s au plus ; fullyBuyable dit %s" % [class_id, str(cout), str(sommet), str(achetable)])
+	# La courbe : chaque niveau demande plus que le précédent, et le maximum se compte.
+	var total := 0.0
+	for n in range(1, int(tree.maxLevel)):
+		h.ok(Arbre.xp_need(t, float(n)) > 0.0 and (n == 1 or Arbre.xp_need(t, float(n)) >= Arbre.xp_need(t, n - 1.0)), "niveau %d" % n)
+		total += Arbre.xp_need(t, float(n))
+	h.ok(total > tree.xp.guardian * tree.xp.depthCap * 10.0, "le niveau maximum ne se gagne pas en dix Gardiens (%s d'expérience)" % str(total))

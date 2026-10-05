@@ -73,6 +73,12 @@ static func _player_projectile_hits(game: Dictionary, pr: Dictionary, ox: float,
 				"kind": "skill", "amount": pr.get("damage"), "dirX": pr.vx / l, "dirY": pr.vy / l,
 				"knockback": pr.knockback, "hitstop": pr.hitstop, "canCrit": true,
 			})
+			if pr.get("blastRadius") != null:
+				# Lance qui EXPLOSE à l'impact (amélioration de l'arbre) : souffle autour du premier touché, fin.
+				D6KitCommon.hit_circle(game, e.x, e.y, pr.blastRadius, {"kind": "skill", "amount": pr.blastDamage, "knockback": pr.knockback, "canCrit": false})
+				D6State.emit(game, "explode", {"x": e.x, "y": e.y, "r": pr.blastRadius, "hero": true, "kind": "lance"})
+				pr.dead = true
+				break
 			if pr.hitIds.size() > pr.pierce:
 				pr.dead = true
 				break

@@ -243,6 +243,34 @@ Vu en faisant ce lot, non tranché :
 | Jouabilité, Revenant | Le bot sans dash bat la section 1 bien plus souvent qu'avant (voir le rapport du lot) : la forme soigne (vol de vie) et étourdit. | Nombres proposés : à juger en main, avant de toucher l'oracle. |
 | `jeu/partie.gd` | Les limiers ne sont pas interpolés entre deux pas de simulation (ils ne sont pas dans la table des positions d'avant) : à 60 images par seconde cela ne se voit pas. | Hors du périmètre du lot (`jeu/partie.gd`). |
 
+## Septième lot (2026-10-04) : combat V3, étape 3 — l'arbre de compétences
+
+Règle neuve (`design/COMBAT_V3.md`, « Étape 3 »), pas une passe de défauts. Gardes :
+`tests/regles/v3_arbre.gd` (62 tests), 3 tests ajoutés à `donnees.gd`, 5 tests existants adaptés
+(`design/COMBAT_V3_TESTS_ADAPTES.md`).
+
+Références réenregistrées une fois : **17 parties sur 85 ont changé**, et seulement par les deux
+événements neufs comptés dans l'empreinte (`levelUp`, `treePoint`) — vérifié partie par partie en
+rejouant les 85 avec ces deux événements retirés de l'empreinte : 0 écart. L'arbre vide ne change
+donc rien d'autre à la simulation. 6 parties `arbre_*` ajoutées (arbre rempli) : 91 au total.
+
+Jouabilité : les oracles jouent l'arbre vide ; `outils/arbre.gd` (mesure, pas oracle) compare
+arbre vide et arbre plein.
+
+Constantes laissées dans le code (techniques) : `sim/tree.gd` — `TREE_SCHEMA` (version du profil qui
+porte l'arbre : marqueur de migration), `FIRST_RANKED` (le rang 1 d'une compétence est dans
+`classes.json`), `EXTRA_FIELDS` (les nombres qu'une amélioration peut ajouter : liste de ce que le
+code sait lire, gardée par `donnees.gd`) ; `sim/kit_skills.gd` — `CHANNEL_OWN` (champs d'une
+compétence `canal` qui ne règlent pas le Super joué).
+
+| Où | Ce qui reste | Suite |
+|---|---|---|
+| `sim/player.gd` | Une compétence `canal` (ancien Super) rend invulnérable tout le geste et bloque la jauge d'ultime pendant ce temps (elle passe par l'état « super ») ; ses dégâts sont de source « super » : le bonus « Gloire charnelle » s'y applique, « dégâts des compétences » non. | À juger par Pierre ; sinon un état propre à écrire. |
+| `sim/kit_gadgets.gd` | Le « sol en feu » de la Nova brûle au rythme du Brasier d'âmes (`skills.brasier.tick`, `burnRefresh`) : la Nova n'a pas ces deux nombres à elle. | Les lui donner si on veut les régler à part. |
+| `data/arbres.json` | Chaîne et Bombe ont le même nœud (mêmes rangs, mêmes améliorations) chez le Revenant et le Bourreau, écrit deux fois. | Étape 4 (contenu) : les différencier, ou partager le nœud. |
+| `jeu/` | Rien ne se voit en jeu quand un niveau est passé (un son seulement) ; l'arbre est une liste de cartes. | Lot « bel écran de l'arbre ». |
+| `sim/tree.gd` | La migration donne l'avance à la seule classe portée : un joueur qui a surtout joué une autre classe la retrouve au niveau 1. | Le profil ne garde pas ses ennemis tués par classe ; à trancher par Pierre. |
+
 ## Vu en passant, non corrigé
 
 | Où | Constat | Pourquoi non corrigé |

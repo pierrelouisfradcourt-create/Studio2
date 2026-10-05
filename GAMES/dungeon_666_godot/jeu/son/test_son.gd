@@ -497,6 +497,7 @@ func _echantillons_progression() -> Array:
 		{"type": "floorEnter", "floor": 2.0, "circle": 1.0, "isBoss": false},
 		{"type": "floorEnter", "floor": 6.0, "circle": 1.0, "isBoss": true},
 		{"type": "checkpoint", "floor": 7.0},
+		{"type": "levelUp", "classId": "revenant", "level": 2.0, "levels": 1.0, "points": 1.0},
 		{"type": "respawn", "floor": 7.0},
 		{"type": "choiceOpen", "kind": "boon"},
 		{"type": "victory", "floor": 666.0},

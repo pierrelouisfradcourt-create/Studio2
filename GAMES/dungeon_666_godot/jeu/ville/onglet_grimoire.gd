@@ -9,6 +9,12 @@ extends "res://jeu/ville/onglet.gd"
 ## (un échange si l'action est déjà ailleurs) ou vide. Ce que le joueur a touché en premier (une
 ## compétence, un emplacement) n'est qu'un état d'ÉCRAN : rien n'est écrit tant qu'il n'a pas
 ## touché le second.
+##
+## ARBRE DE COMPÉTENCES (combat V3, étape 3 ; affichage volontairement simple) : sous les
+## emplacements, le niveau de la classe, sa barre d'expérience, ses points, puis l'arbre en liste
+## par étage — une carte par nœud : rang, texte du rang actuel et du suivant, bouton « + » (grisé
+## avec sa raison), les deux améliorations exclusives. « Tout rendre » se confirme en deux appuis.
+## Tout est LU dans D6Profile.tree_view ; opérations tree_buy, tree_choose, tree_respec.
 
 const Commande = preload("res://jeu/interface/commande.gd")
 
@@ -24,6 +30,12 @@ const AIDES := {
 	"emplacement": "Emplacement %d : touche maintenant la compétence à y placer.",
 }
 const RAYON_PICTO := 15.0
+const CLE_RENDRE := "arbre:rendre"
+const Grille = preload("res://jeu/ville/grille.gd")
+const Accords = preload("res://jeu/theme/accords.gd")
+const SORTES := {"skill": "Compétence", "passive": "Passif", "move": "Déplacement", "ultimate": "Ultime"}
+const VERROU := "À débloquer dans l'arbre"
+const LARGEUR_NOEUD := 250.0
 
 @onready var _note: Label = $Note
 @onready var _arc: Control = %Arc
@@ -32,9 +44,17 @@ const RAYON_PICTO := 15.0
 @onready var _vidages: Array = [%Vider1, %Vider2, %Vider3]
 @onready var _actions: GridContainer = $Actions
 @onready var _super: GridContainer = $Super
+@onready var _niveau: Label = %NiveauTexte
+@onready var _experience: ProgressBar = %Experience
+@onready var _experience_texte: Label = %ExperienceTexte
+@onready var _points: Label = %Points
+@onready var _etages: VBoxContainer = %Etages
+@onready var _rendre: Button = %Rendre
+@onready var _refus_rendre: Label = %RefusRendre
 
 var _action := "" # la compétence touchée en premier ("" : aucune)
 var _emplacement := -1 # l'emplacement touché en premier (-1 : aucun)
+var _rendre_confirme := false # « Tout rendre » attend son second appui
 
 func _ready() -> void:
 	_arc.emplacement_touche.connect(_sur_emplacement)
@@ -46,6 +66,9 @@ func _ready() -> void:
 		_lignes[i].pressed.connect(_sur_emplacement.bind(i))
 		_vidages[i].pressed.connect(_sur_vider.bind(i))
 	visibility_changed.connect(_oublier)
+	_rendre.set_meta("cle", CLE_RENDRE)
+	_rendre.set_meta("action", "rendre")
+	_rendre.pressed.connect(_sur_rendre)
 
 func _dessiner() -> void:
 	var c: Dictionary = app.contenu.classes[app.profil.loadout.classId]
@@ -59,6 +82,7 @@ func _dessiner() -> void:
 	_note.text = NOTE % [c.name, ", ".join(noms)]
 	_ecrire_aide(choix)
 	_montrer_emplacements(choix, places)
+	_dessiner_arbre()
 	_lister(choix, places)
 	_vider(_super)
 	var geste = app.contenu.moves.get(c.get("move"))
@@ -95,16 +119,16 @@ func _montrer_emplacements(choix: Array, places: Array) -> void:
 		_vidages[i].modulate.a = Style.OPACITE_GRISE if x.is_empty() else 1.0
 	_arc.montrer(pictos, _emplacement)
 
-## Les compétences de la classe : placée (dans quel emplacement), à placer, ou à débloquer.
+## Les compétences de la classe : placée (dans quel emplacement), à placer, ou à débloquer (dans l'arbre).
 func _lister(choix: Array, places: Array) -> void:
 	_vider(_actions)
 	for x in choix:
 		var genre: String = GENRES[x.kind]
 		var cle := "%s:%s" % [genre, x.id]
-		var d := {"surtitre": SURTITRES[x.kind], "titre": x.name, "lignes": [x.text], "refus": _raison(cle), "picto": _picto(x.icon, x.unlocked)}
+		var d := {"surtitre": "%s · rang %s" % [SURTITRES[x.kind], D6Js.num_str(x.rank)], "titre": x.name, "lignes": [x.text], "refus": _raison(cle), "picto": _picto(x.icon, x.unlocked)}
 		var place: int = places.find(x.id)
 		if not x.unlocked:
-			_pied_achat(d, cle, "debloquer", "Débloquer", x.cost)
+			d.boutons = [{"nom": "verrou", "texte": VERROU, "inactif": true, "cle": cle}]
 			d.etat = "verrouille"
 		else:
 			if place >= 0:
@@ -137,8 +161,6 @@ func _picto(icone: String, possedee: bool) -> Control:
 func _sur_action(nom: String, genre: String, id: String) -> void:
 	var cle := "%s:%s" % [genre, id]
 	match nom:
-		"debloquer":
-			operation_demandee.emit(cle, "unlock", [genre, id])
 		"placer":
 			_placer(cle, _emplacement, id)
 		"choisir":
@@ -170,3 +192,87 @@ func _oublier() -> void:
 	if not is_visible_in_tree():
 		_action = ""
 		_emplacement = -1
+		_rendre_confirme = false
+
+# ---------------------------------------------------------------- arbre de compétences
+
+## Niveau, expérience, points, puis l'arbre de la classe portée, étage par étage.
+func _dessiner_arbre() -> void:
+	var classe: String = app.profil.loadout.classId
+	var v: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	var au_sommet: bool = v.level >= v.maxLevel
+	_niveau.text = "Niveau %s / %s" % [D6Js.num_str(v.level), D6Js.num_str(v.maxLevel)]
+	_experience.max_value = 1.0 if au_sommet else v.xpNext
+	_experience.value = 1.0 if au_sommet else v.xp
+	_experience_texte.text = "Niveau maximum" if au_sommet else "%s / %s d'expérience" % [D6Js.num_str(v.xp), D6Js.num_str(v.xpNext)]
+	_points.text = "● %s à dépenser" % Accords.compte(v.points, "point", "points") if v.points > 0.0 else "Aucun point à dépenser"
+	_vider(_etages)
+	var pris := false
+	for etage in v.tiers:
+		_dessiner_etage(etage, classe, v.choiceRank)
+		for n in etage.nodes:
+			pris = pris or n.choices.any(func(ch): return ch.taken)
+	var texte := "Confirmer : tout rendre (%s or)" if _rendre_confirme else "Tout rendre (%s or)"
+	_rendre.text = texte % D6Js.num_str(v.respecCost)
+	_rendre.theme_type_variation = &"BoutonDanger" if _rendre_confirme else &"BoutonDiscret"
+	_rendre.disabled = v.spent <= 0.0 and not pris
+	_refus_rendre.text = _raison(CLE_RENDRE)
+
+## Un étage : son titre (ouvert, ou ce qu'il faut dépenser avant) et une carte par nœud.
+func _dessiner_etage(etage: Dictionary, classe: String, rang_du_choix: float) -> void:
+	var titre := Label.new()
+	titre.theme_type_variation = &"TexteDoux"
+	titre.text = "Étage %s" % etage.name if etage.open else "Étage %s — s'ouvre après %s points dépensés" % [etage.name, D6Js.num_str(etage.need)]
+	_etages.add_child(titre)
+	var grille := GridContainer.new()
+	grille.set_script(Grille)
+	grille.largeur_mini = LARGEUR_NOEUD
+	grille.colonnes_max = 3
+	grille.add_theme_constant_override("h_separation", 10)
+	grille.add_theme_constant_override("v_separation", 10)
+	_etages.add_child(grille)
+	for n in etage.nodes:
+		_carte_noeud(grille, n, classe, rang_du_choix)
+
+## La carte d'un nœud : rang, texte du rang actuel et du suivant, « + », améliorations exclusives.
+func _carte_noeud(grille: Node, n: Dictionary, classe: String, rang_du_choix: float) -> void:
+	var cle := "arbre:%s" % n.id
+	var lignes: Array = []
+	if n.now != "":
+		lignes.append(n.now)
+	if n.next != "":
+		lignes.append({"texte": "Suivant — %s" % n.next, "genre": "Affixe"})
+	var boutons: Array = [{"nom": "plus", "texte": "+", "genre": "principal" if n.canBuy else "", "inactif": not n.canBuy, "cle": cle}]
+	for ch in n.choices:
+		lignes.append({"texte": "%s %s : %s" % ["●" if ch.taken else "◇", ch.name, ch.text], "genre": "Pouvoir" if ch.taken else "TexteDoux"})
+		if n.rank >= rang_du_choix and not ch.taken:
+			boutons.append({"nom": "choix:%s" % ch.id, "texte": ch.name, "genre": "principal" if ch.canTake else "", "inactif": not ch.canTake, "cle": "%s:%s" % [cle, ch.id]})
+	var d := {
+		"surtitre": "%s · rang %s / %s" % [SORTES[n.kind], D6Js.num_str(n.rank), D6Js.num_str(n.maxRank)], "titre": n.name, "lignes": lignes,
+		"etat": "equipe" if n.rank > 0.0 else "", "badge": "Offert" if n.free and n.rank == 1.0 else "", "boutons": boutons,
+		"refus": _raison(cle) if _raison(cle) != "" else _dire(n.reason),
+	}
+	if n.icon != "":
+		d.picto = _picto(n.icon, n.rank > 0.0)
+	_carte(grille, d).action.connect(_sur_noeud.bind(classe, String(n.id)))
+
+## Une raison telle qu'on l'affiche : première lettre en capitale.
+func _dire(raison: String) -> String:
+	return raison.left(1).to_upper() + raison.substr(1)
+
+func _sur_noeud(nom: String, classe: String, id: String) -> void:
+	var cle := "arbre:%s" % id
+	_rendre_confirme = false
+	if nom == "plus":
+		operation_demandee.emit(cle, "tree_buy", [classe, id])
+	elif nom.begins_with("choix:"):
+		operation_demandee.emit(cle, "tree_choose", [classe, id, nom.trim_prefix("choix:")])
+
+## « Tout rendre » : un premier appui demande confirmation (c'est payant), le second rend les points.
+func _sur_rendre() -> void:
+	if not _rendre_confirme:
+		_rendre_confirme = true
+		dessin_demande.emit()
+		return
+	_rendre_confirme = false
+	operation_demandee.emit(CLE_RENDRE, "tree_respec", [String(app.profil.loadout.classId)])

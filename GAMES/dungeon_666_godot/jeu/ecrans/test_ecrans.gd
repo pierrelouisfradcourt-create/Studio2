@@ -31,6 +31,7 @@ func _derouler() -> void:
 		await _tous_les_boutons(sorte)
 	await _anti_martelage()
 	await _mort()
+	await _mort_et_experience()
 	await _victoire()
 	await _pause()
 	await _labo_et_feel()
@@ -274,6 +275,24 @@ func _mort() -> void:
 	verifier("mort en arène : pas de récapitulatif, « Recommencer l'arène »", _boutons().size() == 2 and _boutons()[0].text == "Recommencer l'arène", _boutons()[0].text)
 	await _cliquer(_boutons()[0])
 	verifier("mort en arène : on recommence l'arène", _game().mode == "play" and _game().sandbox)
+
+## Arbre de compétences : l'écran de mort dit l'expérience de classe gagnée et le niveau passé.
+func _mort_et_experience() -> void:
+	app.demarrer_descente(1.0, false, false, GRAINE)
+	var g := _game()
+	var a_tuer := int(g.tuning.tree.curve.base / g.tuning.tree.xp.kill) # de quoi passer le niveau 1
+	for i in a_tuer:
+		D6Combat.kill_enemy(g, D6Enemies.create_enemy(g, "imp", g.player.x + 200.0, g.player.y, {"spawnT": 0.0}))
+	Scenes.tuer_le_heros(g)
+	await _attendre(func() -> bool: return ecrans.ecran_montre() == "mort")
+	var bilan: Dictionary = g.run.deathRecap.tree
+	var textes: Array = ecrans.ecran().find_children("*", "Label", true, false).filter(func(l: Label) -> bool: return l.is_visible_in_tree()).map(func(l: Label) -> String: return l.text)
+	verifier("mort : le bilan compte l'expérience et le niveau gagnés", bilan.xpEarned >= g.tuning.tree.curve.base and bilan.levelsGained == 1.0 and bilan.level == 2.0, bilan)
+	verifier("mort : l'expérience de classe gagnée est écrite", textes.has("Expérience de classe : +%s." % D6Js.num_str(bilan.xpEarned)), textes)
+	verifier("mort : « Niveau 2 ! +1 point à dépenser au Grimoire. »", textes.has("Niveau 2 ! +1 point à dépenser au Grimoire."), textes)
+	await _attendre_pret()
+	await _cliquer(_boutons()[1])
+	verifier("mort : de retour en Ville, le niveau gagné reste au profil de la partie", app.ecran == "ville" and g.meta.tree.revenant.level == 2.0, g.meta.tree)
 
 func _victoire() -> void:
 	app.demarrer_descente(Scenes.ETAGE_FINAL, false, false, GRAINE)

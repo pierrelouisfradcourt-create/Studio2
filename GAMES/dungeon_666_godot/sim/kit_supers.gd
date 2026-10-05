@@ -29,17 +29,21 @@ const VIEW_KINDS := {"forme": "forme", "magie": "magie", "meute": "invocation"}
 const VIEW_OTHER := "attaque" # un ancien Super (Colère, Sentence, Nuée)
 
 static func start_kit_super(game: Dictionary) -> void:
-	var p: Dictionary = game.player
 	var s: Dictionary = game.tuning["super"]
-	p.superClock = 0.0
-	p.superStep = 0.0
-	p.superShotT = 0.0
-	p.superRot = 0.0
+	reset_clock(game)
 	match s.kind:
 		"forme":
 			Forme.begin(game, s)
 		"meute":
 			Meute.summon(game, s)
+
+## Horloge d'un Super qui commence (ultime, ou compétence `canal` : player).
+static func reset_clock(game: Dictionary) -> void:
+	var p: Dictionary = game.player
+	p.superClock = 0.0
+	p.superStep = 0.0
+	p.superShotT = 0.0
+	p.superRot = 0.0
 
 static func tick_kit_super(game: Dictionary, dt: float, s: Dictionary) -> void:
 	var p: Dictionary = game.player
@@ -123,7 +127,7 @@ static func view(game: Dictionary) -> Dictionary:
 		if not h.dead and h.life > left:
 			left = h.life
 			frac = h.life / h.lifeMax
-	if left <= 0.0 and p.state == "super":
+	if left <= 0.0 and p.state == "super" and p.get("channel") == null: # pas une compétence `canal`
 		left = maxf(0.0, p.superT)
 		frac = D6Geo.clampv(p.superT / maxf(1e-6, s.duration), 0.0, 1.0)
 	var kit = game.get("kit")
@@ -146,9 +150,11 @@ static func _sentence(game: Dictionary, s: Dictionary) -> void:
 		var aim: Dictionary = D6Aim.compute_aim(game, p.manualAimX, p.manualAimY, s.get("aimRange"))
 		var angle: float = D6Trig.atan2(aim.y, aim.x)
 		p.facing = angle
-		D6KitCommon.hit_sector(game, p.x, p.y, st.range, angle, st.arc * D6Data.DEG, {
-			"kind": "super", "amount": st.damage, "knockback": st.knockback, "stun": D6Js.nz(st.get("stun"), 0.0), "hitstop": st.hitstop, "canCrit": true, "shake": D6Js.nz(st.get("shake"), 0.0),
+		var hits := D6KitCommon.hit_sector(game, p.x, p.y, st.range, angle, st.arc * D6Data.DEG, {
+			"kind": "super", "amount": st.damage * D6Js.nz(s.get("damageMult"), 1.0), "knockback": st.knockback, "stun": D6Js.nz(st.get("stun"), 0.0), "hitstop": st.hitstop, "canCrit": true, "shake": D6Js.nz(st.get("shake"), 0.0),
 		})
+		if hits > 0.0 and s.get("healPerHit") != null:
+			D6Combat.heal_player(game, hits * s.healPerHit, true) # « Dîme de sang » (amélioration de l'arbre)
 		D6State.emit(game, "superTick", {"x": p.x, "y": p.y, "r": st.range, "super": "sentence", "angle": angle, "arc": st.arc * D6Data.DEG, "step": p.superStep})
 
 ## Les `n` ennemis visibles les plus proches à portée, du plus proche au plus lointain.

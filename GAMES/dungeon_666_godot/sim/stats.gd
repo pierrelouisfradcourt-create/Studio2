@@ -4,6 +4,8 @@ extends RefCounted
 ## Statistiques dérivées du héros : base + équipement + bénédictions. Recalculées à chaque
 ## changement de build (jamais à chaque image). Produit aussi la liste des procs.
 
+const Arbre = preload("res://sim/tree.gd")
+
 static func _add_stat(st: Dictionary, stat: String, v: float) -> void:
 	if stat.ends_with("Mult"):
 		# multiplicateurs additifs entre eux (1 + somme) ; clé absente : undefined + v = NaN
@@ -23,6 +25,7 @@ static func recompute_stats(game: Dictionary) -> void:
 	_add_permanent(game, st)
 	_add_items(game, st, procs)
 	_add_boons(game, st, procs)
+	Arbre.add_procs(game, procs) # passifs de l'arbre lus par le combat (dégâts aux ennemis étourdis…)
 
 	# Bornes de sécurité : aucune combinaison ne peut casser la boucle de jeu.
 	var caps: Dictionary = game.tuning.combat
@@ -32,13 +35,14 @@ static func recompute_stats(game: Dictionary) -> void:
 	st.lifesteal = minf(caps.maxLifesteal, st.lifesteal)
 	_apply_to_player(game, st, procs)
 
-## PERMANENT : bonus de la classe et améliorations du Sanctuaire (profil).
+## PERMANENT : bonus de la classe, passifs de son arbre de compétences, améliorations du Sanctuaire (profil).
 static func _add_permanent(game: Dictionary, st: Dictionary) -> void:
 	var t: Dictionary = game.tuning
 	var class_stats = D6Loadout.class_of(game).get("stats")
 	if class_stats is Dictionary:
 		for k in class_stats:
 			_add_stat(st, k, class_stats[k])
+	Arbre.add_stats(game, func(stat, v): _add_stat(st, stat, v))
 	var upgrades = game.meta.get("upgrades")
 	if not (upgrades is Dictionary):
 		return
