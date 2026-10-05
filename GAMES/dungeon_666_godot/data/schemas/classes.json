@@ -198,7 +198,21 @@
         "fermé": true,
         "champs": {
           "name": { "type": "texte", "min": 1 },
-          "kind": { "type": "texte", "valeurs": ["lance", "chain", "bond", "brasier", "volee", "canal"] },
+          "kind": { "type": "texte", "valeurs": [
+              "lance",
+              "chain",
+              "bond",
+              "brasier",
+              "volee",
+              "canal",
+              "sceau",
+              "riposte",
+              "faille",
+              "hachette",
+              "proie",
+              "trait"
+            ]
+          },
           "icon": { "type": "texte", "min": 1 },
           "text": { "type": "texte", "min": 1 },
           "cooldown": { "type": "nombre", "min": 0 },
@@ -231,7 +245,17 @@
             "min": 1,
             "_note": "compétence `canal` : l'ancien Super qu'elle joue (clé de `supers`)"
           },
-          "aimed": { "type": "booleen" }
+          "aimed": { "type": "booleen" },
+          "shotRadius": { "type": "nombre", "min": 1 },
+          "blastMult": { "type": "nombre", "min": 0 },
+          "arc": { "type": "nombre", "min": 0, "max": 360 },
+          "window": { "type": "nombre", "min": 0.02 },
+          "riposteMult": { "type": "nombre", "min": 0 },
+          "parryIframes": { "type": "nombre", "min": 0 },
+          "vuln": { "type": "nombre", "min": 0 },
+          "vulnMult": { "type": "nombre", "min": 0 },
+          "aimBonus": { "type": "nombre", "min": 0 },
+          "minCharge": { "type": "nombre", "min": 0, "max": 1 }
         }
       }
     },
@@ -254,7 +278,7 @@
         "fermé": true,
         "champs": {
           "name": { "type": "texte", "min": 1 },
-          "kind": { "type": "texte", "valeurs": ["nova", "bombe", "piege", "cri", "totem"] },
+          "kind": { "type": "texte", "valeurs": ["nova", "bombe", "piege", "cri", "totem", "sillage", "garde", "leurre"] },
           "icon": { "type": "texte", "min": 1 },
           "text": { "type": "texte", "min": 1 },
           "chargesPerSection": { "type": "entier", "min": 1 },
@@ -278,7 +302,16 @@
           "vulnMult": { "type": "nombre", "min": 0 },
           "pulse": { "type": "nombre", "min": 0.02 },
           "chill": { "type": "nombre", "min": 0 },
-          "chillMult": { "type": "nombre", "min": 0, "max": 1 }
+          "chillMult": { "type": "nombre", "min": 0, "max": 1 },
+          "duration": { "type": "nombre", "min": 0.02 },
+          "step": { "type": "nombre", "min": 1 },
+          "burnDps": { "type": "nombre", "min": 0 },
+          "reduce": { "type": "nombre", "min": 0, "max": 1 },
+          "arc": { "type": "nombre", "min": 0, "max": 360 },
+          "pushback": { "type": "nombre", "min": 0 },
+          "hp": { "type": "nombre", "min": 1 },
+          "bodyRadius": { "type": "nombre", "min": 1 },
+          "lureRatio": { "type": "nombre", "min": 0 }
         }
       }
     },

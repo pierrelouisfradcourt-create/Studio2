@@ -24,7 +24,15 @@ const STYLES := {
 	"thorn": {"couleur": Color("#2fc7ff"), "long": 12.0, "epais": 3.0, "pointe": 6.0, "halo": 16.0},
 	"hook": {"couleur": Color("#cfe9f5"), "long": 6.0, "epais": 4.0, "pointe": 10.0, "halo": 20.0},
 	"star": {"couleur": Color("#e8fbff"), "long": 20.0, "epais": 2.0, "pointe": 6.0, "halo": 20.0},
+	# Compétences neuves (étape 4) : le Stigmate est un fer court et gros, la marque de proie un trait
+	# fin, le renvoi de la parade un éclat blanc, le Trait de Nemrod un long trait épais.
+	"stigmate": {"couleur": Color("#7fe0ff"), "long": 10.0, "epais": 5.0, "pointe": 10.0, "halo": 26.0},
+	"marque": {"couleur": Color("#bff8ff"), "long": 26.0, "epais": 2.0, "pointe": 5.0, "halo": 16.0},
+	"renvoi": {"couleur": Color("#ffffff"), "long": 18.0, "epais": 3.0, "pointe": 7.0, "halo": 22.0},
+	"trait": {"couleur": Color("#e8fbff"), "long": 46.0, "epais": 4.5, "pointe": 12.0, "halo": 34.0},
+	"hache": {"couleur": Color("#cfe9f5"), "long": 0.0, "epais": 6.0, "pointe": 0.0, "halo": 30.0},
 }
+const TOURS_HACHE := 3.2 # tours par seconde de la Hache du supplice en vol
 
 func _init() -> void:
 	lumieres_derriere = true
@@ -61,6 +69,9 @@ func _triangle(a: Vector2, b: Vector2, c: Vector2, couleur: Color) -> void:
 ## Tir d'un kit du héros : trait froid et pointe blanche ; le crochet tire sa chaîne.
 func _tir_de_kit(s: Dictionary, heros: Vector2) -> void:
 	var p: Vector2 = partie.position_dessin(s)
+	if s.get("kind") == "hache":
+		_hache(s, p)
+		return
 	var style: Dictionary = STYLES.get(s.get("kind"), STYLES.arrow)
 	var lourd := 1.4 if D6Js.truthy(s.get("heavy")) else 1.0
 	var long: float = style.long * (1.3 if lourd > 1.0 else 1.0)
@@ -73,6 +84,20 @@ func _tir_de_kit(s: Dictionary, heros: Vector2) -> void:
 	var t: float = style.pointe
 	_triangle(Vector2(t + 1.5, 0), Vector2(-t * 0.4 - 1.0, -t * 0.6 - 1.5), Vector2(-t * 0.4 - 1.0, t * 0.6 + 1.5), Trace.voile(PAL.heroCape, 0.9))
 	_triangle(Vector2(t, 0), Vector2(-t * 0.4, -t * 0.6), Vector2(-t * 0.4, t * 0.6), PAL.hero)
+
+## Hache du supplice : elle TOURNE sur elle-même (manche, fer en croissant, tranchant clair), au-dessus
+## de son ombre ; quand elle tournoie sur place (amélioration), le cercle qu'elle fauche est dit.
+func _hache(s: Dictionary, p: Vector2) -> void:
+	draw_set_transform(Vector2.ZERO)
+	Trace.halo_ovale(self, p + Vector2(0, 12.0), 15.0, 7.0, Color.BLACK, 0.7)
+	if s.get("phase") == "spin":
+		Trace.cercle_pointille(self, p, s.spinRadius, Trace.voile(PAL.lance, 0.7), 2.0, 9.0, 7.0, temps() * 60.0)
+	draw_set_transform(p, temps() * TAU * TOURS_HACHE)
+	draw_line(Vector2(-16, 0), Vector2(12, 0), Trace.voile(PAL.heroCape, 0.9), 5.0, true)
+	draw_line(Vector2(-15, 0), Vector2(11, 0), Color("#cfe9f5"), 2.5, true)
+	var fer := PackedVector2Array([Vector2(4, -3), Vector2(8, -17), Vector2(19, -12), Vector2(22, 0), Vector2(19, 12), Vector2(8, 17), Vector2(4, 3)])
+	Trace.forme(self, fer, PAL.lance, Trace.voile(PAL.heroCape, 0.95), 2.0)
+	draw_polyline(PackedVector2Array([Vector2(19, -12), Vector2(22, 0), Vector2(19, 12)]), Color.WHITE, 2.0, true)
 
 ## Pot ou bombe en vol : l'objet monte au-dessus de son ombre.
 func _objet_lance(z: Dictionary) -> void:

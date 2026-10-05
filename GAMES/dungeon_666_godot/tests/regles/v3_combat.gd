@@ -522,9 +522,9 @@ static func _p_choix(h) -> void:
 	var choix: Array = D6Profile.slot_choices(p, t)
 	var c: Dictionary = t.classes.revenant
 	h.egal(choix.map(func(x): return x.id), c.skills + c.gadgets, "compétences puis gadgets de la classe")
-	h.egal(choix.map(func(x): return x.kind), ["skill", "skill", "skill", "gadget", "gadget"])
-	h.egal(choix.map(func(x): return x.unlocked), [true, false, false, true, false], "le départ possédé, le reste à débloquer (dans l'arbre)")
-	h.egal(choix.map(func(x): return x.rank), [1.0, 0.0, 0.0, 1.0, 0.0], "rang dans l'arbre : 1 offert pour le départ, 0 pour le reste")
+	h.egal(choix.map(func(x): return x.kind), ["skill", "skill", "skill", "skill", "skill", "gadget", "gadget", "gadget"])
+	h.egal(choix.map(func(x): return x.unlocked), [true, false, false, false, false, true, false, false], "le départ possédé, le reste à débloquer (dans l'arbre)")
+	h.egal(choix.map(func(x): return x.rank), [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], "rang dans l'arbre : 1 offert pour le départ, 0 pour le reste")
 	for x in choix:
 		var def: Dictionary = t.skills[x.id] if x.kind == "skill" else t.gadgets[x.id]
 		h.egal(x.keys(), ["id", "name", "text", "icon", "kind", "unlocked", "rank"], "forme de %s" % x.id)

@@ -267,9 +267,43 @@ compétence `canal` qui ne règlent pas le Super joué).
 |---|---|---|
 | `sim/player.gd` | Une compétence `canal` (ancien Super) rend invulnérable tout le geste et bloque la jauge d'ultime pendant ce temps (elle passe par l'état « super ») ; ses dégâts sont de source « super » : le bonus « Gloire charnelle » s'y applique, « dégâts des compétences » non. | À juger par Pierre ; sinon un état propre à écrire. |
 | `sim/kit_gadgets.gd` | Le « sol en feu » de la Nova brûle au rythme du Brasier d'âmes (`skills.brasier.tick`, `burnRefresh`) : la Nova n'a pas ces deux nombres à elle. | Les lui donner si on veut les régler à part. |
-| `data/arbres.json` | Chaîne et Bombe ont le même nœud (mêmes rangs, mêmes améliorations) chez le Revenant et le Bourreau, écrit deux fois. | Étape 4 (contenu) : les différencier, ou partager le nœud. |
+| `data/arbres.json` | **Traité au huitième lot.** Chaîne et Bombe ont le même nœud (mêmes rangs, mêmes améliorations) chez le Revenant et le Bourreau, écrit deux fois. | Étape 4 (contenu) : les différencier, ou partager le nœud. |
 | `jeu/` | Rien ne se voit en jeu quand un niveau est passé (un son seulement) ; l'arbre est une liste de cartes. | Lot « bel écran de l'arbre ». |
 | `sim/tree.gd` | La migration donne l'avance à la seule classe portée : un joueur qui a surtout joué une autre classe la retrouve au niveau 1. | Le profil ne garde pas ses ennemis tués par classe ; à trancher par Pierre. |
+
+## Huitième lot (2026-10-05) : combat V3, étape 4 — les compétences neuves
+
+Contenu neuf (`design/COMBAT_V3.md`, « Étape 4 »), pas une passe de défauts. Gardes :
+`tests/regles/v3_competences.gd` (62 tests) ; le test générique des rangs de `v3_arbre.gd` joue de
+lui-même les neuf nœuds neufs (+9) ; 1 test existant adapté (`design/COMBAT_V3_TESTS_ADAPTES.md`).
+
+Le défaut « Chaîne et Bombe ont le même nœud chez le Revenant et le Bourreau » (septième lot) est
+traité : une version par classe (rang 1 commun, rangs du Bourreau et une amélioration sur deux propres).
+
+Références réenregistrées une fois : **2 parties existantes sur 91 ont changé**, `arbre_hasard_dagues`
+et `arbre_hasard_marteau` — les deux seules qui jouent la Chaîne et la Bombe au rang 3 avec une
+amélioration (leur spec a dû changer d'amélioration de Bombe, « fumigène » et « grappe » ayant changé
+de classe ; les rangs du Bourreau ont changé). Les 89 autres — arbre vide, kit de départ, ultimes,
+arbres pleins sans Chaîne ni Bombe — sont identiques au bit près : les compétences neuves ne
+changent rien à qui ne les équipe pas. 9 parties `competences_*` ajoutées : 100 au total (deux d'entre elles, au hasard et sans héros
+invulnérable, pour qu'une parade et un blocage RÉUSSIS soient dans les références).
+
+Constantes laissées dans le code (techniques) : `sim/neuves_revenant.gd` — `RETURN_SPEED`,
+`RETURN_RANGE`, `RETURN_RADIUS` (le tir renvoyé par « Miroir » : il doit seulement rattraper un
+tireur), `MUZZLE` ; `sim/neuves_bourreau.gd` — `REACH_STEP` (pas de la recherche du mur) ;
+`sim/neuves_chasseresse.gd` — `PLACE_STEP`, `PLACE_MARGIN` (recul d'un leurre posé où rien ne se pose).
+
+| Où | Ce qui reste | Suite |
+|---|---|---|
+| `data/arbres.json` | Trois compétences neuves par classe, pas quatre. | Pistes : double spectral (Revenant), pluie de flèches à retardement ou faucon (Chasseresse), une quatrième pour le Bourreau. |
+| `sim/neuves_chasseresse.gd` | Le Trait se bande d'un appui (second appui : tir immédiat) ; il ne se charge pas en MAINTENANT le bouton. | Le maintien demande un champ « bouton tenu » par emplacement dans l'entrée d'un pas (entrées, bots, codec des références) : lot à part, si le geste manque en main. |
+| `sim/neuves_revenant.gd` | La Contre-taille pare TOUT coup pendant sa garde, même mortel, même d'un Gardien. | À juger : plafonner, ou excepter les Gardiens. |
+| `sim/neuves_revenant.gd` | Le Stigmate ne sert à rien contre un Gardien seul (il n'explose qu'à la mort du marqué). | À juger : un effet à l'expiration de la marque. |
+| `sim/neuves_revenant.gd`, `sim/kit_zones.gd` | Les braises du Sillage et la « Poix ardente » brûlent au rythme du Brasier d'âmes (`skills.brasier.tick`, `burnRefresh`), comme le sol en feu de la Nova. | Les leur donner si on veut les régler à part. |
+| `sim/ult_meute.gd` | Le leurre n'attire que la mêlée en chasse qui peut l'atteindre tout droit ; tireurs et Gardiens l'ignorent. | Règle des limiers, gardée telle quelle. |
+| `sim/neuves_bourreau.gd` | La Garde de fer ne dit pas au HUD combien elle a encaissé ; le « Contrecoup » ramène l'encaissé à l'échelle de l'étage 1 (sinon l'onde compterait deux fois la profondeur). | À juger en profondeur. |
+| `jeu/interface/` | Le bouton d'une compétence ne montre ni la charge du Trait ni la durée d'un sillage ou d'une garde (`D6Loadout.slot_state` les rend). | Lot d'affichage du HUD (tenu par un autre chantier). |
+| `outils/arbre.gd` | Avec 10 graines, les dégâts reçus par salle varient encore beaucoup d'une mesure à l'autre. | Plus de graines pour trancher un nombre. |
 
 ## Vu en passant, non corrigé
 

@@ -75,6 +75,7 @@ func _draw() -> void:
 			"eclair": _dessiner_eclair(f, a)
 			"mort": _mort(f, t, a)
 			"refus": _refus(f, t, a)
+			"fissure": _fissure(f, a)
 
 ## Croissant : l'arc balaie d'un bord à l'autre (dans l'autre sens pour le 2e coup).
 func _taillade(f: Dictionary, t: float, a: float) -> void:
@@ -105,6 +106,23 @@ func _bande(f: Dictionary, a: float) -> void:
 	draw_set_transform(Vector2(f.x, f.y), f.angle)
 	draw_rect(Rect2(0.0, -f.largeur * 0.5 * a, f.longueur, f.largeur * a), Color(BANDE, a * 0.5))
 	draw_set_transform(Vector2.ZERO)
+
+## Fissure au sol (Faille du Bourreau, étape 4) : une lézarde noire aux lèvres claires le long de sa
+## ligne, dans sa bande à peine teintée ; elle se referme en s'effaçant. {x, y, angle, longueur,
+## largeur, couleur, graine}.
+func _fissure(f: Dictionary, a: float) -> void:
+	var o := Vector2(f.x, f.y)
+	var axe := Vector2.from_angle(f.angle)
+	var travers := axe.orthogonal()
+	draw_set_transform(o, f.angle)
+	draw_rect(Rect2(0.0, -f.largeur * 0.5, f.longueur, f.largeur), Color(f.couleur, a * 0.1))
+	draw_set_transform(Vector2.ZERO)
+	var n := maxi(2, int(f.longueur / 22.0))
+	var ligne := PackedVector2Array()
+	for i in n + 1:
+		ligne.append(o + axe * (f.longueur * float(i) / float(n)) + travers * (_hasard(f.graine + float(i)) * f.largeur * 0.28))
+	draw_polyline(ligne, Color(0.0, 0.0, 0.0, a * 0.9), 4.0 + 7.0 * a)
+	draw_polyline(ligne, Color(f.couleur, a), 2.0)
 
 func _dessiner_eclair(f: Dictionary, a: float) -> void:
 	var d := Vector2(f.x1 - f.x0, f.y1 - f.y0)

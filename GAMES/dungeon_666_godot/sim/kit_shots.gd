@@ -9,8 +9,12 @@ extends RefCounted
 ##
 ## shot : {id, kind, x, y, vx, vy, r, range, traveled, pierce, hitIds, damage, source,
 ##         knockback, hitstop, shake, stun, pull?: {stopGap, mass}, heavy, dead}
+## Étape 4 : `mark` (le tir pose une marque sur ce qu'il touche), `custom` (le tir est joué par
+## sim/kit_neuves.gd : la hache qui revient). kind : arrow | bolt | thorn | hook | star | stigmate |
+## renvoi | hache | marque | trait.
 
 const MUZZLE := 0.5 # × rayon du héros : point de départ d'un tir (à bout portant, ça touche)
+const Neuves := preload("res://sim/kit_neuves.gd")
 
 ## `ids.includes(id)` : comparaison par `==` (Array.has distingue 1 de 1.0, JavaScript non).
 static func _has_id(ids: Array, id) -> bool:
@@ -91,6 +95,9 @@ static func update_shots(game: Dictionary, dt: float) -> void:
 		i += 1
 		if s.dead:
 			continue
+		if s.get("custom") != null:
+			Neuves.update_shot(game, s, dt) # tir qui ne vole pas tout droit : la hache qui revient (étape 4)
+			continue
 		var ox: float = s.x
 		var oy: float = s.y
 		var speed: float = maxf(1e-6, sqrt(s.vx * s.vx + s.vy * s.vy))
@@ -102,6 +109,10 @@ static func update_shots(game: Dictionary, dt: float) -> void:
 			continue
 		_shot_hits(game, s, ox, oy, speed)
 	D6Projectiles.compact(store.shots)
+
+## Les touches d'un tir joué ailleurs (`custom`, sim/kit_neuves.gd) sur le segment qu'il vient de parcourir.
+static func hit_segment(game: Dictionary, s: Dictionary, ox: float, oy: float, speed: float) -> void:
+	_shot_hits(game, s, ox, oy, speed)
 
 ## Ennemis traversés par le tir sur le segment parcouru pendant ce pas (corps de la boucle de
 ## update_shots, sorti pour la longueur : même ordre des effets).
@@ -118,6 +129,8 @@ static func _shot_hits(game: Dictionary, s: Dictionary, ox: float, oy: float, sp
 		if D6Geo.point_seg_dist2(e.x, e.y, ox, oy, s.x, s.y) >= rr * rr:
 			continue
 		s.hitIds.append(e.id)
+		if s.get("mark") != null:
+			Neuves.mark_hit(game, s, e) # tir marqueur (Stigmate, Marque de la proie) : la marque d'abord
 		D6Combat.damage_enemy(game, e, {
 			"kind": s.source, "amount": s.damage, "dirX": s.vx / speed, "dirY": s.vy / speed,
 			"knockback": s.knockback, "hitstop": s.hitstop, "canCrit": true, "shake": s.shake, "stun": s.stun, "finisher": s.finisher,

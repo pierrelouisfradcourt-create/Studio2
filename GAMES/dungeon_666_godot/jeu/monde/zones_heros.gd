@@ -1,7 +1,7 @@
 extends "res://jeu/monde/calque.gd"
 ## Les zones posées par le héros (game.room.kitFx.zones) : cible d'un pot ou d'une bombe en vol,
-## Brasier d'âmes, Bombe de soufre, Piège à mâchoires, Totem de givre ; et le souffle de ses
-## explosions. Ce sont SES outils : teintes froides (cyan, blanc), jamais de rouge.
+## Brasier d'âmes, Bombe de soufre, Piège à mâchoires, Totem de givre, braises du Sillage et Faille
+## restée au sol (étape 4) ; et le souffle de ses explosions. Ce sont SES outils : teintes froides (cyan, blanc), jamais de rouge.
 ## Les objets lancés, tant qu'ils volent, sont dessinés par tirs.gd (au-dessus des créatures).
 
 const FEU_D_AMES := Color("#3fb8ff")
@@ -26,7 +26,12 @@ func _draw() -> void:
 			"pot":
 				_cible(Vector2(z.tx, z.ty), z.r, PAL.lance, 0.5)
 			"brasier":
-				_brasier(z)
+				if D6Js.truthy(z.get("trail")):
+					_braise(z) # une braise du Sillage (Revenant) : petite, basse, en chapelet
+				else:
+					_brasier(z)
+			"faille":
+				_faille(z)
 			"bombe":
 				_bombe(z)
 			"piege":
@@ -60,6 +65,42 @@ func _brasier(z: Dictionary) -> void:
 		var feu := Trace.voile(PAL.lance, 0.7 * fondu)
 		Trace.triangle(self, pied + Vector2(-4, 0), pied + Vector2(4, 0), pied + Vector2(0, -h * 1.25), feu, feu, Trace.voile(Color.WHITE, 0.15 * fondu))
 	_cible(p, z.r, PAL.lance, 0.6 * fondu)
+
+## Braise du Sillage de braise : un petit foyer bas (trois langues, un cœur clair), sans l'anneau
+## tournant des grandes zones — un chapelet de braises se lit comme une traînée, pas comme dix cibles.
+func _braise(z: Dictionary) -> void:
+	var t := temps()
+	var fondu := clampf((z.duration - z.t) / 0.4, 0.0, 1.0) * clampf(z.t / 0.1, 0.0, 1.0)
+	var p := Vector2(z.x, z.y)
+	draw_circle(p, z.r, Trace.voile(FEU_D_AMES, 0.06 * fondu), true, -1.0, true)
+	draw_circle(p, z.r * 0.4, Trace.voile(PAL.lance, 0.22 * fondu), true, -1.0, true)
+	Trace.halo(self, p, z.r * 0.7, PAL.heroGlow, 0.45 * fondu)
+	for i in 3:
+		var a: float = float(i) / 3.0 * TAU + float(z.id)
+		var pied: Vector2 = p + Vector2.from_angle(a) * float(z.r) * 0.3
+		var h: float = 9.0 + 5.0 * sin(t * 10.0 + float(i) * 2.1 + float(z.id))
+		var feu := Trace.voile(PAL.lance, 0.8 * fondu)
+		Trace.triangle(self, pied + Vector2(-4, 0), pied + Vector2(4, 0), pied + Vector2(0, -h * 1.3), feu, feu, Trace.voile(Color.WHITE, 0.2 * fondu))
+
+## Faille du Bourreau qui reste au sol : la lézarde (trait noir à lèvres de givre) ; OUVERTE
+## (« gouffre ») sa bande sombre dit où l'on est ralenti ; en attente d'une RÉPLIQUE son contour bat.
+func _faille(z: Dictionary) -> void:
+	var fondu := clampf((z.life - z.t) / 0.3, 0.0, 1.0)
+	var o := Vector2(z.x, z.y)
+	var axe := Vector2.from_angle(z.angle)
+	var travers := axe.orthogonal()
+	var bande := Trace.bande(o, z.angle, z.length, z.width)
+	if z.open > 0.0:
+		draw_colored_polygon(bande, Trace.voile(Color("#05121a"), 0.5 * fondu))
+		Trace.contour(self, bande, Trace.voile(GIVRE, 0.55 * fondu), 2.0)
+	elif not D6Js.truthy(z.get("shaken")):
+		Trace.contour(self, bande, Trace.voile(PAL.lance, (0.45 + 0.35 * sin(temps() * 22.0)) * fondu), 2.0)
+	var n := maxi(2, int(z.length / 24.0))
+	var ligne := PackedVector2Array()
+	for i in n + 1:
+		ligne.append(o + axe * (z.length * float(i) / float(n)) + travers * sin(float(i) * 2.4 + z.id) * z.width * 0.26)
+	draw_polyline(ligne, Trace.voile(Color.BLACK, 0.85 * fondu), 7.0, true)
+	draw_polyline(ligne, Trace.voile(GIVRE, 0.8 * fondu), 1.5, true)
 
 func _bombe(z: Dictionary) -> void:
 	if z.get("phase") == "flight":

@@ -1,174 +1,107 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://jeu/ville/onglet_grimoire.gd" id="1"]
-[ext_resource type="Script" path="res://jeu/ville/grille.gd" id="2"]
-[ext_resource type="Script" path="res://jeu/ville/arc_emplacements.gd" id="3"]
+[ext_resource type="Script" path="res://jeu/ville/arc_emplacements.gd" id="2"]
+[ext_resource type="Script" path="res://jeu/ville/arbre.gd" id="3"]
+[ext_resource type="Script" path="res://jeu/ville/panneau_noeud.gd" id="4"]
+[ext_resource type="Script" path="res://jeu/theme/pastille.gd" id="5"]
+[ext_resource type="Script" path="res://jeu/interface/barre_xp.gd" id="6"]
 
 [node name="Grimoire" type="VBoxContainer"]
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+size_flags_vertical = 3
+theme_override_constants/separation = 2
 script = ExtResource("1")
 
 [node name="Note" type="Label" parent="."]
 layout_mode = 2
-theme_type_variation = &"TexteDoux"
+theme_type_variation = &"Petit"
 text = "Les trois emplacements d'action de la classe."
-autowrap_mode = 3
+clip_text = true
+text_overrun_behavior = 3
 
-[node name="Haut" type="PanelContainer" parent="."]
-layout_mode = 2
-theme_type_variation = &"Carte"
-
-[node name="Marge" type="MarginContainer" parent="Haut"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 8
-
-[node name="Rangee" type="HFlowContainer" parent="Haut/Marge"]
-layout_mode = 2
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 8
-
-[node name="Arc" type="Control" parent="Haut/Marge/Rangee"]
+[node name="Corps" type="BoxContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
-script = ExtResource("3")
-
-[node name="Legende" type="VBoxContainer" parent="Haut/Marge/Rangee"]
-custom_minimum_size = Vector2(300, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
+size_flags_vertical = 3
 theme_override_constants/separation = 6
 
-[node name="Titre" type="Label" parent="Haut/Marge/Rangee/Legende"]
-layout_mode = 2
-theme_type_variation = &"TitreSection"
-text = "Tes trois emplacements"
-
-[node name="Aide" type="Label" parent="Haut/Marge/Rangee/Legende"]
+[node name="Infos" type="VBoxContainer" parent="Corps"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(156, 0)
 layout_mode = 2
-theme_type_variation = &"Texte"
-text = "Touche une compétence, puis l'emplacement où la placer (ou l'inverse)."
-autowrap_mode = 3
+theme_override_constants/separation = 4
 
-[node name="Ligne1" type="HBoxContainer" parent="Haut/Marge/Rangee/Legende"]
+[node name="LignePoints" type="HBoxContainer" parent="Corps/Infos"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Choix1" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne1"]
+[node name="PastillePoints" type="Control" parent="Corps/Infos/LignePoints"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 1
-theme_type_variation = &"Onglet"
-toggle_mode = true
-text = "1 · Vide"
-alignment = 0
-
-[node name="Vider1" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne1"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-mouse_filter = 1
-theme_type_variation = &"BoutonDiscret"
-text = "Vider"
-
-[node name="Ligne2" type="HBoxContainer" parent="Haut/Marge/Rangee/Legende"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="Choix2" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne2"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 1
-theme_type_variation = &"Onglet"
-toggle_mode = true
-text = "2 · Vide"
-alignment = 0
-
-[node name="Vider2" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne2"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-mouse_filter = 1
-theme_type_variation = &"BoutonDiscret"
-text = "Vider"
-
-[node name="Ligne3" type="HBoxContainer" parent="Haut/Marge/Rangee/Legende"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="Choix3" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne3"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 1
-theme_type_variation = &"Onglet"
-toggle_mode = true
-text = "3 · Vide"
-alignment = 0
-
-[node name="Vider3" type="Button" parent="Haut/Marge/Rangee/Legende/Ligne3"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-mouse_filter = 1
-theme_type_variation = &"BoutonDiscret"
-text = "Vider"
-
-[node name="TitreArbre" type="Label" parent="."]
-layout_mode = 2
-theme_type_variation = &"TitreSection"
-text = "Arbre de compétences"
-
-[node name="Niveau" type="HFlowContainer" parent="."]
-layout_mode = 2
-theme_override_constants/h_separation = 14
-theme_override_constants/v_separation = 6
-
-[node name="NiveauTexte" type="Label" parent="Niveau"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Texte"
-text = "Niveau 1"
-
-[node name="Experience" type="ProgressBar" parent="Niveau"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 14)
 layout_mode = 2
 size_flags_vertical = 4
-show_percentage = false
+script = ExtResource("5")
+rayon = 12.0
 
-[node name="ExperienceTexte" type="Label" parent="Niveau"]
+[node name="Points" type="Label" parent="Corps/Infos/LignePoints"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
+size_flags_horizontal = 3
 theme_type_variation = &"TexteDoux"
+text = "Aucun point à dépenser"
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="NiveauTexte" type="Label" parent="Corps/Infos"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Texte"
+text = "Niveau 1 / 30"
+
+[node name="Experience" type="Control" parent="Corps/Infos"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+script = ExtResource("6")
+
+[node name="ExperienceTexte" type="Label" parent="Corps/Infos"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Petit"
 text = "0 / 40 d'expérience"
 
-[node name="Points" type="Label" parent="Niveau"]
+[node name="Arc" type="Control" parent="Corps/Infos"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"Texte"
-text = "Aucun point à dépenser"
+size_flags_horizontal = 4
+script = ExtResource("2")
+echelle = 0.45
 
-[node name="Etages" type="VBoxContainer" parent="."]
+[node name="Defile" type="ScrollContainer" parent="Corps"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 8
+size_flags_horizontal = 3
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 0
 
-[node name="PiedArbre" type="HFlowContainer" parent="."]
+[node name="Feuille" type="VBoxContainer" parent="Corps/Defile"]
 layout_mode = 2
-theme_override_constants/h_separation = 12
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
 
-[node name="Rendre" type="Button" parent="PiedArbre"]
+[node name="Arbre" type="Control" parent="Corps/Defile/Feuille"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("3")
+
+[node name="PiedArbre" type="HBoxContainer" parent="Corps/Defile/Feuille"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Rendre" type="Button" parent="Corps/Defile/Feuille/PiedArbre"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
@@ -176,35 +109,186 @@ mouse_filter = 1
 theme_type_variation = &"BoutonDiscret"
 text = "Tout rendre (0 or)"
 
-[node name="RefusRendre" type="Label" parent="PiedArbre"]
+[node name="RefusRendre" type="Label" parent="Corps/Defile/Feuille/PiedArbre"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_type_variation = &"TexteDoux"
 text = ""
+autowrap_mode = 3
 
-[node name="TitreActions" type="Label" parent="."]
+[node name="Cadre" type="PanelContainer" parent="Corps"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(276, 0)
 layout_mode = 2
-theme_type_variation = &"TitreSection"
-text = "Placer une compétence"
+theme_type_variation = &"Carte"
 
-[node name="Actions" type="GridContainer" parent="."]
+[node name="PanneauDefile" type="ScrollContainer" parent="Corps/Cadre"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
-script = ExtResource("2")
-largeur_mini = 250.0
-colonnes_max = 3
+follow_focus = true
+horizontal_scroll_mode = 0
 
-[node name="TitreSuper" type="Label" parent="."]
+[node name="Marge" type="MarginContainer" parent="Corps/Cadre/PanneauDefile"]
 layout_mode = 2
-theme_type_variation = &"TitreSection"
-text = "Déplacement et ultime"
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 3
 
-[node name="Super" type="GridContainer" parent="."]
+[node name="Panneau" type="VBoxContainer" parent="Corps/Cadre/PanneauDefile/Marge"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
-script = ExtResource("2")
-largeur_mini = 250.0
-colonnes_max = 3
+theme_override_constants/separation = 2
+script = ExtResource("4")
+
+[node name="Tete" type="HBoxContainer" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Sorte" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau/Tete"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SurTitre"
+text = "Compétence"
+clip_text = true
+text_overrun_behavior = 3
+uppercase = true
+
+[node name="Badge" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau/Tete"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 0
+theme_type_variation = &"Badge"
+text = "Offert"
+
+[node name="LigneNom" type="HBoxContainer" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Nom" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau/LigneNom"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"TitreCarte"
+text = "Nœud"
+autowrap_mode = 3
+
+[node name="Rang" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau/LigneNom"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 8
+theme_type_variation = &"Valeur"
+text = "Rang 0 / 5"
+
+[node name="RappelNom" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Texte"
+text = ""
+autowrap_mode = 3
+
+[node name="Rappel" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TexteDoux"
+text = ""
+autowrap_mode = 3
+
+[node name="Actuel" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Texte"
+text = "Pas encore appris."
+autowrap_mode = 3
+
+[node name="Suivant" type="RichTextLabel" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"TexteRiche"
+bbcode_enabled = true
+text = "Suivant"
+fit_content = true
+scroll_active = false
+
+[node name="Acheter" type="Button" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 1
+theme_type_variation = &"BoutonPrincipal"
+text = "Apprendre"
+
+[node name="Raison" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TexteDoux"
+text = ""
+autowrap_mode = 3
+
+[node name="Refus" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Refus"
+text = ""
+autowrap_mode = 3
+
+[node name="TitreChoix" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SurTitreDoux"
+text = "Améliorations · une seule"
+autowrap_mode = 3
+uppercase = true
+
+[node name="Choix" type="VBoxContainer" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Placer" type="HBoxContainer" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Titre" type="Label" parent="Corps/Cadre/PanneauDefile/Marge/Panneau/Placer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"Texte"
+text = "Placer en"
+
+[node name="Placer1" type="Button" parent="Corps/Cadre/PanneauDefile/Marge/Panneau/Placer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(52, 44)
+layout_mode = 2
+mouse_filter = 1
+theme_type_variation = &"Place"
+text = "1"
+
+[node name="Placer2" type="Button" parent="Corps/Cadre/PanneauDefile/Marge/Panneau/Placer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(52, 44)
+layout_mode = 2
+mouse_filter = 1
+theme_type_variation = &"Place"
+text = "2"
+
+[node name="Placer3" type="Button" parent="Corps/Cadre/PanneauDefile/Marge/Panneau/Placer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(52, 44)
+layout_mode = 2
+mouse_filter = 1
+theme_type_variation = &"Place"
+text = "3"
+
+[node name="Vider" type="Button" parent="Corps/Cadre/PanneauDefile/Marge/Panneau"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 1
+text = "Vider l'emplacement"

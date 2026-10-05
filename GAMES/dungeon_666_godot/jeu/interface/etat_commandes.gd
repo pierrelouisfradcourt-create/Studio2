@@ -9,6 +9,8 @@ extends RefCounted
 ##   eclat   : la commande brille (ultime prêt)      icone : nom du pictogramme (icones.gd)
 ##   nom, geste (déplacement) : son nom (« Saut ») et sa sorte (dash | saut | roulade)
 ##   visee   : l'action de l'emplacement se VISE (slot_view.aimed) : glisser le pouce montre une ligne
+##   charge  : 0..1, l'action se BANDE sur ce bouton (D6Loadout.slot_state.chargeFrac ; 0 : non)
+##   duree   : 0..1, la part qui RESTE de l'effet en cours de l'action (slot_state.activeFrac ; 0 : aucun)
 
 const Icones = preload("res://jeu/interface/icones.gd")
 const EMPLACEMENTS := {"skill1": 0, "skill2": 1, "skill3": 2}
@@ -38,9 +40,13 @@ static func _emplacement(game: Dictionary, index: int) -> Dictionary:
 	var vue = D6Loadout.slot_view(game, index)
 	if vue == null:
 		return {"pret": 0.0, "vide": true}
+	var plus: Dictionary = D6Loadout.slot_state(game, index)
+	var e := {"visee": vue.aimed, "charge": plus.chargeFrac if plus.charging else 0.0, "duree": plus.activeFrac if plus.active else 0.0}
 	if vue.charges != null:
-		return {"pret": 1.0 if vue.ready else 0.0, "charges": vue.charges, "max": vue.maxCharges, "partiel": 0.0, "visee": vue.aimed}
-	return {"pret": 1.0 - vue.cooldownFrac, "recharge": true, "visee": vue.aimed}
+		e.merge({"pret": 1.0 if vue.ready else 0.0, "charges": vue.charges, "max": vue.maxCharges, "partiel": 0.0})
+	else:
+		e.merge({"pret": 1.0 - vue.cooldownFrac, "recharge": true})
+	return e
 
 ## Pictogramme : celui de l'arme portée (attaque), de l'action équipée (emplacement) ; à défaut,
 ## celui du bouton. Un emplacement vide n'en a pas ("").

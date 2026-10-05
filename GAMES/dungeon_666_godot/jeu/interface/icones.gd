@@ -11,7 +11,7 @@ extends RefCounted
 const Couleurs = preload("res://jeu/theme/couleurs.gd")
 const Triangles = preload("res://jeu/theme/triangles.gd")
 const PAS := 8 # segments par courbe
-const NOMS := ["attack", "dash", "saut", "roulade", "skill", "gadget", "super", "daggers", "axe", "hammer", "bow", "crossbow", "chain", "leap", "fire", "fan", "bomb", "trap", "roar", "totem", "sentence", "rain", "forme", "meute", "ruee", "burst"]
+const NOMS := ["attack", "dash", "saut", "roulade", "skill", "gadget", "super", "daggers", "axe", "hammer", "bow", "crossbow", "chain", "leap", "fire", "fan", "bomb", "trap", "roar", "totem", "sentence", "rain", "forme", "meute", "ruee", "burst", "sillage", "stigmate", "riposte", "faille", "hachette", "garde", "proie", "leurre", "trait"]
 
 static func connue(nom) -> bool:
 	return nom is String and nom in NOMS
@@ -54,6 +54,15 @@ static func ajouter(lot: Triangles, nom: String, c: Vector2, r: float, col: Colo
 		"ruee": _ruee(lot, r, col)
 		"burst": _embrasement(lot, r, col)
 		"rain": _nuee(lot, c, r, col)
+		"sillage": _sillage(lot, r, col)
+		"stigmate": _stigmate(lot, r, col)
+		"riposte": _riposte(lot, c, r, col)
+		"faille": _faille(lot, r, col)
+		"hachette": _hachette(lot, c, r, col)
+		"garde": _garde(lot, r, col)
+		"proie": _proie(lot, r, col)
+		"leurre": _leurre(lot, r, col)
+		"trait": _trait(lot, r, col)
 	lot.repere = avant
 
 # ---------------------------------------------------------------- outils de tracé
@@ -279,3 +288,92 @@ static func _nuee(lot: Triangles, c: Vector2, r: float, col: Color) -> void:
 		lot.repere = _place(c + Vector2(p[0], p[1]) * r, PI / 2.0)
 		_rect(lot, r, -0.25, -0.03, 0.35, 0.06, col)
 		_poly(lot, r, [[0.18, 0.0], [0.08, -0.08], [0.08, 0.08]], col)
+
+# ---------------------------------------------------------------- compétences neuves (combat V3, étape 4)
+
+## Sillage de braise : trois flammes qui grandissent le long d'une traînée au sol.
+static func _sillage(lot: Triangles, r: float, col: Color) -> void:
+	_rect(lot, r, -0.55, 0.38, 1.1, 0.08, col)
+	for f in [[-0.38, 0.2], [-0.02, 0.32], [0.36, 0.46]]:
+		var x: float = f[0]
+		var h: float = f[1]
+		_poly(lot, r, [[x, 0.34 - h * 1.9], [x + h * 0.55, 0.14], [x + h * 0.3, 0.34], [x - h * 0.3, 0.34], [x - h * 0.5, 0.1]], col)
+
+## Stigmate : le fer à marquer — un anneau, une pointe vers le bas, trois dents autour.
+static func _stigmate(lot: Triangles, r: float, col: Color) -> void:
+	_ellipse(lot, Vector2.ZERO, Vector2(0.36, 0.36) * r, 0.0, col, r * 0.1)
+	_poly(lot, r, [[-0.2, -0.14], [0.2, -0.14], [0.0, 0.22]], col)
+	for i in range(3):
+		var d := Vector2.from_angle(-PI / 2.0 + i * TAU / 3.0)
+		var t := d.orthogonal()
+		lot.polygone(PackedVector2Array([d * r * 0.62, d * r * 0.4 + t * r * 0.11, d * r * 0.4 - t * r * 0.11]), col)
+
+## Contre-taille : deux lames croisées — celle qui pare, celle qui rend.
+static func _riposte(lot: Triangles, c: Vector2, r: float, col: Color) -> void:
+	for s: float in [-1.0, 1.0]:
+		lot.repere = _place(c, s * PI / 4.0)
+		_rect(lot, r, -0.07, -0.58, 0.14, 0.86, col)
+		_poly(lot, r, [[-0.07, -0.58], [0.07, -0.58], [0.0, -0.72]], col)
+		_rect(lot, r, -0.2, 0.26, 0.4, 0.08, col)
+		_rect(lot, r, -0.05, 0.34, 0.1, 0.2, col)
+
+## Faille : le sol (un trait) fendu par une lézarde en zigzag, deux éclats qui sautent.
+static func _faille(lot: Triangles, r: float, col: Color) -> void:
+	_rect(lot, r, -0.58, 0.3, 0.42, 0.09, col)
+	_rect(lot, r, 0.16, 0.3, 0.42, 0.09, col)
+	_poly(lot, r, [[-0.16, 0.3], [0.02, -0.02], [-0.1, -0.06], [0.1, -0.5], [0.2, -0.1], [0.06, -0.06], [0.16, 0.3], [0.0, 0.52]], col)
+	_poly(lot, r, [[-0.44, 0.1], [-0.3, -0.12], [-0.24, 0.12]], col)
+	_poly(lot, r, [[0.34, 0.06], [0.48, -0.16], [0.52, 0.12]], col)
+
+## Hache du supplice : la hache, et la flèche courbe de son retour.
+static func _hachette(lot: Triangles, c: Vector2, r: float, col: Color) -> void:
+	lot.arc(Vector2(0.0, 0.05) * r, r * 0.52, PI * 0.15, PI * 1.05, 16, col, r * 0.09)
+	_poly(lot, r, [[-0.62, -0.02], [-0.38, -0.02], [-0.5, -0.24]], col)
+	lot.repere = _place(c + Vector2(0.06, -0.06) * r, -PI / 4.0)
+	_rect(lot, r, -0.045, -0.4, 0.09, 0.78, col)
+	var pts := PackedVector2Array([Vector2(0.045, -0.38) * r])
+	_courbe(pts, Vector2(0.48, -0.3) * r, Vector2(0.4, 0.04) * r)
+	pts.append(Vector2(0.045, -0.08) * r)
+	lot.polygone(pts, col)
+
+## Garde de fer : un écu, sa nervure en creux.
+static func _garde(lot: Triangles, r: float, col: Color) -> void:
+	var pts := PackedVector2Array([Vector2(-0.42, -0.48) * r, Vector2(0.42, -0.48) * r, Vector2(0.42, 0.0) * r])
+	_courbe(pts, Vector2(0.38, 0.4) * r, Vector2(0.0, 0.58) * r)
+	_courbe(pts, Vector2(-0.38, 0.4) * r, Vector2(-0.42, 0.0) * r)
+	lot.polygone(pts, col)
+	var sombre := Color(Couleurs.UI.panel, 0.9)
+	_rect(lot, r, -0.05, -0.36, 0.1, 0.72, sombre)
+	_rect(lot, r, -0.28, -0.2, 0.56, 0.1, sombre)
+
+## Marque de la proie : un réticule — quatre crochets, un point au centre.
+static func _proie(lot: Triangles, r: float, col: Color) -> void:
+	for i in range(4):
+		var a := PI / 4.0 + i * PI / 2.0
+		lot.arc(Vector2.ZERO, r * 0.46, a - 0.5, a + 0.5, 8, col, r * 0.11)
+	for d in [[0.0, -1.0], [1.0, 0.0], [0.0, 1.0], [-1.0, 0.0]]:
+		_rect(lot, r, d[0] * 0.56 - 0.04, d[1] * 0.56 - 0.04, 0.08, 0.08, col)
+	lot.disque(Vector2.ZERO, r * 0.12, col)
+
+## Leurre d'os : un épouvantail — pieu, traverse, crâne, haillons.
+static func _leurre(lot: Triangles, r: float, col: Color) -> void:
+	_rect(lot, r, -0.05, -0.2, 0.1, 0.78, col)
+	_rect(lot, r, -0.5, -0.12, 1.0, 0.1, col)
+	lot.disque(Vector2(0.0, -0.36) * r, r * 0.2, col)
+	for s: float in [-1.0, 1.0]:
+		_poly(lot, r, [[s * 0.46, -0.04], [s * 0.2, -0.04], [s * 0.36, 0.32]], col)
+	var sombre := Color(Couleurs.UI.panel, 0.9)
+	for x: float in [-0.08, 0.08]:
+		lot.disque(Vector2(x, -0.38) * r, r * 0.045, sombre)
+
+## Trait de Nemrod : un arc bandé à fond, sa longue flèche prête à partir.
+static func _trait(lot: Triangles, r: float, col: Color) -> void:
+	var centre := Vector2(0.1 * r, 0.0)
+	lot.arc(centre, r * 0.5, -1.25, 1.25, 16, col, r * 0.1)
+	var haut := centre + Vector2.from_angle(-1.25) * r * 0.5
+	var bas := centre + Vector2.from_angle(1.25) * r * 0.5
+	var corde := Vector2(-0.5 * r, 0.0)
+	lot.ligne(haut, corde, col, maxf(1.0, r * 0.045))
+	lot.ligne(bas, corde, col, maxf(1.0, r * 0.045))
+	_rect(lot, r, -0.5, -0.04, 1.0, 0.08, col)
+	_poly(lot, r, [[0.66, 0.0], [0.42, -0.15], [0.42, 0.15]], col)

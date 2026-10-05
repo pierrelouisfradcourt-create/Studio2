@@ -122,7 +122,8 @@ func _acquerir(id: String) -> void:
 	_acquis[id] = true
 	acquise.emit(id)
 	if _app != null and _app.has_method("regler"):
-		var liste: Array = Consignes.ids().filter(func(i: String) -> bool: return _acquis.has(i))
+		# Les consignes de la Ville (acquises ailleurs) sont gardées : la liste est réécrite en entier.
+		var liste: Array = (Consignes.ids() + Consignes.ids_ville()).filter(func(i: String) -> bool: return _acquis.has(i))
 		_app.regler(CLE, {"actif": _actif, "acquis": liste})
 
 # ---------------------------------------------------------------- lecture de la partie

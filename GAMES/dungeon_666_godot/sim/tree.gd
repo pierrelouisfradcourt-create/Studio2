@@ -27,6 +27,9 @@ const EXTRA_FIELDS := [
 	"blastRadius", "blastDamage", "pullGap", "pullMass", "fireDuration", "fireDps", "vuln", "vulnMult", "noPull", "pierce", "count", "spread",
 	"healPerHit", "rebound", "surge", "surgeMult", "chill", "chillMult", "ringDist", "ward", "stun", "duration", "strikes",
 	"targets", "interval", "damage", "damagePerTick", "damageMult", "knockback",
+	# étape 4 : améliorations des compétences neuves (sim/kit_neuves.gd) et des variantes du Bourreau
+	"contagion", "healOnBlast", "refund", "mirror", "aftershock", "aftershockMult", "fissureTime", "spin", "spinRadius", "spinMult", "spinEvery",
+	"thorns", "thornStun", "burstMult", "burstRadius", "burstCap", "jumps", "jumpRange", "blastStun", "fear", "hpMult",
 ]
 
 # ---------------------------------------------------------------- lecture des données

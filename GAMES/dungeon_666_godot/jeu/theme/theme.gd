@@ -8,11 +8,14 @@ extends RefCounted
 ##
 ## Boutons   Button (neutre) · BoutonPrincipal (braise) · BoutonDanger · BoutonDiscret
 ##           BoutonPetit · BoutonPetitPrincipal · Onglet (bascule dorée) · BoutonCarte · BoutonHud
+##           Place (« Placer en N » du Grimoire : doré quand la compétence y est déjà)
 ## Panneaux  Carte · CarteEquipee · CarteVerrouillee · CarteVide · PanneauEcran · PanneauNu
 ##           Cadre (plein écran) · Bandeau (liseré d'accent, teinté par self_modulate)
 ## Titres    Logo · TitreMort · TitreEcran · TitreSection · TitreCarte   (police d'apparat)
 ## Textes    SurTitre · SurTitreDoux · SurTitreEcran · Texte · TexteDoux · Petit · Affixe · Pouvoir
 ##           Or · Ames · Prix · PrixCher · Refus · Badge · BadgeDoux · Reglage · ReglageChange · Valeur
+##           Repere (numéro d'emplacement sur l'arbre) · Points (les points à dépenser, en gros)
+##           TexteRiche (RichTextLabel : un texte dont des mots sont mis en évidence, voir `evidence`)
 ## HUD       HudFort · HudDoux · HudVie · HudOr · HudAmes · HudGardien · HudIndice · HudBanniere
 ##           HudBanniereSous · Touche (libellé de touche ou de bouton de manette)
 ##           Consigne (bandeau de l'accueil du premier joueur) · HudConsigne (sa phrase)
@@ -147,6 +150,10 @@ static func accent(etat: String) -> Color:
 			return ui.line
 	return ui.ember
 
+## Un mot MIS EN ÉVIDENCE dans un texte riche (variation TexteRiche) : en or et en gras.
+static func evidence(mot: String) -> String:
+	return "[b][color=#%s]%s[/color][/b]" % [Couleurs.UI.gold.to_html(false), mot]
+
 ## Le fond d'un écran plein (Ville, titre).
 static func fond() -> Color:
 	return Couleurs.UI["void"]
@@ -204,6 +211,10 @@ static func _boutons(th: Theme) -> void:
 	th.set_stylebox("hover_pressed", "Onglet", choisi)
 	for etat in ["font_pressed_color", "font_hover_pressed_color"]:
 		th.set_color(etat, "Onglet", ui.gold)
+	# « Placer en N » : l'emplacement que la compétence occupe déjà est grisé EN OR (il ne se rappuie pas).
+	_etats(th, "Place", Color(ui.ink, 0.05), ui.line, ui.ink)
+	th.set_stylebox("disabled", "Place", choisi)
+	th.set_color("font_disabled_color", "Place", ui.gold)
 	# Bouton posé sur le jeu (pause) : fond sombre, lisible sur un sol clair comme sur un sol noir.
 	_etats(th, "BoutonHud", Color(ui.panel, 0.72), Color(ui.ink, 0.35), ui.ink)
 
@@ -301,6 +312,14 @@ static func _textes(th: Theme) -> void:
 	_etiquette(th, "Reglage", TAILLES.doux, ui.ink)
 	_etiquette(th, "ReglageChange", TAILLES.doux, ui.gold)
 	_etiquette(th, "Valeur", TAILLES.doux, ui.gold, police_grasse())
+	_etiquette(th, "Repere", TAILLES.surtitre, Couleurs.PAL.lance, police_grasse())
+	_etiquette(th, "Points", TAILLES.carte, ui.gold, police_grasse())
+	# Texte à mots mis en évidence (le rang suivant d'un nœud de l'arbre) : le corps, et l'or en gras.
+	th.set_type_variation("TexteRiche", "RichTextLabel")
+	th.set_color("default_color", "TexteRiche", ui.ink_dim)
+	th.set_font("bold_font", "TexteRiche", police_grasse())
+	for taille in ["normal_font_size", "bold_font_size"]:
+		th.set_font_size(taille, "TexteRiche", TAILLES.texte)
 
 ## Sommes : l'or est doré, les Âmes ont le bleu clair du héros ; un prix trop cher vire au rouge.
 static func _sommes(th: Theme) -> void:

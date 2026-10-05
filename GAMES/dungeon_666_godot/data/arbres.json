@@ -1,5 +1,5 @@
 {
-  "_note": "L'ARBRE DE COMPÉTENCES (combat V3, étape 3), PERMANENT, un par classe. Tous les nombres sont des PROPOSITIONS à juger par Pierre. EXPÉRIENCE : `xp` par ennemi tué (kill), par élite, par Gardien, multipliée par 1 + depthStep × (section − 1), jamais plus que depthCap ; rien en arène d'essai ni à l'entraînement, rien pour une invocation. NIVEAUX : de 1 à maxLevel ; passer du niveau N au suivant demande curve.base + curve.perLevel × (N − 1). POINTS : pointsPerLevel par niveau gagné, pointsPerGuardian par modèle de Gardien vaincu pour la première fois avec la classe. ÉTAGES (`tiers`) : un étage s'ouvre quand `need` points ont été dépensés dans la classe ; `tier` d'un nœud = son rang dans cette liste (0 = base). NŒUDS : `skill` (une compétence de classes.json : skillRanks rangs ; le rang 1 la DÉBLOQUE avec les nombres de classes.json, `ranks` donne chaque nombre amélioré aux rangs 2, 3, 4, 5 ; au rang choiceRank, DEUX améliorations exclusives `choices` : `set` remplace des nombres de la compétence, `text` les cite par {champ}) ; `passive` et `move` (maxRank rangs de `perRank` sur la statistique `stat`, ou un `proc` lu par les règles ; `text` cite le total par {v}, en pour cent si `pct`) ; `ultimate` (`ranks` : chaque nombre de l'ultime de la classe aux rangs 1, 2…). `labels` : comment se dit chaque nombre d'un rang ({v}) ; `pctFields` : ceux qui s'écrivent en pour cent. RESPÉCIALISATION : tout rendre coûte respec.base + respec.perPoint × points dépensés, en or. `fullyBuyable` faux : l'arbre de la classe coûte EXPRÈS plus de points qu'un héros n'en aura jamais (niveau maximum + tous les Gardiens) : il faut choisir (gardé par tests/regles/donnees.gd). Ajouter une compétence : une entrée dans classes.json (et dans la liste de sa classe), un nœud ici.",
+  "_note": "L'ARBRE DE COMPÉTENCES (combat V3, étape 3), PERMANENT, un par classe. Tous les nombres sont des PROPOSITIONS à juger par Pierre. EXPÉRIENCE : `xp` par ennemi tué (kill), par élite, par Gardien, multipliée par 1 + depthStep × (section − 1), jamais plus que depthCap ; rien en arène d'essai ni à l'entraînement, rien pour une invocation. NIVEAUX : de 1 à maxLevel ; passer du niveau N au suivant demande curve.base + curve.perLevel × (N − 1). POINTS : pointsPerLevel par niveau gagné, pointsPerGuardian par modèle de Gardien vaincu pour la première fois avec la classe. ÉTAGES (`tiers`) : un étage s'ouvre quand `need` points ont été dépensés dans la classe ; `tier` d'un nœud = son rang dans cette liste (0 = base). NŒUDS : `skill` (une compétence de classes.json : skillRanks rangs ; le rang 1 la DÉBLOQUE avec les nombres de classes.json, `ranks` donne chaque nombre amélioré aux rangs 2, 3, 4, 5 ; au rang choiceRank, DEUX améliorations exclusives `choices` : `set` remplace des nombres de la compétence, `text` les cite par {champ}) ; `passive` et `move` (maxRank rangs de `perRank` sur la statistique `stat`, ou un `proc` lu par les règles ; `text` cite le total par {v}, en pour cent si `pct`) ; `ultimate` (`ranks` : chaque nombre de l'ultime de la classe aux rangs 1, 2…). `labels` : comment se dit chaque nombre d'un rang ({v}) ; `pctFields` : ceux qui s'écrivent en pour cent. RESPÉCIALISATION : tout rendre coûte respec.base + respec.perPoint × points dépensés, en or. `fullyBuyable` faux : l'arbre de la classe coûte EXPRÈS plus de points qu'un héros n'en aura jamais (niveau maximum + tous les Gardiens) : il faut choisir (gardé par tests/regles/donnees.gd). Ajouter une compétence : une entrée dans classes.json (et dans la liste de sa classe), un nœud ici. ÉTAPE 4 : huit compétences par classe (les cinq d'avant + trois neuves, sim/kit_neuves.gd) ; la Chaîne et la Bombe ont une version par classe : le rang 1 est commun (classes.json), les rangs du Bourreau et une amélioration sur deux diffèrent (Revenant : Ferrage ou Croc de boucher, Grappe ou Poix ardente ; Bourreau : Chaîne traversante ou Rafle, Fumigène ou Baril).",
   "tree": {
     "maxLevel": 30,
     "xp": { "kill": 1, "elite": 6, "guardian": 60, "depthStep": 0.25, "depthCap": 4 },
@@ -31,7 +31,7 @@
       "executeBelow": "exécute sous {v} % de vie",
       "count": "{v} limiers"
     },
-    "pctFields": ["vulnMult", "executeBelow", "chillMult", "surgeMult"],
+    "pctFields": ["vulnMult", "executeBelow", "chillMult", "surgeMult", "refund", "aftershockMult", "spinMult"],
     "classes": {
       "revenant": {
         "fullyBuyable": false,
@@ -83,6 +83,27 @@
             ]
           },
           {
+            "id": "sillage",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "sillage",
+            "ranks": { "burnDps": [16, 18, 20, 22], "chargesPerSection": [3, 3, 4, 4] },
+            "choices": [
+              {
+                "id": "tenaces",
+                "name": "Braises tenaces",
+                "text": "Les braises brûlent {life} s et s'étalent à {radius} u.",
+                "set": { "life": 6, "radius": 62 }
+              },
+              {
+                "id": "detonation",
+                "name": "Détonation",
+                "text": "Quand le sillage s'éteint, chaque braise encore allumée explose : {blastDamage} dégâts à {blastRadius} u.",
+                "set": { "blastDamage": 30, "blastRadius": 70 }
+              }
+            ]
+          },
+          {
             "id": "sang_vif",
             "kind": "passive",
             "tier": 0,
@@ -110,10 +131,10 @@
                 "set": { "vuln": 4, "vulnMult": 0.3 }
               },
               {
-                "id": "traversante",
-                "name": "Chaîne traversante",
-                "text": "La chaîne ne tire plus : elle traverse jusqu'à {pierce} ennemis et les étourdit {stun} s.",
-                "set": { "noPull": true, "pierce": 5, "stun": 1.2 }
+                "id": "croc",
+                "name": "Croc de boucher",
+                "text": "Chaîne courte ({range} u) et brutale : {damage} dégâts, étourdit {stun} s.",
+                "set": { "range": 280, "damage": 46, "stun": 1.4 }
               }
             ]
           },
@@ -131,10 +152,31 @@
                 "set": { "count": 3, "spread": 50, "damage": 26, "radius": 90 }
               },
               {
-                "id": "fumigene",
-                "name": "Fumigène",
-                "text": "La bombe ne blesse presque plus ({damage} dégât) mais étourdit {stun} s tout ce qui est à {radius} u, sans repousser.",
-                "set": { "damage": 1, "stun": 2.5, "radius": 170, "knockback": 0 }
+                "id": "poix",
+                "name": "Poix ardente",
+                "text": "L'explosion laisse le sol en feu {fireDuration} s : {fireDps} dégâts/s à ceux qui y restent.",
+                "set": { "fireDuration": 4, "fireDps": 16 }
+              }
+            ]
+          },
+          {
+            "id": "sceau",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "sceau",
+            "ranks": { "damage": [22, 26, 30, 34], "cooldown": [7.5, 7, 6.5, 6] },
+            "choices": [
+              {
+                "id": "contagion",
+                "name": "Contagion",
+                "text": "L'explosion MARQUE à son tour chaque ennemi qu'elle touche sans le tuer.",
+                "set": { "contagion": true }
+              },
+              {
+                "id": "moisson",
+                "name": "Moisson",
+                "text": "Quand le marqué explose : +{healOnBlast} PV, et la recharge du Stigmate est réduite de {refund} %.",
+                "set": { "healOnBlast": 6, "refund": 0.5 }
               }
             ]
           },
@@ -177,6 +219,27 @@
                 "name": "Soif",
                 "text": "Chaque ennemi touché par le tourbillon vous rend {healPerHit} PV.",
                 "set": { "healPerHit": 1 }
+              }
+            ]
+          },
+          {
+            "id": "riposte",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "riposte",
+            "ranks": { "damage": [24, 28, 32, 36], "cooldown": [5.6, 5.2, 4.8, 4.4] },
+            "choices": [
+              {
+                "id": "miroir",
+                "name": "Miroir des damnés",
+                "text": "La garde dure {window} s ; un tir paré est RENVOYÉ à son tireur, et les tirs proches sont effacés.",
+                "set": { "mirror": true, "window": 1 }
+              },
+              {
+                "id": "represailles",
+                "name": "Représailles",
+                "text": "Parade réussie : recharge réduite de {refund} %, et +{surgeMult} % de dégâts pendant {surge} s.",
+                "set": { "refund": 0.75, "surge": 4, "surgeMult": 0.3 }
               }
             ]
           },
@@ -273,6 +336,27 @@
             ]
           },
           {
+            "id": "faille",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "faille",
+            "ranks": { "damage": [33, 38, 43, 48], "cooldown": [6.7, 6.4, 6.1, 5.8] },
+            "choices": [
+              {
+                "id": "replique",
+                "name": "Réplique",
+                "text": "Une réplique secoue la même fissure {aftershock} s plus tard : {aftershockMult} % des dégâts.",
+                "set": { "aftershock": 0.7, "aftershockMult": 0.6 }
+              },
+              {
+                "id": "gouffre",
+                "name": "Gouffre",
+                "text": "La fissure reste ouverte {fissureTime} s : les ennemis qui s'y tiennent sont ralentis de {chillMult} %.",
+                "set": { "fissureTime": 4, "chillMult": 0.5 }
+              }
+            ]
+          },
+          {
             "id": "cuir_epais",
             "kind": "passive",
             "tier": 0,
@@ -287,23 +371,19 @@
             "kind": "skill",
             "tier": 1,
             "skill": "chaine",
-            "ranks": {
-              "damage": [20, 24, 28, 32],
-              "cooldown": [4.7, 4.4, 4.1, 3.8],
-              "range": [450, 470, 490, 510]
-            },
+            "ranks": { "damage": [22, 28, 34, 40], "cooldown": [4.8, 4.6, 4.4, 4.2] },
             "choices": [
-              {
-                "id": "ferrage",
-                "name": "Ferrage",
-                "text": "L'ennemi harponné devient vulnérable : +{vulnMult} % de dégâts subis pendant {vuln} s.",
-                "set": { "vuln": 4, "vulnMult": 0.3 }
-              },
               {
                 "id": "traversante",
                 "name": "Chaîne traversante",
                 "text": "La chaîne ne tire plus : elle traverse jusqu'à {pierce} ennemis et les étourdit {stun} s.",
                 "set": { "noPull": true, "pierce": 5, "stun": 1.2 }
+              },
+              {
+                "id": "rafle",
+                "name": "Rafle",
+                "text": "La chaîne ne s'arrête plus au premier : elle ramène contre lui jusqu'à {pierce} ennemis de plus, même lourds (masse {pullMass}).",
+                "set": { "pierce": 2, "pullMass": 4 }
               }
             ]
           },
@@ -312,19 +392,40 @@
             "kind": "skill",
             "tier": 1,
             "skill": "bombe",
-            "ranks": { "damage": [51, 57, 63, 69], "radius": [126, 132, 138, 144] },
+            "ranks": { "damage": [55, 65, 75, 85], "stun": [0.7, 0.8, 0.9, 1] },
             "choices": [
-              {
-                "id": "grappe",
-                "name": "Grappe",
-                "text": "{count} bombes en éventail au lieu d'une : {damage} dégâts chacune, à {radius} u.",
-                "set": { "count": 3, "spread": 50, "damage": 26, "radius": 90 }
-              },
               {
                 "id": "fumigene",
                 "name": "Fumigène",
                 "text": "La bombe ne blesse presque plus ({damage} dégât) mais étourdit {stun} s tout ce qui est à {radius} u, sans repousser.",
                 "set": { "damage": 1, "stun": 2.5, "radius": 170, "knockback": 0 }
+              },
+              {
+                "id": "baril",
+                "name": "Baril",
+                "text": "Un baril : mèche de {fuse} s, puis il souffle tout à {radius} u (recul {knockback}).",
+                "set": { "radius": 190, "fuse": 0.7, "knockback": 1100 }
+              }
+            ]
+          },
+          {
+            "id": "hachette",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "hachette",
+            "ranks": { "damage": [28, 32, 36, 40], "cooldown": [5.7, 5.4, 5.1, 4.8] },
+            "choices": [
+              {
+                "id": "reprise",
+                "name": "Reprise",
+                "text": "Rattraper la hache réduit sa recharge de {refund} %.",
+                "set": { "refund": 0.5 }
+              },
+              {
+                "id": "tournoiement",
+                "name": "Tournoiement",
+                "text": "Au bout de sa course, la hache tournoie {spin} s : {spinMult} % des dégâts toutes les {spinEvery} s, à {spinRadius} u.",
+                "set": { "spin": 1.5, "spinRadius": 70, "spinMult": 0.5, "spinEvery": 0.3 }
               }
             ]
           },
@@ -382,6 +483,27 @@
                 "name": "Dîme de sang",
                 "text": "Chaque ennemi frappé par une taillade ou le fracas vous rend {healPerHit} PV.",
                 "set": { "healPerHit": 4 }
+              }
+            ]
+          },
+          {
+            "id": "garde",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "garde",
+            "ranks": { "radius": [120, 130, 140, 150], "chargesPerSection": [2, 2, 3, 3] },
+            "choices": [
+              {
+                "id": "epines",
+                "name": "Épines de fer",
+                "text": "Chaque coup paré de face blesse son auteur ({thorns} dégâts) et l'étourdit {thornStun} s.",
+                "set": { "thorns": 14, "thornStun": 0.5 }
+              },
+              {
+                "id": "contrecoup",
+                "name": "Contrecoup",
+                "text": "À la fin de la garde, une onde rend {burstMult} fois les dégâts encaissés ({burstCap} au plus) à {burstRadius} u.",
+                "set": { "burstMult": 1.5, "burstCap": 120, "burstRadius": 170 }
               }
             ]
           },
@@ -474,6 +596,27 @@
             ]
           },
           {
+            "id": "proie",
+            "kind": "skill",
+            "tier": 0,
+            "skill": "proie",
+            "ranks": { "vulnMult": [0.3, 0.35, 0.4, 0.45], "cooldown": [8.5, 8, 7.5, 7] },
+            "choices": [
+              {
+                "id": "curee",
+                "name": "Curée",
+                "text": "Si la proie meurt, la marque saute sur l'ennemi le plus proche à {jumpRange} u ({jumps} fois au plus).",
+                "set": { "jumps": 2, "jumpRange": 320 }
+              },
+              {
+                "id": "battue",
+                "name": "Battue",
+                "text": "La marque éclate : tous les ennemis à {blastRadius} u du premier touché sont marqués.",
+                "set": { "blastRadius": 150 }
+              }
+            ]
+          },
+          {
             "id": "oeil_de_lynx",
             "kind": "passive",
             "tier": 0,
@@ -527,6 +670,27 @@
             ]
           },
           {
+            "id": "leurre",
+            "kind": "skill",
+            "tier": 1,
+            "skill": "leurre",
+            "ranks": { "radius": [280, 300, 320, 340], "chargesPerSection": [2, 2, 3, 3] },
+            "choices": [
+              {
+                "id": "piege",
+                "name": "Leurre piégé",
+                "text": "Détruit ou à bout de temps, le leurre explose : {blastDamage} dégâts à {blastRadius} u, étourdit {blastStun} s.",
+                "set": { "blastDamage": 50, "blastRadius": 120, "blastStun": 0.8 }
+              },
+              {
+                "id": "epouvantail",
+                "name": "Épouvantail",
+                "text": "Il terrifie en apparaissant : les ennemis à sa portée sont étourdis {fear} s ; il encaisse {hpMult} fois plus.",
+                "set": { "fear": 1.2, "hpMult": 2 }
+              }
+            ]
+          },
+          {
             "id": "traits_lourds",
             "kind": "passive",
             "tier": 1,
@@ -565,6 +729,27 @@
                 "name": "Averse",
                 "text": "Un trait toutes les {interval} s sur les {targets} ennemis les plus proches, {damage} dégâts chacun.",
                 "set": { "targets": 6, "interval": 0.06, "damage": 7 }
+              }
+            ]
+          },
+          {
+            "id": "trait",
+            "kind": "skill",
+            "tier": 2,
+            "skill": "trait",
+            "ranks": { "damage": [88, 96, 104, 112], "cooldown": [6.7, 6.4, 6.1, 5.8] },
+            "choices": [
+              {
+                "id": "clouage",
+                "name": "Clouage",
+                "text": "À pleine charge, le trait CLOUE ce qu'il traverse : étourdit {stun} s.",
+                "set": { "stun": 1.4 }
+              },
+              {
+                "id": "vif",
+                "name": "Trait vif",
+                "text": "L'arc se bande en {castTime} s ; le trait ne porte plus qu'à {range} u.",
+                "set": { "castTime": 0.45, "range": 560 }
               }
             ]
           },

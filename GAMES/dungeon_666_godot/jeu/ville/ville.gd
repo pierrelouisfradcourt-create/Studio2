@@ -14,13 +14,17 @@ extends CanvasLayer
 
 const Style = preload("res://jeu/theme/theme.gd")
 const Accords = preload("res://jeu/theme/accords.gd")
+const Pastille = preload("res://jeu/theme/pastille.gd")
+const Consignes = preload("res://jeu/interface/consignes.gd")
 ## Les onglets, dans l'ordre des boutons (Onglets) et des pages (Pages) de ville.tscn.
 const ONGLETS := ["portail", "classe", "armurerie", "coffre", "grimoire", "sanctuaire", "labo"]
 ## En portrait, l'écran est mis en page comme s'il faisait cette largeur (sinon tout est minuscule).
 const LARGEUR_PORTRAIT := 540.0
 const DEFILEMENT_MANETTE := 900.0 # px de référence par seconde, stick droit à fond
 const ZONE_MORTE := 0.25
-const REPERE_POINTS := "Grimoire ●" # des points de compétence attendent d'être dépensés
+## Des points de compétence attendent : l'onglet Grimoire s'élargit, et une pastille y dit combien.
+const REPERE_POINTS := "Grimoire      "
+const CONSIGNE := "grimoire" # la consigne de l'accueil qui se montre en Ville (jeu/interface/consignes.gd)
 const APPARITION_S := 0.16 # la page d'un onglet monte en opacité ; elle répond dès le début
 
 ## L'onglet affiché (un identifiant de ONGLETS).
@@ -31,6 +35,7 @@ var _partie: Node
 var _refus: Dictionary = {} # clé de carte -> raison du dernier refus (effacé à l'opération suivante)
 var _sale := false
 var _fondu: Tween
+var _pastille: Control # le nombre de points à dépenser, sur l'onglet Grimoire
 
 @onready var _racine: Control = $Racine
 @onready var _fond: ColorRect = $Racine/Fond
@@ -44,6 +49,9 @@ var _fondu: Tween
 @onready var _garde: Control = $Racine/Garde
 @onready var _armement: Timer = $Racine/Armement
 @onready var _doigt: Node = $Racine/Doigt
+@onready var _pied: Label = $Racine/Marges/Cadre/Colonne/Pied
+@onready var _consigne: PanelContainer = $Racine/Marges/Cadre/Colonne/Consigne
+@onready var _consigne_texte: Label = $Racine/Marges/Cadre/Colonne/Consigne/Texte
 
 func _ready() -> void:
 	_racine.theme = Style.theme()
@@ -56,7 +64,11 @@ func _ready() -> void:
 		_pages.get_child(i).dessin_demande.connect(_demander_dessin)
 	_retour.pressed.connect(_sur_retour)
 	_armement.timeout.connect(_lever_la_garde)
+	_pastille = Pastille.new()
+	bouton_onglet("grimoire").add_child(_pastille)
+	_pastille.accrocher(false)
 	get_viewport().size_changed.connect(_adapter)
+	_corps.resized.connect(_offrir_la_place)
 	_adapter()
 
 func brancher(app: Node, partie: Node) -> void:
@@ -79,8 +91,20 @@ func ouvrir_onglet(id: String) -> void:
 		_onglets.get_child(i).set_pressed_no_signal(ONGLETS[i] == id)
 		_pages.get_child(i).visible = ONGLETS[i] == id
 	_corps.scroll_vertical = 0
+	_ceder_le_pied()
 	_dessiner()
 	_faire_apparaitre(page(id))
+
+## Dit à chaque onglet la place qu'il a (la zone de défilement, moins les marges de la page).
+func _offrir_la_place() -> void:
+	var marges := Vector2(_pages.get_theme_constant("margin_left") + _pages.get_theme_constant("margin_right"), _pages.get_theme_constant("margin_top") + _pages.get_theme_constant("margin_bottom"))
+	for page_n in _pages.get_children():
+		page_n.tenir_dans(_corps.size - marges)
+
+## L'arbre du Grimoire a besoin de toute la hauteur (il tient sans défiler) : dans cet onglet, la
+## note de pied s'efface pour lui.
+func _ceder_le_pied() -> void:
+	_pied.visible = onglet != "grimoire"
 
 ## Apparition douce de la page montrée (opacité seulement : rien n'est retardé ni déplacé).
 func _faire_apparaitre(page_n: Control) -> void:
@@ -143,8 +167,21 @@ func _dessiner() -> void:
 	_classe.text = "%s · record étage %s" % [classe.name if classe is Dictionary else "?", D6Js.num_str(profil.bestFloor)]
 	var points: float = D6Profile.tree_points(profil, _app.contenu, profil.loadout.classId)
 	bouton_onglet("grimoire").text = REPERE_POINTS if points > 0.0 else "Grimoire"
+	_pastille.nombre = int(points)
+	_montrer_la_consigne(points)
 	page(onglet).dessiner(_refus)
 	_rendre_focus(cle)
+
+## L'accueil du premier joueur, en Ville : la première fois qu'un point de compétence attend, une
+## consigne le dit (sauf dans le Grimoire, où l'arbre parle de lui-même) ; elle est acquise au
+## premier point dépensé (`_sur_operation`).
+func _montrer_la_consigne(points: float) -> void:
+	_consigne.visible = points > 0.0 and onglet != "grimoire" and Consignes.attendue(_app.reglages, CONSIGNE)
+	_consigne_texte.text = Consignes.texte_en_ville(CONSIGNE, points)
+
+## La pastille de l'onglet Grimoire (pour les essais).
+func pastille() -> Control:
+	return _pastille
 
 ## Clé de la carte qui tient le focus dans la page ("" : le focus n'est pas dans la page).
 func _cle_du_focus() -> String:
@@ -157,14 +194,16 @@ func _cle_du_focus() -> String:
 func _rendre_focus(cle: String) -> void:
 	if cle == "":
 		return
-	var repli: Button = null
+	var repli: Control = null
 	for b in page(onglet).find_children("*", "Button", true, false):
-		if String(b.get_meta("cle", "")) != cle:
+		if String(b.get_meta("cle", "")) != cle or not b.is_visible_in_tree():
 			continue
 		if not b.disabled:
 			b.grab_focus()
 			return
 		repli = b
+	if repli == null:
+		repli = page(onglet).repli_du_focus()
 	(repli if repli != null else bouton_onglet(onglet)).grab_focus()
 
 # ---------------------------------------------------------------- actions
@@ -174,6 +213,8 @@ func _sur_operation(cle: String, nom: String, args: Array) -> void:
 	_refus.clear()
 	if not D6Js.truthy(res.get("ok")):
 		_refus[cle] = String(D6Js.nz(res.get("reason"), "refusé"))
+	elif nom == "tree_buy":
+		Consignes.acquerir_en_ville(_app, CONSIGNE)
 	_demander_dessin()
 
 func _sur_retour() -> void:
@@ -220,4 +261,5 @@ func _adapter() -> void:
 	_racine.scale = Vector2(echelle, echelle)
 	_racine.position = Vector2.ZERO
 	_racine.size = vue / echelle
+	_ceder_le_pied()
 	Style.nettete(get_viewport(), echelle)

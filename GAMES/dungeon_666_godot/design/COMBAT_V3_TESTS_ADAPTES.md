@@ -260,3 +260,75 @@ Tests de vues (hors `tests/**`) :
 
 Nouveau fichier : `tests/regles/v3_arbre.gd` (62 tests). Ajouts à `tests/regles/donnees.gd` : 3 tests
 (`_tree_refs`, `_tree_texts`, `_tree_budget`), aucun test existant touché. `tests/harnais.gd` n'a pas changé.
+
+## Étape 4 — compétences neuves (2026-10-05)
+
+Sous le même « GO tests V3 », pour le seul cas prévu : un test qui fige la LISTE ou le NOMBRE des
+compétences d'une classe. Chaque classe a huit compétences au lieu de cinq.
+
+| Fichier | Test (fonction) | Ce qui a changé | Pourquoi |
+|---|---|---|---|
+| `v3_combat.gd` | `_p_choix` (« slot_choices : compétences puis gadgets de la classe, avec leur état ») | les trois listes attendues passent de 5 à 8 éléments : sortes (5 compétences à recharge, 3 à charges), `unlocked` et `rank` (le départ possédé, les trois neuves à 0 comme les autres) | trois compétences neuves par classe ; la forme d'un choix, l'ordre « compétences puis gadgets » et le reste du test sont inchangés |
+
+Aucun autre test existant n'a été touché. Deux tests ont rougi pendant le travail et ont fait
+corriger la RÈGLE, pas le test : `v3_combat` « slot_view : une compétence… » et « un gadget… »
+exigent la forme exacte de `slot_view` — les champs neufs (`charging`…) ont donc été sortis dans
+`D6Loadout.slot_state` ; `v3_arbre` « Chaîne : … » et « Bombe : … » jouent « traversante » et
+« fumigène » avec le Bourreau, « ferrage » et « grappe » avec le Revenant — chaque classe a donc
+gardé cette amélioration-là.
+
+Nouveau fichier : `tests/regles/v3_competences.gd` (62 tests). Le test générique
+`v3_arbre.gd : _r_competence` (« rangs : … chaque rang change EN JEU… ») s'étend de lui-même aux neuf
+nœuds neufs (+9 tests, sans modification). Tests de vues (hors `tests/**`), AJOUTS seulement :
+`jeu/effets/echantillons.gd` (19 événements d'exemple), `jeu/son/test_son.gd` (7 échantillons).
+
+
+## Écran de l'arbre (2026-10-05) — vérifications adaptées dans `jeu/ville/test_ville.gd`
+
+Le Grimoire n'est plus une liste de cartes mais un arbre dessiné et un panneau de détail (mission
+« le bel écran de l'arbre », accord de Pierre pour le combat V3 relayé par la mission). Règle suivie :
+**chaque vérification garde ce qu'elle prouve ; seul le chemin d'écran change** (on touche le nœud, on
+lit son panneau). Aucune vérification retirée ; aucune autre ne rougissait. `jeu/ecrans/test_ecrans.gd`,
+`jeu/interface/test_accueil.gd`, `jeu/monde/test_finitions.gd` : RIEN d'adapté, seulement des ajouts.
+
+À SAVOIR : la mission nommait « les vérifications qui décrivent l'ancienne liste de l'arbre ». Celles de
+`_emplacements`, `_sans_ames` et `_deplacement` décrivent les deux AUTRES listes du même écran (« Placer
+une compétence », « Déplacement et ultime »), que la mission remplace aussi (« Placer en 1 / 2 / 3 » dans
+le panneau, pas de double écran). Elles sont adaptées de la même façon et listées ici une à une : à
+ratifier par Pierre, ou à défaire s'il préfère garder ces listes.
+
+| Fonction | Avant | Après | Pourquoi |
+|---|---|---|---|
+| `_deplacement` | la carte « Déplacement · <classe> », le nom et le texte du geste sont visibles dans le Grimoire | les TROIS mêmes textes, après avoir touché le nœud de déplacement de l'arbre | la carte est devenue le panneau du nœud en écusson |
+| `_sans_ames` | compétence verrouillée : bouton grisé « À débloquer dans l'arbre », sans prix en Âmes | son nœud touché : bouton d'achat grisé « Apprendre », aucun « ◆ » à l'écran, et aucun « Placer en » | c'est le nœud qui débloque ; plus de carte de placement |
+| `_sans_ames` | opération refusée (clé `skills:<id>`) : « Indisponible » sur la carte | même opération (clé `placer:<id>:0`) : « Indisponible » sur le panneau | le refus s'affiche là où est le bouton |
+| `_emplacements` | « ● Emplacement 1 » marque la carte | même texte, sur le panneau du nœud touché | idem |
+| `_emplacements` | emplacement touché : le bouton de la carte dit « Déjà dans l'emplacement 1 », grisé | emplacement touché : le panneau montre l'emplacement (« Vider ») ; le nœud sous le focus : « Placer en 1 » grisé, infobulle « Déjà dans l'emplacement 1 » | même garde : on ne replace pas au même endroit |
+| `_emplacements` | retoucher l'emplacement dans la LÉGENDE l'oublie ; la carte propose « Choisir » | le retoucher sur l'ARC l'oublie ; le panneau propose de nouveau « Placer en » | la légende n'existe plus (l'arc suffit) |
+| `_emplacements` | « Choisir » la carte (profil inchangé, « Choisie — touche un emplacement »), puis l'emplacement 3 sur l'arc : échange | toucher le nœud (profil inchangé, « Placer en 1 / 2 / 3 » offert), puis « Placer en 3 » : même échange, même attente sur `loadout.slots` | compétence d'abord, emplacement ensuite : même opération |
+| `_emplacements` | « Vider » sur la ligne 3 de la légende | emplacement 3 touché sur l'arc, « Vider » du panneau ; mêmes attentes (vide, bouton grisé) | idem |
+| `_emplacements` | emplacement 1 (légende) puis « Placer dans l'emplacement 1 » de la carte | emplacement 1 (arc) puis le nœud touché dans l'arbre ; même attente | emplacement d'abord, compétence ensuite |
+| `_emplacements` | un choix à moitié fait (carte « Choisie ») ne survit pas à un changement d'onglet | un emplacement en attente ne survit pas à un changement d'onglet | même état d'écran |
+| `_arbre` | « ● N points à dépenser » écrit | la pastille porte N et « points à dépenser » est écrit | le nombre est dans la pastille |
+| `_arbre` | chaque étage titré « Étage <nom> » | chaque étage titré de son NOM, dans sa bande | titre dessiné |
+| `_arbre` | chaque nœud : un « + », grisé si `canBuy` est faux | chaque nœud : son médaillon, et son bouton d'achat (panneau) grisé si `canBuy` est faux | un bouton d'achat par nœud choisi |
+| `_arbre` | étage fermé : « + » grisé, « Étage … fermé » sur la carte | idem sur le panneau (même texte) | — |
+| `_arbre` | « Compétence · rang 3 / … » sur la carte | « Rang 3 / 5 » sur le panneau | — |
+| `_arbre` | une amélioration se prend en UN appui | premier appui : rien n'est pris, « Confirmer » et « Ce choix est définitif… » ; second appui : prise | la confirmation est demandée par la mission (plus strict) |
+| `_arbre` | l'autre amélioration : bouton présent, grisé | l'autre : plus de bouton, « ✕ », dessinée barrée — et, forcée, refusée par les règles | plus strict (aucun bouton, et le refus des règles est vérifié) |
+
+Inchangées : niveau écrit, repère de l'onglet, « avant le rang du choix aucune amélioration », « elle est
+au profil », « prise : marquée, son bouton disparaît », les quatre vérifications de « Tout rendre ».
+
+**Ajoutées** (`test_ville.gd`, 96 de plus) : pastille de l'onglet et consigne de la Ville (montrée, tue
+dans le Grimoire, acquise au premier point, coupée par le réglage) ; un médaillon par nœud de `tree_view`
+pour les trois classes et cinq états de l'arbre, dans l'état rendu par les règles (les cinq états d'un
+médaillon et les quatre d'une amélioration y passent tous) ; la raison des règles sous un bouton grisé ;
+un achat refusé affiche leur raison ; la confirmation oubliée quand on regarde un autre nœud ; focus de
+nœud en nœud qui les atteint tous, flèches, Entrée (panneau, puis achat), Échap ; mise en page des vrais
+arbres des trois classes et de 3 à 8 nœuds par étage, en 1280 × 720 et 844 × 390 (aucun médaillon n'en
+touche un autre, rien ne déborde, panneau à l'écran, la page ne défile pas ; en 1280 × 720 tout l'arbre
+tient sans défiler).
+`test_ecrans.gd` (+10) : barre d'expérience de l'écran de mort avec et sans niveau passé, rien en arène,
+pastille du bouton d'entrée en Ville. `test_accueil.gd` (+22) : barre d'expérience du HUD, bandeau de
+niveau (texte, place, effacement), rien en arène ; anneau de durée d'une compétence neuve (`slot_state`).

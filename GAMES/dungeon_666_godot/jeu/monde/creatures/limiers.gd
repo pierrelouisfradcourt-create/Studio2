@@ -1,6 +1,6 @@
 extends "res://jeu/monde/creatures/calque.gd"
-## Calque des LIMIERS de la Meute des Limbes (ultime de la Chasseresse) : des ALLIÉS, lus dans
-## game.allies. Chaque limier vivant a son nœud, enfant de ce calque trié du fond vers l'avant avec
+## Calque des ALLIÉS, lus dans game.allies : les LIMIERS de la Meute des Limbes (ultime de la
+## Chasseresse) et, depuis l'étape 4, son LEURRE D'OS (`kind` : "leurre", dessiné par _leurre). Chaque limier vivant a son nœud, enfant de ce calque trié du fond vers l'avant avec
 ## les ennemis, le héros et les piliers (groupe Debout d'entites.gd). Un limier est UN lot de
 ## triangles (le pinceau) : 1 appel de dessin, ombre, barre de vie et repère de durée compris.
 ## Ce qui les distingue d'un ennemi au premier regard : la teinte FROIDE de l'héroïne (os clair,
@@ -65,6 +65,11 @@ func _peindre(etat: Dictionary) -> void:
 	var n: Node2D = etat.n
 	var r: float = a.r * VISUEL
 	p.commencer(n)
+	if a.kind == "leurre":
+		_leurre(a, r)
+		p.finir()
+		p.ci = self
+		return
 	p.ombre(Vector2(0.0, r * 0.35), r * 1.7, r * 0.8, 0.8)
 	_duree(a, r)
 	var bond: float = sin(etat.marche) * 1.5 if a.state == "chase" else 0.0
@@ -75,6 +80,34 @@ func _peindre(etat: Dictionary) -> void:
 	_vie(a, r)
 	p.finir()
 	p.ci = self
+
+## LEURRE D'OS (Chasseresse, étape 4) : un épouvantail d'os planté là — pieu, traverse, haillons à la
+## teinte de l'héroïne, crâne — qui oscille un peu. À ses pieds le même arc de durée que les limiers ;
+## autour, un cercle fin : jusqu'où il attire la mêlée (lu : a.lure.range). Sa vie : la même barre.
+func _leurre(a: Dictionary, r: float) -> void:
+	var os: Color = Color.WHITE if a.flash > 0.0 else OS_CLAIR
+	var pied := Vector2(0.0, r * 0.35)
+	var penche := sin(temps() * 3.0 + a.id) * r * 0.08
+	var lure = a.get("lure")
+	if lure is Dictionary:
+		p.anneau(pied, lure.range, Color(PAL.heroCape, 0.16), 1.5)
+	p.ombre(pied, r * 1.3, r * 0.6, 0.8)
+	_duree(a, r)
+	p.baton(pied, Vector2(penche, -r * 2.1), OS_OMBRE, 3.5, NUIT)
+	p.baton(Vector2(-r * 1.15 + penche, -r * 1.45), Vector2(r * 1.15 + penche, -r * 1.45), os, 3.0, NUIT)
+	for cote: float in [-1.0, 1.0]:
+		p.pic(Vector2(cote * r * 1.05 + penche, -r * 1.4), Vector2(cote * r * 0.5 + penche, -r * 1.4), Vector2(cote * r * 0.85 + penche * 2.5, -r * 0.5), Color(PAL.heroCape, 0.9), NUIT, 1.5)
+	p.lueur(Vector2(penche, -r * 1.5), r * 1.5, PAL.heroCape, 0.5)
+	var tete := Vector2(penche, -r * 2.35)
+	p.disque(tete, r * 0.55, os, NUIT, 2.0)
+	for cote: float in [-1.0, 1.0]:
+		p.disque(tete + Vector2(cote * r * 0.2, -r * 0.03), r * 0.13, NUIT, Pinceau.SANS)
+	p.pic(tete + Vector2(-r * 0.22, r * 0.3), tete + Vector2(r * 0.22, r * 0.3), tete + Vector2(0.0, r * 0.62), os, NUIT, 1.5)
+	var part := clampf(a.hp / maxf(1.0, a.maxHp), 0.0, 1.0)
+	var largeur := r * 2.4
+	var coin := Vector2(-largeur * 0.5, -r * 3.3)
+	p.rect(Rect2(coin - Vector2(1.0, 1.0), Vector2(largeur + 2.0, 5.0)), Color(NUIT, 0.75))
+	p.rect(Rect2(coin, Vector2(largeur * part, 3.0)), PAL.heroCape if part > 0.35 else OS_CLAIR)
 
 ## Repère de durée : à ses pieds, un arc cyan qui se vide avec le temps qui lui reste.
 func _duree(a: Dictionary, r: float) -> void:

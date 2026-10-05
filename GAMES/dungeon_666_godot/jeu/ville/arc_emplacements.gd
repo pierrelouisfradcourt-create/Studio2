@@ -10,7 +10,8 @@ signal emplacement_touche(index: int)
 const Commande = preload("res://jeu/interface/commande.gd")
 const Disposition = preload("res://jeu/interface/disposition.gd")
 
-const ECHELLE := 0.8 # taille des boutons par rapport au jeu
+## Taille des boutons par rapport au jeu (à poser avant l'entrée dans l'arbre des nœuds).
+@export var echelle := 0.8
 const CADRE := Vector2(480.0, 400.0) # écran fictif où la disposition est calculée
 const MARGE := 6.0 # autour du groupe, anneau des boutons compris
 const FILIGRANE := 0.3 # opacité de l'attaque et du dash (ils ne se règlent pas ici)
@@ -50,7 +51,7 @@ func bouton(index: int) -> Button:
 
 ## Les places du jeu, réduites, ramenées à un groupe dont le coin haut-gauche est l'origine.
 func _mesurer() -> void:
-	var ui: Dictionary = Disposition.calculer(CADRE, Vector4.ZERO, ECHELLE)
+	var ui: Dictionary = Disposition.calculer(CADRE, Vector4.ZERO, echelle)
 	var boite := Rect2()
 	for b in ui.buttons:
 		var cercle := Rect2(b.x - b.r, b.y - b.r, 2.0 * b.r, 2.0 * b.r).grow(Commande.MARGE + MARGE)

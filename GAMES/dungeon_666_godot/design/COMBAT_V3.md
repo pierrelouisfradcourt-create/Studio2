@@ -629,6 +629,9 @@ offerts ne comptent pas). Trois sortes de nœuds :
 jauge) ; la jauge d'ultime n'est ni dépensée ni remplie pendant le geste. À JUGER : une invulnérabilité
 de 1,4 à 1,6 s toutes les 20 s, en plus de l'ultime.
 
+> Tableaux de l'ÉTAPE 3, gardés tels quels. Depuis l'étape 4 : trois compétences neuves par classe,
+> et la Chaîne et la Bombe ont une version par classe — l'arbre à jour est plus bas, « Étape 4 ».
+
 **Revenant**
 
 | Nœud | Étage | Rangs | Ce que donnent les rangs | Amélioration A | Amélioration B |
@@ -735,6 +738,312 @@ appui) ; la capture d'une compétence au rang 1 et au rang 5 en jeu.
 Revenant et Bourreau (mêmes nœuds, arbres séparés) ; l'arbre qui ne se remplit pas en entier ; le
 prix de la respécialisation ; l'avance donnée à la migration (ennemis tués + Gardiens, ou Gardiens
 seuls) ; la puissance de l'arbre plein.
+
+## Étape 4 « Contenu » — ce qui est FAIT (2026-10-05)
+
+Règles (`sim/kit_neuves.gd` et une famille par classe : `sim/neuves_revenant.gd`,
+`sim/neuves_bourreau.gd`, `sim/neuves_chasseresse.gd`), données (`data/classes.json`,
+`data/arbres.json`), bots, affichage dans le monde, pictogrammes, sons, tests, références.
+**Trois compétences neuves par classe : neuf en tout** (le plan en visait douze : trois finies par
+classe ont été préférées à quatre bâclées — ce qui manque est dit plus bas). Chaque classe a
+maintenant **huit compétences** dans son arbre, pour trois emplacements. TOUS les noms et TOUS les
+nombres sont des PROPOSITIONS, à renommer et à régler par Pierre.
+
+**Revenant** (mêlée vive, mobile)
+
+| Compétence | Sorte | Étage | Ce qu'elle fait | Rang 1 | Rang 5 | Amélioration A | Amélioration B |
+|---|---|---|---|---|---|---|---|
+| **Sillage de braise** | charges | Base | Pendant 5 s, ses pas et son dash sèment des braises au sol : ce qui y passe brûle. | 3 charges ; braises de 14 dégâts/s, 3 s chacune | 4 charges ; 22 dégâts/s | **Braises tenaces** : elles brûlent 6 s et s'étalent à 62 u | **Détonation** : quand le sillage s'éteint, chaque braise encore allumée explose (30 dégâts à 70 u, une fois par ennemi) |
+| **Stigmate** | recharge | Cœur | Un trait MARQUE le premier ennemi touché pendant 6 s ; s'il meurt marqué, il explose. | trait 18, explosion 45 à 110 u ; recharge 8 s | trait 34, explosion 85 ; 6 s | **Contagion** : l'explosion marque à son tour ses survivants | **Moisson** : le marqué qui explose rend 6 PV et la moitié de la recharge |
+| **Contre-taille** | recharge | Maîtrise | Une taillade, puis 0,6 s de garde : le premier coup reçu est PARÉ (aucun dégât) et rendu autour de lui ; le tir paré est détruit. | taillade 20, riposte 50 à 130 u, étourdit 0,8 s ; recharge 6 s | taillade 36, riposte 90 ; 4,4 s | **Miroir des damnés** : garde de 1 s, le tir paré est renvoyé à son tireur, les tirs proches sont effacés | **Représailles** : parade réussie = recharge −75 % et +30 % de dégâts pendant 4 s |
+
+**Bourreau** (lourd, contrôle)
+
+| Compétence | Sorte | Étage | Ce qu'elle fait | Rang 1 | Rang 5 | Amélioration A | Amélioration B |
+|---|---|---|---|---|---|---|---|
+| **Faille** | recharge | Base | Il frappe le sol : une fissure court sur 360 u devant lui, blesse et étourdit 0,6 s tout ce qui s'y tient. Un pilier l'arrête, pas une rivière. | 28 dégâts ; recharge 7 s | 48 ; 5,8 s | **Réplique** : une seconde secousse sur la même ligne 0,7 s plus tard (60 % des dégâts) | **Gouffre** : la fissure reste ouverte 4 s et ralentit de 50 % ceux qui s'y tiennent |
+| **Hache du supplice** | recharge | Cœur | Une hache lancée à 380 u qui REVIENT dans sa main : elle traverse tout, frappe à l'aller puis au retour. | 24 + 24 dégâts ; recharge 6 s | 40 + 40 ; 4,8 s | **Reprise** : la rattraper réduit la recharge de 50 % | **Tournoiement** : au bout de sa course elle tournoie 1,5 s (50 % des dégâts toutes les 0,3 s, à 70 u) |
+| **Garde de fer** | charges | Maîtrise | Un coup de bouclier qui repousse, puis 3,5 s de garde : un coup reçu de FACE est réduit de 60 % et son auteur repoussé. Le dos reste nu. | 2 charges ; bouclier 12 dégâts à 110 u | 3 charges ; à 150 u | **Épines de fer** : l'attaquant paré prend 14 dégâts et est étourdi 0,5 s | **Contrecoup** : à la fin, une onde rend 1,5 fois ce qui a été encaissé (120 au plus) à 170 u |
+
+**Chasseresse** (distance, placement)
+
+| Compétence | Sorte | Étage | Ce qu'elle fait | Rang 1 | Rang 5 | Amélioration A | Amélioration B |
+|---|---|---|---|---|---|---|---|
+| **Marque de la proie** | recharge | Base | Un trait MARQUE le premier ennemi touché pendant 6 s : il subit plus de dégâts, la visée assistée le préfère, les limiers de la Meute se jettent sur lui. | +25 % de dégâts subis ; recharge 9 s | +45 % ; 7 s | **Curée** : si la proie meurt, la marque saute sur le plus proche (320 u), deux fois au plus | **Battue** : tous les ennemis à 150 u du premier touché sont marqués |
+| **Leurre d'os** | charges | Cœur | Un épouvantail d'os lancé jusqu'à 300 u, pour 6 s : les ennemis de mêlée proches se jettent sur lui, il arrête les tirs. Deux au plus. | 2 charges ; attire à 260 u | 3 charges ; à 340 u | **Leurre piégé** : détruit ou à bout de temps, il explose (50 dégâts à 120 u, étourdit 0,8 s) | **Épouvantail** : il étourdit 1,2 s ce qui l'entoure en apparaissant, et encaisse le double |
+| **Trait de Nemrod** | recharge | Maîtrise | Un appui : elle BANDE son arc 0,9 s (elle marche au ralenti), puis le trait part seul et traverse tout jusqu'à 720 u. Un second appui le lâche tout de suite, moins fort. | 80 dégâts ; recharge 7 s | 112 ; 5,8 s | **Clouage** : à pleine charge, il étourdit 1,4 s ce qu'il traverse | **Trait vif** : l'arc se bande en 0,45 s, le trait ne porte plus qu'à 560 u |
+
+**Chaîne et Bombe : à chaque classe sa version.** Elles étaient identiques chez le Revenant et le
+Bourreau. Choix pris : on garde les deux compétences chez les deux (le vrai profil du joueur les
+possède), le RANG 1 reste commun (les nombres de `classes.json`), et ce qui se CHOISIT diffère :
+
+| | Revenant | Bourreau |
+|---|---|---|
+| Chaîne — rangs 2 à 5 | dégâts 20 → 32 ; recharge 4,7 → 3,8 s ; portée 450 → 510 u (inchangé) | dégâts 22 → 40 ; recharge 4,8 → 4,2 s ; portée fixe (plus lourde, moins vive) |
+| Chaîne — améliorations | **Ferrage** (gardé) OU **Croc de boucher** (neuf) : chaîne courte de 280 u, 46 dégâts, étourdit 1,4 s | **Chaîne traversante** (gardée) OU **Rafle** (neuf) : elle ramène contre lui jusqu'à 3 ennemis — le crochet de groupe |
+| Bombe — rangs 2 à 5 | dégâts 51 → 69 ; rayon 126 → 144 u (inchangé) | dégâts 55 → 85 ; étourdit 0,7 → 1 s ; rayon fixe |
+| Bombe — améliorations | **Grappe** (gardée) OU **Poix ardente** (neuf) : le sol brûle 4 s après le souffle (16 dégâts/s) | **Fumigène** (gardé) OU **Baril** (neuf) : mèche de 0,7 s, souffle à 190 u, recul 1 100 |
+
+Des tests existants jouent « ferrage » et « grappe » avec le Revenant, « traversante » et « fumigène »
+avec le Bourreau : chaque classe a donc gardé celle-là et reçu une amélioration neuve à la place de
+l'autre. Conséquence pour un joueur : un Revenant qui avait pris « Chaîne traversante » ou
+« Fumigène » (un Bourreau : « Ferrage » ou « Grappe ») retrouve son choix LIBRE, sans rien perdre
+d'autre (une amélioration inconnue est écartée à la lecture du profil).
+
+**L'arbre, mis à jour** (N = compétence neuve ; les passifs, le déplacement et l'ultime n'ont pas bougé)
+
+| Étage (points à dépenser avant) | Revenant | Bourreau | Chasseresse |
+|---|---|---|---|
+| Base (0) | Lance (offerte), Nova (offerte), **Sillage de braise (N)**, passif Sang vif | Bond (offert), Cri (offert), **Faille (N)**, passif Cuir épais | Volée (offerte), Piège (offert), **Marque de la proie (N)**, passif Œil de lynx |
+| Cœur (5) | Chaîne, Bombe, **Stigmate (N)**, passifs Grimoire brûlant, Pas de l'ombre | Chaîne, Bombe, **Hache du supplice (N)**, passifs Bourreau des sonnés, Bras de fer | Brasier, Totem, **Leurre d'os (N)**, passifs Traits lourds, Carquois profond |
+| Maîtrise (12) | Tourbillon de colère, **Contre-taille (N)**, passifs Fureur damnée, Tranchant | Triple sentence, **Garde de fer (N)**, passifs Billot, Jugement hâtif | Nuée de traits, **Trait de Nemrod (N)**, passifs Jambes de biche, Souffle long |
+| Sommet (20) | Dash long, Forme tenace | Saut leste, Sentence sans appel | Troisième roulade, Grande meute |
+
+Seuils d'étages et total de points : **inchangés** (0 / 5 / 12 / 20 ; 33 points au plus). L'arbre
+entier coûte maintenant 52 ou 53 points (il en coûtait 37 ou 38) : on en remplit moins des deux
+tiers, exprès — c'est le « vrai choix de trois parmi beaucoup ».
+
+**Le geste du Trait de Nemrod (la compétence qui se charge).** Choix : **l'entrée d'un pas n'a PAS
+changé** (aucun champ ajouté à `D6Game.empty_input` : ni `jeu/entrees/`, ni le codec des références,
+ni les bots n'ont eu à bouger). Un appui commence la charge ; à pleine charge le trait part seul ;
+un SECOND appui sur le même bouton le lâche aussitôt, d'autant moins fort qu'il est tôt (de 35 % à
+100 % des dégâts) ; un dash ou l'ultime le lâche de même. Sans visée manuelle, elle vise au moment
+où le trait part. Pas de « maintenir puis relâcher » : il aurait fallu un champ « bouton tenu » par
+emplacement, de bout en bout. À JUGER EN MAIN : si le maintien manque, c'est un lot à part.
+
+**Règles communes.**
+
+- Les neuves passent par les chemins existants : recharge et tampon des compétences, charges
+  rendues par section et par élite tué, tirs et zones de la salle, alliés de `game.allies`. Leurs
+  dégâts sont de source « compétence » ou « à charges » : bénédictions, objets et procs (dégâts et
+  recharge des compétences, charges en plus, « Vos compétences… ») s'y appliquent sans rien savoir d'elles.
+- **Terrain bas** : aucune braise dans une rivière ni sur un obstacle (le dash passe au-dessus : il
+  n'y sème rien) ; le leurre lancé par-dessus l'eau recule jusqu'à la rive, et sans aucune place la
+  charge n'est PAS dépensée ; la fissure passe sous une rivière mais s'arrête à un pilier ; la hache
+  vole au-dessus de l'eau, un mur la renvoie.
+- **Le leurre est un allié** (`game.allies`, comme les limiers) : jamais compté comme ennemi (vagues,
+  ennemis restants, salle nettoyée). Il n'est PAS un ultime : il ne tient pas la jauge et ne bloque
+  pas le lancer de la Meute. Un tireur et un Gardien ne se détournent pas vers lui.
+- **Parade et garde** s'interposent dans le seul chemin qui blesse le héros (`D6Combat.damage_player`),
+  après l'invulnérabilité : un coup paré ne blesse pas, un coup bloqué de face est réduit avant l'armure.
+- **Marques** : posées AVANT le coup du trait qui marque (un ennemi achevé par le Stigmate explose ;
+  le trait de la Marque profite déjà de la vulnérabilité qu'il pose).
+- Mort, changement de salle, reprise : plus de sillage, de garde, de parade, de leurre ni de hache
+  en vol ; l'arc qui se bandait est détendu, rien ne part.
+- Lecture pour l'affichage : `D6Loadout.slot_view` garde EXACTEMENT sa forme (un test existant la
+  fige) ; ce que les neuves ajoutent se lit par `D6Loadout.slot_state(game, i)` = `{charging,
+  chargeFrac, active, activeFrac}`.
+
+**Bots.** Ils jouent les neuves avec ce qu'un joueur voit : une compétence visée part sur la
+meilleure ligne (comme la Lance) ; la Contre-taille se lève face à un ennemi qui ARME son coup ;
+une marque n'est pas reposée tant qu'un ennemi la porte ; le Sillage se sème dès que deux ennemis
+approchent, la Garde de fer aussi ; le Leurre dès deux ennemis s'il reste une place. Le Trait : un
+appui, et le bot attend la pleine charge. Les oracles de jouabilité jouent toujours le kit de départ.
+
+**Valeur de chaque compétence neuve** (`outils/arbre.gd`, `bash outils/arbre.sh 10` : 10 graines, bot habile,
+section 1 ; kit de départ — deux emplacements — contre le même kit avec la compétence dans le
+troisième, au rang 1 puis au rang 5, sans amélioration). Entre parenthèses : rapporté au kit de départ.
+
+| Classe | Compétence | Rang | Section battue | Dégâts reçus / salle | Temps par salle | Combat du Gardien | Lancers |
+|---|---|---|---|---|---|---|---|
+| Revenant | (kit de départ) | — | 100 % | 4.2 | 15.6 s | 49.0 s | 110 |
+| Revenant | Sillage de braise | 1 | 100 % | 3.3 (×0.78) | 14.7 s (×0.94) | 46.3 s (×0.95) | 120 |
+| Revenant | Sillage de braise | 5 | 100 % | 4.0 (×0.96) | 13.8 s (×0.88) | 55.2 s (×1.13) | 120 |
+| Revenant | Stigmate | 1 | 100 % | 3.7 (×0.88) | 14.9 s (×0.96) | 44.6 s (×0.91) | 133 |
+| Revenant | Stigmate | 5 | 100 % | 4.8 (×1.15) | 13.6 s (×0.87) | 44.9 s (×0.92) | 136 |
+| Revenant | Contre-taille | 1 | 100 % | 4.1 (×0.97) | 14.8 s (×0.95) | 46.7 s (×0.95) | 130 |
+| Revenant | Contre-taille | 5 | 100 % | 4.5 (×1.08) | 14.3 s (×0.91) | 52.3 s (×1.07) | 142 |
+| Bourreau | (kit de départ) | — | 100 % | 9.6 | 13.0 s | 42.0 s | 57 |
+| Bourreau | Faille | 1 | 100 % | 9.7 (×1.00) | 12.0 s (×0.92) | 39.1 s (×0.93) | 89 |
+| Bourreau | Faille | 5 | 90 % | 12.7 (×1.32) | 11.6 s (×0.90) | 37.8 s (×0.90) | 91 |
+| Bourreau | Hache du supplice | 1 | 90 % | 9.8 (×1.02) | 11.7 s (×0.90) | 33.9 s (×0.81) | 93 |
+| Bourreau | Hache du supplice | 5 | 100 % | 6.3 (×0.66) | 11.2 s (×0.86) | 33.0 s (×0.79) | 100 |
+| Bourreau | Garde de fer | 1 | 100 % | 6.4 (×0.66) | 12.7 s (×0.98) | 40.8 s (×0.97) | 65 |
+| Bourreau | Garde de fer | 5 | 80 % | 9.3 (×0.97) | 12.7 s (×0.98) | 34.2 s (×0.82) | 67 |
+| Chasseresse | (kit de départ) | — | 100 % | 0.6 | 12.2 s | 30.0 s | 76 |
+| Chasseresse | Marque de la proie | 1 | 100 % | 0.4 (×0.71) | 11.7 s (×0.96) | 28.3 s (×0.94) | 99 |
+| Chasseresse | Marque de la proie | 5 | 100 % | 0.9 (×1.61) | 11.8 s (×0.97) | 23.0 s (×0.77) | 102 |
+| Chasseresse | Leurre d'os | 1 | 100 % | 0.3 (×0.51) | 12.0 s (×0.98) | 27.5 s (×0.92) | 79 |
+| Chasseresse | Leurre d'os | 5 | 100 % | 0.7 (×1.30) | 12.9 s (×1.06) | 38.0 s (×1.27) | 90 |
+| Chasseresse | Trait de Nemrod | 1 | 100 % | 0.8 (×1.51) | 12.2 s (×1.00) | 27.9 s (×0.93) | 109 |
+| Chasseresse | Trait de Nemrod | 5 | 100 % | 1.0 (×1.82) | 12.2 s (×1.00) | 28.2 s (×0.94) | 115 |
+
+Lecture, sans embellir. Le TEMPS PAR SALLE est la mesure la plus stable : aucune compétence ne
+l'écrase (les plus fortes — Hache du supplice, Stigmate et Sillage au rang 5 — gagnent 12 à 14 %),
+aucune ne le dégrade nettement. Les DÉGÂTS REÇUS et la SECTION BATTUE bougent encore beaucoup d'une
+mesure à l'autre avec 10 graines (le Bourreau au kit de départ est mesuré à 95 % de sections
+battues sur 20 graines par l'oracle des classes) : les trois lignes du Bourreau à 80 ou 90 % sont
+deux ou une mort sur dix, pas une preuve — à remesurer avec plus de graines avant de régler. Ce qui
+revient dans les DEUX mesures faites (6 puis 10 graines) : le Leurre d'os divise les dégâts reçus au
+rang 1 (×0,36 puis ×0,51) ; au rang 5 le combat du Gardien est plus LONG avec lui (×1,59 puis
+×1,27) — non expliqué, à regarder ; la Contre-taille ne change presque rien AU BOT (il pare
+rarement : c'est une compétence de main, à juger en jouant). Corrections faites après la première
+mesure : **Trait de Nemrod 60 → 80 dégâts** (rangs 68…92 → 88…112) — à 60 il rapportait moins que
+les flèches que la Chasseresse ne tire pas pendant qu'elle bande l'arc (combat du Gardien ×1,30 ;
+après : ×0,93) ; le bot lève la Garde de fer dès deux ennemis proches (il attendait trois ennemis
+au contact et ne s'en servait presque pas). Première mesure gardée pour comparaison :
+`_dev/rapports/arbre_mesure_1_6_graines.md`.
+
+**Affichage** (`jeu/monde/competences.gd`, `tirs.gd`, `zones_heros.gd`, `creatures/limiers.gd`,
+`jeu/effets/competences.gd`, `jeu/son/routage.gd`, `jeu/interface/icones.gd`) — aucune règle dans
+l'affichage, tout est lu ; teintes froides du héros, jamais le rouge des dangers.
+
+- Sillage : un chapelet de petits foyers bleus (pas l'anneau des grandes zones), deux flammèches aux
+  talons du héros et l'arc du temps qui reste. Stigmate : un fer court en vol, puis sur l'ennemi un
+  anneau de braise claire à trois dents qui tourne, avec l'arc du temps ; l'explosion est une onde
+  froide. Contre-taille : un cercle blanc tendu autour de lui qui se vide ; « PARÉ » et l'onde de la riposte.
+- Faille : une lézarde noire aux lèvres de givre le long de la ligne, des gravats ; ouverte
+  (« gouffre »), sa bande sombre reste ; en attente de réplique, son contour bat. Hache : elle tourne
+  sur elle-même au-dessus de son ombre ; en tournoiement, le cercle qu'elle fauche est dit. Garde de
+  fer : un arc épais DEVANT lui (le dos nu se voit), « BLOQUÉ » à chaque coup réduit.
+- Marque de la proie : un réticule cyan à quatre crochets et une pointe au-dessus de la tête. Leurre :
+  un épouvantail d'os à la teinte de l'héroïne, sa barre de vie, l'arc de sa durée, le cercle fin de
+  son attirance. Trait : la ligne de visée s'allonge et s'épaissit avec la charge, tout blanchit à
+  pleine charge ; le trait est le plus long et le plus épais des tirs.
+- Neuf pictogrammes : `sillage`, `stigmate`, `riposte`, `faille`, `hachette`, `garde`, `proie`,
+  `leurre`, `trait`. Sons : sur les recettes existantes (parade pour un coup paré ou bloqué, choc
+  pour la fissure, accord bref pour une marque et la hache rattrapée).
+- Captures : `_dev/captures/lot_v3_competences/` (banc `jeu/essai/competences.tscn`, mode d'emploi
+  en tête de `jeu/essai/competences.gd`) : chaque classe au rang 1, puis avec chaque jeu d'améliorations.
+
+**Tests.** `tests/regles/v3_competences.gd` : 62 tests (effet de base, rangs, les deux améliorations
+et leur exclusion, salle vide, Gardien, terrain bas, mort, changement de salle, bénédictions et
+objets, déterminisme ; le leurre : jamais dans l'eau sur 300 graines, salle nettoyée bien comptée).
+Le test générique des rangs de `v3_arbre.gd` joue de lui-même les neuf nœuds neufs (+9 tests).
+Un test existant adapté (la liste des compétences d'une classe : `design/COMBAT_V3_TESTS_ADAPTES.md`).
+Ce que les tests ne disent pas : le plaisir du geste, la lisibilité en plein combat.
+652 tests de règles en tout.
+
+**Références.** Arbre vide et kit de départ inchangés : **89 parties existantes sur 91 sont identiques au bit près**. Les 2 en écart, `arbre_hasard_dagues` et `arbre_hasard_marteau`, sont les seules qui jouent la Chaîne et la Bombe au rang 3 avec une amélioration : leur spec a changé d'amélioration de Bombe (« fumigène » et « grappe » ont changé de classe) et les rangs du Bourreau ont changé — écart voulu. 9 parties `competences_*` ajoutées (chaque classe avec ses trois neuves, par le bot habile puis au hasard, chaque amélioration d'un côté ou de l'autre ; les versions par classe de Chaîne et Bombe ; une partie au rang 1 ; deux parties au hasard sans héros invulnérable, où une parade et un blocage réussissent) : **100 parties**. Réenregistrées une fois (`bash references/enregistrer.sh`), puis les deux dernières parties ajoutées seules.
+
+**PAS FAIT.** La quatrième compétence par classe (pistes restantes : double spectral du Revenant,
+pluie de flèches à retardement et faucon de la Chasseresse ; pour le Bourreau, le « crochet de
+groupe » est devenu l'amélioration Rafle de sa Chaîne). Le maintien du bouton pour charger (voir le
+geste ci-dessus). Le HUD ne montre pas encore la charge du Trait ni la durée d'un sillage ou d'une
+garde SUR le bouton (`slot_state` le rend ; `jeu/interface/` est tenu par un autre lot) : cela se
+lit dans le monde, autour du héros. Le leurre n'attire pas les tireurs. Aucun son propre.
+
+**À juger par Pierre** : les neuf noms et tous les nombres ; l'étage de chacune ; le geste du Trait
+(un appui, second appui) ; la Contre-taille qui pare même un coup mortel ; la Garde de fer qui ne
+couvre que la face ; le Stigmate inutile contre un Gardien seul (il ne meurt pas) ; le leurre que
+les tireurs ignorent ; les versions par classe de la Chaîne et de la Bombe ; les teintes froides de
+toutes ces marques et zones ; l'arbre rempli aux deux tiers au plus ; la quatrième compétence.
+
+## Écran de l'arbre — ce qui est FAIT (2026-10-05)
+
+Affichage seulement (`jeu/ville/`, `jeu/interface/`, `jeu/ecrans/`, `jeu/theme/`). Aucune règle, aucun
+nombre, aucune donnée changés : tout est LU dans `D6Profile.tree_view`, `slot_choices`, `tree_points`,
+`D6Loadout.slot_state`. Preuves à l'écran : `_dev/captures/lot_v3_ecran_arbre/` (`capturer.sh`, banc
+`jeu/ville/banc_arbre.tscn`). TOUT ce qui suit est à juger par Pierre.
+
+**Le Grimoire est l'écran de l'arbre** (`jeu/ville/onglet_grimoire.gd`), en trois colonnes qui tiennent
+SANS défiler en 1280 × 720 :
+
+```
+ [7] points à dépenser   BASE      (o)──(o)──(o)──<>          COMPÉTENCE          ● Emplacement 1
+ Niveau 8 / 30           Ouvert     ¦    ¦    ¦               Lance infernale        Rang 3 / 5
+ ▬▬▬▬▬▬▬▬▬▬▬▬▬                      °°   °°   °°              Projectile qui transperce…
+ 0 / 215 d'expérience    CŒUR      (o)──(o)──(o)──<>──<>      Rang 3 : 38 dégâts, recharge 3,6 s.
+                         2 / 5 points   │                     → Rang 4 : 42 dégâts, recharge 3,4 s.
+   (2)  (3)              dépensés       │                     [        Améliorer        ]
+ (1)                     MAÎTRISE  (o)──(o)──<>──<>           AMÉLIORATIONS · UNE SEULE
+      (ATT) (DASH)       SOMMET       [▽]──[▽]                ◇ Transperce tout        [Choisir]
+                         [Tout rendre (140 or)]               ◇ Explose à l'impact     [Choisir]
+                                                              Placer en          [1] [2] [3]
+```
+
+- **Sens : étages en BANDES de haut en bas, le long d'un TRONC.** Pourquoi : l'écran est large et bas ;
+  une bande par étage laisse jusqu'à 8 nœuds de front, et le panneau de détail garde toute la hauteur à
+  droite. Le tronc se REMPLIT D'OR jusqu'où l'arbre est ouvert ; vers le premier étage fermé, la part
+  des points déjà dépensés. À gauche de chaque bande : le nom de l'étage, « Ouvert » ou un cadenas et
+  « 2 / 5 points dépensés ».
+- **Mise en page seule** (`jeu/ville/arbre.gd`) : de 1 à 8 nœuds par étage (et plus : au-delà de ce qui
+  tient de front, l'étage se replie sur deux rangées). Médaillons de 27 à 38 px, place d'au moins 44 px
+  par nœud (cible du doigt). Le panneau prend la largeur dont l'arbre n'a pas besoin (276 à 360 px).
+- **Petit téléphone (844 × 390)** : les mêmes trois colonnes ; SEUL l'arbre défile, de haut en bas ;
+  points, niveau, arc des emplacements et panneau restent à l'écran (le panneau défile en lui-même
+  quand son texte est long) ; la note d'en-tête cède sa ligne. La note de pied de la Ville s'efface dans le Grimoire, à toute taille.
+  Portrait (toléré) : les trois blocs s'empilent et la page de la Ville défile.
+- **Un nœud est un médaillon** (`jeu/ville/arbre_dessin.gd`), dessiné par le lot de triangles (tout
+  l'arbre : UN appel de dessin, plus ses textes) :
+
+| Se lit | Comment |
+|---|---|
+| sorte | rond = compétence · losange = passif · écusson = déplacement, ultime |
+| pictogramme | celui du bouton en jeu (`jeu/interface/icones.gd`) ; passif : dix pictogrammes neufs (`jeu/ville/icones_arbre.gd` : cœur, cible, sablier, plumes, bouclier, charge, lame, couronne, poing, étoile) |
+| rang | compétence : l'anneau, coupé en autant de segments que de rangs, dorés quand ils sont pris ; autres : des pastilles sous la forme |
+| verrouillé (étage fermé) | éteint, cerné de gris, pictogramme à peine visible |
+| ouvert, rien à dépenser | cerne clair, pictogramme gris |
+| acquis | fond de braise, cerne et pictogramme clairs |
+| achetable | cerné d'or, il BAT doucement (halo et lueur), qu'il soit déjà acquis ou non |
+| au maximum | tout en or, plus rien ne bat |
+| choisi (touché, ou sous le focus) | un cercle clair autour |
+| placé | une pastille bleue au numéro de l'emplacement (1, 2, 3) |
+
+- **Les deux améliorations exclusives** pendent sous leur compétence, en fourche : pas encore offertes
+  (creuses, grises), offertes (cernées d'or, elles battent), prise (pleine, en or), l'autre BARRÉE.
+- **Panneau de détail** (`jeu/ville/panneau_noeud.gd`), à droite : sorte, nom, « Rang 3 / 5 », ce que la
+  chose EST (texte de la compétence ; nom et texte du déplacement ou de l'ultime de la classe), le rang
+  ACTUEL, le rang SUIVANT précédé de « → » avec en or gras les mots qui changent, le bouton
+  « Apprendre » / « Améliorer » — grisé avec la raison des règles écrite dessous (« Aucun point à
+  dépenser », « Étage Cœur fermé : 5 points à dépenser d'abord », « Rang maximal ») —, les deux
+  améliorations (« Choisir »), et pour une compétence acquise « Placer en 1 / 2 / 3 » (celui qu'elle
+  occupe est doré). Toucher un emplacement de l'ARC montre l'emplacement : ce qu'il porte, « Vider » ;
+  il attend alors une compétence (la toucher dans l'arbre l'y place).
+- **Confirmations** : une amélioration exclusive se prend en DEUX appuis — « Choisir » devient
+  « Confirmer » (rouge) sous la phrase « Ce choix est définitif, sauf à tout rendre. » ; regarder un
+  autre nœud annule. « Tout rendre (N or) » : deux appuis aussi, avec « Tous les points reviennent ; les
+  améliorations choisies sont effacées. ».
+- **Clavier et manette** : chaque nœud est un vrai bouton ; les flèches ou la croix passent de nœud en
+  nœud (voisin de rangée, nœud le plus proche de la rangée voisine) et le panneau suit le focus ; Entrée
+  / A sur un nœud porte le focus sur « Apprendre » / « Améliorer », Entrée encore achète ; Échap / B
+  depuis le panneau revient au nœud (sans quitter la Ville) ; Page préc. / suiv. changent d'onglet.
+- **À l'ouverture**, le nœud choisi est le premier où un point peut être dépensé (sinon le premier).
+- L'ancienne liste de cartes (arbre, « Placer une compétence », « Déplacement et ultime ») est RETIRÉE :
+  il n'y a qu'un écran. La note d'en-tête (classe et emplacements) reste, sur une ligne.
+
+**Retours de progression.**
+
+- **HUD, barre d'expérience** : « NIV. 7 » et une barre fine, froide (la teinte du héros), SOUS LA VIE,
+  de sa largeur. Pourquoi là : la vie et l'expérience sont l'état du HÉROS (coin haut-gauche) ; le
+  centre parle du donjon (étage, fil, Gardien), la droite de la bourse. Lue dans `tree_view`, seulement
+  quand l'expérience de la descente a bougé. Rien en arène ni à l'entraînement.
+- **HUD, bandeau de niveau** (`jeu/interface/niveau.gd`, événements `levelUp` et `treePoint`) :
+  « NIVEAU 7 · +1 point », petit, sur une ligne, sous la barre d'expérience, 2,8 s, en fondu ; la barre
+  brille. Il prend la place des losanges des bénédictions le temps qu'il passe : il reste dans la bande
+  du haut, jamais sur le combat ni dans le couloir des flèches d'ennemis hors champ.
+- **Pastille de points** (`jeu/theme/pastille.gd`) : sur l'onglet Grimoire, sur « Entrer dans Dité » à
+  l'écran titre, et en tête du Grimoire (« [7] points à dépenser »).
+- **Écran de mort** : sous les deux cartes, « Revenant · niveau 2 · 5 / 65 », la barre où la part GAGNÉE
+  dans la descente se détache (plus claire, elle se remplit à vue), « Expérience de classe : +45. » et,
+  si un niveau est passé, « Niveau 2 ! +1 point à dépenser au Grimoire. ». Rien en arène.
+- **Accueil du premier joueur** : en Ville, tant qu'aucun point n'a été dépensé, « Dépense ton point au
+  Grimoire » (« tes points » s'il y en a plusieurs) sous les onglets — pas dans le Grimoire. Acquise au
+  premier point dépensé ; coupée et revue par le réglage de la pause (`reglages.accueil`).
+- **Compétences neuves, sur leur bouton** (`D6Loadout.slot_state`) : une action qui se bande (Trait de
+  Nemrod) montre un anneau d'or qui se REMPLIT dans son bouton ; un effet qui dure (Sillage, Garde,
+  parade) un anneau froid qui se VIDE.
+
+**Ce que `tree_view` ne donne pas** (contourné dans l'affichage, à ajouter aux règles si l'on veut) :
+
+- le pictogramme d'un PASSIF (`icon` vide), ou au moins sa statistique : il est choisi d'après les mots
+  de son texte (« PV », « critique », « recharge »…), à défaut l'étoile ;
+- l'identifiant de l'ACTION d'un nœud de compétence (`skill`) : pris égal à l'identifiant du nœud (vrai
+  dans les données), à défaut au nom ;
+- un LIEN entre nœuds (un passif qui renforce une compétence) et une place dans l'étage : il n'y en a
+  pas dans les données ; les nœuds sont posés dans l'ordre rendu, tous sur la branche de leur étage ;
+- une teinte par classe : `jeu/theme/couleurs.gd` n'en a pas, l'arbre n'en invente pas.
+
+**Coût de dessin** (vraie fenêtre, mêmes données, `jeu/monde/mesure.gd`) : l'ancien Grimoire, haut de
+page : 72 appels en 1280 × 720, 52 en 844 × 390 ; le nouveau, arbre ENTIER : 73 à 84 et 66 à 77 selon
+l'état. Temps d'image 0,58 ms avant ; 0,58 ms après quand rien ne bat, 0,69 ms quand des nœuds battent
+(l'arbre qui bat n'est redessiné que vingt fois par seconde).
+
+**À juger par Pierre** : le sens (bandes de haut en bas) ; la taille des médaillons ; les trois formes ;
+l'or pour « achetable » et « maximum » ; le battement ; les dix pictogrammes de passifs ; la fourche des
+améliorations ; l'arc des emplacements réduit (45 % du jeu) ; la note de pied retirée du Grimoire ; les
+deux appuis de confirmation ; la place et la taille de la barre d'expérience ; le bandeau de niveau
+(assez visible ? trop ?) ; la consigne de la Ville.
 
 ## Tests existants et combat V3
 

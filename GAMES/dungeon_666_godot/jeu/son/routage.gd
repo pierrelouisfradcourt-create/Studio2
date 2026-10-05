@@ -86,6 +86,13 @@ const ROUTES := {
 	"allySpawn": "bossSummon", "allyDeath": "kill", "allyGone": "superEnd",
 	# Arbre de compétences (étape 3) : un niveau de classe passé sonne l'accord du checkpoint.
 	"levelUp": "checkpoint",
+	# Compétences neuves (étape 4), avec les recettes qui existent. Leur lancement est l'événement
+	# `skill` ou `gadget` (ci-dessus, recette de repli). Un coup paré (Contre-taille) ou bloqué (Garde
+	# de fer) sonne la parade ; la fissure de la Faille est un choc ; une marque posée et la hache
+	# rattrapée sonnent l'accord bref « prêt » ; une marque qui saute est un éclair ; la garde qui
+	# tombe sonne la fin d'un Super.
+	"parry": "deflect", "guardBlock": "deflect", "fissure": "slam", "marked": "dashReady",
+	"markJump": "chain", "axeCatch": "dashReady", "guardEnd": "superEnd",
 }
 ## Routes qui dépendent de l'événement : les clés possibles (la décision est dans `cle`).
 const ROUTES_CALCULEES := {
@@ -113,6 +120,12 @@ const SILENCIEUX := [
 	"formStart", # entrée dans la Forme du Damné : le son du lancement (`super`) la porte
 	"allyBite", # morsure d'un limier : le son d'impact (hit) la porte
 	"allyHurt", # limier blessé : retour visuel seulement (le son de blessure est réservé au héros)
+	"parryStart", # Contre-taille : la taillade est portée par le son de la compétence (`skill`)
+	"parryEnd", # la garde qui s'éteint sans avoir paré : retour visuel seulement
+	"guardStart", # Garde de fer levée : le son de la compétence à charges (`gadget`) la porte
+	"axeTurn", # demi-tour de la Hache du supplice : retour visuel seulement
+	"sillageEnd", # fin du Sillage de braise : retour visuel seulement (une détonation émet `explode`)
+	"traitShot", # le Trait de Nemrod qui part : le son de la compétence (`skill`) le porte
 ]
 
 # ---------------------------------------------------------------- clé de son -> recettes

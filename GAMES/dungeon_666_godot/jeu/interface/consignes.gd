@@ -48,6 +48,14 @@ const TABLE := [
 	{"id": "mort", "quand": "revenu", "urgent": true, "patience": 9.0,
 		"texte": "Les bénédictions se regagnent.\nDépense tes Âmes en Ville."},
 ]
+## Consignes de la VILLE, hors partie (la vue Accueil du HUD ne les montre jamais : elle n'existe
+## qu'en jeu). C'est la Ville qui les affiche (jeu/ville/ville.gd) ; elles sont retenues au même
+## endroit que les autres (`reglages.accueil.acquis`), coupées et revues par le même réglage.
+##   grimoire : la première fois qu'un point de compétence attend en Ville ; acquise au premier
+##              point dépensé dans l'arbre.
+const VILLE := [
+	{"id": "grimoire", "un": "Dépense ton point au Grimoire", "plusieurs": "Dépense tes points au Grimoire"},
+]
 ## Objets d'interaction que la consigne « recompense » désigne (les autres ont leur propre écran).
 const RECOMPENSES := ["boon", "loot"]
 ## Commandes qui nomment une SORTE d'action plutôt qu'un bouton : la sorte lue par slot_view.
@@ -66,6 +74,28 @@ static func trouver(id: String) -> Dictionary:
 
 static func ids() -> Array:
 	return TABLE.map(func(c: Dictionary) -> String: return c.id)
+
+static func ids_ville() -> Array:
+	return VILLE.map(func(c: Dictionary) -> String: return c.id)
+
+## La consigne de Ville `id` attend-elle encore (consignes actives, pas encore acquise) ?
+static func attendue(reglages: Dictionary, id: String) -> bool:
+	var a = reglages.get("accueil")
+	return a is Dictionary and a.get("actif") != false and not a.get("acquis", []).has(id)
+
+## La phrase d'une consigne de Ville, accordée au nombre (un point, des points).
+static func texte_en_ville(id: String, nombre: float) -> String:
+	for c in VILLE:
+		if c.id == id:
+			return String(c.plusieurs if nombre >= 2.0 else c.un)
+	return ""
+
+## Tient la consigne de Ville `id` pour acquise : retenue dans les réglages, par l'action de l'app.
+static func acquerir_en_ville(app, id: String) -> void:
+	var a = app.reglages.get("accueil")
+	if not (a is Dictionary) or a.get("acquis", []).has(id):
+		return
+	app.regler("accueil", {"actif": a.get("actif") != false, "acquis": a.get("acquis", []) + [id]})
 
 ## La phrase de la consigne pour l'appareil (« clavier », « manette », « tactile ») ; avec `game`,
 ## une consigne à `gestes` parle du déplacement de la classe jouée (sans partie : celui du dash).

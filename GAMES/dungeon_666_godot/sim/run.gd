@@ -17,6 +17,7 @@ extends RefCounted
 ## REWARD_LABELS et EVENTS se lisent dans D6Data.tables().run.
 
 const Arbre = preload("res://sim/tree.gd")
+const Neuves = preload("res://sim/kit_neuves.gd")
 const DOOR_GUARD := 20.0 # garde-fou du tirage de la seconde porte
 const MIN_HP := 1.0 # un paiement en PV n'est jamais mortel : il laisse au moins ceci
 
@@ -49,6 +50,7 @@ static func enter_floor(game: Dictionary, floor_num, door) -> void:
 	game.meta.bestFloor = maxf(game.meta.bestFloor, info.floor)
 	sync_purse(game)
 	D6KitSupers.reset(game, "etage") # un ultime ne suit pas le héros : forme finie, limiers retirés
+	Neuves.reset(game) # ni sillage, ni garde, ni parade d'une salle à l'autre
 	game.enemies.clear()
 	game.projectiles.clear()
 	game.hazards.clear()
@@ -786,6 +788,7 @@ static func _revive(game: Dictionary) -> void:
 	var p: Dictionary = game.player
 	var t: Dictionary = game.tuning
 	D6KitSupers.reset(game, "reprise")
+	Neuves.reset(game)
 	D6Stats.recompute_stats(game)
 	p.hp = p.maxHp
 	p.superCharge = D6Js.nz(t["super"].get("startCharge"), 0.0)

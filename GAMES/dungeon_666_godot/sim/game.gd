@@ -10,6 +10,7 @@ extends RefCounted
 ##   game.events                            # événements de l'image, à vider par l'appelant
 
 const Arbre = preload("res://sim/tree.gd")
+const Neuves = preload("res://sim/kit_neuves.gd")
 const DT := 1.0 / 60.0
 const HASH_BASIS := 2166136261
 const HASH_PRIME := 16777619
@@ -126,7 +127,8 @@ static func step_game(game: Dictionary, input = null) -> void:
 	var hb: Dictionary = game.tuning.hitstopBank
 	game.hitstopBank = minf(hb.max, game.hitstopBank + hb.refill * dt)
 	D6Player.update_player(game, dt)
-	D6KitSupers.tick(game, dt) # ultimes qui durent : forme, limiers
+	Neuves.tick(game, dt) # compétences neuves : braises semées, garde, parade, marques
+	D6KitSupers.tick(game, dt) # ultimes qui durent : forme, limiers ; et les leurres
 	D6Nav.update_nav(game)
 	D6Enemies.update_enemies(game, dt)
 	D6Projectiles.update_projectiles(game, dt)

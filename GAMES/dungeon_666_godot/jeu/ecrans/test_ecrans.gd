@@ -32,6 +32,8 @@ func _derouler() -> void:
 	await _anti_martelage()
 	await _mort()
 	await _mort_et_experience()
+	await _titre_et_points()
+	await _mort_et_gain()
 	await _victoire()
 	await _pause()
 	await _labo_et_feel()
@@ -290,9 +292,62 @@ func _mort_et_experience() -> void:
 	verifier("mort : le bilan compte l'expérience et le niveau gagnés", bilan.xpEarned >= g.tuning.tree.curve.base and bilan.levelsGained == 1.0 and bilan.level == 2.0, bilan)
 	verifier("mort : l'expérience de classe gagnée est écrite", textes.has("Expérience de classe : +%s." % D6Js.num_str(bilan.xpEarned)), textes)
 	verifier("mort : « Niveau 2 ! +1 point à dépenser au Grimoire. »", textes.has("Niveau 2 ! +1 point à dépenser au Grimoire."), textes)
+	# Écran de l'arbre : la barre d'expérience ; un niveau passé, tout l'acquis du niveau en cours est du gain.
+	var barre: Control = ecrans.ecran().get_node("%BarreXp")
+	var vue: Dictionary = D6Profile.tree_view(g.meta, g.tuning, bilan.classId)
+	verifier("mort : la barre d'expérience montre le niveau en cours, tout en gain après un niveau passé", barre.is_visible_in_tree() and is_equal_approx(barre.part(), vue.xp / vue.xpNext) and barre.depuis() == 0.0, [barre.part(), barre.depuis()])
 	await _attendre_pret()
 	await _cliquer(_boutons()[1])
 	verifier("mort : de retour en Ville, le niveau gagné reste au profil de la partie", app.ecran == "ville" and g.meta.tree.revenant.level == 2.0, g.meta.tree)
+
+## Écran de l'arbre : la barre d'expérience de l'écran de mort. Sans niveau passé, la part gagnée
+## dans la descente se détache de ce qui était acquis avant ; aucun « Niveau N ! ». En arène, rien.
+func _mort_et_gain() -> void:
+	app.demarrer_descente(1.0, false, false, GRAINE)
+	var g := _game()
+	var classe: String = g.meta.loadout.classId
+	var avant: Dictionary = D6Profile.tree_view(g.meta, g.tuning, classe)
+	for i in 5:
+		D6Combat.kill_enemy(g, D6Enemies.create_enemy(g, "imp", g.player.x + 200.0, g.player.y, {"spawnT": 0.0}))
+	for i in 7:
+		D6Combat.kill_enemy(g, D6Enemies.create_enemy(g, "imp", g.player.x + 200.0, g.player.y, {"spawnT": 0.0}))
+	Scenes.tuer_le_heros(g)
+	await _attendre(func() -> bool: return ecrans.ecran_montre() == "mort")
+	var bilan: Dictionary = g.run.deathRecap.tree
+	var v: Dictionary = D6Profile.tree_view(g.meta, g.tuning, classe)
+	var barre: Control = ecrans.ecran().get_node("%BarreXp")
+	var niveau: Label = ecrans.ecran().get_node("%NiveauGagne")
+	var ligne: Label = ecrans.ecran().get_node("%NiveauClasse")
+	verifier("mort, sans niveau passé : le bilan compte l'expérience, aucun niveau", bilan.xpEarned > 0.0 and bilan.levelsGained == 0.0 and v.level == avant.level, bilan)
+	verifier("mort : la barre est à la part acquise du niveau en cours", barre.is_visible_in_tree() and is_equal_approx(barre.part(), v.xp / v.xpNext), [barre.part(), v.xp, v.xpNext])
+	verifier("mort : le gain de la descente part de ce qui était acquis avant", is_equal_approx(barre.depuis(), avant.xp / avant.xpNext) and barre.depuis() < barre.part(), [barre.depuis(), avant.xp])
+	verifier("mort : « classe · niveau N · acquis / à atteindre »", ligne.is_visible_in_tree() and ligne.text == "%s · niveau %s · %s / %s" % [g.tuning.classes[classe].name, D6Js.num_str(v.level), D6Js.num_str(v.xp), D6Js.num_str(v.xpNext)], ligne.text)
+	verifier("mort, sans niveau passé : pas de « Niveau N ! »", not niveau.is_visible_in_tree(), niveau.text)
+	await _attendre_pret()
+	await _cliquer(_boutons()[1])
+	app.demarrer_descente(1.0, true, false, GRAINE)
+	Scenes.tuer_le_heros(_game())
+	await _attendre(func() -> bool: return ecrans.ecran_montre() == "mort")
+	verifier("mort en arène : aucune progression montrée (rien n'y est gagné)", not ecrans.ecran().get_node("%Progression").is_visible_in_tree())
+	app.ouvrir_titre()
+	await _attendre(func() -> bool: return ecrans.ecran_montre() == "titre")
+
+## Écran de l'arbre : le bouton d'entrée en Ville porte une pastille quand des points de compétence attendent.
+func _titre_et_points() -> void:
+	app.ouvrir_titre()
+	await _attendre(func() -> bool: return ecrans.ecran_montre() == "titre")
+	var points: float = D6Profile.tree_points(app.profil, app.contenu, app.profil.loadout.classId)
+	var pastille: Control = ecrans.ecran().pastille()
+	verifier("titre : des points attendent (niveau gagné plus haut)", points > 0.0, points)
+	verifier("titre : « Entrer dans Dité » porte une pastille au nombre de points", pastille != null and pastille.is_visible_in_tree() and pastille.nombre == int(points) and pastille.get_parent() == _boutons()[0], pastille.nombre if pastille != null else -1)
+	var depense: Dictionary = app.operation_ville("tree_buy", [String(app.profil.loadout.classId), String(app.contenu.classes[app.profil.loadout.classId].skills[0])])
+	app.ouvrir_ville()
+	await process_frame
+	await process_frame
+	app.ouvrir_titre()
+	await _attendre(func() -> bool: return ecrans.ecran_montre() == "titre")
+	await process_frame
+	verifier("titre : le point dépensé, la pastille s'en va", D6Js.truthy(depense.get("ok")) and points == 1.0 and not ecrans.ecran().pastille().is_visible_in_tree(), [depense, points])
 
 func _victoire() -> void:
 	app.demarrer_descente(Scenes.ETAGE_FINAL, false, false, GRAINE)

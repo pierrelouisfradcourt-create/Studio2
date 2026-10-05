@@ -49,6 +49,8 @@ func _derouler() -> void:
 	await _jamais_deux_fois()
 	await _arene_et_entrainement()
 	await _couper_et_revoir()
+	await _progression()
+	await _etat_des_neuves()
 	print("test_accueil : %d vérifications, %d échec(s)" % [verifications, echecs])
 	print("ACCUEIL : OK" if echecs == 0 else "ACCUEIL : ÉCHEC")
 	await Fondus.laisser_finir(self)
@@ -156,6 +158,84 @@ func _calmer() -> void:
 	g.projectiles.clear()
 	g.hazards.clear()
 	g.room.kind = "essai"
+
+# ---------------------------------------------------------------- retours de progression (écran de l'arbre)
+
+func _tuer(n: int) -> void:
+	var g := _game()
+	for i in n:
+		D6Combat.kill_enemy(g, D6Enemies.create_enemy(g, "imp", g.player.x + LOIN, g.player.y, {"spawnT": 0.0}))
+
+func _arbre_lu() -> Dictionary:
+	var g := _game()
+	return D6Profile.tree_view(g.meta, g.tuning, g.meta.loadout.classId)
+
+## La barre d'expérience sous la vie suit l'état ; un niveau passé en pleine descente montre le
+## bandeau de niveau (petit, sous la vie, hors du centre), fait briller la barre, puis s'efface seul.
+func _progression() -> void:
+	await _nouvelle_app(true)
+	_reglages_neufs()
+	app.demarrer_descente(1.0, false, false, GRAINE)
+	_calmer()
+	_pas(PEU)
+	await process_frame # la mise en page du HUD se pose (les conteneurs se rangent à l'image suivante)
+	await process_frame
+	var v0 := _arbre_lu()
+	verifier("xp : la barre est montrée sous la vie, à la part lue dans l'état", hud.experience.is_visible_in_tree() and is_equal_approx(hud.barre_xp.part(), v0.xp / v0.xpNext) and hud.niveau_classe.text == "NIV. %s" % D6Js.num_str(v0.level), [hud.barre_xp.part(), hud.niveau_classe.text])
+	verifier("xp : elle tient sous la barre de vie, de sa largeur", hud.experience.get_global_rect().position.y >= hud.vie.get_global_rect().end.y and is_equal_approx(hud.experience.size.x, hud.vie.size.x), [hud.experience.get_global_rect(), hud.vie.get_global_rect()])
+	verifier("niveau : aucun bandeau tant qu'aucun niveau n'est passé", hud.niveau.texte() == "" and not hud.niveau.visible)
+	_tuer(3)
+	_pas(PEU)
+	var v1 := _arbre_lu()
+	verifier("xp : la barre suit l'expérience gagnée", v1.xp > v0.xp and v1.level == v0.level and is_equal_approx(hud.barre_xp.part(), v1.xp / v1.xpNext), [v0.xp, v1.xp, hud.barre_xp.part()])
+	verifier("niveau : toujours aucun bandeau", hud.niveau.texte() == "")
+	var borne := 500
+	while _arbre_lu().level == v1.level and borne > 0:
+		_tuer(1)
+		borne -= 1
+	_pas(PEU)
+	var v2 := _arbre_lu()
+	var attendu := "NIVEAU %s · +1 point" % D6Js.num_str(v2.level)
+	verifier("niveau : un niveau est passé, un point de plus", v2.level == v1.level + 1.0 and v2.points == v1.points + 1.0, [v2.level, v2.points])
+	verifier("niveau : le bandeau dit « %s »" % attendu, hud.niveau.visible and hud.niveau.texte() == attendu, hud.niveau.texte())
+	verifier("niveau : la barre brille et repart au niveau suivant", hud.barre_xp.brille() and is_equal_approx(hud.barre_xp.part(), v2.xp / v2.xpNext) and hud.niveau_classe.text == "NIV. %s" % D6Js.num_str(v2.level), [hud.barre_xp.part(), hud.niveau_classe.text])
+	await process_frame
+	_pas(FONDU) # le bandeau a fini d'apparaître
+	var bandeau: Rect2 = hud.niveau.get_global_rect()
+	verifier("niveau : sous la barre d'expérience, dans la bande du haut (jamais sur le combat), à côté du bloc de l'étage, hors de toute bannière", bandeau.position.y >= hud.experience.get_global_rect().end.y and bandeau.end.y <= hud.bande.get_global_rect().end.y and bandeau.end.x <= hud.centre.get_global_rect().position.x and not bandeau.intersects(hud.banniere.get_global_rect()), [bandeau, hud.centre.get_global_rect(), hud.bande.get_global_rect()])
+	verifier("niveau : les losanges des bénédictions s'effacent le temps qu'il passe", hud.benedictions.modulate.a < 0.1, hud.benedictions.modulate.a)
+	verifier("niveau : il ne prend aucun toucher", hud.niveau.mouse_filter == Control.MOUSE_FILTER_IGNORE)
+	verifier("niveau : il s'efface seul, les bénédictions reviennent", _jusqu_a(func() -> bool: return not hud.niveau.visible, 300) and hud.benedictions.modulate.a == 1.0, hud.benedictions.modulate.a)
+	app.demarrer_descente(1.0, true, false, GRAINE)
+	_pas(PEU)
+	verifier("arène d'essai : ni barre d'expérience ni bandeau (rien n'y est gagné)", not hud.experience.visible and not hud.niveau.visible)
+
+## Compétences neuves : ce qu'une action fait EN CE MOMENT se lit sur son bouton. L'état du bouton
+## reprend D6Loadout.slot_state tel quel (charge qui monte, durée qui reste), sans rien calculer.
+func _etat_des_neuves() -> void:
+	await _nouvelle_app(true)
+	_reglages_neufs()
+	app.demarrer_descente(1.0, false, false, GRAINE)
+	_calmer()
+	var Etats: GDScript = load("res://jeu/interface/etat_commandes.gd")
+	var g := _game()
+	_pas(PEU)
+	var repos: Dictionary = Etats.etat(g, "skill2")
+	verifier("neuves : au repos, ni charge ni durée sur le bouton", repos.charge == 0.0 and repos.duree == 0.0 and not D6Loadout.slot_state(g, 1).active, repos)
+	g.kit.slots[1] = "sillage" # le banc pose la situation : le Sillage dans l'emplacement 2
+	g.player.slots[1].charges = 2.0
+	_pas()
+	_entree = {"skill2Pressed": true}
+	_pas(PEU)
+	var lu: Dictionary = D6Loadout.slot_state(g, 1)
+	var e: Dictionary = Etats.etat(g, "skill2")
+	verifier("neuves : le Sillage lancé, son effet dure (slot_state.active)", lu.active and lu.activeFrac > 0.0, lu)
+	verifier("neuves : le bouton montre la part qui reste, celle des règles", e.duree == lu.activeFrac and e.charge == 0.0, [e, lu])
+	_pas(30)
+	var plus_tard: Dictionary = Etats.etat(g, "skill2")
+	verifier("neuves : l'anneau de durée se vide avec le temps", plus_tard.duree < e.duree and plus_tard.duree == D6Loadout.slot_state(g, 1).activeFrac, [e.duree, plus_tard.duree])
+	hud._process(DT)
+	verifier("neuves : les autres boutons n'en montrent rien", Etats.etat(g, "skill1").duree == 0.0 and Etats.etat(g, "skill1").charge == 0.0)
 
 # ---------------------------------------------------------------- les consignes, une à une
 

@@ -9,6 +9,8 @@ extends Control
 ##   - un EMPLACEMENT ou le DASH : pictogramme du kit, recharge en balayage (secteur sombre qui se
 ##     vide) et en anneau, ou charges en segments autour du bouton ; prêt = cercle et pictogramme
 ##     clairs, une onde au moment où il le redevient ;
+##     une action qui se BANDE (charge) : un anneau d'or se remplit dans le disque ; un effet qui
+##     DURE (durée) : un anneau froid s'y vide ;
 ##   - un emplacement VIDE : un socle éteint, cerclé de tirets, sans pictogramme ni réaction.
 ## Ne lit pas la simulation : on lui donne son état (etat_commandes.gd) par `montrer()`.
 ## Coût : tout le bouton (disque, niveau, cernes, pictogramme, anneaux) part en UN appel de dessin.
@@ -30,6 +32,7 @@ const NIVEAU := 0.62 # opacité du niveau qui monte (le pictogramme clair reste 
 const HALO := Vector3(7.0, 3.0, 7.0) # jauge pleine : écart du halo, battement (px), vitesse
 const MAINTIEN := 5.0 # épaisseur de l'anneau qui se ferme pendant le maintien
 const TIRETS := 12 # tirets du cercle d'un emplacement vide
+const DEDANS := 4.5 # l'anneau de charge ou de durée court DANS le disque, à cette distance du bord
 
 @export var id := "dash"
 @export var rayon := 22.0:
@@ -102,6 +105,7 @@ func _dessiner_bouton(c: Vector2) -> void:
 	if icone != "":
 		Icones.ajouter(_lot, icone, c, rayon, texte if _pret() else Color(texte, 0.4))
 	_dessiner_anneau(c)
+	_dessiner_etat(c, r)
 
 ## Le bouton d'attaque, jauge d'ultime : le niveau monte dans le disque ; pleine, tout le bouton
 ## est braise et bat ; maintenue, un anneau se ferme autour.
@@ -178,6 +182,19 @@ func _dessiner_recharge(c: Vector2) -> void:
 	for i in range(33):
 		pts.append(c + Vector2.from_angle(lerpf(a0, -PI / 2.0 + TAU, i / 32.0)) * rayon)
 	_lot.polygone(pts, Color(Couleurs.UI["void"], 0.55))
+
+## Ce que l'action fait EN CE MOMENT (lu par etat_commandes dans D6Loadout.slot_state), dans le
+## disque : elle se bande — un anneau d'or se REMPLIT ; son effet dure — un anneau froid se VIDE.
+func _dessiner_etat(c: Vector2, r: float) -> void:
+	var charge: float = _etat.get("charge", 0.0)
+	var duree: float = _etat.get("duree", 0.0)
+	if charge <= 0.0 and duree <= 0.0:
+		return
+	var rr := r - DEDANS
+	var part := clampf(charge if charge > 0.0 else duree, 0.0, 1.0)
+	_lot.arc(c, rr, 0.0, TAU, 48, Color(Couleurs.UI["void"], 0.55), ANNEAU + 1.5)
+	if part > 0.01:
+		_lot.arc(c, rr, -PI / 2.0, -PI / 2.0 + TAU * part, 48, Couleurs.PAL.gold if charge > 0.0 else Couleurs.PAL.slashStrike, ANNEAU)
 
 ## Anneau : charges en segments (dash, gadget) ou recharge continue (compétence).
 func _dessiner_anneau(c: Vector2) -> void:

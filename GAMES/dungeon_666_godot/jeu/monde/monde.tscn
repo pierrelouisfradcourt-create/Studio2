@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://jeu/monde/monde.gd" id="1"]
 [ext_resource type="Script" path="res://jeu/monde/sol.gd" id="2"]
@@ -16,6 +16,7 @@
 [ext_resource type="Script" path="res://jeu/monde/piliers.gd" id="14"]
 [ext_resource type="Script" path="res://jeu/monde/terrain.gd" id="15"]
 [ext_resource type="Script" path="res://jeu/monde/barrieres.gd" id="16"]
+[ext_resource type="Script" path="res://jeu/monde/competences.gd" id="17"]
 
 [sub_resource type="CanvasItemMaterial" id="additif"]
 blend_mode = 1
@@ -76,6 +77,9 @@ script = ExtResource("16")
 
 [node name="Contours" type="Node2D" parent="."]
 script = ExtResource("9")
+
+[node name="Competences" type="Node2D" parent="."]
+script = ExtResource("17")
 
 [node name="Tirs" type="Node2D" parent="."]
 script = ExtResource("10")

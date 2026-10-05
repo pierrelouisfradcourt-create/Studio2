@@ -6,6 +6,7 @@ extends Node
 ##   D666_CONSIGNE : bouger | attaquer | dash | rouge | competence | gadget | super | recompense |
 ##                   porte | mort (une consigne de jeu/interface/consignes.gd) ;
 ##                   pause (l'écran de pause et ses deux réglages) ;
+##                   niveau (la classe vient de passer un niveau : bandeau de niveau, barre d'expérience) ;
 ##                   armurerie | grimoire | classe (l'onglet de la Ville, pour les textes accordés)
 ##   D666_APPAREIL : clavier (défaut) | manette | tactile
 ##   D666_CLASSE   : revenant (défaut) | bourreau | chasseresse
@@ -26,6 +27,8 @@ const GRAINE := 7.0
 const ONGLETS := ["armurerie", "grimoire", "classe"]
 const POSE := 3 # images avant de poser la situation (les vues sont branchées)
 const NIVEAUX_D_ARBRE := {"vide": 1.0, "moitie": 16.0} # niveau de classe posé pour D666_ARBRE
+const EN_PLUS := 12 # ennemis tués après le niveau passé (la barre d'expérience n'est pas vide)
+const BORNE := 2000 # ennemis tués au plus pour passer un niveau
 const BAS := 20 # images avant de défiler un onglet de la Ville jusqu'en bas (D666_BAS=1)
 
 var app: Node
@@ -121,6 +124,23 @@ func _poser(g: Dictionary) -> void:
 			_salle_nettoyee(g, true)
 		"pause":
 			app.mettre_en_pause(true)
+		"niveau":
+			_passer_un_niveau(g)
+
+## Des ennemis tués jusqu'à ce que la classe passe un niveau (les règles versent l'expérience et
+## publient `levelUp`), puis quelques-uns encore.
+func _passer_un_niveau(g: Dictionary) -> void:
+	var classe: String = g.meta.loadout.classId
+	var depart: float = D6Profile.tree_view(g.meta, g.tuning, classe).level
+	var reste := -1
+	for i in BORNE:
+		D6Combat.kill_enemy(g, D6Enemies.create_enemy(g, "imp", g.player.x + 400.0, g.player.y - 200.0, {"spawnT": 0.0}))
+		if reste < 0 and D6Profile.tree_view(g.meta, g.tuning, classe).level > depart:
+			reste = EN_PLUS
+		reste -= 1
+		if reste == 0:
+			break
+	g.pickups.clear()
 
 ## Salle vaincue : la récompense au milieu (portes closes), ou déjà prise (portes ouvertes).
 func _salle_nettoyee(g: Dictionary, prise: bool) -> void:

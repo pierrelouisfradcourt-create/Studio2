@@ -31,6 +31,16 @@ func dessiner(refus: Dictionary = {}) -> void:
 func _dessiner() -> void:
 	pass
 
+## La place que la Ville offre à l'onglet (la taille de sa zone de défilement), dite à chaque
+## changement de fenêtre : un onglet qui veut tenir sans défiler s'y mesure.
+func tenir_dans(_place: Vector2) -> void:
+	pass
+
+## Où rendre le focus (clavier, manette) quand le bouton qui le tenait a disparu au redessin ;
+## null : à l'onglet lui-même.
+func repli_du_focus() -> Control:
+	return null
+
 # ---------------------------------------------------------------- briques communes
 
 func _vider(conteneur: Node) -> void:

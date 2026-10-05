@@ -11,6 +11,8 @@ extends RefCounted
 ##   volee   — Volée d'épines : éventail de traits
 ##   canal   — un ancien Super (Colère, Sentence, Nuée) joué comme compétence : channel_def donne ses
 ##             réglages, player le joue dans l'état 'super'
+##   sceau, riposte, faille, hachette, proie, trait — les compétences NEUVES de l'étape 4 : leur
+##             effet est dans sim/kit_neuves.gd (une famille par classe), lancé d'ici comme les autres
 ## Les AMÉLIORATIONS EXCLUSIVES de l'arbre (sim/tree.gd) ajoutent des nombres à la compétence :
 ## `rebound` (Bond), `noPull` / `pierce` / `vuln` (Chaîne), `chill` / `stun` (Brasier)… lus ici.
 ##
@@ -22,6 +24,7 @@ extends RefCounted
 
 const CHANNEL_OWN := ["name", "kind", "icon", "text", "super", "cooldown", "castTime", "aimed"] # champs d'une compétence `canal` qui ne règlent pas le Super joué
 const LAND_OVERLAP := 0.5 # le Bond s'arrête quand le héros chevauche la cible de moitié
+const Neuves := preload("res://sim/kit_neuves.gd")
 static var _point := {"x": 0.0, "y": 0.0}
 
 ## Début du lancer : `aim` = visée résolue par player (objet partagé : on le copie).
@@ -137,6 +140,8 @@ static func release_kit_skill(game: Dictionary) -> void:
 		"ruee", "hurlement", "embrasement":
 			# Actions de la Forme du Damné (elles tiennent les trois emplacements pendant la forme).
 			D6KitSupers.form_action(game, s)
+		"sceau", "riposte", "faille", "hachette", "proie", "trait":
+			angle = Neuves.release(game, s, angle) # compétences neuves (étape 4)
 		_:
 			return
 	# Recul léger au tir (sensation de puissance), comme la Lance.

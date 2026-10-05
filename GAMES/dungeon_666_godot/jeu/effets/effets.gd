@@ -16,6 +16,7 @@ const Particules = preload("res://jeu/effets/particules.gd")
 const Textes = preload("res://jeu/effets/textes.gd")
 const Ecran = preload("res://jeu/effets/ecran.gd")
 const Ultimes = preload("res://jeu/effets/ultimes.gd")
+const Competences = preload("res://jeu/effets/competences.gd")
 const PAL: Dictionary = Couleurs.PAL
 
 ## Teintes absentes de la palette par rôle : poussières et cendres (neutres), nuances des kits.
@@ -33,6 +34,11 @@ const SOUFFLE_HEROS := {
 	"piege": {"couleur": "heroCape", "secousse": 0.2, "zoom": 0.0},
 	"bond": {"couleur": "lance", "secousse": 0.55, "zoom": 0.04},
 	"brasier": {"couleur": "", "secousse": 0.15, "zoom": 0.0},
+	# Compétences neuves (étape 4) : Stigmate qui explose, braises du Sillage, contrecoup de la Garde, leurre piégé.
+	"stigmate": {"couleur": "heroCape", "secousse": 0.3, "zoom": 0.02},
+	"sillage": {"couleur": "", "secousse": 0.06, "zoom": 0.0},
+	"garde": {"couleur": "lance", "secousse": 0.4, "zoom": 0.03},
+	"leurre": {"couleur": "heroCape", "secousse": 0.3, "zoom": 0.0},
 }
 ## Événements que fx.mjs ne traduit qu'en BANNIÈRE : ils sont au HUD, rien ici.
 const AU_HUD: Array[String] = ["roomClear", "checkpoint"]
@@ -86,6 +92,7 @@ func _ready() -> void:
 		"immune": _sur_invulnerable, "moveShort": _sur_geste_court, "moveLand": _sur_atterrissage,
 	}
 	_table.merge(Ultimes.table(self)) # les trois ultimes de classe (combat V3, étape 2)
+	_table.merge(Competences.table(self)) # les compétences neuves (étape 4)
 
 func brancher(p_app: Node, p_partie: Node) -> void:
 	app = p_app

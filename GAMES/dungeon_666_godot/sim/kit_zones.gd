@@ -9,8 +9,11 @@ extends RefCounted
 ## Elles vivent dans game.room.kitFx.zones (kit_common) ; chaque zone copie ses chiffres à
 ## la pose (un réglage modifié ensuite ne change pas un objet déjà posé).
 ##
-## zone : {id, kind, x, y, r, t, dead, ...} — kind : pot | brasier | bombe | piege | totem.
+## zone : {id, kind, x, y, r, t, dead, ...} — kind : pot | brasier | bombe | piege | totem | faille
+## (`faille` : sim/kit_neuves.gd ; un brasier marqué `trail` est une braise du Sillage).
 ## Les objets lancés (pot, bombe) portent x0, y0, tx, ty, flight et leur hauteur `lift` (0..1).
+
+const Neuves := preload("res://sim/kit_neuves.gd")
 
 static func spawn_zone(game: Dictionary, z: Dictionary) -> Dictionary:
 	var zone := {"id": D6State.new_id(game), "t": 0.0, "dead": false}
@@ -49,6 +52,8 @@ static func update_zones(game: Dictionary, dt: float) -> void:
 				_piege(game, z)
 			"totem":
 				_totem(game, z, dt)
+			"faille":
+				Neuves.zone(game, z) # compétence neuve (étape 4) : réplique, fissure ouverte
 	D6Projectiles.compact(store.zones)
 
 ## Objet lancé en cloche : rend true à l'atterrissage (position posée sur la cible).
@@ -113,6 +118,10 @@ static func _bombe(game: Dictionary, z: Dictionary) -> void:
 	D6Projectiles.destroy_enemy_projectiles_in_circle(game, z.x, z.y, z.r)
 	D6State.emit(game, "explode", {"x": z.x, "y": z.y, "r": z.r, "hero": true, "kind": "bombe"})
 	z.dead = true
+	if z.get("fireDuration") != null:
+		# « Poix ardente » : le cercle du souffle brûle, au rythme du Brasier d'âmes (comme la Nova en feu).
+		var fire: Dictionary = game.tuning.skills.brasier
+		spawn_zone(game, {"kind": "brasier", "x": z.x, "y": z.y, "r": z.r, "duration": z.fireDuration, "tick": fire.tick, "tickT": 0.0, "burnDps": z.fireDps, "burnRefresh": fire.burnRefresh})
 
 ## Piège : s'arme, puis se referme sur le premier ennemi qui entre (immobilise : étourdi).
 static func _piege(game: Dictionary, z: Dictionary) -> void:

@@ -70,7 +70,7 @@ static func form_of(game: Dictionary):
 ## se relance pas, et rien ne remplit la jauge (coups, esquive parfaite, procs).
 static func acting(game: Dictionary) -> bool:
 	var p: Dictionary = game.player
-	return p.state == "super" or p.get("ult") != null or not game.allies.is_empty()
+	return p.state == "super" or p.get("ult") != null or Meute.any_hound(game) # un leurre n'est pas un ultime
 
 ## Un pas des ultimes qui durent (chaque pas de simulation, après le héros) : minuterie de la
 ## forme, vie et combat des limiers ; à la mort du héros, tout s'arrête.
@@ -124,7 +124,7 @@ static func view(game: Dictionary) -> Dictionary:
 		left = u.t
 		frac = u.t / u.max
 	for h in game.allies:
-		if not h.dead and h.life > left:
+		if not h.dead and h.kind == Meute.HOUND and h.life > left:
 			left = h.life
 			frac = h.life / h.lifeMax
 	if left <= 0.0 and p.state == "super" and p.get("channel") == null: # pas une compétence `canal`
@@ -136,7 +136,7 @@ static func view(game: Dictionary) -> Dictionary:
 		"name": s.name, "icon": D6Js.nz(s.get("icon"), "super"), "text": D6Js.nz(s.get("text"), ""),
 		"charge": p.superCharge, "ready": p.superCharge >= 1.0 and not acting(game),
 		"holdFrac": D6Geo.clampv(p.superHold / s.holdTime, 0.0, 1.0),
-		"active": acting(game), "timeFrac": frac, "timeLeft": left, "allies": float(game.allies.size()),
+		"active": acting(game), "timeFrac": frac, "timeLeft": left, "allies": Meute.hounds(game),
 	}
 
 # ---------------------------------------------------------------- anciens Supers (réserve)

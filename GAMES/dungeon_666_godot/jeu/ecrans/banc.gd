@@ -4,10 +4,13 @@ extends Node
 ##   titre · benediction · butin · marchand · evenement · coffre · fontaine · mort · mort_arene
 ##   victoire · pause · abandon · labo · feel
 ## D666_VUES : « toutes » monte aussi le monde, le HUD… (défaut : les écrans seuls, sur fond nu).
+## D666_RICHE=1 : le profil d'essai est celui d'un joueur avancé (jeu/ville/profil_essai.gd), qui a
+##   des points de compétence à dépenser (la pastille du bouton d'entrée en Ville, à l'écran titre).
 ##   D666_ECRAN=marchand <godot> --path . --script res://outils/capture.gd -- res://jeu/ecrans/banc.tscn <sortie.png> 120
 
 const App = preload("res://jeu/ecrans/banc_app.gd")
 const Scenes = preload("res://jeu/ecrans/banc_scenes.gd")
+const ProfilEssai = preload("res://jeu/ville/profil_essai.gd")
 const DONNEES := "user://essais_ecrans"
 const GRAINE := 7.0
 const OR_DU_MARCHAND := 60.0
@@ -28,6 +31,8 @@ func _ready() -> void:
 	if OS.get_environment("D666_DONNEES") == DONNEES:
 		for fichier in ["profil.json", "profil.json.bak", "reglages_jeu.json", "reglages_jeu.json.bak"]:
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(DONNEES.path_join(fichier)))
+	if OS.get_environment("D666_RICHE") == "1":
+		ProfilEssai.ecrire(ProfilEssai.riche(D6Data.create_tuning()))
 	if OS.get_environment("D666_ECRAN") != "":
 		_voulu = OS.get_environment("D666_ECRAN")
 	app = App.new()

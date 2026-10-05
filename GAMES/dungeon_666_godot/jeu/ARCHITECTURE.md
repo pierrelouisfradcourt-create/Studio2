@@ -19,7 +19,7 @@ Principal (Node)            jeu/principal.gd     flux titre → Ville → descen
 │       │   ├─ Piliers      jeu/monde/piliers.gd     un nœud par pilier, dessiné une fois par salle
 │       │   ├─ Barrieres    jeu/monde/barrieres.gd   un nœud par obstacle BAS (palissade), dessiné une fois par salle
 │       │   ├─ Ennemis                               un nœud par corps
-│       │   ├─ Limiers      jeu/monde/creatures/limiers.gd  les alliés de la Meute des Limbes : un nœud par limier
+│       │   ├─ Limiers      jeu/monde/creatures/limiers.gd  les ALLIÉS (game.allies) : limiers de la Meute, leurre d'os — un nœud chacun
 │       │   ├─ Heros                                 devant tout, sauf derrière un pilier au nord duquel il est
 │       │   └─ Objets       jeu/monde/objets.gd      relais : l'objet d'interaction, les ramassables masqués
 │       └─ Statuts                                   barres de vie, statuts : jamais cachés
@@ -116,10 +116,61 @@ C'est le SEUL point d'entrée d'une vue. Elle y garde `app` et `partie`, et s'ab
   puis les `superTick` de l'ancien Super ; pendant son geste `player.channel` porte ses réglages.
 - Améliorations exclusives : elles réutilisent les événements existants (`explode` de sorte `lance`,
   zone `brasier` sous la Nova, `hook` absent pour la Chaîne traversante…) ; aucun effet neuf.
-- Grimoire : `jeu/ville/onglet_grimoire.gd` (`_dessiner_arbre`, une carte par nœud, clé `arbre:<nœud>`,
-  actions `plus` et `choix:<amélioration>` ; « Tout rendre » : clé `arbre:rendre`, deux appuis).
-  Ville : l'onglet devient `REPERE_POINTS` quand des points attendent. Bancs : `D666_ARBRE`
-  (`jeu/interface/banc_accueil.gd`), `D666_XP` (`jeu/ecrans/banc.gd`).
+- Grimoire = l'écran de l'arbre (`jeu/ville/onglet_grimoire.gd`, détail et choix : `design/COMBAT_V3.md`,
+  « Écran de l'arbre »). Trois colonnes : points, niveau, expérience et l'arc des emplacements
+  (`arc_emplacements.gd`) ; l'arbre dessiné (`arbre.gd` : mise en page seule pour n'importe quel nombre
+  de nœuds par étage, un bouton nu par nœud — clé `noeud:<id>` — ; `arbre_dessin.gd` : tout l'arbre en
+  UN lot de triangles ; `icones_arbre.gd` : formes et pictogrammes des passifs) ; le panneau de détail
+  (`panneau_noeud.gd` : achat — clé `arbre:<nœud>`, action `plus` —, améliorations — clé
+  `arbre:<nœud>:<amélioration>`, action `choix:<amélioration>`, deux appuis —, « Placer en N » — clé
+  `placer:<nœud>:<n>` —, « Vider » — clé `slots:<n>`). « Tout rendre » : `%Rendre`, clé `arbre:rendre`,
+  deux appuis. Pour un essai : `page.arbre()`, `page.panneau()`, `page.selectionner(id)`,
+  `page.selection()`, `arbre.bouton(id)`, `arbre.boite(id)`, `arbre.etat_de(id)`,
+  `arbre.etats_des_choix(id)` ; `page.vue_forcee` remplace `tree_view` (arbre factice :
+  `jeu/ville/arbre_factice.gd`). À l'ouverture, le nœud choisi est le premier où un point peut être
+  dépensé : son bouton d'achat existe sans rien toucher (le parcours s'en sert).
+- La Ville dit à chaque onglet la place qu'il a (`tenir_dans(place)`) et où rendre le focus quand un
+  bouton a disparu (`repli_du_focus()`) ; dans le Grimoire la note de pied s'efface. L'onglet Grimoire
+  prend le texte `REPERE_POINTS` et une pastille au nombre de points (`jeu/theme/pastille.gd`,
+  `ville.pastille()`) ; la consigne de l'accueil « Dépense ton point au Grimoire » est une consigne de
+  VILLE (`Consignes.VILLE`, hors de la table du HUD), retenue dans `reglages.accueil.acquis`.
+- Retours de progression : barre d'expérience `jeu/interface/barre_xp.gd` (HUD sous la vie, écran de
+  mort, Grimoire) ; bandeau de niveau `jeu/interface/niveau.gd` (HUD, `levelUp` et `treePoint`) ;
+  écran titre : pastille sur « Entrer dans Dité ». Un bouton d'emplacement montre aussi
+  `D6Loadout.slot_state` (`etat_commandes.gd` : `charge`, `duree` ; `commande.gd` : anneau d'or qui se
+  remplit, anneau froid qui se vide).
+- Bancs : `jeu/ville/banc_arbre.tscn` (`D666_CLASSE`, `D666_ARBRE`, `D666_NOEUD`, `D666_GESTE`,
+  `D666_FACTICE`, `D666_ONGLET`), `D666_CONSIGNE=niveau` (`jeu/interface/banc_accueil.gd`), `D666_XP` et
+  `D666_RICHE` (`jeu/ecrans/banc.gd`).
+
+## Compétences neuves (combat V3, étape 4)
+
+- `D6Loadout.slot_view(game, i)` garde EXACTEMENT sa forme (un test de règles la fige). Ce que les
+  compétences neuves ajoutent se lit par `D6Loadout.slot_state(game, i)` = `{charging, chargeFrac,
+  active, activeFrac}` — toujours cette forme, tout à zéro pour une action sans état ou un
+  emplacement vide : `charging` / `chargeFrac` (0..1) : le Trait de Nemrod se BANDE sur ce bouton ;
+  `active` / `activeFrac` (part qui reste) : l'effet de l'action dure (sillage, garde, parade).
+- Pictogrammes neufs (`icon` des données, `jeu/interface/icones.gd`) : `sillage`, `stigmate`,
+  `riposte`, `faille`, `hachette`, `garde`, `proie`, `leurre`, `trait`.
+- Dans le monde, tout est LU : `jeu/monde/competences.gd` (calque `Competences`, au-dessus des
+  créatures, sous les tirs) dessine les marques des ennemis (`e.stigmate`, `e.proie` : `{t, max, …}`)
+  et ce que le héros porte (`player.parry`, `player.guard`, `player.sillage` : `{t, def, …}` ; arc
+  bandé : `slot_state`) ; `tirs.gd` les tirs neufs (`kind` : `stigmate`, `marque`, `renvoi`, `trait`,
+  `hache` — celle-ci tourne, `phase` `out` | `spin` | `back`) ; `zones_heros.gd` la zone `faille`
+  (`{angle, length, width, open, aftershock, shaken}`) et les braises (zone `brasier` marquée
+  `trail`) ; `creatures/limiers.gd` le leurre (allié de `kind` `leurre`, champ `lure.range`).
+- Événements neufs : `parryStart {x, y, angle, arc, range, window}`, `parry {x, y, srcX, srcY, r}`,
+  `parryEnd`, `marked {id, x, y, mark ("stigmate" | "proie"), time}`, `markJump {x0, y0, x1, y1}`,
+  `sillageEnd`, `fissure {x, y, angle, length, width}`, `axeTurn {x, y, spin}`, `axeCatch`,
+  `guardStart {x, y, time, arc}`, `guardBlock {x, y, srcX, srcY, amount}`, `guardEnd`, `traitShot {x,
+  y, angle, charge, full}`. Événements existants réutilisés : `skill {skill: "sceau" | "riposte" |
+  "faille" | "hachette" | "proie" | "trait"}`, `gadget {gadget: "sillage" | "garde" | "leurre", r}`,
+  `explode {hero, kind: "stigmate" | "sillage" | "garde" | "leurre"}`, `kitPulse {kind: "hache" |
+  "proie"}`, `allySpawn {kind: "leurre"}` et les autres événements d'alliés.
+  Effets : `jeu/effets/competences.gd` (forme neuve `fissure` dans `formes.gd`) ; sons : `jeu/son/routage.gd`.
+- `D6Player.ultimate_view(game).allies` ne compte que les limiers : un leurre n'est pas un ultime.
+- Banc : `jeu/essai/competences.tscn` (`D666_CLASSE`, `D666_CHOIX`), captures dans
+  `_dev/captures/lot_v3_competences/`.
 
 ## Signaux
 

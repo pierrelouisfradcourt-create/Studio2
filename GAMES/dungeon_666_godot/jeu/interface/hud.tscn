@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://jeu/interface/hud.gd" id="1"]
 [ext_resource type="Script" path="res://jeu/interface/jauge.gd" id="2"]
@@ -15,6 +15,8 @@
 [ext_resource type="Script" path="res://jeu/theme/filet.gd" id="13"]
 [ext_resource type="PackedScene" path="res://jeu/interface/accueil.tscn" id="14"]
 [ext_resource type="Script" path="res://jeu/interface/reperes.gd" id="15"]
+[ext_resource type="Script" path="res://jeu/interface/barre_xp.gd" id="16"]
+[ext_resource type="Script" path="res://jeu/interface/niveau.gd" id="17"]
 
 [node name="Hud" type="CanvasLayer"]
 layer = 10
@@ -165,6 +167,28 @@ theme_type_variation = &"HudVie"
 text = "100 / 100"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Experience" type="HBoxContainer" parent="Racine/Marges/Zone/Gauche"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="NiveauClasse" type="Label" parent="Racine/Marges/Zone/Gauche/Experience"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HudDoux"
+text = "NIV. 1"
+
+[node name="BarreXp" type="Control" parent="Racine/Marges/Zone/Gauche/Experience"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(60, 4)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("16")
 
 [node name="Benedictions" type="Control" parent="Racine/Marges/Zone/Gauche"]
 unique_name_in_owner = true
@@ -335,6 +359,24 @@ layout_mode = 2
 theme_type_variation = &"HudBanniereSous"
 text = "Limbes · section 1"
 horizontal_alignment = 1
+
+[node name="Niveau" type="HBoxContainer" parent="Racine/Marges/Zone"]
+unique_name_in_owner = true
+layout_mode = 0
+mouse_filter = 2
+theme_override_constants/separation = 8
+script = ExtResource("17")
+
+[node name="Titre" type="Label" parent="Racine/Marges/Zone/Niveau"]
+layout_mode = 2
+theme_type_variation = &"HudOr"
+text = "NIVEAU 2"
+
+[node name="Sous" type="Label" parent="Racine/Marges/Zone/Niveau"]
+layout_mode = 2
+size_flags_vertical = 8
+theme_type_variation = &"HudDoux"
+text = "+1 point"
 
 [node name="Accueil" parent="Racine/Marges/Zone" instance=ExtResource("14")]
 unique_name_in_owner = true

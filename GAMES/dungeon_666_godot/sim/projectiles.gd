@@ -30,6 +30,7 @@ static func _source_of(game: Dictionary, id):
 static func _hurt_player_for(game: Dictionary, source_id, amount: float, src: Dictionary) -> bool:
 	var p: Dictionary = game.player
 	var hp0: float = p.hp
+	src.sourceId = source_id # qui a porté le coup : lu par la riposte et la garde (sim/kit_neuves.gd)
 	var landed: bool = D6Combat.damage_player(game, amount, src)
 	if landed and D6Js.truthy(source_id):
 		D6FoeElites.foe_dealt(game, _source_of(game, source_id), hp0 - p.hp)

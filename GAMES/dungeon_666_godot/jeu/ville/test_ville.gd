@@ -14,6 +14,11 @@ const Principal = preload("res://jeu/principal.gd")
 const Profil = preload("res://jeu/profil.gd")
 const ProfilEssai = preload("res://jeu/ville/profil_essai.gd")
 const PanneauLabo = preload("res://jeu/ville/panneau_labo.tscn")
+const Factice = preload("res://jeu/ville/arbre_factice.gd")
+const BancArbre = preload("res://jeu/ville/banc_arbre.gd")
+const Consignes = preload("res://jeu/interface/consignes.gd")
+## Les deux fenêtres où l'écran de l'arbre est éprouvé : le bureau, un petit téléphone en paysage.
+const FORMATS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(844, 390)]
 
 var app: Node
 var ville: Node
@@ -58,7 +63,11 @@ func _derouler() -> void:
 	await _sanctuaire()
 	await _sans_ames()
 	await _emplacements()
+	await _reperes()
 	await _arbre()
+	await _medaillons()
+	await _manette()
+	await _mise_en_page()
 	await _coffre()
 	await _labo()
 	await _doigt()
@@ -108,6 +117,33 @@ func _texte_commence(debut: String) -> bool:
 			return true
 	return false
 
+## Le Grimoire, et ce que les règles rendent de l'arbre de la classe portée.
+func _grimoire() -> Node:
+	return ville.page("grimoire")
+
+func _visible(c: Control) -> bool:
+	return c != null and c.is_visible_in_tree()
+
+func _vue() -> Dictionary:
+	return D6Profile.tree_view(app.profil, app.contenu, app.profil.loadout.classId)
+
+func _noeuds() -> Array:
+	var tous: Array = []
+	for etage in _vue().tiers:
+		tous.append_array(etage.nodes)
+	return tous
+
+func _noeuds_de_sorte(sorte: String) -> Array:
+	return _noeuds().filter(func(n: Dictionary) -> bool: return n.kind == sorte)
+
+func _noeud(id: String) -> Dictionary:
+	return _noeuds().filter(func(n: Dictionary) -> bool: return n.id == id)[0]
+
+## Touche le nœud `id` de l'arbre comme un joueur : son médaillon est un bouton, le panneau le montre.
+func _choisir(id: String) -> void:
+	_appuyer(_grimoire().arbre().bouton(id))
+	await _images()
+
 func _ouvrir(id: String) -> void:
 	ville.ouvrir_onglet(id)
 	await _images()
@@ -138,6 +174,8 @@ func _deplacement() -> void:
 	await _ouvrir("grimoire")
 	var c: Dictionary = app.contenu.classes[app.profil.loadout.classId]
 	var le_sien: Dictionary = app.contenu.moves[c.move]
+	# Écran de l'arbre : le déplacement est le nœud en écusson de l'arbre ; on le touche, le panneau le décrit.
+	await _choisir(_noeuds_de_sorte("move")[0].id)
 	_ok(_texte_commence("Déplacement · %s" % c.name) and _texte_visible(le_sien.name) and _texte_visible(le_sien.text), "Grimoire : le déplacement de la classe (« %s ») est nommé et décrit" % le_sien.name)
 
 func _classe() -> void:
@@ -195,58 +233,93 @@ func _sans_ames() -> void:
 	await _ouvrir("grimoire")
 	var competence: String = app.contenu.classes[app.profil.loadout.classId].skills[1]
 	var cle := "skills:%s" % competence
-	# Combat V3, étape 3 : une compétence ne s'achète plus en Âmes ; verrouillée, sa carte renvoie à l'arbre.
-	var deblocage := _bouton(cle, "verrou")
-	_ok(deblocage != null and deblocage.disabled and deblocage.text == "À débloquer dans l'arbre", "%s, verrouillée : bouton grisé « À débloquer dans l'arbre », sans prix en Âmes" % competence)
+	# Combat V3, écran de l'arbre : une compétence ne s'achète plus en Âmes ; verrouillée, c'est son
+	# nœud qui la débloque (« Apprendre », grisé tant que son étage est fermé), et elle ne se place pas.
+	await _choisir(competence)
+	var deblocage := _bouton("arbre:%s" % competence, "plus")
+	var prix_en_ames := _grimoire().find_children("*", "Label", true, false).any(func(l: Label) -> bool: return l.is_visible_in_tree() and l.text.contains("◆"))
+	_ok(deblocage != null and deblocage.disabled and deblocage.text == "Apprendre" and not prix_en_ames, "%s, verrouillée : bouton grisé « Apprendre » dans l'arbre, sans prix en Âmes" % competence)
+	_ok(not _visible(_bouton("placer:%s:0" % competence, "placer")), "…et aucun « Placer en » tant qu'elle n'est pas acquise")
 	_ok(_bouton(cle, "debloquer") == null or _bouton(cle, "debloquer") == deblocage, "aucun bouton « Débloquer » en Âmes sur une compétence")
 	# Une opération refusée par les règles (compétence non possédée) : la raison s'affiche, rien ne change.
-	ville.page("grimoire").operation_demandee.emit(cle, "select_slot", [0.0, competence])
+	ville.page("grimoire").operation_demandee.emit("placer:%s:0" % competence, "select_slot", [0.0, competence])
 	await _images()
 	_ok(_instantane() == avant, "une opération refusée ne change pas le profil")
-	_ok(_texte_visible("Indisponible"), "le refus affiche sa raison sur la carte (« Indisponible »)")
+	_ok(_texte_visible("Indisponible"), "le refus affiche sa raison sur le panneau du nœud (« Indisponible »)")
 	app.profil.souls = 50.0
 	app.profil_change.emit()
 	await _images()
 
-## Combat V3, étape 3 : l'ARBRE DE COMPÉTENCES au Grimoire. Niveau, expérience, points ; une carte
-## par nœud avec son « + » (grisé avec sa raison) ; les deux améliorations exclusives au rang du
-## choix ; « Tout rendre » en deux appuis. Tout passe par les boutons (tree_buy, tree_choose, tree_respec).
+## Combat V3, écran de l'arbre : l'ARBRE DE COMPÉTENCES au Grimoire. Niveau, expérience, points ;
+## un médaillon par nœud, dont le panneau porte « Apprendre » / « Améliorer » (grisé avec sa raison) ;
+## les deux améliorations exclusives au rang du choix, prises en DEUX appuis (confirmation) ;
+## « Tout rendre » en deux appuis. Tout passe par les boutons (tree_buy, tree_choose, tree_respec).
 func _arbre() -> void:
 	print("[arbre]")
 	await _ouvrir("grimoire")
 	var classe: String = app.profil.loadout.classId
 	var c: Dictionary = app.contenu.classes[classe]
 	var depart: String = c.skills[0]
-	var v: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
+	var arbre: Control = _grimoire().arbre()
+	var v: Dictionary = _vue()
+	var pastille: Control = _grimoire().get_node("%PastillePoints")
 	_ok(v.points > 0.0 and _texte_visible("Niveau %s / %s" % [D6Js.num_str(v.level), D6Js.num_str(v.maxLevel)]), "le niveau de la classe est écrit (%s)" % D6Js.num_str(v.level))
-	_ok(_texte_commence("● %s point" % D6Js.num_str(v.points)), "les points à dépenser sont écrits (%s)" % D6Js.num_str(v.points))
+	_ok(pastille.is_visible_in_tree() and pastille.nombre == int(v.points) and _texte_commence("point"), "les points à dépenser sont écrits (%s)" % D6Js.num_str(v.points))
 	_ok(ville.bouton_onglet("grimoire").text == ville.REPERE_POINTS, "l'onglet Grimoire porte le repère des points à dépenser")
 	for etage in v.tiers:
-		_ok(_texte_commence("Étage %s" % etage.name), "l'étage « %s » est titré" % etage.name)
+		_ok(_texte_visible(String(etage.name).to_upper()), "l'étage « %s » est titré" % etage.name)
 		for n in etage.nodes:
+			await _choisir(n.id)
 			var plus := _bouton("arbre:%s" % n.id, "plus")
-			_ok(plus != null and plus.disabled == (not n.canBuy), "%s : un « + », %s" % [n.id, "offert" if n.canBuy else "grisé (%s)" % n.reason])
+			_ok(_visible(arbre.bouton(n.id)) and _visible(plus) and plus.disabled == (not n.canBuy), "%s : un médaillon, et son bouton d'achat %s" % [n.id, "offert" if n.canBuy else "grisé (%s)" % n.reason])
+	await _choisir(c.skills[1])
 	var ferme := _bouton("arbre:%s" % c.skills[1], "plus")
-	_ok(ferme != null and ferme.disabled and _texte_commence("Étage %s fermé" % v.tiers[1].name), "étage fermé : « + » grisé, la carte dit pourquoi")
+	_ok(ferme != null and ferme.disabled and _texte_commence("Étage %s fermé" % v.tiers[1].name), "étage fermé : achat grisé, le panneau dit pourquoi")
+	await _choisir(depart)
 	var premier: String = v.tiers[0].nodes.filter(func(n: Dictionary) -> bool: return n.id == depart)[0].choices[0].id
 	_ok(_bouton("arbre:%s:%s" % [depart, premier], "choix:%s" % premier) == null, "avant le rang du choix, aucune amélioration ne se prend")
-	# « + » jusqu'au rang du choix : le rang monte, les points descendent, les deux améliorations s'offrent.
+	# « Améliorer » jusqu'au rang du choix : le rang monte, les points descendent, les deux améliorations s'offrent.
 	for i in int(v.choiceRank) - 1:
-		_ok(_appuyer(_bouton("arbre:%s" % depart, "plus")), "« + » sur %s s'appuie" % depart)
+		_ok(_appuyer(_bouton("arbre:%s" % depart, "plus")), "« Améliorer » sur %s s'appuie" % depart)
 		await _images()
-	var apres: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
-	_ok(apres.points == v.points - (v.choiceRank - 1.0) and _texte_commence("Compétence · rang %s / " % D6Js.num_str(v.choiceRank)), "rang %s : écrit sur la carte, un point par rang" % D6Js.num_str(v.choiceRank))
-	var choix: Array = apres.tiers[0].nodes.filter(func(n: Dictionary) -> bool: return n.id == depart)[0].choices
-	var a := _bouton("arbre:%s:%s" % [depart, choix[0].id], "choix:%s" % choix[0].id)
-	var b := _bouton("arbre:%s:%s" % [depart, choix[1].id], "choix:%s" % choix[1].id)
+	var apres: Dictionary = _vue()
+	_ok(apres.points == v.points - (v.choiceRank - 1.0) and _texte_visible("Rang %s / %s" % [D6Js.num_str(v.choiceRank), D6Js.num_str(_noeud(depart).maxRank)]), "rang %s : écrit sur le panneau, un point par rang" % D6Js.num_str(v.choiceRank))
+	await _choix_exclusif(classe, depart)
+	await _tout_rendre(classe, v)
+
+## Les deux améliorations exclusives : offertes au rang du choix ; un premier appui demande
+## confirmation (rien n'est pris), le second prend ; l'autre est alors barrée.
+func _choix_exclusif(classe: String, depart: String) -> void:
+	var arbre: Control = _grimoire().arbre()
+	var choix: Array = _noeud(depart).choices
+	var cles: Array = choix.map(func(ch: Dictionary) -> String: return "arbre:%s:%s" % [depart, ch.id])
+	var a := _bouton(cles[0], "choix:%s" % choix[0].id)
+	var b := _bouton(cles[1], "choix:%s" % choix[1].id)
 	_ok(a != null and b != null and not a.disabled and not b.disabled, "les deux améliorations exclusives sont offertes")
-	_ok(_appuyer(a), "« %s » se prend" % choix[0].name)
+	_ok(arbre.etats_des_choix(depart) == ["offerte", "offerte"], "…et dessinées offertes sous le médaillon")
+	var avant := _instantane()
+	_ok(_appuyer(a), "« Choisir » %s s'appuie" % choix[0].name)
+	await _images()
+	a = _bouton(cles[0], "choix:%s" % choix[0].id)
+	_ok(_instantane() == avant and a != null and a.text == "Confirmer" and _texte_visible("Ce choix est définitif, sauf à tout rendre."), "premier appui : rien n'est pris, le bouton devient « Confirmer » et dit que le choix est définitif")
+	await _choisir(app.contenu.classes[classe].skills[1])
+	await _choisir(depart)
+	a = _bouton(cles[0], "choix:%s" % choix[0].id)
+	_ok(_instantane() == avant and a != null and a.text == "Choisir", "regarder un autre nœud oublie la confirmation en attente")
+	_appuyer(a)
+	await _images()
+	_ok(_appuyer(_bouton(cles[0], "choix:%s" % choix[0].id)), "« %s » se prend (second appui)" % choix[0].name)
 	await _images()
 	_ok(app.profil.tree[classe].choices.get(depart) == choix[0].id, "elle est au profil")
-	_ok(_bouton("arbre:%s:%s" % [depart, choix[0].id], "choix:%s" % choix[0].id) == null and _texte_commence("● %s" % choix[0].name), "prise : marquée, son bouton disparaît")
-	b = _bouton("arbre:%s:%s" % [depart, choix[1].id], "choix:%s" % choix[1].id)
-	_ok(b != null and b.disabled, "l'autre est grisée : c'est l'une OU l'autre")
-	# Tout rendre : deux appuis, de l'or, tous les points.
+	_ok(_bouton(cles[0], "choix:%s" % choix[0].id) == null and _texte_commence("● %s" % choix[0].name), "prise : marquée, son bouton disparaît")
+	b = _bouton(cles[1], "choix:%s" % choix[1].id)
+	_ok(b == null and _texte_commence("✕ %s" % choix[1].name) and arbre.etats_des_choix(depart) == ["prise", "barree"], "l'autre est barrée, sans bouton : c'est l'une OU l'autre")
+	var forcee: Dictionary = app.operation_ville("tree_choose", [classe, depart, choix[1].id])
+	_ok(not D6Js.truthy(forcee.get("ok")) and app.profil.tree[classe].choices.get(depart) == choix[0].id, "…et, forcée, les règles la refusent (%s)" % forcee.get("reason"))
+	await _images()
+
+## Tout rendre : deux appuis, de l'or, tous les points.
+func _tout_rendre(classe: String, v: Dictionary) -> void:
 	var rendre: Button = ville.page("grimoire").get_node("%Rendre")
 	var bourse: float = app.profil.gold
 	var prix: float = D6Profile.tree_view(app.profil, app.contenu, classe).respecCost
@@ -261,42 +334,47 @@ func _arbre() -> void:
 	_ok(rendre.disabled, "plus rien à rendre : le bouton est grisé")
 
 ## Combat V3 : le Grimoire place les actions dans les TROIS emplacements (opération select_slot).
-## On touche une compétence PUIS un emplacement, ou l'inverse ; rien n'est écrit au premier toucher.
+## On choisit une compétence de l'arbre PUIS « Placer en N », ou un emplacement de l'arc puis la
+## compétence ; rien n'est écrit au premier toucher.
 func _emplacements() -> void:
 	print("[emplacements]")
 	await _ouvrir("grimoire")
 	var avant: Array = app.profil.loadout.slots.duplicate()
 	_ok(avant.size() == 3 and avant[0] != null and avant[1] != null, "le profil porte trois emplacements (%s)" % str(avant))
 	var premiere: String = avant[0]
-	var cle := "%s:%s" % ["skills" if app.contenu.skills.has(premiere) else "gadgets", premiere]
 	var arc: Control = ville.page("grimoire").get_node("%Arc")
 	_ok(_bouton("slots:0", "emplacement") == arc.bouton(0) and _bouton("slots:2", "emplacement") == arc.bouton(2), "les trois emplacements sont dessinés en arc, chacun est un bouton")
+	await _choisir(premiere)
 	_ok(_texte_visible("● EMPLACEMENT 1") or _texte_visible("● Emplacement 1"), "l'action placée dans l'emplacement 1 est marquée « ● Emplacement 1 »")
 	# 1. Un emplacement d'abord : l'action qui y est déjà ne s'y replace pas.
 	var instantane := _instantane()
 	_ok(_appuyer(_bouton("slots:0", "emplacement")), "l'emplacement 1 se touche sur l'arc")
 	await _images()
 	_ok(_instantane() == instantane and arc.bouton(0).button_pressed, "toucher un emplacement ne change pas le profil : il attend une compétence")
-	var deja := _bouton(cle, "")
-	_ok(deja != null and deja.disabled and deja.text == "Déjà dans l'emplacement 1", "l'action placée dans l'emplacement 1 : son bouton « Déjà dans l'emplacement 1 » est grisé")
-	_ok(_appuyer(_bouton("slots:0", "ligne")), "retoucher l'emplacement 1 (dans la légende) l'oublie")
+	_ok(_visible(_bouton("slots:0", "vider")) and _texte_visible("Emplacement 1") and _texte_visible(_noeud(premiere).name), "le panneau montre l'emplacement : ce qu'il porte, et « Vider »")
+	_grimoire().selectionner(premiere) # le focus passe sur son nœud, sans appui
 	await _images()
-	_ok(not arc.bouton(0).button_pressed and _bouton(cle, "choisir") != null, "plus rien n'est choisi : la carte propose « Choisir »")
-	# 2. Une compétence d'abord, puis l'emplacement 3 : elle y va (échange).
-	_ok(_appuyer(_bouton(cle, "choisir")), "« Choisir » la compétence s'appuie")
+	var deja := _bouton("placer:%s:0" % premiere, "placer")
+	_ok(_visible(deja) and deja.disabled and deja.tooltip_text == "Déjà dans l'emplacement 1", "l'action placée dans l'emplacement 1 : son bouton « Placer en 1 » est grisé (« Déjà dans l'emplacement 1 »)")
+	_ok(_appuyer(arc.bouton(0)), "retoucher l'emplacement 1 (sur l'arc) l'oublie")
 	await _images()
-	_ok(_instantane() == instantane and _bouton(cle, "choisir").text.begins_with("Choisie"), "choisir une compétence ne change pas le profil : elle attend un emplacement (« %s »)" % _bouton(cle, "choisir").text)
-	_ok(_appuyer(_bouton("slots:2", "emplacement")), "…et l'emplacement 3 se touche")
+	_ok(not arc.bouton(0).button_pressed and not _visible(_bouton("slots:0", "vider")) and _visible(_bouton("placer:%s:1" % premiere, "placer")), "plus rien n'est choisi : le panneau propose de nouveau « Placer en »")
+	# 2. Une compétence d'abord, puis « Placer en 3 » : elle y va (échange).
+	await _choisir(premiere)
+	_ok(_instantane() == instantane and _visible(_bouton("placer:%s:2" % premiere, "placer")), "choisir une compétence ne change pas le profil : le panneau offre « Placer en 1 / 2 / 3 »")
+	_ok(_appuyer(_bouton("placer:%s:2" % premiere, "placer")), "…et « Placer en 3 » s'appuie")
 	await _images()
 	_ok(app.profil.loadout.slots == [avant[2], avant[1], premiere], "compétence puis emplacement 3 : les emplacements 1 et 3 s'échangent (%s)" % str(app.profil.loadout.slots))
-	_ok(_bouton(cle, "choisir") != null and _bouton(cle, "choisir").text == "Choisir" and not arc.bouton(2).button_pressed, "le choix est fini : plus rien n'attend")
+	_ok(_bouton("placer:%s:2" % premiere, "placer").disabled and _texte_visible("● Emplacement 3") and not arc.bouton(2).button_pressed, "le choix est fini : plus rien n'attend")
+	_appuyer(arc.bouton(2))
+	await _images()
 	_ok(_appuyer(_bouton("slots:2", "vider")), "l'emplacement 3, rempli, a un bouton « Vider »")
 	await _images()
 	_ok(app.profil.loadout.slots[2] == null and _bouton("slots:2", "vider").disabled, "« Vider » : l'emplacement 3 est vide, et son bouton est grisé")
 	# 3. L'inverse : l'emplacement 1 d'abord, puis la compétence.
-	_ok(_appuyer(_bouton("slots:0", "ligne")), "l'emplacement 1 (vide) se touche dans la légende")
+	_ok(_appuyer(arc.bouton(0)), "l'emplacement 1 (vide) se touche sur l'arc")
 	await _images()
-	_ok(_appuyer(_bouton(cle, "placer")), "l'action, plus placée nulle part, propose « Placer dans l'emplacement 1 »")
+	_ok(_appuyer(_grimoire().arbre().bouton(premiere)), "l'action, plus placée nulle part, se touche dans l'arbre")
 	await _images()
 	_ok(app.profil.loadout.slots[0] == premiere, "…elle y est")
 	var relu: Dictionary = Profil.charger(app.contenu)
@@ -304,11 +382,214 @@ func _emplacements() -> void:
 	var jeu: Dictionary = app.operation_ville("select_slot", [1.0, avant[1]])
 	_ok(jeu.get("ok") == true, "le second emplacement est remis")
 	# 4. Un choix à moitié fait ne survit pas à un changement d'onglet.
-	_appuyer(_bouton(cle, "choisir"))
+	_appuyer(arc.bouton(1))
 	await _images()
 	await _ouvrir("classe")
 	await _ouvrir("grimoire")
-	_ok(_bouton(cle, "choisir") != null and _bouton(cle, "choisir").text == "Choisir", "changer d'onglet oublie un choix à moitié fait")
+	_ok(not arc.bouton(1).button_pressed and not _visible(_bouton("slots:1", "vider")), "changer d'onglet oublie un choix à moitié fait")
+
+# ---------------------------------------------------------------- écran de l'arbre (vérifications ajoutées)
+
+## Repères des points à dépenser : la pastille de l'onglet Grimoire dit combien ; la consigne de
+## l'accueil se montre en Ville (pas dans le Grimoire) tant qu'aucun point n'a été dépensé.
+func _reperes() -> void:
+	print("[repères des points]")
+	await _ouvrir("classe")
+	var points: float = D6Profile.tree_points(app.profil, app.contenu, app.profil.loadout.classId)
+	var consigne: Control = ville.get_node("Racine/Marges/Cadre/Colonne/Consigne")
+	_ok(points >= 2.0 and ville.pastille().is_visible_in_tree() and ville.pastille().nombre == int(points), "l'onglet Grimoire porte une pastille au nombre de points (%s)" % D6Js.num_str(points))
+	_ok(consigne.is_visible_in_tree() and consigne.get_node("Texte").text == "Dépense tes points au Grimoire", "premier point disponible en Ville : la consigne « Dépense tes points au Grimoire »")
+	_ok(Consignes.texte_en_ville("grimoire", 1.0) == "Dépense ton point au Grimoire", "…« ton point » quand il n'y en a qu'un")
+	await _ouvrir("grimoire")
+	_ok(not consigne.is_visible_in_tree(), "dans le Grimoire, la consigne se tait (l'arbre parle)")
+	var depart: String = app.contenu.classes[app.profil.loadout.classId].skills[0]
+	await _choisir(depart)
+	_appuyer(_bouton("arbre:%s" % depart, "plus"))
+	await _images()
+	await _ouvrir("classe")
+	_ok(not consigne.is_visible_in_tree() and app.reglages.accueil.acquis.has("grimoire") and Profil.charger_reglages().accueil.acquis.has("grimoire"), "un point dépensé : la consigne est acquise, retenue sur le disque d'essai, et ne revient pas")
+	_ok(ville.pastille().nombre == int(points) - 1, "la pastille suit les points restants (%d)" % ville.pastille().nombre)
+	app.regler("accueil", {"actif": false, "acquis": []})
+	await _images()
+	app.profil_change.emit()
+	await _images()
+	_ok(not consigne.is_visible_in_tree(), "consignes coupées (réglage de la pause) : elle ne se montre pas")
+	app.regler("accueil", {"actif": true, "acquis": ["grimoire"]})
+	app.operation_ville("tree_respec", [String(app.profil.loadout.classId)])
+	app.profil.gold = 312.0
+	app.profil_change.emit()
+	await _images()
+
+func _etat_attendu(n: Dictionary, ouvert: bool) -> String:
+	if n.next == "":
+		return "max"
+	if n.canBuy:
+		return "achetable"
+	if not ouvert:
+		return "ferme"
+	return "acquis" if n.rank > 0.0 else "attente"
+
+func _choix_attendus(n: Dictionary) -> Array:
+	var une_prise: bool = n.choices.any(func(ch: Dictionary) -> bool: return ch.taken)
+	return n.choices.map(func(ch: Dictionary) -> String: return "prise" if ch.taken else ("barree" if une_prise else ("offerte" if ch.canTake else "attente")))
+
+## Chaque nœud de tree_view a son médaillon, pour les trois classes et cinq états de l'arbre ;
+## l'état DESSINÉ (médaillon, améliorations) est celui que rendent les règles ; un bouton grisé
+## dit la raison des règles ; un refus des règles s'affiche.
+func _medaillons() -> void:
+	print("[médaillons]")
+	await _ouvrir("grimoire")
+	var page := _grimoire()
+	var arbre: Control = page.arbre()
+	var vus := {"noeud": {}, "choix": {}}
+	for classe: String in app.contenu.classes:
+		for etat in ["vide", "points", "choix", "moitie", "plein"]:
+			var p: Dictionary = ProfilEssai.riche(app.contenu)
+			D6Profile.select_class(p, app.contenu, classe)
+			BancArbre.garnir(p, app.contenu, etat)
+			var v: Dictionary = D6Profile.tree_view(p, app.contenu, classe)
+			page.vue_forcee = v
+			app.profil_change.emit()
+			await _images()
+			var faux: Array = []
+			var nombre := 0
+			for etage in v.tiers:
+				for n in etage.nodes:
+					nombre += 1
+					var attendu := _etat_attendu(n, etage.open)
+					vus.noeud[attendu] = true
+					for e in _choix_attendus(n):
+						vus.choix[e] = true
+					if not _visible(arbre.bouton(n.id)) or arbre.etat_de(n.id) != attendu or arbre.etats_des_choix(n.id) != _choix_attendus(n):
+						faux.append(n.id)
+			_ok(faux.is_empty() and arbre.ids().size() == nombre, "%s, arbre « %s » : %d nœuds, %d médaillons, chacun dans l'état rendu par les règles %s" % [classe, etat, nombre, arbre.ids().size(), faux])
+	_ok(vus.noeud.size() == 5 and vus.choix.size() == 4, "les cinq états d'un médaillon %s et les quatre d'une amélioration %s ont tous été dessinés" % [vus.noeud.keys(), vus.choix.keys()])
+	page.vue_forcee = {}
+	app.profil_change.emit()
+	await _images()
+	var classe_portee: String = app.profil.loadout.classId
+	for n in _noeuds().filter(func(x: Dictionary) -> bool: return not x.canBuy).slice(0, 3):
+		await _choisir(n.id)
+		_ok(_texte_visible(n.reason.left(1).to_upper() + n.reason.substr(1)), "%s, grisé : le panneau donne la raison des règles (« %s »)" % [n.id, n.reason])
+	var ferme: Dictionary = _vue().tiers[1].nodes[0]
+	var avant := _instantane()
+	await _choisir(ferme.id)
+	page.operation_demandee.emit("arbre:%s" % ferme.id, "tree_buy", [classe_portee, ferme.id])
+	await _images()
+	var refus: Label = page.get_node("%Refus")
+	_ok(_instantane() == avant and refus.is_visible_in_tree() and refus.text.to_lower() == String(ferme.reason).to_lower(), "un achat refusé par les règles ne change rien et affiche leur raison (« %s »)" % refus.text)
+
+func _touche(code: Key) -> void:
+	for appui in [true, false]:
+		var ev := InputEventKey.new()
+		ev.keycode = code
+		ev.physical_keycode = code
+		ev.pressed = appui
+		root.push_input(ev)
+		await process_frame
+
+func _id_du_focus() -> String:
+	var tenu := root.gui_get_focus_owner()
+	return String(tenu.get_meta("cle", "")).trim_prefix("noeud:") if tenu != null and String(tenu.get_meta("action", "")) == "noeud" else ""
+
+## Clavier et manette : le focus passe de nœud en nœud et les atteint tous ; Entrée sur un nœud
+## mène au bouton du panneau, Entrée encore achète ; Échap revient au nœud sans quitter la Ville.
+func _manette() -> void:
+	print("[clavier, manette]")
+	await _ouvrir("grimoire")
+	var arbre: Control = _grimoire().arbre()
+	var ids: Array = arbre.ids()
+	var vus := {ids[0]: true}
+	var file: Array = [ids[0]]
+	while not file.is_empty():
+		var b: Button = arbre.bouton(file.pop_back())
+		for cote in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+			var voisin := b.get_node_or_null(b.get_focus_neighbor(cote)) if not b.get_focus_neighbor(cote).is_empty() else null
+			var id := String(voisin.get_meta("cle", "")).trim_prefix("noeud:") if voisin != null and String(voisin.get_meta("action", "")) == "noeud" else ""
+			if id != "" and not vus.has(id):
+				vus[id] = true
+				file.append(id)
+	_ok(vus.size() == ids.size(), "de voisin en voisin, le focus atteint chaque nœud (%d sur %d)" % [vus.size(), ids.size()])
+	var etages: Array = _vue().tiers
+	arbre.bouton(etages[0].nodes[0].id).grab_focus()
+	await _images()
+	await _touche(KEY_RIGHT)
+	_ok(_id_du_focus() == etages[0].nodes[1].id and _grimoire().selection() == etages[0].nodes[1].id and _texte_visible(etages[0].nodes[1].name), "flèche droite : le focus passe au nœud voisin, le panneau le montre (%s)" % _id_du_focus())
+	await _touche(KEY_DOWN)
+	_ok(etages[1].nodes.any(func(n: Dictionary) -> bool: return n.id == _id_du_focus()), "flèche bas : le focus descend à l'étage suivant (%s)" % _id_du_focus())
+	await _touche(KEY_UP)
+	await _touche(KEY_LEFT)
+	var premier: Dictionary = etages[0].nodes[0]
+	_ok(_id_du_focus() == premier.id and premier.canBuy, "haut puis gauche : retour au premier nœud (%s), où un point peut être dépensé" % _id_du_focus())
+	await _touche(KEY_ENTER)
+	var achat := _bouton("arbre:%s" % premier.id, "plus")
+	_ok(root.gui_get_focus_owner() == achat, "Entrée sur le nœud : le focus passe au bouton « %s » du panneau" % achat.text)
+	await _touche(KEY_ENTER)
+	await _images()
+	_ok(_noeud(premier.id).rank == premier.rank + 1.0, "Entrée sur le bouton : un rang de plus (%s)" % D6Js.num_str(_noeud(premier.id).rank))
+	await _touche(KEY_ESCAPE)
+	_ok(_id_du_focus() == premier.id and app.ecran == "ville", "Échap depuis le panneau : le focus revient au nœud, la Ville reste ouverte")
+	app.operation_ville("tree_respec", [String(app.profil.loadout.classId)])
+	app.profil.gold = 312.0
+	app.profil_change.emit()
+	await _images()
+
+## Mise en page : les VRAIS arbres des trois classes, puis de 3 à 8 nœuds par étage (arbre factice), en 1280 × 720 et en 844 × 390, aucun
+## médaillon n'en touche un autre et tout tient dans la largeur ; en 1280 × 720 tout l'arbre tient
+## SANS défiler ; en 844 × 390 seul l'arbre défile, de haut en bas, et le panneau reste à l'écran.
+func _mise_en_page() -> void:
+	print("[mise en page]")
+	await _ouvrir("grimoire")
+	var page := _grimoire()
+	var vue: Dictionary = _vue()
+	var depart: Vector2i = root.size
+	for format: Vector2i in FORMATS:
+		root.size = format
+		await _images(4)
+		for classe: String in app.contenu.classes:
+			var p: Dictionary = ProfilEssai.riche(app.contenu)
+			D6Profile.select_class(p, app.contenu, classe)
+			BancArbre.garnir(p, app.contenu, "plein")
+			page.vue_forcee = D6Profile.tree_view(p, app.contenu, classe)
+			app.profil_change.emit()
+			await _images(4)
+			_verifier_la_page(format, "l'arbre du jeu, %s" % classe)
+		for n in range(3, 9):
+			page.vue_forcee = Factice.gonfler(vue, n)
+			app.profil_change.emit()
+			await _images(4)
+			_verifier_la_page(format, "%d nœuds par étage" % n)
+	page.vue_forcee = {}
+	root.size = depart
+	app.profil_change.emit()
+	await _images(4)
+
+func _verifier_la_page(format: Vector2i, cas: String) -> void:
+	var page := _grimoire()
+	var arbre: Control = page.arbre()
+	var defile: ScrollContainer = page.get_node("%Defile")
+	var corps: ScrollContainer = page.get_parent().get_parent()
+	var ecran: Rect2 = root.get_visible_rect().grow(0.5)
+	var ids: Array = arbre.ids()
+	var dedans := Rect2(Vector2.ZERO, arbre.size).grow(0.5)
+	var se_touchent := 0
+	var debordent := 0
+	for i in ids.size():
+		var boite: Rect2 = arbre.boite(ids[i])
+		debordent += 0 if dedans.encloses(boite) and boite.size.y <= defile.size.y else 1
+		for j in range(i + 1, ids.size()):
+			se_touchent += 1 if boite.intersects(arbre.boite(ids[j])) else 0
+	var nom := "%d × %d, %s" % [format.x, format.y, cas]
+	var attendus := 0
+	for etage in page.vue_forcee.tiers:
+		attendus += etage.nodes.size()
+	_ok(ids.size() == attendus and se_touchent == 0 and debordent == 0, "%s : %d médaillons, aucun n'en touche un autre, aucun ne déborde (se touchent %d, débordent %d)" % [nom, ids.size(), se_touchent, debordent])
+	var panneau: Rect2 = page.get_node("%Cadre").get_global_rect()
+	_ok(ecran.encloses(panneau) and ecran.encloses(defile.get_global_rect()) and not corps.get_v_scroll_bar().visible and defile.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED, "%s : le panneau de détail et l'arbre sont à l'écran ; la page ne défile pas, l'arbre jamais de côté" % nom)
+	if format.y < 480:
+		return
+	var tous := ids.all(func(id: String) -> bool: return ecran.encloses(arbre.bouton(id).get_global_rect()))
+	_ok(arbre.rangees() == page.vue_forcee.tiers.size() and not defile.get_v_scroll_bar().visible and tous, "%s : une rangée par étage, tout l'arbre tient sans défiler (%d rangées)" % [nom, arbre.rangees()])
 
 func _objet_du_coffre(emplacement: String, rarete: String = ""):
 	for objet in app.profil.stash:

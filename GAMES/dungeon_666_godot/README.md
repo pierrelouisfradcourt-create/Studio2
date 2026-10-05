@@ -14,9 +14,9 @@ règles). Il ne se compare plus à lui : il se garde lui-même. L'histoire du pa
 | `sim/` | La simulation : les règles. Ne connaît pas Godot (ni nœud, ni scène). Conventions : `PORTAGE.md`. |
 | `data/` | Tous les nombres et tables du jeu, en JSON ordinaire, un fichier par domaine. `validation.json` + `schemas/` : leur garde. |
 | `tests/regles/` | Les tests de règles (une règle, un test), lancés par `tests/regles.gd`. Outils : `tests/harnais.gd`. |
-| `references/` | 91 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
+| `references/` | 100 parties enregistrées par Godot et rejouées : la simulation n'a pas changé sans qu'on le veuille. |
 | `jeu/` | Ce qui se voit, s'entend, se touche (contrat : `jeu/ARCHITECTURE.md`), avec ses tests headless. |
-| `outils/` | `verifier.sh` (l'oracle), `jouabilite.sh` (bots : solvabilité, classes), `donnees.gd` (écriture des données), `capture.gd`. |
+| `outils/` | `verifier.sh` (l'oracle), `jouabilite.sh` (bots : solvabilité, classes), `arbre.sh` (mesure : puissance de l'arbre, valeur de chaque compétence neuve), `donnees.gd` (écriture des données), `capture.gd`. |
 | `parite/` | Héritage : les outils de comparaison au web, plus lancés (`comparer.gd` sert encore). |
 | `addons/studio_kit/` | Le socle du studio (sauvegarde, thème, réglages, validation des données). |
 
@@ -30,9 +30,9 @@ bash outils/verifier.sh --jouabilite    # … puis les bots : solvabilité et cl
 1. **import** — Godot enregistre ses classes ;
 2. **données** — chaque fichier de `data/` contre son schéma (types, bornes, un télégraphe
    d'ennemi d'au moins 0,4 s), et se réécrit sans rien perdre ;
-3. **règles** — `tests/regles/*.gd` : 581 tests, dont les références croisées des données
+3. **règles** — `tests/regles/*.gd` : 652 tests, dont les références croisées des données
    (`donnees.gd`) ;
-4. **références** — les 91 parties de `references/parties/` sont rejouées, point de contrôle
+4. **références** — les 100 parties de `references/parties/` sont rejouées, point de contrôle
    par point de contrôle (un toutes les 30 images) ;
 5. **vues** — les tests headless de `jeu/` (entrées, écrans, Ville, son, effets, thème), et le
    **parcours** (`jeu/essai/test_parcours.gd`) : le vrai jeu assemblé, toutes ses vues montées,
@@ -106,6 +106,32 @@ table, marqués `reserve` : leur code joue toujours, ils ne sont l'ultime d'aucu
 choix et nombres : `design/COMBAT_V3.md`, « Étape 2 » ; gardes : `tests/regles/v3_ultimes.gd`.
 Juger à l'écran : `jeu/essai/ultimes.tscn` (mode d'emploi en tête de `jeu/essai/ultimes.gd`).
 
+## Les compétences neuves (combat V3, étape 4)
+
+Trois compétences neuves par classe (huit en tout par classe, pour trois emplacements), chacune une
+entrée de `data/classes.json` (`skills` : à recharge ; `gadgets` : à charges) et un nœud de
+`data/arbres.json`. Façade : `sim/kit_neuves.gd` (chargée par `preload`, sans `class_name`) ; une
+famille par fichier :
+
+- **Revenant** (`sim/neuves_revenant.gd`) : `sillage` (braises semées par ses pas et son dash),
+  `sceau` (Stigmate : marque qui explose à la mort du marqué), `riposte` (Contre-taille : taillade,
+  puis garde qui pare et rend le premier coup reçu).
+- **Bourreau** (`sim/neuves_bourreau.gd`) : `faille` (fissure en ligne), `hachette` (hache lancée qui
+  revient), `garde` (Garde de fer : coups de face réduits, attaquant repoussé).
+- **Chasseresse** (`sim/neuves_chasseresse.gd`) : `proie` (marque : dégâts subis en plus, visée et
+  limiers), `leurre` (allié posé dans `game.allies`, qui attire la mêlée), `trait` (Trait de Nemrod :
+  il se BANDE d'un appui, part seul à pleine charge, ou tout de suite au second appui).
+
+Elles passent par les chemins communs (état `cast` et recharge, charges, tirs et zones de la salle,
+alliés) : l'entrée d'un pas n'a pas changé, et tout ce qui parle « des compétences » (bénédictions,
+objets, procs) s'y applique. Un leurre est un allié, pas un ultime : il ne tient pas la jauge
+(`D6KitSupers.acting` ne compte que les limiers). L'affichage lit `D6Loadout.slot_view` (forme
+inchangée) et, en plus, `D6Loadout.slot_state(game, i)` (charge du Trait, effet qui dure). La Chaîne
+et la Bombe ont une version par classe (rang 1 commun, rangs et une amélioration sur deux propres).
+Règles, tableaux et nombres : `design/COMBAT_V3.md`, « Étape 4 » ; gardes :
+`tests/regles/v3_competences.gd` ; mesure : `bash outils/arbre.sh` (`_dev/rapports/arbre.md`) ;
+juger à l'écran : `jeu/essai/competences.tscn` (mode d'emploi en tête de `jeu/essai/competences.gd`).
+
 ## Changer une règle
 
 1. Modifier la règle dans `sim/` (conventions : `PORTAGE.md`) ou son nombre dans `data/`.
@@ -118,7 +144,7 @@ Juger à l'écran : `jeu/essai/ultimes.tscn` (mode d'emploi en tête de `jeu/ess
    (« références réenregistrées : <la règle changée> »).
 
 ```
-bash references/enregistrer.sh          # 91 parties, ~25 s ; sans changement : mêmes fichiers au bit près
+bash references/enregistrer.sh          # 100 parties, ~30 s ; sans changement : mêmes fichiers au bit près
 bash outils/verifier.sh
 ```
 
@@ -153,8 +179,13 @@ ses nombres de `classes.json` ; `ranks` donne chaque nombre aux rangs 2 à 5 ; u
 exclusive remplace des nombres (`set`) et son texte les cite par `{champ}` ; un passif cite son total
 par `{v}`. Ajouter une compétence : une entrée dans `classes.json` (et dans la liste de sa classe), un
 nœud ici — aucun code si elle réutilise une sorte (`kind`) existante. `tests/regles/donnees.gd` garde
-les renvois, les textes et le budget de points ; `outils/arbre.gd` mesure arbre vide contre arbre
-plein (`_dev/rapports/arbre.md`).
+les renvois, les textes et le budget de points ; `outils/arbre.gd` (`bash outils/arbre.sh`) mesure
+arbre vide contre arbre plein, et la valeur de chaque compétence neuve (`_dev/rapports/arbre.md`).
+Une compétence d'une sorte (`kind`) NEUVE demande aussi sa règle (`sim/kit_neuves.gd`), son dessin
+(`jeu/monde/`, `jeu/effets/`), son pictogramme, et ses champs dans `data/schemas/classes.json` ; un
+champ de rang hors de ceux que `tests/regles/v3_arbre.gd` sait vérifier en jeu (dégâts, recharge,
+charges, rayon d'une compétence à charges, portée, vulnérabilité, étourdissement, brûlure, durée)
+fera rougir ce test : c'est voulu.
 
 Ajouter un champ ou un identifiant : le déclarer aussi dans `data/schemas/<domaine>.json` ; les
 identifiants qui se répondent d'un fichier à l'autre sont gardés par `tests/regles/donnees.gd`.

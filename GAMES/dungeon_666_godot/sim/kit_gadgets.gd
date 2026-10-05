@@ -6,12 +6,15 @@ extends RefCounted
 ##   piege — posé aux pieds ; se referme sur le premier ennemi qui passe (maxActive au plus)
 ##   totem — posé aux pieds ; impulsions qui blessent et ralentissent
 ##   cri   — hurlement autour du héros : étourdit et rend vulnérable, sans repousser
+##   sillage, garde, leurre — les compétences NEUVES à charges de l'étape 4 (sim/kit_neuves.gd)
 ## player vérifie que le gadget est utilisable (ni mort, ni Super, une charge au moins) et donne
 ## l'emplacement `slot` d'où il part, avec la visée de son bouton (0, 0 = celle de l'attaque).
 ## Les AMÉLIORATIONS EXCLUSIVES de l'arbre (sim/tree.gd) ajoutent des nombres au gadget : `count` /
-## `spread` (bombes en grappe), `count` / `ringDist` (champ de pièges), `ward` (totem gardien),
+## `spread` (bombes en grappe), `fireDuration` / `fireDps` (bombe : sol en feu), `count` / `ringDist`
+## (champ de pièges), `ward` (totem gardien),
 ## `surge` (cri de guerre), `pullGap` / `pullMass` et `fireDuration` / `fireDps` (nova : player).
 
+const Neuves := preload("res://sim/kit_neuves.gd")
 static var _point := {"x": 0.0, "y": 0.0}
 
 static func use_kit_gadget(game: Dictionary, g: Dictionary, slot: int, aim_x: float = 0.0, aim_y: float = 0.0) -> bool:
@@ -32,6 +35,11 @@ static func use_kit_gadget(game: Dictionary, g: Dictionary, slot: int, aim_x: fl
 				"kind": "totem", "x": p.x, "y": p.y, "r": g.radius, "life": g.life, "pulse": g.pulse, "pulseT": 0.0, "damage": g.damage,
 				"chill": g.chill, "chillMult": g.chillMult, "ward": D6Js.truthy(g.get("ward")),
 			})
+		"sillage", "garde", "leurre":
+			# Compétences neuves à charges (étape 4). Rien n'a pu partir (leurre sans place) : charge rendue.
+			if not Neuves.use_gadget(game, g, aim_x, aim_y):
+				st.charges += 1.0
+				return false
 	game.telemetry.gadgetUses += 1.0
 	D6State.emit(game, "gadget", {"x": p.x, "y": p.y, "r": g.radius, "charges": st.charges, "gadget": g.kind, "slot": float(slot)})
 	return true
@@ -57,10 +65,13 @@ static func _throw_bombs(game: Dictionary, g: Dictionary, aim_x: float, aim_y: f
 static func _throw_bomb(game: Dictionary, g: Dictionary, dir_x: float, dir_y: float, target_id) -> void:
 	var p: Dictionary = game.player
 	var target: Dictionary = D6KitCommon.throw_point(game, dir_x, dir_y, target_id, g.range, g.throwDist, _point)
-	D6KitZones.spawn_zone(game, {
+	var z := D6KitZones.spawn_zone(game, {
 		"kind": "bombe", "phase": "flight", "x": p.x, "y": p.y, "x0": p.x, "y0": p.y, "tx": target.x, "ty": target.y, "flight": g.flight, "lift": 0.0,
 		"fuse": g.fuse, "r": g.radius, "damage": g.damage, "knockback": g.knockback, "stun": g.stun, "hitstop": g.hitstop, "shake": g.shake,
 	})
+	if g.get("fireDuration") != null: # « Poix ardente » (amélioration de la Bombe du Bourreau) : le sol brûle après le souffle
+		z.fireDuration = g.fireDuration
+		z.fireDps = g.fireDps
 
 ## Piège posé aux pieds. « Champ de pièges » (amélioration, `count` > 1) : `count` pièges en cercle
 ## à `ringDist` u du héros ; un point dans un mur ou dans l'eau retombe à ses pieds.

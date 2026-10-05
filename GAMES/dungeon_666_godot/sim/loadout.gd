@@ -16,6 +16,7 @@ const DEFAULT_WEAPON := "lame"
 const COMBO_EXPIRED := 99.0 # s : valeur de départ de player.comboTimer (state), « aucun enchaînement en cours »
 const SLOTS := 3 # emplacements d'action
 const DEFAULT_MOVE := "dash" # déplacement d'une classe qui n'en nomme pas : le dash de base
+const Neuves := preload("res://sim/kit_neuves.gd")
 
 ## game.meta.loadout?.<key> : null si le loadout ou la clé manque.
 static func _loadout_field(game: Dictionary, key: String):
@@ -214,6 +215,7 @@ static func clamp_gadgets(game: Dictionary) -> void:
 ##   aimed        : l'action se vise (toute compétence ; un gadget LANCÉ, comme la bombe ; une
 ##                  action qui dit `aimed: false` ne se vise pas : hurlement, embrasement)
 ## Pendant la Forme du Damné, les trois emplacements rendent les actions de FORME.
+## (Sa forme est figée par les tests : ce que les compétences neuves ajoutent se lit par slot_state.)
 static func slot_view(game: Dictionary, index: int):
 	var def = slot_def(game, index)
 	if def == null:
@@ -230,3 +232,14 @@ static func slot_view(game: Dictionary, index: int):
 		"maxCharges": max_charges(game, index) if gadget else null,
 		"aimed": D6Js.nz(def.get("aimed"), not gadget or def.get("throwDist") != null),
 	}
+
+## Ce que l'affichage lit EN PLUS d'un emplacement, pour les compétences neuves de l'étape 4
+## (sim/kit_neuves.gd) ; toujours la même forme, tout à zéro pour une action sans état ou un
+## emplacement vide :
+##   charging, chargeFrac : le Trait de Nemrod se BANDE sur ce bouton, et de combien (0..1)
+##   active, activeFrac   : l'effet de l'action dure encore (sillage, garde, parade) et la part qui reste (0..1)
+static func slot_state(game: Dictionary, index: int) -> Dictionary:
+	var def = slot_def(game, index)
+	if def == null:
+		return {"charging": false, "chargeFrac": 0.0, "active": false, "activeFrac": 0.0}
+	return Neuves.slot_extra(game, index, def)

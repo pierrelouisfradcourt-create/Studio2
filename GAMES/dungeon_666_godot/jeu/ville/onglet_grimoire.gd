@@ -1,278 +1,371 @@
 extends "res://jeu/ville/onglet.gd"
-## Grimoire (combat V3) : en haut, les TROIS emplacements d'action dessinés comme en jeu (le même
-## arc autour de l'attaque, les mêmes pictogrammes : jeu/ville/arc_emplacements.gd) et leur
-## légende ; dessous, les compétences de la classe. On touche une compétence PUIS un emplacement
-## (ou l'inverse) : elle y est placée ; une compétence déjà placée est marquée. L'ultime de la
-## classe est rappelé : il ne se choisit pas, il se lance en gardant l'attaque appuyée. Le
-## DÉPLACEMENT de la classe (dash, saut, roulade) l'est aussi : son bouton, son nom, ce qu'il fait.
-## Aucune règle ici : D6Profile.slot_choices dit ce qui se place, l'opération `select_slot` place
-## (un échange si l'action est déjà ailleurs) ou vide. Ce que le joueur a touché en premier (une
-## compétence, un emplacement) n'est qu'un état d'ÉCRAN : rien n'est écrit tant qu'il n'a pas
-## touché le second.
+## GRIMOIRE : l'écran de l'ARBRE DE COMPÉTENCES de la classe portée (combat V3). Trois colonnes,
+## qui tiennent sans défiler en 1280 × 720 :
+##   à gauche   les points à dépenser (gros), le niveau, la barre d'expérience, et les TROIS
+##              emplacements d'action dessinés comme en jeu (jeu/ville/arc_emplacements.gd) ;
+##   au milieu  l'arbre dessiné (jeu/ville/arbre.gd) : étages en bandes le long du tronc, un
+##              médaillon par nœud, « Tout rendre » à son pied ; lui seul défile, de haut en bas,
+##              quand la fenêtre est basse (téléphone) ;
+##   en tête    une note d'une ligne : la classe et ce que portent ses trois emplacements ;
+##   à droite   le panneau de détail (jeu/ville/panneau_noeud.gd) du nœud choisi — ou de
+##              l'emplacement touché sur l'arc.
+## En portrait (toléré), les trois blocs s'empilent et c'est la page de la Ville qui défile.
 ##
-## ARBRE DE COMPÉTENCES (combat V3, étape 3 ; affichage volontairement simple) : sous les
-## emplacements, le niveau de la classe, sa barre d'expérience, ses points, puis l'arbre en liste
-## par étage — une carte par nœud : rang, texte du rang actuel et du suivant, bouton « + » (grisé
-## avec sa raison), les deux améliorations exclusives. « Tout rendre » se confirme en deux appuis.
-## Tout est LU dans D6Profile.tree_view ; opérations tree_buy, tree_choose, tree_respec.
+## Aucune règle ici : tout est LU dans D6Profile.tree_view et D6Profile.slot_choices ; chaque geste
+## demande une opération (tree_buy, tree_choose, tree_respec, select_slot) par `operation_demandee`.
+## Le nœud choisi, l'emplacement choisi, une confirmation en attente ne sont que des états d'ÉCRAN :
+## rien n'est écrit tant que l'opération n'est pas demandée, et tout est oublié en quittant l'onglet.
+## Une amélioration exclusive et « Tout rendre » se CONFIRMENT : un second appui sur le même bouton.
 
-const Commande = preload("res://jeu/interface/commande.gd")
+const Accords = preload("res://jeu/theme/accords.gd")
 
+const CLE_RENDRE := "arbre:rendre"
 ## Le texte nomme ce qui est RÉELLEMENT équipé (lu dans le profil), jamais une action en dur.
 const NOTE := "%s — emplacements : %s. En jeu, ce sont les trois boutons autour de l'attaque."
 const VIDE := "vide"
-const GENRES := {"skill": "skills", "gadget": "gadgets"}
-## Une compétence se recharge avec le temps ; l'autre sorte (les anciens gadgets) a des charges.
-const SURTITRES := {"skill": "Se recharge", "gadget": "À charges"}
-const AIDES := {
-	"rien": "Touche une compétence, puis l'emplacement où la placer (ou l'inverse).",
-	"action": "« %s » : touche maintenant l'emplacement où la placer.",
-	"emplacement": "Emplacement %d : touche maintenant la compétence à y placer.",
-}
-const RAYON_PICTO := 15.0
-const CLE_RENDRE := "arbre:rendre"
-const Grille = preload("res://jeu/ville/grille.gd")
-const Accords = preload("res://jeu/theme/accords.gd")
 const SORTES := {"skill": "Compétence", "passive": "Passif", "move": "Déplacement", "ultimate": "Ultime"}
-const VERROU := "À débloquer dans l'arbre"
-const LARGEUR_NOEUD := 250.0
+const A_CHARGES := "Compétence à charges"
+const LARGEUR_ETROITE := 640.0 # en deçà (portrait), les trois blocs s'empilent
+const HAUTEUR_AISEE := 300.0 # en deçà (téléphone), la note d'en-tête cède sa ligne à l'arbre
+const PANNEAU := Vector2(276.0, 360.0) # largeur du panneau de détail : mini, maxi
+const PAS_AISE := 58.0 # écart entre deux nœuds où l'arbre est à son aise : au-delà, la place va au panneau
+const AVIS_RENDRE := "Tous les points reviennent ; les améliorations choisies sont effacées."
 
 @onready var _note: Label = $Note
-@onready var _arc: Control = %Arc
-@onready var _aide: Label = %Aide
-@onready var _lignes: Array = [%Choix1, %Choix2, %Choix3]
-@onready var _vidages: Array = [%Vider1, %Vider2, %Vider3]
-@onready var _actions: GridContainer = $Actions
-@onready var _super: GridContainer = $Super
-@onready var _niveau: Label = %NiveauTexte
-@onready var _experience: ProgressBar = %Experience
-@onready var _experience_texte: Label = %ExperienceTexte
+@onready var _corps: BoxContainer = %Corps
+@onready var _pastille: Control = %PastillePoints
 @onready var _points: Label = %Points
-@onready var _etages: VBoxContainer = %Etages
+@onready var _niveau: Label = %NiveauTexte
+@onready var _experience: Control = %Experience
+@onready var _experience_texte: Label = %ExperienceTexte
+@onready var _arc: Control = %Arc
+@onready var _defile: ScrollContainer = %Defile
+@onready var _arbre: Control = %Arbre
 @onready var _rendre: Button = %Rendre
 @onready var _refus_rendre: Label = %RefusRendre
+@onready var _panneau_defile: ScrollContainer = %PanneauDefile
+@onready var _cadre: PanelContainer = %Cadre
+@onready var _infos: VBoxContainer = %Infos
+@onready var _panneau: VBoxContainer = %Panneau
 
-var _action := "" # la compétence touchée en premier ("" : aucune)
-var _emplacement := -1 # l'emplacement touché en premier (-1 : aucun)
+## Banc d'essai : une vue d'arbre donnée à la place de celle des règles (arbre factice, plus chargé).
+var vue_forcee := {}
+
+var _vue := {} # ce que rend tree_view pour la classe portée
+var _actions: Array = [] # ce que rend slot_choices
+var _selection := "" # le nœud choisi
+var _emplacement := -1 # l'emplacement choisi sur l'arc (-1 : aucun) ; il attend une compétence
+var _devant := "noeud" # ce que montre le panneau : « noeud » ou « emplacement »
 var _rendre_confirme := false # « Tout rendre » attend son second appui
+var _a_confirmer := "" # « nœud:amélioration » qui attend son second appui
+var _place := Vector2.ZERO # la place offerte par la Ville (sa zone de défilement)
+var _au_clavier := false # le dernier geste vient du clavier ou de la manette (ni doigt, ni souris)
 
 func _ready() -> void:
 	_arc.emplacement_touche.connect(_sur_emplacement)
-	for i in _lignes.size():
-		for b: Button in [_lignes[i], _vidages[i]]:
-			b.set_meta("cle", "slots:%d" % i)
-		_lignes[i].set_meta("action", "ligne")
-		_vidages[i].set_meta("action", "vider")
-		_lignes[i].pressed.connect(_sur_emplacement.bind(i))
-		_vidages[i].pressed.connect(_sur_vider.bind(i))
-	visibility_changed.connect(_oublier)
+	_arbre.noeud_choisi.connect(_sur_noeud_choisi)
+	_arbre.noeud_valide.connect(_sur_noeud_valide)
+	_arbre.voisin_droit = _panneau.bouton_acheter()
+	_arbre.voisin_bas = _rendre
+	_panneau.achat_demande.connect(_sur_achat)
+	_panneau.choix_demande.connect(_sur_choix)
+	_panneau.placement_demande.connect(_sur_placement)
+	_panneau.vidage_demande.connect(_sur_vidage)
 	_rendre.set_meta("cle", CLE_RENDRE)
 	_rendre.set_meta("action", "rendre")
 	_rendre.pressed.connect(_sur_rendre)
+	visibility_changed.connect(_oublier)
+	resized.connect(_adapter)
+	_adapter()
+
+# ---------------------------------------------------------------- ce que l'onglet expose
+
+## L'arbre dessiné et le panneau de détail (pour les bancs et les essais).
+func arbre() -> Control:
+	return _arbre
+
+func panneau() -> Control:
+	return _panneau
+
+## Choisit le nœud `id` comme le ferait un toucher : le panneau le montre.
+func selectionner(id: String) -> void:
+	_sur_noeud_choisi(id)
+
+func selection() -> String:
+	return _selection
+
+## Le bouton de ce que montre le panneau : l'emplacement choisi sur l'arc, sinon le nœud choisi.
+func repli_du_focus() -> Control:
+	if _devant == "emplacement" and _emplacement >= 0:
+		return _arc.bouton(_emplacement)
+	return _arbre.bouton(_selection)
+
+# ---------------------------------------------------------------- dessin
 
 func _dessiner() -> void:
-	var c: Dictionary = app.contenu.classes[app.profil.loadout.classId]
-	var choix: Array = D6Profile.slot_choices(app.profil, app.contenu)
-	var places: Array = app.profil.loadout.slots
-	if _trouver(choix, _action).is_empty():
-		_action = "" # la classe a changé : cette compétence n'est plus proposée
-	var noms: Array = []
-	for i in places.size():
-		noms.append("%d · %s" % [i + 1, _trouver(choix, places[i]).get("name", VIDE)])
-	_note.text = NOTE % [c.name, ", ".join(noms)]
-	_ecrire_aide(choix)
-	_montrer_emplacements(choix, places)
-	_dessiner_arbre()
-	_lister(choix, places)
-	_vider(_super)
-	var geste = app.contenu.moves.get(c.get("move"))
-	if geste is Dictionary:
-		_carte(_super, {"surtitre": "Déplacement · %s" % c.name, "titre": geste.name, "lignes": [geste.text], "etat": "equipe", "badge": "Lié à la classe", "picto": _picto(String(geste.get("icon", "dash")), true)})
-	var s = app.contenu.supers.get(c.super)
-	if s is Dictionary:
-		_carte(_super, {"surtitre": "Ultime · %s" % c.name, "titre": s.name, "lignes": [s.get("text", ""), "Jauge pleine : garde l'attaque appuyée."], "etat": "equipe", "badge": "Lié à la classe", "picto": _picto(String(s.get("icon", "super")), true)})
+	var classe: String = app.profil.loadout.classId
+	_vue = vue_forcee if not vue_forcee.is_empty() else D6Profile.tree_view(app.profil, app.contenu, classe)
+	_actions = D6Profile.slot_choices(app.profil, app.contenu)
+	if _noeud(_selection).is_empty():
+		_selection = _premier_noeud()
+	_ecrire_les_infos()
+	_montrer_les_emplacements()
+	_partager_la_largeur()
+	_arbre.montrer(_vue, "" if _devant == "emplacement" else _selection, _places())
+	_montrer_le_panneau(classe)
+	_ecrire_rendre()
 
-func _trouver(choix: Array, id) -> Dictionary:
-	for x in choix:
+## Le nœud `id` tel que le rend tree_view ({} s'il n'existe pas).
+func _noeud(id: String) -> Dictionary:
+	for etage in _vue.get("tiers", []):
+		for n in etage.nodes:
+			if String(n.id) == id:
+				return n
+	return {}
+
+## À l'ouverture : le premier nœud où un point peut être dépensé ; à défaut, le premier de l'arbre.
+func _premier_noeud() -> String:
+	var premier := ""
+	for etage in _vue.tiers:
+		for n in etage.nodes:
+			if n.canBuy:
+				return String(n.id)
+			if premier == "":
+				premier = String(n.id)
+	return premier
+
+## L'action d'emplacement (slot_choices) que porte un nœud de compétence, {} sinon. tree_view ne
+## donne pas l'identifiant de l'action : c'est celui du nœud (les données les nomment pareil), et
+## à défaut celle qui porte le même nom.
+func _action_de(n: Dictionary) -> Dictionary:
+	if n.is_empty() or n.kind != "skill":
+		return {}
+	for x in _actions:
+		if x.id == n.id:
+			return x
+	for x in _actions:
+		if x.name == n.name:
+			return x
+	return {}
+
+func _action(id) -> Dictionary:
+	for x in _actions:
 		if x.id == id:
 			return x
 	return {}
 
-func _ecrire_aide(choix: Array) -> void:
-	if _action != "":
-		_aide.text = AIDES.action % _trouver(choix, _action).name
-	elif _emplacement >= 0:
-		_aide.text = AIDES.emplacement % (_emplacement + 1)
-	else:
-		_aide.text = AIDES.rien
+## {id du nœud: emplacement} des compétences placées (l'arbre y pose une pastille numérotée).
+func _places() -> Dictionary:
+	var places := {}
+	var portes: Array = app.profil.loadout.slots
+	for etage in _vue.tiers:
+		for n in etage.nodes:
+			var x := _action_de(n)
+			var rang: int = portes.find(x.id) if not x.is_empty() else -1
+			if rang >= 0:
+				places[String(n.id)] = rang
+	return places
 
-## L'arc (les boutons du jeu) et sa légende : ce que porte chaque emplacement, lequel est choisi,
-## et « Vider » pour un emplacement rempli.
-func _montrer_emplacements(choix: Array, places: Array) -> void:
+func _ecrire_les_infos() -> void:
+	var v := _vue
+	var au_sommet: bool = v.level >= v.maxLevel
+	_pastille.nombre = int(v.points)
+	_points.text = "%s à dépenser" % Accords.nom(v.points, "point", "points") if v.points > 0.0 else "Aucun point à dépenser"
+	_points.theme_type_variation = &"Points" if v.points > 0.0 else &"TexteDoux"
+	_niveau.text = "Niveau %s / %s" % [D6Js.num_str(v.level), D6Js.num_str(v.maxLevel)]
+	_experience.poser(1.0 if au_sommet else v.xp / v.xpNext)
+	_experience_texte.text = "Niveau maximum" if au_sommet else "%s / %s d'expérience" % [D6Js.num_str(v.xp), D6Js.num_str(v.xpNext)]
+
+## L'arc (les boutons du jeu) : ce que porte chaque emplacement, lequel est choisi ; et la note
+## d'en-tête, qui les nomme en toutes lettres.
+func _montrer_les_emplacements() -> void:
+	var portes: Array = app.profil.loadout.slots
 	var pictos: Array = []
-	for i in _lignes.size():
-		var x: Dictionary = _trouver(choix, places[i]) if i < places.size() else {}
-		pictos.append(String(x.get("icon", "")))
-		_lignes[i].text = "%d · %s" % [i + 1, x.get("name", "Vide")]
-		_lignes[i].set_pressed_no_signal(i == _emplacement)
-		_vidages[i].disabled = x.is_empty()
-		_vidages[i].modulate.a = Style.OPACITE_GRISE if x.is_empty() else 1.0
+	var noms: Array = []
+	for i in portes.size():
+		pictos.append(String(_action(portes[i]).get("icon", "")))
+		noms.append("%d · %s" % [i + 1, _action(portes[i]).get("name", VIDE)])
+	_note.text = NOTE % [app.contenu.classes[app.profil.loadout.classId].name, ", ".join(noms)]
 	_arc.montrer(pictos, _emplacement)
 
-## Les compétences de la classe : placée (dans quel emplacement), à placer, ou à débloquer (dans l'arbre).
-func _lister(choix: Array, places: Array) -> void:
-	_vider(_actions)
-	for x in choix:
-		var genre: String = GENRES[x.kind]
-		var cle := "%s:%s" % [genre, x.id]
-		var d := {"surtitre": "%s · rang %s" % [SURTITRES[x.kind], D6Js.num_str(x.rank)], "titre": x.name, "lignes": [x.text], "refus": _raison(cle), "picto": _picto(x.icon, x.unlocked)}
-		var place: int = places.find(x.id)
-		if not x.unlocked:
-			d.boutons = [{"nom": "verrou", "texte": VERROU, "inactif": true, "cle": cle}]
-			d.etat = "verrouille"
-		else:
-			if place >= 0:
-				d.etat = "equipe"
-				d.badge = "● Emplacement %d" % (place + 1)
-			d.boutons = [_bouton_de_placement(x, place, cle)]
-		_carte(_actions, d).action.connect(_sur_action.bind(genre, x.id))
+func _montrer_le_panneau(classe: String) -> void:
+	var portes: Array = app.profil.loadout.slots
+	if _devant == "emplacement" and _emplacement >= 0:
+		_panneau.montrer_emplacement({"index": _emplacement, "action": _action(portes[_emplacement]), "refus": _refus})
+		return
+	var n := _noeud(_selection)
+	if n.is_empty():
+		return
+	var x := _action_de(n)
+	var place: int = portes.find(x.get("id")) if not x.is_empty() else -1
+	var d := {
+		"n": n, "sorte": _sorte(n, x, classe), "place": place, "placable": x.get("unlocked", false),
+		"badge": "● Emplacement %d" % (place + 1) if place >= 0 else ("Offert" if n.free and n.rank == 1.0 else ""),
+		"a_confirmer": _a_confirmer.trim_prefix("%s:" % n.id) if _a_confirmer.begins_with("%s:" % n.id) else "",
+		"refus": _refus,
+	}
+	d.merge(_rappel(n, x, classe))
+	_panneau.montrer_noeud(d)
 
-## Le bouton d'une compétence possédée, selon ce qui a été touché en premier.
-func _bouton_de_placement(x: Dictionary, place: int, cle: String) -> Dictionary:
-	if _emplacement >= 0:
-		if place == _emplacement:
-			return {"nom": "", "texte": "Déjà dans l'emplacement %d" % (place + 1), "inactif": true, "cle": cle}
-		return {"nom": "placer", "texte": "Placer dans l'emplacement %d" % (_emplacement + 1), "genre": "principal", "cle": cle}
-	if _action == x.id:
-		return {"nom": "choisir", "texte": "Choisie — touche un emplacement", "genre": "principal", "cle": cle}
-	return {"nom": "choisir", "texte": "Choisir", "cle": cle}
+## La sorte du nœud : « Compétence », « Compétence à charges », « Passif » (son étage se lit sur
+## l'arbre) ; « Déplacement · Revenant », « Ultime · Revenant » (ils sont ceux de la classe).
+func _sorte(n: Dictionary, x: Dictionary, classe: String) -> String:
+	if n.kind == "move" or n.kind == "ultimate":
+		return "%s · %s" % [SORTES[n.kind], app.contenu.classes[classe].name]
+	return A_CHARGES if x.get("kind") == "gadget" else String(SORTES.get(n.kind, ""))
 
-## Le pictogramme de l'action, celui de son bouton en jeu.
-func _picto(icone: String, possedee: bool) -> Control:
-	var c: Control = Commande.new()
-	c.rayon = RAYON_PICTO
-	c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	c.modulate.a = 1.0 if possedee else Style.OPACITE_GRISE
-	c.montrer({"pret": 1.0, "icone": icone})
-	return c
+## Ce que la chose EST, à côté de ce que donne son rang : le texte de la compétence ; pour le
+## déplacement et l'ultime, le nom et le texte de celui de la classe (données : moves, supers).
+func _rappel(n: Dictionary, x: Dictionary, classe: String) -> Dictionary:
+	var c: Dictionary = app.contenu.classes[classe]
+	var base = null
+	if n.kind == "move":
+		base = app.contenu.moves.get(c.get("move"))
+	elif n.kind == "ultimate":
+		base = app.contenu.supers.get(c.get("super"))
+	if base is Dictionary:
+		return {"rappel_nom": String(base.name), "rappel": String(base.get("text", ""))}
+	return {"rappel": String(x.get("text", "")) if n.rank > 0.0 else ""}
+
+func _ecrire_rendre() -> void:
+	var pris := false
+	for etage in _vue.tiers:
+		for n in etage.nodes:
+			pris = pris or n.choices.any(func(ch: Dictionary) -> bool: return ch.taken)
+	var texte := "Confirmer : tout rendre (%s or)" if _rendre_confirme else "Tout rendre (%s or)"
+	_rendre.text = texte % D6Js.num_str(_vue.respecCost)
+	_rendre.theme_type_variation = &"BoutonDanger" if _rendre_confirme else &"BoutonDiscret"
+	_rendre.disabled = _vue.spent <= 0.0 and not pris
+	var refus := _raison(CLE_RENDRE)
+	_refus_rendre.text = refus if refus != "" else (AVIS_RENDRE if _rendre_confirme else "")
+	_refus_rendre.theme_type_variation = &"Refus" if refus != "" else &"TexteDoux"
 
 # ---------------------------------------------------------------- ce que le joueur touche
 
-func _sur_action(nom: String, genre: String, id: String) -> void:
-	var cle := "%s:%s" % [genre, id]
-	match nom:
-		"placer":
-			_placer(cle, _emplacement, id)
-		"choisir":
-			_action = "" if _action == id else id
-			dessin_demande.emit()
-
-## Un emplacement est touché (sur l'arc ou dans la légende) : une compétence attendait, elle y va ;
-## sinon c'est lui qui attend une compétence (le toucher de nouveau l'oublie).
-func _sur_emplacement(index: int) -> void:
-	if _action != "":
-		_placer("%s:%s" % [_genre_de(_action), _action], index, _action)
-		return
-	_emplacement = -1 if _emplacement == index else index
+func _redessiner() -> void:
 	dessin_demande.emit()
 
-func _sur_vider(index: int) -> void:
-	_placer("slots:%d" % index, index, null)
-
-func _placer(cle: String, index: int, id) -> void:
-	_action = ""
-	_emplacement = -1
-	operation_demandee.emit(cle, "select_slot", [float(index), id])
-
-func _genre_de(id: String) -> String:
-	return "skills" if app.contenu.skills.has(id) else "gadgets"
-
-## L'onglet quitté puis rouvert ne garde pas un choix à moitié fait.
-func _oublier() -> void:
-	if not is_visible_in_tree():
-		_action = ""
-		_emplacement = -1
-		_rendre_confirme = false
-
-# ---------------------------------------------------------------- arbre de compétences
-
-## Niveau, expérience, points, puis l'arbre de la classe portée, étage par étage.
-func _dessiner_arbre() -> void:
-	var classe: String = app.profil.loadout.classId
-	var v: Dictionary = D6Profile.tree_view(app.profil, app.contenu, classe)
-	var au_sommet: bool = v.level >= v.maxLevel
-	_niveau.text = "Niveau %s / %s" % [D6Js.num_str(v.level), D6Js.num_str(v.maxLevel)]
-	_experience.max_value = 1.0 if au_sommet else v.xpNext
-	_experience.value = 1.0 if au_sommet else v.xp
-	_experience_texte.text = "Niveau maximum" if au_sommet else "%s / %s d'expérience" % [D6Js.num_str(v.xp), D6Js.num_str(v.xpNext)]
-	_points.text = "● %s à dépenser" % Accords.compte(v.points, "point", "points") if v.points > 0.0 else "Aucun point à dépenser"
-	_vider(_etages)
-	var pris := false
-	for etage in v.tiers:
-		_dessiner_etage(etage, classe, v.choiceRank)
-		for n in etage.nodes:
-			pris = pris or n.choices.any(func(ch): return ch.taken)
-	var texte := "Confirmer : tout rendre (%s or)" if _rendre_confirme else "Tout rendre (%s or)"
-	_rendre.text = texte % D6Js.num_str(v.respecCost)
-	_rendre.theme_type_variation = &"BoutonDanger" if _rendre_confirme else &"BoutonDiscret"
-	_rendre.disabled = v.spent <= 0.0 and not pris
-	_refus_rendre.text = _raison(CLE_RENDRE)
-
-## Un étage : son titre (ouvert, ou ce qu'il faut dépenser avant) et une carte par nœud.
-func _dessiner_etage(etage: Dictionary, classe: String, rang_du_choix: float) -> void:
-	var titre := Label.new()
-	titre.theme_type_variation = &"TexteDoux"
-	titre.text = "Étage %s" % etage.name if etage.open else "Étage %s — s'ouvre après %s points dépensés" % [etage.name, D6Js.num_str(etage.need)]
-	_etages.add_child(titre)
-	var grille := GridContainer.new()
-	grille.set_script(Grille)
-	grille.largeur_mini = LARGEUR_NOEUD
-	grille.colonnes_max = 3
-	grille.add_theme_constant_override("h_separation", 10)
-	grille.add_theme_constant_override("v_separation", 10)
-	_etages.add_child(grille)
-	for n in etage.nodes:
-		_carte_noeud(grille, n, classe, rang_du_choix)
-
-## La carte d'un nœud : rang, texte du rang actuel et du suivant, « + », améliorations exclusives.
-func _carte_noeud(grille: Node, n: Dictionary, classe: String, rang_du_choix: float) -> void:
-	var cle := "arbre:%s" % n.id
-	var lignes: Array = []
-	if n.now != "":
-		lignes.append(n.now)
-	if n.next != "":
-		lignes.append({"texte": "Suivant — %s" % n.next, "genre": "Affixe"})
-	var boutons: Array = [{"nom": "plus", "texte": "+", "genre": "principal" if n.canBuy else "", "inactif": not n.canBuy, "cle": cle}]
-	for ch in n.choices:
-		lignes.append({"texte": "%s %s : %s" % ["●" if ch.taken else "◇", ch.name, ch.text], "genre": "Pouvoir" if ch.taken else "TexteDoux"})
-		if n.rank >= rang_du_choix and not ch.taken:
-			boutons.append({"nom": "choix:%s" % ch.id, "texte": ch.name, "genre": "principal" if ch.canTake else "", "inactif": not ch.canTake, "cle": "%s:%s" % [cle, ch.id]})
-	var d := {
-		"surtitre": "%s · rang %s / %s" % [SORTES[n.kind], D6Js.num_str(n.rank), D6Js.num_str(n.maxRank)], "titre": n.name, "lignes": lignes,
-		"etat": "equipe" if n.rank > 0.0 else "", "badge": "Offert" if n.free and n.rank == 1.0 else "", "boutons": boutons,
-		"refus": _raison(cle) if _raison(cle) != "" else _dire(n.reason),
-	}
-	if n.icon != "":
-		d.picto = _picto(n.icon, n.rank > 0.0)
-	_carte(grille, d).action.connect(_sur_noeud.bind(classe, String(n.id)))
-
-## Une raison telle qu'on l'affiche : première lettre en capitale.
-func _dire(raison: String) -> String:
-	return raison.left(1).to_upper() + raison.substr(1)
-
-func _sur_noeud(nom: String, classe: String, id: String) -> void:
-	var cle := "arbre:%s" % id
+## Un nœud est choisi (touché, ou atteint par le focus) : le panneau le montre. Une confirmation
+## en attente est oubliée ; un emplacement choisi sur l'arc reste en attente d'une compétence.
+func _sur_noeud_choisi(id: String) -> void:
+	_selection = id
+	_devant = "noeud"
+	_a_confirmer = ""
 	_rendre_confirme = false
-	if nom == "plus":
-		operation_demandee.emit(cle, "tree_buy", [classe, id])
-	elif nom.begins_with("choix:"):
-		operation_demandee.emit(cle, "tree_choose", [classe, id, nom.trim_prefix("choix:")])
+	_redessiner()
+
+## Un nœud est APPUYÉ. Un emplacement attendait : la compétence acquise y va (sinon l'attente est
+## oubliée). Rien n'attendait : au clavier ou à la manette, le focus passe au bouton du panneau.
+func _sur_noeud_valide(id: String) -> void:
+	var x := _action_de(_noeud(id))
+	if _emplacement >= 0:
+		var index := _emplacement
+		_emplacement = -1
+		if x.get("unlocked", false):
+			operation_demandee.emit("placer:%s:%d" % [id, index], "select_slot", [float(index), x.id])
+		else:
+			_redessiner()
+	elif _au_clavier and not _panneau.bouton_acheter().disabled:
+		_panneau.bouton_acheter().grab_focus()
+
+## Un emplacement est touché sur l'arc : le panneau le montre (« Vider »), et il attend une
+## compétence ; le toucher de nouveau l'oublie.
+func _sur_emplacement(index: int) -> void:
+	_emplacement = -1 if _emplacement == index else index
+	_devant = "emplacement" if _emplacement >= 0 else "noeud"
+	_a_confirmer = ""
+	_rendre_confirme = false
+	_redessiner()
+
+func _sur_achat() -> void:
+	_a_confirmer = ""
+	_rendre_confirme = false
+	operation_demandee.emit("arbre:%s" % _selection, "tree_buy", [String(app.profil.loadout.classId), _selection])
+
+## Une amélioration exclusive : le premier appui demande confirmation (le choix est définitif), le
+## second la prend.
+func _sur_choix(id: String) -> void:
+	var cle := "%s:%s" % [_selection, id]
+	_rendre_confirme = false
+	if _a_confirmer != cle:
+		_a_confirmer = cle
+		_redessiner()
+		return
+	_a_confirmer = ""
+	operation_demandee.emit("arbre:%s" % cle, "tree_choose", [String(app.profil.loadout.classId), _selection, id])
+
+func _sur_placement(index: int) -> void:
+	var x := _action_de(_noeud(_selection))
+	_emplacement = -1
+	_a_confirmer = ""
+	operation_demandee.emit("placer:%s:%d" % [_selection, index], "select_slot", [float(index), x.get("id")])
+
+func _sur_vidage() -> void:
+	if _emplacement >= 0:
+		operation_demandee.emit("slots:%d" % _emplacement, "select_slot", [float(_emplacement), null])
 
 ## « Tout rendre » : un premier appui demande confirmation (c'est payant), le second rend les points.
 func _sur_rendre() -> void:
+	_a_confirmer = ""
 	if not _rendre_confirme:
 		_rendre_confirme = true
-		dessin_demande.emit()
+		_redessiner()
 		return
 	_rendre_confirme = false
 	operation_demandee.emit(CLE_RENDRE, "tree_respec", [String(app.profil.loadout.classId)])
+
+## L'onglet quitté puis rouvert ne garde ni choix à moitié fait, ni confirmation en attente.
+func _oublier() -> void:
+	if not is_visible_in_tree():
+		_selection = ""
+		_emplacement = -1
+		_devant = "noeud"
+		_rendre_confirme = false
+		_a_confirmer = ""
+
+# ---------------------------------------------------------------- clavier, manette, écran
+
+## Qui tient la main : le clavier ou la manette (le focus suit), ou bien le doigt ou la souris.
+func _input(ev: InputEvent) -> void:
+	if ev is InputEventKey or ev is InputEventJoypadButton or ev is InputEventAction:
+		_au_clavier = true
+	elif ev is InputEventMouseButton or ev is InputEventScreenTouch:
+		_au_clavier = false
+
+## Retour (Échap, B) depuis le panneau : le focus revient au nœud choisi, sans quitter la Ville.
+func _unhandled_input(ev: InputEvent) -> void:
+	if not is_visible_in_tree() or not ev.is_action_pressed("ui_cancel"):
+		return
+	var tenu := get_viewport().gui_get_focus_owner()
+	var noeud_n: Button = _arbre.bouton(_selection)
+	if tenu != null and noeud_n != null and _panneau.is_ancestor_of(tenu):
+		noeud_n.grab_focus()
+		get_viewport().set_input_as_handled()
+
+## La place que la Ville offre à l'onglet (elle le dit quand sa fenêtre change) : c'est elle, et
+## non la taille de l'onglet (qui grandit avec ce qu'il montre), qui décide de ce qui tient.
+func tenir_dans(place: Vector2) -> void:
+	_place = place
+	if is_node_ready():
+		_adapter()
+
+## Le panneau de détail prend la largeur dont l'arbre n'a pas besoin (peu de nœuds par étage : un
+## texte plus large, donc moins haut) ; un arbre chargé le ramène à sa largeur minimale.
+func _partager_la_largeur() -> void:
+	var reste: float = size.x - _infos.size.x - _arbre.largeur_aisee(_vue, PAS_AISE) - 2.0 * _corps.get_theme_constant("separation")
+	var voulu := PANNEAU.x if _corps.vertical else clampf(reste, PANNEAU.x, PANNEAU.y)
+	if not is_equal_approx(_cadre.custom_minimum_size.x, voulu):
+		_cadre.custom_minimum_size.x = voulu
+
+## Paysage : trois colonnes, l'arbre seul défile. Portrait : tout s'empile, la page de la Ville défile.
+func _adapter() -> void:
+	var etroit := size.x < LARGEUR_ETROITE
+	_note.visible = etroit or _place.y >= HAUTEUR_AISEE # l'arc montre la même chose, en dessin
+	if not _vue.is_empty():
+		_partager_la_largeur()
+	if _corps.vertical == etroit:
+		return
+	_corps.vertical = etroit
+	var mode := ScrollContainer.SCROLL_MODE_DISABLED if etroit else ScrollContainer.SCROLL_MODE_AUTO
+	_defile.vertical_scroll_mode = mode
+	_panneau_defile.vertical_scroll_mode = mode

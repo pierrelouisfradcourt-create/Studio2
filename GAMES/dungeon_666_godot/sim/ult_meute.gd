@@ -23,6 +23,12 @@ extends RefCounted
 ##     limiers qui s'y trouvent ;
 ##   - ils disparaissent à la fin de `life`, à leur mort, à la mort de l'héroïne, au changement de salle.
 ## Tant qu'un limier vit, la jauge d'ultime est leur minuterie (elle se vide) et ne se remplit pas.
+##
+## AUTRES ALLIÉS (étape 4) : le LEURRE de la Chasseresse vit dans la même liste (mêmes gardes :
+## jamais un ennemi) et profite des mêmes règles d'encaissement — un ennemi de mêlée s'y jette
+## (son champ `lure` = {range, ratio} remplace distractRange / distractRatio), un tir s'y arrête,
+## une zone le blesse. Il n'est PAS un ultime : il ne tient pas la jauge, ne bloque pas le lancer
+## (hounds, any_hound), et son pas est joué par Neuves.tick_ally.
 
 const SPREAD := 0.9 # rad entre deux limiers à l'apparition (derrière l'héroïne, en éventail)
 const SPAWN_RINGS := [1.0, 0.66, 0.33] # parts de spawnDist essayées, du plus loin au plus près
@@ -32,6 +38,8 @@ const NAV_REFRESH := 15.0 # pas entre deux calculs du champ d'un limier (comme D
 const CONTACT := 8.0 # u : marge de contact d'un ennemi qui frappe un limier
 const HEEL_STOP := 0.6 # part de heelDist où le limier au pied s'arrête
 const HIT_FLASH := 0.1 # s : éclat d'un limier touché
+const HOUND := "limier" # game.allies porte aussi d'autres alliés (le leurre, étape 4 : sim/kit_neuves.gd)
+const Neuves := preload("res://sim/kit_neuves.gd")
 
 static var _dir := {"x": 0.0, "y": 0.0}
 
@@ -90,33 +98,56 @@ static func tick(game: Dictionary, dt: float) -> void:
 	if p.state == "dead":
 		dismiss(game, "mort")
 		return
+	var pack := any_hound(game)
 	var s = def_of(game)
-	var mark = _marked(game, s)
+	var mark = _marked(game, s) if pack else null
 	var left := 0.0
 	var i := 0
 	while i < allies.size():
 		var h: Dictionary = allies[i]
 		i += 1
+		if h.kind != HOUND:
+			Neuves.tick_ally(game, h, dt) # le leurre : il ne bouge pas, il s'use
+			continue
 		if not h.dead:
 			_tick_hound(game, h, s, mark, dt)
 		if not h.dead:
 			left = maxf(left, h.life / h.lifeMax)
 	_separate(game)
 	D6Projectiles.compact(allies)
-	p.superCharge = left # la jauge est leur minuterie
+	if pack:
+		p.superCharge = left # la jauge est leur minuterie
 
 ## Retire toute la meute (mort de l'héroïne, changement de salle, reprise).
 static func dismiss(game: Dictionary, reason: String) -> void:
 	for h in game.allies:
 		if not h.dead:
 			D6State.emit(game, "allyGone", {"id": h.id, "x": h.x, "y": h.y, "reason": reason})
-	if not game.allies.is_empty():
+	if any_hound(game):
 		game.player.superCharge = 0.0
 	game.allies.clear()
+
+## Un limier au moins est-il dans la liste des alliés ? (un leurre n'est pas la meute)
+static func any_hound(game: Dictionary) -> bool:
+	for h in game.allies:
+		if h.kind == HOUND:
+			return true
+	return false
+
+## Nombre de limiers de la liste des alliés.
+static func hounds(game: Dictionary) -> float:
+	var n := 0.0
+	for h in game.allies:
+		if h.kind == HOUND:
+			n += 1.0
+	return n
 
 ## La cible désignée par l'héroïne : ce qu'elle vient de blesser, sinon ce qu'elle vient de viser.
 static func _marked(game: Dictionary, s: Dictionary):
 	var p: Dictionary = game.player
+	var prey = Neuves.prey(game)
+	if prey != null:
+		return prey # Marque de la proie (étape 4) : la proie marquée passe avant tout
 	if game.time - D6Js.nz(p.get("markAt"), -99.0) <= s.markTime:
 		var e = D6KitCommon.live_enemy(game, p.get("markId"))
 		if e != null:
@@ -211,11 +242,11 @@ static func _separate(game: Dictionary) -> void:
 	var allies: Array = game.allies
 	for i in allies.size():
 		var a: Dictionary = allies[i]
-		if a.dead:
+		if a.dead or a.kind != HOUND:
 			continue
 		for j in range(i + 1, allies.size()):
 			var b: Dictionary = allies[j]
-			if b.dead:
+			if b.dead or b.kind != HOUND: # un leurre est planté : il ne pousse ni n'est poussé
 				continue
 			var dx: float = b.x - a.x
 			var dy: float = b.y - a.y
@@ -230,7 +261,7 @@ static func _separate(game: Dictionary) -> void:
 			b.x += dx * push
 			b.y += dy * push
 	for h in allies:
-		if not h.dead:
+		if not h.dead and h.kind == HOUND:
 			D6Physics.move_circle(game.room, h, 0.0, 0.0)
 
 ## Blesse un limier (coup d'ennemi, tir, zone). Rend true s'il était vivant.
@@ -250,14 +281,17 @@ static func hurt(game: Dictionary, h: Dictionary, amount: float, source) -> bool
 ## Le limier vers lequel l'ennemi `e` se tourne (règle de distraction), ou null.
 static func _lure(game: Dictionary, e: Dictionary, s: Dictionary):
 	var p: Dictionary = game.player
-	var limit: float = minf(s.distractRange, sqrt(D6Geo.dist2(e.x, e.y, p.x, p.y)) * s.distractRatio)
+	var to_hero: float = sqrt(D6Geo.dist2(e.x, e.y, p.x, p.y))
 	var best = null
-	var best_d: float = limit * limit
+	var best_d := INF
 	for h in game.allies:
 		if h.dead:
 			continue
+		# Portée d'attirance de CET allié : celle des limiers, ou la sienne (`lure` du leurre).
+		var lure = h.get("lure")
+		var limit: float = minf(lure.range, to_hero * lure.ratio) if lure is Dictionary else minf(s.distractRange, to_hero * s.distractRatio)
 		var d := D6Geo.dist2(e.x, e.y, h.x, h.y)
-		if d < best_d and D6Physics.walk_clear(game.room, e.x, e.y, h.x, h.y, e.r):
+		if d < limit * limit and d < best_d and D6Physics.walk_clear(game.room, e.x, e.y, h.x, h.y, e.r):
 			best_d = d
 			best = h
 	return best

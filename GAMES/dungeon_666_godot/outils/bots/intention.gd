@@ -40,6 +40,13 @@ const SUPER_LOW_HP := 0.4
 const SUPER_REACH_PAD := 20.0
 const SUPER_HOLD_MARGIN := 0.1 # s tenues au-delà de super.holdTime : la décision de lancer l'ultime ne se reprend pas à chaque image
 const LANCE_BOSS_WEIGHT := 3.0 # un boss aligné vaut trois ennemis pour la Lance
+# Compétences neuves (étape 4) : ce que le bot en sait est ce que le joueur en voit.
+const TRAIL_NEAR := 170.0 # u : le Sillage de braise se sème quand la mêlée est là
+const TRAIL_CROWD := 2.0
+const GUARD_PAD := 60.0 # u ajoutées au rayon du coup de bouclier pour décider de lever la Garde de fer
+const GUARD_CROWD := 2.0
+const LURE_CROWD := 2.0 # le Leurre se lance dès que deux ennemis pressent (ou un seul, PV bas)
+const PARRY_PAD := 30.0 # u : la Contre-taille se lève face à un ennemi qui ARME son coup à cette distance de sa portée
 const SHIELD_PENALTY := 600.0 # u : un Gardien enchaîné (bouclier visible) passe après ses geôliers
 # Arme à distance (kits) : on tient la cible à cette distance (u, bord à bord), on recule
 # en deçà de RANGED_TOO_CLOSE, et l'on ne tire que si la ligne de tir est dégagée.
@@ -209,15 +216,56 @@ static func _slot_intents(game: Dictionary, mem: Dictionary, enemies: Array, int
 		elif view.kind == "skill":
 			if not can_cast:
 				continue
-			var aim = _best_lance_aim(game, enemies, def)
-			if aim != null and aim.count >= 1.0:
+			var aim = _parry_aim(p, enemies, def) if def.get("kind") == "riposte" else _best_lance_aim(game, enemies, def)
+			if aim != null and aim.count >= 1.0 and not _already_marked(enemies, def):
 				intent.slots[i] = aim
 				can_cast = false
-		elif opts.gadget and game.time - mem.lastGadget > GADGET_MIN_GAP:
-			var near := _count_near(p, enemies, Base.num(def, "radius"))
-			if near >= GADGET_CROWD or (hp_frac < GADGET_LOW_HP and near >= 1.0):
+		elif opts.gadget and game.time - mem.lastGadget > GADGET_MIN_GAP and not D6Loadout.slot_state(game, i).active:
+			if _charge_wanted(game, p, enemies, def, hp_frac):
 				intent.slots[i] = {"x": 0.0, "y": 0.0}
 				mem.lastGadget = game.time
+
+## Une compétence à charges vaut-elle d'être dépensée ? Par défaut : quand la foule presse dans son
+## rayon, ou qu'un ennemi est là et que les PV sont bas. Le Sillage de braise : dès que la mêlée
+## est là (ses braises se sèment en marchant) ; le Leurre : dès deux ennemis, s'il reste une place.
+static func _charge_wanted(game: Dictionary, p: Dictionary, enemies: Array, def: Dictionary, hp_frac: float) -> bool:
+	var radius := Base.num(def, "radius")
+	var crowd := GADGET_CROWD
+	match def.get("kind"):
+		"sillage":
+			radius = TRAIL_NEAR
+			crowd = TRAIL_CROWD
+		"garde":
+			radius += GUARD_PAD # la Garde de fer se lève AVANT le contact : dès que deux ennemis approchent
+			crowd = GUARD_CROWD
+		"leurre":
+			crowd = LURE_CROWD
+			if float(game.allies.filter(func(a): return a.kind == "leurre" and not a.dead).size()) >= Base.num(def, "maxActive"):
+				return false # les leurres posés se voient : on n'en remplace pas un debout
+	var near := _count_near(p, enemies, radius)
+	return near >= crowd or (hp_frac < GADGET_LOW_HP and near >= 1.0)
+
+## Contre-taille : elle se lève face à l'ennemi qui ARME son coup à portée (télégraphe visible) —
+## la taillade le touche, et sa frappe sera parée. Rend la visée, ou null.
+static func _parry_aim(p: Dictionary, enemies: Array, def: Dictionary):
+	for e in enemies:
+		if e.state != "windup":
+			continue
+		var d := Base.norm(e.x - p.x, e.y - p.y)
+		if d.l <= Base.num(def, "range") + e.r + PARRY_PAD:
+			return {"x": d.x, "y": d.y, "count": 1.0}
+	return null
+
+## Une marque (Stigmate, Marque de la proie) se voit sur l'ennemi : on n'en pose pas une seconde
+## tant qu'un ennemi la porte.
+static func _already_marked(enemies: Array, def: Dictionary) -> bool:
+	var key = {"sceau": "stigmate", "proie": "proie"}.get(def.get("kind"))
+	if key == null:
+		return false
+	for e in enemies:
+		if e.get(key) != null:
+			return true
+	return false
 
 ## Une action de forme qui frappe AUTOUR du héros vaut-elle d'être lancée ? Le hurlement : quand
 ## plusieurs ennemis sont dans son rayon (ou un seul, PV bas) ; l'embrasement (il met fin à la

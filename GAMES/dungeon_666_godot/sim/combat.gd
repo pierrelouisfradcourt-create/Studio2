@@ -23,6 +23,7 @@ extends RefCounted
 
 # Sources de dégâts du héros qui déclenchent les procs « au toucher ».
 const Arbre = preload("res://sim/tree.gd")
+const Neuves = preload("res://sim/kit_neuves.gd")
 const PROC_SOURCES := ["melee", "strike", "skill", "gadget", "super"]
 # Sources qui ne remplissent pas la jauge de Super (sinon le Super se recharge lui-même).
 const NO_SUPER_CHARGE := ["super", "burn", "blast", "chain", "ally"] # "ally" : morsure d'un limier
@@ -507,6 +508,7 @@ static func kill_enemy(game: Dictionary, e: Dictionary, src = null) -> void:
 	_drop_gold(game, e, elite)
 	_kill_rewards(game, e, elite)
 	_kill_procs(game, e)
+	Neuves.on_kill(game, e) # compétences neuves : Stigmate qui explose, marque de proie qui saute
 
 static func heal_player(game: Dictionary, amount: float, show) -> void:
 	var p: Dictionary = game.player
@@ -548,6 +550,10 @@ static func damage_player(game: Dictionary, amount: float, src: Dictionary) -> b
 		return false
 	if p.iframes > 0.0 or p.state == "super":
 		_dodge(game, src)
+		return false
+	# Compétences neuves : Contre-taille (le coup est paré : rien ne porte), Garde de fer (réduit de face).
+	amount = Neuves.absorb(game, amount, src)
+	if amount <= 0.0:
 		return false
 	var src_kind = src.get("kind")
 	var armor := D6Geo.clampv(p.stats.armor, 0.0, t.combat.armorCap)

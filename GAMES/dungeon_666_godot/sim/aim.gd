@@ -85,6 +85,9 @@ static func _best_target(game: Dictionary, px: float, py: float, max_range: floa
 			score -= a.threatBonus
 		if D6Js.truthy(e.get("eliteMod")):
 			score -= a.eliteBonus
+		var prey = e.get("proie")
+		if prey is Dictionary:
+			score -= prey.aim # Marque de la proie (Chasseresse) : la visée assistée la préfère
 		if score < best_score:
 			best_score = score
 			best = e

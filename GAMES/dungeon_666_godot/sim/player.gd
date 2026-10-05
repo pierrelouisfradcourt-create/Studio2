@@ -20,6 +20,10 @@ extends RefCounted
 ##   Super ≠ colere     -> kit_supers (ultimes de classe : forme, magie, meute ; réserve : sentence, nuee)
 ##   compétence `canal` -> un ancien Super (Colère, Sentence, Nuée) joué dans l'état 'super' sur la
 ##                         recharge de la compétence (player.channel), sans toucher à la jauge d'ultime
+##   compétences neuves (étape 4) -> sim/kit_neuves.gd, par les mêmes chemins (état 'cast', charges).
+##                         Le Trait de Nemrod se BANDE : son lancer (castTime) est sa charge, il part
+##                         seul à la fin ; un SECOND appui sur son bouton le lâche aussitôt
+##                         (_press_slot). Aucun champ n'est ajouté à l'entrée d'un pas.
 ## Les tirs et zones posés par le héros vivent dans la salle (kit_common.kit_store).
 ##
 ## COMBAT V3 — trois EMPLACEMENTS d'action (D6Loadout : game.kit.slots, player.slots) : une
@@ -37,6 +41,7 @@ extends RefCounted
 ##     skill1Pressed, skill2Pressed, skill3Pressed,     // fronts des trois emplacements
 ##     skill1AimX, skill1AimY, … }                      // visée de l'emplacement (0, 0 = assistée)
 
+const Neuves := preload("res://sim/kit_neuves.gd")
 const PRIORITY := ["dash", "skill", "attack"]
 const SLOT_PRESSED := ["skill1Pressed", "skill2Pressed", "skill3Pressed"]
 const SLOT_AIM_X := ["skill1AimX", "skill2AimX", "skill3AimX"]
@@ -242,6 +247,8 @@ static func read_input(game: Dictionary, input: Dictionary) -> bool:
 static func _press_slot(game: Dictionary, slot: int, aim_x: float, aim_y: float, window: float) -> void:
 	match D6Loadout.slot_kind(game, slot):
 		"skill":
+			if Neuves.second_press(game, slot):
+				return # le Trait qui se bande sur ce bouton est lâché
 			if _feasible_soon(game, "skill", window, slot):
 				_buffer_action(game.player, "skill", window, aim_x, aim_y, slot)
 		"gadget":
@@ -676,6 +683,8 @@ static func _start_cast(game: Dictionary, slot: int, aim_x: float, aim_y: float)
 	D6State.emit(game, "castStart", {"angle": p.facing, "slot": p.castSlot})
 	if s.kind != "lance":
 		D6KitSkills.begin_kit_skill(game, s, aim)
+		p.cast.manX = mx # visée manuelle du lancer (0, 0 = assistée) : le Trait revise au moment de partir
+		p.cast.manY = my
 
 ## Compétence `canal` : elle joue un ancien Super (Colère, Sentence, Nuée) dans l'état 'super' —
 ## invulnérable, dégâts de source « super » — sur SA recharge. La jauge d'ultime n'est ni dépensée

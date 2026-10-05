@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://jeu/ecrans/mort.gd" id="1"]
 [ext_resource type="Script" path="res://jeu/ecrans/grille.gd" id="2"]
 [ext_resource type="PackedScene" path="res://jeu/theme/carte.tscn" id="3"]
 [ext_resource type="Script" path="res://jeu/theme/titre_relief.gd" id="4"]
+[ext_resource type="Script" path="res://jeu/interface/barre_xp.gd" id="5"]
 
 [node name="Mort" type="VBoxContainer"]
 size_flags_horizontal = 3
@@ -42,6 +43,44 @@ layout_mode = 2
 [node name="Garde" parent="Recap" instance=ExtResource("3")]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="Progression" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Ligne" type="HBoxContainer" parent="Progression"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="NiveauClasse" type="Label" parent="Progression/Ligne"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Texte"
+text = "Revenant · niveau 1"
+
+[node name="BarreXp" type="Control" parent="Progression/Ligne"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+script = ExtResource("5")
+
+[node name="Gagne" type="Label" parent="Progression/Ligne"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Affixe"
+text = "Expérience de classe : +0."
+
+[node name="NiveauGagne" type="Label" parent="Progression"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Pouvoir"
+text = "Niveau 2 ! +1 point à dépenser au Grimoire."
+horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="Boutons" type="GridContainer" parent="."]
 layout_mode = 2

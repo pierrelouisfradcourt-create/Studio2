@@ -16,6 +16,7 @@ const CONTROLES_MANETTE := "Manette — stick gauche : se déplacer · stick dro
 const GESTE := "DASH" # à défaut de classe lue : le dash de base
 const RECORD := "Meilleur étage : %s. Paysage conseillé sur téléphone."
 const DESCENDRE := "Descendre · étage %s"
+const Pastille = preload("res://jeu/theme/pastille.gd")
 
 @onready var _logo: Label = %Logo
 @onready var _entrer: Button = %Entrer
@@ -25,6 +26,7 @@ const DESCENDRE := "Descendre · étage %s"
 @onready var _record: Label = %Record
 
 var _app: Node
+var _pastille: Control # points de compétence à dépenser : sur le bouton d'entrée en Ville
 
 func _ready() -> void:
 	resized.connect(_tailler_logo)
@@ -40,8 +42,24 @@ func ouvrir(app: Node, _partie: Node) -> void:
 	_entrer.pressed.connect(func() -> void: action.emit("ville", []))
 	_descendre.pressed.connect(func() -> void: action.emit("descendre", [etage]))
 	_arene.pressed.connect(func() -> void: action.emit("arene", []))
+	_montrer_les_points(app)
+	app.profil_change.connect(_montrer_les_points.bind(app))
 	_ecrire_controles()
 	_tailler_logo()
+
+## Des points de compétence attendent la classe portée : une pastille le dit sur « Entrer dans Dité ».
+func _montrer_les_points(app: Node) -> void:
+	if _pastille == null:
+		_pastille = Pastille.new()
+		_entrer.add_child(_pastille)
+		_pastille.accrocher()
+	var profil: Dictionary = app.profil
+	var connu: bool = profil.get("loadout") is Dictionary and profil.get("unlocked") is Dictionary
+	_pastille.nombre = int(D6Profile.tree_points(profil, app.contenu, profil.loadout.classId)) if connu else 0
+
+## La pastille du bouton d'entrée en Ville (pour les essais).
+func pastille() -> Control:
+	return _pastille
 
 func largeur() -> float:
 	return LARGEUR

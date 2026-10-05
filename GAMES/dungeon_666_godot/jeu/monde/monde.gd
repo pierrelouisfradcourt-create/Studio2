@@ -27,7 +27,7 @@ var _salle_des_flambeaux = null
 @onready var camera: Camera2D = $Camera
 @onready var entites: Node2D = $Entites
 @onready var voile: CanvasLayer = $Voile
-@onready var _calques: Array[Node] = [$Sol, $Terrain, $Murs, $Lueurs, $Portes, $Objets, $ZonesHeros, $Dangers, $Entites/Debout/Piliers, $Entites/Debout/Barrieres, $Contours, $Tirs, $Braises]
+@onready var _calques: Array[Node] = [$Sol, $Terrain, $Murs, $Lueurs, $Portes, $Objets, $ZonesHeros, $Dangers, $Entites/Debout/Piliers, $Entites/Debout/Barrieres, $Contours, $Competences, $Tirs, $Braises]
 
 func brancher(p_app: Node, p_partie: Node) -> void:
 	app = p_app

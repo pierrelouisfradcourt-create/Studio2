@@ -29,6 +29,7 @@ const SEUIL_MANETTE := 0.5 # un axe de manette compte comme « utilisé » au-de
 const ECART_ACCUEIL := 6.0 # entre le bloc de l'étage et la consigne de l'accueil
 const ENFONCE := 0.14 # s : un bouton du bureau reste « enfoncé » au moins ce temps (un appui bref se voit)
 const EMPLACEMENTS := ["skill1", "skill2", "skill3"]
+const ECART_NIVEAU := 3.0 # entre la barre d'expérience et le bandeau de niveau
 const EN_MARCHE := 0.5 # norme du déplacement voulu au-delà de laquelle le héros marche franchement
 ## Libellé de chaque commande selon le dernier périphérique utilisé (mêmes touches que jeu/entrees/).
 ## « move » (le déplacement) n'a pas de bouton : seules les consignes de l'accueil le nomment.
@@ -51,6 +52,7 @@ var _echelle := 1.0 # agrandissement des textes et barres sur une petite fenêtr
 ## Dernier périphérique utilisé hors écran tactile : « clavier » ou « manette » (libellés des commandes).
 var _peripherique := "clavier"
 var _deplacement := "" # les lettres du déplacement sur ce clavier (lues une fois)
+var _xp_lue: Array = [] # ce qui a été lu de l'expérience à la dernière image (on ne relit l'arbre que si elle bouge)
 var _enfonce := {} # commande -> s pendant lesquelles son bouton du bureau reste dessiné enfoncé
 
 @onready var racine: Control = $Racine
@@ -62,6 +64,11 @@ var _enfonce := {} # commande -> s pendant lesquelles son bouton du bureau reste
 @onready var centre: VBoxContainer = $Racine/Marges/Zone/Centre
 @onready var vie: Control = %Vie
 @onready var vie_nombre: Label = %VieNombre
+@onready var gauche: VBoxContainer = $Racine/Marges/Zone/Gauche
+@onready var experience: HBoxContainer = %Experience
+@onready var niveau_classe: Label = %NiveauClasse
+@onready var barre_xp: Control = %BarreXp
+@onready var niveau: HBoxContainer = %Niveau
 @onready var benedictions: Control = %Benedictions
 @onready var etage: Label = %Etage
 @onready var etage_total: Label = %EtageTotal
@@ -100,10 +107,13 @@ func brancher(app_: Node, partie_: Node) -> void:
 	banniere.brancher(partie)
 	danger.brancher(partie)
 	accueil.brancher(app, partie)
+	niveau.brancher(partie)
+	niveau.montre.connect(func(_texte: String) -> void: barre_xp.eclater())
 	partie.partie_demarree.connect(_sur_demarrage)
 
 func _sur_demarrage() -> void:
 	vie.reinitialiser()
+	_xp_lue = []
 
 func _sur_pause() -> void:
 	if app != null:
@@ -116,6 +126,10 @@ func _process(delta: float) -> void:
 		return
 	var au_doigt := _tactile()
 	_actualiser_vie(game)
+	_actualiser_experience(game)
+	# Le bandeau de niveau prend, le temps qu'il passe, la place des losanges des bénédictions.
+	niveau.actualiser(delta, gauche.position + Vector2(0.0, experience.position.y + experience.size.y + ECART_NIVEAU))
+	benedictions.modulate.a = 1.0 - niveau.opacite()
 	_actualiser_centre(game)
 	_actualiser_bourse(game)
 	accueil.actualiser(game, delta, appareil(), libelles(), banniere.visible, centre.position.y + centre.size.y + ECART_ACCUEIL)
@@ -246,6 +260,23 @@ func _actualiser_vie(game: Dictionary) -> void:
 	vie.poser(part, Couleurs.PAL.danger if part < VIE_BASSE else Couleurs.PAL.hpBar)
 	vie_nombre.text = "%s / %s" % [D6Js.num_str(ceilf(p.hp)), D6Js.num_str(roundf(p.maxHp))]
 	benedictions.poser(game.run.boons)
+
+## L'expérience de la classe jouée, sous la vie : son niveau et la part acquise du niveau en cours.
+## Lue dans D6Profile.tree_view (aucun calcul ici), et seulement quand l'expérience de la descente
+## a bougé. Comme les Âmes : rien en arène ni à l'entraînement (rien n'y est gagné).
+func _actualiser_experience(game: Dictionary) -> void:
+	experience.visible = not D6Js.truthy(game.get("sandbox")) and not D6Js.truthy(game.get("practice")) and game.meta.get("tree") is Dictionary
+	if not experience.visible:
+		return
+	experience.custom_minimum_size.x = vie.custom_minimum_size.x
+	var classe = game.meta.loadout.classId
+	var lue: Array = [classe, game.telemetry.get("xpEarned", 0.0)]
+	if lue == _xp_lue:
+		return
+	_xp_lue = lue
+	var v: Dictionary = D6Profile.tree_view(game.meta, game.tuning, classe)
+	niveau_classe.text = "NIV. %s" % D6Js.num_str(v.level)
+	barre_xp.poser(v.xp / v.xpNext if v.xpNext > 0.0 else 1.0)
 
 func _actualiser_centre(game: Dictionary) -> void:
 	var info: Dictionary = game.info
